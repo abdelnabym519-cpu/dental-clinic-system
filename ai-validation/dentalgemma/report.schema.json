@@ -280,6 +280,167 @@
         "null"
       ],
       "description": "First part of the generated text, for quick inspection. The full text lives in the response file."
+    },
+    "capture": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How the runtime's bytes were captured, decoded and preserved. The .raw files hold the child's bytes unmodified; the readable .txt/.log files have ANSI escapes removed and invalid UTF-8 replaced, and both of those steps are counted here so a substitution made by this lab can never be mistaken for text the model produced.",
+      "properties": {
+        "encoding": {
+          "type": "string",
+          "description": "Encoding used to decode the captured bytes."
+        },
+        "stdout_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "stdout_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stderr_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "stderr_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stdout_decode_replacements": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Byte sequences on stdout that were not valid UTF-8 and became U+FFFD."
+        },
+        "stderr_decode_replacements": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "invalid_utf8_sequences": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "ansi_stripped_from_readable_text": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "readable_text_is_raw": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "raw_stdout_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "raw_stderr_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "output_integrity": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What the runtime did to the text before this lab saw it. llama.cpp writes [UNK_BYTE_0x...] into the generated text when its detokenizer cannot map a token piece (see OUTPUT_DECODING.md); those markers are counted and preserved, never removed. `decoding_clean` false does not change `status`.",
+      "properties": {
+        "count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "codes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "codepoints": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "unresolved_codes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "markers_preserved": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "decoding_clean": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "True only when the runtime emitted no markers and no byte needed replacing."
+        },
+        "explanation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     }
   },
   "definitions": {

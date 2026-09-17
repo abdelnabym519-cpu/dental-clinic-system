@@ -133,6 +133,29 @@ def verify_one(role: str, skip_metadata: bool, model_dir: Path | None = None) ->
               f"context_length={summary['context_length']}")
         if summary.get("name"):
             print(f"                    name={summary['name']}")
+        tokenizer = summary.get("tokenizer") or {}
+        decode = tokenizer.get("decode") or {}
+        if tokenizer.get("model") or tokenizer.get("pre"):
+            # "(missing)" rather than a blank or a Python None: for a BPE vocab the
+            # runtime warns and falls back to 'default', and that fallback keeps
+            # escape_whitespaces = false — the condition behind [UNK_BYTE_...].
+            pre_shown = tokenizer.get("pre") or "(missing)"
+            print(f"    tokenizer     : model={tokenizer.get('model')} "
+                  f"pre={pre_shown} vocab={tokenizer.get('vocab_size')}")
+            print(f"                    decode path: {decode.get('decode_path')}")
+            print(f"                    escape_whitespaces={decode.get('escape_whitespaces')} "
+                  f"risk={decode.get('risk')}")
+            if decode.get("risk") == "unk-byte-markers-possible":
+                # Not a failure of this lab, and not a damaged file: a mismatch
+                # between the metadata and the pieces, which the runtime reports
+                # by writing [UNK_BYTE_...] into the generated text.
+                print(f"                    [WARN] this vocabulary will be decoded with "
+                      f"the GPT-2 byte-level branch;")
+                print(f"                           tokens containing ▁ may render as "
+                      f"[UNK_BYTE_0x{gguf.SPACE_MARKER_UTF8_HEX}...]")
+                print(f"                           see OUTPUT_DECODING.md — the file is "
+                      f"readable, the text is not")
+                print(f"                           necessarily the model's raw output")
         if summary.get("vision"):
             for key, value in summary["vision"].items():
                 print(f"                    {key}={value}")

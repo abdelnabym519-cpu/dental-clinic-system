@@ -253,6 +253,64 @@ class TestCpuOnlyAndIsolation(unittest.TestCase):
             self.assertTrue(str(path.resolve()).startswith(lab))
 
 
+class TestOutputDecodingIsDocumented(unittest.TestCase):
+    """The decoding defect must be documented where it can be acted on.
+
+    This lab cannot repair an artifact-side decoding mismatch, and it must not
+    pretend to. What it can do is state the cause with its source, give the two
+    local commands that confirm it, and make the difference between a runtime
+    workaround and a real fix unmistakable. Each of those is asserted here,
+    because a document that quietly loses one of them is how a diagnosis turns
+    into a superstition.
+    """
+
+    def setUp(self):
+        self.path = LAB / "OUTPUT_DECODING.md"
+        self.text = self.path.read_text(encoding="utf-8")
+
+    def test_the_document_exists_and_is_pointed_at_from_the_others(self):
+        self.assertTrue(self.path.is_file())
+        for doc in ("README.md", "LOCAL_EXECUTION.md", "MODEL_PROVENANCE.md"):
+            self.assertIn("OUTPUT_DECODING.md",
+                          (LAB / doc).read_text(encoding="utf-8"),
+                          f"{doc} must point at the decoding analysis")
+
+    def test_it_names_the_runtime_source_of_the_marker(self):
+        self.assertIn("llama-vocab.cpp", self.text)
+        self.assertIn("llama_decode_text", self.text)
+        self.assertIn("U+2581", self.text)
+        self.assertIn("e29681", self.text)
+
+    def test_it_states_the_two_metadata_keys_that_decide_the_path(self):
+        self.assertIn("tokenizer.ggml.model", self.text)
+        self.assertIn("tokenizer.ggml.pre", self.text)
+        self.assertIn("escape_whitespaces", self.text)
+
+    def _plain(self) -> str:
+        """The document's prose without markdown emphasis, for substring checks.
+
+        "the markers are **not** stripped" would otherwise fail a naive search for
+        "not stripped" — which is exactly what happened on the first run of these
+        tests.
+        """
+        lowered = self.text.lower()
+        return re.sub(r"[*_`]", "", lowered)
+
+    def test_it_separates_a_runtime_workaround_from_a_fix(self):
+        self.assertIn("--override-kv", self.text)
+        plain = self._plain()
+        self.assertIn("workaround", plain)
+        self.assertIn("not a repair", plain)
+        # and it must say where the real fix belongs
+        self.assertIn("publisher", plain)
+
+    def test_it_says_the_markers_are_not_removed(self):
+        self.assertIn("not stripped", self._plain())
+
+    def test_it_gives_the_code_page_check(self):
+        self.assertIn("-Encoding UTF8", self.text)
+
+
 class TestPythonVersionFloor(unittest.TestCase):
     """`requirements.txt` claims 3.9+, so that claim has to be checkable.
 
@@ -334,7 +392,7 @@ class TestDocumentedCommandsExist(unittest.TestCase):
     """
 
     DOCS = ["README.md", "LOCAL_EXECUTION.md", "MODEL_PROVENANCE.md",
-            "input/README.md", "model/README.md"]
+            "OUTPUT_DECODING.md", "input/README.md", "model/README.md"]
     SCRIPTS = ["check_environment", "collect_system_info", "download_artifacts",
                "verify_artifacts", "run_dentalgemma"]
 
@@ -357,12 +415,22 @@ class TestDocumentedCommandsExist(unittest.TestCase):
         this test only accepted a forward slash and silently matched nothing —
         which is worse than failing, so the pattern now accepts either separator
         and the count is asserted below.
+
+        A command continued with PowerShell's backtick is joined first, so a flag
+        on the second line is checked too instead of being quietly skipped, and
+        anything after `--extra` is left alone: that argument is a verbatim
+        passthrough to the runtime, whose flags belong to llama.cpp, not to us.
         """
         pattern = re.compile(r"python\s+(?:\.?[\\/])?(?:scripts[\\/])?(\w+)\.py([^\n`]*)")
         for doc in self.DOCS:
             text = (LAB / doc).read_text(encoding="utf-8")
-            for match in pattern.finditer(text):
-                yield doc, match.group(1), match.group(2), match.group(0)
+            # join backtick continuations into a single logical command line
+            joined = re.sub(r"`\s*\n\s*", " ", text)
+            for match in pattern.finditer(joined):
+                rest = match.group(2)
+                if "--extra" in rest:
+                    rest = rest.split("--extra")[0]
+                yield doc, match.group(1), rest, match.group(0)
 
     def test_every_documented_script_exists(self):
         found = 0

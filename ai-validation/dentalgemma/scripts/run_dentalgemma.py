@@ -29,6 +29,17 @@ Memory and CPU figures are sampled (every 0.5 s by default) rather than measured
 by a profiler, and are labelled that way in the report: a short spike between
 samples can be missed. Where no probe works the field is null, never a guess.
 
+Capture is byte-exact on purpose. The child's stdout and stderr are read as
+bytes, decoded as UTF-8 explicitly, and *both* forms are kept: the readable
+`<stem>_response.txt` / `<stem>_llama.log`, and the untouched
+`<stem>_stdout.raw` / `<stem>_stderr.raw`. Nothing that comes out of the runtime
+is repaired, deleted or rewritten — including the `[UNK_BYTE_0x...]` markers
+llama.cpp writes into the text when its detokenizer cannot map a piece (see
+OUTPUT_DECODING.md). They are counted in the report and named on screen instead.
+A byte that is not valid UTF-8 becomes U+FFFD in the readable file, and the
+count is reported, so a substitution made here can never be mistaken for
+something the model produced.
+
 Usage:
     python scripts/run_dentalgemma.py --image input\\panoramic.png
     python scripts/run_dentalgemma.py --image input\\panoramic.png --dry-run
@@ -70,6 +81,158 @@ DEFAULT_PROMPT = (
 )
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07")
+
+# llama.cpp writes this marker into the *text* when its detokenizer cannot map a
+# token piece back to bytes: "[UNK_BYTE_0x" + the UTF-8 bytes as hex + the whole
+# token text + "]". It is the runtime's own diagnostic, produced before this
+# process sees a single byte, so nothing here may remove it — this lab counts and
+# names it instead. The mechanism is documented in OUTPUT_DECODING.md.
+UNK_BYTE_RE = re.compile(r"\[UNK_BYTE_0x([0-9a-fA-F]{2,16})")
+
+# The hex run after "0x" is the UTF-8 encoding of one codepoint, and the token
+# text that follows can itself begin with hex digits — so the run is ambiguous by
+# construction ("[UNK_BYTE_0xe29681abc" could be 0xe2 0x96 0x81 or 0xe2 0x96 0x81
+# followed by "abc"). It is resolved the way UTF-8 itself is: the first byte
+# determines how many bytes follow. That is exact for every well-formed marker
+# and needs no guessing.
+def _utf8_length_from_lead_byte(byte: int) -> int | None:
+    """How many bytes a UTF-8 sequence starting with this byte has."""
+    if byte < 0x80:
+        return 1
+    if 0xC2 <= byte <= 0xDF:
+        return 2
+    if 0xE0 <= byte <= 0xEF:
+        return 3
+    if 0xF0 <= byte <= 0xF4:
+        return 4
+    return None                     # a continuation byte, or not a valid lead
+
+
+def _decode_counting_invalid(data: bytes) -> tuple[str, list[dict]]:
+    """Decode UTF-8, replacing invalid sequences and recording each one.
+
+    A byte-level vocabulary can emit bytes that are not valid UTF-8 on their own,
+    so replacement is necessary; what must never happen is that a substitution
+    made *here* becomes indistinguishable from text the model produced. Each
+    invalid sequence is therefore reported with its byte offset and its bytes.
+
+    This walks the buffer instead of registering a `codecs` error handler on
+    purpose: that registry is process-global and the last registration for a name
+    wins, so importing this module twice in one process (which the test suite
+    does) leaves earlier instances writing into a stale audit object. The first
+    version of this function did exactly that, and only the suite caught it.
+    """
+    sequences: list[dict] = []
+    parts: list[str] = []
+    position = 0
+    while position < len(data):
+        try:
+            parts.append(data[position:].decode("utf-8"))
+            break
+        except UnicodeDecodeError as exc:
+            if exc.start:
+                parts.append(data[position:position + exc.start].decode("utf-8"))
+            start, end = position + exc.start, position + exc.end
+            sequences.append({
+                "start": start,
+                "end": end,
+                "bytes": data[start:end].hex(),
+                "reason": exc.reason,
+            })
+            parts.append("\ufffd")
+            position = end
+    return "".join(parts), sequences
+
+
+def decode_stream(raw: bytes | None, label: str) -> dict:
+    """Decode one captured stream as UTF-8, accounting for every substitution."""
+    data = raw or b""
+    text, sequences = _decode_counting_invalid(data)
+    return {
+        "label": label,
+        "encoding": "utf-8",
+        "bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "decode_replacements": len(sequences),
+        "invalid_sequences": sequences,
+        "text": text,
+    }
+
+
+def audit_unk_bytes(text: str) -> dict:
+    """Count llama.cpp's [UNK_BYTE_0x...] markers without touching them.
+
+    Returns counts and the codepoints they name. The text itself is never
+    modified: an earlier draft of this idea was a `str.replace` that deleted the
+    markers, which would have hidden a real decoding defect and destroyed the
+    only evidence of it.
+    """
+    codes: list[str] = []
+    codepoints: list[str] = []
+    unresolved: list[str] = []
+    count = 0
+
+    for match in UNK_BYTE_RE.finditer(text):
+        count += 1
+        hex_run = match.group(1).lower()
+        lead = int(hex_run[:2], 16)
+        size = _utf8_length_from_lead_byte(lead)
+        needed = 2 * size if size else None
+
+        if not needed or len(hex_run) < needed:
+            # Not enough hex to be the codepoint the lead byte promises: report
+            # the first byte and say it could not be resolved.
+            if hex_run[:2] not in unresolved:
+                unresolved.append(hex_run[:2])
+            continue
+
+        candidate = hex_run[:needed]
+        try:
+            decoded = bytes.fromhex(candidate).decode("utf-8")
+        except (ValueError, UnicodeDecodeError):
+            if hex_run[:2] not in unresolved:
+                unresolved.append(hex_run[:2])
+            continue
+        if len(decoded) != 1:
+            if hex_run[:2] not in unresolved:
+                unresolved.append(hex_run[:2])
+            continue
+        if candidate not in codes:
+            codes.append(candidate)
+        label = f"U+{ord(decoded):04X}"
+        if label not in codepoints:
+            codepoints.append(label)
+
+    return {
+        "count": count,
+        # ordered by the marker's first byte, then by length: deterministic and
+        # readable in a report
+        "codes": sorted(codes, key=lambda c: (int(c[:2], 16), len(c), c)),
+        "codepoints": sorted(codepoints, key=lambda c: int(c[2:], 16)),
+        "unresolved_codes": sorted(unresolved, key=lambda c: int(c, 16)),
+        "markers_preserved": True,
+        "explanation": (
+            "llama.cpp's detokenizer substitutes these markers; they are its own "
+            "diagnostic, not text from the model and not something this lab "
+            "produced. See OUTPUT_DECODING.md."
+        ) if count else None,
+    }
+
+
+def force_utf8_console() -> None:
+    """Make this script's own output survive a Windows code page.
+
+    On Windows, printing text that the active code page cannot represent raises
+    UnicodeEncodeError when stdout is redirected — which would crash the runner
+    *after* a successful inference and before the report is finalised. The files
+    are written explicitly as UTF-8 either way; this only protects the console
+    copy. Guarded, because `reconfigure` does not exist on a replaced stream.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 
 def _load(name: str, filename: str):
@@ -344,12 +507,12 @@ def read_child_async(proc: subprocess.Popen, timeout: float, box: dict) -> None:
         try:
             box["stdout"], box["stderr"] = proc.communicate(timeout=60)
         except Exception:
-            box.setdefault("stdout", "")
-            box.setdefault("stderr", "")
+            box.setdefault("stdout", b"")
+            box.setdefault("stderr", b"")
     except Exception as exc:                                    # pragma: no cover
         box["error"] = f"{type(exc).__name__}: {exc}"
-        box.setdefault("stdout", "")
-        box.setdefault("stderr", "")
+        box.setdefault("stdout", b"")
+        box.setdefault("stderr", b"")
 
 
 def build_command(binary: Path, main: Path, mmproj: Path, image: Path,
@@ -393,6 +556,7 @@ def write_report(report: dict, out_dir: Path, logs_dir: Path, tag: str) -> tuple
 
 
 def main() -> int:
+    force_utf8_console()
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--main", default=None,
@@ -479,6 +643,11 @@ def main() -> int:
         "output_path": None,
         "output_chars": None,
         "exit_code": None,
+        # Present in every report, before any run: a BLOCKED report has nothing to
+        # capture, and saying that with null beats omitting the keys and leaving a
+        # consumer to guess whether the fields exist.
+        "capture": None,
+        "output_integrity": None,
         "status": artifacts.STATUS_UNKNOWN,
         "notes": [],
     }
@@ -627,8 +796,10 @@ def main() -> int:
     started = datetime.now(timezone.utc)
     t0 = time.perf_counter()
     try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                text=True, encoding="utf-8", errors="replace")
+        # No text=True: the runtime's bytes are read as bytes. Decoding is done
+        # explicitly afterwards (decode_stream) so that any substitution this lab
+        # performs is counted and reported rather than invisible.
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except Exception as exc:
         print(f"\n[STOP] could not start the runtime: {type(exc).__name__}: {exc}")
         report["notes"].append(f"could not start runtime: {exc}")
@@ -646,14 +817,21 @@ def main() -> int:
         monitor_task = monitor(proc, args.sample_interval)
     finally:
         reader.join(timeout=180)
-    stdout = box.get("stdout") or ""
-    stderr = box.get("stderr") or ""
     timed_out = bool(box.get("timed_out"))
     if box.get("error"):
         report["notes"].append(f"output reader: {box['error']}")
     elapsed = time.perf_counter() - t0
     finished = datetime.now(timezone.utc)
 
+    # ---- decode the captured bytes, and keep the bytes --------------------
+    stdout_audit = decode_stream(box.get("stdout"), "stdout")
+    stderr_audit = decode_stream(box.get("stderr"), "stderr")
+    stdout, stderr = stdout_audit["text"], stderr_audit["text"]
+
+    # The readable files keep exactly the semantics they had before — ANSI colour
+    # codes stripped, surrounding whitespace trimmed — so nothing that reads them
+    # changes. The .raw files are new and are the untouched byte streams, which is
+    # what makes it possible to tell a decoding defect from a display defect later.
     text = ANSI_RE.sub("", stdout or "").strip()
     raw_log = ANSI_RE.sub("", stderr or "").strip()
 
@@ -661,9 +839,17 @@ def main() -> int:
     stem = image.stem
     text_path = out_dir / f"{stem}_response.txt"
     log_path = out_dir / f"{stem}_llama.log"
+    stdout_raw_path = out_dir / f"{stem}_stdout.raw"
+    stderr_raw_path = out_dir / f"{stem}_stderr.raw"
     if text:
         text_path.write_text(text, encoding="utf-8")
     log_path.write_text((stderr or "") + ("\n" if stderr else ""), encoding="utf-8")
+    stdout_raw_path.write_bytes(box.get("stdout") or b"")
+    stderr_raw_path.write_bytes(box.get("stderr") or b"")
+
+    markers = audit_unk_bytes(text)
+    decoding_clean = (markers["count"] == 0
+                      and stdout_audit["decode_replacements"] == 0)
 
     report.update({
         "started_at": started.isoformat(),
@@ -681,6 +867,33 @@ def main() -> int:
         "stderr_chars": len(stderr or ""),
         "response_path": str(text_path) if text else None,
         "llama_log_path": str(log_path),
+        # Everything below is additive: the fields above keep their meaning.
+        "capture": {
+            "encoding": "utf-8",
+            "stdout_bytes": stdout_audit["bytes"],
+            "stdout_sha256": stdout_audit["sha256"],
+            "stderr_bytes": stderr_audit["bytes"],
+            "stderr_sha256": stderr_audit["sha256"],
+            "stdout_decode_replacements": stdout_audit["decode_replacements"],
+            "stderr_decode_replacements": stderr_audit["decode_replacements"],
+            "invalid_utf8_sequences": (stdout_audit["invalid_sequences"]
+                                       + stderr_audit["invalid_sequences"]),
+            "ansi_stripped_from_readable_text": True,
+            "readable_text_is_raw": False,
+            "raw_stdout_path": str(stdout_raw_path),
+            "raw_stderr_path": str(stderr_raw_path),
+            "note": ("the .raw files are the child's bytes, unmodified; the .txt/.log "
+                     "files are the same streams with ANSI escapes removed and "
+                     "invalid UTF-8 replaced, which is counted above"),
+        },
+        "output_integrity": {
+            **markers,
+            "decoding_clean": decoding_clean,
+            "note": ("decoding_clean is False when the runtime wrote [UNK_BYTE_...] "
+                     "markers or when this lab had to substitute a byte. It does not "
+                     "change `status`: OPERATIONAL still means 'real inference "
+                     "produced non-empty text', not 'the text is correct'."),
+        },
     })
 
     print(f"\n  exit code   : {proc.returncode}"
@@ -700,6 +913,24 @@ def main() -> int:
         if len(text.splitlines()) > 20:
             print(f"  ... ({len(text.splitlines()) - 20} more lines, see the file)")
         print("  " + "-" * 74)
+
+    # ---- say out loud what the runtime did to the text --------------------
+    if markers["count"]:
+        named = ", ".join(markers["codepoints"]) or "codepoints that could not be resolved"
+        codes = ", ".join(markers["codes"]) or ", ".join(markers["unresolved_codes"])
+        print("\n" + "!" * 78)
+        print(f" {markers['count']} [UNK_BYTE_...] marker(s) in the generated text, "
+              f"naming {named}")
+        print(f" (hex: {codes}) — written by llama.cpp's detokenizer, left exactly as")
+        print(" it emitted them. The text above is NOT the model's raw output: the")
+        print(" runtime replaced part of it. See OUTPUT_DECODING.md.")
+        print("!" * 78)
+    if stdout_audit["decode_replacements"]:
+        print(f"\n  [WARN] {stdout_audit['decode_replacements']} byte sequence(s) on stdout were "
+              f"not valid UTF-8 and were replaced by U+FFFD in the readable file")
+        print(f"         the bytes are preserved in {stdout_raw_path.name}")
+    print(f"\n  raw streams : {stdout_raw_path.name}, {stderr_raw_path.name} "
+          f"(stdout {stdout_audit['bytes']:,} B, stderr {stderr_audit['bytes']:,} B)")
 
     # ---- verdict ----------------------------------------------------------
     success = (not timed_out) and proc.returncode == 0 and bool(text)

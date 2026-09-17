@@ -192,6 +192,133 @@ _CONTEXT_KEYS = (
 )
 
 
+# --------------------------------------------------------------------------
+# tokenizer decoding — which of llama.cpp's two detokenize paths this file gets
+# --------------------------------------------------------------------------
+# A generated token is turned back into text by llama_vocab::token_to_piece(),
+# and that function has two mutually exclusive ways of doing it. Which one runs
+# is decided entirely by GGUF metadata, and the wrong one for the file's own
+# pieces is what puts "[UNK_BYTE_0x..." into the generated text. The rules
+# below were read from the runtime source at the build this lab documents
+# (llama.cpp b11026); they are the reason this lab can say anything at all about
+# decoding *without* running the model:
+#
+#   src/llama-vocab.cpp, llama_vocab::impl::load()
+#     tokenizer.ggml.model == "llama"      -> vocab type SPM
+#     tokenizer.ggml.model == "gemma4"     -> vocab type BPE, and tokenizer_pre
+#                                             is forced to "gemma4"
+#     tokenizer.ggml.model in {gpt2, hybriddna, whitespace} -> vocab type BPE,
+#                                             escape_whitespaces = false unless
+#                                             tokenizer.ggml.pre is one of the
+#                                             pre-tokenizers that set it true
+#
+#   src/llama-vocab.cpp, token_to_piece()
+#     escape_whitespaces == true   -> "SPM-style BPE": ▁ (U+2581) is turned back
+#                                     into a space with llama_unescape_whitespace
+#     escape_whitespaces == false  -> llama_decode_text(): every codepoint is
+#                                     mapped back through the 256-entry GPT-2
+#                                     byte alphabet. U+2581 is not in that
+#                                     alphabet, the map lookup throws, and the
+#                                     catch substitutes the literal text
+#                                     "[UNK_BYTE_0x<utf8 of the codepoint>"
+#                                     followed by the *entire* token text and "]".
+#
+# The 256-entry alphabet (src/unicode.cpp, unicode_utf8_to_byte_map) is built
+# from the ranges 0x21-0x7E, 0xA1-0xAC, 0xAE-0xFF plus 256+n for the remaining
+# bytes, so it never contains U+2581.
+SPACE_MARKER = "\u2581"                 # ▁, the SentencePiece space
+SPACE_MARKER_UTF8_HEX = "e29681"        # its three UTF-8 bytes, as the runtime prints them
+BYTE_LEVEL_BPE_MODELS = ("gpt2", "hybriddna", "whitespace")
+ESCAPES_WHITESPACE_PRES = ("gemma4", "granite-embed-multi-311m", "sarvam-moe")
+
+_TOKENIZER_SCALAR_KEYS = ("tokenizer.ggml.model", "tokenizer.ggml.pre",
+                          "tokenizer.ggml.add_space_prefix",
+                          "tokenizer.ggml.byte_fallback")
+
+
+def tokenizer_decode_risk(model, pre) -> dict:
+    """Predict which detokenize path this vocabulary will take, and the risk.
+
+    This is a *reading of the runtime's rules*, not a measurement. It is exact
+    for the rules quoted above and deliberately says "unknown" rather than
+    guessing for anything else. The prediction is confirmed (or refuted) locally
+    by a tokenizer-only run of the runtime, which is documented in
+    OUTPUT_DECODING.md and needs no image, no projector and no full inference.
+    """
+    result = {
+        "tokenizer_model": model,
+        "tokenizer_pre": pre,
+        "vocab_type": None,
+        "escape_whitespaces": None,
+        "decode_path": None,
+        "risk": "unknown",
+        "basis": "llama.cpp b11026 src/llama-vocab.cpp (token_to_piece, load)",
+        "note": None,
+    }
+
+    if not model:
+        result["note"] = ("tokenizer.ggml.model is absent from the metadata: the "
+                          "runtime would refuse this file ('unknown tokenizer')")
+        return result
+
+    if model == "llama":
+        result.update({
+            "vocab_type": "SPM",
+            "decode_path": "llama_unescape_whitespace (SPM branch)",
+            "risk": "none",
+            "note": ("SentencePiece-style vocabulary: pieces are unescaped, so ▁ "
+                     "becomes a space and no [UNK_BYTE_...] marker is possible."),
+        })
+        return result
+
+    if model == "gemma4":
+        result.update({
+            "vocab_type": "BPE",
+            "escape_whitespaces": True,
+            "decode_path": "llama_unescape_whitespace (SPM-style BPE branch)",
+            "risk": "none",
+            "note": ("model 'gemma4' forces tokenizer_pre = 'gemma4' regardless of "
+                     "the metadata, which sets escape_whitespaces = true, so the "
+                     "SPM-style branch is used and ▁ is unescaped."),
+        })
+        return result
+
+    if model in BYTE_LEVEL_BPE_MODELS:
+        escapes = pre in ESCAPES_WHITESPACE_PRES
+        result.update({
+            "vocab_type": "BPE",
+            "escape_whitespaces": escapes,
+            "decode_path": ("llama_unescape_whitespace (SPM-style BPE branch)"
+                            if escapes else "llama_decode_text (GPT-2 byte-level branch)"),
+        })
+        if escapes:
+            result.update({
+                "risk": "none",
+                "note": (f"pre-tokenizer '{pre}' sets escape_whitespaces = true, so "
+                         "the pieces are decoded as SentencePiece text."),
+            })
+        else:
+            shown = pre if pre else "(missing — runtime warns and uses 'default')"
+            result.update({
+                "risk": "unk-byte-markers-possible",
+                "note": (f"vocab type is BPE with escape_whitespaces = false "
+                         f"(tokenizer.ggml.pre = {shown}), so every codepoint is "
+                         f"mapped through the 256-entry GPT-2 byte alphabet. Any "
+                         f"piece containing {SPACE_MARKER} (U+2581, bytes "
+                         f"{SPACE_MARKER_UTF8_HEX}) — which is how SentencePiece "
+                         f"spells a leading space — is not in that alphabet and "
+                         f"the runtime substitutes [UNK_BYTE_0x{SPACE_MARKER_UTF8_HEX}"
+                         f"...] into the generated text. If this file's pieces do "
+                         f"contain ▁, that is the mechanism behind the markers; a "
+                         f"run of llama-tokenize confirms it (see OUTPUT_DECODING.md)."),
+            })
+        return result
+
+    result["note"] = (f"tokenizer.ggml.model = '{model}' is not one of the vocab "
+                      f"types whose decode path this lab has verified; no prediction.")
+    return result
+
+
 def summarise(parsed: dict) -> dict:
     """Turn a parsed GGUF into the facts this lab cares about."""
     header = parsed["header"]
@@ -231,7 +358,16 @@ def summarise(parsed: dict) -> dict:
         },
         "general": {k: meta[k] for k in _GENERAL_KEYS if k in meta},
         "vision": {k: meta[k] for k in _EMBED_KEYS if k in meta},
+        "tokenizer": {
+            **{k.split(".")[-1]: meta[k] for k in _TOKENIZER_SCALAR_KEYS if k in meta},
+            # The tokens array itself is skipped by the reader (>32 strings), but
+            # its length is the vocabulary size and costs nothing to report.
+            "vocab_size": (meta.get("tokenizer.ggml.tokens") or {}).get("count")
+            if isinstance(meta.get("tokenizer.ggml.tokens"), dict) else None,
+        },
     }
+    summary["tokenizer"]["decode"] = tokenizer_decode_risk(
+        summary["tokenizer"].get("model"), summary["tokenizer"].get("pre"))
 
     # Does this look like a projector rather than a language model?
     summary["looks_like_projector"] = bool(

@@ -32,5 +32,7 @@
   "inference_seconds": null,
   "peak_ram_gb": null,
   "output_path": null,
+  "capture": null,
+  "output_integrity": null,
   "status": "UNKNOWN"
 }

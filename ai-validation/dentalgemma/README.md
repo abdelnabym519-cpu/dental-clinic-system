@@ -94,6 +94,7 @@ python scripts\run_dentalgemma.py --image input\panoramic.png
 | `scripts/download_artifacts.py` | Pinned-revision download, hash-verified, never destructive |
 | `scripts/verify_artifacts.py` | Presence, size, SHA-256, GGUF validity, and whether the two files form a pair. `--model-dir` reads them from anywhere |
 | `scripts/run_dentalgemma.py` | **The only script that runs a model** |
+| `OUTPUT_DECODING.md` | The `[UNK_BYTE_0x...]` markers in the generated text: cause, evidence, and the local diagnostic |
 | `input/README.md` | Acceptable test images, and the rules about patient data |
 | `model/README.md` | What goes in `model/`, and why nothing there is committed |
 | `tests/` | Static and unit tests that need no model, no GPU and no network |
@@ -150,6 +151,25 @@ regression test for it (`tests/test_cli_contract.py::TestOutputDraining`).
 as an error rather than "auto", so the flag is omitted entirely unless a count is
 given, and llama.cpp chooses.
 
+**The runtime's bytes are kept, and the text is never repaired.** stdout and
+stderr are captured as bytes, decoded as UTF-8 explicitly, and written twice: the
+readable `<stem>_response.txt` / `<stem>_llama.log`, and the untouched
+`<stem>_stdout.raw` / `<stem>_stderr.raw`. If a byte is not valid UTF-8 it becomes
+U+FFFD in the readable file *and the substitution is counted in the report*, so a
+change made by this lab can never be mistaken for something the model produced.
+
+**`[UNK_BYTE_0x...]` is counted, never deleted.** Those markers are written into
+the text by llama.cpp's own detokenizer when it cannot map a token piece. Stripping
+them would hide a real decoding defect and destroy the only evidence of it, so the
+report counts them, names the codepoints, sets `output_integrity.decoding_clean`
+to `false`, and prints a warning. A test asserts that no code here rewrites them.
+See `OUTPUT_DECODING.md`.
+
+**`status` is about text, not about quality.** `OPERATIONAL` means "real inference
+produced non-empty text" — it has never meant "the text is correct". A run whose
+output carries markers is still `OPERATIONAL`, and `output_integrity` is where
+that distinction lives.
+
 **Every blocker is reported in one pass.** Missing artifacts, a missing image and
 an unusable image extension are collected before the run decisions, so the first
 attempt on a machine that cannot be debugged interactively lists everything that
@@ -159,18 +179,25 @@ has to be fixed — rather than one problem per attempt, at 3.47 GiB each.
 
 Run here, in the repository, with no model present and no network access:
 
-* **69 tests, all passing** (`python -m unittest discover -s tests -v`, Python
+* **112 tests, all passing** (`python -m unittest discover -s tests -v`, Python
   3.11.2). They cover the GGUF reader against synthetic containers, the report
   template's honesty, artifact identities, the CLI contract (`--help`, BLOCKED on
   missing prerequisites, `--dry-run`, the `LOCAL HASH` output, refusal of wrong
-  sizes and digests, Windows-safety and CPU-only assertions), pipe draining, and
-  that every command printed in these documents uses flags the scripts accept.
+  sizes and digests, Windows-safety and CPU-only assertions), pipe draining,
+  byte-exact output capture, and that every command printed in these documents
+  uses flags the scripts accept.
 * Every script parses under `ast.parse(..., feature_version=(3, 9))`, so the
   documented Python floor is enforced rather than asserted.
 * The failure paths were executed for real: missing artifacts, missing image,
   wrong extension, an unrecognised image header, a non-GGUF file and a hollow
   container were all driven through the scripts and produced `BLOCKED` / failure
   exits with honest reports.
+* The capture path is tested end to end against a **synthetic runtime** (a script
+  named `llama-mtmd-cli` that emits bytes we choose): the incident text is
+  reproduced byte for byte, the markers survive, the raw streams match the child's
+  bytes exactly, invalid UTF-8 is counted rather than hidden, ANSI escapes are
+  stripped from the readable file only, and timeout / non-zero exit / empty output
+  still produce `FAILED`.
 
 **Not validated — and not claimed:** no GGUF file was downloaded or opened, no
 llama.cpp binary was run, no image was fed to the model, and no inference of any
@@ -192,7 +219,10 @@ until a real run on the target machine produces non-empty output.
 `run_report.json` follows `report.schema.json` and carries the model identity,
 both artifact sizes and digests, the runtime and its version, CPU and RAM, CUDA
 presence, the input image and its digest, the **exact command line**, the
-configuration, timing, peak RAM, CPU seconds, the output path, and the status.
+configuration, timing, peak RAM, CPU seconds, the output path, and the status. Two
+additive blocks record the capture itself: `capture` (byte counts, digests of the
+raw streams, how many bytes needed replacing) and `output_integrity` (marker
+count, the codepoints they name, and whether the text came through untouched).
 
 ## Limitations
 

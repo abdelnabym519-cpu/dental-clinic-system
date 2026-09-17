@@ -234,7 +234,8 @@ class TestCommandConstruction(unittest.TestCase):
 
 
 def synthetic_gguf(architecture: str = "gemma3", tensors: int = 1,
-                   kv_extra: dict | None = None) -> bytes:
+                   kv_extra: dict | None = None,
+                   kv_strings: dict | None = None) -> bytes:
     """A structurally valid but hollow GGUF container, for the verifier's tests.
 
     This is not a model and is never written inside the lab: the tests below assert
@@ -243,7 +244,13 @@ def synthetic_gguf(architecture: str = "gemma3", tensors: int = 1,
     weights — the file is a container header, and the expected outcome is failure.
     """
     def string(value: str) -> bytes:
-        return struct.pack("<Q", len(value)) + value.encode("utf-8")
+        # GGUF lengths are *byte* counts. Using len() on the str wrote a short
+        # length for any non-ASCII value (the em dash in the name), which shifted
+        # every following key: the container parsed three entries and quietly gave
+        # up on the rest. The debug output gave it away — the name came back as
+        # "…NOT a mod".
+        data = value.encode("utf-8")
+        return struct.pack("<Q", len(data)) + data
 
     def kv_u32(key: str, value: int) -> bytes:
         return string(key) + struct.pack("<I", 4) + struct.pack("<I", value)
@@ -257,12 +264,15 @@ def synthetic_gguf(architecture: str = "gemma3", tensors: int = 1,
           + kv_u32(f"{architecture}.context_length", 4096))
     for key, value in (kv_extra or {}).items():
         kv += kv_u32(f"{architecture}.{key}", value)
+    for key, value in (kv_strings or {}).items():
+        kv += kv_str(key, value)
 
     tensor_info = b""
     for index in range(tensors):
         tensor_info += string(f"blk.{index}.weight") + struct.pack("<I", 1) \
             + struct.pack("<Q", 4096 + index) + struct.pack("<Q", 0)
-    header = struct.pack("<IIQQ", 0x46554747, 3, tensors, 4 + len(kv_extra or {}))
+    header = struct.pack("<IIQQ", 0x46554747, 3, tensors,
+                         4 + len(kv_extra or {}) + len(kv_strings or {}))
     return header + kv + tensor_info + b"\x00" * 256
 
 
@@ -344,6 +354,114 @@ class TestVerifierRejection(unittest.TestCase):
         for role, spec in artifacts.ARTIFACTS.items():
             self.assertRegex(spec["sha256_expected"], r"^[0-9a-f]{64}$")
             self.assertIn("Hugging Face", spec["sha256_origin"])
+
+
+class TestTokenizerDiagnosisInVerifier(unittest.TestCase):
+    """`verify_artifacts.py` must surface the metadata that decides decoding.
+
+    The [UNK_BYTE_...] markers come from llama.cpp choosing its GPT-2 byte-level
+    detokenize path for a vocabulary whose pieces contain ▁. That choice is made
+    from two GGUF keys, so the verifier — which already opens the file's header —
+    is the right place to make the condition visible without running anything.
+    """
+
+    def _verify(self, tokenizer_model: str | None, tokenizer_pre: str | None = None):
+        artifacts = _load("dg_verify_meta_artifacts", "artifacts.py")
+        strings = {}
+        if tokenizer_model:
+            strings["tokenizer.ggml.model"] = tokenizer_model
+        if tokenizer_pre:
+            strings["tokenizer.ggml.pre"] = tokenizer_pre
+        payload = synthetic_gguf(kv_strings=strings)
+        with tempfile.TemporaryDirectory(prefix="dentalgemma_tokmeta_") as tmp:
+            model_dir = Path(tmp) / "model"
+            model_dir.mkdir()
+            for role in ("main", "mmproj"):
+                (model_dir / artifacts.ARTIFACTS[role]["filename"]).write_bytes(payload)
+            out = Path(tmp) / "v.json"
+            result = subprocess.run(
+                [sys.executable, str(SCRIPTS / "verify_artifacts.py"),
+                 "--model-dir", str(model_dir), "--json-out", str(out), "--skip-metadata"],
+                capture_output=True, text=True, timeout=300)
+            return result, json.loads(out.read_text(encoding="utf-8"))
+
+    def test_gpt2_vocab_is_flagged_with_the_marker_mechanism(self):
+        result, report = self._verify("gpt2", "default")
+        self.assertIn("tokenizer     : model=gpt2 pre=default", result.stdout)
+        self.assertIn("escape_whitespaces=False", result.stdout)
+        self.assertIn("unk-byte-markers-possible", result.stdout)
+        self.assertIn("e29681", result.stdout)
+        self.assertIn("OUTPUT_DECODING.md", result.stdout)
+
+        decode = report["artifacts"]["main"]["gguf"]["tokenizer"]["decode"]
+        self.assertEqual(decode["risk"], "unk-byte-markers-possible")
+        self.assertIs(decode["escape_whitespaces"], False)
+        self.assertIn("llama-vocab.cpp", decode["basis"])
+
+    def test_a_missing_pre_is_named_as_missing_not_as_default(self):
+        result, _ = self._verify("gpt2", None)
+        self.assertIn("(missing", result.stdout)
+        self.assertIn("unk-byte-markers-possible", result.stdout)
+
+    def test_the_spm_path_is_not_flagged(self):
+        result, report = self._verify("llama", None)
+        self.assertNotIn("unk-byte-markers-possible", result.stdout)
+        decode = report["artifacts"]["main"]["gguf"]["tokenizer"]["decode"]
+        self.assertEqual(decode["risk"], "none")
+        self.assertIn("SPM", decode["vocab_type"])
+
+    def test_the_gemma4_model_type_is_not_flagged(self):
+        result, report = self._verify("gemma4", None)
+        self.assertNotIn("unk-byte-markers-possible", result.stdout)
+        decode = report["artifacts"]["main"]["gguf"]["tokenizer"]["decode"]
+        self.assertIs(decode["escape_whitespaces"], True)
+
+    def test_a_file_without_tokenizer_metadata_says_nothing_false(self):
+        result, _ = self._verify(None, None)
+        self.assertNotIn("unk-byte-markers-possible", result.stdout)
+        self.assertNotIn("escape_whitespaces", result.stdout)
+
+
+class TestReportSchemaAdditions(unittest.TestCase):
+    """The capture/integrity blocks are additive: nothing required moved."""
+
+    REQUIRED_BEFORE = 18
+
+    def setUp(self):
+        self.schema = json.loads((LAB / "report.schema.json").read_text(encoding="utf-8"))
+        self.template = json.loads(
+            (LAB / "reports" / "run_report.template.json").read_text(encoding="utf-8"))
+
+    def test_the_required_field_set_is_unchanged(self):
+        self.assertEqual(len(self.schema["required"]), self.REQUIRED_BEFORE)
+        for field in ("capture", "output_integrity"):
+            self.assertNotIn(field, self.schema["required"],
+                             f"{field} is optional: an older report stays valid")
+
+    def test_the_new_blocks_are_described_in_the_schema(self):
+        for field in ("capture", "output_integrity"):
+            with self.subTest(field=field):
+                prop = self.schema["properties"][field]
+                self.assertIn("null", prop["type"],
+                              "unmeasured in a template, so null must be allowed")
+                self.assertIn("description", prop)
+
+    def test_output_integrity_documents_that_it_does_not_change_status(self):
+        note = self.schema["properties"]["output_integrity"]["description"]
+        self.assertIn("does not change `status`", note)
+        self.assertIn("preserved", note)
+
+    def test_the_template_is_null_for_the_new_blocks(self):
+        for field in ("capture", "output_integrity"):
+            self.assertIsNone(self.template[field],
+                              f"{field} must be null until a run measures it")
+
+    def test_the_schema_has_no_baked_in_measurements(self):
+        """The schema describes shape, never a value from a machine."""
+        text = (LAB / "report.schema.json").read_text(encoding="utf-8")
+        for accidental in ("e29681", "311ea621", "3d03262e", "5.152", "42.686"):
+            self.assertNotIn(accidental, text,
+                             f"{accidental} is a measurement, not a schema description")
 
 
 class TestOutputDraining(unittest.TestCase):

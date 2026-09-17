@@ -195,6 +195,16 @@ obsolete.
 
 ---
 
+**Observed tokenizer metadata discrepancy.** An actual local run produced text
+containing `[UNK_BYTE_0xe29681...]`, which is llama.cpp's own detokenizer marker
+for a codepoint it cannot map — `U+2581` (▁). That means the vocabulary's pieces
+contain `▁` while the file's `tokenizer.ggml.model` / `tokenizer.ggml.pre` select
+the GPT-2 byte-level decode path instead of the SentencePiece one. This is a
+property of the published artifact's metadata, not of this lab, and it is
+documented in `OUTPUT_DECODING.md` together with the two-key local check and the
+runtime-side override that tests the cause. No conversion, re-download or file
+mutation is performed here.
+
 ## 5. What this record does not claim
 
 - It does not claim the model is accurate, safe, or clinically useful.

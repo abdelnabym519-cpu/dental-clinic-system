@@ -298,6 +298,36 @@ free space, GPU detection and the llama.cpp version; then the run report, whose
 
 ---
 
+## Step 8b — if the text contains `[UNK_BYTE_0x...]`, read this first
+
+Those markers are written by llama.cpp's detokenizer, before this lab sees a
+single byte; the inference itself succeeded. The full analysis, the proof, and the
+one-command overrides that test the cause are in **`OUTPUT_DECODING.md`**.
+
+Three local checks, in increasing cost — the first two need no image, no
+projector and no 42-second run:
+
+```powershell
+# 1. what the file actually declares (read from the GGUF header, no model load)
+python scripts\verify_artifacts.py --skip-metadata --json-out reports\artifact_verification.json
+
+# 2. the same decoding path the generation used, without generating anything
+.\llama.cpp\llama-tokenize.exe -m .\model\dentalgemma-4b-Q4_K_M.gguf `
+    -p "This is a dental radiograph" --no-bos
+
+# 3. read the saved text as UTF-8 — "â–" instead of "▁" is a code-page problem,
+#    not a decoding one
+Get-Content .\output\panoramicxray_response.txt -Encoding UTF8
+```
+
+**Expected:** step 1 prints a `tokenizer : model=... pre=...` line and a `risk=`
+value — `unk-byte-markers-possible` is the condition described in
+`OUTPUT_DECODING.md`. Step 2 shows the pieces the runtime derives; if they read
+`[UNK_BYTE_0xe29681...]`, the decode-path mismatch is confirmed and the fix belongs
+in the GGUF's metadata, not in this lab.
+
+---
+
 ## Step 9 — record the test suite result (optional, fast)
 
 ```powershell

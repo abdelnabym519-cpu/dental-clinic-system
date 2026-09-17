@@ -178,7 +178,7 @@ def nvidia_gpus() -> dict:
             out = subprocess.run(
                 [smi, "--query-gpu=name,memory.total,driver_version",
                  "--format=csv,noheader"],
-                capture_output=True, text=True, timeout=30)
+                capture_output=True, text=True, errors="replace", timeout=30)
             if out.returncode == 0:
                 for line in out.stdout.strip().splitlines():
                     if line.strip():
@@ -271,8 +271,12 @@ def _run_version(binary: Path) -> dict:
     """Ask a llama.cpp binary for its version. Returns what actually happened."""
     for flag in ("--version", "--help"):
         try:
+            # errors="replace": a version banner is never worth an exception. With
+            # text=True and no error policy, one non-UTF-8 byte in a child's output
+            # raises UnicodeDecodeError on a Windows code page and takes the whole
+            # environment check down with it.
             out = subprocess.run([str(binary), flag], capture_output=True,
-                                 text=True, timeout=60)
+                                 text=True, errors="replace", timeout=60)
             text = (out.stdout or "") + (out.stderr or "")
             version = None
             for line in text.splitlines():
