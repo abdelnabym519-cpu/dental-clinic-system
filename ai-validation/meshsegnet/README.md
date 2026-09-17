@@ -288,6 +288,7 @@ and the output format.
 | Runtime stability | **VERIFIED** — 3 repeats, 2.02–2.21 s inference |
 | Label→tooth-name mapping | **NOT PUBLISHED** — not claimed |
 | Accuracy of the segmentation | **NOT ASSESSED** — no ground truth used |
+| Torch 2.14.0 (the version on the local machine) | **VERIFIED** — checkpoint loads, official architecture matches with 0 missing keys, full preprocessing produces identical numbers |
 | Behaviour on your specific laptop | **NOT MEASURED HERE** — re-run locally |
 | Runs on Windows (no Unix-only imports; RAM probing portable) | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics |
 | Windows `GetProcessMemoryInfo` reports a real working set | **VERIFIED BY TEST** — pointer-sized handle declared; a truncated handle (the original bug) is now impossible; zeroed counters degrade to `unavailable` instead of a fake `0 bytes` |
@@ -304,7 +305,7 @@ Two different things are being claimed, and they are kept apart on purpose.
 | | Where it was established | What it covers |
 | --- | --- | --- |
 | The method, the weights, the input data, the pipeline | Arena sandbox (Linux, 2 cores, 3 GB, 1 torch thread) | that these are the real official artifacts and that real inference produced real output |
-| The dependency stack *you* have (vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) | Arena sandbox, by installing exactly that stack | that the pipeline runs on those versions, with identical numbers |
+| The dependency stack *you* have (torch 2.14.0 + vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) | Arena sandbox, by installing exactly that stack | that the pipeline runs on those versions, with identical numbers |
 | Your hardware, your Windows, your timing and RAM | **only you can produce this** | that it runs on the i9-13900H, and how fast |
 
 Arena cannot observe your machine, your VTK runtime, your filesystem or your
