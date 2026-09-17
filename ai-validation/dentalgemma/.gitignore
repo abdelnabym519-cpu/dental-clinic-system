@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# DentalGemma validation lab — keep the repository light and free of PHI.
+# Nothing here is referenced by the ERP application.
+# ---------------------------------------------------------------------------
+
+# Model weights: large, and obtainable from the official source. Never commit.
+model/*.gguf
+model/*.bin
+model/*.safetensors
+model/*.pt
+model/*.pth
+model/*.ckpt
+model/**/*.gguf
+*.gguf
+*.safetensors
+
+# Traces of an interrupted download.
+model/*.part
+model/*.tmp
+model/*.incomplete
+
+# Test images. A dental radiograph is patient data — never commit it.
+input/**/*.png
+input/**/*.jpg
+input/**/*.jpeg
+input/**/*.bmp
+input/**/*.tif
+input/**/*.tiff
+input/**/*.dcm
+input/images/
+input/*.png
+input/*.jpg
+input/*.jpeg
+
+# Run outputs, logs and reports are per-machine artifacts.
+output/*
+!output/.gitkeep
+!output/NOTE.txt
+logs/*
+!logs/.gitkeep
+reports/*
+!reports/.gitkeep
+!reports/run_report.template.json
+
+# A local llama.cpp checkout or unpacked Windows release.
+llama.cpp/
+llama*/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

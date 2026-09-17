@@ -1,0 +1,16 @@
+This folder holds run artifacts only. Nothing here is committed (see ../.gitignore).
+
+Expected contents after a successful run:
+
+  <image>_response.txt     the generated text — the artifact that proves the run
+  <image>_llama.log        raw runtime stderr, kept verbatim
+  run_report.json          machine-readable record of the latest run
+
+If this folder is empty, no inference has been run yet on this machine:
+
+    python scripts\download_artifacts.py --all      # 3.47 GiB, once
+    python scripts\run_dentalgemma.py --image input\panoramic.png --dry-run
+    python scripts\run_dentalgemma.py --image input\panoramic.png
+
+An empty folder is the honest state of this lab: no model file is committed, and
+no run has been performed by the work that created it.

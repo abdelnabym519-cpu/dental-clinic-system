@@ -1,0 +1,46 @@
+# DentalGemma validation lab — dependency policy.
+#
+# REQUIRED DEPENDENCIES: none.
+#
+# Every script in this lab is standard library only, and that is deliberate:
+#   * the model runs in llama.cpp (a native binary), not in Python, so no
+#     Python ML stack is needed — no torch, no transformers, no llama-cpp-python;
+#   * this lab must be runnable on a machine where nothing was installed for it;
+#   * it keeps the lab's dependency surface at zero, so it cannot drag anything
+#     into the ERP's tooling either.
+#
+# Python 3.9+ is required for the scripts themselves (`dict | None` syntax and
+# `Path.unlink(missing_ok=...)`), and nothing newer is used: every file parses
+# under `ast.parse(..., feature_version=(3, 9))`, which a test enforces, no match
+# statements and no `zip(strict=...)`. Python 3.11 is what has actually been
+# exercised here, and 3.11.9 is what the target machine reports — so 3.9 and 3.10
+# are a syntax-level guarantee, not a tested one.
+#
+# ---------------------------------------------------------------------------
+# OPTIONAL
+# ---------------------------------------------------------------------------
+# psutil improves two things and is needed for neither:
+#
+#   1. peak-memory and CPU-time sampling of the child process in
+#      run_dentalgemma.py (without it, the same figures come from
+#      GetProcessMemoryInfo / GetProcessTimes on Windows and from
+#      VmHWM + /proc/<pid>/stat on Linux);
+#   2. total/available RAM in check_environment.py and collect_system_info.py
+#      (without it, GlobalMemoryStatusEx on Windows and /proc/meminfo on Linux).
+#
+# Install it only if you want those numbers from one consistent source:
+#
+#     pip install psutil
+#
+# ---------------------------------------------------------------------------
+# NOT dependencies of this lab, listed so nobody adds them by reflex:
+# ---------------------------------------------------------------------------
+# torch                  — not used; the model is a GGUF run by llama.cpp
+# transformers           — not used; no Hugging Face runtime is involved
+# llama-cpp-python       — not used; this lab drives the official llama.cpp
+#                          binaries directly, which is what the model publisher
+#                          documents and what the hardware note (CPU-only, no
+#                          CUDA) makes simplest
+# pillow / opencv        — not used; image dimensions are read from the file
+#                          header in run_dentalgemma.py with the standard library
+# numpy                  — not used

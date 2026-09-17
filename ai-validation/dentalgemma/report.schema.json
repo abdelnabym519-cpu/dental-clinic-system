@@ -1,0 +1,308 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/abdelnabym519-cpu/dental-clinic-system/ai-validation/dentalgemma/report.schema.json",
+  "title": "DentalGemma local validation run report",
+  "description": "Machine-readable record of one local DentalGemma inference attempt. Written by scripts/run_dentalgemma.py to output/run_report.json. 'status' is UNKNOWN until a run is attempted, and OPERATIONAL only when the runtime exited 0 AND non-empty generated text exists on disk.",
+  "type": "object",
+  "required": [
+    "model",
+    "base_model",
+    "main_artifact",
+    "mmproj_artifact",
+    "main_size_bytes",
+    "mmproj_size_bytes",
+    "main_sha256",
+    "mmproj_sha256",
+    "runtime",
+    "cpu",
+    "ram_gb",
+    "cuda",
+    "input",
+    "inference_success",
+    "inference_seconds",
+    "peak_ram_gb",
+    "output_path",
+    "status"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "Format identifier for this report."
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of when the report was written."
+    },
+    "finished_at": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of when the run finished."
+    },
+    "model": {
+      "type": "string",
+      "description": "The model under test, as named by the lab."
+    },
+    "base_model": {
+      "type": "string",
+      "description": "Upstream foundation model repository id."
+    },
+    "finetune_model": {
+      "type": "string",
+      "description": "The community dental fine-tune repository id."
+    },
+    "gguf_repository": {
+      "type": "string",
+      "description": "Repository the GGUF files came from."
+    },
+    "gguf_revision": {
+      "type": "string",
+      "description": "Pinned repository revision, so results are tied to exact bytes."
+    },
+    "main_artifact": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Path to the main language-model GGUF."
+    },
+    "mmproj_artifact": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Path to the multimodal projector GGUF."
+    },
+    "main_size_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Observed size of the main GGUF in bytes."
+    },
+    "mmproj_size_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Observed size of the projector GGUF in bytes."
+    },
+    "main_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "LOCAL SHA-256 of the main GGUF. Null when not computed."
+    },
+    "mmproj_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "LOCAL SHA-256 of the projector GGUF. Null when not computed."
+    },
+    "runtime": {
+      "type": [
+        "object",
+        "string",
+        "null"
+      ],
+      "description": "The inference runtime: name, binary path and version line.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "binary": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "obsolete_tools_present": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cpu": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "CPU model string of the machine that ran the job."
+    },
+    "ram_gb": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Total physical RAM in GiB."
+    },
+    "cuda": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "Whether an NVIDIA CUDA-capable GPU was detected on the machine that ran the inference. This lab never requires one. null in a template, because no machine has been measured yet."
+    },
+    "intel_gpu": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Intel display adapter detection (Iris Xe and friends)."
+    },
+    "input": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Path to the image sent to the model."
+    },
+    "input_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "SHA-256 of the input image, for reproducibility. Never commit the image itself."
+    },
+    "input_image": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Probed properties of the input image (format, width, height, mode)."
+    },
+    "command": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "The exact argv that was (or would be) executed. Recorded verbatim so a run can be reproduced or challenged."
+    },
+    "config": {
+      "type": "object",
+      "description": "Sampling and runtime configuration (ctx, predict, temp, seed, threads, ngl)."
+    },
+    "inference_success": {
+      "type": "boolean",
+      "description": "True only when the runtime exited 0 AND non-empty generated text exists. Never set from intention."
+    },
+    "inference_seconds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Wall-clock duration of the process, in seconds."
+    },
+    "peak_ram_gb": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Peak resident/working set of the child process in GiB. Sampled, not profiled; null when no probe worked."
+    },
+    "cpu_seconds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "CPU time consumed by the child process, in seconds, where measurable."
+    },
+    "memory_probe": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Which probe produced the memory figure, so it is never quoted without its origin."
+    },
+    "output_path": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Path to the generated text. Null when nothing was generated."
+    },
+    "output_chars": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Length of the generated text, in characters."
+    },
+    "exit_code": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Exit code of the runtime process."
+    },
+    "timed_out": {
+      "type": "boolean",
+      "description": "True when the child was killed after exceeding the configured timeout."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "BLOCKED",
+        "FAILED",
+        "OPERATIONAL"
+      ],
+      "description": "UNKNOWN: not attempted. BLOCKED: a prerequisite is missing. FAILED: attempted and did not produce usable text. OPERATIONAL: exited 0 with non-empty generated text on disk."
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Human-readable notes about anything unusual, including why a status was chosen."
+    },
+    "generated_text_preview": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "First part of the generated text, for quick inspection. The full text lives in the response file."
+    }
+  },
+  "definitions": {
+    "status_semantics": {
+      "description": "How each status must be earned.",
+      "oneOf": [
+        {
+          "const": "UNKNOWN",
+          "title": "Not attempted. The committed template stays here."
+        },
+        {
+          "const": "BLOCKED",
+          "title": "A prerequisite is missing: no runtime, no artifacts, no image."
+        },
+        {
+          "const": "FAILED",
+          "title": "The model ran and produced no usable text, or crashed."
+        },
+        {
+          "const": "OPERATIONAL",
+          "title": "Exit code 0 and a non-empty response file exists. Requires a real local run."
+        }
+      ]
+    }
+  }
+}
