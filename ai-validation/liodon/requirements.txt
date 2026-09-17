@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Liodon Dental Panoramic Detector — independent local validation
+# Target machine: ASUS Vivobook X1505VA / Windows 10 Home / Intel Core i9-13900H
+#                 / 16 GB RAM / Intel Iris Xe / no NVIDIA GPU / no CUDA
+#
+# `onnxruntime` is the CPU build. `onnxruntime-gpu` is deliberately NOT used:
+# it would pull CUDA/TensorRT providers this machine cannot use, and the whole
+# point of this validation is CPU-only execution.
+#
+#   pip install -r requirements.txt
+#
+# No PyTorch, no Ultralytics, no CUDA, no cloud, no paid API, no remote
+# inference. The published ONNX artifact is executed as-is.
+# ---------------------------------------------------------------------------
+
+onnxruntime>=1.17,<2      # CPU build — the only inference engine used
+numpy>=1.24
+Pillow>=10.0              # image decode + annotation overlay
+huggingface_hub>=0.23     # used only by download_liodon.py, to fetch the artifact
+
+# ---------------------------------------------------------------------------
+# Optional extras — not required for a normal run.
+#
+#   pip install psutil      # more precise process-RAM reporting on Windows.
+#                           # Without it the runner falls back to the Win32
+#                           # GetProcessMemoryInfo API via ctypes, and still
+#                           # reports memory.
+#
+#   pip install onnx        # only needed to regenerate the synthetic stand-in
+#                           # graph (scripts/make_standin_onnx.py). Never used
+#                           # to open or modify the published Liodon artifact.
+# ---------------------------------------------------------------------------
