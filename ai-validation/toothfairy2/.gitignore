@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------------------
+# ai-validation/toothfairy2 — ignore rules
+#
+# Rule: commit the code and the documentation, never the weights and never the
+# medical scans. Both are large, both are licence-encumbered, and neither
+# belongs in a source repository.
+# ---------------------------------------------------------------------------
+
+# --- Model weights --------------------------------------------------------
+# The checkpoint is ~248 MB. It is not ours to redistribute, and a copy in git
+# is a copy nobody can verify. Fetch it from the official source and hash it
+# locally: scripts/verify_checkpoint.py.
+source/model/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# --- Official inference source tree ---------------------------------------
+# The benchmark repo is cloned locally when you prepare the environment. It is
+# upstream code, not ours; do not vendor it into this repository.
+source/benchmark/
+source/nnUNet_results/
+source/nnUNet_raw/
+source/nnUNet_preprocessed/
+
+# --- Medical imaging data -------------------------------------------------
+# Real CBCT volumes. Never committed. See input/README.md.
+input/source/
+input/nifti/
+*.mha
+*.nii
+*.nii.gz
+*.nrrd
+*.dcm
+*.dicom
+*.raw
+*.npz
+*.npy
+*.h5
+*.mat
+
+# --- Run output -----------------------------------------------------------
+output/*
+!output/.gitkeep
+!output/NOTE.txt
+
+# --- Run logs -------------------------------------------------------------
+logs/*
+!logs/.gitkeep
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# --- Editors / OS ---------------------------------------------------------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
