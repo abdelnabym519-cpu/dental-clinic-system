@@ -97,6 +97,35 @@ python scripts\run_meshsegnet.py --model man --input input\meshes\0EJBIPTC_lower
 python scripts\run_meshsegnet.py --model max --input input\meshes\ZOUIF2W4_upper.obj
 ```
 
+### Windows: memory reporting
+
+`run_meshsegnet.py` prints a RAM line and records a RAM field. That is
+diagnostics only — it has no effect on inference. Because the Unix-only
+`resource` module does not exist on Windows, measurement goes through the first
+probe that works:
+
+1. **`psutil`**, if it is installed — cross-platform;
+2. **`GetProcessMemoryInfo`** (Windows API), through `ctypes` — needs no
+   dependency at all;
+3. **`resource` / `/proc`** on POSIX, imported lazily so Windows never touches it.
+
+If no probe works the field reads `n/a (probe unavailable)` and the run
+continues. Install `psutil` only if you want its numbers:
+
+```powershell
+pip install psutil      # optional
+```
+
+The reported figure is always attributed to the probe that produced it, because
+Windows measures a *working set* and Linux a *resident set* — the two are not
+interchangeable and the report does not pretend they are.
+
+Verify the runner starts on a machine without `resource`:
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
 Use `--dry-run` to exercise everything except the forward pass, and
 `--expect-sha256 <hash>` to pin the input.
 
@@ -106,6 +135,7 @@ Use `--dry-run` to exercise everything except the forward pass, and
 | `download_artifacts.py` | Fetches the official models, official source snapshot and real meshes; refuses anything whose SHA-256 does not match |
 | `verify_artifacts.py` | Hashes everything, loads each checkpoint into the architecture with `strict=False`, and reports missing/unexpected keys |
 | `run_meshsegnet.py` | The only script that performs inference |
+| `../tests/test_runner_import.py` | Platform-compatibility regression tests: the runner must import and start on a machine without `resource`, memory probes must never raise, and the official constants/filenames must stay unchanged. Standard library only. |
 
 `--model man` = lower jaw (mandible), `--model max` = upper jaw (maxilla). Match
 the model to the jaw of the scan; the two heads were trained separately.
@@ -173,6 +203,7 @@ and the output format.
 | Label→tooth-name mapping | **NOT PUBLISHED** — not claimed |
 | Accuracy of the segmentation | **NOT ASSESSED** — no ground truth used |
 | Behaviour on your specific laptop | **NOT MEASURED HERE** — re-run locally |
+| Runs on Windows (no Unix-only imports; RAM probing portable) | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics |
 
 ---
 

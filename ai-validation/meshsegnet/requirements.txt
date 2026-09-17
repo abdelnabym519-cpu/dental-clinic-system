@@ -18,6 +18,19 @@ scipy>=1.10
 vedo>=2022.4.2
 vtk>=9.2
 
+# Optional — memory reporting on Windows.
+#
+# run_meshsegnet.py prints one RAM line and records a RAM field. That is
+# diagnostics only and has no effect on inference. Measurement goes through the
+# first probe that works: psutil, then the Windows GetProcessMemoryInfo API via
+# ctypes, then the POSIX resource//proc probes.
+#
+# psutil is NOT required: without it on Windows the ctypes probe still reports
+# the working set and peak working set, and if no probe works the field reads
+# "n/a (probe unavailable)". Install it only if you want psutil's numbers.
+#
+# psutil>=5.9
+
 # The official project additionally lists visdom / torchvision / torchaudio /
 # pygco / pandas / matplotlib / scikit-learn / vtk. Those are for training,
 # visualisation and the graph-cut post-processing step (step6). None of them is

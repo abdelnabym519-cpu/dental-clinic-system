@@ -25,6 +25,13 @@ mathematics:
   4. Mesh attribute accessors are written to work with both the vedo API used by
      the official code (methods) and the current vedo API (properties).
 
+Memory reporting is diagnostics only: it feeds one console line and the RAM
+field of the report, and it never touches the model, the features, the adjacency
+matrices or the forward pass. It is therefore measured through the first probe
+that works on the current platform (psutil, then a platform-native API, then
+/proc), so that this file also imports on Windows, where the Unix-only
+``resource`` module does not exist.
+
 Usage:
     python scripts/run_meshsegnet.py --model max --input input/meshes/ZOUIF2W4_upper.obj
     python scripts/run_meshsegnet.py --model man --input input/meshes/0EJBIPTC_lower.obj
@@ -34,11 +41,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import importlib.util
 import json
+import os
 import platform
-import resource
 import sys
 import time
 from datetime import datetime, timezone
@@ -90,20 +98,157 @@ def sha256_of(path: Path, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
-def rss_bytes() -> int:
-    """Current resident set size of this process."""
+# --------------------------------------------------------------------------
+# portable process-memory measurement (diagnostics only)
+#
+# ``resource`` is a Unix-only module: importing it on Windows raises
+# ``ModuleNotFoundError: No module named 'resource'``, which used to abort this
+# script before it did anything. Nothing here affects inference, so the
+# measurement now goes through the first probe that works:
+#
+#   1. psutil                     — if installed; cross-platform, used when present
+#   2. Windows: GetProcessMemoryInfo via ctypes — working set and peak working set
+#   3. POSIX:   resource.getrusage() for the peak, /proc/self/statm for the current
+#
+# If no probe works the measurement degrades to 0 and reports
+# method="unavailable" instead of raising. Note that Windows measures a *working
+# set* and Linux a *resident set*; the report records which probe produced the
+# number so the figure is never quoted without its origin.
+# --------------------------------------------------------------------------
+MEMORY_UNAVAILABLE = "unavailable"
+
+
+class _ProcessMemoryCounters(ctypes.Structure):
+    """PROCESS_MEMORY_COUNTERS from the Windows psapi.h.
+
+    Defined unconditionally because it is pure ctypes and therefore harmless
+    everywhere; it is only ever filled in on Windows. Keeping it at module level
+    also lets the layout be checked on any platform.
+    """
+
+    _fields_ = [
+        ("cb", ctypes.c_uint32),
+        ("PageFaultCount", ctypes.c_uint32),
+        ("PeakWorkingSetSize", ctypes.c_size_t),
+        ("WorkingSetSize", ctypes.c_size_t),
+        ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+        ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+        ("PagefileUsage", ctypes.c_size_t),
+        ("PeakPagefileUsage", ctypes.c_size_t),
+    ]
+
+
+def _psutil_memory() -> dict | None:
+    """Memory via psutil if it is importable, else None. Never raises."""
     try:
-        with open("/proc/self/statm") as fh:
-            pages = int(fh.read().split()[1])
-        return pages * resource.getpagesize()
+        import psutil  # optional: see requirements.txt
     except Exception:
-        return 0
+        # On POSIX psutil itself imports `resource`, so a blocked/absent
+        # `resource` lands here too — which is exactly the case on Windows.
+        return None
+    try:
+        info = psutil.Process().memory_info()
+        peak = int(getattr(info, "peak_wset", 0) or 0)  # Windows only
+        return {"rss": int(info.rss), "peak": peak,
+                "rss_label": "psutil resident set",
+                "peak_label": "psutil peak working set" if peak else ""}
+    except Exception:
+        return None
+
+
+def _windows_memory() -> dict | None:
+    """Working set / peak working set on Windows via GetProcessMemoryInfo."""
+    if os.name != "nt":
+        return None
+    try:
+        counters = _ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+        get_info = getattr(psapi, "GetProcessMemoryInfo", None) \
+            or kernel32.GetProcessMemoryInfo
+        if not get_info(kernel32.GetCurrentProcess(),
+                        ctypes.byref(counters), counters.cb):
+            return None
+        return {"rss": int(counters.WorkingSetSize),
+                "peak": int(counters.PeakWorkingSetSize),
+                "rss_label": "Windows working set",
+                "peak_label": "Windows peak working set"}
+    except Exception:
+        return None
+
+
+def _posix_memory() -> dict | None:
+    """Resident / peak resident set on POSIX; ``resource`` is imported lazily."""
+    if os.name == "nt":
+        return None
+    page_size, rss, peak = 0, 0, 0
+    try:
+        # Lazy, so a machine without `resource` (Windows) never reaches this.
+        import resource
+
+        peak = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+        # ru_maxrss is KiB on Linux/BSD and bytes on macOS.
+        if sys.platform != "darwin":
+            peak *= 1024
+        page_size = int(resource.getpagesize())
+    except Exception:
+        peak = 0
+        try:
+            page_size = int(os.sysconf("SC_PAGE_SIZE"))
+        except Exception:
+            page_size = 0
+    try:
+        with open("/proc/self/statm", encoding="ascii") as fh:
+            rss = int(fh.read().split()[1]) * page_size
+    except Exception:
+        rss = 0
+    if not (rss or peak):
+        return None
+    return {"rss": rss, "peak": peak,
+            "rss_label": "resident set (/proc/self/statm)" if rss else "",
+            "peak_label": "peak resident set (ru_maxrss)" if peak else ""}
+
+
+def memory_usage() -> dict:
+    """Current and peak process memory, portably. Never raises.
+
+    Returns ``{"rss_bytes", "peak_bytes", "method"}`` where ``method`` names the
+    probe(s) that produced the numbers, or ``"unavailable"``.
+    """
+    rss = peak = 0
+    labels: list[str] = []
+    for probe in (_psutil_memory, _windows_memory, _posix_memory):
+        got = probe()
+        if not got:
+            continue
+        if not rss and got.get("rss"):
+            rss = int(got["rss"])
+            if got.get("rss_label"):
+                labels.append(got["rss_label"])
+        if not peak and got.get("peak"):
+            peak = int(got["peak"])
+            if got.get("peak_label"):
+                labels.append(got["peak_label"])
+    return {"rss_bytes": rss, "peak_bytes": peak,
+            "method": ", ".join(labels) if labels else MEMORY_UNAVAILABLE}
+
+
+def rss_bytes() -> int:
+    """Current resident/working set of this process, or 0 if unmeasurable."""
+    return memory_usage()["rss_bytes"]
 
 
 def peak_rss_bytes() -> int:
-    """Peak resident set size (ru_maxrss is KiB on Linux)."""
-    usage = resource.getrusage(resource.RUSAGE_SELF)
-    return int(usage.ru_maxrss) * 1024
+    """Peak resident/working set of this process, or 0 if unmeasurable."""
+    return memory_usage()["peak_bytes"]
+
+
+def format_gb(value: int) -> str:
+    """Format a byte count for humans, honestly reporting an unmeasurable one."""
+    return f"{value / 2**30:.2f} GB" if value else "n/a (probe unavailable)"
 
 
 def _read_attr(obj, name, *args):
@@ -313,7 +458,7 @@ def main() -> int:
     t_adj = time.perf_counter() - t0
     print(f"  adjacency      : A_S/A_L {A_S.shape}, "
           f"nnz/row {int((A_S > 0).sum() / N)} / {int((A_L > 0).sum() / N)}  ({t_adj:.2f}s)")
-    print(f"  resident RAM   : {rss_bytes() / 2**30:.2f} GB")
+    print(f"  resident RAM   : {format_gb(rss_bytes())}")
 
     X_t = torch.from_numpy(X.transpose(1, 0).reshape(1, 15, N)).to(device, dtype=torch.float)
     A_S_t = torch.from_numpy(A_S.reshape(1, N, N)).to(device, dtype=torch.float)
@@ -403,7 +548,7 @@ def main() -> int:
             "cuda_available": bool(torch.cuda.is_available()),
             "torch_threads": threads,
             "host": platform.platform(),
-            "cpu_count": __import__("os").cpu_count(),
+            "cpu_count": os.cpu_count(),
         },
         "timing_seconds": {
             "load_model": round(t_model, 3),
@@ -414,8 +559,12 @@ def main() -> int:
             "total_runtime": round(t_total, 3),
         },
         "memory_bytes": {
+            "rss_after_adjacency": rss_bytes(),
             "peak_rss": peak_rss_bytes(),
-            "note": "peak resident set size of this process, measured on the host that ran the job",
+            "method": memory_usage()["method"],
+            "note": "diagnostic only; peak resident/working set of this process on the "
+                    "host that ran the job, measured by the probe named in 'method'. "
+                    "Windows reports a working set, Linux a resident set.",
         },
         "output": {
             "classes": int(probs.shape[-1]),
@@ -439,7 +588,7 @@ def main() -> int:
     print("\n" + "=" * 78)
     print(f" SUCCESS — real segmentation produced on {device}")
     print(f" inference {t_infer:.2f}s   total {t_total:.2f}s   "
-          f"peak RAM {peak_rss_bytes() / 2**30:.2f} GB")
+          f"peak RAM {format_gb(peak_rss_bytes())}")
     print("=" * 78)
     print(f"\nWrote {run_report}")
     print(f"Wrote {log_path}")
