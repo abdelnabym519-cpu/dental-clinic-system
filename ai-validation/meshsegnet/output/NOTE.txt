@@ -1,0 +1,14 @@
+This folder holds run artifacts only. Nothing here is committed (see ../.gitignore).
+
+Expected contents after a successful run:
+
+  <case>_<model>_predicted.vtp        decimated mesh with per-cell Label data
+  <case>_<model>_labels.npy           int32 class id per cell, shape (N,), values 0-14
+  <case>_<model>_probabilities.npz    full softmax output, shape (N, 15)
+  run_report.json                     machine-readable record of the run
+  artifact_verification.json          output of scripts/verify_artifacts.py
+
+If this folder is empty, no inference has been run yet on this machine:
+
+    python scripts\download_artifacts.py --models --meshes
+    python scripts\run_meshsegnet.py --model man --input input\meshes\0EJBIPTC_lower.obj

@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------
+# MeshSegNet validation lab — keep the repository lightweight.
+# Nothing here is referenced by the ERP application.
+# ---------------------------------------------------------------
+
+# Official model archives (28.8 MB each) — downloaded, never committed.
+# See model/README.md for the exact official URLs and SHA-256 values.
+model/*.zip
+model/*.tar
+model/*.pth
+model/*.pt
+model/*.ckpt
+
+# Real mesh inputs (patient-derived geometry) — never committed.
+input/**/*.obj
+input/**/*.stl
+input/**/*.ply
+input/**/*.vtk
+input/**/*.vtp
+input/**/*.off
+input/**/*.npz
+input/**/*.npy
+
+# Outputs and logs are per-machine artifacts.
+output/*
+!output/.gitkeep
+!output/NOTE.txt
+logs/*
+!logs/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

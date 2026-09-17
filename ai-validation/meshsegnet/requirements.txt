@@ -1,0 +1,25 @@
+# MeshSegNet validation lab — CPU-only stack.
+#
+# Verified working combination (Linux, CPU): torch 2.0.1, numpy 1.26.4,
+# scipy 1.10.1, vedo 2022.4.2-era API compatibility.
+#
+# ON A MACHINE WITHOUT NVIDIA HARDWARE, install torch from the CPU index:
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+# The ordinary PyPI torch wheel for Linux pulls in ~2 GB of unused CUDA
+# runtime libraries; the CPU index avoids that.
+#
+# numpy must stay below 2.0 for torch < 2.3 (torch 2.0.1 predates numpy 2).
+# The official project pins numpy 1.23.1; 1.26.4 is used here and works.
+
+torch==2.0.1          ; sys_platform != "win32"   # see note above; on Windows use the CPU index
+torch                   ; sys_platform == "win32"
+numpy<2
+scipy>=1.10
+vedo>=2022.4.2
+vtk>=9.2
+
+# The official project additionally lists visdom / torchvision / torchaudio /
+# pygco / pandas / matplotlib / scikit-learn / vtk. Those are for training,
+# visualisation and the graph-cut post-processing step (step6). None of them is
+# required to load the published weights and run inference, so none is installed
+# here — this lab deliberately keeps the dependency surface small.
