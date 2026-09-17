@@ -38,6 +38,41 @@ def sha256_of(path: Path, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
+# SimpleITK works in LPS world space. For each image axis, the dominant world
+# axis of the corresponding direction column gives the orientation letter.
+# Positive/negative sense flips the letter within each pair.
+_LPS_AXIS_LETTERS = (("L", "R"), ("P", "A"), ("S", "I"))
+
+
+def decode_orientation(direction):
+    """Turn a direction matrix into a 3-letter radiological orientation code.
+
+    e.g. identity (LPS)          -> 'LPS'
+         flipped X and Z columns -> 'RPI'
+
+    Returns None when there is no usable direction matrix. This is a *reading*
+    of the file's own header; it does not change anything.
+    """
+    if direction is None:
+        return None
+    try:
+        import numpy as np
+
+        d = np.asarray(direction, dtype=float).reshape(3, 3)
+    except Exception:
+        return None
+
+    code = []
+    for axis in range(3):          # image axis 0,1,2
+        col = d[:, axis]
+        dom = int(np.argmax(np.abs(col)))   # dominant world axis
+        if abs(col[dom]) < 0.5:             # not axis-aligned enough to name
+            return None
+        positive, negative = _LPS_AXIS_LETTERS[dom]
+        code.append(positive if col[dom] > 0 else negative)
+    return "".join(code)
+
+
 def load_volume(path: Path):
     """Read a volume with SimpleITK if available, else nibabel.
 
@@ -79,6 +114,7 @@ def describe(path: Path, source: str | None) -> dict:
     import numpy as np
 
     arr, spacing, origin, direction, backend = load_volume(path)
+    orientation = decode_orientation(direction)
 
     # SimpleITK returns (z, y, x); report both so there is no ambiguity about
     # which axis is which when this is compared against the official shapes.
@@ -107,6 +143,12 @@ def describe(path: Path, source: str | None) -> dict:
         "spacing_xyz": list(spacing),
         "origin": list(origin) if origin is not None else None,
         "direction": list(direction) if direction is not None else None,
+        "orientation": orientation,
+        "orientation_note": (
+            "3-letter radiological code read from the file's own direction matrix. "
+            "'LPS' is the standard; ToothFairy3 documents 'RPI' and ToothFairy4 warns "
+            "that orientation may differ from ToothFairy3. This is a reading, not a change."
+        ),
         "datatype": dtype,
         "intensity": {
             "min": stat(np.min),
@@ -176,6 +218,7 @@ def main() -> int:
         print(f"  voxels        : {rec['voxel_count']:,}")
         print(f"  spacing       : {rec['spacing_xyz']}")
         print(f"  datatype      : {rec['datatype']}")
+        print(f"  orientation   : {rec['orientation'] or '(not determinable)'}")
         print(f"  intensity     : min {i['min']}  max {i['max']}  mean {i['mean']}")
         print(f"  reader        : {rec['reader_backend']}")
         print(f"  source        : {rec['source'] or '(not stated)'}")
