@@ -178,6 +178,18 @@ This lab therefore runs the model on CPU through its own runner, documented in
 `../README.md`, with the deviations listed there and recorded inside every
 `run_report.json`.
 
+### Library stacks actually exercised
+
+| Stack | What was observed |
+| --- | --- |
+| vedo 2026.6.1 · vtk 9.7.0 · numpy 1.26.4 · torch 2.0.1 | full CPU inference on both jaws, real output written (the original validation run) |
+| vedo 2022.4.2 · vtk 9.7.0 · numpy 1.26.4 · scipy 1.17.1 · torch 2.0.1 | the whole pipeline up to the forward pass on both real meshes, with features and adjacency identical to the row above; requires the two in-process shims documented in `../README.md` |
+| vedo 2022.4.2 · vtk 9.2.x (what the official `requirements.txt` pins) | **not exercised here** — the Arena sandbox cannot install that VTK build (its wheels need `libGL`, unavailable without root). It is the combination the authors wrote against, so no shim should be needed; unverified rather than assumed |
+
+The shims restore library behaviour only. They change no weight, no feature, no
+threshold and no computation — the "identical features and adjacency" column
+above is the measurement that supports that claim.
+
 ---
 
 ## 7. Summary

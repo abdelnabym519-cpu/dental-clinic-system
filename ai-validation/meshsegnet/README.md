@@ -137,6 +137,49 @@ which this lab does not recommend — torch 2.0.1 supports numpy 1.26.4 well, an
 downgrading numpy to suit one library's warning filter is the larger risk. No
 numpy downgrade is performed or required.
 
+### Library-compatibility fixes applied by the runner
+
+Three version drifts in the pinned library set stopped this pipeline *before* it
+could touch the model. Each was reproduced against the real libraries and fixed
+inside the lab. None of them touches the model, the weights or the mathematics.
+
+| # | Symptom | Cause | Fix |
+| --- | --- | --- | --- |
+| 1 | `ModuleNotFoundError: No module named 'resource'` at startup | `resource` is Unix-only | portable memory probing: `psutil` → Windows `GetProcessMemoryInfo` → POSIX `resource` + `/proc`, imported lazily |
+| 2 | `AttributeError: module 'numpy' has no attribute 'warnings'` while importing vedo | numpy removed the alias in 1.24; vedo 2022.4.2 still uses it at import time | `np.warnings` restored in memory — the stdlib `warnings` module, i.e. the same object numpy used to re-export |
+| 3 | `ValueError: No input was provided when one is required.` from `clone()` / `decimate()` / `compute_normals()` | modern VTK added a `mapper` **property** to `vtkActor` that shadows vedo's own `mapper()` method earlier in the MRO | the class attribute is rebound to vedo's own method, then verified on a tiny mesh |
+
+Fixes 2 and 3 live in **`scripts/compat.py`** and are applied by every script in
+the lab (loaded by path, so a fix made once cannot drift between scripts). They
+are idempotent, they revert themselves when verification fails, and they are
+recorded in `run_report.json` under `environment_shims`. Every run prints them:
+
+```
+  np compat    : restored for vedo 2022.4.2 on numpy 1.26.4: np.warnings
+  vedo compat  : vtkActor.mapper shadows vedo's method on vtk 9.7.0; rebound to vedo.base.BaseActor.mapper
+```
+
+Check the stack on your machine before a long run — this imports nothing heavy
+and performs no inference:
+
+```powershell
+python scripts\compat.py
+```
+
+**These shims are numerically inert, and that was measured, not assumed.** With
+the shimmed stack (vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) the
+pipeline produces *exactly* the same features and adjacency matrices as the
+modern stack used for the original validation run (vedo 2026.6.1 + vtk 9.7.0):
+
+| Mesh | Cells | Points after decimation | A_S / A_L nonzeros per row |
+| --- | --- | --- | --- |
+| `0EJBIPTC_lower.obj` | 178,421 → **10,000** | 6,172 | **428 / 1697** |
+| `ZOUIF2W4_upper.obj` | 328,581 → **9,999** | 5,003 | **311 / 1307** |
+
+Both stacks agree to the digit on both jaws. The decimation, the 15 features and
+the two adjacency thresholds are therefore unchanged by the compatibility work —
+that is the point of doing it this way rather than switching library versions.
+
 ### Windows: memory reporting
 
 `run_meshsegnet.py` prints a RAM line and records a RAM field. That is
@@ -175,6 +218,8 @@ Use `--dry-run` to exercise everything except the forward pass, and
 | `download_artifacts.py` | Fetches the official models, official source snapshot and real meshes; refuses anything whose SHA-256 does not match |
 | `verify_artifacts.py` | Hashes everything, loads each checkpoint into the architecture with `strict=False`, and reports missing/unexpected keys |
 | `run_meshsegnet.py` | The only script that performs inference |
+| `compat.py` | The shared compatibility shims (numpy names for vedo, vedo's `mapper()` method) plus a mesh-operation self-test. Run it directly for a pre-flight report: `python scripts\compat.py` |
+| `../tests/test_vedo_vtk_compat.py` | Regression tests for the vedo/VTK fix: the shim must repair `clone()`/`decimate()`, must be a no-op on a correct stack, must run before any mesh is touched, and the official decimation targets (10,000 / 9,999 cells) must still be hit exactly. |
 | `../tests/test_runner_import.py` | Platform-compatibility regression tests: the runner must import and start on a machine without `resource`, memory probes must never raise, and the official constants/filenames must stay unchanged. Standard library only. |
 | `../tests/test_numpy_warnings_shim.py` | Regression tests for the `np.warnings` fix: the exact vedo 2022.4.2 statement must execute after the shim and must still fail without it, the shim must be installed before `import vedo`, and it must patch nothing else. Really imports vedo where it is installed. |
 
@@ -245,9 +290,84 @@ and the output format.
 | Accuracy of the segmentation | **NOT ASSESSED** — no ground truth used |
 | Behaviour on your specific laptop | **NOT MEASURED HERE** — re-run locally |
 | Runs on Windows (no Unix-only imports; RAM probing portable) | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics |
+| Windows `GetProcessMemoryInfo` reports a real working set | **VERIFIED BY TEST** — pointer-sized handle declared; a truncated handle (the original bug) is now impossible; zeroed counters degrade to `unavailable` instead of a fake `0 bytes` |
+| Mesh pipeline works on the era-mismatched stack (vedo 2022.4.2 + vtk 9.7.0) | **VERIFIED** — reproduced the failure, fixed it, then ran the full pipeline on both real meshes with identical features and adjacency |
+| Dependency versions changed to make it work | **NONE** — no numpy/torch/vedo/vtk downgrade or upgrade; the shims restore library behaviour in-process |
 | Imports vedo 2022.4.2 on numpy 1.26.4 (`np.warnings` gap) | **VERIFIED** — reproduced the real failure, then imported the real vedo 2022.4.2 with vtk 9.7.0 after the shim; covered by `tests/test_numpy_warnings_shim.py` |
 
 ---
+
+## Arena validation vs your machine
+
+Two different things are being claimed, and they are kept apart on purpose.
+
+| | Where it was established | What it covers |
+| --- | --- | --- |
+| The method, the weights, the input data, the pipeline | Arena sandbox (Linux, 2 cores, 3 GB, 1 torch thread) | that these are the real official artifacts and that real inference produced real output |
+| The dependency stack *you* have (vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) | Arena sandbox, by installing exactly that stack | that the pipeline runs on those versions, with identical numbers |
+| Your hardware, your Windows, your timing and RAM | **only you can produce this** | that it runs on the i9-13900H, and how fast |
+
+Arena cannot observe your machine, your VTK runtime, your filesystem or your
+timings. Nothing below is a substitute for running it locally.
+
+### LOCAL_ONLY_CHECKS
+
+Run these from `C:\Users\abdoo\dental-clinic-system\ai-validation\meshsegnet`.
+Each one is safe: none of them trains, converts, downloads, deletes or writes
+into the application.
+
+**1 — the library stack can perform mesh operations (fastest, do this first)**
+
+```powershell
+python scripts\compat.py
+```
+Expected: `mesh ops verified: True` and
+`This library stack can perform the pipeline's mesh operations.`
+Any other result means the mesh stage cannot run — send me the output.
+
+**2 — environment and artifacts**
+
+```powershell
+python scripts\check_environment.py
+python scripts\verify_artifacts.py --expect-models
+```
+Expected: `torch 2.14.0+cpu`, `CUDA available : False`, total RAM ≈ 16 GB; both
+models `official match : YES` with `missing=0 unexpected=0`; both meshes with
+`finite coords : True` and extent ≈ 85 mm. Exit code 0 for both.
+
+**3 — the test suite**
+
+```powershell
+python -m unittest discover -s tests -v
+```
+Expected: `Ran 43 tests` … `OK`.
+
+**4 — the RAM probe really measures something on Windows**
+
+```powershell
+python -c "import sys; sys.path.insert(0,'scripts'); import run_meshsegnet as r; print(r.memory_usage())"
+```
+Expected: `rss_bytes` greater than 0 and a `method` mentioning
+`Windows working set`. If it says `unavailable`, report it — that is the bug this
+round of work fixed.
+
+**5 — full pipeline rehearsal, no inference**
+
+```powershell
+python scripts\run_meshsegnet.py --dry-run --model man --input input\meshes\0EJBIPTC_lower.obj --expect-sha256 b824f6822f4a6ada296eef6869e9341fa1e69ad6cd14862b53572198ae5e7a76
+```
+Expected: `decimation : yes -> 10,000 cells`,
+`features : X (10000, 15)`, `adjacency : A_S/A_L (10000, 10000), nnz/row 428 / 1697`,
+then `--dry-run: skipping the forward pass.` Exit code 0. This exercises the
+whole pipeline except the forward pass, so any remaining library problem surfaces
+here rather than halfway through the real run.
+
+**6 — redirected output stays clean**
+
+```powershell
+python scripts\run_meshsegnet.py --help > $env:TEMP\msn_help.txt; Get-Content $env:TEMP\msn_help.txt | Select-Object -First 3
+```
+Expected: the usage text, with no `UnicodeEncodeError`.
 
 ## Limitations
 
@@ -270,9 +390,15 @@ and the output format.
 6. **Single-mesh, single-jaw-pair test.** Two scans is enough to prove the
    pipeline runs; it is not an evaluation across scanners, malocclusions, or
    edentulous cases.
-7. **Era drift.** The official code targets vedo 2022.4.2 / torch 1.13.1; this lab
-   runs a newer vedo/vtk. The mathematical pipeline is unchanged, but the mesh
-   decimation is performed by a newer VTK than the authors used.
+7. **Era drift, and what it costs.** The official code targets vedo 2022.4.2 +
+   vtk 9.2.4 + torch 1.13.1. Two drifts were found and repaired in-process (see
+   above). A third is cosmetic and left alone: on vtk 9.7.0 vedo 2022.4.2 emits
+   `DeprecationWarning` for `vtkTransformPolyDataFilter` and `GetData` while
+   decimating. The calls still work, the numbers are identical, and suppressing
+   a library's warnings was not this lab's call to make. A future VTK that
+   *removes* those APIs would break the mesh stage; the runner detects that
+   before touching the mesh (`python scripts\compat.py`) and stops cleanly
+   with `[STOP]` rather than crashing.
 8. **Sandbox ≠ laptop.** Timing and RAM figures come from a 2-core, 3 GB
    container.
 

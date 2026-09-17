@@ -53,6 +53,19 @@ def sha256_of(path: Path, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
+def load_compat():
+    """Load the lab's shared compatibility shims (see scripts/compat.py).
+
+    Loaded by path so this script works from any working directory.
+    """
+    path = Path(__file__).resolve().parent / "compat.py"
+    spec = importlib.util.spec_from_file_location("meshsegnet_compat", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("meshsegnet_compat", module)
+    spec.loader.exec_module(module)
+    return module
+
+
 def load_official_architecture():
     """Import meshsegnet.py from the official source snapshot."""
     path = SOURCE_DIR / "meshsegnet.py"
@@ -162,28 +175,72 @@ def main() -> int:
 
     # ---- meshes ------------------------------------------------------------
     print("\n[3] Input meshes")
+    # vedo 2022.4.2 cannot be imported at all on numpy >= 1.24 without this shim;
+    # without it every mesh would be reported as "could not read".
+    shim_messages: list[str] = []
+    try:
+        compat = load_compat()
+        compat.install_numpy_warnings_shim(shim_messages)
+        print(f"    np compat       : {shim_messages[-1]}")
+    except Exception as exc:
+        print(f"    np compat       : unavailable ({type(exc).__name__}: {exc})")
     mesh_dir = LAB / "input" / "meshes"
     meshes = sorted(mesh_dir.glob("*.obj")) + sorted(mesh_dir.glob("*.stl")) \
         + sorted(mesh_dir.glob("*.ply")) + sorted(mesh_dir.glob("*.vtk"))
     if not meshes:
         print("    none found — run: python scripts/download_artifacts.py --meshes")
     for m in meshes:
+        ncells = npoints = None
+        geometry: dict = {}
         try:
+            import numpy as np
+
             import vedo
 
             mesh = vedo.load(str(m))
-            ncells, npoints = mesh.ncells, mesh.npoints
+            ncells, npoints = int(mesh.ncells), int(mesh.npoints)
+
+            # Geometry plausibility: a real intraoral arch is a closed-ish surface
+            # tens of millimetres across. These checks catch a truncated download,
+            # a placeholder file, or a unit-scaled mesh masquerading as millimetres.
+            pts = getattr(mesh, "points", None)
+            pts = pts() if callable(pts) else pts          # vedo 2022.x: method
+            pts = np.asarray(pts, dtype=float)
+            extent = (pts.max(axis=0) - pts.min(axis=0)) if pts.size else np.zeros(3)
+            geometry = {
+                "coordinates_finite": bool(np.isfinite(pts).all()),
+                "extent_mm": [round(float(v), 3) for v in extent],
+                "largest_extent_mm": round(float(extent.max()), 3) if pts.size else 0.0,
+                "triangular_cells": None,
+            }
+            faces = getattr(mesh, "cells", None)
+            if faces is None:
+                faces = getattr(mesh, "faces", None)
+            faces = faces() if callable(faces) else faces
+            if faces is not None:
+                faces = np.asarray(faces)
+                if faces.ndim == 2:
+                    geometry["triangular_cells"] = bool(faces.shape[1] == 3)
+            geometry["plausible_dental_arch_scale"] = bool(
+                geometry["coordinates_finite"]
+                and 10.0 < geometry["largest_extent_mm"] < 200.0
+            )
         except Exception as exc:
-            ncells, npoints = None, None
-            print(f"    {m.name}: could not read ({type(exc).__name__})")
+            print(f"    {m.name}: could not read ({type(exc).__name__}: {exc})")
         entry = {"file": m.name, "path": str(m), "size_bytes": m.stat().st_size,
-                 "sha256": sha256_of(m), "cells": ncells, "points": npoints}
+                 "sha256": sha256_of(m), "cells": ncells, "points": npoints,
+                 **geometry}
         report["meshes"].append(entry)
         print(f"\n    {m.name}")
         print(f"      size            : {m.stat().st_size:,} B")
         print(f"      sha256          : {entry['sha256']}")
         if ncells is not None:
             print(f"      cells / points  : {ncells:,} / {npoints:,}")
+        if geometry:
+            print(f"      finite coords   : {geometry['coordinates_finite']}")
+            print(f"      extent (mm)     : {geometry['extent_mm']}")
+            print(f"      triangular      : {geometry['triangular_cells']}")
+            print(f"      arch-scale plaus.: {geometry['plausible_dental_arch_scale']}")
 
     # ---- verdict -----------------------------------------------------------
     print("\n" + "=" * 78)

@@ -11,7 +11,10 @@ Usage:
 
 from __future__ import annotations
 
+import ctypes
+import importlib.util
 import json
+import os
 import platform
 import shutil
 import sys
@@ -21,9 +24,72 @@ from pathlib import Path
 LAB = Path(__file__).resolve().parent.parent
 
 
+def load_compat():
+    """Load the lab's shared compatibility shims (see scripts/compat.py)."""
+    path = Path(__file__).resolve().parent / "compat.py"
+    spec = importlib.util.spec_from_file_location("meshsegnet_compat", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("meshsegnet_compat", module)
+    spec.loader.exec_module(module)
+    return module
+
+
 def section(title: str) -> None:
     print(f"\n{title}")
     print("-" * len(title))
+
+
+def total_ram_bytes() -> int:
+    """Total physical memory, portably, or 0 when it cannot be determined.
+
+    ``/proc/meminfo`` is the obvious source but only exists on Linux; on Windows
+    the equivalent is ``GlobalMemoryStatusEx``. psutil is used first when it is
+    installed. Never raises.
+    """
+    try:
+        import psutil  # optional
+
+        return int(psutil.virtual_memory().total)
+    except Exception:
+        pass
+
+    if os.name == "nt":
+        try:
+            class _MemoryStatusEx(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_uint32),
+                    ("dwMemoryLoad", ctypes.c_uint32),
+                    ("ullTotalPhys", ctypes.c_uint64),
+                    ("ullAvailPhys", ctypes.c_uint64),
+                    ("ullTotalPageFile", ctypes.c_uint64),
+                    ("ullAvailPageFile", ctypes.c_uint64),
+                    ("ullTotalVirtual", ctypes.c_uint64),
+                    ("ullAvailVirtual", ctypes.c_uint64),
+                    ("ullAvailExtendedVirtual", ctypes.c_uint64),
+                ]
+
+            status = _MemoryStatusEx()
+            status.dwLength = ctypes.sizeof(_MemoryStatusEx)
+            fn = ctypes.windll.kernel32.GlobalMemoryStatusEx
+            fn.restype = ctypes.c_int
+            fn.argtypes = [ctypes.POINTER(_MemoryStatusEx)]
+            if fn(ctypes.byref(status)):
+                return int(status.ullTotalPhys)
+        except Exception:
+            pass
+
+    try:
+        with open("/proc/meminfo", encoding="ascii") as fh:
+            for line in fh:
+                if line.startswith("MemTotal"):
+                    return int(line.split()[1]) * 1024
+    except Exception:
+        pass
+
+    try:
+        return int(os.sysconf("SC_PHYS_PAGES")) * int(os.sysconf("SC_PAGE_SIZE"))
+    except Exception:
+        return 0
 
 
 def main() -> int:
@@ -38,22 +104,12 @@ def main() -> int:
     print(f"  machine         : {platform.machine()}")
 
     section("CPU / memory")
-    try:
-        import os
-
-        cores = os.cpu_count()
-        print(f"  logical cores   : {cores}")
-    except Exception:
-        pass
-    try:
-        with open("/proc/meminfo") as fh:
-            for line in fh:
-                if line.startswith("MemTotal"):
-                    kb = int(line.split()[1])
-                    print(f"  total RAM       : {kb / 1048576:.2f} GB")
-                    break
-    except Exception:
-        print("  total RAM       : (not readable)")
+    print(f"  logical cores   : {os.cpu_count()}")
+    ram = total_ram_bytes()
+    if ram:
+        print(f"  total RAM       : {ram / 2**30:.2f} GB")
+    else:
+        print("  total RAM       : (could not be determined on this platform)")
 
     section("Deep learning runtime")
     try:
@@ -72,6 +128,15 @@ def main() -> int:
         print(f"  torch           : NOT AVAILABLE ({type(exc).__name__}: {exc})")
 
     section("Mesh / numeric libraries")
+    try:
+        # vedo 2022.4.2 cannot even be imported on numpy >= 1.24 without this,
+        # and would otherwise be reported here as "not installed".
+        compat = load_compat()
+        shim_messages: list[str] = []
+        compat.install_numpy_warnings_shim(shim_messages)
+        print(f"  np compat      : {shim_messages[-1]}")
+    except Exception as exc:
+        print(f"  np compat      : unavailable ({type(exc).__name__}: {exc})")
     for name in ("numpy", "scipy", "vedo", "vtk", "pydicom"):
         try:
             mod = __import__(name)

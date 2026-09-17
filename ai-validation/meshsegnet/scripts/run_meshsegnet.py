@@ -24,6 +24,12 @@ mathematics:
      self-consistent.
   4. Mesh attribute accessors are written to work with both the vedo API used by
      the official code (methods) and the current vedo API (properties).
+  5. Two in-process compatibility shims are installed when — and only when — the
+     installed library versions need them: numpy names that vedo 2022.4.2 expects
+     at import time, and vedo's own ``mapper()`` method, which modern VTK hides
+     behind a property of the same name. Both shims only restore a library's own
+     behaviour under a newer dependency; neither changes the model, the features,
+     the adjacency matrices or the forward pass.
 
 Memory reporting is diagnostics only: it feeds one console line and the RAM
 field of the report, and it never touches the model, the features, the adjacency
@@ -83,6 +89,9 @@ DEVIATIONS = [
     "Mesh attribute access supports both the vedo method API (official era) and the current vedo property API.",
     "Environment shim (no computational effect): np.warnings / np.VisibleDeprecationWarning are restored in memory so "
     "vedo 2022.4.2 can be imported on numpy >= 1.24. These names only control which warnings are printed.",
+    "Environment shim (no computational effect): vedo's own mapper() method is rebound where modern VTK's vtkActor.mapper "
+    "property shadows it, so that clone()/decimate()/compute_normals() can run. The same vedo code then calls the same "
+    "VTK filters with the same parameters.",
 ]
 
 
@@ -161,23 +170,50 @@ def _psutil_memory() -> dict | None:
 
 
 def _windows_memory() -> dict | None:
-    """Working set / peak working set on Windows via GetProcessMemoryInfo."""
+    """Working set / peak working set on Windows via GetProcessMemoryInfo.
+
+    Every signature is declared explicitly. This is not decoration: ctypes
+    defaults a function's return type to ``c_int`` (32 bits), while
+    ``GetCurrentProcess()`` returns a *pseudo-handle* — a full 64-bit value on
+    64-bit Windows. Without ``restype = c_void_p`` the handle is truncated, the
+    subsequent ``GetProcessMemoryInfo`` call fails, and this probe silently
+    reported nothing (a 0-byte reading attributed to a working probe). Declaring
+    the pointer-sized handle and the 32-bit ``BOOL`` return is the documented
+    way to call these APIs.
+    """
     if os.name != "nt":
         return None
     try:
-        counters = _ProcessMemoryCounters()
-        counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         psapi = ctypes.WinDLL("psapi", use_last_error=True)
-        get_info = getattr(psapi, "GetProcessMemoryInfo", None) \
-            or kernel32.GetProcessMemoryInfo
-        if not get_info(kernel32.GetCurrentProcess(),
-                        ctypes.byref(counters), counters.cb):
+
+        kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+        kernel32.GetCurrentProcess.argtypes = []
+
+        # psapi exports this on Windows 7+; kernel32 re-exports it too, and is
+        # the fallback if the psapi DLL lookup ever fails.
+        get_info = getattr(psapi, "GetProcessMemoryInfo", None)
+        if get_info is None:
+            get_info = kernel32.GetProcessMemoryInfo
+        get_info.restype = ctypes.c_int                 # BOOL (4 bytes)
+        get_info.argtypes = [ctypes.c_void_p,           # HANDLE
+                             ctypes.POINTER(_ProcessMemoryCounters),
+                             ctypes.c_uint32]           # DWORD cb
+
+        counters = _ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+        handle = kernel32.GetCurrentProcess()
+        if not handle or not get_info(handle, ctypes.byref(counters), counters.cb):
             return None
-        return {"rss": int(counters.WorkingSetSize),
-                "peak": int(counters.PeakWorkingSetSize),
+        rss = int(counters.WorkingSetSize)
+        peak = int(counters.PeakWorkingSetSize)
+        if not (rss or peak):
+            # A real process never has a zero working set. Treat a zeroed struct
+            # as "this probe has nothing to say" rather than reporting 0 bytes.
+            return None
+        return {"rss": rss, "peak": peak,
                 "rss_label": "Windows working set",
-                "peak_label": "Windows peak working set"}
+                "peak_label": "Windows peak working set" if peak else ""}
     except Exception:
         return None
 
@@ -254,77 +290,36 @@ def format_gb(value: int) -> str:
 
 
 # --------------------------------------------------------------------------
-# numpy compatibility shim for vedo 2022.4.2 (environment only)
+# compatibility shims — implemented in compat.py, shared by every script here
 #
-# vedo 2022.4.2 executes this statement while its package is being imported
-# (vedo/__init__.py:234):
+# Two library drifts break this pipeline for reasons that have nothing to do
+# with the model: numpy >= 1.24 removed the ``np.warnings`` alias that vedo
+# 2022.4.2 touches while importing, and modern VTK hides vedo's ``mapper()``
+# method behind a property of the same name, which breaks clone()/decimate().
+# compat.py restores both in-process; see that file for the full explanation
+# and the README for the evidence. Neither shim changes a model, a weight, a
+# feature, a threshold or any computation.
 #
-#     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
-#
-# `np.warnings` used to be the standard library `warnings` module re-exported
-# by numpy. NumPy deprecated that alias in 1.15 and REMOVED it in 1.24, so on
-# numpy >= 1.24 — which includes the 1.26.4 pinned for this lab — the statement
-# raises
-#
-#     AttributeError: module 'numpy' has no attribute 'warnings'
-#
-# and `import vedo` fails outright. `np.VisibleDeprecationWarning` is the second
-# casualty: numpy 2.0 moved it to `np.exceptions`.
-#
-# This restores both names, in memory, for the current process only:
-#
-#     np.warnings                    -> the stdlib `warnings` module, which is
-#                                       the very same object numpy used to
-#                                       re-export (so behaviour is identical)
-#     np.VisibleDeprecationWarning   -> np.exceptions.VisibleDeprecationWarning,
-#                                       if numpy moved it
-#
-# Nothing else is patched. No NumPy version is changed, no file is modified, no
-# numerical behaviour is affected: `warnings.filterwarnings` only controls which
-# user-facing warnings are printed. This exists purely so a warning-filtering
-# line from an older library can execute on a newer numpy.
+# compat.py is loaded by path so this script runs from any working directory and
+# stays importable as a module by the test suite.
 # --------------------------------------------------------------------------
-def install_numpy_warnings_shim(messages: list[str] | None = None) -> dict:
-    """Restore the numpy names that vedo 2022.4.2 expects at import time.
+def _load_compat():
+    path = Path(__file__).resolve().parent / "compat.py"
+    spec = importlib.util.spec_from_file_location("meshsegnet_compat", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("meshsegnet_compat", module)
+    spec.loader.exec_module(module)
+    return module
 
-    Returns a dict of ``{attribute: where_it_came_from}`` for the names actually
-    restored, empty when the installed numpy still provides them. Never raises:
-    if the shim cannot be applied the caller simply sees the original error.
-    """
-    import warnings as stdlib_warnings
 
-    import numpy as np
+compat = _load_compat()
 
-    restored: dict[str, str] = {}
-
-    if not hasattr(np, "warnings"):
-        try:
-            # The stdlib module, i.e. exactly what numpy re-exported before 1.24.
-            np.warnings = stdlib_warnings
-            restored["np.warnings"] = "stdlib warnings module"
-        except Exception:
-            pass
-
-    if not hasattr(np, "VisibleDeprecationWarning"):
-        moved = getattr(getattr(np, "exceptions", None),
-                        "VisibleDeprecationWarning", None)
-        if moved is not None:
-            try:
-                np.VisibleDeprecationWarning = moved
-                restored["np.VisibleDeprecationWarning"] = \
-                    "np.exceptions.VisibleDeprecationWarning"
-            except Exception:
-                pass
-
-    if messages is not None:
-        if restored:
-            messages.append(
-                "restored for vedo 2022.4.2 on numpy "
-                f"{np.__version__}: " + ", ".join(restored))
-        else:
-            messages.append(f"not needed (numpy {np.__version__} still provides them)")
-
-    return restored
+# re-exported so callers (and the tests) keep using the runner as the entry point
+# while the implementation lives in one shared place
+install_numpy_warnings_shim = compat.install_numpy_warnings_shim
+install_vedo_mapper_shim = compat.install_vedo_mapper_shim
+verify_mesh_operations = compat.verify_mesh_operations
+make_console_utf8_safe = compat.make_console_utf8_safe
 
 
 def _read_attr(obj, name, *args):
@@ -393,6 +388,8 @@ def main() -> int:
                     help="Do everything except the forward pass.")
     args = ap.parse_args()
 
+    make_console_utf8_safe()
+
     out_dir = Path(args.output_dir) if args.output_dir else LAB / "output"
     out_dir.mkdir(parents=True, exist_ok=True)
     logs_dir = LAB / "logs"
@@ -433,8 +430,10 @@ def main() -> int:
         # version change and no effect on any computation.
         shim_messages: list[str] = []
         numpy_shims = install_numpy_warnings_shim(shim_messages)
+        import scipy
         import torch
         import vedo
+        import vtk
         from scipy.spatial import distance_matrix
     except Exception as exc:
         print(f"\n[STOP] missing dependency: {type(exc).__name__}: {exc}")
@@ -443,12 +442,30 @@ def main() -> int:
     for message in shim_messages:
         print(f"  np compat    : {message}")
 
+    # Must run before any mesh operation: modern VTK hides vedo's mapper()
+    # method behind a property of the same name, which breaks clone/decimate.
+    vedo_shim_messages: list[str] = []
+    vedo_shim = install_vedo_mapper_shim(vedo_shim_messages)
+    for message in vedo_shim_messages:
+        print(f"  vedo compat  : {message}")
+
+    vedo_version = getattr(vedo, "__version__", "unknown")
+    vtk_version = vtk.vtkVersion.GetVTKVersion()
+
+    if vedo_shim.get("patched") and not vedo_shim.get("verified"):
+        print("\n[STOP] the vedo/VTK combination cannot clone or decimate a mesh,")
+        print("       and the in-process compatibility shim did not fix it.")
+        print("       Verified working pairs: vedo 2022.4.2 + vtk 9.2.x (official),")
+        print("       or a matching vedo/vtk pair from the same release.")
+        return 4
+
     t_start = time.perf_counter()
     device = torch.device("cpu")          # CPU-only contract
     threads = torch.get_num_threads()
     print(f"\n  torch        : {torch.__version__}")
     print(f"  cuda present : {torch.cuda.is_available()}")
     print(f"  device       : {device}  ({threads} threads)")
+    print(f"  vedo / vtk   : {vedo_version} / {vtk_version}")
 
     # ---- model -------------------------------------------------------------
     t0 = time.perf_counter()
@@ -471,18 +488,26 @@ def main() -> int:
 
     # ---- mesh --------------------------------------------------------------
     t0 = time.perf_counter()
-    mesh = vedo.load(str(input_path))
-    cells_original = int(mesh.ncells)
-    points_original = int(mesh.npoints)
+    try:
+        mesh = vedo.load(str(input_path))
+        cells_original = int(mesh.ncells)
+        points_original = int(mesh.npoints)
 
-    if mesh.ncells > args.target_cells:
-        ratio = args.target_cells / mesh.ncells
-        mesh_d = mesh.clone()
-        mesh_d.decimate(fraction=ratio)
-        downsampled = True
-    else:
-        mesh_d = mesh.clone()
-        downsampled = False
+        if mesh.ncells > args.target_cells:
+            ratio = args.target_cells / mesh.ncells
+            mesh_d = mesh.clone()
+            mesh_d.decimate(fraction=ratio)
+            downsampled = True
+        else:
+            mesh_d = mesh.clone()
+            downsampled = False
+    except Exception as exc:
+        print(f"\n[STOP] mesh preprocessing failed: {type(exc).__name__}: {exc}")
+        print(f"       input : {input_path}")
+        print(f"       stack : vedo {vedo_version} / vtk {vtk_version}")
+        print("       The official pipeline needs mesh.clone() and mesh.decimate();")
+        print("       this failure is a library incompatibility, not a model problem.")
+        return 6
     t_load = time.perf_counter() - t0
     print(f"\n  mesh           : {cells_original:,} cells / {points_original:,} points")
     print(f"  decimation     : {'yes' if downsampled else 'no'} -> {mesh_d.ncells:,} cells "
@@ -634,8 +659,20 @@ def main() -> int:
             "host": platform.platform(),
             "cpu_count": os.cpu_count(),
         },
+        "environment": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "scipy": scipy.__version__,
+            "torch": torch.__version__,
+            "vedo": vedo_version,
+            "vtk": vtk_version,
+            "host": platform.platform(),
+            "cpu_count": os.cpu_count(),
+            "mesh_operations_verified": bool(vedo_shim.get("verified")),
+        },
         "environment_shims": {
             "numpy_warnings_shim": numpy_shims or None,
+            "vedo_mapper_shim": vedo_shim or None,
             "note": "in-memory attribute restoration only; changes no computation and no installed package version",
         },
         "timing_seconds": {

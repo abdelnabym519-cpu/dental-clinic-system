@@ -183,12 +183,34 @@ class TestMemoryProbing(unittest.TestCase):
                 out = getattr(self.runner, probe)()
                 self.assertTrue(out is None or isinstance(out, dict))
 
-    def test_current_platform_is_measured(self):
+    def test_memory_contract_is_consistent(self):
+        """Whatever the platform can do, the report must never be silently wrong.
+
+        This used to assert "every platform reports a nonzero footprint", which
+        is a contract no implementation can guarantee — it fails on a machine
+        where no probe works, and it hid a real bug behind that assumption. What
+        can be guaranteed is consistency: a number is always attributed to the
+        probe that produced it, and "no reading" is never reported as 0 bytes.
+        """
         usage = self.runner.memory_usage()
         self.assertIsInstance(usage["rss_bytes"], int)
         self.assertIsInstance(usage["peak_bytes"], int)
+        self.assertGreaterEqual(usage["rss_bytes"], 0)
+        self.assertGreaterEqual(usage["peak_bytes"], 0)
+        measured = usage["rss_bytes"] or usage["peak_bytes"]
+        if measured:
+            self.assertNotEqual(usage["method"], self.runner.MEMORY_UNAVAILABLE,
+                                "a real reading must name the probe behind it")
+        else:
+            self.assertEqual(usage["method"], self.runner.MEMORY_UNAVAILABLE,
+                             "an unmeasurable footprint must say so, not report 0")
+
+    @unittest.skipIf(os.name == "nt", "POSIX probe chain (resource + /proc)")
+    def test_posix_platform_is_measured(self):
+        """On POSIX the probes are always available, so a 0 means they broke."""
+        usage = self.runner.memory_usage()
         self.assertGreater(usage["rss_bytes"], 0,
-                           "a running process should report a nonzero footprint")
+                           "a running process must report a nonzero footprint on POSIX")
         self.assertNotEqual(usage["method"], self.runner.MEMORY_UNAVAILABLE)
 
     def test_degrades_gracefully_when_nothing_works(self):
@@ -263,6 +285,134 @@ class TestMemoryProbing(unittest.TestCase):
                          "PROCESS_MEMORY_COUNTERS layout drifted; "
                          "GetProcessMemoryInfo would write out of bounds")
         self.assertEqual(self.runner._ProcessMemoryCounters._fields_[0][0], "cb")
+
+
+class _FakeWinFunction:
+    """One entry of a fake Win32 DLL, with settable restype/argtypes like ctypes."""
+
+    def __init__(self, name: str, dll: "_FakeWinDLL"):
+        self.name = name
+        self.dll = dll
+        self.restype = None
+        self.argtypes = None
+
+    def __call__(self, *args):
+        self.dll.calls.append((self.name, self.restype, self.argtypes, args))
+        if self.name == "GetCurrentProcess":
+            # A 64-bit pseudo-handle: reading it as c_int truncates it, which is
+            # exactly the bug this test exists to prevent.
+            return self.dll.PSEUDO_HANDLE
+        handle, byref_counters, cb = args
+        self.dll.handle_seen = handle
+        self.dll.cb_seen = cb
+        counters = byref_counters._obj          # the real struct being filled in
+        counters.WorkingSetSize = self.dll.working_set
+        counters.PeakWorkingSetSize = self.dll.peak_working_set
+        return 1
+
+
+class _FakeWinDLL:
+    """Just enough of a Windows DLL to exercise the ctypes probe off-Windows."""
+
+    PSEUDO_HANDLE = 0xFFFFFFFFFFFFFFFF
+
+    def __init__(self, working_set: int, peak_working_set: int):
+        self.working_set = working_set
+        self.peak_working_set = peak_working_set
+        self.calls: list[tuple] = []
+        self.handle_seen = None
+        self.cb_seen = None
+        self._fns: dict[str, _FakeWinFunction] = {}
+
+    def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        # Memoise, like a real DLL: the same function object every time, so a
+        # restype set before the call is still in force when the call happens.
+        if name not in self._fns:
+            self._fns[name] = _FakeWinFunction(name, self)
+        return self._fns[name]
+
+
+class TestWindowsMemoryProbe(unittest.TestCase):
+    """Exercise the Windows ctypes path on any platform.
+
+    The probe returned 0 bytes on real Windows hardware because
+    ``GetCurrentProcess`` was called without a declared return type: ctypes then
+    reads the 64-bit pseudo-handle as a 32-bit int, the handle becomes invalid,
+    and ``GetProcessMemoryInfo`` fails — silently, because the failure was
+    swallowed and reported as "no memory". These tests declare the contract.
+    """
+
+    def setUp(self):
+        import ctypes
+
+        self.ctypes = ctypes
+        self.runner = load_runner()
+        self._saved_windll = ctypes.__dict__.get("WinDLL", None)
+        self._saved_name = os.name
+
+    def tearDown(self):
+        if self._saved_windll is None:
+            self.ctypes.__dict__.pop("WinDLL", None)
+        else:
+            self.ctypes.WinDLL = self._saved_windll
+        os.name = self._saved_name
+
+    def _install_fake(self, working_set: int, peak: int) -> _FakeWinDLL:
+        dll = _FakeWinDLL(working_set, peak)
+        self.ctypes.WinDLL = lambda name, use_last_error=False: dll
+        os.name = "nt"
+        return dll
+
+    def test_handle_is_declared_pointer_sized(self):
+        dll = self._install_fake(1, 2)
+        self.runner._windows_memory()
+        declarations = {name: (restype, argtypes) for name, restype, argtypes, _ in dll.calls}
+        self.assertIn("GetCurrentProcess", declarations)
+        restype, argtypes = declarations["GetCurrentProcess"]
+        self.assertIs(restype, self.ctypes.c_void_p,
+                      "GetCurrentProcess must declare restype=c_void_p, otherwise the "
+                      "64-bit pseudo-handle is truncated to 32 bits and every call fails")
+        self.assertEqual(argtypes, [])
+
+    def test_counter_call_signature_is_declared(self):
+        dll = self._install_fake(1, 2)
+        self.runner._windows_memory()
+        declarations = {name: (restype, argtypes) for name, restype, argtypes, _ in dll.calls}
+        self.assertIn("GetProcessMemoryInfo", declarations)
+        restype, argtypes = declarations["GetProcessMemoryInfo"]
+        self.assertIs(restype, self.ctypes.c_int, "BOOL must be a 4-byte int")
+        self.assertEqual(len(argtypes), 3)
+        self.assertIs(argtypes[0], self.ctypes.c_void_p, "HANDLE must be pointer-sized")
+        self.assertIs(argtypes[2], self.ctypes.c_uint32, "cb is a DWORD")
+
+    def test_counters_are_parsed_and_attributed_to_windows(self):
+        dll = self._install_fake(812_345_678, 1_234_567_890)
+        got = self.runner._windows_memory()
+        self.assertIsNotNone(got, "the fabricated counters must be picked up")
+        self.assertEqual(got["rss"], 812_345_678)
+        self.assertEqual(got["peak"], 1_234_567_890)
+        self.assertEqual(dll.handle_seen, _FakeWinDLL.PSEUDO_HANDLE,
+                         "the handle must reach the API untruncated")
+        self.assertEqual(dll.cb_seen, self.ctypes.sizeof(self.runner._ProcessMemoryCounters))
+
+        usage = self.runner.memory_usage()
+        self.assertEqual(usage["rss_bytes"], 812_345_678)
+        self.assertEqual(usage["peak_bytes"], 1_234_567_890)
+        self.assertIn("Windows", usage["method"])
+
+    def test_zeroed_counters_are_not_reported_as_zero_bytes(self):
+        """A zeroed struct means "no data", not "0 bytes of memory"."""
+        self._install_fake(0, 0)
+        self.assertIsNone(self.runner._windows_memory())
+        usage = self.runner.memory_usage()
+        self.assertEqual(usage["method"], self.runner.MEMORY_UNAVAILABLE)
+        self.assertEqual(usage["rss_bytes"], 0)
+
+    def test_posix_probe_still_declines_on_windows(self):
+        self._install_fake(1, 2)
+        self.assertIsNone(self.runner._posix_memory())
 
 
 class TestPipelineUntouched(unittest.TestCase):

@@ -57,6 +57,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 LAB = HERE.parent
 SCRIPT = LAB / "scripts" / "run_meshsegnet.py"
+COMPAT = LAB / "scripts" / "compat.py"
 
 # The statement taken verbatim from vedo 2022.4.2, vedo/__init__.py:234.
 VEDO_2022_LINE = (
@@ -229,7 +230,7 @@ class TestShimPlacement(unittest.TestCase):
 
     def test_shim_is_the_only_numpy_patch(self):
         """No other numpy attribute may be monkey-patched (keep the change minimal)."""
-        tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+        tree = ast.parse(COMPAT.read_text(encoding="utf-8"))
         shim_fn = next(node for node in ast.walk(tree)
                        if isinstance(node, ast.FunctionDef)
                        and node.name == "install_numpy_warnings_shim")
@@ -241,6 +242,20 @@ class TestShimPlacement(unittest.TestCase):
         }
         self.assertEqual(patched, {"warnings", "VisibleDeprecationWarning"},
                          f"the shim must only set the two names vedo needs, got {patched}")
+
+    def test_shim_implementation_is_shared_not_duplicated(self):
+        """The runner must use scripts/compat.py, not a private copy.
+
+        Every script in the lab applies the same shims; if one grew its own
+        version, a fix could silently stop applying to the others.
+        """
+        tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+        defined = {node.name for node in ast.walk(tree)
+                   if isinstance(node, ast.FunctionDef)}
+        for name in ("install_numpy_warnings_shim", "install_vedo_mapper_shim",
+                     "verify_mesh_operations", "make_console_utf8_safe"):
+            self.assertNotIn(name, defined,
+                             f"{name} must live in scripts/compat.py only")
 
     def test_shim_does_not_touch_the_numerical_pipeline(self):
         """No pipeline function may call the shim, and no shim may touch maths."""
