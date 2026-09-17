@@ -81,6 +81,8 @@ DEVIATIONS = [
     "Adjacency matrices A_S/A_L are built in row blocks (identical comparisons and normalisation, bounded memory).",
     "Cell barycenters computed from the same face points used for the cell features (identical to cell_centers() for triangles).",
     "Mesh attribute access supports both the vedo method API (official era) and the current vedo property API.",
+    "Environment shim (no computational effect): np.warnings / np.VisibleDeprecationWarning are restored in memory so "
+    "vedo 2022.4.2 can be imported on numpy >= 1.24. These names only control which warnings are printed.",
 ]
 
 
@@ -251,6 +253,80 @@ def format_gb(value: int) -> str:
     return f"{value / 2**30:.2f} GB" if value else "n/a (probe unavailable)"
 
 
+# --------------------------------------------------------------------------
+# numpy compatibility shim for vedo 2022.4.2 (environment only)
+#
+# vedo 2022.4.2 executes this statement while its package is being imported
+# (vedo/__init__.py:234):
+#
+#     np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+#
+# `np.warnings` used to be the standard library `warnings` module re-exported
+# by numpy. NumPy deprecated that alias in 1.15 and REMOVED it in 1.24, so on
+# numpy >= 1.24 — which includes the 1.26.4 pinned for this lab — the statement
+# raises
+#
+#     AttributeError: module 'numpy' has no attribute 'warnings'
+#
+# and `import vedo` fails outright. `np.VisibleDeprecationWarning` is the second
+# casualty: numpy 2.0 moved it to `np.exceptions`.
+#
+# This restores both names, in memory, for the current process only:
+#
+#     np.warnings                    -> the stdlib `warnings` module, which is
+#                                       the very same object numpy used to
+#                                       re-export (so behaviour is identical)
+#     np.VisibleDeprecationWarning   -> np.exceptions.VisibleDeprecationWarning,
+#                                       if numpy moved it
+#
+# Nothing else is patched. No NumPy version is changed, no file is modified, no
+# numerical behaviour is affected: `warnings.filterwarnings` only controls which
+# user-facing warnings are printed. This exists purely so a warning-filtering
+# line from an older library can execute on a newer numpy.
+# --------------------------------------------------------------------------
+def install_numpy_warnings_shim(messages: list[str] | None = None) -> dict:
+    """Restore the numpy names that vedo 2022.4.2 expects at import time.
+
+    Returns a dict of ``{attribute: where_it_came_from}`` for the names actually
+    restored, empty when the installed numpy still provides them. Never raises:
+    if the shim cannot be applied the caller simply sees the original error.
+    """
+    import warnings as stdlib_warnings
+
+    import numpy as np
+
+    restored: dict[str, str] = {}
+
+    if not hasattr(np, "warnings"):
+        try:
+            # The stdlib module, i.e. exactly what numpy re-exported before 1.24.
+            np.warnings = stdlib_warnings
+            restored["np.warnings"] = "stdlib warnings module"
+        except Exception:
+            pass
+
+    if not hasattr(np, "VisibleDeprecationWarning"):
+        moved = getattr(getattr(np, "exceptions", None),
+                        "VisibleDeprecationWarning", None)
+        if moved is not None:
+            try:
+                np.VisibleDeprecationWarning = moved
+                restored["np.VisibleDeprecationWarning"] = \
+                    "np.exceptions.VisibleDeprecationWarning"
+            except Exception:
+                pass
+
+    if messages is not None:
+        if restored:
+            messages.append(
+                "restored for vedo 2022.4.2 on numpy "
+                f"{np.__version__}: " + ", ".join(restored))
+        else:
+            messages.append(f"not needed (numpy {np.__version__} still provides them)")
+
+    return restored
+
+
 def _read_attr(obj, name, *args):
     value = getattr(obj, name)
     return value(*args) if callable(value) else value
@@ -352,12 +428,20 @@ def main() -> int:
 
     try:
         import numpy as np
+        # Must run before `import vedo`: vedo 2022.4.2 touches np.warnings at
+        # import time, which numpy >= 1.24 no longer provides. Shim only, no
+        # version change and no effect on any computation.
+        shim_messages: list[str] = []
+        numpy_shims = install_numpy_warnings_shim(shim_messages)
         import torch
         import vedo
         from scipy.spatial import distance_matrix
     except Exception as exc:
         print(f"\n[STOP] missing dependency: {type(exc).__name__}: {exc}")
         return 4
+
+    for message in shim_messages:
+        print(f"  np compat    : {message}")
 
     t_start = time.perf_counter()
     device = torch.device("cpu")          # CPU-only contract
@@ -549,6 +633,10 @@ def main() -> int:
             "torch_threads": threads,
             "host": platform.platform(),
             "cpu_count": os.cpu_count(),
+        },
+        "environment_shims": {
+            "numpy_warnings_shim": numpy_shims or None,
+            "note": "in-memory attribute restoration only; changes no computation and no installed package version",
         },
         "timing_seconds": {
             "load_model": round(t_model, 3),

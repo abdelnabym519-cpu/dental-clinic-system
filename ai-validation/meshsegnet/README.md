@@ -97,6 +97,46 @@ python scripts\run_meshsegnet.py --model man --input input\meshes\0EJBIPTC_lower
 python scripts\run_meshsegnet.py --model max --input input\meshes\ZOUIF2W4_upper.obj
 ```
 
+### `np.warnings`: numpy ≥ 1.24 versus vedo 2022.4.2
+
+vedo 2022.4.2 executes this statement while its package is being imported
+(`vedo/__init__.py:234`):
+
+```python
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+```
+
+`np.warnings` was the standard library `warnings` module re-exported by numpy.
+NumPy deprecated the alias in 1.15 and **removed it in 1.24**, so with the
+numpy 1.26.4 pinned for this lab, `import vedo` fails with
+
+```
+AttributeError: module 'numpy' has no attribute 'warnings'
+```
+
+and the runner stops with `[STOP] missing dependency: AttributeError: ...`
+before reaching inference. (`np.VisibleDeprecationWarning` is the second
+casualty: numpy 2.0 moved it to `np.exceptions`.)
+
+The runner installs a shim **before** importing vedo, restoring only those two
+names in memory for the current process:
+
+| Restored name | Value | Why it is safe |
+| --- | --- | --- |
+| `np.warnings` | the standard library `warnings` module | exactly the object numpy re-exported before 1.24 — not a reimplementation |
+| `np.VisibleDeprecationWarning` | `np.exceptions.VisibleDeprecationWarning`, if numpy moved it | same class object, different location |
+
+Nothing else is patched, no package version changes, no file is written, and no
+numerical behaviour is affected: these names only control **which warnings are
+printed**. The applied shim is named in the run output and recorded in
+`run_report.json` under `environment_shims`.
+
+The shim is needed because the lab pins numpy below 2.0 for torch. If you would
+rather not rely on it, the alternative is an era-matched numpy (`numpy<1.24`),
+which this lab does not recommend — torch 2.0.1 supports numpy 1.26.4 well, and
+downgrading numpy to suit one library's warning filter is the larger risk. No
+numpy downgrade is performed or required.
+
 ### Windows: memory reporting
 
 `run_meshsegnet.py` prints a RAM line and records a RAM field. That is
@@ -136,6 +176,7 @@ Use `--dry-run` to exercise everything except the forward pass, and
 | `verify_artifacts.py` | Hashes everything, loads each checkpoint into the architecture with `strict=False`, and reports missing/unexpected keys |
 | `run_meshsegnet.py` | The only script that performs inference |
 | `../tests/test_runner_import.py` | Platform-compatibility regression tests: the runner must import and start on a machine without `resource`, memory probes must never raise, and the official constants/filenames must stay unchanged. Standard library only. |
+| `../tests/test_numpy_warnings_shim.py` | Regression tests for the `np.warnings` fix: the exact vedo 2022.4.2 statement must execute after the shim and must still fail without it, the shim must be installed before `import vedo`, and it must patch nothing else. Really imports vedo where it is installed. |
 
 `--model man` = lower jaw (mandible), `--model max` = upper jaw (maxilla). Match
 the model to the jaw of the scan; the two heads were trained separately.
@@ -204,6 +245,7 @@ and the output format.
 | Accuracy of the segmentation | **NOT ASSESSED** — no ground truth used |
 | Behaviour on your specific laptop | **NOT MEASURED HERE** — re-run locally |
 | Runs on Windows (no Unix-only imports; RAM probing portable) | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics |
+| Imports vedo 2022.4.2 on numpy 1.26.4 (`np.warnings` gap) | **VERIFIED** — reproduced the real failure, then imported the real vedo 2022.4.2 with vtk 9.7.0 after the shim; covered by `tests/test_numpy_warnings_shim.py` |
 
 ---
 
