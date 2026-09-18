@@ -1,0 +1,80 @@
+{
+  "_context": {
+    "what_this_is": "sandbox control run of scripts/run_inference.py",
+    "checkpoint": "a control checkpoint with RANDOM weights (268.3 MB), generated from the same config so it has the real checkpoint's contract (1969 tensors + dataset_meta). The real 268,846,952-byte checkpoint is NOT in the validation environment and its Google Drive distribution route is unreachable from it.",
+    "what_it_proves": "the environment, the model construction, the checkpoint-loading contract, the repository's preprocessing, the forward pass, the output structure and the runtime cost",
+    "what_it_does_not_prove": "anything about landmark accuracy — the weights are random, so the coordinates are meaningless by construction and are not model output",
+    "device": "cpu (2 vCPU sandbox; the operator's i9-13900H will be faster)"
+  },
+  "engine": "6 — CLdetection2023",
+  "repo": "/tmp/cld/CLdetection2023-master",
+  "config": "configs/CLdetection2023/srpose_s2.py",
+  "checkpoint": "/tmp/control_state.pth",
+  "checkpoint_sha256": "f8abda49ff32779aca764f06d4f6a8f49220d264a3c7be59bb890c88cdf2addd",
+  "checkpoint_size": 268322135,
+  "device": "cpu",
+  "torch_cuda_available": false,
+  "python_version": "3.11.2",
+  "platform": "Linux-6.1.158+-x86_64-with-glibc2.36",
+  "globals_found": [
+    "__builtin__.bytes",
+    "_codecs.encode",
+    "collections.OrderedDict",
+    "numpy.core.multiarray._reconstruct",
+    "numpy.dtype",
+    "numpy.ndarray",
+    "torch.FloatStorage",
+    "torch.LongStorage",
+    "torch._utils._rebuild_tensor_v2"
+  ],
+  "globals_registered": [
+    "__builtin__.bytes",
+    "_codecs.encode",
+    "collections.OrderedDict",
+    "numpy.core.multiarray._reconstruct",
+    "numpy.dtype",
+    "numpy.ndarray",
+    "torch.FloatStorage",
+    "torch.LongStorage",
+    "torch._utils._rebuild_tensor_v2"
+  ],
+  "inference_seconds": 20.38,
+  "total_seconds": 25.91,
+  "peak_ram_gb": 1.82,
+  "peak_ram_source": "resource.ru_maxrss",
+  "landmark_count": 38,
+  "input_path": "/tmp/lab_ceph_1.png",
+  "input_sha256": "b663ed10bd190f8891e781b7e408b9e380c3a2f550a6bdca1c5414cee545d988",
+  "input_dimensions": {
+    "height": 2400,
+    "width": 2880,
+    "channels": 3
+  },
+  "workarounds": [
+    "torch>=2.6 weights_only=True: registered the checkpoint's own numpy/codecs reconstruction primitives instead of downgrading torch or disabling the guard"
+  ],
+  "failure_reasons": [],
+  "functional_inference": true,
+  "clinical_validation": "NOT VALIDATED",
+  "torch_version": "2.6.0+cu124",
+  "mmpose_version": "1.0.0",
+  "mmcv_version": "2.1.0",
+  "mmengine_version": "0.10.7",
+  "numpy_version": "1.26.4",
+  "metainfo_source": "checkpoint/config",
+  "model_load_seconds": 1.2,
+  "architecture": {
+    "estimator": "TopdownPoseEstimator",
+    "backbone": "HRNet",
+    "head": "SRPoseHead",
+    "num_joints": 38,
+    "parameters_millions": 66.82
+  },
+  "input_dimensions_after_zero_padding": {
+    "height": 2400,
+    "width": 1935
+  },
+  "output_image": "/tmp/run_control_overlay.png",
+  "status": "🟡 OPERATIONAL WITH WORKAROUND",
+  "keypoints_withheld": "the 38 coordinate pairs were produced by random weights and are meaningless; they are withheld so they cannot be mistaken for model output. A real run writes them to reports/engine6_run.json"
+}

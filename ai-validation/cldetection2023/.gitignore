@@ -1,0 +1,24 @@
+# The checkpoint, the challenge data, extracted images, the venv and run outputs
+# stay on the operator's machine.
+.venv/
+venv/
+*.pth
+*.pt
+*.mha
+*.nii
+*.nii.gz
+CLdetection2023/
+model/
+input/*
+!input/NOTE.md
+output/*
+reports/*
+!reports/.gitkeep
+!reports/engine6_validation_report.md
+!reports/engine6_control_run.json
+!reports/environment_checks.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,80 @@
+{
+  "python_version": "3.11.2",
+  "checks": [
+    {
+      "name": "torch imported",
+      "ok": true,
+      "detail": "torch 2.6.0+cu124"
+    },
+    {
+      "name": "torch >= 2.0",
+      "ok": true,
+      "detail": "torch 2.6.0+cu124"
+    },
+    {
+      "name": "torch>=2.6 weights_only workaround available",
+      "ok": true,
+      "detail": "torch.serialization.add_safe_globals present — run_inference.py needs it because mmengine 0.10.7 calls torch.load without weights_only"
+    },
+    {
+      "name": "mmcv in [2.0.0rc4, 2.1.0]",
+      "ok": true,
+      "detail": "mmcv 2.1.0"
+    },
+    {
+      "name": "mmengine in [0.6.0, 1.0.0]",
+      "ok": true,
+      "detail": "mmengine 0.10.7"
+    },
+    {
+      "name": "mmpose == 1.0.0",
+      "ok": true,
+      "detail": "mmpose 1.0.0"
+    },
+    {
+      "name": "numpy 1.x (xtcocotools ABI)",
+      "ok": true,
+      "detail": "numpy 1.26.4 — xtcocotools is built against numpy 1.x"
+    },
+    {
+      "name": "xtcocotools imports (numpy ABI)",
+      "ok": true,
+      "detail": "xtcocotools._mask loaded"
+    },
+    {
+      "name": "pkg_resources available (setuptools<81)",
+      "ok": true,
+      "detail": "setuptools 80.10.2"
+    },
+    {
+      "name": "mmpose inference API + SRPoseHead + MSRAHeatmap",
+      "ok": true,
+      "detail": "mmpose.apis.inference_topdown / init_model / SRPoseHead / MSRAHeatmap import"
+    },
+    {
+      "name": "repository config present",
+      "ok": true,
+      "detail": "/tmp/cld/CLdetection2023-master/configs/CLdetection2023/srpose_s2.py"
+    },
+    {
+      "name": "fork declares the version ranges read here",
+      "ok": true,
+      "detail": "mmpose/__init__.py asserts the same bounds this script enforces"
+    }
+  ],
+  "ok": true,
+  "versions": {
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "numpy": "1.26.4",
+    "cv2": "4.10.0",
+    "mmcv": "2.1.0",
+    "mmengine": "0.10.7",
+    "mmpose": "1.0.0",
+    "xtcocotools": "unknown",
+    "munkres": "1.1.4",
+    "json_tricks": "3.17.3"
+  },
+  "torch_cuda_available": false,
+  "torch_cuda_build": "12.4"
+}
