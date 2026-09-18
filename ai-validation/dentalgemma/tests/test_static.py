@@ -404,8 +404,14 @@ class TestDocumentedCommandsExist(unittest.TestCase):
                 [sys.executable, str(SCRIPTS / f"{name}.py"), "--help"],
                 capture_output=True, text=True, timeout=120)
             options = result.stdout.split("options:")[-1]
+            # argparse puts a long option's description on the *next* line when the
+            # option itself is too long to fit the indent, so a flag can be followed
+            # by a newline rather than by a space — that is why the lookahead accepts
+            # end-of-line as well (an earlier version silently missed
+            # `--no-tokenizer-pre-override`, and the docs check then blamed the docs).
             cls.accepted[name] = set(
-                re.findall(r"(?<![\w-])(--[a-z0-9-]+|-[a-zA-Z])(?=[ ,=])", options))
+                re.findall(r"(?<![\w-])(--[a-z0-9-]+|-[a-zA-Z])(?=[ ,=]|$)",
+                           options, re.MULTILINE))
 
     def _documented_invocations(self):
         """Yield every `python ...<script>.py <flags>` command found in the docs.

@@ -34,5 +34,7 @@
   "output_path": null,
   "capture": null,
   "output_integrity": null,
+  "execution": null,
+  "validation_scope": null,
   "status": "UNKNOWN"
 }

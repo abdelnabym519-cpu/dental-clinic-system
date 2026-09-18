@@ -239,20 +239,131 @@ it fails here — in seconds — instead of two minutes into a real run.
 python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp
 ```
 
-Expect several minutes on the first run (the 2.68 GiB file is read from disk and
-a 4B model is loaded), and well under a minute for the generation itself.
+That single command is the whole validated path. It already includes the two
+things this model needs on this machine — **CPU-only execution** and the
+**tokenizer pre-tokenizer override** — and it records both in the report. The rest
+of this step explains what those two are, why they are defaults, and how to turn
+them off.
 
-Useful knobs, all recorded in the report:
+Expect several minutes on the first run (the 3.47 GiB of weights are read from
+disk), and well under a minute for the generation itself.
+
+### Why CPU-only is the default (`-ngl 0`, `-dev none`, `--no-mmproj-offload`)
+
+llama.cpp does **not** default to the CPU. Its `-ngl` default is *auto* (as many
+layers as fit on the GPU), and the projector goes to the first GPU backend that
+answers. On this machine that is the Intel Iris Xe through the Vulkan backend, and
+a run that only *looked* CPU-only died inside the vision encode:
+
+```
+ggml_vulkan: device lost on Vulkan0
+mtmd_batch_encode: error
+Failed to encode mtmd batch
+```
+
+with exit code `3221226505` (`0xC0000409`, the code Windows reports for an
+unrecoverable process fault). The markers above come from the operator's local run
+on this machine and are quoted as reported; nothing in this repository has
+executed them.
+
+So the runner pins the CPU explicitly:
+
+| flag | what it stops |
+| --- | --- |
+| `-ngl 0` | any layer being offloaded to a GPU (`-ngl` defaults to *auto*) |
+| `-dev none` | llama.cpp selecting a GPU device at all (`-dev none` is its own "no GPU device") |
+| `--no-mmproj-offload` | the SigLIP vision encoder being placed on the iGPU |
+
+These are the runtime's own flags, not a new mechanism: `-ngl`/`-dev` live in
+llama.cpp's `common/arg.cpp`, `--no-mmproj-offload` sets `mmproj_use_gpu = false`
+in `tools/mtmd/mtmd-cli.cpp`. The runner adds nothing to the runtime.
+
+**The report says which mode ran, and what the runtime itself reported**:
+
+```powershell
+Get-Content .\output\run_report.json | Select-String "cpu_only" -Context 2,2
+```
+
+* `execution.cpu_only` — `true` when the run was pinned to the CPU.
+* `execution.gpu_requested_by` — the exact flags that asked for a GPU, if any.
+* `execution.device_evidence` — what the runtime's own log said: the projector's
+  backend (`CLIP using CPU backend`), the layer count (`offloaded 0/35 layers to
+  GPU`), and a verdict of `cpu-only-confirmed-by-log`, `gpu-work-observed` or
+  `not-stated-in-log`. A GPU observed while CPU-only was requested is a warning in
+  the report, not a silent success. (Vulkan lines in the log are *not* evidence of
+  use: the backend DLL is loaded and its devices enumerated at startup either way.)
+
+`--cpu-only` is on by default; `--no-cpu-only` is the switch that turns the whole
+policy off and lets the runtime choose.
+
+One fallback, in case you are on a much older llama.cpp build that does not know
+`-dev none`: the runner notices that error and says so in the report, and the
+equivalent CPU-only command is
+
+```powershell
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp `
+    --no-cpu-only --ngl 0 --no-mmproj-offload
+```
+
+which pins the same two things (`-ngl 0` keeps every layer on the CPU,
+`--no-mmproj-offload` keeps the projector there) without `-dev none`. Updating to
+the current release is the better fix; the build this lab documents is `b11026`.
+
+**Asking for a GPU is possible, and it is recorded.** Any of these leaves CPU-only
+mode, and the report states which flag did it:
+
+```powershell
+# let llama.cpp put as many layers as fit on the Vulkan device
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --ngl auto
+
+# or name the device and let the projector follow it
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --device Vulkan0
+
+# or do not pin anything at all and take the runtime's defaults
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --no-cpu-only
+```
+
+On this machine those are the runs that fail. `--ngl auto` and `--ngl 0` also
+switch CPU-only mode off/keep it on respectively; `--device none` means the same
+thing as staying CPU-only.
+
+### Why the tokenizer override is the default
+
+The pinned GGUF's own metadata sends llama.cpp down its GPT-2 byte-level
+detokenizer, which cannot represent `▁` and writes `[UNK_BYTE_0xe29681...]` into
+the text. The runner therefore passes, in memory only:
+
+```
+--override-kv tokenizer.ggml.pre=str:gemma4
+```
+
+That is the value confirmed on this machine. It is a **runtime workaround, not a
+repair** — the real fix belongs in the GGUF's metadata, which this lab must not
+touch — and the file on disk is only ever read: its SHA-256 is recorded before the
+run, and no code path here writes to it. The full reasoning is in
+`OUTPUT_DECODING.md`; the runner also *reads* the file's `tokenizer.ggml.model` /
+`tokenizer.ggml.pre` and prints them next to the override, so you can see whether
+the file agrees with the workaround (`execution.override_matches_metadata`).
+
+```powershell
+# use a different pre-tokenizer value
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --tokenizer-pre llama3
+
+# do not pass any override (expect the markers back on this artifact)
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --no-tokenizer-pre-override
+```
+
+### Other useful knobs, all recorded in the report
 
 ```powershell
 # shorter answer, faster
 python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --predict 128
 
-# keep the vision encoder on the CPU instead of the iGPU
-python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --no-mmproj-offload
-
 # pin the thread count (the i9 has 20 logical cores; llama.cpp's default is fine)
 python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --threads 8
+
+# the same command, checked without running anything: prints the exact argv
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp --dry-run
 ```
 
 **Expected on success:**
@@ -268,15 +379,27 @@ python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llam
   <the model's answer>
   ------------------------------------------------------------------------
 
+  device use  : CPU-only, confirmed by the runtime's own log
+                projector backend : CPU
+                layers to GPU     : 0/35
+
 ==============================================================================
  SUCCESS — the model produced text on this machine, on the CPU
  <n> characters written to panoramic_response.txt
+ Functional inference only: no accuracy was measured and this is not a
+ validated diagnosis. See validation_scope in the report.
 ==============================================================================
   status : OPERATIONAL
 ```
 
+The last two lines are not decoration: success here means *text was produced*, not
+that the text is correct. `validation_scope.clinical_validation` is `false` in
+every report, and no run of this lab may be read as a diagnosis.
+
 **Files produced:** `output\panoramic_response.txt`,
-`output\panoramic_llama.log`, `output\run_report.json`, `logs\run_<UTC>_dentalgemma.json` `[NEW]`.
+`output\panoramic_llama.log`, `output\panoramic_stdout.raw`,
+`output\panoramic_stderr.raw`, `output\run_report.json`,
+`logs\run_<UTC>_dentalgemma.json` `[NEW]`.
 
 Exit code `0` means success. `3` means a prerequisite is missing (status
 `BLOCKED`), `4` means an artifact or the image is unusable, `6` means the model
@@ -295,6 +418,35 @@ Get-Content .\output\run_report.json | Select-Object -First 40
 free space, GPU detection and the llama.cpp version; then the run report, whose
 `status` field must read `OPERATIONAL` and whose `inference_success` must be
 `true` — and both only if `output\panoramic_response.txt` actually contains text.
+
+### The fields to record from that report
+
+These are the ten values that describe the run, and they are all in
+`output\run_report.json` (the same JSON is copied to `logs\`):
+
+| field in `run_report.json` | what it is |
+| --- | --- |
+| `exit_code` | the runtime's exit code (`0` is required for success) |
+| `inference_seconds` | wall-clock seconds for the inference |
+| `peak_ram_gb` / `peak_rss_bytes` | sampled peak memory (`memory_probe` names the probe) |
+| `cpu_seconds` | CPU time the child used |
+| `command` | the exact argv, verbatim |
+| `main_sha256`, `mmproj_sha256` | the two artifact digests as hashed on this machine |
+| `output_path` | the file the text was written to |
+| `execution.workarounds` | the CPU-only pins and the tokenizer override this run used |
+| `execution.device_evidence` | what the runtime's log said about the device |
+| `status` | `OPERATIONAL`, `FAILED`, `BLOCKED` or `UNKNOWN` |
+
+```powershell
+$r = Get-Content .\output\run_report.json -Raw | ConvertFrom-Json
+$r | Select-Object status, exit_code, inference_seconds, peak_ram_gb, cpu_seconds
+$r.main_sha256
+$r.mmproj_sha256
+$r.output_path
+$r.execution.workarounds
+$r.execution.device_evidence.verdict
+$r.validation_scope
+```
 
 ---
 
@@ -358,3 +510,12 @@ It does not prove the model is accurate, safe, or suitable for patients. It prov
 one thing: that the real published weights ran on this machine, on the CPU, and
 produced text — with the runtime and memory cost recorded next to them. Accuracy
 is a separate question that this lab does not attempt and cannot answer.
+
+It also does not prove that the model is "operational" on its own. The run
+described in Step 7 depends on two documented workarounds — CPU-only execution and
+the `tokenizer.ggml.pre` override — so the honest classification is **operational
+with workarounds**, on this machine, on the CPU. A run that had to be forced onto
+the CPU is not evidence that the model works on the GPU; likewise a run whose text
+had to be decoded through a different pre-tokenizer is not evidence that the GGUF's
+own metadata is correct. Both facts are in the report, and neither may be dropped
+when the result is quoted.

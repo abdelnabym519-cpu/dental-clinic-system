@@ -441,6 +441,128 @@
           ]
         }
       }
+    },
+    "execution": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "How the runtime was invoked: the CPU-only policy, whether any GPU flag was requested, which compatibility workarounds were applied, and — once a run has happened — what the runtime's own log said about the device it used. `device_evidence` is null before a run: the request is recorded, the runtime's confirmation is not assumed. The CPU-only pins (-ngl 0, -dev none, --no-mmproj-offload) exist because a run that believed it was CPU-only still submitted vision-encoder work to the machine's Vulkan device, which lost the device and killed the process. The tokenizer override named here is applied in memory only and recorded as a workaround, never as a repair: the GGUF on disk is read-only and its digest is recorded in this same report.",
+      "properties": {
+        "cpu_only": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "True when the run is pinned to the CPU."
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Why that mode was chosen, including the flag that switched CPU-only off, if any was given."
+        },
+        "gpu_requested_by": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "The exact command-line flags that asked for GPU work. Empty means none did."
+        },
+        "ngl": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Layer count passed as -ngl (0 in CPU-only mode; null when the flag is omitted)."
+        },
+        "device": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Value passed as -dev ('none' in CPU-only mode; null when the flag is omitted)."
+        },
+        "mmproj_offload": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Whether the projector is allowed on a GPU device."
+        },
+        "workarounds": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "The compatibility settings this run depends on, spelled out. A run that needs them is not the same as a run without them."
+        },
+        "tokenizer_metadata": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "The GGUF's own tokenizer.ggml.model / tokenizer.ggml.pre and the decode path they select, read from the file. Evidence, not an input: a metadata quirk cannot switch the workaround off silently."
+        },
+        "override_matches_metadata": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Whether the applied override addresses the decode path the file's own metadata selects. Null when the metadata could not be read."
+        },
+        "device_evidence": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "What the runtime's own log said about the device it used, with a verdict of cpu-only-confirmed-by-log, gpu-work-observed, or not-stated-in-log. Vulkan mentions are counted because the backend DLL is enumerated at startup even when nothing is submitted."
+        },
+        "notes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Warnings about this execution mode, e.g. GPU work observed while CPU-only was requested."
+        }
+      }
+    },
+    "validation_scope": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "What this report does and does not establish. `functional_inference` is true only when a real run exited 0 with non-empty text; `clinical_validation` is always false — no ground truth, no accuracy metric, and the publisher does not release this model as a medical device. A produced answer is not a correct answer, and nothing here may be read as a diagnosis.",
+      "properties": {
+        "functional_inference": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "clinical_validation": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "statement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     }
   },
   "definitions": {

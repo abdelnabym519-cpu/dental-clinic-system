@@ -93,11 +93,12 @@ python scripts\run_dentalgemma.py --image input\panoramic.png
 | `scripts/collect_system_info.py` | Machine-readable snapshot of this machine |
 | `scripts/download_artifacts.py` | Pinned-revision download, hash-verified, never destructive |
 | `scripts/verify_artifacts.py` | Presence, size, SHA-256, GGUF validity, and whether the two files form a pair. `--model-dir` reads them from anywhere |
-| `scripts/run_dentalgemma.py` | **The only script that runs a model** |
+| `scripts/run_dentalgemma.py` | **The only script that runs a model.** CPU-only by default, with the decoding override applied and recorded |
 | `OUTPUT_DECODING.md` | The `[UNK_BYTE_0x...]` markers in the generated text: cause, evidence, and the local diagnostic |
 | `input/README.md` | Acceptable test images, and the rules about patient data |
 | `model/README.md` | What goes in `model/`, and why nothing there is committed |
 | `tests/` | Static and unit tests that need no model, no GPU and no network |
+| `tests/test_execution_policy.py` | The CPU-only policy, the decoding workaround, and what the runtime's log is allowed to prove |
 
 ## Dependencies
 
@@ -151,6 +152,41 @@ regression test for it (`tests/test_cli_contract.py::TestOutputDraining`).
 as an error rather than "auto", so the flag is omitted entirely unless a count is
 given, and llama.cpp chooses.
 
+**CPU-only is pinned, because llama.cpp does not default to the CPU.** `-ngl`
+defaults to *auto* and the projector goes to the first GPU backend that answers —
+on this machine the Intel Iris Xe through Vulkan, which lost the device during the
+vision encode and killed the process with `0xC0000409`. The runner therefore
+passes `-ngl 0`, `-dev none` and `--no-mmproj-offload` by default, and a GPU
+request (`--ngl`, `--device`, `--mmproj-offload`, or `--no-cpu-only`) is an
+explicit act that is recorded rather than silently honoured. All three flags are
+llama.cpp's own (`common/arg.cpp`, `tools/mtmd/mtmd-cli.cpp`); nothing new is
+invented here. See `LOCAL_EXECUTION.md` step 7.
+
+**What was requested and what happened are both recorded.** `execution` holds the
+policy (CPU-only, the flags that asked for a GPU, the workarounds applied) and
+`execution.device_evidence` holds what the runtime's own log said — the projector's
+backend, the layer count, `using device …` lines, and a verdict of
+`cpu-only-confirmed-by-log`, `gpu-work-observed` or `not-stated-in-log`. A GPU
+observed while CPU-only was requested becomes a warning; a log that says nothing
+yields no claim. Vulkan lines are *not* usage: the backend DLL is enumerated at
+startup either way, which is why they are only counted.
+
+**The decoding workaround is a documented default with an off-switch.** The pinned
+GGUF's metadata selects llama.cpp's GPT-2 byte-level detokenizer, which writes
+`[UNK_BYTE_0xe29681...]` into the text; the runner applies
+`--override-kv tokenizer.ggml.pre=str:gemma4` in memory (`--tokenizer-pre` changes
+the value, `--no-tokenizer-pre-override` drops it) and reads the file's own
+`tokenizer.ggml.model` / `tokenizer.ggml.pre` to report whether the metadata agrees
+(`execution.override_matches_metadata`). It never decides the workaround: metadata
+under suspicion must not be able to switch its own workaround off silently. The
+GGUF is read-only to this lab and its digest is recorded in every report.
+
+**No run may be read as a diagnosis.** Every report carries `validation_scope`,
+where `functional_inference` is true only after a real run produced non-empty text
+and `clinical_validation` is always false: no ground truth, no metric, and the
+publisher does not release this model as a medical device. `OPERATIONAL` describes
+the run, never the answer.
+
 **The runtime's bytes are kept, and the text is never repaired.** stdout and
 stderr are captured as bytes, decoded as UTF-8 explicitly, and written twice: the
 readable `<stem>_response.txt` / `<stem>_llama.log`, and the untouched
@@ -179,13 +215,15 @@ has to be fixed — rather than one problem per attempt, at 3.47 GiB each.
 
 Run here, in the repository, with no model present and no network access:
 
-* **112 tests, all passing** (`python -m unittest discover -s tests -v`, Python
+* **151 tests, all passing** (`python -m unittest discover -s tests -v`, Python
   3.11.2). They cover the GGUF reader against synthetic containers, the report
   template's honesty, artifact identities, the CLI contract (`--help`, BLOCKED on
   missing prerequisites, `--dry-run`, the `LOCAL HASH` output, refusal of wrong
   sizes and digests, Windows-safety and CPU-only assertions), pipe draining,
-  byte-exact output capture, and that every command printed in these documents
-  uses flags the scripts accept.
+  byte-exact output capture, the CPU-only execution policy and the decoding
+  workaround (which flags reach the argv, what the report records, and that no
+  code path writes to the artifacts), and that every command printed in these
+  documents uses flags the scripts accept.
 * Every script parses under `ast.parse(..., feature_version=(3, 9))`, so the
   documented Python floor is enforced rather than asserted.
 * The failure paths were executed for real: missing artifacts, missing image,
@@ -219,10 +257,15 @@ until a real run on the target machine produces non-empty output.
 `run_report.json` follows `report.schema.json` and carries the model identity,
 both artifact sizes and digests, the runtime and its version, CPU and RAM, CUDA
 presence, the input image and its digest, the **exact command line**, the
-configuration, timing, peak RAM, CPU seconds, the output path, and the status. Two
-additive blocks record the capture itself: `capture` (byte counts, digests of the
-raw streams, how many bytes needed replacing) and `output_integrity` (marker
-count, the codepoints they name, and whether the text came through untouched).
+configuration, timing, peak RAM, CPU seconds, the output path, and the status. Four
+additive blocks record how the run was made and what it is worth: `capture` (byte
+counts, digests of the raw streams, how many bytes needed replacing),
+`output_integrity` (marker count, the codepoints they name, and whether the text
+came through untouched), `execution` (the CPU-only policy, the flags that asked for
+a GPU, the workarounds applied, and what the runtime's own log said about the
+device) and `validation_scope` (functional inference only — never clinical
+validation). The 18 required fields and the four statuses are unchanged, so an
+older report stays valid.
 
 ## Limitations
 

@@ -40,6 +40,33 @@ A byte that is not valid UTF-8 becomes U+FFFD in the readable file, and the
 count is reported, so a substitution made here can never be mistaken for
 something the model produced.
 
+This path is CPU-only, and the two workarounds it needs are switches rather than
+folklore:
+
+  * **CPU-only is the default.** The validated execution mode for this lab is the
+    CPU, so the command pins it explicitly: `-ngl 0` (no layers offloaded),
+    `-dev none` (no GPU device is selected at all) and `--no-mmproj-offload`
+    (the projector stays on the CPU). llama.cpp's own default for `-ngl` is
+    *auto*, which is how a run that believed it was CPU-only ends up submitting
+    vision-encoder work to a Vulkan device — on this machine's Intel iGPU that
+    failed with `ggml_vulkan: device lost` and killed the process. A GPU request
+    (`--ngl`, `--device`, `--mmproj-offload`) is still possible, and it is
+    recorded rather than silently honoured. See LOCAL_EXECUTION.md.
+  * **One decoding override is applied by default.** This GGUF's own tokenizer
+    metadata selects llama.cpp's GPT-2 byte-level detokenizer, which cannot
+    represent ▁ (U+2581) and writes `[UNK_BYTE_0x...]` into the text. The
+    override `--override-kv tokenizer.ggml.pre=str:gemma4` selects the SPM-style
+    path instead. It is an in-memory runtime setting: the file on disk is never
+    written to, and its digest is recorded before the run. It is recorded as a
+    workaround, never as a repair (OUTPUT_DECODING.md).
+
+Both are *recorded*, not assumed: the report carries `execution` (what was
+requested) next to `execution.device_evidence` (what the runtime's own log says
+it did), and a GPU observed while CPU-only was requested is a warning, not a
+silent success. The report also carries `validation_scope`, which states the one
+thing this script must never imply: that the generated text is a validated
+diagnosis.
+
 Usage:
     python scripts/run_dentalgemma.py --image input\\panoramic.png
     python scripts/run_dentalgemma.py --image input\\panoramic.png --dry-run
@@ -79,6 +106,22 @@ DEFAULT_PROMPT = (
     "dental radiograph, in one short paragraph. Mention the image type, the "
     "anatomy visible, and any obvious abnormality. Do not claim a diagnosis."
 )
+
+# The tokenizer pre-tokenizer override applied by default, as an in-memory
+# `--override-kv tokenizer.ggml.pre=str:<value>` (see OUTPUT_DECODING.md §4):
+#
+#   * the pinned DentalGemma GGUF declares a tokenizer model that puts llama.cpp
+#     on its GPT-2 byte-level detokenize path (`escape_whitespaces = false`), and
+#     that path cannot represent ▁ (U+2581) — it writes `[UNK_BYTE_0xe29681...]`
+#     into the generated text;
+#   * `gemma4` is one of the pre-tokenizers that set `escape_whitespaces = true`,
+#     which is the SPM-style path that handles ▁ correctly — and the vocabulary
+#     is Gemma-family, so it is also the right pre-tokenizer by name;
+#   * it was confirmed on the operator's machine, and it is applied as a switch
+#     rather than as a guess: `--tokenizer-pre <value>` changes it,
+#     `--no-tokenizer-pre-override` removes it, and the report always records
+#     which of the two happened.
+DEFAULT_TOKENIZER_PRE = "gemma4"
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07")
 
@@ -515,9 +558,113 @@ def read_child_async(proc: subprocess.Popen, timeout: float, box: dict) -> None:
         box.setdefault("stderr", b"")
 
 
+def resolve_execution_policy(args) -> dict:
+    """Decide, once, how the runtime will be invoked — and record the decision.
+
+    The lab's validated execution mode is the CPU, so the default pins it instead
+    of trusting llama.cpp's defaults (`-ngl auto`, projector on the first GPU
+    backend it finds — which on this machine's Intel iGPU is the Vulkan device
+    that lost the device during the vision encode and killed the process).
+
+    An explicit GPU request always wins over the default, and is *recorded*: it is
+    never silently ignored, and never silently granted either. `build_command`
+    and the report both read this same dict, so the command that ran and the
+    record of what was requested cannot drift apart.
+
+    Defined as a pure function of the parsed arguments so that it can be tested
+    without a model, and so that every branch is visible in one place.
+    """
+    cpu_only = bool(getattr(args, "cpu_only", True))
+    ngl = getattr(args, "ngl", None)
+    device = getattr(args, "device", None)
+    requested_mmproj_offload = getattr(args, "mmproj_offload", None)   # None = follow the policy
+    tokenizer_pre = getattr(args, "tokenizer_pre", DEFAULT_TOKENIZER_PRE)
+    if tokenizer_pre is None:                       # defensive: the flag has a default
+        tokenizer_pre = DEFAULT_TOKENIZER_PRE
+
+    gpu_requested_by: list[str] = []
+    if ngl is not None and ngl != 0:
+        gpu_requested_by.append(f"--ngl {ngl}")
+    if device and device.strip() and device.strip().lower() != "none":
+        gpu_requested_by.append(f"--device {device}")
+    if requested_mmproj_offload:
+        gpu_requested_by.append("--mmproj-offload")
+
+    if gpu_requested_by and cpu_only:
+        cpu_only = False
+        reason = ("CPU-only mode was switched off because the command line asked for "
+                  "GPU work (" + ", ".join(gpu_requested_by) + "); this run is not the "
+                  "validated CPU path and may hit the Vulkan failure again")
+    elif cpu_only:
+        reason = "CPU-first default for this validation lab; no GPU flag was given"
+    else:
+        reason = ("CPU-only mode was disabled with --no-cpu-only: no layer count, no "
+                  "device and no projector placement is pinned, so the runtime's own "
+                  "defaults apply (on this machine that means the Vulkan device)")
+
+    if cpu_only:
+        effective_ngl = 0
+        effective_device = "none"
+    else:
+        effective_ngl = ngl                       # None: leave the flag out entirely
+        effective_device = device
+
+    if requested_mmproj_offload is None:
+        mmproj_offload = not cpu_only
+        mmproj_offload_source = ("CPU-only policy" if cpu_only
+                                 else "the runtime's own default (no flag passed)")
+    else:
+        mmproj_offload = bool(requested_mmproj_offload)
+        mmproj_offload_source = "--mmproj-offload / --no-mmproj-offload"
+
+    workarounds: list[str] = []
+    if cpu_only:
+        workarounds.append("CPU-only execution (-ngl 0, -dev none, --no-mmproj-offload): "
+                           "no GPU layer is offloaded and no GPU device is selected")
+    if tokenizer_pre:
+        workarounds.append(f"tokenizer pre-tokenizer override in memory "
+                           f"(--override-kv tokenizer.ggml.pre=str:{tokenizer_pre}): "
+                           f"the GGUF on disk is not modified")
+
+    notes: list[str] = []
+    extra_flags = list(getattr(args, "extra", None) or [])
+    if any("tokenizer.ggml.pre" in str(part) for part in extra_flags):
+        # llama.cpp keeps overrides in an unordered_map and inserts without
+        # overwriting, so the *first* occurrence of a key wins — which is this
+        # lab's, because --extra is appended last. Say so rather than let the
+        # passthrough look like it changed something.
+        notes.append(
+            "the passthrough --extra also carries a tokenizer.ggml.pre override; the "
+            "runtime keeps overrides in a map and the first occurrence wins, so the "
+            "lab's own value (if enabled) is the one that takes effect — use "
+            "--tokenizer-pre to change it, or --no-tokenizer-pre-override to drop it")
+
+    return {
+        "cpu_only": cpu_only,
+        "reason": reason,
+        "gpu_requested_by": gpu_requested_by,
+        "ngl": effective_ngl,
+        "device": effective_device,
+        "mmproj_offload": mmproj_offload,
+        "mmproj_offload_source": mmproj_offload_source,
+        "tokenizer_pre_override": tokenizer_pre or None,
+        "tokenizer_pre_override_source": (
+            "--tokenizer-pre (the documented default for the pinned DentalGemma GGUF)"
+            if tokenizer_pre else
+            "disabled by --no-tokenizer-pre-override; the runtime's own metadata applies"),
+        "workarounds": workarounds,
+        # Filled in later: metadata is read from the file, evidence from the run.
+        "tokenizer_metadata": None,
+        "override_matches_metadata": None,
+        "device_evidence": None,
+        "notes": notes,
+    }
+
+
 def build_command(binary: Path, main: Path, mmproj: Path, image: Path,
-                  args) -> list[str]:
+                  args, policy: dict | None = None) -> list[str]:
     """The exact argv this run will use, in the order llama.cpp documents."""
+    policy = policy if policy is not None else resolve_execution_policy(args)
     cmd = [
         str(binary),
         "-m", str(main),
@@ -533,13 +680,187 @@ def build_command(binary: Path, main: Path, mmproj: Path, image: Path,
     # as an error. Omit the flag entirely and let llama.cpp choose.
     if args.threads:
         cmd += ["-t", str(args.threads)]
-    if args.ngl is not None:
-        cmd += ["-ngl", str(args.ngl)]
-    if args.no_mmproj_offload:
+    if policy["ngl"] is not None:
+        cmd += ["-ngl", str(policy["ngl"])]
+    if policy["device"]:
+        cmd += ["-dev", str(policy["device"])]
+    if not policy["mmproj_offload"]:
         cmd += ["--no-mmproj-offload"]
+    elif getattr(args, "mmproj_offload", None):
+        # the runtime default already offloads the projector; say it explicitly
+        # when it was asked for, so the recorded command states the intent
+        cmd += ["--mmproj-offload"]
+    if policy["tokenizer_pre_override"]:
+        cmd += ["--override-kv",
+                f"tokenizer.ggml.pre=str:{policy['tokenizer_pre_override']}"]
     if args.extra:
         cmd += list(args.extra)
     return cmd
+
+
+# --------------------------------------------------------------------------
+# what the runtime's own log says about where the work ran
+# --------------------------------------------------------------------------
+# Read from llama.cpp b11026, so the patterns are the runtime's own wording:
+#
+#   src/llama.cpp          "using device %s (%s) ..." — one line per device the
+#                          model was told to use; absent when it uses none
+#   src/llama-model.cpp    "offloading %d repeating layers to GPU" and
+#                          "offloaded %d/%d layers to GPU" — printed by a build
+#                          with GPU support even when the answer is 0
+#   tools/mtmd/clip.cpp    "CLIP using %s backend" / "CLIP using CPU backend" —
+#                          which backend holds the projector
+#
+# Deliberately *not* a usage signal: the loader enumerates backend DLLs at
+# startup (ggml_backend_load_all), so "ggml_vulkan:" lines appear in the log of
+# a run that never submits anything to the GPU. That is why the verdict below is
+# built from the three lines above and the Vulkan mentions are recorded only as a
+# count.
+DEVICE_USED_RE = re.compile(r"using device\s+(\S+)")
+LAYERS_OFFLOADED_RE = re.compile(r"offloaded\s+(\d+)\s*/\s*(\d+)\s+layers to GPU")
+REPEATING_LAYERS_RE = re.compile(r"offloading\s+(\d+)\s+repeating layers to GPU")
+CLIP_BACKEND_RE = re.compile(r"CLIP using\s+(.+?)\s+backend")
+DEVICE_LOST_RE = re.compile(r"device lost", re.IGNORECASE)
+ENCODE_FAILURE_RE = re.compile(r"Failed to encode mtmd batch|mtmd_batch_encode", re.IGNORECASE)
+VULKAN_RE = re.compile(r"ggml_vulkan|vulkan", re.IGNORECASE)
+
+# Windows reports this for an unrecoverable process fault (fast-fail). It is the
+# code the operator's run exited with while the Vulkan device was being lost.
+WINDOWS_FAST_FAIL = 0xC0000409
+
+
+def inspect_runtime_log(stdout_text: str, stderr_text: str) -> dict:
+    """What the runtime's own output says about CPU vs GPU — nothing more.
+
+    Absence of evidence is reported as absence: a log that does not state its
+    device yields `not-stated-in-log`, never a claim in either direction.
+    """
+    combined = (stdout_text or "") + "\n" + (stderr_text or "")
+
+    devices_used = [line.strip() for line in combined.splitlines()
+                    if "using device" in line]
+    offloaded = LAYERS_OFFLOADED_RE.search(combined)
+    clip = CLIP_BACKEND_RE.search(combined)
+    vulkan_mentions = len(VULKAN_RE.findall(combined))
+
+    layers_offloaded = f"{offloaded.group(1)}/{offloaded.group(2)}" if offloaded else None
+    clip_backend = clip.group(1).strip() if clip else None
+
+    gpu_offload_observed = bool(devices_used)
+    if offloaded and int(offloaded.group(1)) > 0:
+        gpu_offload_observed = True
+
+    if gpu_offload_observed:
+        verdict = "gpu-work-observed"
+    elif (layers_offloaded is not None and layers_offloaded.startswith("0/")) \
+            or (clip_backend and clip_backend.upper().startswith("CPU")):
+        verdict = "cpu-only-confirmed-by-log"
+    else:
+        verdict = "not-stated-in-log"
+
+    return {
+        "source": "the child's own stdout/stderr, read as text without modification",
+        "clip_backend": clip_backend,
+        "device_names": [match.group(1) for match in DEVICE_USED_RE.finditer(combined)],
+        "layers_offloaded": layers_offloaded,
+        "repeating_layers_offloaded": (REPEATING_LAYERS_RE.search(combined).group(1)
+                                       if REPEATING_LAYERS_RE.search(combined) else None),
+        "devices_used": devices_used,
+        "gpu_offload_observed": gpu_offload_observed,
+        "device_lost": bool(DEVICE_LOST_RE.search(combined)),
+        "mtmd_encode_failure": bool(ENCODE_FAILURE_RE.search(combined)),
+        "vulkan_mentions": vulkan_mentions,
+        "vulkan_note": ("Vulkan mentions are informational: the backend DLL is loaded and "
+                        "its devices are enumerated at startup even when nothing is "
+                        "submitted to the GPU, so a mention is not usage."),
+        "verdict": verdict,
+    }
+
+
+def describe_failure(exit_code: int | None, evidence: dict) -> list[str]:
+    """Plain-language notes for a failed run, from what was observed only."""
+    notes: list[str] = []
+    if evidence.get("device_lost"):
+        notes.append("the runtime's log reports a lost GPU device "
+                     "(ggml_vulkan: device lost): the Vulkan backend failed while it was "
+                     "in use. This is the failure the CPU-only default exists for; see "
+                     "LOCAL_EXECUTION.md")
+        if exit_code == WINDOWS_FAST_FAIL:
+            notes.append(f"exit code {exit_code} is 0x{WINDOWS_FAST_FAIL:08X}, the code "
+                         f"Windows reports when a process is terminated by an "
+                         f"unrecoverable fault — consistent with a fault inside the "
+                         f"graphics driver rather than with a model or prompt problem")
+        elif exit_code is not None and exit_code > 255:
+            notes.append(f"exit code {exit_code} is 0x{exit_code & 0xFFFFFFFF:08X}, a "
+                         f"Windows status code rather than a small process exit code")
+    if evidence.get("mtmd_encode_failure"):
+        notes.append("the runtime failed inside mtmd_batch_encode (image encoding), "
+                     "before any text generation started")
+    if evidence.get("gpu_offload_observed"):
+        notes.append("the log shows the model used a GPU device; if that was not asked "
+                     "for with --ngl/--device/--mmproj-offload, report it — the validated "
+                     "path is meant to be CPU-only")
+    return notes
+
+
+# `-dev none` is llama.cpp's own way of saying "no GPU device", and it is present
+# in the build this lab documents (b11026). A much older build would reject it as
+# an unknown device, and that must produce a way forward rather than a puzzle.
+PIN_REJECTED_RE = re.compile(r"invalid device|unknown argument|unrecognized argument",
+                             re.IGNORECASE)
+
+
+def cpu_pin_rejected_hint(log_text: str, policy: dict) -> list[str]:
+    """A way forward if a build refuses one of the CPU-only pins."""
+    if not policy.get("cpu_only") or not log_text or not PIN_REJECTED_RE.search(log_text):
+        return []
+    return ["the runtime rejected one of the CPU-only pins (see the log line above). "
+            "Some llama.cpp builds predate `-dev none`; update to the current release, "
+            "or run the equivalent CPU-only command with --no-cpu-only --ngl 0 "
+            "--no-mmproj-offload (LOCAL_EXECUTION.md, step 7)"]
+
+
+def read_tokenizer_metadata(path: Path) -> dict:
+    """Read the two GGUF keys that decide the detokenize path — never fatal.
+
+    This is the metadata the runtime itself will read, so it is worth showing next
+    to the override: it is what the override is *for*. It is deliberately not
+    allowed to decide anything — if the reader fails, that is recorded and the
+    documented override still applies, because the file at this path is expected
+    to be the pinned artifact (whose digest was just checked) and its decode path
+    has been observed locally.
+    """
+    try:
+        gguf = _load("dg_gguf", "gguf.py")
+        parsed = gguf.read_metadata(path)
+        metadata = parsed.get("metadata", {})
+        model = metadata.get("tokenizer.ggml.model")
+        pre = metadata.get("tokenizer.ggml.pre")
+        risk = gguf.tokenizer_decode_risk(model, pre)
+        return {
+            "read": True,
+            "metadata_read_completely": bool(parsed.get("metadata_read")),
+            "model": model,
+            "pre": pre,
+            "escape_whitespaces": risk["escape_whitespaces"],
+            "decode_path": risk["decode_path"],
+            "risk": risk["risk"],
+            "note": risk["note"],
+        }
+    except Exception as exc:
+        return {
+            "read": False,
+            "metadata_read_completely": False,
+            "model": None,
+            "pre": None,
+            "escape_whitespaces": None,
+            "decode_path": None,
+            "risk": "unknown",
+            "error": f"{type(exc).__name__}: {exc}",
+            "note": ("the GGUF metadata could not be read, so the decode path could not "
+                     "be cross-checked; the documented override still applies and this "
+                     "failure is recorded rather than guessed around"),
+        }
 
 
 def write_report(report: dict, out_dir: Path, logs_dir: Path, tag: str) -> tuple[Path, Path]:
@@ -581,10 +902,33 @@ def main() -> int:
     ap.add_argument("--threads", type=int, default=0,
                     help="Threads (-t). 0 = let llama.cpp decide")
     ap.add_argument("--ngl", type=int, default=None,
-                    help="GPU layers (-ngl). Omit for the default; this lab does "
-                         "not require a GPU")
-    ap.add_argument("--no-mmproj-offload", action="store_true",
-                    help="Keep the projector on the CPU")
+                    help="GPU layers (-ngl). Any value other than 0 leaves CPU-only mode, "
+                         "and is recorded as an explicit GPU request; omit it to stay on "
+                         "the validated CPU path")
+    ap.add_argument("--device", default=None,
+                    help="GPU device list for llama.cpp (-dev), e.g. Vulkan0. 'none' means "
+                         "'no GPU device', which is what CPU-only mode passes. Anything "
+                         "else leaves CPU-only mode")
+    ap.add_argument("--cpu-only", dest="cpu_only", action="store_true", default=True,
+                    help="Pin the run to the CPU (default): -ngl 0, -dev none and "
+                         "--no-mmproj-offload. This is the validated execution mode")
+    ap.add_argument("--no-cpu-only", dest="cpu_only", action="store_false",
+                    help="Do not pin anything: llama.cpp's own defaults decide where the "
+                         "model and the projector run. Not the validated path")
+    ap.add_argument("--mmproj-offload", dest="mmproj_offload", action="store_true",
+                    default=None,
+                    help="Let the projector run on a GPU device (leaves CPU-only mode)")
+    ap.add_argument("--no-mmproj-offload", dest="mmproj_offload", action="store_false",
+                    help="Keep the projector on the CPU (already the default in CPU-only "
+                         "mode; accepted so existing commands keep working)")
+    ap.add_argument("--tokenizer-pre", default=DEFAULT_TOKENIZER_PRE, metavar="PRE",
+                    help="Value for --override-kv tokenizer.ggml.pre=str:<PRE>, applied in "
+                         "memory only. Default: gemma4, the documented decoding workaround "
+                         "for the pinned DentalGemma GGUF (OUTPUT_DECODING.md)")
+    ap.add_argument("--no-tokenizer-pre-override", dest="tokenizer_pre",
+                    action="store_const", const="",
+                    help="Pass no tokenizer override at all: the runtime's own metadata "
+                         "applies, and [UNK_BYTE_...] markers are likely for this artifact")
     ap.add_argument("--extra", nargs=argparse.REMAINDER, default=None,
                     help="Verbatim extra flags appended after the known ones")
     ap.add_argument("--timeout", type=float, default=1800.0,
@@ -613,6 +957,13 @@ def main() -> int:
     print(f"\n  main   : {main_gguf}")
     print(f"  mmproj : {mmproj_gguf}")
     print(f"  image  : {args.image if args.image else '(not given)'}")
+    # The execution policy is resolved once, here, and the same dict is used to
+    # build the command and to fill the report: the record cannot drift from the
+    # argv that actually ran.
+    policy = resolve_execution_policy(args)
+    print(f"  mode    : " + ("CPU-only (validated path)" if policy["cpu_only"]
+                              else "GPU allowed (not the validated path)"))
+    print(f"            {policy['reason']}")
 
     report: dict = {
         "schema": "dentalgemma.run_report/1",
@@ -648,6 +999,22 @@ def main() -> int:
         # consumer to guess whether the fields exist.
         "capture": None,
         "output_integrity": None,
+        # `execution` is known before the run (it is the requested policy) and
+        # `device_evidence` inside it is null until the runtime has spoken.
+        "execution": policy,
+        "validation_scope": {
+            "functional_inference": False,
+            "clinical_validation": False,
+            "statement": (
+                "This report records whether the model produced text locally on this "
+                "machine, on the CPU, and what that cost. It is not a clinical "
+                "evaluation: no ground truth, no accuracy metric, and the publisher does "
+                "not release this model as a medical device. Any generated text is "
+                "unvalidated model output and must not be used for patient care. A run "
+                "counts as a success here when text was produced — never because the "
+                "text is correct, which this lab does not measure."
+            ),
+        },
         "status": artifacts.STATUS_UNKNOWN,
         "notes": [],
     }
@@ -772,18 +1139,61 @@ def main() -> int:
     else:
         report["notes"].append("SHA-256 mismatch against the published digest")
 
+    # ---- the tokenizer metadata the override is for ------------------------
+    # Read from the file itself, and shown next to the override. It is evidence,
+    # not an input: the override is applied because the operator's run showed the
+    # broken decode path for this pinned artifact, and a metadata quirk must not
+    # be able to switch the workaround off silently.
+    tokenizer_metadata = read_tokenizer_metadata(main_gguf)
+    policy["tokenizer_metadata"] = tokenizer_metadata
+    risk = tokenizer_metadata.get("risk")
+    if risk == "unk-byte-markers-possible":
+        policy["override_matches_metadata"] = True
+        metadata_line = ("metadata selects the GPT-2 byte-level decode path "
+                         "(escape_whitespaces=false): exactly the condition the override "
+                         "below addresses")
+    elif risk == "none":
+        policy["override_matches_metadata"] = False
+        metadata_line = ("metadata already selects a whitespace-escaped decode path; the "
+                         "override is redundant here — it is still applied, so the run "
+                         "stays comparable with the documented one")
+        policy["notes"].append(
+            "the GGUF's own metadata does not show the decode path this override "
+            "addresses; the override was applied anyway and is recorded (check "
+            "tokenizer_metadata before trusting either)")
+    else:
+        policy["override_matches_metadata"] = None
+        metadata_line = "no decode-path prediction could be made from the metadata"
+
+    if tokenizer_metadata.get("read"):
+        print(f"  tokenizer   : model={tokenizer_metadata['model']} "
+              f"pre={tokenizer_metadata['pre'] if tokenizer_metadata['pre'] is not None else '(missing)'}"
+              f"  risk={risk}")
+        if not tokenizer_metadata.get("metadata_read_completely"):
+            print("                (the metadata section was only partially readable)")
+    else:
+        print(f"  tokenizer   : metadata not readable ({tokenizer_metadata.get('error')})")
+    print(f"                {metadata_line}")
+
     # ---- command ----------------------------------------------------------
-    cmd = build_command(binary, main_gguf, mmproj_gguf, image, args)
+    cmd = build_command(binary, main_gguf, mmproj_gguf, image, args, policy=policy)
     report["command"] = cmd
     report["config"] = {
         "ctx": args.ctx, "predict": args.predict, "temp": args.temp,
-        "seed": args.seed, "threads": args.threads, "ngl": args.ngl,
-        "no_mmproj_offload": args.no_mmproj_offload,
+        "seed": args.seed, "threads": args.threads, "ngl": policy["ngl"],
+        "cpu_only": policy["cpu_only"],
+        "device": policy["device"],
+        "mmproj_offload": policy["mmproj_offload"],
+        "tokenizer_pre_override": policy["tokenizer_pre_override"],
+        # kept, with its original meaning: the projector is on the CPU
+        "no_mmproj_offload": not policy["mmproj_offload"],
         "sample_interval_seconds": args.sample_interval,
         "timeout_seconds": args.timeout,
     }
     print("\n  command:")
     print("    " + " ".join(f'"{part}"' if " " in part else part for part in cmd))
+    print(f"  workaround  : " + ("; ".join(policy["workarounds"])
+                                  if policy["workarounds"] else "none"))
 
     if args.dry_run:
         print("\n  --dry-run: nothing was executed.")
@@ -896,12 +1306,30 @@ def main() -> int:
         },
     })
 
+    # ---- what the runtime's own log says about where the work ran ---------
+    evidence = inspect_runtime_log(stdout, stderr)
+    policy["device_evidence"] = evidence
+    if policy["cpu_only"] and evidence["gpu_offload_observed"]:
+        policy["notes"].append(
+            "CPU-only mode was requested, but the runtime's log shows GPU work (a device "
+            "was selected, or layers were offloaded to it). This run is not the validated "
+            "CPU path — do not treat its figures as the CPU figures")
+    elif policy["cpu_only"] and evidence["verdict"] == "not-stated-in-log":
+        policy["notes"].append(
+            "CPU-only mode was requested and the command line pins it (-ngl 0, -dev none, "
+            "--no-mmproj-offload), but the runtime's log does not state which device it "
+            "used: the request is recorded, the runtime's own confirmation is absent")
+
     print(f"\n  exit code   : {proc.returncode}"
           + ("  (killed after timeout)" if timed_out else ""))
     print(f"  duration    : {elapsed:.2f} s")
+    # `is not None`, not truthiness: a measured peak rounds to 0.0 GiB for a very
+    # small child, and 0.0 is falsy — testing the value would print "not
+    # measurable" for a measurement that did happen.
     print(f"  peak RAM    : "
           + (f"{report['peak_ram_gb']} GiB  ({monitor_task.get('probe')})"
-             if report["peak_ram_gb"] else "not measurable on this platform"))
+             if report["peak_ram_gb"] is not None
+             else "not measurable on this platform"))
     if report.get("cpu_seconds") is not None:
         print(f"  cpu time    : {report['cpu_seconds']:.2f} s")
 
@@ -932,11 +1360,30 @@ def main() -> int:
     print(f"\n  raw streams : {stdout_raw_path.name}, {stderr_raw_path.name} "
           f"(stdout {stdout_audit['bytes']:,} B, stderr {stderr_audit['bytes']:,} B)")
 
+    # ---- CPU vs GPU, as the runtime itself reported it ---------------------
+    print("  device use  : " + {
+        "cpu-only-confirmed-by-log": "CPU-only, confirmed by the runtime's own log",
+        "gpu-work-observed": "a GPU device was used (see the lines below)",
+        "not-stated-in-log": "not stated by the runtime's log",
+    }[evidence["verdict"]])
+    if evidence["clip_backend"]:
+        print(f"                projector backend : {evidence['clip_backend']}")
+    if evidence["layers_offloaded"]:
+        print(f"                layers to GPU     : {evidence['layers_offloaded']}")
+    for line in evidence["devices_used"][:3]:
+        print(f"                {line}")
+    if evidence["vulkan_mentions"]:
+        print(f"                {evidence['vulkan_mentions']} Vulkan mention(s) in the log "
+              f"(loading/enumerating the backend is not using it)")
+    for note in policy["notes"]:
+        print(f"  [WARN] {note}")
+
     # ---- verdict ----------------------------------------------------------
     success = (not timed_out) and proc.returncode == 0 and bool(text)
     report["inference_success"] = success
     report["output_path"] = str(text_path) if text else None
     report["output_chars"] = len(text)
+    report["validation_scope"]["functional_inference"] = success
 
     machine = sysinfo.cpu_model()
     memory = sysinfo.memory_bytes()
@@ -945,9 +1392,17 @@ def main() -> int:
     report["cuda"] = bool(sysinfo.nvidia_gpus()["present"])
 
     if success:
+        if policy["cpu_only"] and not evidence["gpu_offload_observed"]:
+            where = "on the CPU"
+        elif evidence["gpu_offload_observed"]:
+            where = "with GPU work (the runtime's log shows a GPU device)"
+        else:
+            where = "(device not stated by the runtime's log)"
         print("\n" + "=" * 78)
-        print(" SUCCESS — the model produced text on this machine, on the CPU")
+        print(f" SUCCESS — the model produced text on this machine, {where}")
         print(f" {len(text)} characters written to {text_path.name}")
+        print(" Functional inference only: no accuracy was measured and this is not a")
+        print(" validated diagnosis. See validation_scope in the report.")
         print("=" * 78)
         return finish(artifacts.STATUS_OPERATIONAL, 0)
 
@@ -962,6 +1417,13 @@ def main() -> int:
             print("\n  last lines from the runtime log:")
             for line in tail:
                 print(f"    {line}")
+    # A failure is described from what was observed, and nothing is attributed to
+    # the model that the runtime's own log does not support.
+    failure_notes = (describe_failure(proc.returncode, evidence)
+                     + cpu_pin_rejected_hint(stdout + "\n" + stderr, policy))
+    for note in failure_notes:
+        report["notes"].append(note)
+        print(f"  [cause] {note}")
 
     print("\n" + "=" * 78)
     print(" FAILED — no usable text output was produced")

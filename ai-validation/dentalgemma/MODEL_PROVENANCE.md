@@ -172,7 +172,7 @@ Nothing in this lab reproduces, endorses or repeats these numbers.
 | A Q4_K_M 4-bit model "requires approximately ~2.5GB to 3GB RAM" | GGUF model card |
 | The card recommends Q4_K_M or higher; aggressive quantisation degrades quality | GGUF model card |
 | Multimodal needs both `-m` and `--mmproj` | llama.cpp `docs/multimodal.md` |
-| By default the projector is offloaded to a GPU; `--no-mmproj-offload` prevents that | llama.cpp `docs/multimodal.md` |
+| By default the projector is offloaded to a GPU; `--no-mmproj-offload` prevents that — and `-ngl` defaults to *auto*, so the language model is not pinned to the CPU either. `scripts/run_dentalgemma.py` therefore passes `-ngl 0`, `-dev none` **and** `--no-mmproj-offload` unless a GPU is asked for explicitly | llama.cpp `docs/multimodal.md`, `common/common.h` (`n_gpu_layers = -1`), `common/arg.cpp` |
 | Current multimodal tools are `llama-mtmd-cli`, `llama-cli`, `llama-server` | llama.cpp `docs/multimodal.md` |
 | **Gemma 3 vision is "very experimental, only used for demo purpose"** | llama.cpp `docs/multimodal/gemma3.md` |
 | The card's example uses `llama-llava-cli`, which llama.cpp has since replaced with `libmtmd` | GGUF model card vs llama.cpp PRs #12849 / #13012 |

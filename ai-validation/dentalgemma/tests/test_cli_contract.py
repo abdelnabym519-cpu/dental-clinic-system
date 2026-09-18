@@ -169,11 +169,14 @@ class TestCommandConstruction(unittest.TestCase):
 
     def _args(self, **overrides):
         runner = self.runner
-        argv = ["--model", "man"] if False else []
         parser_args = {
             "prompt": "describe this radiograph",
             "ctx": 4096, "predict": 128, "temp": 0.1, "seed": 42,
-            "threads": 0, "ngl": None, "no_mmproj_offload": False,
+            "threads": 0, "ngl": None,
+            # None = follow the CPU-only policy; the resolved value is what the
+            # command and the report both carry (see resolve_execution_policy)
+            "cpu_only": True, "device": None, "mmproj_offload": None,
+            "tokenizer_pre": runner.DEFAULT_TOKENIZER_PRE,
             "extra": None,
         }
         parser_args.update(overrides)
@@ -205,10 +208,20 @@ class TestCommandConstruction(unittest.TestCase):
         self.assertEqual(cmd[cmd.index("--seed") + 1], "7",
                          "a fixed seed is what makes a rerun comparable")
 
-    def test_no_gpu_flag_unless_asked(self):
+    def test_no_gpu_is_used_unless_asked(self):
+        """The default pins the CPU; nothing here reaches for a GPU by accident.
+
+        llama.cpp's own default for `-ngl` is *auto*, and the projector goes to
+        the first GPU backend that answers — which on this machine is the Vulkan
+        device that lost the device mid-encode. The default command therefore has
+        to say otherwise, explicitly.
+        """
         args = self._args()
         cmd = self.runner.build_command(Path("b"), Path("m"), Path("p"), Path("i"), args)
-        self.assertNotIn("-ngl", cmd, "this lab must not require a GPU")
+        self.assertEqual(cmd[cmd.index("-ngl") + 1], "0", "-ngl 0 is the CPU-only pin")
+        self.assertEqual(cmd[cmd.index("-dev") + 1], "none")
+        self.assertIn("--no-mmproj-offload", cmd)
+        self.assertNotIn("--mmproj-offload", cmd)
 
     def test_threads_flag_is_omitted_when_not_requested(self):
         """`-t 0` is not "auto" on every llama.cpp build — omitting it is."""
@@ -222,10 +235,19 @@ class TestCommandConstruction(unittest.TestCase):
         self.assertIn("-t", cmd)
         self.assertEqual(cmd[cmd.index("-t") + 1], "8")
 
-    def test_mmproj_offload_flag_is_opt_in(self):
-        args = self._args(no_mmproj_offload=True)
+    def test_a_gpu_request_is_honoured_and_drops_the_cpu_pins(self):
+        args = self._args(ngl=35, mmproj_offload=True)
         cmd = self.runner.build_command(Path("b"), Path("m"), Path("p"), Path("i"), args)
-        self.assertIn("--no-mmproj-offload", cmd)
+        self.assertEqual(cmd[cmd.index("-ngl") + 1], "35")
+        self.assertNotIn("-dev", cmd)
+        self.assertIn("--mmproj-offload", cmd)
+        self.assertNotIn("--no-mmproj-offload", cmd)
+
+    def test_mmproj_offload_flag_is_still_accepted_explicitly(self):
+        """The operator's proven command keeps working, flag and all."""
+        args = self._args(mmproj_offload=False)
+        cmd = self.runner.build_command(Path("b"), Path("m"), Path("p"), Path("i"), args)
+        self.assertEqual(cmd.count("--no-mmproj-offload"), 1)
 
     def test_extra_flags_are_appended_verbatim(self):
         args = self._args(extra=["--verbose", "-b", "512"])
@@ -434,12 +456,12 @@ class TestReportSchemaAdditions(unittest.TestCase):
 
     def test_the_required_field_set_is_unchanged(self):
         self.assertEqual(len(self.schema["required"]), self.REQUIRED_BEFORE)
-        for field in ("capture", "output_integrity"):
+        for field in ("capture", "output_integrity", "execution", "validation_scope"):
             self.assertNotIn(field, self.schema["required"],
                              f"{field} is optional: an older report stays valid")
 
     def test_the_new_blocks_are_described_in_the_schema(self):
-        for field in ("capture", "output_integrity"):
+        for field in ("capture", "output_integrity", "execution", "validation_scope"):
             with self.subTest(field=field):
                 prop = self.schema["properties"][field]
                 self.assertIn("null", prop["type"],
@@ -452,9 +474,25 @@ class TestReportSchemaAdditions(unittest.TestCase):
         self.assertIn("preserved", note)
 
     def test_the_template_is_null_for_the_new_blocks(self):
-        for field in ("capture", "output_integrity"):
+        for field in ("capture", "output_integrity", "execution", "validation_scope"):
             self.assertIsNone(self.template[field],
                               f"{field} must be null until a run measures it")
+
+    def test_execution_scope_is_described_as_a_request_and_a_workaround(self):
+        """The two new blocks have to say what they are *not*.
+
+        `execution` is where the CPU-only pins and the decoding override are
+        recorded, and `validation_scope` is where the difference between "the
+        model produced text" and "the text is correct" is stated. A schema that
+        describes them vaguely is how a workaround turns into a claim.
+        """
+        note = self.schema["properties"]["execution"]["description"]
+        self.assertIn("device_evidence", note)
+        self.assertIn("in memory only", note)
+        self.assertIn("workaround", note)
+        scope = self.schema["properties"]["validation_scope"]["description"]
+        self.assertIn("clinical_validation", scope)
+        self.assertIn("always", scope)
 
     def test_the_schema_has_no_baked_in_measurements(self):
         """The schema describes shape, never a value from a machine."""
@@ -462,6 +500,46 @@ class TestReportSchemaAdditions(unittest.TestCase):
         for accidental in ("e29681", "311ea621", "3d03262e", "5.152", "42.686"):
             self.assertNotIn(accidental, text,
                              f"{accidental} is a measurement, not a schema description")
+
+
+class TestTokenizerMetadataCrossCheck(unittest.TestCase):
+    """The runner reads the decode-path keys out of the file it is about to run.
+
+    This is evidence, not an input: the override is applied because the operator's
+    run showed the broken path for this pinned artifact, and the metadata is taken
+    from the file only to *show* whether it agrees. A file whose metadata cannot be
+    read must not, silently, turn the workaround off.
+    """
+
+    def _read(self, payload: bytes) -> dict:
+        runner = _load("dg_runner_metadata", "run_dentalgemma.py")
+        with tempfile.TemporaryDirectory(prefix="dentalgemma_meta_") as tmp:
+            path = Path(tmp) / "main.gguf"
+            path.write_bytes(payload)
+            return runner.read_tokenizer_metadata(path)
+
+    def test_the_risk_path_is_read_from_the_file(self):
+        result = self._read(synthetic_gguf(kv_strings={"tokenizer.ggml.model": "gpt2"}))
+        self.assertIs(result["read"], True)
+        self.assertEqual(result["model"], "gpt2")
+        self.assertIsNone(result["pre"])
+        self.assertEqual(result["risk"], "unk-byte-markers-possible")
+        self.assertIs(result["escape_whitespaces"], False)
+        self.assertIn("llama_decode_text", result["decode_path"])
+
+    def test_the_safe_path_is_read_as_safe(self):
+        result = self._read(synthetic_gguf(kv_strings={
+            "tokenizer.ggml.model": "gpt2", "tokenizer.ggml.pre": "gemma4"}))
+        self.assertEqual(result["risk"], "none")
+        self.assertIs(result["escape_whitespaces"], True)
+
+    def test_an_unreadable_file_is_reported_not_fatal(self):
+        result = self._read(b"this is not a GGUF container at all")
+        self.assertIs(result["read"], False)
+        self.assertEqual(result["risk"], "unknown")
+        self.assertIn("GgufError", result["error"])
+        self.assertIn("still applies", result["note"],
+                      "the override must survive an unreadable header, and say so")
 
 
 class TestOutputDraining(unittest.TestCase):

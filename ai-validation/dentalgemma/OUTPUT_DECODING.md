@@ -166,16 +166,37 @@ projector:
 `--override-kv` changes metadata *in memory only*: the GGUF on disk stays
 byte-identical, its hash does not change, and nothing is re-converted. If the
 mismatch in §2 is the cause, forcing the pre-tokenizer that sets
-`escape_whitespaces = true` removes the markers:
+`escape_whitespaces = true` removes the markers.
+
+**As of this commit the runner does that by default**, so the plain run *is* the
+override. The comparison is now between the default run and an explicitly disabled
+one — the same prompt, the same image, the same parameters, one metadata setting
+apart:
 
 ```powershell
-# diagnostic run — same prompt, same image, same parameters, one metadata override
+# with the override (the default; it is also printed in the command line)
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp
+
+# without it — this is the artifact's own behaviour, and the markers should return
 python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp `
-    --extra --override-kv tokenizer.ggml.pre=str:gemma4
+    --no-tokenizer-pre-override
 ```
 
-Also run the same command **without** `--extra ...` to keep the two reports
-side by side (the lab never overwrites the earlier files, so both survive).
+Both reports survive (the lab never overwrites the earlier files), and each one
+states which of the two it was: `execution.tokenizer_pre_override`,
+`execution.workarounds`, and the `--override-kv` pair in `command`.
+
+```powershell
+# a different pre-tokenizer value, if you want to test another one
+python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llama.cpp `
+    --tokenizer-pre llama3
+```
+
+Passing it by hand through `--extra --override-kv tokenizer.ggml.pre=str:X` still
+works, but it can no longer *change* the value: llama.cpp keeps overrides in a map
+and the first occurrence of a key wins, and this lab's own flag is appended before
+`--extra`. The runner says so in `execution.notes` when it sees a passthrough
+override for that key. Use `--tokenizer-pre`.
 
 Interpretation:
 
@@ -218,7 +239,18 @@ Changed (Phase 2 of this task, all inside `ai-validation/dentalgemma/`):
 * the runner's own console output is UTF-8 with `errors="replace"`, so a Windows
   code page can no longer crash a finished run before the report is written;
 * `verify_artifacts.py` / `gguf.py` now report the tokenizer metadata and the
-  decode path it selects, with the runtime rule and its source cited.
+  decode path it selects, with the runtime rule and its source cited;
+* the workaround is a **first-class, recorded setting** instead of a passthrough:
+  `--tokenizer-pre <value>` (default `gemma4`) and `--no-tokenizer-pre-override`,
+  with the applied value, its source and the file's own metadata recorded in
+  `execution` — so a run can never be quoted without saying which decoding it
+  used. The runner also records the same report's `validation_scope`, because a
+  decoded answer is still not a diagnosis;
+* the CPU is **pinned by default** (`-ngl 0`, `-dev none`, `--no-mmproj-offload`),
+  with `execution.device_evidence` recording what the runtime's own log said about
+  the device it actually used. A run that had to be forced onto the CPU must not be
+  reported as though the artifact were simply "operational" (see
+  `LOCAL_EXECUTION.md` step 7).
 
 Deliberately **not** done:
 

@@ -349,6 +349,169 @@ class TestEndToEndCapture(unittest.TestCase):
                          "a dry run must not create run artifacts")
 
 
+@unittest.skipIf(os.name == "nt",
+                 "an executable script is not a runnable runtime on Windows; the "
+                 "policy itself is covered platform-independently in "
+                 "test_execution_policy.py")
+class TestCpuOnlyExecutionEndToEnd(unittest.TestCase):
+    """The whole CPU-first path: argv → run → report → what the runtime said.
+
+    The runtime is the synthetic one from this file, so what is being tested is
+    the lab's own plumbing — that the CPU-only pins reach the child's argv, that
+    the decoding workaround is applied and recorded, that the artifacts are
+    untouched, and that the report repeats only what the child's log actually
+    said about the device.
+    """
+
+    # llama.cpp's own wording, from b11026: the loader prints the projector's
+    # backend, and a GPU-enabled build always reports the layer count (0 when
+    # nothing was offloaded). ggml_vulkan lines appear in an enumeration too.
+    CPU_LOG = (
+        "ggml_vulkan: Found 1 Vulkan devices:\n"
+        "ggml_vulkan: 0 = Intel(R) Iris(R) Xe Graphics (Intel Corporation)\n"
+        "llama_model_loader: - kv  12: tokenizer.ggml.model str = gpt2\n"
+        "load_tensors: offloading 0 repeating layers to GPU\n"
+        "load_tensors: offloaded 0/35 layers to GPU\n"
+        "clip_ctx: CLIP using CPU backend\n"
+        "llama_perf_context_print: total time = 38687.20 ms\n"
+    )
+    GPU_LOG = (
+        "llama_model_load: using device Vulkan0 (Intel(R) Iris(R) Xe Graphics) - 4096 MiB free\n"
+        "load_tensors: offloading 34 repeating layers to GPU\n"
+        "load_tensors: offloaded 35/35 layers to GPU\n"
+        "clip_ctx: CLIP using Vulkan0 backend\n"
+    )
+    LOST_LOG = (
+        "ggml_vulkan: device lost on Vulkan0\n"
+        "clip_ctx: CLIP using Vulkan0 backend\n"
+        "mtmd_batch_encode: error\n"
+        "Failed to encode mtmd batch, res = -1\n"
+    )
+    ANSWER = "This is a panoramic dental radiograph. No obvious abnormality is visible.\n"
+
+    def _rig(self, **kwargs) -> CaptureRig:
+        rig = CaptureRig(**kwargs)
+        self.addCleanup(rig.cleanup)
+        return rig
+
+    def test_a_real_cpu_run_reports_every_field_the_handoff_needs(self):
+        """The report a real run must produce, exercised end to end."""
+        # `sleep`: the sampler has to catch a live child for the memory probe to
+        # have anything to read, and a 40 ms script can be gone before the first
+        # sample. Real inferences take minutes; this makes the rig representative.
+        rig = self._rig(stdout=self.ANSWER.encode("utf-8"),
+                        stderr=self.CPU_LOG.encode("utf-8"), sleep=0.3)
+        result = rig.run()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = rig.report()
+
+        # the ten values the handoff records
+        self.assertEqual(report["status"], "OPERATIONAL")
+        self.assertIs(report["inference_success"], True)
+        self.assertEqual(report["exit_code"], 0)
+        self.assertIsInstance(report["inference_seconds"], float)
+        self.assertGreater(report["peak_rss_bytes"], 0, "the memory probe must have read")
+        self.assertIsNotNone(report["memory_probe"])
+        self.assertIsNotNone(report["cpu_seconds"])
+        self.assertEqual(report["main_sha256"], rig.sha256(rig.main_gguf))
+        self.assertEqual(report["mmproj_sha256"], rig.sha256(rig.mmproj_gguf))
+        self.assertEqual(report["output_path"], str(rig.artifact("response.txt")))
+        self.assertEqual(report["output_chars"], len(self.ANSWER.strip()))
+
+        # the command, verbatim, with the pins and the workaround in it
+        cmd = report["command"]
+        self.assertEqual(cmd[cmd.index("-ngl") + 1], "0")
+        self.assertEqual(cmd[cmd.index("-dev") + 1], "none")
+        self.assertIn("--no-mmproj-offload", cmd)
+        self.assertIn("tokenizer.ggml.pre=str:gemma4", cmd)
+        self.assertEqual(report["execution"]["workarounds"],
+                         ["CPU-only execution (-ngl 0, -dev none, --no-mmproj-offload): "
+                          "no GPU layer is offloaded and no GPU device is selected",
+                          "tokenizer pre-tokenizer override in memory "
+                          "(--override-kv tokenizer.ggml.pre=str:gemma4): the GGUF on "
+                          "disk is not modified"])
+
+        # the runtime's own account of the device, recorded next to the request
+        evidence = report["execution"]["device_evidence"]
+        self.assertEqual(evidence["verdict"], "cpu-only-confirmed-by-log")
+        self.assertEqual(evidence["clip_backend"], "CPU")
+        self.assertEqual(evidence["layers_offloaded"], "0/35")
+        self.assertIs(evidence["gpu_offload_observed"], False)
+        self.assertEqual(evidence["devices_used"], [])
+        self.assertGreater(evidence["vulkan_mentions"], 0,
+                           "enumeration appears in the log even for a CPU-only run")
+
+        # and the scope statement, which must never claim clinical validation
+        self.assertIs(report["validation_scope"]["functional_inference"], True)
+        self.assertIs(report["validation_scope"]["clinical_validation"], False)
+        # the banner wraps, so match the two phrases rather than the sentence
+        banner = " ".join(result.stdout.split("SUCCESS")[-1].split())
+        self.assertIn("Functional inference only", banner)
+        self.assertIn("validated diagnosis", banner)
+
+    def test_a_run_never_modifies_the_artifacts(self):
+        rig = self._rig(stdout=self.ANSWER.encode("utf-8"),
+                        stderr=self.CPU_LOG.encode("utf-8"))
+        before = {path: hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in (rig.main_gguf, rig.mmproj_gguf)}
+        rig.run()
+        after = {path: hashlib.sha256(path.read_bytes()).hexdigest()
+                 for path in (rig.main_gguf, rig.mmproj_gguf)}
+        self.assertEqual(before, after, "a run must not touch the weights it runs")
+        report = rig.report()
+        self.assertEqual(report["main_sha256"], before[rig.main_gguf])
+        self.assertEqual(report["mmproj_sha256"], before[rig.mmproj_gguf])
+
+    def test_the_workaround_can_be_switched_off_for_a_run(self):
+        rig = self._rig(stdout=self.ANSWER.encode("utf-8"),
+                        stderr=self.CPU_LOG.encode("utf-8"))
+        result = rig.run(extra=["--no-tokenizer-pre-override"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = rig.report()
+        self.assertIsNone(report["execution"]["tokenizer_pre_override"])
+        self.assertNotIn("--override-kv", report["command"])
+        self.assertNotIn("tokenizer pre-tokenizer override",
+                         " ".join(report["execution"]["workarounds"]))
+        self.assertIn("disabled", report["execution"]["tokenizer_pre_override_source"])
+
+    def test_gpu_work_while_cpu_only_was_requested_is_a_warning(self):
+        """The protection against "accidental Vulkan" that must not be silent."""
+        rig = self._rig(stdout=self.ANSWER.encode("utf-8"),
+                        stderr=self.GPU_LOG.encode("utf-8"))
+        result = rig.run()
+        report = rig.report()
+
+        evidence = report["execution"]["device_evidence"]
+        self.assertEqual(evidence["verdict"], "gpu-work-observed")
+        self.assertIs(evidence["gpu_offload_observed"], True)
+        self.assertEqual(evidence["layers_offloaded"], "35/35")
+        self.assertTrue(report["execution"]["notes"],
+                        "a GPU observed while CPU-only was requested must be recorded")
+        self.assertIn("not the validated CPU path",
+                      " ".join(report["execution"]["notes"]))
+        self.assertIn("[WARN]", result.stdout)
+        self.assertNotIn("on the CPU", result.stdout.split("SUCCESS")[-1].split("=")[0],
+                         "the banner must not claim the CPU when the log shows a GPU")
+
+    def test_a_vulkan_device_loss_is_reported_with_its_cause(self):
+        rig = self._rig(stdout=b"", stderr=self.LOST_LOG.encode("utf-8"), exit_code=1)
+        result = rig.run()
+        report = rig.report()
+
+        self.assertEqual(result.returncode, 6)
+        self.assertEqual(report["status"], "FAILED")
+        self.assertIs(report["inference_success"], False)
+        evidence = report["execution"]["device_evidence"]
+        self.assertIs(evidence["device_lost"], True)
+        self.assertIs(evidence["mtmd_encode_failure"], True)
+        causes = [note for note in report["notes"] if "device lost" in note]
+        self.assertTrue(causes, report["notes"])
+        self.assertTrue(any("mtmd_batch_encode" in note for note in report["notes"]))
+        self.assertIn("[cause]", result.stdout)
+        # the raw log is kept: the evidence of the failure is not cleaned away
+        self.assertIn(b"device lost", rig.artifact("stderr.raw").read_bytes())
+
+
 class TestDecodeStream(unittest.TestCase):
     """The decode helper, without a subprocess."""
 
