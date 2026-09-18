@@ -1,0 +1,18 @@
+# Model weights, real radiographs and generated reports stay on the operator's machine.
+*.pt
+*.pth
+*.onnx
+*.safetensors
+model/*
+!model/README.md
+input/*
+!input/README.md
+output/*
+!output/README.md
+reports/*
+!reports/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
