@@ -3,6 +3,14 @@
 Audit date: 2026-09-18. Scope: source auditing and artifact verification.
 **No inference was run. No artifact was modified. Nothing was integrated.**
 
+> **Revision (after the first local run).** The operator downloaded the checkpoint and
+> verified its SHA-256 locally, then ran this lab's gate on it. The gate stopped with
+> *"class name(s) missing from the bytes"* — a **false block**: it was matching the model
+> card's spellings while the checkpoint uses its own for three of the eight concepts. The
+> gate now resolves them through an explicit, closed alias table (`Missing teeth`,
+> `Periapical lesion`, `Root canal obturation`), records the file's own wording unchanged,
+> and keeps `Implant` mandatory. No checkpoint byte, weight or architecture was altered.
+
 Search for a **verification** tag:
 
 - **VERIFIED-HERE** — read directly from a primary source during this audit
@@ -58,12 +66,20 @@ downloaded during this audit** — see field 6.
 
 ## 6. SHA-256
 
-**PARTIALLY VERIFIED — metadata only.** The hub publishes the LFS digest
+**VERIFIED BY THE OPERATOR (metadata cross-checked here).** The operator downloaded the
+file on the target machine and computed its digest locally:
+`E7CC137766F44C3DAD86138A1B37622A25C496A32CCA2E7DAB1BEC1BCCF0CE98` — identical to the
+expected value (digests are case-insensitive; the gate compares them that way). The hub's LFS
+metadata independently publishes the same digest from the other direction.
+
+The audit environment still cannot recompute it — see the note below — so the verification
+rests on the operator's run, which is the run that matters, and on the hub's record agreeing
+with it. The hub publishes the LFS digest
 `e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98`, which **equals the
 expected value exactly**, and an Xet hash
 `843f906dc1a3a0f19306a19795048ad1c9c165a2e3627ee4750748926c3f0c30`.
 
-**The digest was not recomputed from the bytes.** Hugging Face is not reachable from the
+**Why the audit environment could not do it:** Hugging Face is not reachable from the
 audit environment's shell (`curl` to `huggingface.co`, `cdn-lfs.huggingface.co`,
 `hf-mirror.com` and the Xet bridge all fail with `SSL_ERROR_SYSCALL`; only the JSON/raw
 endpoints are readable through the page-fetch tool, and a 144 MB binary cannot be read that
@@ -143,35 +159,48 @@ segmentation head. Not measured from the checkpoint.
 
 ## 11. Class names and order
 
-**CORROBORATED** (three independent public sources agree on the content and order):
+**VERIFIED FROM THE FILE (via the operator's gate run) — with an alias mapping.**
 
-| idx | class |
-| --- | --- |
-| 0 | Caries |
-| 1 | Crown |
-| 2 | Filling |
-| 3 | **Implant** |
-| 4 | Missing-tooth-between |
-| 5 | Periapical-lesion |
-| 6 | Root Piece |
-| 7 | Root-Canal-Treatment |
+The checkpoint's own `names` mapping, read out of `data.pkl` by the operator's run and
+recorded in `checkpoint_ops.txt`:
 
-Sources: the model card, `model_handler.py`'s `LABELS`, and the consumer Space's
-`CLASS_NAMES`. Minor spelling differences exist between them — `Root Piece` (card, handler)
-vs `Root-Piece` (consumer), and `Root-Canal-Treatment` — which is exactly the kind of thing
-only the checkpoint's own bytes can settle.
+| idx | canonical concept (audited) | label inside `8024.pt` | match |
+| --- | --- | --- | --- |
+| 0 | Caries | `Caries` | canonical |
+| 1 | Crown | `Crown` | canonical |
+| 2 | Filling | `Filling` | canonical |
+| 3 | **Implant** | `Implant` | canonical — **mandatory** |
+| 4 | Missing-tooth-between | `Missing teeth` | alias |
+| 5 | Periapical-lesion | `Periapical lesion` | alias |
+| 6 | Root Piece | `Root Piece` | canonical |
+| 7 | Root-Canal-Treatment | `Root canal obturation` | alias |
+
+Three concepts are spelled differently inside the checkpoint than on the model card. This is
+a **naming difference, not a missing class**, and it was handled as such: the gate maps the
+canonical concept to the file's spelling through an explicit, closed table, and the report
+keeps the file's wording (`checkpoint_label`) untouched beside the canonical name. Nothing is
+matched by fuzzy similarity, so a different concept cannot be accepted as one of the eight.
+
+This is a verification alias. It does not rename anything in the model, and it is not a claim
+that two phrases are clinically interchangeable — the canonical names are the operator's
+labels for the eight audited concepts.
+
+The three public sources that first described the classes (model card, `model_handler.py`,
+the consumer Space) gave the canonical names and disagreed with each other in small ways
+(`Root Piece` vs `Root-Piece`); the file settles all of it, and only the file counts.
 
 ## 12. Is `Implant` inside the checkpoint metadata / model structure?
 
-**UNVERIFIED — and this is the field the whole audit turns on.** Three public sources
-attribute `Implant` to this model, but all three are *outside the checkpoint*. The
-audit's own success criterion (not README-only) is therefore not yet met.
+**VERIFIED FROM THE FILE — yes, at index 3, as the string `Implant` in `data.pkl`.**
 
-It *is* mechanically checkable without running anything: an Ultralytics checkpoint stores
-its `names` mapping in `data.pkl`, so the strings are present in the file's bytes. The gate
-reads them out of the pickle stream (`labels_found` / `labels_missing`, exit 5 if any is
-absent) and reports the spelling **as written in the file**. That is the check to run
-locally; it needs no torch.
+This is the field the whole audit turned on, and it is the one the first local run settled:
+the operator's gate run read the checkpoint's `names` mapping out of its own bytes and
+`Implant` is present. Nothing was executed to establish it — the inspector decodes the
+pickle stream and never constructs an object.
+
+The check is now enforced, not just observed: `Implant` is a **required** class, and the gate
+stops (exit 5) if it is absent from the bytes, before any load. `class_validation` in the
+JSON report carries the result, including the file's own spelling of every concept.
 
 ## 13. Does the checkpoint contain code / pickle objects that execute during loading?
 
@@ -256,18 +285,27 @@ results. They stay unverified until a real, authorised run happens.
 **BLOCKED** — the audit cannot be completed in this environment, and loading is not yet
 justified. This is *not* a finding against the model.
 
-Three specific blockers:
+What the operator's local run has since cleared:
 
-1. **The artifact cannot be obtained here.** Hugging Face is unreachable from this
-   environment's shell, so the 143,955,443 bytes cannot be fetched, re-hashed, or inspected.
-   Field 6 is therefore a metadata match, not a verification, and fields 7, 11 and 12 cannot
-   be read out of the file.
-2. **Field 12 (`Implant` inside the checkpoint) is unverified.** Three public sources say it
-   is there; none of them is the checkpoint.
-3. **The security question is answered only up to "there is a safe way to load it".**
+1. **Identity** — the operator's own SHA-256 matches the expected digest (field 6), so the
+   audited bytes are the bytes on disk.
+2. **The class list and `Implant`** — read out of the checkpoint itself (fields 11 and 12).
+   The gate's first run stopped on a *false* class-missing block; the alias mapping fixed it
+   without touching the checkpoint, and `Implant` presence is now enforced.
+
+What still keeps this at BLOCKED:
+
+1. **The runtime stage has not started — by instruction.** No load, no inference, no
+   Ultralytics installation. The static gate passing is not the same as the model running,
+   and an `Operational` classification is only available after a real inference on a real
+   dental radiograph.
+2. **The security question is answered only up to "there is a safe way to load it".**
    The hub rates the file `unsafe` on pattern evidence; the constrained loading path in
    Ultralytics 8.4.155 covers all 33 imports and neutralises the `getattr` entry — but that
-   path has not been exercised on this file, and the file has not been read.
+   path has not been exercised on this file, and the file has not been loaded.
+3. **The audit environment cannot fetch the artifact**, so every byte-level fact here rests
+   on the operator's machine plus the hub's metadata; that is recorded per field rather than
+   presented as an in-environment measurement.
 
 Nothing found so far disqualifies the checkpoint: it is public, ungated, Apache-2.0 as
 published, 143,955,443 bytes matching the expected digest in the hub's own LFS metadata, and
@@ -285,8 +323,9 @@ python scripts\inspect_checkpoint.py --checkpoint model\8024.pt `
     --json-out reports\checkpoint_inspection.json --dis-out reports\checkpoint_ops.txt
 ```
 
-If the gate exits 0, fields 6, 7, 11, 12 and 13 move from "corroborated/unverified" to
-"read from the file", and the classification can be raised to **READY FOR LOCAL INFERENCE**
-— which still means *nothing has run yet*, so it is not, and cannot be, `Operational`.
+If the gate exits 0 — which the corrected class resolution now allows for this file — fields
+6, 7, 11, 12 and 13 are "read from the file", and the classification can be raised to
+**READY FOR LOCAL INFERENCE**. That still means *nothing has run yet*: it is not, and cannot
+be, `Operational`.
 Any other exit code is a stop: send the JSON and the disassembly text back before touching
 the file with a loader.

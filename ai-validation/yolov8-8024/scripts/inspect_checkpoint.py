@@ -56,13 +56,48 @@ LAB = HERE.parent
 EXPECTED_SHA256 = "e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98"
 EXPECTED_SIZE = 143_955_443
 
-# The class list the publisher documents, in the order the card gives it.
-# `Implant` is the one the task cares about; the tool reports where each of these
-# appears in the checkpoint's own bytes.
-EXPECTED_LABELS = (
+# The class concepts this checkpoint is audited against, in the order the model
+# card gives them. `Implant` is the one the task cares about; the tool reports
+# where each concept appears in the checkpoint's own bytes.
+CANONICAL_CLASSES = (
     "Caries", "Crown", "Filling", "Implant", "Missing-tooth-between",
     "Periapical-lesion", "Root Piece", "Root-Canal-Treatment",
 )
+
+# Semantic alias mapping: canonical concept -> every spelling known to mean it.
+#
+# The audited checkpoint spells three of the eight concepts differently from the
+# model card. The operator's own gate run on the file (`checkpoint_ops.txt`)
+# records the checkpoint's labels as: Caries, Crown, Filling, Implant,
+# "Missing teeth", "Periapical lesion", "Root Piece", "Root canal obturation".
+# Those are naming differences, not missing classes, so the gate resolves them
+# through this table instead of stopping.
+#
+# Three rules keep the mapping honest:
+#   * the table is explicit and closed — nothing is matched by fuzzy similarity,
+#     so a *different* concept can never be accepted as one of the eight;
+#   * `as_written` always records the label exactly as the checkpoint stores it,
+#     so the model's own vocabulary is never replaced by the alias;
+#   * this is a verification alias only. It renames nothing in the model, and the
+#     concepts are the operator's canonical names — not a clinical claim that two
+#     different words describe the same finding.
+CLASS_ALIASES = {
+    "Caries": ("Caries",),
+    "Crown": ("Crown",),
+    "Filling": ("Filling",),
+    "Implant": ("Implant",),
+    "Missing-tooth-between": ("Missing-tooth-between", "Missing teeth"),
+    "Periapical-lesion": ("Periapical-lesion", "Periapical lesion"),
+    "Root Piece": ("Root Piece",),
+    "Root-Canal-Treatment": ("Root-Canal-Treatment", "Root canal obturation"),
+}
+
+# Concepts whose absence must stop the load outright. `Implant` is the subject of
+# this engine: a checkpoint without it is not the audited implant model.
+REQUIRED_CLASSES = ("Implant",)
+
+# Kept: earlier reports and tests refer to the canonical list under this name.
+EXPECTED_LABELS = CANONICAL_CLASSES
 
 # --------------------------------------------------------------------------
 # what is allowed to be in the pickle, and what stops the line
@@ -286,29 +321,79 @@ def walk_pickle(data: bytes) -> dict:
     }
 
 
-def find_labels(events, labels) -> list:
+def _normalize_label(text) -> str:
+    """Case- and separator-insensitive form of a class name (letters/digits only).
+
+    `Periapical-lesion`, `Periapical lesion` and `periapical_lesion` normalize to
+    one key; nothing else does.
+    """
+    return re.sub(r"[^a-z0-9]", "", str(text).strip().lower())
+
+
+def build_alias_index(concepts=CANONICAL_CLASSES, aliases=CLASS_ALIASES) -> dict:
+    """normalized spelling -> canonical concept.
+
+    Raises `ValueError` if one spelling is claimed by two concepts: an ambiguous
+    table must fail loudly rather than resolve a class to whichever came last.
+    """
+    index = {}
+    for concept in concepts:
+        for spelling in aliases.get(concept, (concept,)):
+            key = _normalize_label(spelling)
+            other = index.get(key)
+            if other is not None and other != concept:
+                raise ValueError(
+                    f"ambiguous alias table: {spelling!r} maps to both {other!r} and {concept!r}")
+            index[key] = concept
+    return index
+
+
+def resolve_concepts(labels, concepts=CANONICAL_CLASSES, aliases=CLASS_ALIASES) -> list:
+    """Map any accepted spelling to its canonical concept; unknown entries pass through."""
+    index = build_alias_index(concepts, aliases)
+    resolved = []
+    for label in labels:
+        hit = index.get(_normalize_label(label))
+        resolved.append(hit if hit else label)
+    return resolved
+
+
+def find_labels(events, labels, aliases=CLASS_ALIASES) -> list:
     """Where the documented class names appear in the checkpoint's own stream.
 
     In an Ultralytics checkpoint the model's `names` mapping is pickled as
     ``{0: 'Caries', 1: 'Crown', ...}``, so the label strings appear adjacent to
     their indices. This reports that adjacency as it is found — the *stream*'s
     order, which is the closest a non-executing reader can get to the model's.
+
+    Matching goes through `CLASS_ALIASES` and is case/separator-insensitive, so a
+    concept is found under the checkpoint's own spelling as well as the canonical
+    one. Each hit carries the canonical concept, the label exactly as the file
+    wrote it, and whether it was an alias resolution.
     """
-    wanted = {label.lower(): label for label in labels}
+    index = build_alias_index(tuple(labels), aliases)
     hits = []
-    for index, (kind, value, offset) in enumerate(events):
+    for position, (kind, value, offset) in enumerate(events):
         if kind != "str":
             continue
-        label = wanted.get(str(value).strip().lower())
-        if not label:
+        concept = index.get(_normalize_label(value))
+        if concept is None:
             continue
+        written = str(value)
+        # Judged on the literal spelling: "Periapical lesion" is an alias even
+        # though it normalizes to the same key as "Periapical-lesion".
+        match = "canonical" if written.strip() == concept else "alias"
         neighbour = None
-        for back in range(index - 1, max(-1, index - 4), -1):
+        for back in range(position - 1, max(-1, position - 4), -1):
             if events[back][0] == "int":
                 neighbour = events[back][1]
                 break
-        hits.append({"label": label, "index_in_stream": neighbour, "offset": offset,
-                     "as_written": value})
+        hits.append({"label": concept,            # canonical concept (name kept for callers)
+                     "canonical": concept,
+                     "as_written": str(value),    # the model's own label, untouched
+                     "match": match,              # "canonical" | "alias"
+                     "index_in_stream": neighbour,
+                     "offset": offset})
     return hits
 
 
@@ -398,6 +483,8 @@ def inspect(path: Path, labels) -> dict:
         "dangerous_globals": [],
         "labels_found": [],
         "labels_missing": list(labels),
+        "semantic_classes": [],
+        "class_validation": None,
         "key_values": [],
         "versions_found": [],
         "suspicious_strings": [],
@@ -411,7 +498,8 @@ def inspect(path: Path, labels) -> dict:
     report["size_bytes"] = path.stat().st_size
     report["size_matches_expected"] = report["size_bytes"] == EXPECTED_SIZE
     report["sha256"] = sha256_of(path)
-    report["sha256_matches_expected"] = report["sha256"] == EXPECTED_SHA256
+    report["sha256_matches_expected"] = (report["sha256"] is not None
+                                         and report["sha256"].lower() == EXPECTED_SHA256.lower())
 
     container = container_info(path)
     report["container"] = container
@@ -456,9 +544,41 @@ def inspect(path: Path, labels) -> dict:
     report["globals_by_verdict"] = dict(verdicts)
     report["key_values"] = key_values
     report["labels_found"] = found_labels
-    report["labels_missing"] = [label for label in labels
-                                if label.lower() not in {h["label"].lower()
-                                                         for h in found_labels}]
+
+    # One entry per canonical concept, in the order the audit lists them, with the
+    # spelling the checkpoint itself used. `as_written` is never rewritten.
+    first_hit = {}
+    for hit in found_labels:
+        first_hit.setdefault(hit["canonical"], hit)
+    semantic_classes = []
+    for concept in labels:
+        hit = first_hit.get(concept)
+        semantic_classes.append({
+            "canonical": concept,
+            "checkpoint_label": hit["as_written"] if hit else None,
+            "match": hit["match"] if hit else None,
+            "offset": hit["offset"] if hit else None,
+        })
+    missing = [entry["canonical"] for entry in semantic_classes
+               if entry["checkpoint_label"] is None]
+    required_missing = [concept for concept in REQUIRED_CLASSES
+                        if concept in labels and concept in missing]
+    report["semantic_classes"] = semantic_classes
+    report["labels_missing"] = missing
+    report["class_validation"] = {
+        "status": "FAIL" if missing else "PASS",
+        "canonical_classes": list(labels),
+        "checkpoint_labels": [entry["checkpoint_label"] for entry in semantic_classes
+                              if entry["checkpoint_label"] is not None],
+        "resolved_aliases": [{"canonical": entry["canonical"],
+                              "checkpoint_label": entry["checkpoint_label"]}
+                             for entry in semantic_classes if entry["match"] == "alias"],
+        "missing": missing,
+        "required_missing": required_missing,
+        "note": ("Presence check against the checkpoint's own bytes. An alias records the "
+                 "file's spelling of a concept and never replaces it; the concepts are the "
+                 "operator's canonical names, not a clinical-equivalence claim."),
+    }
     report["versions_found"] = versions
     report["suspicious_strings"] = suspicious
     return report
@@ -476,6 +596,22 @@ def verdict_exit_code(report: dict) -> int:
     return 0
 
 
+def gate_exit_code(report: dict) -> int:
+    """The full gate, in precedence order: scan, then identity, then class concepts.
+
+    A forbidden global is always reported as 3 — never masked by a size mismatch —
+    and a foreign file is always 6, never reported as a missing class.
+    """
+    code = verdict_exit_code(report)
+    if code != 0:
+        return code
+    if not (report.get("size_matches_expected") and report.get("sha256_matches_expected")):
+        return 6
+    if report.get("labels_missing"):
+        return 5
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -485,8 +621,9 @@ def main() -> int:
                         help="Expected SHA-256 of the file (default: the published one)")
     parser.add_argument("--expect-size", type=int, default=EXPECTED_SIZE,
                         help="Expected size in bytes (default: the published one)")
-    parser.add_argument("--labels", default=",".join(EXPECTED_LABELS),
-                        help="Comma-separated class names to look for in the stream")
+    parser.add_argument("--labels", default=",".join(CANONICAL_CLASSES),
+                        help="Comma-separated class concepts to require; the checkpoint's "
+                             "own spelling of each concept is accepted (see CLASS_ALIASES)")
     parser.add_argument("--json-out", default=None,
                         help="Write the full JSON report here (e.g. reports\\checkpoint_inspection.json)")
     parser.add_argument("--dis-out", default=None,
@@ -495,11 +632,14 @@ def main() -> int:
     args = parser.parse_args()
 
     path = Path(args.checkpoint)
-    labels = [label.strip() for label in args.labels.split(",") if label.strip()]
+    labels = resolve_concepts([label.strip() for label in args.labels.split(",")
+                               if label.strip()])
     report = inspect(path, labels)
     report["expected"] = {"sha256": args.expect_sha256, "size_bytes": args.expect_size}
     if report["sha256"] is not None:
-        report["sha256_matches_expected"] = report["sha256"] == args.expect_sha256
+        # Digests are case-insensitive: `certutil`/PowerShell print them upper-case.
+        report["sha256_matches_expected"] = (
+            report["sha256"].lower() == args.expect_sha256.strip().lower())
     if report["size_bytes"] is not None:
         report["size_matches_expected"] = report["size_bytes"] == args.expect_size
 
@@ -533,9 +673,16 @@ def main() -> int:
             print(f"    [{marker}] {entry['module']}.{entry['name']}  @{entry['offset']}")
 
     print(f"\n  verdicts    : {report['globals_by_verdict']}")
-    print(f"  labels found: {[h['label'] for h in report['labels_found']] or 'none'}")
+
+    validation = report["class_validation"] or {}
+    resolved = len([e for e in report["semantic_classes"] if e["checkpoint_label"]])
+    aliases = validation.get("resolved_aliases", [])
+    print(f"  classes     : {resolved}/{len(report['semantic_classes'])} concepts present "
+          f"in the bytes ({resolved - len(aliases)} canonical, {len(aliases)} alias)")
+    for entry in aliases:
+        print(f"                {entry['canonical']:>22}  ←  \"{entry['checkpoint_label']}\"")
     if report["labels_missing"]:
-        print(f"  labels not in the bytes: {report['labels_missing']}")
+        print(f"  classes not in the bytes: {report['labels_missing']}")
     if report["key_values"]:
         shown = ", ".join(f"{kv['key']}={kv['value']!r}" for kv in report["key_values"][:12])
         print(f"  key values  : {shown}")
@@ -548,11 +695,7 @@ def main() -> int:
     if args.dis_out:
         _write_disassembly(path, report, Path(args.dis_out))
 
-    code = verdict_exit_code(report)
-    if code == 0 and not (report["size_matches_expected"] and report["sha256_matches_expected"]):
-        code = 6
-    if code == 0 and report["labels_missing"]:
-        code = 5
+    code = gate_exit_code(report)
 
     print("\n" + "-" * 78)
     if code == 0:
@@ -566,8 +709,15 @@ def main() -> int:
         print(" RESULT: REVIEW — unrecognised global(s) present. Do not load until they")
         print(" are explained; send the JSON.")
     elif code == 5:
-        print(" RESULT: STOP — class name(s) missing from the bytes. This is not the")
-        print(" audited segmentation checkpoint. Do not load it as one.")
+        required = (report["class_validation"] or {}).get("required_missing") or []
+        if required:
+            print(f" RESULT: STOP — the required class {', '.join(repr(r) for r in required)} "
+                  f"is not in the bytes.")
+            print(" This is not the audited implant checkpoint. Do not load it as one.")
+        else:
+            print(" RESULT: STOP — class concept(s) missing from the bytes:")
+            print(f"          {', '.join(report['labels_missing'])}")
+            print(" This is not the audited segmentation checkpoint. Do not load it as one.")
     elif code == 6:
         print(" RESULT: STOP — size or sha256 differs from the audited artifact. Never")
         print(" load a checkpoint whose identity was not verified.")

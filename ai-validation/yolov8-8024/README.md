@@ -35,7 +35,7 @@ Both must pass before the checkpoint is loaded anywhere.
 | --- | --- |
 | `AUDIT.md` | The 16-field audit report and the current classification |
 | `scripts/inspect_checkpoint.py` | The non-executing inspector / gate (stdlib only) |
-| `tests/test_checkpoint_inspector.py` | 34 tests, including the proof that a hostile pickle is not executed |
+| `tests/test_checkpoint_inspector.py` | 42 tests, including the proof that a hostile pickle is not executed |
 | `model/` | Where `8024.pt` goes on the operator's machine (kept out of git) |
 | `input/` | Where a dental X-ray goes, later (kept out of git) |
 
@@ -60,12 +60,44 @@ Exit codes:
 | `1` | Missing / unreadable / not a torch or pickle container |
 | `3` | A forbidden global (`os`, `subprocess`, `socket`, `eval`, `exec`, …) — **do not load** |
 | `4` | An unrecognised global — send the JSON, do not load |
-| `5` | An expected class name is missing from the bytes — not the audited segmentation checkpoint |
+| `5` | A class concept is missing from the bytes — including `Implant`, which is mandatory for this engine. Not the audited checkpoint |
 | `6` | Size or SHA-256 differs from the audited artifact — **do not load** |
 
 What a passing run proves: the bytes are the audited revision, and the pickle asks for
 exactly the classes this checkpoint is expected to need. What it does **not** prove: that
 the file is benign, and it is not a substitute for the restricted load below.
+
+### Class resolution (canonical concept vs the checkpoint's own label)
+
+The checkpoint spells three of the eight concepts differently from the model card. The first
+run of this gate on the real file stopped with *"class name(s) missing from the bytes"* —
+a false block, because the gate was matching the card's spelling and the file uses its own:
+
+| # | canonical concept (audited) | label inside `8024.pt` | how it resolves |
+| --- | --- | --- | --- |
+| 0 | `Caries` | `Caries` | canonical |
+| 1 | `Crown` | `Crown` | canonical |
+| 2 | `Filling` | `Filling` | canonical |
+| 3 | `Implant` | `Implant` | canonical — **mandatory** |
+| 4 | `Missing-tooth-between` | `Missing teeth` | alias |
+| 5 | `Periapical-lesion` | `Periapical lesion` | alias |
+| 6 | `Root Piece` | `Root Piece` | canonical |
+| 7 | `Root-Canal-Treatment` | `Root canal obturation` | alias |
+
+Three rules keep the mapping honest, and they are enforced by tests:
+
+- the table (`CLASS_ALIASES` in the inspector) is **explicit and closed** — nothing is
+  matched by fuzzy similarity, so a different concept can never be accepted as one of the
+  eight (`Missing tooth`, `Obturation`, `Implanted` … are all rejected);
+- the file's own wording is **never replaced**: the report records `checkpoint_label`
+  exactly as it appears in the bytes, next to the canonical concept;
+- this is a **verification alias only**. It renames nothing in the model, the weights are
+  untouched, and the concepts are the operator's canonical names — not a clinical claim
+  that two different phrases describe the same finding.
+
+The JSON report carries the result as `class_validation`
+(`status`, `canonical_classes`, `checkpoint_labels`, `resolved_aliases`, `missing`,
+`required_missing`) plus a per-concept `semantic_classes` list.
 
 `reports\checkpoint_ops.txt` is the full `pickletools.dis` of every pickle member — the
 line-by-line record of what the pickle does, for whoever wants to read the REDUCE sites
@@ -103,7 +135,7 @@ loader itself).
 python -m unittest discover -s tests -v
 ```
 
-34 tests. The load-bearing one is `TestNothingIsExecuted`: a pickle whose payload would
+42 tests. The load-bearing one is `TestNothingIsExecuted`: a pickle whose payload would
 create a file if it were ever unpickled is inspected, reported as forbidden, and the file
 is never created.
 

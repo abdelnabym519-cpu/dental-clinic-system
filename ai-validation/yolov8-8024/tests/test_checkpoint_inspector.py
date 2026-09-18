@@ -326,6 +326,152 @@ class TestInspectFile(unittest.TestCase):
         self.assertEqual(ic.EXPECTED_LABELS[3], "Implant")
 
 
+# The labels the audited checkpoint actually carries inside its own bytes, in the
+# audited order, as recorded by the operator's gate run (`checkpoint_ops.txt`):
+#   0 Caries · 1 Crown · 2 Filling · 3 Implant · 4 Missing teeth
+#   5 Periapical lesion · 6 Root Piece · 7 Root canal obturation
+CHECKPOINT_LABELS = (
+    "Caries", "Crown", "Filling", "Implant",
+    "Missing teeth", "Periapical lesion", "Root Piece", "Root canal obturation",
+)
+
+# canonical concept -> the spelling this checkpoint uses for it
+EXPECTED_RESOLUTION = (
+    ("Caries", "Caries"),
+    ("Crown", "Crown"),
+    ("Filling", "Filling"),
+    ("Implant", "Implant"),
+    ("Missing-tooth-between", "Missing teeth"),
+    ("Periapical-lesion", "Periapical lesion"),
+    ("Root Piece", "Root Piece"),
+    ("Root-Canal-Treatment", "Root canal obturation"),
+)
+
+
+def _stand_in_checkpoint(tmp: Path, labels=CHECKPOINT_LABELS) -> Path:
+    """A zip checkpoint whose `names` mapping is pickled exactly as the file has it."""
+    payload = pickle.dumps({index: label for index, label in enumerate(labels)}, protocol=2)
+    return _torch_zip(tmp / "8024.pt", payload)
+
+
+class TestSemanticClassGate(unittest.TestCase):
+    """The checkpoint's own spellings versus the canonical concepts.
+
+    The file writes `Missing teeth`, `Periapical lesion` and `Root canal
+    obturation` where the model card writes `Missing-tooth-between`,
+    `Periapical-lesion` and `Root-Canal-Treatment`. Those are naming differences,
+    so the gate resolves them through the documented alias table — while still
+    recording the file's own spelling as written.
+    """
+
+    # A — the exact labels of the audited file pass
+    def test_the_checkpoints_own_spellings_pass_the_class_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _stand_in_checkpoint(Path(tmp))
+            report = ic.inspect(target, ic.CANONICAL_CLASSES)
+        validation = report["class_validation"]
+        self.assertEqual(validation["status"], "PASS")
+        self.assertEqual(report["labels_missing"], [])
+        self.assertEqual(ic.verdict_exit_code(report), 0)
+        self.assertEqual(validation["checkpoint_labels"], list(CHECKPOINT_LABELS))
+        for key in ("status", "canonical_classes", "checkpoint_labels", "resolved_aliases"):
+            self.assertIn(key, validation, f"class_validation.{key} is required")
+
+    # B — the alias table is explicit, closed and unambiguous
+    def test_the_alias_table_is_explicit_closed_and_unambiguous(self):
+        index = ic.build_alias_index()
+        for concept in ic.CANONICAL_CLASSES:
+            self.assertIn(ic._normalize_label(concept), index)
+        self.assertEqual(ic.resolve_concepts(["Missing teeth"]), ["Missing-tooth-between"])
+        self.assertEqual(ic.resolve_concepts(["Periapical lesion"]), ["Periapical-lesion"])
+        self.assertEqual(ic.resolve_concepts(["Root canal obturation"]),
+                         ["Root-Canal-Treatment"])
+        # nearby but different words must NOT resolve to a concept
+        for near_miss in ("Missing tooth", "Missing", "Obturation", "Periapical",
+                          "Implanted", "Crowns", "Root Piece Fragment"):
+            self.assertEqual(ic.resolve_concepts([near_miss]), [near_miss],
+                             f"{near_miss!r} must not resolve to a canonical class")
+        # an ambiguous table fails loudly instead of silently picking the last one
+        with self.assertRaises(ValueError):
+            ic.build_alias_index(("A", "B"), {"A": ("Same",), "B": ("same",)})
+
+    # C — Implant is mandatory
+    def test_a_missing_implant_blocks_even_with_the_other_seven(self):
+        without_implant = tuple(label for label in CHECKPOINT_LABELS if label != "Implant")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(
+                Path(tmp) / "8024.pt",
+                pickle.dumps({i: l for i, l in enumerate(without_implant)}, protocol=2))
+            report = ic.inspect(target, ic.CANONICAL_CLASSES)
+            argv = ["inspect_checkpoint.py", "--checkpoint", str(target),
+                    "--expect-sha256", ic.sha256_of(target),
+                    "--expect-size", str(target.stat().st_size)]
+            with unittest.mock.patch.object(sys, "argv", argv):
+                code = ic.main()
+        self.assertEqual(report["class_validation"]["status"], "FAIL")
+        self.assertEqual(report["class_validation"]["required_missing"], ["Implant"])
+        self.assertEqual(report["labels_missing"], ["Implant"])
+        self.assertEqual(code, 5, "the CLI must stop when Implant is absent")
+
+    # D — every concept resolves, with the file's spelling recorded
+    def test_every_canonical_concept_resolves_to_the_checkpoint_label(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _stand_in_checkpoint(Path(tmp))
+            report = ic.inspect(target, ic.CANONICAL_CLASSES)
+        got = [(entry["canonical"], entry["checkpoint_label"])
+               for entry in report["semantic_classes"]]
+        self.assertEqual(got, list(EXPECTED_RESOLUTION))
+        aliases = [(entry["canonical"], entry["checkpoint_label"])
+                   for entry in report["class_validation"]["resolved_aliases"]]
+        self.assertEqual(aliases, [("Missing-tooth-between", "Missing teeth"),
+                                   ("Periapical-lesion", "Periapical lesion"),
+                                   ("Root-Canal-Treatment", "Root canal obturation")])
+        # the file's own wording is never replaced by the canonical one
+        written = [entry["checkpoint_label"] for entry in report["semantic_classes"]]
+        self.assertIn("Root canal obturation", written)
+        self.assertNotIn("Root-Canal-Treatment", written)
+
+    # E — a genuinely absent class blocks (no false pass)
+    def test_a_genuinely_absent_class_blocks(self):
+        labels = tuple(label for label in CHECKPOINT_LABELS if label != "Periapical lesion")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(Path(tmp) / "8024.pt",
+                                pickle.dumps({i: l for i, l in enumerate(labels)}, protocol=2))
+            report = ic.inspect(target, ic.CANONICAL_CLASSES)
+            argv = ["inspect_checkpoint.py", "--checkpoint", str(target),
+                    "--expect-sha256", ic.sha256_of(target),
+                    "--expect-size", str(target.stat().st_size)]
+            with unittest.mock.patch.object(sys, "argv", argv):
+                code = ic.main()
+        self.assertEqual(report["class_validation"]["status"], "FAIL")
+        self.assertEqual(report["labels_missing"], ["Periapical-lesion"])
+        self.assertEqual(report["class_validation"]["required_missing"], [])
+        self.assertEqual(code, 5)
+
+    # the identity gate outranks the class gate
+    def test_a_foreign_file_is_reported_as_an_identity_stop_not_a_class_stop(self):
+        labels = tuple(label for label in CHECKPOINT_LABELS if label != "Implant")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(Path(tmp) / "8024.pt",
+                                pickle.dumps({i: l for i, l in enumerate(labels)}, protocol=2))
+            argv = ["inspect_checkpoint.py", "--checkpoint", str(target),
+                    "--expect-sha256", "0" * 64]
+            with unittest.mock.patch.object(sys, "argv", argv):
+                code = ic.main()
+        self.assertEqual(code, 6, "a size/hash mismatch must not be reported as a class problem")
+
+    # F — the scan never modifies the checkpoint
+    def test_the_scan_never_modifies_the_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _stand_in_checkpoint(Path(tmp))
+            before_sha, before_size = ic.sha256_of(target), target.stat().st_size
+            report = ic.inspect(target, ic.CANONICAL_CLASSES)
+            after_sha, after_size = ic.sha256_of(target), target.stat().st_size
+        self.assertEqual(before_sha, after_sha, "the checkpoint bytes changed during the scan")
+        self.assertEqual(before_size, after_size)
+        self.assertEqual(report["sha256"], before_sha)
+
+
 class TestCommandLine(unittest.TestCase):
 
     def test_the_cli_writes_json_and_returns_the_gate_code(self):
@@ -345,6 +491,17 @@ class TestCommandLine(unittest.TestCase):
             payload = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(payload["container"]["kind"], "torch-zip")
             self.assertEqual(payload["expected"]["size_bytes"], target.stat().st_size)
+
+    def test_the_cli_accepts_the_checkpoints_own_spellings_and_upper_case_hash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _stand_in_checkpoint(Path(tmp))
+            argv = ["inspect_checkpoint.py", "--checkpoint", str(target),
+                    "--labels", ",".join(CHECKPOINT_LABELS),
+                    "--expect-sha256", ic.sha256_of(target).upper(),
+                    "--expect-size", str(target.stat().st_size)]
+            with unittest.mock.patch.object(sys, "argv", argv):
+                code = ic.main()
+        self.assertEqual(code, 0, "file spellings + an upper-case digest must not block")
 
     def test_a_foreign_checkpoint_is_stopped_by_the_identity_gate(self):
         names = {0: "Caries", 3: "Implant"}
