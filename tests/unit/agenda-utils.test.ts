@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  canScheduleRole,
   isValidTime,
   timeToMinutes,
   minutesToTime,
@@ -126,5 +127,21 @@ describe('agenda timeline positioning', () => {
     expect(agendaHeightPercent(60)).toBeCloseTo(7.142, 1)
     expect(agendaHeightPercent(5)).toBeGreaterThanOrEqual(2.5)
     expect(agendaHeightPercent(0)).toBe(2.5)
+  })
+})
+
+describe('scheduling RBAC helper', () => {
+  it('allows exactly the server-side scheduling roles', () => {
+    expect(canScheduleRole('ADMIN')).toBe(true)
+    expect(canScheduleRole('DOCTOR')).toBe(true)
+    expect(canScheduleRole('RECEPTIONIST')).toBe(true)
+  })
+
+  it('denies non-scheduling and missing roles', () => {
+    expect(canScheduleRole('ACCOUNTANT')).toBe(false)
+    expect(canScheduleRole('LAB_TECH')).toBe(false)
+    expect(canScheduleRole(undefined)).toBe(false)
+    expect(canScheduleRole(null)).toBe(false)
+    expect(canScheduleRole('')).toBe(false)
   })
 })

@@ -98,3 +98,14 @@ export function agendaPositionPercent(time: string): number {
 export function agendaHeightPercent(duration: number): number {
   return Math.max((Math.min(duration, AGENDA_TOTAL_MINUTES) / AGENDA_TOTAL_MINUTES) * 100, 2.5)
 }
+
+/**
+ * Roles allowed to mutate the schedule (create / edit / reschedule / cancel).
+ * This mirrors the server-side RBAC in the appointment API routes — the UI
+ * uses it to hide mutation controls; the server remains the authority.
+ */
+export const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST'] as const
+
+export function canScheduleRole(role: string | undefined | null): boolean {
+  return !!role && (SCHEDULING_ROLES as readonly string[]).includes(role)
+}

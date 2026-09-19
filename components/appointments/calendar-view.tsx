@@ -74,6 +74,8 @@ interface CalendarViewProps {
   refreshKey?: number
   /** Hide the built-in toolbar (when embedding under a custom header). */
   hideToolbar?: boolean
+  /** Whether the viewer may edit/reschedule/cancel (mirrors server RBAC). Defaults to true. */
+  canSchedule?: boolean
 }
 
 const HOUR_PX = 64 // day view: pixels per hour
@@ -88,6 +90,7 @@ export function CalendarView({
   providers,
   refreshKey = 0,
   hideToolbar = false,
+  canSchedule = true,
 }: CalendarViewProps) {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(initialDate)
@@ -316,23 +319,27 @@ export function CalendarView({
                       <User className="h-3.5 w-3.5" /> View patient
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                    onClick={() => router.push(`/appointments/${apt.id}/edit`)}
-                    disabled={cancelled}
-                  >
-                    <Calendar className="h-3.5 w-3.5" /> Edit / Reschedule
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted disabled:opacity-50"
-                    onClick={() => cancelAppointment(apt)}
-                    disabled={cancelled || cancellingId === apt.id}
-                  >
-                    <CalendarX className="h-3.5 w-3.5" />
-                    {cancellingId === apt.id ? 'Cancelling…' : 'Cancel'}
-                  </button>
+                  {canSchedule && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+                      onClick={() => router.push(`/appointments/${apt.id}/edit`)}
+                      disabled={cancelled}
+                    >
+                      <Calendar className="h-3.5 w-3.5" /> Edit / Reschedule
+                    </button>
+                  )}
+                  {canSchedule && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted disabled:opacity-50"
+                      onClick={() => cancelAppointment(apt)}
+                      disabled={cancelled || cancellingId === apt.id}
+                    >
+                      <CalendarX className="h-3.5 w-3.5" />
+                      {cancellingId === apt.id ? 'Cancelling…' : 'Cancel'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

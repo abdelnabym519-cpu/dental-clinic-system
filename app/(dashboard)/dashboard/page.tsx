@@ -323,11 +323,16 @@ export default function DashboardPage() {
                 <p className="text-muted-foreground text-center py-8">No upcoming appointments</p>
               )}
             </div>
-            <Link href="/appointments">
-              <Button variant="outline" className="w-full mt-4">
-                View All Appointments
+            <div className="mt-4 flex gap-2">
+              <Button asChild>
+                <Link href="/agenda">Open Agenda</Link>
               </Button>
-            </Link>
+              <Link href="/appointments" className="flex-1">
+                <Button variant="outline" className="w-full">
+                  View All Appointments
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

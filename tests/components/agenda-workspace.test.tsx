@@ -103,7 +103,7 @@ vi.mock('@/components/appointments/calendar-view', () => ({
   ),
 }))
 
-import AgendaPage from '@/app/(dashboard)/agenda/page'
+import { AgendaWorkspace } from '@/components/agenda/agenda-workspace'
 import { AppointmentDialog } from '@/components/agenda/appointment-dialog'
 
 const doctorsPayload = {
@@ -138,7 +138,7 @@ describe('Agenda workspace page', () => {
   })
 
   it('renders the Agenda header with scheduling actions', async () => {
-    render(<AgendaPage />)
+    render(<AgendaWorkspace canSchedule />)
     expect(screen.getByRole('heading', { level: 1, name: 'Agenda' })).toBeInTheDocument()
     expect(screen.getByText('New appointment')).toBeInTheDocument()
     expect(screen.getByText('Waitlist')).toBeInTheDocument()
@@ -146,14 +146,14 @@ describe('Agenda workspace page', () => {
   })
 
   it('passes fetched providers into the calendar for filtering', async () => {
-    render(<AgendaPage />)
+    render(<AgendaWorkspace canSchedule />)
     await waitFor(() => {
       expect(screen.getByTestId('calendar-view').dataset.providers).toBe('2')
     })
   })
 
   it('opens the create dialog and books an appointment through the API', async () => {
-    render(<AgendaPage />)
+    render(<AgendaWorkspace canSchedule />)
     await waitFor(() => {
       expect(screen.getByTestId('calendar-view').dataset.providers).toBe('2')
     })
@@ -204,7 +204,7 @@ describe('Agenda workspace page', () => {
       return Promise.resolve({ ok: true, json: async () => ({ appointments: [] }) })
     })
 
-    render(<AgendaPage />)
+    render(<AgendaWorkspace canSchedule />)
     await waitFor(() => {
       expect(screen.getByTestId('calendar-view').dataset.providers).toBe('2')
     })
@@ -220,7 +220,7 @@ describe('Agenda workspace page', () => {
   })
 
   it('blocks submission when required fields are missing (client-side pre-check)', async () => {
-    render(<AgendaPage />)
+    render(<AgendaWorkspace canSchedule />)
     await waitFor(() => {
       expect(screen.getByTestId('calendar-view').dataset.providers).toBe('2')
     })
@@ -232,6 +232,16 @@ describe('Agenda workspace page', () => {
       expect(screen.getByRole('alert')).toHaveTextContent(/Patient, provider, date/i)
     })
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it('hides scheduling controls for read-only roles while keeping the calendar', async () => {
+    render(<AgendaWorkspace canSchedule={false} />)
+    await waitFor(() => {
+      expect(screen.getByTestId('calendar-view').dataset.providers).toBe('2')
+    })
+    expect(screen.queryByText('New appointment')).not.toBeInTheDocument()
+    // The calendar still renders (viewing stays available to every role)
+    expect(screen.getByTestId('calendar-view')).toBeInTheDocument()
   })
 
   it('dialog refreshes the calendar after a successful edit save', async () => {
