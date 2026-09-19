@@ -34,7 +34,7 @@ export function ToothSVG({
       aria-hidden="true"
     >
       <defs>
-        {/* Anatomical Enamel 3D Linear Gradient: warm ivory porcelain tone */}
+        {/* Anatomical Enamel 3D Linear Gradient: warm porcelain ivory tone */}
         <linearGradient
           id={`enamel-grad-${tooth.number}`}
           x1="0%"
@@ -43,12 +43,12 @@ export function ToothSVG({
           y2={isUpper ? '100%' : '0%'}
         >
           <stop offset="0%" stopColor="#f8fafc" />
-          <stop offset="20%" stopColor="#ffffff" />
-          <stop offset="60%" stopColor="#f1f5f9" />
+          <stop offset="25%" stopColor="#ffffff" />
+          <stop offset="65%" stopColor="#f1f5f9" />
           <stop offset="100%" stopColor="#e2e8f0" />
         </linearGradient>
 
-        {/* Dentin / Cementum Anatomical Root Gradient: warm organic amber */}
+        {/* Dentin / Cementum Anatomical Root Gradient: warm organic amber/gold */}
         <linearGradient
           id={`root-grad-${tooth.number}`}
           x1="0%"
@@ -57,8 +57,9 @@ export function ToothSVG({
           y2={isUpper ? '100%' : '0%'}
         >
           <stop offset="0%" stopColor="#fef08a" stopOpacity="0.95" />
-          <stop offset="45%" stopColor="#fde047" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#fef9c3" stopOpacity="0.75" />
+          <stop offset="40%" stopColor="#fde047" stopOpacity="0.9" />
+          <stop offset="80%" stopColor="#eab308" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#fef9c3" stopOpacity="0.8" />
         </linearGradient>
 
         {/* Pulp Vascular Gradient */}
@@ -69,25 +70,29 @@ export function ToothSVG({
           x2="0%"
           y2={isUpper ? '100%' : '0%'}
         >
-          <stop offset="0%" stopColor="#fb7185" stopOpacity="0.8" />
+          <stop offset="0%" stopColor="#fb7185" stopOpacity="0.85" />
           <stop offset="100%" stopColor="#fecdd3" stopOpacity="0.5" />
         </linearGradient>
 
-        {/* Subtle drop shadow filter */}
-        <filter id={`tooth-shadow-${tooth.number}`} x="-15%" y="-15%" width="130%" height="130%">
-          <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#0f172a" floodOpacity="0.15" />
-        </filter>
+        {/* Volumetric Lateral Crown Shading */}
+        <linearGradient id={`lateral-shadow-${tooth.number}`} x1="0%" y1="50%" x2="100%" y2="50%">
+          <stop offset="0%" stopColor="#334155" stopOpacity="0.12" />
+          <stop offset="20%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.25" />
+          <stop offset="80%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#334155" stopOpacity="0.12" />
+        </linearGradient>
       </defs>
 
       {/* 1. ANATOMICAL ROOT BODY LAYER */}
       {!tooth.isImplant && (
         <g className="root-anatomy-group">
-          {/* Main Root Silhouette */}
+          {/* Main Root Silhouette with natural organic cementum tone */}
           <path
             d={geometry.rootOutline}
             fill={isMissing ? 'none' : `url(#root-grad-${tooth.number})`}
-            stroke={isMissing ? '#94a3b8' : '#475569'}
-            strokeWidth={isMissing ? 1.2 : 1.7}
+            stroke={isMissing ? '#94a3b8' : '#78350f'}
+            strokeWidth={isMissing ? 1.2 : 1.4}
             strokeDasharray={isMissing ? '3 3' : undefined}
             strokeLinejoin="round"
             className="transition-colors"
@@ -101,7 +106,7 @@ export function ToothSVG({
                   key={`root-detail-${i}`}
                   d={detail}
                   fill="none"
-                  stroke="#64748b"
+                  stroke="#a16207"
                   strokeWidth={1.1}
                   strokeLinecap="round"
                 />
@@ -114,11 +119,10 @@ export function ToothSVG({
             <path
               d={geometry.rootSeparationPath}
               fill="none"
-              stroke="#334155"
-              strokeWidth={1.4}
+              stroke="#854d0e"
+              strokeWidth={1.3}
               strokeLinecap="round"
-              strokeDasharray="2 2"
-              opacity={0.85}
+              opacity={0.8}
             />
           )}
         </g>
@@ -132,7 +136,7 @@ export function ToothSVG({
             d={geometry.pulpOutline}
             fill={`url(#pulp-grad-${tooth.number})`}
             stroke="#f87171"
-            strokeWidth={0.9}
+            strokeWidth={0.8}
             strokeLinejoin="round"
           />
           {/* Natural Root Canal Pathways */}
@@ -142,8 +146,8 @@ export function ToothSVG({
               d={canal}
               fill="none"
               stroke="#f87171"
-              strokeWidth={0.95}
-              strokeOpacity={0.7}
+              strokeWidth={0.9}
+              strokeOpacity={0.65}
               strokeDasharray="2 2"
             />
           ))}
@@ -156,23 +160,32 @@ export function ToothSVG({
         <path
           d={geometry.crownOutline}
           fill={isMissing ? 'none' : `url(#enamel-grad-${tooth.number})`}
-          stroke={isMissing ? '#94a3b8' : '#1e293b'}
-          strokeWidth={isMissing ? 1.2 : 1.9}
+          stroke={isMissing ? '#94a3b8' : '#334155'}
+          strokeWidth={isMissing ? 1.2 : 1.6}
           strokeDasharray={isMissing ? '3 3' : undefined}
           strokeLinejoin="round"
           className="transition-colors"
         />
 
+        {/* Volumetric Enamel Overlay */}
+        {!isMissing && (
+          <path
+            d={geometry.crownOutline}
+            fill={`url(#lateral-shadow-${tooth.number})`}
+            pointerEvents="none"
+          />
+        )}
+
         {/* Anatomical Cusp Facets, Mamelons, Lobes & Marginal Ridges */}
         {geometry.crownDetails && !isMissing && (
-          <g className="crown-anatomical-details opacity-85">
+          <g className="crown-anatomical-details opacity-80">
             {geometry.crownDetails.map((detail, i) => (
               <path
                 key={`crown-detail-${i}`}
                 d={detail}
                 fill="none"
-                stroke="#475569"
-                strokeWidth={1.15}
+                stroke="#64748b"
+                strokeWidth={1.1}
                 strokeLinecap="round"
               />
             ))}
@@ -181,14 +194,14 @@ export function ToothSVG({
 
         {/* Cusp / Incisal Specular Highlights (3D Enamel Sheen) */}
         {geometry.cuspHighlights && !isMissing && (
-          <g className="cusp-highlights-group opacity-90">
+          <g className="cusp-highlights-group opacity-95">
             {geometry.cuspHighlights.map((highlight, i) => (
               <path
                 key={`highlight-${i}`}
                 d={highlight}
                 fill="none"
                 stroke="#ffffff"
-                strokeWidth={1.6}
+                strokeWidth={1.8}
                 strokeLinecap="round"
               />
             ))}
@@ -197,14 +210,14 @@ export function ToothSVG({
 
         {/* Anatomical Developmental Fissures & Grooves */}
         {geometry.fissurePaths && !isMissing && (
-          <g className="fissure-grooves-group opacity-80">
+          <g className="fissure-grooves-group opacity-85">
             {geometry.fissurePaths.map((fissure, i) => (
               <path
                 key={`fissure-${i}`}
                 d={fissure}
                 fill="none"
                 stroke="#1e293b"
-                strokeWidth={1.25}
+                strokeWidth={1.2}
                 strokeLinecap="round"
               />
             ))}
@@ -227,17 +240,17 @@ export function ToothSVG({
             <path
               d={geometry.cervicalLinePath}
               fill="none"
-              stroke="#94a3b8"
-              strokeWidth={1.0}
-              strokeOpacity={0.7}
+              stroke="#eab308"
+              strokeWidth={0.9}
+              strokeOpacity={0.6}
             />
           )}
           <path
             d={geometry.gumLinePath}
             fill="none"
             stroke="#f43f5e"
-            strokeWidth={1.5}
-            strokeOpacity={0.85}
+            strokeWidth={1.4}
+            strokeOpacity={0.8}
             strokeLinecap="round"
           />
         </g>
