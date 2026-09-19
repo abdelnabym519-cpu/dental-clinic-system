@@ -67,3 +67,6 @@ next-env.d.ts
 
 # Windows reserved names (can't be deleted normally)
 **/nul
+
+# Local visual-verification raster outputs (regenerate: npx tsx tools/render-arch.tsx)
+tools/preview/
