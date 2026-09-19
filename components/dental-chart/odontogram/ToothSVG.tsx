@@ -294,11 +294,11 @@ export function ToothSVG({
 
           {hasTable && (
             <g>
-              <path d={geometry.occlusalTablePath as string} fill="#CDBA8C" fillOpacity={0.22} />
+              {/* Single blurred tonal field — no crisp plate boundary */}
               <path
                 d={geometry.occlusalTablePath as string}
                 fill="#CDBA8C"
-                fillOpacity={0.18}
+                fillOpacity={0.3}
                 filter={`url(#blurW-${n})`}
               />
               {geometry.tableTopShade && <Blob b={geometry.tableTopShade} n={n} shade={false} />}

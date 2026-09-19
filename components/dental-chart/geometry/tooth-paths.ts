@@ -1223,9 +1223,15 @@ function finalize(g: Omit<ToothGeometryPaths, 'surfaces'>, isRightSide: boolean,
       x0 = Math.min(x0, b.x0)
       x1 = Math.max(x1, b.x1)
     }
-    // Clamp to the crown silhouette so the base block never sticks out
-    x0 = Math.max(x0, bb.x0 + 1.5)
-    x1 = Math.min(x1, bb.x1 - 1.5)
+    // Clamp to the crown's CERVICAL width (the band the skirt actually spans),
+    // taken from the cervical line endpoints — the global bbox is wider on
+    // narrowed crowns and let the skirt poke out beside the cervical.
+    const cM = g.cervicalLinePath ? /M\s*(-?[\d.]+),\s*(-?[\d.]+)/.exec(g.cervicalLinePath) : null
+    const cT = g.cervicalLinePath ? /(-?[\d.]+),\s*(-?[\d.]+)\s*$/.exec(g.cervicalLinePath) : null
+    const cervX0 = cM ? +cM[1] : bb.x0 + 1.5
+    const cervX1 = cT ? +cT[1] : bb.x1 - 1.5
+    x0 = Math.max(x0, Math.min(cervX0, cervX1) + 1.0)
+    x1 = Math.min(x1, Math.max(cervX0, cervX1) - 1.0)
     const topY = isUpper ? 49.2 : 44.8
     const botY = isUpper ? 55.5 : 51.5
     skirt = `M ${r1(x0)},${botY} L ${r1(x0)},${topY} Q ${r1((x0 + x1) / 2)},${r1(topY - 1.2)} ${r1(x1)},${topY} L ${r1(x1)},${botY} Z`
