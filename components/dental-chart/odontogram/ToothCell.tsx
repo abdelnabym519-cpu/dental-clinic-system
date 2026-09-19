@@ -53,6 +53,22 @@ export function ToothCell({
       : ''
   }`
 
+  // Anatomically proportional cell sizing based on tooth class
+  const isMolar = tooth.group === 'molar'
+  const isNarrowAnterior =
+    tooth.number === 31 ||
+    tooth.number === 41 ||
+    tooth.number === 32 ||
+    tooth.number === 42 ||
+    tooth.number === 12 ||
+    tooth.number === 22
+
+  const widthClass = isMolar
+    ? 'w-11 sm:w-12 md:w-13 lg:w-14'
+    : isNarrowAnterior
+      ? 'w-9 sm:w-10 md:w-11 lg:w-12'
+      : 'w-10 sm:w-11 md:w-12 lg:w-13'
+
   return (
     <ToothTooltip tooth={tooth}>
       <button
@@ -68,7 +84,7 @@ export function ToothCell({
         }}
         className={`
           relative flex flex-col items-center justify-between
-          w-10 sm:w-11 md:w-12 lg:w-13 h-24 sm:h-28 md:h-30 p-1 rounded-xl
+          ${widthClass} h-24 sm:h-28 md:h-32 p-1 rounded-xl
           transition-all duration-200 select-none
           outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
           ${
