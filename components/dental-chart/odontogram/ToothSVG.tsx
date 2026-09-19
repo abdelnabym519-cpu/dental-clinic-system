@@ -13,17 +13,26 @@ interface ToothSVGProps {
   className?: string
 }
 
-/** Recessed occlusal groove: soft dark line + faint light edge (subtle, not printed). */
-function Engrave({ d, offset = 0.55 }: { d: string; offset?: number }) {
+/** Recessed occlusal fissure: blurred groove floor + crisp core + lit lip (soft, not printed). */
+function Engrave({ d, offset = 0.55, n }: { d: string; offset?: number; n: number }) {
   return (
     <>
-      <path d={d} fill="none" stroke="#6B5632" strokeOpacity={0.36} strokeWidth={0.9} strokeLinecap="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke="#6B5632"
+        strokeOpacity={0.3}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        filter={`url(#blurS-${n})`}
+      />
+      <path d={d} fill="none" stroke="#5C4A2A" strokeOpacity={0.4} strokeWidth={0.8} strokeLinecap="round" />
       <path
         d={d}
         fill="none"
         stroke="#FFFDF3"
-        strokeOpacity={0.18}
-        strokeWidth={0.5}
+        strokeOpacity={0.3}
+        strokeWidth={0.55}
         strokeLinecap="round"
         transform={`translate(${offset},${offset})`}
       />
@@ -109,19 +118,56 @@ export function ToothSVG({
           )}
         </linearGradient>
 
+        {/* Continuous anatomical body tone: warm cervical amber → translucent cool incisal/occlusal edge */}
+        <linearGradient id={`crownBody-${n}`} x1="0" y1="0" x2="0" y2="1">
+          {isUpper ? (
+            <>
+              <stop offset="0" stopColor="#B97F2E" stopOpacity="0.20" />
+              <stop offset="0.3" stopColor="#B97F2E" stopOpacity="0.04" />
+              <stop offset="0.68" stopColor="#6B7E94" stopOpacity="0" />
+              <stop offset="1" stopColor="#6B7E94" stopOpacity="0.16" />
+            </>
+          ) : (
+            <>
+              <stop offset="0" stopColor="#6B7E94" stopOpacity="0.16" />
+              <stop offset="0.32" stopColor="#6B7E94" stopOpacity="0" />
+              <stop offset="0.7" stopColor="#B97F2E" stopOpacity="0.04" />
+              <stop offset="1" stopColor="#B97F2E" stopOpacity="0.20" />
+            </>
+          )}
+        </linearGradient>
+
+        {/* Root body tone: darkened apex + warm cervical continuity into the crown */}
+        <linearGradient id={`rootBody-${n}`} x1="0" y1="0" x2="0" y2="1">
+          {isUpper ? (
+            <>
+              <stop offset="0" stopColor="#5F4212" stopOpacity="0.30" />
+              <stop offset="0.5" stopColor="#5F4212" stopOpacity="0.05" />
+              <stop offset="1" stopColor="#C9A85C" stopOpacity="0.14" />
+            </>
+          ) : (
+            <>
+              <stop offset="0" stopColor="#C9A85C" stopOpacity="0.14" />
+              <stop offset="0.5" stopColor="#5F4212" stopOpacity="0.05" />
+              <stop offset="1" stopColor="#5F4212" stopOpacity="0.30" />
+            </>
+          )}
+        </linearGradient>
+
         {/* Cementum root trunk: matte cream-tan cylindrical volume (desaturated, narrow highlight) */}
         <linearGradient id={`rootCyl-${n}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#AD8C48" />
-          <stop offset="0.3" stopColor="#DECB94" />
-          <stop offset="0.48" stopColor="#F1E2B8" />
-          <stop offset="0.68" stopColor="#D9BC80" />
-          <stop offset="1" stopColor="#93712F" />
+          <stop offset="0" stopColor="#B49A58" />
+          <stop offset="0.3" stopColor="#E3D3A0" />
+          <stop offset="0.48" stopColor="#F4E7C2" />
+          <stop offset="0.68" stopColor="#DEC894" />
+          <stop offset="1" stopColor="#9E7E3E" />
         </linearGradient>
 
         {/* Raised cusp volume highlight (soft radial) */}
         <radialGradient id={`cuspLightR-${n}`}>
-          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.98" />
-          <stop offset="0.45" stopColor="#FFFBEA" stopOpacity="0.6" />
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
+          <stop offset="0.35" stopColor="#FFFBEA" stopOpacity="0.62" />
+          <stop offset="0.7" stopColor="#FFFBEA" stopOpacity="0.24" />
           <stop offset="1" stopColor="#FFFBEA" stopOpacity="0" />
         </radialGradient>
 
@@ -147,7 +193,7 @@ export function ToothSVG({
       {!tooth.isImplant && (
         <g className="root-system">
           {geometry.furcationShadows.map((d, i) => (
-            <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.5} filter={`url(#blurS-${n})`} />
+            <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.36} filter={`url(#blurS-${n})`} />
           ))}
           {/* Merged cervical base — extends trunks behind the crown (hides base steps) */}
           {geometry.cervicalSkirt && !missing && (
@@ -165,6 +211,7 @@ export function ToothSVG({
               strokeLinejoin="round"
             />
           ))}
+          {!missing && <path d={geometry.rootOutline} fill={`url(#rootBody-${n})`} />}
           {!missing &&
             geometry.rootApexShadows.map((a, i) => (
               <ellipse
@@ -201,7 +248,7 @@ export function ToothSVG({
         d={geometry.crownOutline}
         fill={missing ? 'none' : `url(#enamel-${n})`}
         stroke={missing ? '#94A3B8' : '#B49B6B'}
-        strokeOpacity={missing ? 0.8 : 0.55}
+        strokeOpacity={missing ? 0.8 : 0.45}
         strokeWidth={missing ? 1.1 : 1}
         strokeDasharray={missing ? '3 3' : undefined}
         strokeLinejoin="round"
@@ -210,22 +257,39 @@ export function ToothSVG({
       {/* ══ 3. INTERIOR VOLUMETRIC SHADING (clipped to enamel silhouette) ══ */}
       {!missing && (
         <g clipPath={`url(#crownClip-${n})`}>
+          {/* Continuous body tone across the whole enamel organ */}
+          <path d={geometry.crownOutline} fill={`url(#crownBody-${n})`} />
+          {/* Soft inner shadow just inside the silhouette — physical enamel thickness */}
+          <path
+            d={geometry.crownOutline}
+            fill="none"
+            stroke="#8A744E"
+            strokeOpacity={0.32}
+            strokeWidth={2.6}
+            filter={`url(#blurW-${n})`}
+          />
           {geometry.crownShades.map((b, i) => (
             <Blob key={`shade-${i}`} b={b} n={n} shade={false} />
           ))}
 
           {/* Translucent pulp chamber — faint, deep inside the enamel */}
-          <path d={geometry.pulpOutline} fill="#7A4A3A" fillOpacity={0.14} />
+          <path d={geometry.pulpOutline} fill="#7A4A3A" fillOpacity={0.12} filter={`url(#blurW-${n})`} />
 
           {hasTable && (
             <g>
-              <path d={geometry.occlusalTablePath as string} fill="#CDBA8C" fillOpacity={0.42} />
+              <path d={geometry.occlusalTablePath as string} fill="#CDBA8C" fillOpacity={0.26} />
+              <path
+                d={geometry.occlusalTablePath as string}
+                fill="#CDBA8C"
+                fillOpacity={0.18}
+                filter={`url(#blurW-${n})`}
+              />
               {geometry.tableTopShade && <Blob b={geometry.tableTopShade} n={n} shade={false} />}
               {geometry.occlusalShades.map((b, i) => (
                 <Blob key={`oshade-${i}`} b={b} n={n} shade={false} />
               ))}
               {geometry.occlusalGrooves.map((d, i) => (
-                <Engrave key={`og-${i}`} d={d} offset={engraveOffset} />
+                <Engrave key={`og-${i}`} d={d} offset={engraveOffset} n={n} />
               ))}
               {geometry.occlusalRidges?.map((d, i) => (
                 <path
