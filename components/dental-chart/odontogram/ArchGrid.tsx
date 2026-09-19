@@ -24,9 +24,9 @@ export function ArchGrid({
   mode = 'clinical',
 }: ArchGridProps) {
   return (
-    <div className="w-full overflow-x-auto pb-2">
-      <div className="min-w-[720px] max-w-4xl mx-auto bg-gradient-to-b from-slate-50/80 via-white to-slate-50/80 dark:from-slate-900/60 dark:via-slate-950 dark:to-slate-900/60 rounded-2xl p-5 border border-border shadow-xs relative">
-        {/* QUADRANT CORNER LABELS */}
+    <div className="w-full overflow-x-auto pb-2" dir="ltr">
+      <div className="min-w-[760px] max-w-5xl mx-auto bg-gradient-to-b from-slate-50/90 via-white to-slate-50/90 dark:from-slate-900/70 dark:via-slate-950 dark:to-slate-900/70 rounded-2xl p-5 sm:p-6 border border-border shadow-sm relative select-none">
+        {/* QUADRANT CORNER CLINICAL LABELS */}
         <div className="absolute top-3 left-4 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-500" />
           Q1 (UR)
@@ -44,15 +44,15 @@ export function ArchGrid({
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
         </div>
 
-        {/* ─── 1. UPPER JAW (MAXILLA) ─────────────────────────────────── */}
+        {/* ─── 1. UPPER JAW (MAXILLARY ARCH) ──────────────────────────── */}
         <div className="relative pt-6 pb-2">
-          <div className="text-center mb-2">
-            <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80 px-2.5 py-0.5 rounded-full bg-muted/60">
+          <div className="text-center mb-3">
+            <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/90 px-3 py-1 rounded-full bg-muted/80 border border-border/50">
               Upper Jaw (Maxilla)
             </span>
           </div>
 
-          <div className="relative flex justify-center items-center gap-2 sm:gap-3">
+          <div className="relative flex justify-center items-center gap-2 sm:gap-4">
             {/* Quadrant 1 (18 -> 11) */}
             <Quadrant
               id="Q1"
@@ -68,8 +68,8 @@ export function ArchGrid({
             />
 
             {/* MIDLINE VERTICAL SEPARATOR */}
-            <div className="h-28 w-[2px] bg-border/80 relative flex items-center justify-center">
-              <span className="absolute text-[9px] font-bold text-muted-foreground/60 rotate-90 whitespace-nowrap select-none">
+            <div className="h-32 w-[2px] bg-border relative flex items-center justify-center">
+              <span className="absolute text-[9px] font-bold text-muted-foreground/70 rotate-90 whitespace-nowrap select-none bg-background px-1 py-0.5 rounded-sm">
                 Midline
               </span>
             </div>
@@ -93,16 +93,16 @@ export function ArchGrid({
         </div>
 
         {/* ─── OCCLUSAL PLANE HORIZONTAL DIVIDER ───────────────────────── */}
-        <div className="relative my-3 flex items-center justify-center">
+        <div className="relative my-4 flex items-center justify-center">
           <div className="w-full border-t-2 border-dashed border-border" />
-          <span className="absolute bg-background px-3 py-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider rounded-full border border-border shadow-2xs">
+          <span className="absolute bg-background px-3 py-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider rounded-full border border-border shadow-xs">
             Occlusal Plane
           </span>
         </div>
 
-        {/* ─── 2. LOWER JAW (MANDIBLE) ─────────────────────────────────── */}
+        {/* ─── 2. LOWER JAW (MANDIBULAR ARCH) ─────────────────────────── */}
         <div className="relative pt-2 pb-6">
-          <div className="relative flex justify-center items-center gap-2 sm:gap-3">
+          <div className="relative flex justify-center items-center gap-2 sm:gap-4">
             {/* Quadrant 4 (48 -> 41) */}
             <Quadrant
               id="Q4"
@@ -118,8 +118,8 @@ export function ArchGrid({
             />
 
             {/* MIDLINE VERTICAL SEPARATOR */}
-            <div className="h-28 w-[2px] bg-border/80 relative flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-border" />
+            <div className="h-32 w-[2px] bg-border relative flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-border" />
             </div>
 
             {/* Quadrant 3 (31 -> 38) */}
@@ -139,8 +139,8 @@ export function ArchGrid({
             <BridgeConnector viewModels={viewModels} position="lower" />
           </div>
 
-          <div className="text-center mt-2">
-            <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/80 px-2.5 py-0.5 rounded-full bg-muted/60">
+          <div className="text-center mt-3">
+            <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/90 px-3 py-1 rounded-full bg-muted/80 border border-border/50">
               Lower Jaw (Mandible)
             </span>
           </div>

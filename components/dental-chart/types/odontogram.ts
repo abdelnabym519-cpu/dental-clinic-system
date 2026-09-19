@@ -6,6 +6,26 @@ export type ToothPosition = 'upper' | 'lower'
 export type ToothSide = 'right' | 'left'
 export type ToothAnatomyGroup = 'incisor' | 'canine' | 'premolar' | 'molar'
 
+export type ToothSpecificType =
+  // Maxillary (Upper)
+  | 'maxillary_central_incisor'
+  | 'maxillary_lateral_incisor'
+  | 'maxillary_canine'
+  | 'maxillary_first_premolar'
+  | 'maxillary_second_premolar'
+  | 'maxillary_first_molar'
+  | 'maxillary_second_molar'
+  | 'maxillary_third_molar'
+  // Mandibular (Lower)
+  | 'mandibular_central_incisor'
+  | 'mandibular_lateral_incisor'
+  | 'mandibular_canine'
+  | 'mandibular_first_premolar'
+  | 'mandibular_second_premolar'
+  | 'mandibular_first_molar'
+  | 'mandibular_second_molar'
+  | 'mandibular_third_molar'
+
 export type ToothSurfaceKey = 'mesial' | 'distal' | 'occlusal' | 'buccal' | 'lingual'
 
 export type DentalCondition =
@@ -57,9 +77,12 @@ export interface ToothViewModel {
   fdiNotation: string
   name: string
   group: ToothAnatomyGroup
+  specificType: ToothSpecificType
   position: ToothPosition
   side: ToothSide
   quadrant: 1 | 2 | 3 | 4
+  rootCount: number
+  canalCount: number
   activeEntry?: DentalChartEntryRecord
   condition: DentalCondition
   severity: SeverityLevel

@@ -7,11 +7,16 @@ import {
   getToothPosition,
   getToothSide,
   getToothQuadrant,
+  getToothRootCanalCounts,
   buildToothViewModels,
   calculateOdontogramStats,
   DENTAL_CONDITION_CONFIG,
 } from '@/components/dental-chart/adapters/dental-chart-adapter'
-import { getToothGeometry } from '@/components/dental-chart/geometry/tooth-paths'
+import {
+  getToothGeometry,
+  getToothGeometryByNumber,
+  getToothSpecificType,
+} from '@/components/dental-chart/geometry/tooth-paths'
 import { DentalChartEntryRecord } from '@/components/dental-chart/types/odontogram'
 
 describe('Clean-Room Odontogram — Anatomy & FDI Mapping', () => {
@@ -50,6 +55,45 @@ describe('Clean-Room Odontogram — Anatomy & FDI Mapping', () => {
     expect(getToothAnatomyGroup(27)).toBe('molar')
     expect(getToothAnatomyGroup(38)).toBe('molar')
     expect(getToothAnatomyGroup(46)).toBe('molar')
+  })
+
+  it('correctly identifies specific tooth anatomical types', () => {
+    expect(getToothSpecificType(11)).toBe('maxillary_central_incisor')
+    expect(getToothSpecificType(21)).toBe('maxillary_central_incisor')
+    expect(getToothSpecificType(12)).toBe('maxillary_lateral_incisor')
+    expect(getToothSpecificType(13)).toBe('maxillary_canine')
+    expect(getToothSpecificType(14)).toBe('maxillary_first_premolar')
+    expect(getToothSpecificType(15)).toBe('maxillary_second_premolar')
+    expect(getToothSpecificType(16)).toBe('maxillary_first_molar')
+    expect(getToothSpecificType(17)).toBe('maxillary_second_molar')
+    expect(getToothSpecificType(18)).toBe('maxillary_third_molar')
+
+    expect(getToothSpecificType(41)).toBe('mandibular_central_incisor')
+    expect(getToothSpecificType(31)).toBe('mandibular_central_incisor')
+    expect(getToothSpecificType(42)).toBe('mandibular_lateral_incisor')
+    expect(getToothSpecificType(43)).toBe('mandibular_canine')
+    expect(getToothSpecificType(44)).toBe('mandibular_first_premolar')
+    expect(getToothSpecificType(45)).toBe('mandibular_second_premolar')
+    expect(getToothSpecificType(46)).toBe('mandibular_first_molar')
+    expect(getToothSpecificType(47)).toBe('mandibular_second_molar')
+    expect(getToothSpecificType(48)).toBe('mandibular_third_molar')
+  })
+
+  it('correctly specifies root and canal counts per tooth type', () => {
+    // Upper 1st molar: 3 roots, 4 canals
+    expect(getToothRootCanalCounts(16)).toEqual({ rootCount: 3, canalCount: 4 })
+    expect(getToothRootCanalCounts(26)).toEqual({ rootCount: 3, canalCount: 4 })
+
+    // Upper 1st premolar: 2 roots, 2 canals (bifurcated)
+    expect(getToothRootCanalCounts(14)).toEqual({ rootCount: 2, canalCount: 2 })
+
+    // Lower 1st molar: 2 roots, 3 canals
+    expect(getToothRootCanalCounts(46)).toEqual({ rootCount: 2, canalCount: 3 })
+    expect(getToothRootCanalCounts(36)).toEqual({ rootCount: 2, canalCount: 3 })
+
+    // Incisors & Canines: 1 root, 1 canal
+    expect(getToothRootCanalCounts(11)).toEqual({ rootCount: 1, canalCount: 1 })
+    expect(getToothRootCanalCounts(43)).toEqual({ rootCount: 1, canalCount: 1 })
   })
 
   it('correctly identifies jaw position and anatomical side', () => {
@@ -111,18 +155,45 @@ describe('Clean-Room Odontogram — Mathematical SVG Geometry', () => {
       }
     }
   }
+
+  it('generates unique anatomical geometry for all 32 permanent teeth by number', () => {
+    for (const toothNum of ALL_FDI_TEETH) {
+      const geom = getToothGeometryByNumber(toothNum)
+
+      expect(geom.crownOutline).toBeDefined()
+      expect(geom.rootOutline).toBeDefined()
+      expect(geom.pulpOutline).toBeDefined()
+      expect(geom.surfaces.mesial).toBeDefined()
+      expect(geom.surfaces.distal).toBeDefined()
+      expect(geom.surfaces.occlusal).toBeDefined()
+      expect(geom.surfaces.buccal).toBeDefined()
+      expect(geom.surfaces.lingual).toBeDefined()
+      expect(geom.rootCount).toBeGreaterThanOrEqual(1)
+      expect(geom.canalCount).toBeGreaterThanOrEqual(1)
+      expect(geom.apexCenter.x).toBeGreaterThan(0)
+      expect(geom.apexCenter.y).toBeGreaterThan(0)
+    }
+  })
 })
 
 describe('Clean-Room Odontogram — View Model Adapter & Statistics', () => {
-  it('builds full 32-tooth view model from empty chart data', () => {
+  it('builds full 32-tooth view model from empty chart data with specific types', () => {
     const models = buildToothViewModels({})
     expect(Object.keys(models)).toHaveLength(32)
 
     const tooth11 = models[11]
     expect(tooth11.number).toBe(11)
     expect(tooth11.condition).toBe('HEALTHY')
+    expect(tooth11.specificType).toBe('maxillary_central_incisor')
+    expect(tooth11.rootCount).toBe(1)
+    expect(tooth11.canalCount).toBe(1)
     expect(tooth11.isMissing).toBe(false)
     expect(tooth11.surfaces.mesial).toBe(false)
+
+    const tooth16 = models[16]
+    expect(tooth16.specificType).toBe('maxillary_first_molar')
+    expect(tooth16.rootCount).toBe(3)
+    expect(tooth16.canalCount).toBe(4)
   })
 
   it('accurately maps active entries, surfaces, and conditions', () => {

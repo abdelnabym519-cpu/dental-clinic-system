@@ -10,10 +10,12 @@ interface ConditionOverlayProps {
 }
 
 export function ConditionOverlay({ tooth, geometry }: ConditionOverlayProps) {
-  const { condition, isUpper } = {
-    condition: tooth.condition,
+  const { isUpper } = {
     isUpper: tooth.position === 'upper',
   }
+
+  const apices =
+    geometry.apices && geometry.apices.length > 0 ? geometry.apices : [geometry.apexCenter]
 
   return (
     <g className="condition-overlays pointer-events-none select-none">
@@ -112,19 +114,23 @@ export function ConditionOverlay({ tooth, geometry }: ConditionOverlayProps) {
         />
       )}
 
-      {/* 5. PERIAPICAL ABSCESS LESION */}
+      {/* 5. PERIAPICAL ABSCESS LESION (Multi-Apices Supported) */}
       {tooth.hasAbscess && !tooth.isMissing && (
-        <g className="abscess-layer animate-bounce">
-          <circle
-            cx={geometry.apexCenter.x}
-            cy={geometry.apexCenter.y}
-            r={5.5}
-            fill="#eab308"
-            fillOpacity={0.8}
-            stroke="#ca8a04"
-            strokeWidth={1.5}
-          />
-          <circle cx={geometry.apexCenter.x} cy={geometry.apexCenter.y} r={2.5} fill="#fef08a" />
+        <g className="abscess-layer">
+          {apices.map((apex, i) => (
+            <g key={`abscess-apex-${i}`}>
+              <circle
+                cx={apex.x}
+                cy={apex.y}
+                r={4.5}
+                fill="#eab308"
+                fillOpacity={0.85}
+                stroke="#ca8a04"
+                strokeWidth={1.2}
+              />
+              <circle cx={apex.x} cy={apex.y} r={2} fill="#fef08a" />
+            </g>
+          ))}
         </g>
       )}
 

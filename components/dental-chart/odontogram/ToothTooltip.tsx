@@ -24,7 +24,7 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
         <TooltipTrigger asChild>{children}</TooltipTrigger>
         <TooltipContent
           side="top"
-          className="p-3 max-w-xs shadow-lg rounded-xl border border-border"
+          className="p-3 max-w-xs shadow-lg rounded-xl border border-border bg-popover/95 backdrop-blur-xs"
         >
           <div className="space-y-1.5 text-xs">
             {/* Header: Number and Anatomical Name */}
@@ -51,6 +51,15 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
                   {tooth.severity}
                 </span>
               )}
+            </div>
+
+            {/* Clinical Anatomy Spec */}
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground/90 bg-muted/30 px-1.5 py-0.5 rounded">
+              <span>Anatomy:</span>
+              <span className="font-medium">
+                {tooth.rootCount} Root{tooth.rootCount > 1 ? 's' : ''} &bull; {tooth.canalCount}{' '}
+                Canal{tooth.canalCount > 1 ? 's' : ''}
+              </span>
             </div>
 
             {/* Surfaces Involved */}

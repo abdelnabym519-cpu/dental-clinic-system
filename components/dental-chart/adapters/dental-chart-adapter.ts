@@ -13,8 +13,10 @@ import {
   ToothAnatomyGroup,
   ToothPosition,
   ToothSide,
+  ToothSpecificType,
   ToothConditionConfigItem,
 } from '../types/odontogram'
+import { getToothSpecificType } from '../geometry/tooth-paths'
 
 // ─── FDI TOOTH NUMBERING DEFINITIONS ─────────────────────────────────────────
 
@@ -100,6 +102,34 @@ export function getToothQuadrant(toothNumber: number): 1 | 2 | 3 | 4 {
     return firstDigit as 1 | 2 | 3 | 4
   }
   return 1
+}
+
+export function getToothRootCanalCounts(toothNumber: number): {
+  rootCount: number
+  canalCount: number
+} {
+  const lastDigit = toothNumber % 10
+  const isUpper = Math.floor(toothNumber / 10) <= 2
+
+  if (lastDigit === 1 || lastDigit === 2 || lastDigit === 3) {
+    return { rootCount: 1, canalCount: 1 }
+  }
+  if (lastDigit === 4) {
+    return isUpper ? { rootCount: 2, canalCount: 2 } : { rootCount: 1, canalCount: 1 }
+  }
+  if (lastDigit === 5) {
+    return isUpper ? { rootCount: 1, canalCount: 2 } : { rootCount: 1, canalCount: 1 }
+  }
+  if (lastDigit === 6) {
+    return isUpper ? { rootCount: 3, canalCount: 4 } : { rootCount: 2, canalCount: 3 }
+  }
+  if (lastDigit === 7) {
+    return isUpper ? { rootCount: 3, canalCount: 3 } : { rootCount: 2, canalCount: 3 }
+  }
+  if (lastDigit === 8) {
+    return isUpper ? { rootCount: 1, canalCount: 3 } : { rootCount: 1, canalCount: 2 }
+  }
+  return { rootCount: 1, canalCount: 1 }
 }
 
 // ─── CONDITION CONFIGURATION ─────────────────────────────────────────────────
@@ -283,6 +313,7 @@ export function buildToothViewModels(
 
     const condition = (activeEntry?.condition as DentalCondition) || 'HEALTHY'
     const severity = (activeEntry?.severity as SeverityLevel) || 'MILD'
+    const counts = getToothRootCanalCounts(toothNumber)
 
     const surfaces = {
       mesial: !!activeEntry?.mesial,
@@ -297,9 +328,12 @@ export function buildToothViewModels(
       fdiNotation: String(toothNumber),
       name: TOOTH_NAMES[toothNumber] || `Tooth ${toothNumber}`,
       group: getToothAnatomyGroup(toothNumber),
+      specificType: getToothSpecificType(toothNumber),
       position: getToothPosition(toothNumber),
       side: getToothSide(toothNumber),
       quadrant: getToothQuadrant(toothNumber),
+      rootCount: counts.rootCount,
+      canalCount: counts.canalCount,
       activeEntry,
       condition,
       severity,
