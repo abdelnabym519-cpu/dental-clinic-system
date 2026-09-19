@@ -24,6 +24,19 @@ only the downloader for the blocked CDN). Therefore no DB-backed or browser
 click-through was possible in-sandbox. Do not treat the table above as a
 substitute for the browser pass below.
 
+## Automated browser checklist
+
+`tests/e2e/agenda.spec.ts` automates the §28 browser checklist (sidebar
+placement, single scheduling entry, day/week/month, navigation, create,
+conflict rejection, edit/reschedule, cancel, patient navigation, provider
+filter, console hygiene) using the shared authenticated fixtures. With MySQL
+running and the app seeded:
+
+```bash
+npx playwright install chromium   # once per machine
+npm run test:e2e -- agenda        # or: npx playwright test tests/e2e/agenda.spec.ts
+```
+
 ## Local machine verification (runs the full checklist)
 
 Prerequisites: MySQL reachable at `DATABASE_URL` (see `.env.example`,

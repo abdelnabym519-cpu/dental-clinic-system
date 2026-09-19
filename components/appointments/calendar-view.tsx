@@ -19,6 +19,7 @@ import {
   Eye,
   CalendarX,
   RefreshCw,
+  User,
 } from 'lucide-react'
 import {
   appointmentStatusConfig,
@@ -47,6 +48,7 @@ interface Appointment {
   appointmentType: string
   status: string
   patient: {
+    id?: string
     firstName: string
     lastName: string
     phone: string
@@ -305,6 +307,15 @@ export function CalendarView({
                   >
                     <Eye className="h-3.5 w-3.5" /> View details
                   </button>
+                  {apt.patient.id && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+                      onClick={() => router.push(`/patients/${apt.patient.id}`)}
+                    >
+                      <User className="h-3.5 w-3.5" /> View patient
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"

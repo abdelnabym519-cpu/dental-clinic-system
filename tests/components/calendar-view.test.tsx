@@ -322,6 +322,36 @@ describe('CalendarView', () => {
     expect(screen.getAllByText('9:00 AM').length).toBeGreaterThanOrEqual(1)
   })
 
+  it('offers patient-context navigation from the block menu', async () => {
+    fetchMock
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ appointments: [] }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          appointments: [
+            {
+              ...mockAppointments[0],
+              patient: { id: 'pat-77', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+            },
+          ],
+        }),
+      })
+
+    render(<CalendarView initialDate={new Date('2025-06-15')} />)
+    await waitFor(() => {
+      expect(screen.queryByText('Loading calendar...')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByTestId('select-item-day'))
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /actions for appointment/i }))
+    fireEvent.click(screen.getByText('View patient'))
+    expect(mockPush).toHaveBeenCalledWith('/patients/pat-77')
+  })
+
   it('navigates to appointment on click in day view', async () => {
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ appointments: [] }) })
