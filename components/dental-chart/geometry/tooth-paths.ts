@@ -68,6 +68,8 @@ export interface ToothGeometryPaths {
   rootGrooves: string[]
   /** Dark soft shapes in the inter-radicular furcation notches. */
   furcationShadows: string[]
+  /** Merged cervical base block extending root trunks behind the crown. */
+  cervicalSkirt?: string
   /** Blurred interior crown shadows (cervical band, side falloff, incisal translucency). */
   crownShades: VolBlob[]
   /** Soft cusp-base / fossa shadows rendered ON the occlusal table. */
@@ -331,7 +333,7 @@ const UP11: ToothClass = {
       cervical(31, 52, 13.5, 4),
       edgeShade(42.6, 68, 2.8, 15, 0.22),
       edgeShade(17.6, 68, 2.4, 15, 0.12, SHADE_MESIAL),
-      { cx: 31, cy: 90.4, rx: 11.5, ry: 3, fill: SHADE_INCISAL, opacity: 0.2, blur: 'wide' },
+      { cx: 31, cy: 90.4, rx: 11.5, ry: 3, fill: SHADE_INCISAL, opacity: 0.27, blur: 'wide' },
     ],
     lights: [
       gloss(26.5, 66, 6.2, 14, 0.42),
@@ -375,7 +377,7 @@ const UP12: ToothClass = {
       cervical(30.3, 52, 11, 3.8),
       edgeShade(40.2, 67, 2.6, 14, 0.24),
       edgeShade(19.7, 66, 2.1, 14, 0.12, SHADE_MESIAL),
-      { cx: 30.3, cy: 89, rx: 9.5, ry: 2.8, fill: SHADE_INCISAL, opacity: 0.2, blur: 'wide' },
+      { cx: 30.3, cy: 89, rx: 9.5, ry: 2.8, fill: SHADE_INCISAL, opacity: 0.27, blur: 'wide' },
     ],
     lights: [
       gloss(25.8, 63.5, 5.2, 12.5, 0.4),
@@ -421,7 +423,7 @@ const UP13: ToothClass = {
       edgeShade(17.8, 68, 2.5, 15, 0.13, SHADE_MESIAL),
       cuspShade(24.8, 76, 4.2, 10.5, 0.2),
       cuspShade(39.2, 76, 4.2, 10.5, 0.2),
-      { cx: 32, cy: 94, rx: 7.5, ry: 2.6, fill: SHADE_INCISAL, opacity: 0.2, blur: 'wide' },
+      { cx: 32, cy: 94, rx: 7.5, ry: 2.6, fill: SHADE_INCISAL, opacity: 0.25, blur: 'wide' },
     ],
     lights: [
       cuspLight(32, 88.5, 6.5, 0.9),
@@ -478,9 +480,9 @@ const UP14: ToothClass = {
   occlusal: {
     table:
       'M 19.5,64 C 25,61.2 38,61.2 43.5,64 C 45.5,70 45.3,78.5 43.6,84.5 C 39,89.3 25.5,89.3 21,84.5 C 19.2,78.5 19,70 19.5,64 Z',
-    tableTopShade: { cx: 31.5, cy: 63.5, rx: 12.5, ry: 3.2, fill: SHADE_CUSP, opacity: 0.28, blur: 'wide' },
+    tableTopShade: { cx: 31.5, cy: 63.5, rx: 12.5, ry: 3.2, fill: SHADE_CUSP, opacity: 0.36, blur: 'wide' },
     shades: [cuspShade(26, 70, 5.5, 5, 0.26), cuspShade(39, 69.5, 5, 4.8, 0.26)],
-    lights: [cuspLight(26, 84.5, 5.2, 0.9), cuspLight(39, 83.5, 4.6, 0.85)],
+    lights: [cuspLight(26, 84.5, 5.8, 0.95), cuspLight(39, 83.5, 5.2, 0.9)],
     grooves: ['M 32.5,64 C 32.2,71 32.2,78 32.5,86.5'],
   },
   roots: {
@@ -534,9 +536,9 @@ const UP15: ToothClass = {
   occlusal: {
     table:
       'M 19,64 C 24.8,61.2 38.8,61.2 44.5,64 C 46.5,70.5 46.2,79 44.3,85 C 38.8,90.3 24.8,90.3 20.4,85 C 18.5,79 18.2,70.5 19,64 Z',
-    tableTopShade: { cx: 31.8, cy: 63.5, rx: 13, ry: 3.2, fill: SHADE_CUSP, opacity: 0.28, blur: 'wide' },
+    tableTopShade: { cx: 31.8, cy: 63.5, rx: 13, ry: 3.2, fill: SHADE_CUSP, opacity: 0.36, blur: 'wide' },
     shades: [cuspShade(26.5, 70, 5.5, 5, 0.26), cuspShade(39, 70, 5.5, 5, 0.26)],
-    lights: [cuspLight(26.5, 84.5, 5, 0.9), cuspLight(39, 84, 5, 0.87)],
+    lights: [cuspLight(26.5, 84.5, 5.6, 0.95), cuspLight(39, 84, 5.5, 0.92)],
     grooves: ['M 32.5,64 C 32.2,72 32.2,79 32.5,87.5'],
   },
   roots: {
@@ -586,15 +588,15 @@ const UP16: ToothClass = {
       'M 12.5,63.5 C 19.5,60.5 43.5,60.5 50.5,63.5 C 52.8,70 52.5,78 50.8,84 C 45,90 19,90 13.2,84 C 11.4,78 11.2,70 12.5,63.5 Z',
     tableTopShade: { cx: 31.5, cy: 63, rx: 18.5, ry: 3.6, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31, 74, 7.5, 6.5, 0.28),
+      cuspShade(31, 74, 9, 7.5, 0.34),
       cuspShade(19, 68.5, 5, 4.5, 0.2),
       cuspShade(42, 68.5, 5, 4.5, 0.2),
     ],
     lights: [
-      cuspLight(19, 70, 5.4, 0.9),
-      cuspLight(42, 70, 5.2, 0.9),
-      cuspLight(18.5, 81, 4.8, 0.82),
-      cuspLight(43, 81, 4.8, 0.82),
+      cuspLight(19, 70, 6.3, 0.95),
+      cuspLight(42, 70, 6, 0.95),
+      cuspLight(18.5, 81, 5.5, 0.88),
+      cuspLight(43, 81, 5.5, 0.88),
     ],
     grooves: [
       'M 31,63.5 C 30.7,70 30.7,78 31,85',
@@ -664,15 +666,15 @@ const UP17: ToothClass = {
       'M 13,63.5 C 20,60.8 43,60.8 49.5,63.5 C 51.5,70 51.2,77.5 49.4,83 C 44,89 19.8,89 14.6,83 C 12.7,77.5 12.5,70 13,63.5 Z',
     tableTopShade: { cx: 31.2, cy: 63, rx: 17.5, ry: 3.4, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31, 73.5, 6.5, 6, 0.28),
+      cuspShade(31, 73.5, 8, 7, 0.34),
       cuspShade(19.5, 69, 4.8, 4.2, 0.2),
       cuspShade(41, 69, 4.8, 4.2, 0.2),
     ],
     lights: [
-      cuspLight(19.5, 70, 5, 0.9),
-      cuspLight(41, 70, 4.8, 0.87),
-      cuspLight(19, 80, 4.6, 0.8),
-      cuspLight(42, 80, 4.4, 0.78),
+      cuspLight(19.5, 70, 5.8, 0.95),
+      cuspLight(41, 70, 5.5, 0.92),
+      cuspLight(19, 80, 5.2, 0.86),
+      cuspLight(42, 80, 5, 0.84),
     ],
     grooves: [
       'M 30.8,63.5 C 30.6,70 30.6,77 30.8,84',
@@ -742,15 +744,15 @@ const UP18: ToothClass = {
       'M 14,63.5 C 20.5,61 43.5,61 49,63.5 C 50.9,70 50.6,77.5 48.7,82.8 C 43.5,88.5 19.5,88.5 14.6,82.8 C 12.8,77.5 12.5,70 14,63.5 Z',
     tableTopShade: { cx: 31.4, cy: 63, rx: 17, ry: 3.3, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31, 73.5, 6, 5.8, 0.28),
+      cuspShade(31, 73.5, 7.5, 6.8, 0.34),
       cuspShade(20, 69, 4.8, 4.2, 0.2),
       cuspShade(41, 69, 4.8, 4.2, 0.2),
     ],
     lights: [
-      cuspLight(20, 70, 4.8, 0.9),
-      cuspLight(41, 70, 4.6, 0.87),
-      cuspLight(20.5, 80, 4.4, 0.78),
-      cuspLight(41.5, 80, 4.4, 0.78),
+      cuspLight(20, 70, 5.5, 0.95),
+      cuspLight(41, 70, 5.2, 0.92),
+      cuspLight(20.5, 80, 5, 0.85),
+      cuspLight(41.5, 80, 5, 0.85),
     ],
     grooves: [
       'M 30.8,63.5 C 30.6,70 30.6,77 30.8,83.5',
@@ -803,16 +805,16 @@ const LO6_OCCLUSAL: OcclusalSet = {
     'M 12.5,63.5 C 19.5,60.5 43.5,60.5 50.5,63.5 C 52.8,70 52.5,78 50.8,84 C 45,90 19,90 13.2,84 C 11.4,78 11.2,70 12.5,63.5 Z',
   tableTopShade: { cx: 31.5, cy: 63, rx: 18.5, ry: 3.6, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
   shades: [
-    cuspShade(31, 74, 7.5, 6, 0.28),
+    cuspShade(31, 74, 9, 7, 0.34),
     cuspShade(18, 69, 5, 4.2, 0.2),
     cuspShade(44, 69, 5, 4.2, 0.2),
   ],
   lights: [
-    cuspLight(18, 70, 5.2, 0.9),
-    cuspLight(31, 68, 5, 0.9),
-    cuspLight(44, 70, 5.2, 0.9),
-    cuspLight(23, 81, 4.8, 0.8),
-    cuspLight(39, 81, 4.8, 0.8),
+    cuspLight(18, 70, 5.9, 0.95),
+    cuspLight(31, 68, 5.7, 0.95),
+    cuspLight(44, 70, 5.9, 0.95),
+    cuspLight(23, 81, 5.4, 0.87),
+    cuspLight(39, 81, 5.4, 0.87),
   ],
   grooves: [
     'M 31,63.5 C 30.8,70 30.8,77 31,84.5',
@@ -1004,15 +1006,15 @@ const LO47: LowerClass = {
       'M 13.5,63.5 C 20.3,60.8 42.7,60.8 48.5,63.5 C 50.5,70 50.2,77.5 48.4,83 C 43.5,89 19.7,89 14.8,83 C 12.9,77.5 12.6,70 13.5,63.5 Z',
     tableTopShade: { cx: 31, cy: 63, rx: 17.5, ry: 3.4, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31, 73.5, 6.5, 6, 0.28),
+      cuspShade(31, 73.5, 8, 7, 0.34),
       cuspShade(20, 69, 4.8, 4.2, 0.2),
       cuspShade(41, 69, 4.8, 4.2, 0.2),
     ],
     lights: [
-      cuspLight(20, 70, 4.8, 0.9),
-      cuspLight(41, 70, 4.8, 0.87),
-      cuspLight(20, 80, 4.6, 0.79),
-      cuspLight(42, 80, 4.6, 0.79),
+      cuspLight(20, 70, 5.5, 0.95),
+      cuspLight(41, 70, 5.5, 0.92),
+      cuspLight(20, 80, 5.2, 0.85),
+      cuspLight(42, 80, 5.2, 0.85),
     ],
     grooves: [
       'M 30.8,63.5 C 30.6,70 30.6,77 30.8,84',
@@ -1056,15 +1058,15 @@ const LO48: LowerClass = {
       'M 14.5,63.5 C 21,61.2 42.5,61.2 48,63.5 C 49.8,70 49.6,77.5 47.7,82.8 C 43,88.5 19.8,88.5 15.2,82.8 C 13.3,77.5 13.1,70 14.5,63.5 Z',
     tableTopShade: { cx: 31.3, cy: 63, rx: 17, ry: 3.3, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31.5, 73.5, 6, 5.5, 0.28),
+      cuspShade(31.5, 73.5, 7.5, 6.5, 0.34),
       cuspShade(20.5, 69, 4.8, 4, 0.2),
       cuspShade(42, 69, 4.8, 4, 0.2),
     ],
     lights: [
-      cuspLight(20.5, 70, 4.6, 0.9),
-      cuspLight(42, 70, 4.5, 0.87),
-      cuspLight(21, 80, 4.3, 0.77),
-      cuspLight(42.5, 80, 4.3, 0.77),
+      cuspLight(20.5, 70, 5.3, 0.95),
+      cuspLight(42, 70, 5.1, 0.92),
+      cuspLight(21, 80, 4.9, 0.84),
+      cuspLight(42.5, 80, 4.9, 0.84),
     ],
     grooves: [
       'M 31.3,63.5 C 31.1,70 31.1,77 31.3,83.5',
@@ -1161,8 +1163,27 @@ function finalize(g: Omit<ToothGeometryPaths, 'surfaces'>, isRightSide: boolean,
   const implant = implantFor(bb, isUpper)
   const fracture =
     `M ${r1(cx - 9)},${r1(bb.y0 + 2.5)} L ${r1(cx - 1)},${r1(cy)} L ${r1(cx - 5)},${r1(cy + (bb.y1 - cy) * 0.45)} L ${r1(cx + 6)},${r1(bb.y1 - 1.5)}`
+  // Merged cervical base: extends the root trunks down behind the crown so the
+  // trunk base edges never step out above the cervical line.
+  let skirt: string | undefined
+  if (g.rootTrunks.length > 0) {
+    let x0 = Infinity
+    let x1 = -Infinity
+    for (const t of g.rootTrunks) {
+      const b = pathBBox(t)
+      x0 = Math.min(x0, b.x0)
+      x1 = Math.max(x1, b.x1)
+    }
+    // Clamp to the crown silhouette so the base block never sticks out
+    x0 = Math.max(x0, bb.x0 + 1.5)
+    x1 = Math.min(x1, bb.x1 - 1.5)
+    const topY = isUpper ? 49.2 : 44.8
+    const botY = isUpper ? 55.5 : 51.5
+    skirt = `M ${r1(x0)},${botY} L ${r1(x0)},${topY} Q ${r1((x0 + x1) / 2)},${r1(topY - 1.2)} ${r1(x1)},${topY} L ${r1(x1)},${botY} Z`
+  }
   return {
     ...g,
+    cervicalSkirt: skirt,
     surfaces: buildSurfaces(bb, isRightSide, isUpper),
     crownCapOutline: cap,
     implantOutline: implant.outline,
@@ -1189,6 +1210,7 @@ function flipGeometry(g: ToothGeometryPaths): ToothGeometryPaths {
     fissurePaths: g.fissurePaths?.map(flipX),
     cuspHighlights: g.cuspHighlights?.map(flipX),
     rootSeparationPath: g.rootSeparationPath ? flipX(g.rootSeparationPath) : undefined,
+    cervicalSkirt: g.cervicalSkirt ? flipX(g.cervicalSkirt) : undefined,
     cervicalLinePath: g.cervicalLinePath ? flipX(g.cervicalLinePath) : undefined,
     rootTrunks: g.rootTrunks.map(flipX),
     rootApexShadows: g.rootApexShadows.map(flipXBlob),
@@ -1297,6 +1319,7 @@ function mirrorToMandibularFrame(g: Omit<ToothGeometryPaths, 'surfaces'>): Omit<
     fissurePaths: g.fissurePaths?.map(mirrorY),
     cuspHighlights: g.cuspHighlights?.map(mirrorY),
     rootSeparationPath: g.rootSeparationPath ? mirrorY(g.rootSeparationPath) : undefined,
+    cervicalSkirt: g.cervicalSkirt ? mirrorY(g.cervicalSkirt) : undefined,
     cervicalLinePath: g.cervicalLinePath ? mirrorY(g.cervicalLinePath) : undefined,
     rootTrunks: g.rootTrunks.map(mirrorY),
     rootApexShadows: g.rootApexShadows.map(mirrorYBlob),

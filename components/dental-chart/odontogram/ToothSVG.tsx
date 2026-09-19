@@ -35,12 +35,12 @@ function Engrave({ d, offset = 0.55 }: { d: string; offset?: number }) {
 function SubtleLine({ d, offset = 0.5 }: { d: string; offset?: number }) {
   return (
     <>
-      <path d={d} fill="none" stroke="#6B5632" strokeOpacity={0.18} strokeWidth={0.7} strokeLinecap="round" />
+      <path d={d} fill="none" stroke="#6B5632" strokeOpacity={0.22} strokeWidth={0.7} strokeLinecap="round" />
       <path
         d={d}
         fill="none"
         stroke="#FFFDF3"
-        strokeOpacity={0.2}
+        strokeOpacity={0.22}
         strokeWidth={0.45}
         strokeLinecap="round"
         transform={`translate(${offset},${offset})`}
@@ -148,6 +148,10 @@ export function ToothSVG({
           {geometry.furcationShadows.map((d, i) => (
             <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.5} filter={`url(#blurS-${n})`} />
           ))}
+          {/* Merged cervical base — extends trunks behind the crown (hides base steps) */}
+          {geometry.cervicalSkirt && !missing && (
+            <path d={geometry.cervicalSkirt} fill="#C2A05C" fillOpacity={0.9} />
+          )}
           {geometry.rootTrunks.map((d, i) => (
             <path
               key={`trunk-${i}`}
