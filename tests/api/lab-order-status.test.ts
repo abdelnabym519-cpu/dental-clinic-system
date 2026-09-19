@@ -1,4 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('@prisma/client', () => ({
+  LabOrderStatus: {
+    CREATED: 'CREATED',
+    SENT_TO_LAB: 'SENT_TO_LAB',
+    IN_PROGRESS: 'IN_PROGRESS',
+    READY: 'READY',
+    DELIVERED: 'DELIVERED',
+    FITTED: 'FITTED',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED',
+    REJECTED: 'REJECTED',
+  },
+}))
+
 import { LabOrderStatus } from '@prisma/client'
 
 const mockAuth = vi.hoisted(() => ({

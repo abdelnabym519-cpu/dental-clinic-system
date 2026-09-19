@@ -5,6 +5,31 @@ import { LabOrderStatus, LabVendorStatus } from '@prisma/client'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
+vi.mock('@prisma/client', () => ({
+  LabOrderStatus: {
+    CREATED: 'CREATED',
+    SENT_TO_LAB: 'SENT_TO_LAB',
+    IN_PROGRESS: 'IN_PROGRESS',
+    READY: 'READY',
+    DELIVERED: 'DELIVERED',
+    FITTED: 'FITTED',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED',
+    REJECTED: 'REJECTED',
+  },
+  LabVendorStatus: {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+    BLOCKED: 'BLOCKED',
+  },
+  QualityCheckStatus: {
+    PASSED: 'PASSED',
+    FAILED: 'FAILED',
+    PENDING: 'PENDING',
+    REJECTED: 'REJECTED',
+  },
+}))
+
 vi.mock('@/lib/prisma', () => import('../__mocks__/prisma'))
 
 vi.mock('@/lib/api-helpers', () => ({

@@ -4,6 +4,38 @@ import { PurchaseOrderStatus, SupplierStatus } from '@prisma/client'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
+vi.mock('@prisma/client', () => ({
+  PurchaseOrderStatus: {
+    DRAFT: 'DRAFT',
+    ORDERED: 'ORDERED',
+    RECEIVED: 'RECEIVED',
+    CANCELLED: 'CANCELLED',
+  },
+  SupplierStatus: {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+    BLOCKED: 'BLOCKED',
+  },
+  StockTransactionType: {
+    PURCHASE: 'PURCHASE',
+    CONSUMPTION: 'CONSUMPTION',
+    ADJUSTMENT_IN: 'ADJUSTMENT_IN',
+    ADJUSTMENT_OUT: 'ADJUSTMENT_OUT',
+    RETURN_TO_SUPPLIER: 'RETURN_TO_SUPPLIER',
+    EXPIRED_DISPOSAL: 'EXPIRED_DISPOSAL',
+    TRANSFER: 'TRANSFER',
+    INITIAL: 'INITIAL',
+  },
+  ItemType: {
+    DENTAL_MATERIAL: 'DENTAL_MATERIAL',
+    INSTRUMENT: 'INSTRUMENT',
+    CONSUMABLE: 'CONSUMABLE',
+    EQUIPMENT: 'EQUIPMENT',
+    MEDICINE: 'MEDICINE',
+    OTHER: 'OTHER',
+  },
+}))
+
 vi.mock('@/lib/prisma', () => import('../__mocks__/prisma'))
 
 vi.mock('@/lib/api-helpers', () => ({

@@ -6,6 +6,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+vi.mock('@prisma/client', () => ({
+  InventoryItemType: {
+    DENTAL_MATERIAL: 'DENTAL_MATERIAL',
+    INSTRUMENT: 'INSTRUMENT',
+    CONSUMABLE: 'CONSUMABLE',
+    EQUIPMENT: 'EQUIPMENT',
+    MEDICINE: 'MEDICINE',
+    OTHER: 'OTHER',
+  },
+}))
+
 // Mock Prisma
 vi.mock('@/lib/prisma', () => ({
   prisma: {

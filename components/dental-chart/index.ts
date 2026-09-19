@@ -1,1 +1,5 @@
-export { DentalChart } from './dental-chart'
+export { DentalChart, Odontogram } from './dental-chart'
+export type { DentalChartProps } from './dental-chart'
+export * from './types/odontogram'
+export * from './adapters/dental-chart-adapter'
+export * from './geometry/tooth-paths'

@@ -5,6 +5,34 @@ import { StockAlertType, SupplierStatus } from '@prisma/client'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
+vi.mock('@prisma/client', () => ({
+  StockAlertType: {
+    LOW_STOCK: 'LOW_STOCK',
+    OUT_OF_STOCK: 'OUT_OF_STOCK',
+    EXPIRING_SOON: 'EXPIRING_SOON',
+    EXPIRED: 'EXPIRED',
+  },
+  SupplierStatus: {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+    BLOCKED: 'BLOCKED',
+  },
+  StockTransactionType: {
+    PURCHASE: 'PURCHASE',
+    SALE: 'SALE',
+    CONSUMPTION: 'CONSUMPTION',
+    ADJUSTMENT_IN: 'ADJUSTMENT_IN',
+    ADJUSTMENT_OUT: 'ADJUSTMENT_OUT',
+    RETURN_TO_SUPPLIER: 'RETURN_TO_SUPPLIER',
+    EXPIRED_DISPOSAL: 'EXPIRED_DISPOSAL',
+    TRANSFER: 'TRANSFER',
+    INITIAL: 'INITIAL',
+    DAMAGED: 'DAMAGED',
+    EXPIRED: 'EXPIRED',
+    RETURNED: 'RETURNED',
+  },
+}))
+
 vi.mock('@/lib/prisma', () => import('../__mocks__/prisma'))
 
 vi.mock('@/lib/api-helpers', () => ({
