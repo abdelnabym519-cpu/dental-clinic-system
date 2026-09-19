@@ -266,46 +266,63 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate appointment number for this hospital
-    const appointmentNo = await generateAppointmentNo(hospitalId)
+    // Create appointment with a collision-safe appointment number:
+    // generateAppointmentNo reads the current max, so two concurrent bookings
+    // can derive the same number (the unique constraint then rejects one).
+    // Retry with a freshly generated number instead of failing the booking.
+    let appointment: { id: string } | null = null
+    let appointmentNo = ''
+    for (let attempt = 0; attempt < 3 && !appointment; attempt++) {
+      appointmentNo = await generateAppointmentNo(hospitalId)
+      try {
+        appointment = (await prisma.appointment.create({
+          data: {
+            appointmentNo,
+            patientId,
+            doctorId,
+            hospitalId,
+            scheduledDate: appointmentDate,
+            scheduledTime,
+            duration,
+            chairNumber,
+            appointmentType,
+            priority,
+            chiefComplaint,
+            notes,
+            isVirtual: !!isVirtual,
+            status: 'SCHEDULED',
+          },
+          include: {
+            patient: {
+              select: {
+                id: true,
+                patientId: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+              },
+            },
+            doctor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        })) as { id: string }
+      } catch (err) {
+        if ((err as { code?: string })?.code === 'P2002') continue // number taken concurrently — retry
+        throw err
+      }
+    }
 
-    // Create appointment
-    const appointment = await prisma.appointment.create({
-      data: {
-        appointmentNo,
-        patientId,
-        doctorId,
-        hospitalId,
-        scheduledDate: appointmentDate,
-        scheduledTime,
-        duration,
-        chairNumber,
-        appointmentType,
-        priority,
-        chiefComplaint,
-        notes,
-        isVirtual: !!isVirtual,
-        status: 'SCHEDULED',
-      },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            patientId: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-          },
-        },
-        doctor: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    })
+    if (!appointment) {
+      return NextResponse.json(
+        { error: 'Could not allocate an appointment number, please retry' },
+        { status: 503 }
+      )
+    }
 
     // Auto-create video consultation for virtual appointments
     if (isVirtual) {

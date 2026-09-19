@@ -294,6 +294,73 @@ describe('Agenda conflict detection', () => {
 })
 
 // ---------------------------------------------------------------------------
+// Appointment-number collision safety
+// ---------------------------------------------------------------------------
+
+describe('Agenda appointment-number collision retry', () => {
+  function setupValidEntities() {
+    prisma.patient.findFirst.mockResolvedValue({ id: 'patient-1', hospitalId: 'hospital-1' })
+    prisma.staff.findFirst.mockResolvedValue({ id: 'doctor-1', hospitalId: 'hospital-1' })
+    prisma.appointment.findFirst.mockResolvedValue(null)
+    prisma.appointment.findMany.mockResolvedValue([])
+  }
+
+  it('retries with a fresh appointment number when a concurrent booking takes it', async () => {
+    setupValidEntities()
+    const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+    prisma.appointment.create
+      .mockRejectedValueOnce(p2002)
+      .mockResolvedValueOnce({ id: 'apt-new' })
+
+    const res = await POST(
+      jsonRequest('http://localhost/api/appointments', {
+        patientId: 'patient-1',
+        doctorId: 'doctor-1',
+        scheduledDate: DAY,
+        scheduledTime: '15:00',
+        duration: 30,
+      })
+    )
+    expect(res.status).toBe(201)
+    expect(prisma.appointment.create).toHaveBeenCalledTimes(2)
+  })
+
+  it('gives up gracefully after repeated collisions (503, no crash)', async () => {
+    setupValidEntities()
+    const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+    prisma.appointment.create.mockRejectedValue(p2002)
+
+    const res = await POST(
+      jsonRequest('http://localhost/api/appointments', {
+        patientId: 'patient-1',
+        doctorId: 'doctor-1',
+        scheduledDate: DAY,
+        scheduledTime: '15:00',
+        duration: 30,
+      })
+    )
+    expect(res.status).toBe(503)
+    expect(prisma.appointment.create).toHaveBeenCalledTimes(3)
+  })
+
+  it('still surfaces unrelated create failures as 500', async () => {
+    setupValidEntities()
+    prisma.appointment.create.mockRejectedValue(new Error('Database error'))
+
+    const res = await POST(
+      jsonRequest('http://localhost/api/appointments', {
+        patientId: 'patient-1',
+        doctorId: 'doctor-1',
+        scheduledDate: DAY,
+        scheduledTime: '15:00',
+        duration: 30,
+      })
+    )
+    expect(res.status).toBe(500)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Validation & tenant isolation
 // ---------------------------------------------------------------------------
 
