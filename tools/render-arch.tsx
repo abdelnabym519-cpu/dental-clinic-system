@@ -232,10 +232,48 @@ function closeUpSheet(): string {
   return sheet('Maxillary Class Close-Up (11 → 18)', out, 900, 120 + 100 * scale + 70)
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// SHEET 4 — close-up class comparison (lower row, 41 → 48, large)
+// ══════════════════════════════════════════════════════════════════════════════
+function closeUpMandibularSheet(): string {
+  const order = [41, 42, 43, 44, 45, 46, 47, 48]
+  const scale = 1.55
+  const cellW = 86
+  let out = ''
+  order.forEach((num, i) => {
+    const x = 55 + i * (cellW + 8)
+    const y = 120
+    const tw = 64 * scale
+    const th = 100 * scale
+    out += placeTooth(makeTooth(num), x + (cellW - tw) / 2, y, tw, th)
+    out += label(x + cellW / 2, y + th + 20, String(num), 15)
+    out += label(x + cellW / 2, y - 12, NAMES[num].replace('Lower R ', ''), 9.5, 'middle', '#64748B')
+  })
+  return sheet('Mandibular Class Close-Up (41 → 48)', out, 900, 120 + 100 * scale + 70)
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SHEET 5 — high-zoom debug (single pair, scale 3)
+// ══════════════════════════════════════════════════════════════════════════════
+function zoomSheet(nums: number[], scale = 3): string {
+  const cellW = 64 * scale
+  let out = ''
+  nums.forEach((num, i) => {
+    const x = 40 + i * (cellW + 40)
+    const y = 40
+    out += placeTooth(makeTooth(num), x, y, cellW, 100 * scale)
+    out += label(x + cellW / 2, y - 14, String(num), 20)
+  })
+  return sheet('High-Zoom ' + nums.join(' + '), out, nums.length * (cellW + 40) + 40, 100 * scale + 100)
+}
+
 const outDir = path.resolve(process.cwd(), 'tools/preview')
 fs.mkdirSync(outDir, { recursive: true })
 
 toPng(archSheet(), path.join(outDir, 'arch-healthy.png'), 2160)
 toPng(conditionsSheet(), path.join(outDir, 'arch-conditions.png'), 2160)
 toPng(closeUpSheet(), path.join(outDir, 'closeup-maxillary.png'), 1800)
+toPng(closeUpMandibularSheet(), path.join(outDir, 'closeup-mandibular.png'), 1800)
+toPng(zoomSheet([43, 46]), path.join(outDir, 'zoom-43-46.png'), 2400)
+toPng(zoomSheet([43, 13], 6), path.join(outDir, 'zoom-canine-pair.png'), 2400)
 console.log('done')

@@ -805,7 +805,7 @@ const LO6_OCCLUSAL: OcclusalSet = {
     'M 12.5,63.5 C 19.5,60.5 43.5,60.5 50.5,63.5 C 52.8,70 52.5,78 50.8,84 C 45,90 19,90 13.2,84 C 11.4,78 11.2,70 12.5,63.5 Z',
   tableTopShade: { cx: 31.5, cy: 63, rx: 18.5, ry: 3.6, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
   shades: [
-    cuspShade(31, 74, 9, 7, 0.34),
+    cuspShade(31, 74.5, 10, 8, 0.36),
     cuspShade(18, 69, 5, 4.2, 0.2),
     cuspShade(44, 69, 5, 4.2, 0.2),
   ],
@@ -813,8 +813,8 @@ const LO6_OCCLUSAL: OcclusalSet = {
     cuspLight(18, 70, 5.9, 0.95),
     cuspLight(31, 68, 5.7, 0.95),
     cuspLight(44, 70, 5.9, 0.95),
-    cuspLight(23, 81, 5.4, 0.87),
-    cuspLight(39, 81, 5.4, 0.87),
+    cuspLight(23, 81, 5.9, 0.95),
+    cuspLight(39, 81, 5.9, 0.95),
   ],
   grooves: [
     'M 31,63.5 C 30.8,70 30.8,77 31,84.5',
@@ -828,16 +828,16 @@ const LO6_OCCLUSAL: OcclusalSet = {
 const LO4_OCCLUSAL: OcclusalSet = {
   table:
     'M 19.5,64 C 25,61.2 38,61.2 43.5,64 C 45.5,70 45.3,78.5 43.6,84.5 C 39,89.3 25.5,89.3 21,84.5 C 19.2,78.5 19,70 19.5,64 Z',
-  tableTopShade: { cx: 31.5, cy: 63.5, rx: 12.5, ry: 3.2, fill: SHADE_CUSP, opacity: 0.28, blur: 'wide' },
+  tableTopShade: { cx: 31.5, cy: 63.5, rx: 12.5, ry: 3.2, fill: SHADE_CUSP, opacity: 0.33, blur: 'wide' },
   shades: [
     cuspShade(31, 70, 8, 4.5, 0.2),
     cuspShade(26, 79, 6, 4, 0.16),
     cuspShade(38, 79, 6, 4, 0.16),
   ],
   lights: [
-    cuspLight(31, 84.5, 6, 0.9),
-    cuspLight(26, 86, 3.8, 0.75),
-    cuspLight(38, 86, 3.8, 0.75),
+    cuspLight(31, 84.5, 6.4, 0.95),
+    cuspLight(26, 86, 4.3, 0.85),
+    cuspLight(38, 86, 4.3, 0.85),
   ],
   grooves: [
     'M 22,65 C 21.5,71 21.7,78 23,84.5',
@@ -850,12 +850,12 @@ const LO4_OCCLUSAL: OcclusalSet = {
 const LO5_OCCLUSAL: OcclusalSet = {
   table:
     'M 19,64 C 24.8,61.2 38.8,61.2 44.5,64 C 46.5,70.5 46.2,79 44.3,85 C 38.8,90.3 24.8,90.3 20.4,85 C 18.5,79 18.2,70.5 19,64 Z',
-  tableTopShade: { cx: 31.8, cy: 63.5, rx: 13, ry: 3.2, fill: SHADE_CUSP, opacity: 0.28, blur: 'wide' },
-  shades: [cuspShade(31.5, 74, 6.5, 5.5, 0.25)],
+  tableTopShade: { cx: 31.8, cy: 63.5, rx: 13, ry: 3.2, fill: SHADE_CUSP, opacity: 0.33, blur: 'wide' },
+  shades: [cuspShade(31.5, 74, 6.5, 5.5, 0.28)],
   lights: [
-    cuspLight(25.5, 84.5, 5, 0.9),
-    cuspLight(39, 84.5, 4.8, 0.87),
-    cuspLight(31.5, 73, 4, 0.75),
+    cuspLight(25.5, 84.5, 5.5, 0.95),
+    cuspLight(39, 84.5, 5.3, 0.95),
+    cuspLight(31.5, 73, 4.4, 0.88),
   ],
   grooves: [
     'M 31.5,64 C 31.3,67 31.3,69.5 31.5,72',
@@ -908,8 +908,28 @@ const LO42: LowerClass = {
 }
 
 const LO43: LowerClass = {
-  crownFx: 0.95,
-  occlusal: { shades: [], lights: [], grooves: [] },
+  crownFx: 0.92,
+  occlusal: {
+    // Single cusp: bright tip, flanking shoulders, central developmental groove
+    table:
+      'M 22.5,64.5 C 26.5,62 37.5,62 41.5,64.5 C 43.2,70.5 43,78.5 41.6,84.5 C 37.5,89.3 26.5,89.3 22.4,84.5 C 21,78.5 20.8,70.5 22.5,64.5 Z',
+    tableTopShade: { cx: 32, cy: 64, rx: 10.5, ry: 3, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
+    shades: [
+      cuspShade(32, 79, 7.5, 6.5, 0.2),
+      cuspShade(25, 72, 4, 5.5, 0.16),
+      cuspShade(39, 72, 4, 5.5, 0.16),
+    ],
+    lights: [
+      cuspLight(32, 85.5, 5.2, 0.95),
+      cuspLight(26.5, 70, 4, 0.7),
+      cuspLight(37.5, 70, 4, 0.7),
+    ],
+    grooves: [
+      'M 32,73 C 31.8,77 31.8,80.5 32,84.5',
+      'M 27,71 C 29,74 30.5,76.5 31.4,79',
+      'M 37,71 C 35,74 33.5,76.5 32.6,79',
+    ],
+  },
   roots: {
     trunks: [
       'M 21.5,48 C 20.2,35 21.5,15 30,5.5 C 31.4,3.6 34.6,3.6 36,5.5 C 43.5,15 44,35 42.5,48 C 35.5,51.6 27.5,51.6 21.5,48 Z',
@@ -1004,17 +1024,17 @@ const LO47: LowerClass = {
   occlusal: {
     table:
       'M 13.5,63.5 C 20.3,60.8 42.7,60.8 48.5,63.5 C 50.5,70 50.2,77.5 48.4,83 C 43.5,89 19.7,89 14.8,83 C 12.9,77.5 12.6,70 13.5,63.5 Z',
-    tableTopShade: { cx: 31, cy: 63, rx: 17.5, ry: 3.4, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
+    tableTopShade: { cx: 31, cy: 63, rx: 17.5, ry: 3.4, fill: SHADE_CUSP, opacity: 0.32, blur: 'wide' },
     shades: [
-      cuspShade(31, 73.5, 8, 7, 0.34),
+      cuspShade(31, 74, 8.5, 7.5, 0.36),
       cuspShade(20, 69, 4.8, 4.2, 0.2),
       cuspShade(41, 69, 4.8, 4.2, 0.2),
     ],
     lights: [
       cuspLight(20, 70, 5.5, 0.95),
       cuspLight(41, 70, 5.5, 0.92),
-      cuspLight(20, 80, 5.2, 0.85),
-      cuspLight(42, 80, 5.2, 0.85),
+      cuspLight(20, 80, 5.7, 0.95),
+      cuspLight(42, 80, 5.7, 0.95),
     ],
     grooves: [
       'M 30.8,63.5 C 30.6,70 30.6,77 30.8,84',
@@ -1058,15 +1078,15 @@ const LO48: LowerClass = {
       'M 14.5,63.5 C 21,61.2 42.5,61.2 48,63.5 C 49.8,70 49.6,77.5 47.7,82.8 C 43,88.5 19.8,88.5 15.2,82.8 C 13.3,77.5 13.1,70 14.5,63.5 Z',
     tableTopShade: { cx: 31.3, cy: 63, rx: 17, ry: 3.3, fill: SHADE_CUSP, opacity: 0.3, blur: 'wide' },
     shades: [
-      cuspShade(31.5, 73.5, 7.5, 6.5, 0.34),
+      cuspShade(31.5, 74, 8, 7, 0.36),
       cuspShade(20.5, 69, 4.8, 4, 0.2),
       cuspShade(42, 69, 4.8, 4, 0.2),
     ],
     lights: [
       cuspLight(20.5, 70, 5.3, 0.95),
       cuspLight(42, 70, 5.1, 0.92),
-      cuspLight(21, 80, 4.9, 0.84),
-      cuspLight(42.5, 80, 4.9, 0.84),
+      cuspLight(21, 80, 5.4, 0.93),
+      cuspLight(42.5, 80, 5.4, 0.93),
     ],
     grooves: [
       'M 31.3,63.5 C 31.1,70 31.1,77 31.3,83.5',
