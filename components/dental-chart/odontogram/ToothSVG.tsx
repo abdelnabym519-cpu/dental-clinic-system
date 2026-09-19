@@ -60,6 +60,7 @@ function Blob({ b, n, shade }: { b: VolBlob; n: number; shade: boolean }) {
       fill={fill}
       fillOpacity={b.radial ? b.opacity : b.opacity}
       filter={b.blur ? `url(#blur${b.blur === 'wide' ? 'W' : 'S'}-${n})` : undefined}
+      transform={b.rot ? `rotate(${b.rot} ${b.cx} ${b.cy})` : undefined}
     />
   )
 }
