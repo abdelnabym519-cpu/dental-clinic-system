@@ -68,7 +68,7 @@ function Blob({ b, n, shade }: { b: VolBlob; n: number; shade: boolean }) {
       ry={b.ry}
       fill={fill}
       fillOpacity={b.radial ? b.opacity : b.opacity}
-      filter={b.blur ? `url(#blur${b.blur === 'wide' ? 'W' : 'S'}-${n})` : undefined}
+      filter={b.blur ? `url(#blur${b.blur === 'wide' ? 'W' : 'S'}-${n})` : b.radial ? `url(#blurS-${n})` : undefined}
       transform={b.rot ? `rotate(${b.rot} ${b.cx} ${b.cy})` : undefined}
     />
   )
@@ -143,11 +143,11 @@ export function ToothSVG({
             <>
               <stop offset="0" stopColor="#5F4212" stopOpacity="0.30" />
               <stop offset="0.5" stopColor="#5F4212" stopOpacity="0.05" />
-              <stop offset="1" stopColor="#C9A85C" stopOpacity="0.14" />
+              <stop offset="1" stopColor="#C9A85C" stopOpacity="0.22" />
             </>
           ) : (
             <>
-              <stop offset="0" stopColor="#C9A85C" stopOpacity="0.14" />
+              <stop offset="0" stopColor="#C9A85C" stopOpacity="0.22" />
               <stop offset="0.5" stopColor="#5F4212" stopOpacity="0.05" />
               <stop offset="1" stopColor="#5F4212" stopOpacity="0.30" />
             </>
@@ -165,9 +165,9 @@ export function ToothSVG({
 
         {/* Raised cusp volume highlight (soft radial) */}
         <radialGradient id={`cuspLightR-${n}`}>
-          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
-          <stop offset="0.35" stopColor="#FFFBEA" stopOpacity="0.62" />
-          <stop offset="0.7" stopColor="#FFFBEA" stopOpacity="0.24" />
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
+          <stop offset="0.4" stopColor="#FFFBEA" stopOpacity="0.58" />
+          <stop offset="0.72" stopColor="#FFFBEA" stopOpacity="0.22" />
           <stop offset="1" stopColor="#FFFBEA" stopOpacity="0" />
         </radialGradient>
 
@@ -187,14 +187,14 @@ export function ToothSVG({
         <clipPath id={`crownClip-${n}`}>
           <path d={geometry.crownOutline} />
         </clipPath>
+        <clipPath id={`rootsClip-${n}`}>
+          <path d={geometry.rootOutline} />
+        </clipPath>
       </defs>
 
       {/* ══ 1. ROOT SYSTEM: furcation depth, volumetric trunks, apex shadow ══ */}
       {!tooth.isImplant && (
         <g className="root-system">
-          {geometry.furcationShadows.map((d, i) => (
-            <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.36} filter={`url(#blurS-${n})`} />
-          ))}
           {/* Merged cervical base — extends trunks behind the crown (hides base steps) */}
           {geometry.cervicalSkirt && !missing && (
             <path d={geometry.cervicalSkirt} fill="#C2A05C" fillOpacity={0.9} />
@@ -211,20 +211,37 @@ export function ToothSVG({
               strokeLinejoin="round"
             />
           ))}
-          {!missing && <path d={geometry.rootOutline} fill={`url(#rootBody-${n})`} />}
-          {!missing &&
-            geometry.rootApexShadows.map((a, i) => (
-              <ellipse
-                key={`apex-${i}`}
-                cx={a.cx}
-                cy={a.cy}
-                rx={a.rx}
-                ry={a.ry}
-                fill={a.fill}
-                fillOpacity={a.opacity}
-                filter={`url(#blurS-${n})`}
+          {!missing && (
+            <g clipPath={`url(#rootsClip-${n})`}>
+              <path d={geometry.rootOutline} fill={`url(#rootBody-${n})`} />
+              {/* Cervical blend band: crown tone washes into the root tops — one continuous structure */}
+              <rect
+                x="2"
+                y={isUpper ? 30 : 50}
+                width="60"
+                height="18"
+                fill="#E8D5A8"
+                opacity={0.4}
+                filter={`url(#blurW-${n})`}
               />
-            ))}
+              {/* Furcation deepening painted ON the trunks only — crisp between roots, soft on them */}
+              {geometry.furcationShadows.map((d, i) => (
+                <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.42} filter={`url(#blurS-${n})`} />
+              ))}
+              {geometry.rootApexShadows.map((a, i) => (
+                <ellipse
+                  key={`apex-${i}`}
+                  cx={a.cx}
+                  cy={a.cy}
+                  rx={a.rx}
+                  ry={a.ry}
+                  fill={a.fill}
+                  fillOpacity={a.opacity}
+                  filter={`url(#blurS-${n})`}
+                />
+              ))}
+            </g>
+          )}
           {!missing &&
             geometry.rootGrooves.map((d, i) => <SubtleLine key={`rg-${i}`} d={d} offset={engraveOffset * 0.7} />)}
           {!tooth.isRootCanal &&
@@ -277,7 +294,7 @@ export function ToothSVG({
 
           {hasTable && (
             <g>
-              <path d={geometry.occlusalTablePath as string} fill="#CDBA8C" fillOpacity={0.26} />
+              <path d={geometry.occlusalTablePath as string} fill="#CDBA8C" fillOpacity={0.22} />
               <path
                 d={geometry.occlusalTablePath as string}
                 fill="#CDBA8C"
@@ -297,9 +314,10 @@ export function ToothSVG({
                   d={d}
                   fill="none"
                   stroke="#FFFBEA"
-                  strokeOpacity={0.4}
-                  strokeWidth={1}
+                  strokeOpacity={0.3}
+                  strokeWidth={1.6}
                   strokeLinecap="round"
+                  filter={`url(#blurS-${n})`}
                 />
               ))}
             </g>
