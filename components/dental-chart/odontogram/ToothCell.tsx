@@ -68,15 +68,15 @@ export function ToothCell({
         }}
         className={`
           relative flex flex-col items-center justify-between
-          w-10 sm:w-11 md:w-12 h-24 sm:h-26 md:h-28 p-1 rounded-lg
+          w-10 sm:w-11 md:w-12 lg:w-13 h-24 sm:h-28 md:h-30 p-1 rounded-xl
           transition-all duration-200 select-none
           outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
           ${
             isSelected
               ? 'ring-2 ring-primary bg-primary/10 shadow-md scale-105 z-10'
-              : 'hover:bg-muted/60 hover:shadow-sm hover:scale-102'
+              : 'hover:bg-muted/70 hover:shadow-xs hover:scale-102'
           }
-          ${tooth.isMissing ? 'opacity-50' : 'opacity-100'}
+          ${tooth.isMissing ? 'opacity-40' : 'opacity-100'}
           ${interactive ? 'cursor-pointer' : 'cursor-default'}
         `}
       >
@@ -93,7 +93,7 @@ export function ToothCell({
         )}
 
         {/* TOOTH ANATOMY SVG CONTAINER */}
-        <div className="relative w-full flex-1 flex items-center justify-center min-h-0">
+        <div className="relative w-full flex-1 flex items-center justify-center min-h-0 px-0.5">
           <ToothSVG
             tooth={tooth}
             onSurfaceClick={onSurfaceClick}
@@ -104,7 +104,7 @@ export function ToothCell({
           {tooth.condition !== 'HEALTHY' && !tooth.isMissing && (
             <div
               className={`
-                absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-background shadow-xs
+                absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background shadow-xs
               `}
               style={{ backgroundColor: conditionConfig?.fillColor || '#ef4444' }}
               title={conditionConfig?.label}

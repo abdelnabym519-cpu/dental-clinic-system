@@ -30,11 +30,11 @@ export function ToothSVG({
   return (
     <svg
       viewBox="0 0 60 100"
-      className={`w-full h-full overflow-visible transition-transform duration-200 ${className}`}
+      className={`w-full h-full overflow-visible transition-transform duration-200 drop-shadow-2xs ${className}`}
       aria-hidden="true"
     >
       <defs>
-        {/* High Realism Enamel Gradient */}
+        {/* High Realism Enamel 3D Gradient */}
         <linearGradient
           id={`enamel-grad-${tooth.number}`}
           x1="0%"
@@ -42,13 +42,13 @@ export function ToothSVG({
           x2="0%"
           y2={isUpper ? '100%' : '0%'}
         >
-          <stop offset="0%" stopColor="#f8fafc" />
-          <stop offset="30%" stopColor="#ffffff" />
-          <stop offset="70%" stopColor="#f1f5f9" />
+          <stop offset="0%" stopColor="#f1f5f9" />
+          <stop offset="25%" stopColor="#ffffff" />
+          <stop offset="60%" stopColor="#f8fafc" />
           <stop offset="100%" stopColor="#e2e8f0" />
         </linearGradient>
 
-        {/* Dentin / Cementum Root Gradient */}
+        {/* Dentin / Cementum Anatomical Gradient */}
         <linearGradient
           id={`root-grad-${tooth.number}`}
           x1="0%"
@@ -56,9 +56,9 @@ export function ToothSVG({
           x2="0%"
           y2={isUpper ? '100%' : '0%'}
         >
-          <stop offset="0%" stopColor="#fef3c7" stopOpacity="0.95" />
-          <stop offset="45%" stopColor="#fde68a" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#fef9c3" stopOpacity="0.6" />
+          <stop offset="0%" stopColor="#fef08a" stopOpacity="0.95" />
+          <stop offset="50%" stopColor="#fde047" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#fef9c3" stopOpacity="0.7" />
         </linearGradient>
 
         {/* Pulp Vascular Gradient */}
@@ -69,8 +69,8 @@ export function ToothSVG({
           x2="0%"
           y2={isUpper ? '100%' : '0%'}
         >
-          <stop offset="0%" stopColor="#fda4af" stopOpacity="0.65" />
-          <stop offset="100%" stopColor="#fee2e2" stopOpacity="0.4" />
+          <stop offset="0%" stopColor="#fb7185" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#fecdd3" stopOpacity="0.5" />
         </linearGradient>
       </defs>
 
@@ -80,23 +80,23 @@ export function ToothSVG({
           <path
             d={geometry.rootOutline}
             fill={isMissing ? 'none' : `url(#root-grad-${tooth.number})`}
-            stroke={isMissing ? '#94a3b8' : '#cbd5e1'}
-            strokeWidth={isMissing ? 1.2 : 1.5}
+            stroke={isMissing ? '#94a3b8' : '#64748b'}
+            strokeWidth={isMissing ? 1.2 : 1.6}
             strokeDasharray={isMissing ? '3 3' : undefined}
             strokeLinejoin="round"
             className="transition-colors"
           />
 
-          {/* Root Furcation Separation Line / Shadow (Multi-rooted molars/premolars) */}
+          {/* Root Furcation Separation Line (Multi-rooted molars/premolars) */}
           {geometry.rootSeparationPath && !isMissing && (
             <path
               d={geometry.rootSeparationPath}
               fill="none"
-              stroke="#94a3b8"
-              strokeWidth={1.2}
+              stroke="#475569"
+              strokeWidth={1.3}
               strokeLinecap="round"
-              strokeDasharray="1 1"
-              opacity={0.7}
+              strokeDasharray="2 2"
+              opacity={0.8}
             />
           )}
         </g>
@@ -109,8 +109,8 @@ export function ToothSVG({
           <path
             d={geometry.pulpOutline}
             fill={`url(#pulp-grad-${tooth.number})`}
-            stroke="#fca5a5"
-            strokeWidth={0.75}
+            stroke="#f87171"
+            strokeWidth={0.9}
             strokeLinejoin="round"
           />
           {/* Subtle Root Canal Pathways */}
@@ -119,9 +119,9 @@ export function ToothSVG({
               key={`natural-canal-${i}`}
               d={canal}
               fill="none"
-              stroke="#fca5a5"
-              strokeWidth={0.75}
-              strokeOpacity={0.5}
+              stroke="#f87171"
+              strokeWidth={0.9}
+              strokeOpacity={0.65}
               strokeDasharray="2 2"
             />
           ))}
@@ -133,23 +133,23 @@ export function ToothSVG({
         <path
           d={geometry.crownOutline}
           fill={isMissing ? 'none' : `url(#enamel-grad-${tooth.number})`}
-          stroke={isMissing ? '#94a3b8' : '#64748b'}
-          strokeWidth={isMissing ? 1.2 : 1.6}
+          stroke={isMissing ? '#94a3b8' : '#334155'}
+          strokeWidth={isMissing ? 1.2 : 1.8}
           strokeDasharray={isMissing ? '3 3' : undefined}
           strokeLinejoin="round"
           className="transition-colors"
         />
 
-        {/* Cusp / Ridge Highlights (Subtle Enamel Reflections) */}
+        {/* Cusp / Ridge Highlights (Enamel 3D Reflections) */}
         {geometry.cuspHighlights && !isMissing && (
-          <g className="cusp-highlights-group opacity-60">
+          <g className="cusp-highlights-group opacity-80">
             {geometry.cuspHighlights.map((highlight, i) => (
               <path
                 key={`highlight-${i}`}
                 d={highlight}
                 fill="none"
                 stroke="#ffffff"
-                strokeWidth={1.2}
+                strokeWidth={1.4}
                 strokeLinecap="round"
               />
             ))}
@@ -158,14 +158,14 @@ export function ToothSVG({
 
         {/* Anatomical Developmental Fissures & Grooves */}
         {geometry.fissurePaths && !isMissing && (
-          <g className="fissure-grooves-group opacity-40">
+          <g className="fissure-grooves-group opacity-70">
             {geometry.fissurePaths.map((fissure, i) => (
               <path
                 key={`fissure-${i}`}
                 d={fissure}
                 fill="none"
-                stroke="#475569"
-                strokeWidth={0.9}
+                stroke="#334155"
+                strokeWidth={1.1}
                 strokeLinecap="round"
               />
             ))}
@@ -188,17 +188,17 @@ export function ToothSVG({
             <path
               d={geometry.cervicalLinePath}
               fill="none"
-              stroke="#cbd5e1"
-              strokeWidth={0.75}
-              strokeOpacity={0.6}
+              stroke="#94a3b8"
+              strokeWidth={0.9}
+              strokeOpacity={0.7}
             />
           )}
           <path
             d={geometry.gumLinePath}
             fill="none"
             stroke="#f43f5e"
-            strokeWidth={1.1}
-            strokeOpacity={0.65}
+            strokeWidth={1.3}
+            strokeOpacity={0.8}
             strokeLinecap="round"
           />
         </g>

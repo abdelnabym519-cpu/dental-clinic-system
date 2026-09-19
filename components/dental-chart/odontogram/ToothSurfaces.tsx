@@ -20,8 +20,6 @@ export function ToothSurfaces({
   onSurfaceClick,
   interactive = true,
 }: ToothSurfacesProps) {
-  const isHealthy = tooth.condition === 'HEALTHY' || tooth.isMissing
-
   // Get active restorative / condition color
   const conditionConfig = DENTAL_CONDITION_CONFIG[tooth.condition]
   const fillColor = conditionConfig?.fillColor || '#ef4444'
@@ -40,7 +38,7 @@ export function ToothSurfaces({
 
         if (isAffected && !tooth.isCrown && !tooth.isMissing) {
           surfaceFill = fillColor
-          surfaceFillOpacity = tooth.condition === 'CARIES' ? 0.8 : 0.65
+          surfaceFillOpacity = tooth.condition === 'CARIES' ? 0.85 : 0.7
         }
 
         return (
@@ -49,14 +47,14 @@ export function ToothSurfaces({
             d={pathData}
             fill={surfaceFill}
             fillOpacity={surfaceFillOpacity}
-            stroke={isAffected ? conditionConfig.borderColor : '#94a3b8'}
-            strokeWidth={isAffected ? 1.4 : 0.75}
+            stroke={isAffected ? conditionConfig.borderColor : 'transparent'}
+            strokeWidth={isAffected ? 1.6 : 0.8}
             strokeDasharray={tooth.isMissing ? '2 2' : undefined}
             className={`
-              transition-colors duration-150
+              transition-all duration-150
               ${
                 interactive && !tooth.isMissing
-                  ? 'hover:fill-primary/30 hover:fill-opacity-40 cursor-pointer'
+                  ? 'hover:fill-primary/25 hover:fill-opacity-40 hover:stroke-primary/50 cursor-pointer'
                   : ''
               }
             `}
