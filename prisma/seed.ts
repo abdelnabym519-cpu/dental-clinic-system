@@ -1478,6 +1478,63 @@ async function main() {
     }
   }
 
+  // A second provider so the Agenda's provider filter operates on real data.
+  if (appointmentCount === 0 && seededPatients.length) {
+    const doctor2User = await prisma.user.upsert({
+      where: { email: 'doctor2@demo-dental.com' },
+      update: {},
+      create: {
+        email: 'doctor2@demo-dental.com',
+        name: 'Meera Nair',
+        password: hashedPassword,
+        role: Role.DOCTOR,
+        phone: '9876543299',
+        hospitalId: hospital.id,
+        staff: {
+          create: {
+            employeeId: 'EMP0002',
+            firstName: 'Meera',
+            lastName: 'Nair',
+            phone: '9876543299',
+            email: 'doctor2@demo-dental.com',
+            specialization: 'Orthodontics',
+            licenseNumber: 'TN-DENT-2016-2210',
+            city: 'Chennai',
+            state: 'Tamil Nadu',
+            hospitalId: hospital.id,
+          },
+        },
+      },
+    })
+
+    const doctor2Staff = await prisma.staff.findFirst({
+      where: { userId: doctor2User.id },
+    })
+    if (!doctor2Staff) throw new Error('Seed: second doctor staff record missing')
+
+    for (let i = 0; i < 4; i++) {
+      const patient = seededPatients[(i + 3) % seededPatients.length]
+      const scheduledDate = new Date()
+      scheduledDate.setHours(0, 0, 0, 0)
+      scheduledDate.setDate(scheduledDate.getDate() + (i % 3))
+
+      await prisma.appointment.create({
+        data: {
+          hospitalId: hospital.id,
+          appointmentNo: `APT2026${String(20 + i).padStart(4, '0')}`,
+          patientId: patient.id,
+          doctorId: doctor2Staff.id,
+          scheduledDate,
+          scheduledTime: `${String(10 + i).padStart(2, '0')}:30`,
+          duration: 45,
+          appointmentType: i % 2 === 0 ? AppointmentType.CHECK_UP : AppointmentType.FOLLOW_UP,
+          status: AppointmentStatus.CONFIRMED,
+          chiefComplaint: 'Orthodontic review',
+        },
+      })
+    }
+  }
+
   console.log('Created appointments')
 
   // Invoice + payment link with a fixed token.

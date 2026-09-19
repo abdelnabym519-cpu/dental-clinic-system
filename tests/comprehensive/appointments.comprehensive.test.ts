@@ -266,6 +266,7 @@ describe('Appointments API - Comprehensive Tests', () => {
         hospitalId: mockHospitalId,
       })
       mockPrisma.appointment.findFirst.mockResolvedValue(null) // No conflict
+      mockPrisma.appointment.findMany.mockResolvedValue([]) // Duration-aware conflict lookup: no same-day provider rows
     })
 
     it('should create a new appointment with valid data', async () => {
@@ -352,14 +353,17 @@ describe('Appointments API - Comprehensive Tests', () => {
     })
 
     it('should detect and reject conflicting appointments', async () => {
-      // Doctor already has appointment at this time
-      mockPrisma.appointment.findFirst.mockResolvedValue({
-        id: 'existing-apt',
-        doctorId: mockDoctorId,
-        scheduledDate: new Date('2025-01-29'),
-        scheduledTime: '10:00',
-        status: 'SCHEDULED',
-      })
+      // Duration-aware conflict check: same-day provider appointments are
+      // fetched and tested for [start, start+duration) overlap server-side.
+      mockPrisma.appointment.findMany.mockResolvedValue([
+        {
+          id: 'existing-apt',
+          appointmentNo: 'APT20260001',
+          doctorId: mockDoctorId,
+          scheduledTime: '10:00',
+          duration: 30,
+        },
+      ])
 
       const request = new NextRequest('http://localhost/api/appointments', {
         method: 'POST',
@@ -367,14 +371,14 @@ describe('Appointments API - Comprehensive Tests', () => {
           patientId: mockPatientId,
           doctorId: mockDoctorId,
           scheduledDate: '2030-06-15',
-          scheduledTime: '10:00',
+          scheduledTime: '10:15',
         }),
       })
       const response = await POST(request)
 
       expect(response.status).toBe(409)
       const data = await response.json()
-      expect(data.error).toContain('already has an appointment')
+      expect(data.error).toContain('already has appointment')
     })
 
     it('should allow appointment at same time with different doctor', async () => {
@@ -529,8 +533,9 @@ describe('Appointments API - Comprehensive Tests', () => {
     })
 
     it('should allow cancelled appointment slots to be reused', async () => {
-      // Conflict check should exclude cancelled appointments
-      mockPrisma.appointment.findFirst.mockResolvedValue(null) // Query excludes CANCELLED status
+      // Conflict lookup only targets ACTIVE statuses, so cancelled / no-show
+      // / rescheduled rows never come back and never block the slot.
+      mockPrisma.appointment.findMany.mockResolvedValue([])
       mockPrisma.appointment.create.mockResolvedValue({ id: 'apt-new' })
 
       const request = new NextRequest('http://localhost/api/appointments', {
@@ -545,11 +550,11 @@ describe('Appointments API - Comprehensive Tests', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(201)
-      expect(mockPrisma.appointment.findFirst).toHaveBeenCalledWith(
+      expect(mockPrisma.appointment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             status: {
-              notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'],
+              in: expect.arrayContaining(['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED']),
             },
           }),
         })

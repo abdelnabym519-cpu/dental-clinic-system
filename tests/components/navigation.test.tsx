@@ -124,6 +124,27 @@ describe('Navigation Structure', () => {
   })
 
   describe('Role-based filtering', () => {
+    it('Agenda sits directly after Dashboard in Overview and is the only scheduling entry', () => {
+      const overview = navigation.find((s) => s.title === 'Overview')
+      expect(overview).toBeDefined()
+      const items = overview!.items
+      const dashboardIdx = items.findIndex((i) => i.href === '/dashboard')
+      const agendaIdx = items.findIndex((i) => i.href === '/agenda')
+      expect(dashboardIdx).toBeGreaterThanOrEqual(0)
+      expect(agendaIdx).toBe(dashboardIdx + 1)
+      expect(items[agendaIdx].title).toBe('Agenda')
+
+      // Exactly one primary Agenda entry across the whole nav
+      const allTopLevel = navigation.flatMap((s) => s.items)
+      expect(allTopLevel.filter((i) => i.href === '/agenda').length).toBe(1)
+
+      // No Appointments entry is left under Patient Care
+      const patientCare = navigation.find((s) => s.title === 'Patient Care')
+      const pcItems = patientCare?.items ?? []
+      expect(pcItems.some((i) => i.href.startsWith('/appointments'))).toBe(false)
+      expect(pcItems.some((i) => i.subItems?.some((sub) => sub.href.startsWith('/appointments')))).toBe(false)
+    })
+
     it('ADMIN gets all navigation items', () => {
       const adminNav = getNavigationForRole('ADMIN')
       // Admin should have at least as many sections as the full nav
@@ -141,8 +162,8 @@ describe('Navigation Structure', () => {
     it('RECEPTIONIST gets filtered navigation', () => {
       const receptionistNav = getNavigationForRole('RECEPTIONIST')
       const allItems = receptionistNav.flatMap((s) => s.items)
-      // Receptionist should see appointments
-      expect(allItems.some((i) => i.href === '/appointments')).toBe(true)
+      // Receptionist should see the Agenda (scheduling workspace)
+      expect(allItems.some((i) => i.href === '/agenda')).toBe(true)
     })
 
     it('ACCOUNTANT gets billing-related items', () => {

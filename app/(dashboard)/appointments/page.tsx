@@ -117,7 +117,6 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState('')
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
 
   // AI no-show risk
   const [riskMap, setRiskMap] = useState<
@@ -288,21 +287,15 @@ export default function AppointmentsPage() {
             <p className="text-muted-foreground">Manage and schedule patient appointments</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
+            <Button variant="default" size="sm">
               <List className="h-4 w-4 mr-2" />
               List
             </Button>
-            <Button
-              variant={viewMode === 'calendar' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('calendar')}
-            >
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Calendar
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/agenda">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Calendar
+              </Link>
             </Button>
             <ExportMenu
               filename="appointments"

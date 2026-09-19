@@ -67,6 +67,11 @@ export const navigation: NavSection[] = [
         href: '/dashboard',
         icon: LayoutDashboard,
       },
+      {
+        title: 'Agenda',
+        href: '/agenda',
+        icon: Calendar,
+      },
     ],
   },
   {
@@ -76,24 +81,6 @@ export const navigation: NavSection[] = [
         title: 'Patients',
         href: '/patients',
         icon: Users,
-      },
-      {
-        title: 'Appointments',
-        href: '/appointments',
-        icon: Calendar,
-        subItems: [
-          {
-            title: 'All Appointments',
-            href: '/appointments',
-            icon: Calendar,
-          },
-          {
-            title: 'Waitlist',
-            href: '/appointments/waitlist',
-            icon: Clock,
-            roles: ['ADMIN', 'RECEPTIONIST'],
-          },
-        ],
       },
       {
         title: 'Video Consults',

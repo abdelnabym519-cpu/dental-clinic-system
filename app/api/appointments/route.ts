@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { createRoom } from '@/lib/services/video.service'
+import { findConflictingAppointment } from '@/lib/services/appointment-conflict.service'
+import { isValidTime } from '@/lib/agenda-utils'
+
+// Roles allowed to mutate the schedule. Reads stay available to every
+// authenticated role; the server enforces this split on POST/PUT/DELETE.
+const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
 
 // Generate unique appointment number for the hospital
 async function generateAppointmentNo(hospitalId: string): Promise<string> {
@@ -165,7 +171,7 @@ export async function GET(request: NextRequest) {
 
 // POST - Create new appointment
 export async function POST(request: NextRequest) {
-  const { error, hospitalId } = await requireAuthAndRole()
+  const { error, hospitalId } = await requireAuthAndRole(SCHEDULING_ROLES)
 
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -196,8 +202,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate time format (HH:MM)
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
-    if (!timeRegex.test(scheduledTime)) {
+    if (!isValidTime(scheduledTime)) {
       return NextResponse.json(
         { error: 'Invalid time format. Use HH:MM (24-hour format)' },
         { status: 400 }
@@ -239,23 +244,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Doctor not found' }, { status: 404 })
     }
 
-    // Check for conflicting appointments (same doctor, same time, same hospital)
+    // Check for conflicting appointments for this provider.
+    // Duration-aware: a 60-minute booking that overlaps the middle of an
+    // existing 30-minute slot (or vice versa) must fail, not just exact-time
+    // duplicates. Authoritative server-side check.
     const appointmentDate = new Date(scheduledDate)
-    const existingAppointment = await prisma.appointment.findFirst({
-      where: {
-        hospitalId,
-        doctorId,
-        scheduledDate: appointmentDate,
-        scheduledTime,
-        status: {
-          notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'],
-        },
-      },
+    const conflict = await findConflictingAppointment({
+      hospitalId,
+      doctorId,
+      scheduledDate: appointmentDate,
+      scheduledTime,
+      duration,
     })
 
-    if (existingAppointment) {
+    if (conflict) {
       return NextResponse.json(
-        { error: 'Doctor already has an appointment at this time' },
+        {
+          error: `Doctor already has appointment ${conflict.appointmentNo} from ${conflict.scheduledTime} (${conflict.duration} min) overlapping this time`,
+        },
         { status: 409 }
       )
     }

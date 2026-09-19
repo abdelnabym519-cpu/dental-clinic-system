@@ -259,7 +259,7 @@ describe('CalendarView', () => {
 
     render(<CalendarView initialDate={new Date('2025-06-15')} />)
     await waitFor(() => {
-      expect(screen.getByText('John')).toBeInTheDocument()
+      expect(screen.getByText('John Doe')).toBeInTheDocument()
     })
   })
 

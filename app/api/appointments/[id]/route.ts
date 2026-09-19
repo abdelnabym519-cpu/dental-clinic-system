@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { handleCancellationWaitlist } from '@/lib/services/smart-scheduler'
+import { findConflictingAppointment } from '@/lib/services/appointment-conflict.service'
+import { isValidTime } from '@/lib/agenda-utils'
+
+// Roles allowed to mutate the schedule (edit / reschedule / cancel / status).
+const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
 
 // GET - Get single appointment
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 // PUT - Update appointment
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { error, hospitalId } = await requireAuthAndRole()
+  const { error, hospitalId } = await requireAuthAndRole(SCHEDULING_ROLES)
 
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -84,6 +89,45 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
 
+    // Validate provided fields before touching the database (parity with POST).
+    if (scheduledTime !== undefined && !isValidTime(scheduledTime)) {
+      return NextResponse.json(
+        { error: 'Invalid time format. Use HH:MM (24-hour format)' },
+        { status: 400 }
+      )
+    }
+    if (duration !== undefined && (duration < 5 || duration > 480)) {
+      return NextResponse.json(
+        { error: 'Duration must be between 5 and 480 minutes' },
+        { status: 400 }
+      )
+    }
+    const VALID_STATUSES = ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED']
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: 'Invalid appointment status' }, { status: 400 })
+    }
+    const VALID_TYPES = ['CONSULTATION', 'PROCEDURE', 'FOLLOW_UP', 'EMERGENCY', 'CHECK_UP']
+    if (appointmentType !== undefined && !VALID_TYPES.includes(appointmentType)) {
+      return NextResponse.json({ error: 'Invalid appointment type' }, { status: 400 })
+    }
+    const VALID_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT']
+    if (priority !== undefined && !VALID_PRIORITIES.includes(priority)) {
+      return NextResponse.json({ error: 'Invalid priority' }, { status: 400 })
+    }
+    if (scheduledDate !== undefined && Number.isNaN(new Date(scheduledDate).getTime())) {
+      return NextResponse.json({ error: 'Invalid scheduled date' }, { status: 400 })
+    }
+
+    // Never trust a client-supplied doctorId: verify it belongs to this hospital.
+    if (doctorId !== undefined) {
+      const doctor = await prisma.staff.findFirst({
+        where: { id: doctorId, hospitalId },
+      })
+      if (!doctor) {
+        return NextResponse.json({ error: 'Doctor not found' }, { status: 404 })
+      }
+    }
+
     // Build update data
     const updateData: any = {}
 
@@ -110,22 +154,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const checkTime = scheduledTime || existingAppointment.scheduledTime
       const checkDoctorId = doctorId || existingAppointment.doctorId
 
-      const conflictingAppointment = await prisma.appointment.findFirst({
-        where: {
-          hospitalId,
-          id: { not: id },
-          doctorId: checkDoctorId,
-          scheduledDate: checkDate,
-          scheduledTime: checkTime,
-          status: {
-            notIn: ['CANCELLED', 'NO_SHOW', 'RESCHEDULED'],
-          },
-        },
+      const checkDuration = duration ?? existingAppointment.duration
+      const conflictingAppointment = await findConflictingAppointment({
+        hospitalId,
+        doctorId: checkDoctorId,
+        scheduledDate: checkDate,
+        scheduledTime: checkTime,
+        duration: checkDuration,
+        excludeId: id,
       })
 
       if (conflictingAppointment) {
         return NextResponse.json(
-          { error: 'Doctor already has an appointment at this time' },
+          {
+            error: `Doctor already has appointment ${conflictingAppointment.appointmentNo} from ${conflictingAppointment.scheduledTime} (${conflictingAppointment.duration} min) overlapping this time`,
+          },
           { status: 409 }
         )
       }
@@ -205,7 +248,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error, hospitalId } = await requireAuthAndRole()
+  const { error, hospitalId } = await requireAuthAndRole(SCHEDULING_ROLES)
 
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -60,13 +60,18 @@ describe('navigation config', () => {
     expect(billing.subItems!.length).toBeGreaterThan(0)
   })
 
-  it('Appointments has subItems with Waitlist', () => {
+  it('Agenda is the single scheduling entry, placed in Overview after Dashboard', () => {
+    const overview = navigation.find((s) => s.title === 'Overview')!
+    const items = overview.items
+    const agendaIdx = items.findIndex((i) => i.title === 'Agenda')
+    expect(agendaIdx).toBeGreaterThan(-1)
+    expect(items[agendaIdx].href).toBe('/agenda')
+    expect(items[agendaIdx - 1].href).toBe('/dashboard')
+    expect(items[agendaIdx].subItems).toBeUndefined()
+
+    // Patient Care no longer carries any appointments entry (no duplicates)
     const care = navigation.find((s) => s.title === 'Patient Care')!
-    const appointments = care.items.find((i) => i.title === 'Appointments')!
-    expect(appointments.subItems).toBeDefined()
-    const waitlist = appointments.subItems!.find((i) => i.title === 'Waitlist')
-    expect(waitlist).toBeDefined()
-    expect(waitlist!.roles).toContain('ADMIN')
+    expect(care.items.find((i) => i.href.startsWith('/appointments'))).toBeUndefined()
   })
 })
 
