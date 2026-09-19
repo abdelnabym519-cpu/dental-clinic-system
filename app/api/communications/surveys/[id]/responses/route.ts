@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { requireAuthAndRole } from '@/lib/api-helpers'
 import { z } from 'zod'
 
 const submitResponseSchema = z.object({
@@ -8,7 +9,7 @@ const submitResponseSchema = z.object({
   rating: z.number().min(1).max(5).optional(),
 })
 
-// POST /api/communications/surveys/[id]/responses - Submit survey response
+// POST /api/communications/surveys/[id]/responses - Submit survey response (Public patient endpoint)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -74,15 +75,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-// GET /api/communications/surveys/[id]/responses - Get survey responses
+// GET /api/communications/surveys/[id]/responses - Get survey responses (Authenticated staff endpoint)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { error, hospitalId } = await requireAuthAndRole()
+
+  if (error || !hospitalId) {
+    return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { id } = await params
-    // This endpoint requires authentication
-    // const session = await auth();
-    // if (!session?.user) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+
+    // Verify survey exists and belongs to this hospital (Multi-tenant check)
+    const survey = await prisma.survey.findFirst({
+      where: { id, hospitalId },
+    })
+
+    if (!survey) {
+      return NextResponse.json({ error: 'Survey not found' }, { status: 404 })
+    }
 
     const searchParams = req.nextUrl.searchParams
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100

@@ -68,6 +68,28 @@ describe('Push Device Registration API', () => {
       const res = await mod.POST(makePostRequest({ platform: 'web' }))
       expect(res.status).toBe(400)
     })
+
+    it('isolates device registration to the authenticated hospital context', async () => {
+      ;(prisma.pushDevice.upsert as any).mockResolvedValue({})
+
+      const res = await mod.POST(
+        makePostRequest({
+          token: 'apns-token-xyz',
+          platform: 'ios',
+          deviceName: 'iPhone 15',
+        })
+      )
+      expect(res.status).toBe(200)
+      expect(prisma.pushDevice.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            token: 'apns-token-xyz',
+            hospitalId: 'hospital-1',
+            userId: 'user-1',
+          }),
+        })
+      )
+    })
   })
 
   describe('DELETE /api/notifications/register-device', () => {

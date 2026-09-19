@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getAuthenticatedHospital } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -12,9 +12,9 @@ const registerSchema = z.object({
 // Register a device for push notifications
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { error, user, hospitalId } = await getAuthenticatedHospital()
+    if (error || !user || !hospitalId) {
+      return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json()
@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       update: {
         platform,
         deviceName: deviceName || null,
-        userId: session.user.id as string,
-        hospitalId: session.user.hospitalId as string,
+        userId: user.id as string,
+        hospitalId: hospitalId as string,
         isActive: true,
         updatedAt: new Date(),
       },
@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
         token,
         platform,
         deviceName: deviceName || null,
-        userId: session.user.id as string,
-        hospitalId: session.user.hospitalId as string,
+        userId: user.id as string,
+        hospitalId: hospitalId as string,
         isActive: true,
       },
     })
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
 // Unregister device (on logout)
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { error, user, hospitalId } = await getAuthenticatedHospital()
+    if (error || !user || !hospitalId) {
+      return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -77,7 +77,7 @@ export async function DELETE(req: NextRequest) {
     await prisma.pushDevice.updateMany({
       where: {
         token,
-        userId: session.user.id as string,
+        userId: user.id as string,
       },
       data: {
         isActive: false,

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
+import { randomInt } from 'crypto'
 import { prisma } from './prisma'
 
 const COOKIE_NAME = 'patient-portal-token'
-const JWT_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'patient-portal-secret')
+
+function getJwtSecret(): Uint8Array {
+  return new Uint8Array(
+    new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'patient-portal-secret')
+  )
+}
 
 interface PatientTokenPayload {
   patientId: string
@@ -13,10 +19,10 @@ interface PatientTokenPayload {
 }
 
 /**
- * Generate a 6-digit OTP
+ * Generate a 6-digit OTP using Node.js CSPRNG
  */
 export function generateOTP(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
+  return String(randomInt(100000, 1000000))
 }
 
 /**
@@ -27,7 +33,7 @@ export async function createPatientToken(payload: PatientTokenPayload): Promise<
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
 }
 
 /**
@@ -35,7 +41,7 @@ export async function createPatientToken(payload: PatientTokenPayload): Promise<
  */
 async function verifyPatientToken(token: string): Promise<PatientTokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET)
+    const { payload } = await jwtVerify(token, getJwtSecret())
     return payload as unknown as PatientTokenPayload
   } catch {
     return null

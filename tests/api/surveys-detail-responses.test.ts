@@ -53,6 +53,7 @@ describe('Surveys Detail & Responses API', () => {
     it('returns survey with parsed questions and responses', async () => {
       ;(prisma.survey.findFirst as any).mockResolvedValue({
         id: 'survey-1',
+        hospitalId: 'hospital-1',
         title: 'Patient Satisfaction',
         questions: JSON.stringify([{ q: 'How was your visit?', type: 'rating' }]),
         responses: [{ id: 'r1', answers: JSON.stringify({ q1: 5 }), createdAt: new Date() }],
@@ -68,6 +69,13 @@ describe('Surveys Detail & Responses API', () => {
     })
 
     it('returns 404 when survey not found', async () => {
+      ;(prisma.survey.findFirst as any).mockResolvedValue(null)
+
+      const res = await surveyDetailModule.GET(makeDetailRequest('GET'), ctx)
+      expect(res.status).toBe(404)
+    })
+
+    it('returns 404 when survey belongs to a different tenant', async () => {
       ;(prisma.survey.findFirst as any).mockResolvedValue(null)
 
       const res = await surveyDetailModule.GET(makeDetailRequest('GET'), ctx)
@@ -256,7 +264,42 @@ describe('Surveys Detail & Responses API', () => {
 
   // ─── GET /api/communications/surveys/[id]/responses ───
   describe('GET /api/communications/surveys/[id]/responses', () => {
-    it('returns responses with statistics', async () => {
+    it('rejects an unauthenticated caller', async () => {
+      mockAuth.requireAuthAndRole.mockResolvedValue({
+        error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+        hospitalId: null,
+        user: null,
+        session: null,
+      })
+
+      const res = await responsesModule.GET(makeResponseRequest('GET'), ctx)
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 when survey belongs to another tenant', async () => {
+      // Mock survey findFirst returning null because hospitalId does not match
+      ;(prisma.survey.findFirst as any).mockResolvedValue(null)
+
+      const res = await responsesModule.GET(makeResponseRequest('GET'), ctx)
+      expect(res.status).toBe(404)
+      const body = await res.json()
+      expect(body.error).toBe('Survey not found')
+      expect(prisma.surveyResponse.findMany).not.toHaveBeenCalled()
+    })
+
+    it('returns 404 when survey does not exist', async () => {
+      ;(prisma.survey.findFirst as any).mockResolvedValue(null)
+
+      const res = await responsesModule.GET(makeResponseRequest('GET'), ctx)
+      expect(res.status).toBe(404)
+    })
+
+    it('returns responses with statistics for authorized tenant', async () => {
+      ;(prisma.survey.findFirst as any).mockResolvedValue({
+        id: 'survey-1',
+        hospitalId: 'hospital-1',
+        title: 'Satisfaction Survey',
+      })
       ;(prisma.surveyResponse.findMany as any).mockResolvedValue([
         { id: 'r1', rating: 5, sentiment: 'positive', answers: JSON.stringify({ q1: 'Great' }) },
         { id: 'r2', rating: 3, sentiment: 'neutral', answers: JSON.stringify({ q1: 'OK' }) },
@@ -276,7 +319,12 @@ describe('Surveys Detail & Responses API', () => {
       expect(body.statistics.sentimentCounts.negative).toBe(1)
     })
 
-    it('handles empty responses', async () => {
+    it('handles empty responses for authorized tenant', async () => {
+      ;(prisma.survey.findFirst as any).mockResolvedValue({
+        id: 'survey-1',
+        hospitalId: 'hospital-1',
+        title: 'Satisfaction Survey',
+      })
       ;(prisma.surveyResponse.findMany as any).mockResolvedValue([])
 
       const res = await responsesModule.GET(makeResponseRequest('GET'), ctx)

@@ -236,6 +236,34 @@ describe('Security — Authorization', () => {
       expect(result.error).not.toBeNull()
       expect(result.hospitalId).toBeNull()
     })
+
+    it('strictly isolates tenant storage paths via keyBelongsToHospital', async () => {
+      const { keyBelongsToHospital } = await import('@/lib/storage/keys')
+      expect(keyBelongsToHospital('tenant-1/documents/pat-1/x.pdf', 'tenant-1')).toBe(true)
+      expect(keyBelongsToHospital('tenant-2/documents/pat-1/x.pdf', 'tenant-1')).toBe(false)
+      expect(keyBelongsToHospital('tenant-10/documents/pat-1/x.pdf', 'tenant-1')).toBe(false)
+      expect(keyBelongsToHospital('tenant-1/../tenant-2/x.pdf', 'tenant-1')).toBe(false)
+      expect(keyBelongsToHospital('', 'tenant-1')).toBe(false)
+      expect(keyBelongsToHospital('tenant-1/x.pdf', null)).toBe(false)
+      expect(keyBelongsToHospital('tenant-1/x.pdf', undefined)).toBe(false)
+    })
+
+    it('prevents tenant context manipulation: hospitalId comes strictly from authenticated session/bearer', async () => {
+      mockAuth.mockResolvedValue({
+        user: {
+          id: 'u1',
+          role: 'ADMIN',
+          hospitalId: 'tenant-A',
+          email: 'admin@a.com',
+          name: 'Admin A',
+        },
+      } as any)
+
+      const authContext = await getAuthenticatedHospital()
+      expect(authContext.hospitalId).toBe('tenant-A')
+      expect(authContext.user?.hospitalId).toBe('tenant-A')
+      expect(authContext.hospitalId).not.toBe('tenant-B')
+    })
   })
 
   describe('Plan Limits', () => {
