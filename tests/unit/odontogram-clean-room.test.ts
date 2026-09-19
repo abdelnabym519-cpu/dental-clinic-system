@@ -174,6 +174,34 @@ describe('Clean-Room Odontogram — Mathematical SVG Geometry', () => {
       expect(geom.apexCenter.y).toBeGreaterThan(0)
     }
   })
+
+  it('generates anatomically distinct geometry across all tooth classes and jaws', () => {
+    // Upper Central Incisor (11) vs Lower Central Incisor (41)
+    const upperCentral = getToothGeometryByNumber(11)
+    const lowerCentral = getToothGeometryByNumber(41)
+    expect(upperCentral.crownOutline).not.toEqual(lowerCentral.crownOutline)
+    expect(upperCentral.crownDetails?.length).toBeGreaterThan(0)
+    expect(lowerCentral.crownDetails?.length).toBeGreaterThan(0)
+
+    // Upper Canine (13) vs Upper Central Incisor (11)
+    const upperCanine = getToothGeometryByNumber(13)
+    expect(upperCanine.crownOutline).not.toEqual(upperCentral.crownOutline)
+
+    // Upper 1st Molar (16: 3 roots, 3 apices) vs Lower 1st Molar (46: 2 roots, 2 apices)
+    const upperMolar16 = getToothGeometryByNumber(16)
+    const lowerMolar46 = getToothGeometryByNumber(46)
+    expect(upperMolar16.rootOutline).not.toEqual(lowerMolar46.rootOutline)
+    expect(upperMolar16.apices?.length).toBe(3)
+    expect(lowerMolar46.apices?.length).toBe(2)
+    expect(upperMolar16.rootCanalPaths.length).toBe(3)
+    expect(lowerMolar46.rootCanalPaths.length).toBe(2)
+
+    // Upper 1st Premolar (14: 2 roots, 2 apices) vs Lower 1st Premolar (44: 1 root, 1 apex)
+    const upperPM14 = getToothGeometryByNumber(14)
+    const lowerPM44 = getToothGeometryByNumber(44)
+    expect(upperPM14.apices?.length).toBe(2)
+    expect(lowerPM44.apices?.length).toBe(1)
+  })
 })
 
 describe('Clean-Room Odontogram — View Model Adapter & Statistics', () => {
