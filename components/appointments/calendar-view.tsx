@@ -336,6 +336,71 @@ export function CalendarView({
     )
   }
 
+  /**
+   * Narrow-viewport representation (§ responsiveness): a grouped agenda list
+   * instead of the time grids, so mobile users get a usable schedule rather
+   * than horizontal overflow. Shown below the `md` breakpoint only.
+   */
+  const renderMobileList = (days: Date[]) => {
+    const groups = days
+      .map((day) => ({ day, appts: getAppointmentsForDate(day) }))
+      .filter(({ appts }) => appts.length > 0)
+
+    return (
+      <div className="space-y-4 rounded-lg border p-3" data-testid="agenda-mobile-list">
+        {groups.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+            <Calendar className="h-8 w-8" />
+            <p className="text-sm">No appointments in this period</p>
+          </div>
+        ) : (
+          groups.map(({ day, appts }) => (
+            <div key={day.toISOString()}>
+              <p className="mb-2 text-sm font-semibold">
+                {day.toLocaleDateString('en-IN', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'short',
+                })}
+              </p>
+              <ul className="space-y-2">
+                {appts.map((apt) => (
+                  <li key={apt.id}>
+                    <button
+                      type="button"
+                      className={`w-full rounded-md border p-2 text-left ${getStatusColor(
+                        apt.status
+                      )} ${apt.status === 'CANCELLED' ? 'opacity-60' : ''}`}
+                      onClick={() => router.push(`/appointments/${apt.id}`)}
+                      aria-label={`Appointment ${apt.appointmentNo}: ${getPatientName(
+                        apt.patient
+                      )} at ${formatTime(apt.scheduledTime)}, ${
+                        appointmentStatusConfig[apt.status]?.label ?? apt.status
+                      }`}
+                    >
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium">
+                          {formatTime(apt.scheduledTime)} · {getPatientName(apt.patient)}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide">
+                          {appointmentStatusConfig[apt.status]?.label ?? apt.status}
+                        </span>
+                      </span>
+                      <span className="block text-xs text-muted-foreground truncate">
+                        {getDoctorName(apt.doctor)} · {apt.duration}m ·{' '}
+                        {apt.appointmentType.replace('_', ' ')}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
+      </div>
+    )
+  }
+
   const renderDayView = () => {
     const dayAppointments = getAppointmentsForDate(currentDate)
     const totalPx = (DAY_END_H - DAY_START_H) * HOUR_PX
@@ -572,8 +637,18 @@ export function CalendarView({
         </Card>
       ) : (
         <>
-          {viewMode === 'day' && renderDayView()}
-          {viewMode === 'week' && renderWeekView()}
+          {viewMode === 'day' && (
+            <>
+              <div className="hidden md:block">{renderDayView()}</div>
+              <div className="md:hidden">{renderMobileList([currentDate])}</div>
+            </>
+          )}
+          {viewMode === 'week' && (
+            <>
+              <div className="hidden md:block">{renderWeekView()}</div>
+              <div className="md:hidden">{renderMobileList(getWeekDays())}</div>
+            </>
+          )}
           {viewMode === 'month' && renderMonthView()}
         </>
       )}

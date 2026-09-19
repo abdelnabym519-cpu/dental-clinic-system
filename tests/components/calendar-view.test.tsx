@@ -305,6 +305,23 @@ describe('CalendarView', () => {
     })
   })
 
+  it('renders a mobile agenda list for the week instead of bare overflow', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ appointments: mockAppointments }),
+    })
+
+    render(<CalendarView initialDate={new Date('2025-06-15')} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('agenda-mobile-list')).toBeInTheDocument()
+    })
+    // Grouped under the day heading, with status labels readable as text
+    expect(screen.getAllByText('John Doe').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Scheduled').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('9:00 AM').length).toBeGreaterThanOrEqual(1)
+  })
+
   it('navigates to appointment on click in day view', async () => {
     fetchMock
       .mockResolvedValueOnce({ ok: true, json: async () => ({ appointments: [] }) })
