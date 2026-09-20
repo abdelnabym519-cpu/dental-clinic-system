@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Calendar, Clock, User, Search, Check, Loader2, Video } from 'lucide-react'
 import { formatTime } from '@/lib/appointment-utils'
+import { CHIEF_COMPLAINT_EXAMPLES, COMPLAINT_HINT } from '@/lib/egypt-governorates'
 
 interface Patient {
   id: string
@@ -501,10 +502,16 @@ export default function NewAppointmentPage() {
                 <div className="space-y-2 md:col-span-3">
                   <Label>Chief Complaint</Label>
                   <Input
-                    placeholder="Patient's main concern or reason for visit"
+                    placeholder={"Patient's main concern or reason for visit " + COMPLAINT_HINT}
                     value={chiefComplaint}
                     onChange={(e) => setChiefComplaint(e.target.value)}
+                    list="chief-complaint-examples"
                   />
+                  <datalist id="chief-complaint-examples">
+                    {CHIEF_COMPLAINT_EXAMPLES.map((example) => (
+                      <option key={example} value={example} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="space-y-2 md:col-span-3">

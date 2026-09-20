@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { Building2, Save, Upload, Trash2, Loader2, Copy } from 'lucide-react'
+import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const DAY_LABELS: Record<string, string> = {
@@ -440,13 +441,21 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="state">State *</Label>
+                <Label htmlFor="state">Governorate (المحافظة) *</Label>
                 <Input
                   id="state"
                   value={formData.state}
                   onChange={(e) => handleChange('state', e.target.value)}
+                  list="egypt-governorates"
                   required
                 />
+                <datalist id="egypt-governorates">
+                  {EGYPT_GOVERNORATES.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </datalist>
               </div>
 
               <div>

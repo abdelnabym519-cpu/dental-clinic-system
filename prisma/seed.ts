@@ -1470,7 +1470,7 @@ async function main() {
           duration: 30,
           appointmentType: types[i % types.length],
           status,
-          chiefComplaint: 'Routine dental complaint',
+          chiefComplaint: 'تنظيف أسنان دوري',
           checkedInAt:
             status === AppointmentStatus.CHECKED_IN || status === AppointmentStatus.IN_PROGRESS
               ? new Date()
@@ -1531,7 +1531,7 @@ async function main() {
           duration: 45,
           appointmentType: i % 2 === 0 ? AppointmentType.CHECK_UP : AppointmentType.FOLLOW_UP,
           status: AppointmentStatus.CONFIRMED,
-          chiefComplaint: 'Orthodontic review',
+          chiefComplaint: 'متابعة تقويم الأسنان',
         },
       })
     }

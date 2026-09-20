@@ -18,6 +18,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 export default function NewStaffPage() {
   const router = useRouter()
@@ -286,13 +287,21 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state">Governorate (المحافظة)</Label>
                   <Input
                     id="state"
                     value={formData.state}
                     onChange={(e) => handleChange('state', e.target.value)}
+                    list="egypt-governorates"
                     placeholder="القاهرة"
                   />
+                  <datalist id="egypt-governorates">
+                    {EGYPT_GOVERNORATES.map((g) => (
+                      <option key={g.value} value={g.value}>
+                        {g.label}
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pincode">Postal Code</Label>

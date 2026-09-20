@@ -59,6 +59,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
+import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 interface LabVendor {
   id: string
@@ -72,8 +73,8 @@ interface LabVendor {
   city: string
   state: string
   pincode: string
-  taxId: string
-  registrationNo: string
+  gstNumber: string
+  panNumber: string
   specializations: string
   avgTurnaround: number
   rating: number
@@ -182,7 +183,7 @@ export default function LabVendorsPage() {
         city: vendor.city || '',
         state: vendor.state || 'القاهرة',
         pincode: vendor.pincode || '',
-        taxId: vendor.taxId || '',
+        taxId: vendor.gstNumber || '',
         registrationNo: vendor.panNumber || '',
         specializations: vendor.specializations || '',
         avgTurnaround: vendor.avgTurnaround,
@@ -636,12 +637,19 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
+                <Label htmlFor="state">Governorate (المحافظة)</Label>
                 <Input
                   id="state"
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                 />
+                <datalist id="egypt-governorates">
+                  {EGYPT_GOVERNORATES.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pincode">Postal Code</Label>

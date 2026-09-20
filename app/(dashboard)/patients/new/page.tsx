@@ -18,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Loader2, Save } from 'lucide-react'
 import { DuplicateDetector } from '@/components/ai/duplicate-detector'
+import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 const BLOOD_GROUPS = [
   { value: 'A_POSITIVE', label: 'A+' },
@@ -281,13 +282,21 @@ export default function NewPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+              <Label htmlFor="state">Governorate (المحافظة)</Label>
               <Input
                 id="state"
                 value={form.state}
                 onChange={(e) => updateField('state', e.target.value)}
-                placeholder="State"
+                placeholder="القاهرة"
+                list="egypt-governorates"
               />
+<datalist id="egypt-governorates">
+                  {EGYPT_GOVERNORATES.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </datalist>
             </div>
             <div className="space-y-2">
               <Label htmlFor="pincode">Postal Code</Label>

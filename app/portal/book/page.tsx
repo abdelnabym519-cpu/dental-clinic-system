@@ -27,6 +27,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { COMPLAINT_HINT } from '@/lib/egypt-governorates'
 
 interface Doctor {
   id: string
@@ -334,7 +335,7 @@ export default function BookAppointment() {
             <div className="space-y-2">
               <Label>Reason for visit (optional)</Label>
               <Textarea
-                placeholder="Describe your dental concern..."
+                placeholder={"Describe your dental concern " + COMPLAINT_HINT}
                 value={chiefComplaint}
                 onChange={(e) => setChiefComplaint(e.target.value)}
                 rows={3}

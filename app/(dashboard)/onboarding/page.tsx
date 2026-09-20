@@ -20,13 +20,16 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 const onboardingSchema = z.object({
   tagline: z.string().optional(),
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
-  pincode: z.string().min(5, 'Valid postal code is required'),
+  pincode: z
+    .string()
+    .regex(/^[1-9]\d{4}$/, 'Postal code must be 5 digits (11111-99999)'),
   alternatePhone: z.string().optional(),
   website: z.string().optional(),
   gstNumber: z.string().optional(),
@@ -239,8 +242,20 @@ export default function OnboardingPage() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">State *</Label>
-                      <Input id="state" placeholder="القاهرة" {...register('state')} />
+                      <Label htmlFor="state">Governorate (المحافظة) *</Label>
+                      <Input
+                        id="state"
+                        placeholder="القاهرة"
+                        list="egypt-governorates"
+                        {...register('state')}
+                      />
+                      <datalist id="egypt-governorates">
+                        {EGYPT_GOVERNORATES.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                      </datalist>
                       {errors.state && (
                         <p className="text-sm text-destructive">{errors.state.message}</p>
                       )}
