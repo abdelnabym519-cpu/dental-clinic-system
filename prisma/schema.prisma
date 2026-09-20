@@ -98,6 +98,8 @@ model Hospital {
   attendance          Attendance[]
   staffShifts         StaffShift[]
   leaves              Leave[]
+  rooms               Room[]
+  appointmentReminders AppointmentReminder[]
   aiConversations     AIConversation[]
   aiSkillExecutions   AISkillExecution[]
   aiInsights          AIInsight[]
@@ -587,6 +589,8 @@ model Appointment {
   scheduledTime   String
   duration        Int               @default(30)
   chairNumber     Int?
+  roomId          String?
+  recurrenceGroupId String?
 
   appointmentType AppointmentType   @default(CONSULTATION)
   status          AppointmentStatus @default(SCHEDULED)
@@ -614,8 +618,11 @@ model Appointment {
   treatments      Treatment[]
   reminders       AppointmentReminder[]
   videoConsultation VideoConsultation?
+  room            Room?             @relation(fields: [roomId], references: [id])
 
   @@unique([hospitalId, appointmentNo])
+  @@index([roomId])
+  @@index([recurrenceGroupId])
   @@index([hospitalId])
   @@index([scheduledDate])
   @@index([patientId])
@@ -625,6 +632,7 @@ model Appointment {
 
 model AppointmentReminder {
   id              String         @id @default(cuid())
+  hospitalId      String?
   appointmentId   String
   reminderType    ReminderType
   scheduledFor    DateTime
@@ -633,9 +641,11 @@ model AppointmentReminder {
   createdAt       DateTime       @default(now())
 
   appointment     Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  hospital        Hospital?      @relation(fields: [hospitalId], references: [id])
 
   @@index([scheduledFor])
   @@index([status])
+  @@index([hospitalId])
 }
 
 enum AppointmentType {
@@ -2554,6 +2564,22 @@ model CalendarIntegration {
   user           User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, provider])
+  @@index([hospitalId])
+}
+
+model Room {
+  id          String   @id @default(cuid())
+  hospitalId  String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hospital     Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@unique([hospitalId, name])
   @@index([hospitalId])
 }
 

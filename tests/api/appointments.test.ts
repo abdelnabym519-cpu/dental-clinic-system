@@ -17,6 +17,23 @@ vi.mock('@/lib/prisma', () => ({
     staff: {
       findFirst: vi.fn(),
     },
+    // Agenda Phase-2 availability models: benign defaults = no configured
+    // shifts/hours, so the availability gate falls back to clinic defaults.
+    staffShift: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    leave: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    holiday: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    hospital: { findUnique: vi.fn().mockResolvedValue({ workingHours: null }) },
+    room: { findFirst: vi.fn().mockResolvedValue(null) },
   },
 }))
 

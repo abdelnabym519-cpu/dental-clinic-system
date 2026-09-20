@@ -189,6 +189,23 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
 
+  // Deep links (e.g. Agenda drawer → /patients/[id]?tab=dental-chart).
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('tab')
+    const valid = [
+      'overview',
+      'dental-chart',
+      'timeline',
+      'documents',
+      'appointments',
+      'treatments',
+      'billing',
+      'forms',
+      'insurance',
+    ]
+    if (requested && valid.includes(requested)) setActiveTab(requested)
+  }, [])
+
   // Document upload state
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1134,7 +1151,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Appointments</CardTitle>
-                <CardDescription>Recent and upcoming appointments</CardDescription>
+                <CardDescription>
+                  Recent and upcoming appointments
+                  {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length > 0 && (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                      {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length}{' '}
+                      no-show{patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </CardDescription>
               </div>
               <Link href={`/appointments/new?patientId=${patient.id}`}>
                 <Button>

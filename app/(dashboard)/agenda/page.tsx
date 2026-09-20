@@ -14,5 +14,5 @@ export default async function AgendaPage() {
   const session = await auth()
   const canSchedule = canScheduleRole(session?.user?.role)
 
-  return <AgendaWorkspace canSchedule={canSchedule} />
+  return <AgendaWorkspace canSchedule={canSchedule} role={session?.user?.role ?? null} />
 }

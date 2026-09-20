@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { handleCancellationWaitlist } from '@/lib/services/smart-scheduler'
-import { findConflictingAppointment } from '@/lib/services/appointment-conflict.service'
-import { isValidTime } from '@/lib/agenda-utils'
+import {
+  findConflictingAppointment,
+  findConflictingRoomBooking,
+  findAvailabilityViolation,
+} from '@/lib/services/appointment-conflict.service'
+import { isValidTime, toDateKey, parseDateKey } from '@/lib/agenda-utils'
 
 // Roles allowed to mutate the schedule (edit / reschedule / cancel / status).
 const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
@@ -42,6 +46,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
         reminders: true,
+        room: {
+          select: { id: true, name: true },
+        },
       },
     })
 
@@ -72,12 +79,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       scheduledTime,
       duration,
       chairNumber,
+      roomId,
       appointmentType,
       status,
       priority,
       chiefComplaint,
       notes,
       doctorId,
+      /** For recurrence series: 'this' (default) | 'future' | 'all'. */
+      applyTo,
     } = body
 
     // Check if appointment exists and belongs to this hospital
@@ -118,13 +128,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Invalid scheduled date' }, { status: 400 })
     }
 
-    // Never trust a client-supplied doctorId: verify it belongs to this hospital.
+    // Never trust client-supplied IDs: verify ownership within this hospital.
     if (doctorId !== undefined) {
       const doctor = await prisma.staff.findFirst({
         where: { id: doctorId, hospitalId },
       })
       if (!doctor) {
         return NextResponse.json({ error: 'Doctor not found' }, { status: 404 })
+      }
+    }
+    if (roomId !== undefined && roomId !== null) {
+      const room = await prisma.room.findFirst({ where: { id: roomId, hospitalId } })
+      if (!room) {
+        return NextResponse.json({ error: 'Room not found' }, { status: 404 })
       }
     }
 
@@ -137,6 +153,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (scheduledTime !== undefined) updateData.scheduledTime = scheduledTime
     if (duration !== undefined) updateData.duration = duration
     if (chairNumber !== undefined) updateData.chairNumber = chairNumber
+    if (roomId !== undefined) updateData.roomId = roomId
     if (appointmentType !== undefined) updateData.appointmentType = appointmentType
     if (status !== undefined) updateData.status = status
     if (priority !== undefined) updateData.priority = priority
@@ -155,6 +172,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const checkDoctorId = doctorId || existingAppointment.doctorId
 
       const checkDuration = duration ?? existingAppointment.duration
+      const violating = await findAvailabilityViolation({
+        hospitalId,
+        doctorId: checkDoctorId,
+        scheduledDate: checkDate,
+        scheduledTime: checkTime,
+        duration: checkDuration,
+      })
+      if (violating) {
+        return NextResponse.json({ error: violating.message, code: violating.code }, { status: 409 })
+      }
+
       const conflictingAppointment = await findConflictingAppointment({
         hospitalId,
         doctorId: checkDoctorId,
@@ -172,6 +200,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           { status: 409 }
         )
       }
+
+      const existingRoomId = (existingAppointment as { roomId?: string | null }).roomId ?? null
+      const effectiveRoomId = roomId !== undefined ? roomId : existingRoomId
+      if (effectiveRoomId) {
+        const roomConflict = await findConflictingRoomBooking({
+          hospitalId,
+          doctorId: checkDoctorId,
+          scheduledDate: checkDate,
+          scheduledTime: checkTime,
+          duration: checkDuration,
+          roomId: effectiveRoomId,
+          excludeId: id,
+        })
+        if (roomConflict) {
+          return NextResponse.json(
+            {
+              error: `Room is already booked by appointment ${roomConflict.appointmentNo} at ${roomConflict.scheduledTime}`,
+            },
+            { status: 409 }
+          )
+        }
+      }
     }
 
     // Handle cancellation
@@ -180,6 +230,89 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (body.cancellationReason) {
         updateData.cancellationReason = body.cancellationReason
       }
+    }
+
+    // ── Recurrence series updates ──────────────────────────────────────────
+    // 'this' (default): only this record. 'future': this + later occurrences.
+    // 'all': every occurrence in the group. Time/doctor/status changes are
+    // applied to each affected occurrence at its own date, with the conflict
+    // pipeline re-run per record; series edits fail atomically.
+    const groupId = (existingAppointment as { recurrenceGroupId?: string | null }).recurrenceGroupId
+    if (applyTo && applyTo !== 'this' && groupId) {
+      const group = await prisma.appointment.findMany({
+        where: { hospitalId, recurrenceGroupId: groupId },
+        orderBy: { scheduledDate: 'asc' },
+      })
+      const thisKey = toDateKey(existingAppointment.scheduledDate)
+      const targets = (group as Array<Record<string, unknown>>).filter((g) => {
+        if (g.id === id) return true
+        if (applyTo === 'all') return true
+        return toDateKey(g.scheduledDate as Date) >= thisKey
+      })
+
+      const baseDate =
+        scheduledDate !== undefined ? new Date(scheduledDate) : existingAppointment.scheduledDate
+      const newKey = toDateKey(baseDate)
+      const oldKey = thisKey
+      for (const target of targets) {
+        const targetKey = toDateKey(target.scheduledDate as Date)
+        // Date moves: shift every sibling by the same delta unless 'all' with
+        // no explicit date change; otherwise keep each occurrence's own date.
+        let memberDate = target.scheduledDate as Date
+        if (scheduledDate !== undefined) {
+          memberDate = new Date(target.scheduledDate as Date)
+          memberDate.setDate(memberDate.getDate() + (parseDateKey(newKey).getTime() - parseDateKey(oldKey).getTime()) / 86400000)
+        }
+
+        const memberTime = scheduledTime ?? (target.scheduledTime as string)
+        const memberDuration = duration ?? (target.duration as number)
+        const memberDoctorId = doctorId ?? (target.doctorId as string)
+
+        if (status !== 'CANCELLED' && status !== 'NO_SHOW') {
+          const violating = await findAvailabilityViolation({
+            hospitalId,
+            doctorId: memberDoctorId,
+            scheduledDate: memberDate,
+            scheduledTime: memberTime,
+            duration: memberDuration,
+          })
+          if (violating) {
+            return NextResponse.json(
+              { error: `${toDateKey(memberDate)}: ${violating.message}`, code: violating.code },
+              { status: 409 }
+            )
+          }
+          const conflict = await findConflictingAppointment({
+            hospitalId,
+            doctorId: memberDoctorId,
+            scheduledDate: memberDate,
+            scheduledTime: memberTime,
+            duration: memberDuration,
+            excludeId: target.id as string,
+          })
+          if (conflict) {
+            return NextResponse.json(
+              {
+                error: `${toDateKey(memberDate)}: doctor already has appointment ${conflict.appointmentNo} at ${conflict.scheduledTime}`,
+              },
+              { status: 409 }
+            )
+          }
+        }
+
+        const memberData: Record<string, unknown> = {
+          ...updateData,
+          scheduledDate: memberDate,
+        }
+        if (status === 'CANCELLED' && (target.status as string) !== 'CANCELLED') {
+          memberData.cancelledAt = new Date()
+          if (body.cancellationReason) memberData.cancellationReason = body.cancellationReason
+        }
+        await prisma.appointment.update({ where: { id: target.id as string }, data: memberData })
+      }
+
+      const last = await prisma.appointment.findFirst({ where: { id } })
+      return NextResponse.json(last)
     }
 
     const appointment = await prisma.appointment.update({

@@ -15,6 +15,8 @@ import {
   LabOrderPriority,
   LabWorkType,
   AppointmentStatus,
+  LeaveType,
+  LeaveStatus,
   AppointmentType,
 } from '@prisma/client'
 import bcrypt from 'bcryptjs'
@@ -1533,6 +1535,60 @@ async function main() {
         },
       })
     }
+  }
+
+  // ── Agenda Phase-2 domain records ─────────────────────────────────────────
+  // Clinical rooms, an approved doctor leave window (unavailable period), and
+  // a waitlist entry — all additive and guarded like the appointment block.
+
+  const roomCount = await prisma.room.count({ where: { hospitalId: hospital.id } })
+  if (roomCount === 0) {
+    await prisma.room.createMany({
+      data: [
+        { hospitalId: hospital.id, name: 'Chair 1', description: 'Main operatory' },
+        { hospitalId: hospital.id, name: 'Chair 2', description: 'Surgery room' },
+        { hospitalId: hospital.id, name: 'Consultation', description: 'Consult / imaging' },
+      ],
+    })
+    console.log('Created rooms')
+  }
+
+  const leaveCount = await prisma.leave.count({ where: { hospitalId: hospital.id } })
+  if (leaveCount === 0 && seededPatients.length) {
+    const secondDoctor = await prisma.staff.findFirst({
+      where: { hospitalId: hospital.id, employeeId: 'EMP0002' },
+    })
+    const leaveStart = new Date()
+    leaveStart.setHours(0, 0, 0, 0)
+    leaveStart.setDate(leaveStart.getDate() + 7)
+    const leaveEnd = new Date(leaveStart)
+    leaveEnd.setDate(leaveEnd.getDate() + 2)
+    await prisma.leave.create({
+      data: {
+        hospitalId: hospital.id,
+        staffId: (secondDoctor ?? doctorStaff).id,
+        leaveType: LeaveType.CASUAL,
+        startDate: leaveStart,
+        endDate: leaveEnd,
+        status: LeaveStatus.APPROVED,
+        reason: 'Conference attendance',
+      },
+    })
+    console.log('Created approved doctor leave')
+  }
+
+  const waitlistCount = await prisma.waitlist.count({ where: { hospitalId: hospital.id } })
+  if (waitlistCount === 0 && seededPatients.length) {
+    await prisma.waitlist.create({
+      data: {
+        hospitalId: hospital.id,
+        patientId: seededPatients[0].id,
+        doctorId: doctorStaff.id,
+        preferredTime: 'MORNING',
+        notes: 'Wants the first available morning slot',
+      },
+    })
+    console.log('Created waitlist entry')
   }
 
   console.log('Created appointments')

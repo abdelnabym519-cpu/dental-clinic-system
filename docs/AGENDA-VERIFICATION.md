@@ -78,3 +78,65 @@ Login with the standard demo account, then verify:
 - API: `app/api/appointments/*` (hardened in place — no duplicate routes/models)
 - Navigation: `config/nav.ts` (Agenda under Overview, after Dashboard)
 - Seed additions: `prisma/seed.ts` (second doctor + appointments, additive)
+
+---
+
+# Phase 2 — complete clinic scheduling domain (runtime checklist)
+
+Phase 2 extends the same Agenda (no new nav entries, no duplicate screens) with
+rooms, booking-window enforcement, recurrence, check-in/queue, waiting list,
+analytics and reminder infrastructure. New code: `lib/agenda-availability.ts`,
+`components/agenda/agenda-panels.tsx`, `components/agenda/appointment-drawer.tsx`,
+`app/api/appointments/{analytics,reminders,availability}`,
+`app/api/rooms`, `app/api/appointments/waitlist/[id]/promote`,
+`lib/appointment-number.ts`. Schema deltas are additive (Room model,
+`Appointment.roomId`/`recurrenceGroupId`, `AppointmentReminder.hospitalId`) with
+migration `prisma/migrations/20260920000000_agenda_phase2_rooms_recurrence`.
+
+After `npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts`:
+
+1. **Rooms** — as ADMIN: rooms CRUD via `POST /api/rooms` (seeded: Chair 1,
+   Chair 2, Consultation); booking dialog shows a Room/chair selector; booking
+   the same room at the same time twice → 409 naming the blocking appointment.
+2. **Room filter** — calendar toolbar (when rooms exist) narrows to one room;
+   room name appears on blocks in day view.
+3. **Booking window** — select a provider, try booking 23:00 → inline 409
+   `OUTSIDE_WORKING_HOURS`; booking 13:15 (default lunch) → 409 `DURING_BREAK`;
+   booking on a configured-closed weekday → 409.
+4. **Availability overlay** — with a provider selected, day/week views shade
+   outside-hours (hatching) and the lunch band; a provider on approved leave or
+   a clinic holiday shows a red ribbon on that day.
+5. **Recurrence** — New appointment → "Repeat as a series" (daily/weekly/
+   bi-weekly/monthly, max 60); each occurrence becomes a REAL appointment with
+   a shared `recurrenceGroupId`; overlapping occurrence → 409 naming its date.
+6. **Series edit scope** — edit one occurrence of a series → scope prompt
+   (this / future / all); `future` moves later occurrences by the same delta.
+7. **Check-in** — as RECEPTIONIST/ADMIN: Today's queue panel (under the
+   calendar) + block menu show **Check in**; status flips to Checked in.
+8. **Queue flow** — Start (checked-in) and Complete (in-progress) actions for
+   DOCTOR/ADMIN; block color + legend follow the status.
+9. **No-show** — mark a no-show (DOCTOR/ADMIN); the patient profile's
+   Appointments tab shows an "N no-shows" badge computed from real records.
+10. **Waiting list** — panel lists ACTIVE entries (seeded one); **Book next
+    slot** books the first genuinely free slot (server-side search honoring
+    hours/leaves/holidays/conflicts) and marks the entry BOOKED.
+11. **Analytics** — Analytics tab (ADMIN/DOCTOR): totals, completion /
+    cancellation / no-show rates, clinic occupancy and per-doctor utilization
+    computed from live records (numbers change as appointments change).
+12. **Reminders (infrastructure only)** — appointment drawer → Reminders:
+    queue a WhatsApp/SMS/Email reminder (stored PENDING for the reminder job;
+    nothing is sent from the UI), cancel a pending one; SENT reminders refuse
+    cancellation. (Live sending is Phase 3 / Egyptianization.)
+13. **Clinical links** — drawer links: Patient file (`?tab=appointments`),
+    Odontogram (`?tab=dental-chart`) — the patient profile opens directly on
+    the requested tab; drawer also lists complaint/notes/recurrence group.
+14. **RBAC (spot-check)** — DOCTOR sees no Check-in button; RECEPTIONIST sees
+    no Start/Complete; every endpoint re-checks server-side (client hiding is
+    cosmetic only).
+15. **Patient search** — the toolbar search box filters by patient name/number.
+
+> In-sandbox this checklist could not be executed (no MySQL, no browser, and
+> the Prisma engine cannot be downloaded — see the Phase 1 report). The suite
+> covers each behavior with real numbers: `tests/api/agenda-phase2.test.ts`
+> (28 tests), `tests/unit/agenda-availability.test.ts` (24),
+> `tests/components/agenda-panels.test.tsx` (6).

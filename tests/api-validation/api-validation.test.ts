@@ -68,6 +68,21 @@ vi.mock('@/lib/prisma', () => {
       count: vi.fn(),
     },
     hospital: { findUnique: vi.fn(), findFirst: vi.fn() },
+    // Agenda Phase-2 availability models (safe defaults: unconfigured clinic).
+    staffShift: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    leave: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    holiday: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    room: { findFirst: vi.fn().mockResolvedValue(null) },
     videoConsultation: { create: vi.fn() },
     stockTransaction: { create: vi.fn() },
     $transaction: vi.fn((fn: any) => fn(prismaMock)),

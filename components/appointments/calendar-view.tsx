@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -20,6 +21,11 @@ import {
   CalendarX,
   RefreshCw,
   User,
+  LogIn,
+  Play,
+  CheckCheck,
+  UserX,
+  Search,
 } from 'lucide-react'
 import {
   appointmentStatusConfig,
@@ -57,6 +63,7 @@ interface Appointment {
     firstName: string
     lastName: string
   }
+  room?: { id: string; name: string } | null
 }
 
 export interface AgendaProvider {
@@ -64,6 +71,15 @@ export interface AgendaProvider {
   firstName: string
   lastName: string
   specialization?: string | null
+}
+
+interface AvailabilityContext {
+  windowsByDay: Record<
+    number,
+    { startTime: string; endTime: string; lunchStart?: string; lunchEnd?: string } | null
+  >
+  leaves: Array<{ startDate: string; endDate: string; leaveType: string; status: string }>
+  holidays: Array<{ date: string; name: string; isRecurring: boolean }>
 }
 
 interface CalendarViewProps {
@@ -76,6 +92,20 @@ interface CalendarViewProps {
   hideToolbar?: boolean
   /** Whether the viewer may edit/reschedule/cancel (mirrors server RBAC). Defaults to true. */
   canSchedule?: boolean
+  /** Clinical rooms for the room filter (Phase 2). Omit to hide the filter. */
+  rooms?: Array<{ id: string; name: string }>
+  /** Show the patient-name search box. */
+  showSearch?: boolean
+  /** Shade unavailable time (working hours, break, leaves) for the selected provider. */
+  showAvailability?: boolean
+  /** Check-in action (RECEPTIONIST + ADMIN; server enforces authoritatively). */
+  canCheckIn?: boolean
+  /** Clinical progression actions (DOCTOR + ADMIN). */
+  canAdvance?: boolean
+  /** No-show marking (DOCTOR + ADMIN). */
+  canNoShow?: boolean
+  /** When provided, block clicks open this instead of navigating to the detail page. */
+  onOpenAppointment?: (appointmentId: string) => void
 }
 
 const HOUR_PX = 64 // day view: pixels per hour
@@ -91,6 +121,13 @@ export function CalendarView({
   refreshKey = 0,
   hideToolbar = false,
   canSchedule = true,
+  rooms,
+  showSearch = false,
+  showAvailability = false,
+  canCheckIn = false,
+  canAdvance = false,
+  canNoShow = false,
+  onOpenAppointment,
 }: CalendarViewProps) {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(initialDate)
@@ -101,6 +138,9 @@ export function CalendarView({
   const [doctorId, setDoctorId] = useState<string>('all')
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [menuFor, setMenuFor] = useState<string | null>(null)
+  const [roomId, setRoomId] = useState<string>('all')
+  const [search, setSearch] = useState<string>('')
+  const [availability, setAvailability] = useState<AvailabilityContext | null>(null)
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -109,6 +149,8 @@ export function CalendarView({
       const dateStr = toDateKey(currentDate)
       let url = `/api/appointments?view=${viewMode}&date=${dateStr}`
       if (doctorId && doctorId !== 'all') url += `&doctorId=${doctorId}`
+      if (roomId && roomId !== 'all') url += `&roomId=${roomId}`
+      if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to load the schedule')
@@ -120,11 +162,37 @@ export function CalendarView({
     } finally {
       setLoading(false)
     }
-  }, [currentDate, viewMode, doctorId])
+  }, [currentDate, viewMode, doctorId, roomId, search])
 
   useEffect(() => {
     fetchAppointments()
   }, [fetchAppointments, refreshKey])
+
+  // Availability context for the shading overlay (selected provider only —
+  // the server computes the same rules it enforces on booking).
+  useEffect(() => {
+    if (!showAvailability || !doctorId || doctorId === 'all') {
+      setAvailability(null)
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await fetch(
+          `/api/appointments/availability?doctorId=${doctorId}&date=${toDateKey(currentDate)}`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setAvailability(data)
+      } catch {
+        // Overlay is progressive enhancement — never blocks the calendar.
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [showAvailability, doctorId, currentDate])
 
   const navigatePrevious = () => {
     const newDate = new Date(currentDate)
@@ -178,6 +246,100 @@ export function CalendarView({
       setCancellingId(null)
       setMenuFor(null)
     }
+  }
+
+  /** One-click visit status transition (queue workflow, server-enforced). */
+  const quickStatus = async (apt: Appointment, status: string) => {
+    if (cancellingId) return
+    setCancellingId(apt.id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/appointments/${apt.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to update the appointment')
+      }
+      await fetchAppointments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update the appointment')
+    } finally {
+      setCancellingId(null)
+      setMenuFor(null)
+    }
+  }
+
+  /** Slot-unavailable shading for one day column (break + outside hours + leaves). */
+  const renderAvailabilityOverlays = (day: Date) => {
+    if (!availability) return null
+    const key = toDateKey(day)
+    const onLeave = availability.leaves.some((l) => {
+      const start = l.startDate.slice(0, 10)
+      const end = l.endDate.slice(0, 10)
+      return start <= key && key <= end
+    })
+    const holiday = availability.holidays.find((h) => {
+      const hd = h.date.slice(5) // MM-DD
+      return h.isRecurring ? hd === key.slice(5) : h.date.slice(0, 10) === key
+    })
+    const window = availability.windowsByDay?.[day.getDay()]
+    const breakStart = window?.lunchStart
+    const breakEnd = window?.lunchEnd
+    const pct = (mins: number) => (mins / (AGENDA_END_MINUTES - AGENDA_START_MINUTES)) * 100
+
+    const dayStart = window ? timeToMinutes(window.startTime) : AGENDA_START_MINUTES
+    const dayEnd = window ? timeToMinutes(window.endTime) : AGENDA_START_MINUTES
+
+    return (
+      <>
+        {/* Outside working window (before / after) */}
+        {dayStart > AGENDA_START_MINUTES && (
+          <div
+            aria-hidden
+            className="absolute left-0 right-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.05)_0,rgba(0,0,0,0.05)_6px,transparent_6px,transparent_12px)] pointer-events-none"
+            style={{ top: 0, height: `${pct(dayStart - AGENDA_START_MINUTES)}%` }}
+          />
+        )}
+        {dayEnd < AGENDA_END_MINUTES && (
+          <div
+            aria-hidden
+            className="absolute left-0 right-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.05)_0,rgba(0,0,0,0.05)_6px,transparent_6px,transparent_12px)] pointer-events-none"
+            style={{ top: `${pct(dayEnd - AGENDA_START_MINUTES)}%`, bottom: 0 }}
+          />
+        )}
+        {/* Lunch / clinic break */}
+        {breakStart && breakEnd && (
+          <div
+            aria-hidden
+            title="Clinic break"
+            className="absolute left-0 right-0 bg-amber-100/70 dark:bg-amber-900/20 pointer-events-none"
+            style={{
+              top: `${pct(timeToMinutes(breakStart) - AGENDA_START_MINUTES)}%`,
+              height: `${pct(timeToMinutes(breakEnd) - timeToMinutes(breakStart))}%`,
+            }}
+          />
+        )}
+        {/* Clinic closed the whole day */}
+        {!window && !onLeave && (
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.06)_0,rgba(0,0,0,0.06)_6px,transparent_6px,transparent_12px)] pointer-events-none"
+          />
+        )}
+        {/* Approved leave / clinic holiday ribbon */}
+        {(onLeave || holiday) && (
+          <div
+            role="status"
+            className="absolute left-1 right-1 top-1 z-10 rounded bg-destructive/15 px-2 py-1 text-[10px] font-semibold text-destructive pointer-events-none"
+          >
+            {onLeave ? 'Provider on leave' : `Clinic holiday: ${holiday?.name ?? ''}`}
+          </div>
+        )}
+      </>
+    )
   }
 
   const getDateLabel = () => {
@@ -276,9 +438,12 @@ export function CalendarView({
           height: `max(${heightPct}%, 1.75rem)`,
           ...(options.compact ? { paddingLeft: 4, paddingRight: 4 } : {}),
         }}
-        onClick={() => router.push(`/appointments/${apt.id}`)}
+        onClick={() =>
+          onOpenAppointment ? onOpenAppointment(apt.id) : router.push(`/appointments/${apt.id}`)
+        }
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') router.push(`/appointments/${apt.id}`)
+          if (e.key === 'Enter' || e.key === ' ')
+            onOpenAppointment ? onOpenAppointment(apt.id) : router.push(`/appointments/${apt.id}`)
         }}
       >
         <div className="flex items-center justify-between gap-1">
@@ -340,6 +505,51 @@ export function CalendarView({
                       {cancellingId === apt.id ? 'Cancelling…' : 'Cancel'}
                     </button>
                   )}
+                  {canCheckIn && (apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED') && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+                      aria-label={`Check in for appointment ${apt.appointmentNo}`}
+                      disabled={cancellingId === apt.id}
+                      onClick={() => quickStatus(apt, 'CHECKED_IN')}
+                    >
+                      <LogIn className="h-3.5 w-3.5" /> Check in
+                    </button>
+                  )}
+                  {canAdvance && apt.status === 'CHECKED_IN' && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+                      aria-label={`Start visit for appointment ${apt.appointmentNo}`}
+                      disabled={cancellingId === apt.id}
+                      onClick={() => quickStatus(apt, 'IN_PROGRESS')}
+                    >
+                      <Play className="h-3.5 w-3.5" /> Start visit
+                    </button>
+                  )}
+                  {canAdvance && apt.status === 'IN_PROGRESS' && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+                      aria-label={`Complete appointment ${apt.appointmentNo}`}
+                      disabled={cancellingId === apt.id}
+                      onClick={() => quickStatus(apt, 'COMPLETED')}
+                    >
+                      <CheckCheck className="h-3.5 w-3.5" /> Complete
+                    </button>
+                  )}
+                  {canNoShow &&
+                    ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(apt.status) && (
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted"
+                        aria-label={`Mark no-show for appointment ${apt.appointmentNo}`}
+                        disabled={cancellingId === apt.id}
+                        onClick={() => quickStatus(apt, 'NO_SHOW')}
+                      >
+                        <UserX className="h-3.5 w-3.5" /> No-show
+                      </button>
+                    )}
                 </div>
               )}
             </div>
@@ -348,7 +558,7 @@ export function CalendarView({
         <p className={`text-muted-foreground truncate ${options.compact ? 'text-[10px]' : 'text-xs'}`}>
           {options.compact
             ? startLabel
-            : `${startLabel} · ${getDoctorName(apt.doctor)} · ${apt.duration}m`}
+            : `${startLabel} · ${getDoctorName(apt.doctor)} · ${apt.duration}m${apt.room ? ` · ${apt.room.name}` : ''}`}
         </p>
       </div>
     )
@@ -440,6 +650,7 @@ export function CalendarView({
             {HOURS.map((h) => (
               <div key={h} className="border-b" style={{ height: HOUR_PX }} />
             ))}
+            {showAvailability && renderAvailabilityOverlays(currentDate)}
 
             {dayAppointments.length === 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -502,6 +713,7 @@ export function CalendarView({
                 {HOURS.map((h) => (
                   <div key={h} className="border-b" style={{ height: WEEK_HOUR_PX }} />
                 ))}
+                {showAvailability && renderAvailabilityOverlays(day)}
 
                 {dayAppointments.map((apt) =>
                   renderBlock(apt, { hourPx: WEEK_HOUR_PX, compact: true })
@@ -615,6 +827,34 @@ export function CalendarView({
                     <SelectItem key={p.id} value={p.id}>
                       Dr. {p.firstName} {p.lastName}
                       {p.specialization ? ` — ${p.specialization}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {showSearch && (
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search patient…"
+                  aria-label="Search appointments by patient name or number"
+                  className="h-9 w-[180px] pl-7"
+                />
+              </div>
+            )}
+            {rooms && rooms.length > 0 && (
+              <Select value={roomId} onValueChange={setRoomId}>
+                <SelectTrigger className="w-[150px]" aria-label="Filter by room">
+                  <SelectValue placeholder="All rooms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All rooms</SelectItem>
+                  {rooms.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

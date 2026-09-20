@@ -34,6 +34,7 @@ export interface AppointmentDialogAppointment {
   priority?: string
   chiefComplaint?: string | null
   notes?: string | null
+  roomId?: string | null
 }
 
 interface AppointmentDialogProps {
@@ -42,11 +43,15 @@ interface AppointmentDialogProps {
   onSaved: () => void
   patients: Array<{ id: string; patientId: string; firstName: string; lastName: string }>
   doctors: Array<{ id: string; firstName: string; lastName: string; specialization?: string | null }>
+  /** Clinical rooms (Agenda Phase 2). Omit to hide the room selector. */
+  rooms?: Array<{ id: string; name: string }>
   /** Preselected defaults (e.g. date clicked on the agenda). */
   defaults?: { scheduledDate?: string; scheduledTime?: string; doctorId?: string }
   /** When set, the dialog edits this appointment instead of creating one. */
   appointment?: AppointmentDialogAppointment | null
 }
+
+const RECURRENCE_PATTERNS = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY']
 
 const DURATIONS = [15, 30, 45, 60, 90, 120]
 const TYPES = ['CONSULTATION', 'CHECK_UP', 'PROCEDURE', 'FOLLOW_UP', 'EMERGENCY']
@@ -63,6 +68,7 @@ export function AppointmentDialog({
   onSaved,
   patients,
   doctors,
+  rooms,
   defaults,
   appointment,
 }: AppointmentDialogProps) {
@@ -79,11 +85,20 @@ export function AppointmentDialog({
     priority: 'NORMAL',
     chiefComplaint: '',
     notes: '',
+    roomId: 'none',
+  })
+  const [recurrenceEnabled, setRecurrenceEnabled] = useState(false)
+  const [recurrence, setRecurrence] = useState({
+    pattern: 'WEEKLY',
+    count: '4',
+    endDate: '',
   })
 
   useEffect(() => {
     if (!open) return
     setError(null)
+    setRecurrenceEnabled(false)
+    setRecurrence({ pattern: 'WEEKLY', count: '4', endDate: '' })
     if (appointment) {
       setForm({
         patientId: appointment.patientId || '',
@@ -95,6 +110,7 @@ export function AppointmentDialog({
         priority: appointment.priority || 'NORMAL',
         chiefComplaint: appointment.chiefComplaint || '',
         notes: appointment.notes || '',
+        roomId: appointment.roomId || 'none',
       })
     } else {
       setForm({
@@ -107,6 +123,7 @@ export function AppointmentDialog({
         priority: 'NORMAL',
         chiefComplaint: '',
         notes: '',
+        roomId: 'none',
       })
     }
   }, [open, appointment, defaults])
@@ -124,7 +141,7 @@ export function AppointmentDialog({
 
     setSaving(true)
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         patientId: form.patientId,
         doctorId: form.doctorId,
         scheduledDate: form.scheduledDate,
@@ -134,6 +151,14 @@ export function AppointmentDialog({
         priority: form.priority,
         chiefComplaint: form.chiefComplaint || undefined,
         notes: form.notes || undefined,
+        roomId: form.roomId && form.roomId !== 'none' ? form.roomId : undefined,
+      }
+      if (!editing && recurrenceEnabled) {
+        payload.recurrence = {
+          pattern: recurrence.pattern,
+          count: parseInt(recurrence.count, 10) || 1,
+          endDate: recurrence.endDate || undefined,
+        }
       }
       const res = await fetch(
         editing ? `/api/appointments/${appointment!.id}` : '/api/appointments',
@@ -280,6 +305,102 @@ export function AppointmentDialog({
               </Select>
             </div>
           </div>
+
+          {rooms && rooms.length > 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="apt-room">Room / chair</Label>
+              <Select value={form.roomId} onValueChange={set('roomId')}>
+                <SelectTrigger id="apt-room" aria-label="Room or chair">
+                  <SelectValue placeholder="No room" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No room</SelectItem>
+                  {rooms.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Room double-bookings are rejected by the server.
+              </p>
+            </div>
+          )}
+
+          {!editing && (
+            <fieldset className="rounded-md border p-3">
+              <legend className="px-1 text-sm font-medium">Repeat</legend>
+              <label className="mb-3 flex items-center gap-2 text-sm" htmlFor="apt-recurrence">
+                <input
+                  id="apt-recurrence"
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={recurrenceEnabled}
+                  onChange={(e) => setRecurrenceEnabled(e.target.checked)}
+                  aria-label="Repeat this appointment as a series"
+                />
+                Repeat this appointment as a series
+              </label>
+              {recurrenceEnabled && (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="apt-rec-pattern" className="text-xs">
+                      Pattern
+                    </Label>
+                    <Select
+                      value={recurrence.pattern}
+                      onValueChange={(v) => setRecurrence((r) => ({ ...r, pattern: v }))}
+                    >
+                      <SelectTrigger id="apt-rec-pattern" aria-label="Recurrence pattern">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RECURRENCE_PATTERNS.map((pattern) => (
+                          <SelectItem key={pattern} value={pattern}>
+                            {pattern === 'BIWEEKLY' ? 'Every 2 weeks' : pattern.toLowerCase()}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="apt-rec-count" className="text-xs">
+                      Occurrences
+                    </Label>
+                    <Input
+                      id="apt-rec-count"
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={recurrence.count}
+                      onChange={(e) => setRecurrence((r) => ({ ...r, count: e.target.value }))}
+                      aria-label="Number of occurrences (max 60)"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="apt-rec-end" className="text-xs">
+                      Until (optional)
+                    </Label>
+                    <Input
+                      id="apt-rec-end"
+                      type="date"
+                      value={recurrence.endDate}
+                      onChange={(e) => setRecurrence((r) => ({ ...r, endDate: e.target.value }))}
+                      aria-label="Series end date (optional, overrides occurrences)"
+                    />
+                  </div>
+                </div>
+              )}
+              {recurrenceEnabled && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Each occurrence is booked as a real appointment and conflict-checked
+                  individually (max 60). Editing later offers this-occurrence / future / whole
+                  series scope.
+                </p>
+              )}
+            </fieldset>
+          )}
 
           <div className="grid gap-2">
             <Label htmlFor="apt-complaint">Chief complaint</Label>

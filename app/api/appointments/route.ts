@@ -1,38 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { generateAppointmentNo } from '@/lib/appointment-number'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { createRoom } from '@/lib/services/video.service'
-import { findConflictingAppointment } from '@/lib/services/appointment-conflict.service'
-import { isValidTime } from '@/lib/agenda-utils'
+import {
+  findConflictingAppointment,
+  findConflictingRoomBooking,
+  findAvailabilityViolation,
+} from '@/lib/services/appointment-conflict.service'
+import {
+  generateRecurrenceDateKeys,
+  RECURRENCE_PATTERNS,
+  type RecurrencePattern,
+} from '@/lib/agenda-availability'
+import { isValidTime, parseDateKey, toDateKey } from '@/lib/agenda-utils'
 
 // Roles allowed to mutate the schedule. Reads stay available to every
 // authenticated role; the server enforces this split on POST/PUT/DELETE.
 const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
 
-// Generate unique appointment number for the hospital
-async function generateAppointmentNo(hospitalId: string): Promise<string> {
-  const today = new Date()
-  const prefix = `APT${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`
-
-  const lastAppointment = await prisma.appointment.findFirst({
-    where: {
-      hospitalId,
-      appointmentNo: {
-        startsWith: prefix,
-      },
-    },
-    orderBy: {
-      appointmentNo: 'desc',
-    },
-  })
-
-  if (lastAppointment) {
-    const lastNumber = parseInt(lastAppointment.appointmentNo.slice(-4))
-    return `${prefix}${String(lastNumber + 1).padStart(4, '0')}`
-  }
-
-  return `${prefix}0001`
-}
+// Appointment numbering lives in lib/appointment-number.ts (shared with the
+// waitlist promote flow so sequences stay consistent across booking paths).
 
 // GET - List appointments with filters
 export async function GET(request: NextRequest) {
@@ -52,6 +40,7 @@ export async function GET(request: NextRequest) {
     const doctorId = searchParams.get('doctorId') || ''
     const patientId = searchParams.get('patientId') || ''
     const type = searchParams.get('type') || ''
+    const roomId = searchParams.get('roomId') || ''
     const view = searchParams.get('view') || 'list' // list, day, week, month
 
     const skip = (page - 1) * limit
@@ -87,6 +76,10 @@ export async function GET(request: NextRequest) {
 
     if (type) {
       where.appointmentType = type
+    }
+
+    if (roomId) {
+      where.roomId = roomId
     }
 
     // For calendar views, get date range
@@ -146,6 +139,9 @@ export async function GET(request: NextRequest) {
               specialization: true,
             },
           },
+          room: {
+            select: { id: true, name: true },
+          },
         },
         orderBy: [{ scheduledDate: 'asc' }, { scheduledTime: 'asc' }],
         skip: view === 'list' ? skip : undefined,
@@ -186,11 +182,13 @@ export async function POST(request: NextRequest) {
       scheduledTime,
       duration = 30,
       chairNumber,
+      roomId,
       appointmentType = 'CONSULTATION',
       priority = 'NORMAL',
       chiefComplaint,
       notes,
       isVirtual = false,
+      recurrence,
     } = body
 
     // Validate required fields
@@ -244,88 +242,166 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Doctor not found' }, { status: 404 })
     }
 
-    // Check for conflicting appointments for this provider.
-    // Duration-aware: a 60-minute booking that overlaps the middle of an
-    // existing 30-minute slot (or vice versa) must fail, not just exact-time
-    // duplicates. Authoritative server-side check.
+    // Room must exist in this hospital (never trust client IDs for ownership)
+    if (roomId) {
+      const room = await prisma.room.findFirst({ where: { id: roomId, hospitalId } })
+      if (!room) {
+        return NextResponse.json({ error: 'Room not found' }, { status: 404 })
+      }
+    }
+
+    // Availability gate: working hours, lunch break, approved leave, clinic
+    // holiday. Authoritative server-side scheduling rule.
     const appointmentDate = new Date(scheduledDate)
-    const conflict = await findConflictingAppointment({
+    const violation = await findAvailabilityViolation({
       hospitalId,
       doctorId,
       scheduledDate: appointmentDate,
       scheduledTime,
       duration,
     })
-
-    if (conflict) {
-      return NextResponse.json(
-        {
-          error: `Doctor already has appointment ${conflict.appointmentNo} from ${conflict.scheduledTime} (${conflict.duration} min) overlapping this time`,
-        },
-        { status: 409 }
-      )
+    if (violation) {
+      return NextResponse.json({ error: violation.message, code: violation.code }, { status: 409 })
     }
 
-    // Create appointment with a collision-safe appointment number:
+    // Recurrence expansion: every occurrence is a real Appointment record and
+    // runs the full conflict pipeline before anything is written.
+    let recurrenceDates: string[] = [toDateKey(appointmentDate)]
+    let recurrenceGroupId: string | null = null
+    if (recurrence && typeof recurrence === 'object') {
+      const pattern = recurrence.pattern as RecurrencePattern
+      if (!RECURRENCE_PATTERNS.includes(pattern)) {
+        return NextResponse.json(
+          { error: 'Invalid recurrence pattern. Use DAILY, WEEKLY, BIWEEKLY or MONTHLY' },
+          { status: 400 }
+        )
+      }
+      const count = Number(recurrence.count) || 1
+      const endKey = recurrence.endDate ? String(recurrence.endDate) : undefined
+      if (endKey && !/^\d{4}-\d{2}-\d{2}$/.test(endKey)) {
+        return NextResponse.json({ error: 'Invalid recurrence end date' }, { status: 400 })
+      }
+      recurrenceDates = generateRecurrenceDateKeys(
+        toDateKey(appointmentDate),
+        pattern,
+        endKey ? Number.MAX_SAFE_INTEGER : count,
+        endKey
+      )
+      if (recurrenceDates.length < 1) {
+        return NextResponse.json(
+          { error: 'Recurrence produced no occurrences after the end date' },
+          { status: 400 }
+        )
+      }
+      recurrenceGroupId =
+        recurrenceDates.length > 1
+          ? `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+          : null
+    }
+
+    // Conflict + room-conflict checks for every occurrence
+    for (const dateKey of recurrenceDates) {
+      const occurrenceDate = parseDateKey(dateKey)
+      const conflict = await findConflictingAppointment({
+        hospitalId,
+        doctorId,
+        scheduledDate: occurrenceDate,
+        scheduledTime,
+        duration,
+      })
+      if (conflict) {
+        return NextResponse.json(
+          {
+            error: `Doctor already has appointment ${conflict.appointmentNo} from ${conflict.scheduledTime} (${conflict.duration} min) overlapping ${dateKey}`,
+          },
+          { status: 409 }
+        )
+      }
+      if (roomId) {
+        const roomConflict = await findConflictingRoomBooking({
+          hospitalId,
+          doctorId,
+          scheduledDate: occurrenceDate,
+          scheduledTime,
+          duration,
+          roomId,
+        })
+        if (roomConflict) {
+          return NextResponse.json(
+            {
+              error: `Room is already booked by appointment ${roomConflict.appointmentNo} at ${roomConflict.scheduledTime} on ${dateKey}`,
+            },
+            { status: 409 }
+          )
+        }
+      }
+    }
+
+    // Create appointment(s) with a collision-safe appointment number:
     // generateAppointmentNo reads the current max, so two concurrent bookings
     // can derive the same number (the unique constraint then rejects one).
     // Retry with a freshly generated number instead of failing the booking.
     let appointment: { id: string } | null = null
-    let appointmentNo = ''
-    for (let attempt = 0; attempt < 3 && !appointment; attempt++) {
-      appointmentNo = await generateAppointmentNo(hospitalId)
-      try {
-        appointment = (await prisma.appointment.create({
-          data: {
-            appointmentNo,
-            patientId,
-            doctorId,
-            hospitalId,
-            scheduledDate: appointmentDate,
-            scheduledTime,
-            duration,
-            chairNumber,
-            appointmentType,
-            priority,
-            chiefComplaint,
-            notes,
-            isVirtual: !!isVirtual,
-            status: 'SCHEDULED',
-          },
-          include: {
-            patient: {
-              select: {
-                id: true,
-                patientId: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
+    for (const dateKey of recurrenceDates) {
+      const occurrenceDate = parseDateKey(dateKey)
+      let created: { id: string } | null = null
+      for (let attempt = 0; attempt < 3 && !created; attempt++) {
+        const appointmentNo = await generateAppointmentNo(hospitalId)
+        try {
+          created = (await prisma.appointment.create({
+            data: {
+              appointmentNo,
+              patientId,
+              doctorId,
+              hospitalId,
+              scheduledDate: occurrenceDate,
+              scheduledTime,
+              duration,
+              chairNumber,
+              roomId: roomId || null,
+              recurrenceGroupId,
+              appointmentType,
+              priority,
+              chiefComplaint,
+              notes,
+              isVirtual: !!isVirtual,
+              status: 'SCHEDULED',
+            },
+            include: {
+              patient: {
+                select: {
+                  id: true,
+                  patientId: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                },
+              },
+              doctor: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                },
               },
             },
-            doctor: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        })) as { id: string }
-      } catch (err) {
-        if ((err as { code?: string })?.code === 'P2002') continue // number taken concurrently — retry
-        throw err
+          })) as { id: string }
+          if (!appointment) appointment = created // first occurrence is the response body
+        } catch (err) {
+          if ((err as { code?: string })?.code === 'P2002') continue // number taken concurrently — retry
+          throw err
+        }
+      }
+      if (!created) {
+        return NextResponse.json(
+          { error: 'Could not allocate an appointment number, please retry' },
+          { status: 503 }
+        )
       }
     }
 
-    if (!appointment) {
-      return NextResponse.json(
-        { error: 'Could not allocate an appointment number, please retry' },
-        { status: 503 }
-      )
-    }
-
     // Auto-create video consultation for virtual appointments
-    if (isVirtual) {
+    if (isVirtual && appointment) {
       try {
         const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
         const room = await createRoom(tempId)

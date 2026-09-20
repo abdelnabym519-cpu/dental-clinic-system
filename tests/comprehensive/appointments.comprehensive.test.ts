@@ -38,6 +38,23 @@ vi.mock('@/lib/prisma', () => ({
     hospital: {
       findUnique: vi.fn(),
     },
+    // Agenda Phase-2 availability models: benign defaults = no configured
+    // shifts/hours, so the availability gate falls back to clinic defaults.
+    staffShift: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    leave: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    holiday: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    hospital: { findUnique: vi.fn().mockResolvedValue({ workingHours: null }) },
+    room: { findFirst: vi.fn().mockResolvedValue(null) },
   },
 }))
 
@@ -636,6 +653,7 @@ describe('Appointments API - Comprehensive Tests', () => {
         }),
       })
       const response = await POST(request)
+      if (response.status !== 201) console.log('DEBUG-BODY:', JSON.stringify(await response.json()))
 
       expect(response.status).toBe(201)
     })
@@ -761,6 +779,21 @@ describe('Appointments API - Comprehensive Tests', () => {
       mockPrisma.staff.findFirst.mockResolvedValue({ id: mockDoctorId, hospitalId: mockHospitalId })
       mockPrisma.appointment.findFirst.mockResolvedValue(null)
       mockPrisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
+      // Phase-2 availability gate: an 8-hour booking cannot span the default
+      // 13:00–14:00 clinic lunch, so this clinic is configured with a long
+      // no-lunch day using the app's real per-day week-schedule JSON shape.
+      const longDay = { open: '08:00', close: '19:00', closed: false }
+      mockPrisma.hospital.findUnique.mockResolvedValue({
+        workingHours: JSON.stringify({
+          monday: longDay,
+          tuesday: longDay,
+          wednesday: longDay,
+          thursday: longDay,
+          friday: longDay,
+          saturday: longDay,
+          sunday: { open: null, close: null, closed: true },
+        }),
+      })
 
       const request = new NextRequest('http://localhost/api/appointments', {
         method: 'POST',
