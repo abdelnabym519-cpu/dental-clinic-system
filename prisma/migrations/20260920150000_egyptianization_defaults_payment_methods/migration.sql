@@ -10,7 +10,10 @@ ALTER TABLE `Hospital` ALTER COLUMN `currency` SET DEFAULT 'EGP';
 ALTER TABLE `Hospital` ALTER COLUMN `timezone` SET DEFAULT 'Africa/Cairo';
 
 -- Billing money is Egyptian pounds by default.
-ALTER TABLE `Invoice` ALTER COLUMN `currency` SET DEFAULT 'EGP';
+-- (No Invoice.currency statement: the Invoice model has no currency column —
+--  schema.prisma and every prior migration agree — so altering it here made
+--  the chain fail with MySQL 1054 "Unknown column 'currency' in 'Invoice'".
+--  Invoice amounts are always EGP; SubscriptionPayment carries the currency.)
 ALTER TABLE `SubscriptionPayment` ALTER COLUMN `currency` SET DEFAULT 'EGP';
 
 -- Patient region defaults to Cairo (legacy template defaulted to an

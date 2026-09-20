@@ -2664,8 +2664,8 @@ model BlockedSlot {
   updatedAt  DateTime @updatedAt
 
   hospital Hospital  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
-  staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: Set Null)
-  room     Room?     @relation(fields: [roomId], references: [id], onDelete: Set Null)
+  staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  room     Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
 
   @@index([hospitalId, startAt])
   @@index([staffId])
@@ -2692,8 +2692,8 @@ model MessageQueue {
   updatedAt     DateTime       @updatedAt
 
   hospital    Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
-  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Set Null)
-  patient     Patient?     @relation(fields: [patientId], references: [id], onDelete: Set Null)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patient     Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
 
   @@index([hospitalId])
   @@index([status, scheduledAt])
