@@ -372,3 +372,95 @@ describe('CalendarView', () => {
     expect(mockPush).toHaveBeenCalledWith('/appointments/apt-1')
   })
 })
+
+// ---------------------------------------------------------------------------
+// § fill-height: the calendar must absorb the remaining viewport height below
+// the toolbar (flex-1 / min-h-0 chain), stretch its time grid via
+// `max(100%, <design px>)` columns with percentage hour rows, and scroll
+// internally when the viewport is shorter than the designed grid.
+// jsdom note: inline styles set through the CSSOM serialize as
+// `height: max(100%, 896px);`, so assertions read getAttribute('style').
+// ---------------------------------------------------------------------------
+describe('CalendarView fill-height layout (§ viewport stretch)', () => {
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    fetchMock = vi.fn()
+    global.fetch = fetchMock
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ appointments: mockAppointments }),
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const renderLoaded = async () => {
+    const utils = render(<CalendarView initialDate={new Date('2025-06-15')} />)
+    await waitFor(() => {
+      expect(screen.queryByText('Loading calendar...')).not.toBeInTheDocument()
+    })
+    return utils
+  }
+
+  const styleOf = (el: Element | null) => (el ? el.getAttribute('style') ?? '' : '')
+
+  it('roots the layout in a flex column that absorbs the remaining height', async () => {
+    const { container } = await renderLoaded()
+    expect(container.firstChild).toHaveClass('flex', 'flex-1', 'min-h-0', 'flex-col')
+  })
+
+  it('day view stretches and scrolls internally; columns use max(100%, design px)', async () => {
+    const { container } = await renderLoaded()
+    fireEvent.click(screen.getByTestId('select-item-day'))
+    const day = await screen.findByTestId('day-view')
+
+    expect(day).toHaveClass('flex-1', 'min-h-0', 'flex-col', 'overflow-hidden')
+    // desktop wrapper forwards the height chain (mobile list wrapper stays auto)
+    expect(day.parentElement).toHaveClass('min-h-0', 'flex-1', 'md:flex')
+    // single scroll region sized by the grid row
+    expect(day.querySelector('.grid')).toHaveClass('overflow-y-auto', 'min-h-0', 'flex-1')
+
+    const appointmentCol = day.querySelector('.relative')
+    expect(appointmentCol).toBeTruthy()
+    expect(styleOf(appointmentCol)).toContain('max(100%')
+    expect(styleOf(appointmentCol)).toContain('896px')
+    // time column mirrors the appointment column height
+    expect(styleOf(appointmentCol!.previousElementSibling)).toBe(styleOf(appointmentCol))
+
+    // hour rows are percentage-based so labels/lines/blocks stay aligned
+    const hourRow = [...appointmentCol!.children].find((c) =>
+      (c.getAttribute('style') ?? '').includes('%')
+    )
+    expect(hourRow).toBeTruthy()
+  })
+
+  it('week view keeps its header fixed while the 7 day columns stretch', async () => {
+    const { container } = await renderLoaded() // week is the default view
+    const week = screen.getByTestId('week-view')
+    expect(week).toHaveClass('flex-1', 'min-h-0', 'flex-col')
+
+    const dayCols = week.querySelectorAll('.relative')
+    expect(dayCols.length).toBe(7)
+    expect(styleOf(dayCols[0])).toContain('672px')
+    expect(styleOf(dayCols[0])).toContain('max(100%')
+    // time column mirrors the day columns
+    expect(styleOf(dayCols[0].previousElementSibling)).toBe(styleOf(dayCols[0]))
+  })
+
+  it('month view stretches and its day cells share the available height', async () => {
+    const { container } = await renderLoaded()
+    fireEvent.click(screen.getByTestId('select-item-month'))
+    const month = await screen.findByTestId('month-view')
+
+    expect(month).toHaveClass('flex-1', 'min-h-0', 'flex-col')
+    expect(month.querySelector('.grid:not([class*="bg-muted"])')).toHaveClass(
+      'flex-1',
+      'min-h-0',
+      'auto-rows-fr'
+    )
+  })
+})

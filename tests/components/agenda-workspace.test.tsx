@@ -280,3 +280,23 @@ describe('Agenda workspace page', () => {
     expect(onClose).toHaveBeenCalled()
   })
 })
+
+describe('Agenda workspace fill-height layout (§ viewport stretch)', () => {
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    fetchMock = vi.fn()
+    global.fetch = fetchMock
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ appointments: [] }) })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('roots the workspace in a min-h-full flex column so the calendar absorbs the viewport', async () => {
+    const { container } = render(<AgendaWorkspace canSchedule />)
+    expect(container.firstChild).toHaveClass('flex', 'min-h-full', 'flex-col')
+  })
+})
