@@ -1660,14 +1660,29 @@ describe('AIUsageStats', () => {
     // This month values
     expect(screen.getByText('25')).toBeInTheDocument()
     expect(screen.getByText('60')).toBeInTheDocument()
-    // toLocaleString() may format differently depending on locale (e.g. 200,000 or 2,00,000)
+    // toLocaleString() is locale-dependent: grouping separators vary
+    // (200,000 / 2.00.000 / 2,00,000) and on Arabic-locale systems the digits
+    // themselves are Eastern Arabic numerals (e.g. ٢٠٠٬٠٠٠). Normalize every
+    // digit to its Western form and collapse separators, then assert on the
+    // raw number so the expectation passes in any locale.
     const bodyText = document.body.textContent || ''
-    expect(bodyText).toMatch(/2[,.]?00[,.]?000/)
+    const normalizeNumber = (text: string) =>
+      text
+        // Arabic-Indic ٠-٩ (U+0660–U+0669) and Extended ۰-۹ (U+06F0–U+06F9):
+        // the low nibble of the code point is the digit value for both blocks.
+        .replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) & 0xf))
+        // Grouping/decimal separators are pure formatting punctuation:
+        // Arabic thousands (U+066C) / decimal (U+066B) marks, ASCII , and .
+        // (2,00,000 en-IN / 2.00.000 de-DE / 42.30), plus narrow spaces.
+        .replace(/[\u066B\u066C,.\u00A0\u202F\u2009]/g, '')
+        // Any other punctuation delimits separate numbers.
+        .replace(/[^\d]+/g, ' ')
+    expect(normalizeNumber(bodyText)).toContain(' 200000 ')
 
     // All-time values
     expect(bodyText).toMatch(/All-time:\s*150/)
     expect(bodyText).toMatch(/All-time:\s*320/)
-    expect(bodyText).toMatch(/1[,.]?2[,.]?50[,.]?000/)
+    expect(normalizeNumber(bodyText)).toContain(' 1250000 ')
 
     // Cost card
     expect(screen.getByText('Estimated AI Cost')).toBeInTheDocument()
