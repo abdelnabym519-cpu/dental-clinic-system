@@ -14,11 +14,13 @@ vi.mock('next/server', () => ({
   },
 }))
 
-// The middleware does: export default auth((req) => { ... })
-// Our auth mock just returns the handler as-is, so `middleware` IS the handler
-vi.mock('@/lib/auth', () => ({
-  auth: (handler: Function) => handler,
+// The middleware does: export default NextAuth(authConfig).auth((req) => { ... })
+// Our NextAuth mock returns the handler as-is, so `middleware` IS the handler.
+// (Middleware must use the Edge-safe auth.config — no Prisma in the bundle.)
+vi.mock('next-auth', () => ({
+  default: (cfg: unknown) => ({ auth: (handler: Function) => handler }),
 }))
+vi.mock('@/lib/auth.config', () => ({ authConfig: { pages: { signIn: '/login' } } }))
 
 import middleware, { config } from '@/middleware'
 

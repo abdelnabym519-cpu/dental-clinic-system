@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,6 +59,16 @@ export interface SettingsCategory {
 export function SettingsOverview({ categories }: { categories: SettingsCategory[] }) {
   const { theme, setTheme } = useTheme()
 
+  // Hydration-safety: next-themes' useTheme() returns `undefined` for `theme`
+  // during SSR but a concrete value (localStorage entry or defaultTheme) on
+  // the client's hydration render, so deriving the button `variant` from
+  // `theme` directly produced different classNames in the server HTML vs the
+  // hydrated tree ("attributes didn't match" on the theme buttons). Gate the
+  // active highlight behind `mounted`: the first client render is identical
+  // to the server HTML, and the correct highlight appears right after mount.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   return (
     <div className="space-y-6">
       <div className="mb-8">
@@ -108,7 +118,7 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
               ).map((opt) => (
                 <Button
                   key={opt.value}
-                  variant={theme === opt.value ? 'default' : 'outline'}
+                  variant={mounted && theme === opt.value ? 'default' : 'outline'}
                   className="flex items-center gap-2"
                   onClick={() => setTheme(opt.value)}
                 >

@@ -1,6 +1,14 @@
-import { auth } from '@/lib/auth'
+import NextAuth from 'next-auth'
 import { NextResponse } from 'next/server'
+import { authConfig } from '@/lib/auth.config'
 import { canAccessSettingsSection, settingsSectionFromPath } from '@/lib/settings-access'
+
+// Edge-safe auth: the middleware bundle must not include Prisma. lib/auth.ts
+// wires the credentials provider to @prisma/client, which cannot compile in
+// the Edge runtime (and breaks the whole middleware bundle when the generated
+// client is missing). authConfig carries only pages + jwt/session callbacks —
+// identical session decoding (req.auth.user.role), zero Prisma in the bundle.
+const { auth } = NextAuth(authConfig)
 
 // Routes that require specific roles.
 // NOTE: /settings is intentionally NOT here — the settings area has its own

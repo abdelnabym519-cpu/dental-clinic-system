@@ -7,13 +7,17 @@ import React from 'react'
 // Mocks
 // ---------------------------------------------------------------------------
 
+const mockUseTheme = vi.fn(() => ({ theme: 'system', setTheme: vi.fn() }))
+
 vi.mock('next-themes', () => ({
-  useTheme: () => ({ theme: 'system', setTheme: vi.fn() }),
+  useTheme: () => mockUseTheme(),
 }))
 
 vi.mock('@/lib/utils', () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
 }))
+
+import { renderToString } from 'react-dom/server'
 
 import { AccessDenied } from '@/components/settings/access-denied'
 import { SettingsOverview, type SettingsCategory } from '@/components/settings/settings-overview'
@@ -67,5 +71,47 @@ describe('SettingsOverview (role-filtered categories)', () => {
     const { container } = render(<SettingsOverview categories={[]} />)
     expect(container.innerHTML).toContain('Settings &amp; Configuration')
     expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+})
+
+describe('Theme buttons hydration contract (next-themes SSR mismatch regression)', () => {
+  const OVERVIEW = <SettingsOverview categories={[]} />
+
+  it('server-rendered first paint has NO active variant even when the client theme is set', () => {
+    // Reproduces the reported bug's conditions: next-themes gives the client a
+    // real theme ('dark') but SSR `undefined`. The mounted-gate must keep the
+    // server HTML free of active-variant classes so hydration always matches.
+    mockUseTheme.mockReturnValue({ theme: 'dark', setTheme: vi.fn() })
+    const serverHtml = renderToString(OVERVIEW)
+    expect(serverHtml).toContain('Dark')
+    expect(serverHtml).not.toContain('bg-primary')
+  })
+
+  it('renders identically for SSR-undefined and client-default themes', () => {
+    mockUseTheme.mockReturnValue({ theme: undefined, setTheme: vi.fn() })
+    const undefinedHtml = renderToString(OVERVIEW)
+    mockUseTheme.mockReturnValue({ theme: 'system', setTheme: vi.fn() })
+    const systemHtml = renderToString(OVERVIEW)
+    expect(undefinedHtml).toBe(systemHtml)
+  })
+
+  it('highlights the active theme after mount (client-only state)', () => {
+    mockUseTheme.mockReturnValue({ theme: 'dark', setTheme: vi.fn() })
+    render(<SettingsOverview categories={[]} />)
+    const buttons = screen.getAllByRole('button')
+    const labels = buttons.map((b) => b.textContent)
+    const dark = buttons[labels.indexOf('Dark')]
+    expect(dark.className).toContain('bg-primary')
+  })
+
+  it('keeps the other two buttons outlined when one is active', () => {
+    mockUseTheme.mockReturnValue({ theme: 'dark', setTheme: vi.fn() })
+    render(<SettingsOverview categories={[]} />)
+    const buttons = screen.getAllByRole('button')
+    const labels = buttons.map((b) => b.textContent)
+    for (const label of ['Light', 'System']) {
+      expect(buttons[labels.indexOf(label)].className).not.toContain('bg-primary')
+      expect(buttons[labels.indexOf(label)].className).toContain('bg-background')
+    }
   })
 })
