@@ -47,7 +47,7 @@ export default function NewPatientPage() {
     email: '',
     address: '',
     city: '',
-    state: 'Tamil Nadu',
+    state: 'القاهرة',
     pincode: '',
     aadharNumber: '',
     occupation: '',
@@ -290,12 +290,12 @@ export default function NewPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pincode">Pincode</Label>
+              <Label htmlFor="pincode">Postal Code</Label>
               <Input
                 id="pincode"
                 value={form.pincode}
                 onChange={(e) => updateField('pincode', e.target.value)}
-                placeholder="Pincode"
+                placeholder="Postal code"
               />
             </div>
           </CardContent>
@@ -309,12 +309,12 @@ export default function NewPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadharNumber">Aadhar Number</Label>
+              <Label htmlFor="aadharNumber">National ID (الرقم القومي)</Label>
               <Input
                 id="aadharNumber"
                 value={form.aadharNumber}
                 onChange={(e) => updateField('aadharNumber', e.target.value)}
-                placeholder="Enter Aadhar number"
+                placeholder="14-digit national ID"
               />
             </div>
             <div className="space-y-2">

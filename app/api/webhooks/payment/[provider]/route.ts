@@ -4,7 +4,7 @@ import { getGateway } from '@/lib/payment-gateways'
 
 /**
  * Webhook handler for payment gateway callbacks.
- * Dynamic route: /api/webhooks/payment/razorpay, /api/webhooks/payment/phonepe, /api/webhooks/payment/paytm
+ * Dynamic route: /api/webhooks/payment/fawry, /api/webhooks/payment/paymob, /api/webhooks/payment/instapay
  */
 export async function POST(
   req: NextRequest,
@@ -13,7 +13,8 @@ export async function POST(
   try {
     const { provider } = await params
     const rawBody = await req.text()
-    const signature = req.headers.get('x-razorpay-signature') || req.headers.get('x-verify') || ''
+    const signature =
+      req.headers.get('x-fawry-signature') || req.headers.get('x-paymob-hmac') || ''
 
     // Parse the webhook payload
     let payload: Record<string, unknown>
@@ -27,31 +28,20 @@ export async function POST(
     let gatewayOrderId: string | null = null
 
     switch (provider) {
-      case 'razorpay': {
-        const entity = (payload.payload as Record<string, unknown>)?.payment as Record<
-          string,
-          unknown
-        >
-        const paymentEntity = entity?.entity as Record<string, string> | undefined
-        gatewayOrderId = paymentEntity?.order_id || null
+      case 'fawry': {
+        // Fawry charge-status callbacks carry the merchant reference directly.
+        gatewayOrderId = (payload.merchantRefNum as string) || (payload.referenceNumber as string) || null
         break
       }
-      case 'phonepe': {
-        // PhonePe sends base64 encoded response
-        const base64Response = payload.response as string
-        if (base64Response) {
-          try {
-            const decoded = JSON.parse(Buffer.from(base64Response, 'base64').toString('utf8'))
-            gatewayOrderId = decoded.data?.merchantTransactionId || null
-          } catch {
-            // ignore parse errors
-          }
-        }
+      case 'paymob': {
+        // Paymob transaction webhooks nest the order under `obj`.
+        const obj = payload.obj as Record<string, unknown> | undefined
+        gatewayOrderId = (obj?.order_id as string) || String(obj?.id ?? '') || null
         break
       }
-      case 'paytm': {
-        const paytmBody = payload.body as Record<string, string> | undefined
-        gatewayOrderId = paytmBody?.ORDERID || null
+      case 'instapay': {
+        // InstaPay confirmations carry our unique payment reference.
+        gatewayOrderId = (payload.reference as string) || (payload.orderId as string) || null
         break
       }
       default:

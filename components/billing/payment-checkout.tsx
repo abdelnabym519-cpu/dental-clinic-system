@@ -75,16 +75,13 @@ export function PaymentCheckout({
 
       setState('checkout')
 
-      // Step 2: Open appropriate checkout based on provider
+      // Step 2: All Egyptian gateways use hosted redirect flows
+      // (Fawry checkout, Paymob iframe, InstaPay instructions page).
       switch (checkout.provider) {
-        case 'razorpay':
-          await handleRazorpayCheckout(checkout, order, hospital, patient)
-          break
-        case 'phonepe':
-          handlePhonePeCheckout(checkout)
-          break
-        case 'paytm':
-          handlePaytmCheckout(checkout)
+        case 'fawry':
+        case 'paymob':
+        case 'instapay':
+          handleRedirectCheckout(checkout)
           break
         default:
           throw new Error(`Unsupported provider: ${checkout.provider}`)
@@ -95,102 +92,16 @@ export function PaymentCheckout({
     }
   }, [invoiceId, amount])
 
-  const handleRazorpayCheckout = async (
-    checkout: Record<string, unknown>,
-    order: Record<string, unknown>,
-    hospital: Record<string, string>,
-    patient: Record<string, string>
-  ) => {
-    // Load Razorpay script if not already loaded
-    if (!(window as unknown as Record<string, unknown>).Razorpay) {
-      await loadScript('https://checkout.razorpay.com/v1/checkout.js')
-    }
-
-    const RazorpayConstructor = (window as unknown as Record<string, unknown>).Razorpay as new (
-      options: Record<string, unknown>
-    ) => {
-      open: () => void
-      on: (event: string, handler: () => void) => void
-    }
-
-    return new Promise<void>((resolve, reject) => {
-      const options = {
-        key: checkout.key,
-        amount: checkout.amount,
-        currency: checkout.currency || 'INR',
-        name: hospital.name,
-        description: `Payment for ${invoiceNo}`,
-        order_id: checkout.orderId,
-        prefill: {
-          name: patient.name,
-          email: patient.email || '',
-          contact: patient.phone || '',
-        },
-        theme: { color: '#0f172a' },
-        handler: async (response: Record<string, string>) => {
-          await verifyPayment({
-            invoiceId,
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          })
-          resolve()
-        },
-        modal: {
-          ondismiss: () => {
-            setState('idle')
-            reject(new Error('Payment cancelled'))
-          },
-        },
-      }
-
-      const rzp = new RazorpayConstructor(options)
-      rzp.on('payment.failed', () => {
-        setState('error')
-        setErrorMsg('Payment failed. Please try again.')
-        reject(new Error('Payment failed'))
-      })
-      rzp.open()
-    })
-  }
-
-  const handlePhonePeCheckout = (checkout: Record<string, unknown>) => {
-    // PhonePe uses redirect-based flow
+  const handleRedirectCheckout = (checkout: Record<string, unknown>) => {
+    // Fawry / Paymob / InstaPay all hand back a hosted URL to complete the
+    // payment; the return trip lands on /api/webhooks/payment/[provider].
     const redirectUrl = checkout.redirectUrl as string
     if (redirectUrl) {
       window.location.href = redirectUrl
     } else {
       setState('error')
-      setErrorMsg('Failed to get PhonePe redirect URL')
+      setErrorMsg('Failed to get the payment redirect URL')
     }
-  }
-
-  const handlePaytmCheckout = (checkout: Record<string, unknown>) => {
-    // Paytm redirect-based flow
-    const mid = checkout.mid as string
-    const orderId = checkout.orderId as string
-    const txnToken = checkout.txnToken as string
-    const paytmAmount = checkout.amount as number
-
-    // Build Paytm payment page URL
-    const isProduction = !mid.includes('TEST')
-    const baseUrl = isProduction ? 'https://securegw.paytm.in' : 'https://securegw-stage.paytm.in'
-
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = `${baseUrl}/theia/api/v1/showPaymentPage?mid=${mid}&orderId=${orderId}`
-
-    const fields = { mid: mid, orderId: orderId, txnToken: txnToken, AMOUNT: String(paytmAmount) }
-    for (const [key, value] of Object.entries(fields)) {
-      const input = document.createElement('input')
-      input.type = 'hidden'
-      input.name = key
-      input.value = value
-      form.appendChild(input)
-    }
-
-    document.body.appendChild(form)
-    form.submit()
   }
 
   const verifyPayment = async (params: Record<string, string>) => {
@@ -220,9 +131,9 @@ export function PaymentCheckout({
   }
 
   const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('en-IN', {
+    new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       minimumFractionDigits: 0,
     }).format(val)
 

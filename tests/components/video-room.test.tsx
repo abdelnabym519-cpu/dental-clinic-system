@@ -81,7 +81,7 @@ const mockPatient = {
   patientId: 'PAT-001',
   firstName: 'John',
   lastName: 'Doe',
-  phone: '9876543210',
+  phone: '01012345678',
   email: 'john@test.com',
   gender: 'MALE',
   medicalHistory: {
@@ -170,7 +170,7 @@ describe('VideoRoom', () => {
 
     it('shows patient phone', () => {
       render(<VideoRoom {...defaultProps} patient={mockPatient} />)
-      expect(screen.getByText('9876543210')).toBeInTheDocument()
+      expect(screen.getByText('01012345678')).toBeInTheDocument()
     })
 
     it('shows patient gender', () => {

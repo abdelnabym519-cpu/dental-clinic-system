@@ -22,8 +22,8 @@ export default function BillingSettingsPage() {
   const [saving, setSaving] = useState(false)
 
   const [settings, setSettings] = useState({
-    cgstRate: '9',
-    sgstRate: '9',
+    cgstRate: '14',
+    sgstRate: '0',
     defaultPaymentTerms: '30',
     invoicePrefix: 'INV',
     receiptPrefix: 'REC',
@@ -31,8 +31,8 @@ export default function BillingSettingsPage() {
     invoiceNotes: 'Thank you for choosing our services.',
     termsAndConditions:
       'Payment is due within 30 days from the invoice date.\nLate payments may incur additional charges.',
-    currencySymbol: '₹',
-    currencyCode: 'INR',
+    currencySymbol: 'EGP ',
+    currencyCode: 'EGP',
     enableAutoInvoice: 'true',
     lateFeePercentage: '2',
     minimumDueAmount: '100',
@@ -115,12 +115,12 @@ export default function BillingSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Tax Configuration</CardTitle>
-            <CardDescription>GST and tax rates for invoicing</CardDescription>
+            <CardDescription>VAT (ضريبة القيمة المضافة) rate for invoicing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="cgstRate">CGST Rate (%)</Label>
+                <Label htmlFor="cgstRate">VAT Rate (%)</Label>
                 <Input
                   id="cgstRate"
                   type="number"
@@ -128,27 +128,15 @@ export default function BillingSettingsPage() {
                   value={settings.cgstRate}
                   onChange={(e) => setSettings({ ...settings, cgstRate: e.target.value })}
                 />
-                <p className="text-sm text-muted-foreground mt-1">Central Goods and Services Tax</p>
-              </div>
-
-              <div>
-                <Label htmlFor="sgstRate">SGST Rate (%)</Label>
-                <Input
-                  id="sgstRate"
-                  type="number"
-                  step="0.01"
-                  value={settings.sgstRate}
-                  onChange={(e) => setSettings({ ...settings, sgstRate: e.target.value })}
-                />
-                <p className="text-sm text-muted-foreground mt-1">State Goods and Services Tax</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Egyptian standard VAT rate is 14% (medical services may be exempt)
+                </p>
               </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>Total GST:</strong>{' '}
-                {parseFloat(settings.cgstRate) + parseFloat(settings.sgstRate)}% (CGST{' '}
-                {settings.cgstRate}% + SGST {settings.sgstRate}%)
+                <strong>Applied VAT rate:</strong> {settings.cgstRate}%
               </p>
             </div>
           </CardContent>
@@ -265,7 +253,7 @@ export default function BillingSettingsPage() {
                   id="currencyCode"
                   value={settings.currencyCode}
                   onChange={(e) => setSettings({ ...settings, currencyCode: e.target.value })}
-                  placeholder="INR"
+                  placeholder="EGP"
                 />
               </div>
 
@@ -275,7 +263,7 @@ export default function BillingSettingsPage() {
                   id="currencySymbol"
                   value={settings.currencySymbol}
                   onChange={(e) => setSettings({ ...settings, currencySymbol: e.target.value })}
-                  placeholder="₹"
+                  placeholder="EGP "
                 />
               </div>
             </div>

@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Users,
   Stethoscope,
-  IndianRupee,
+  Banknote,
   Clock,
   FileText,
   UserCheck,
@@ -141,9 +141,9 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
   }, [resolvedParams.id, startDate, endDate])
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -236,7 +236,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
                 <p className="text-2xl font-bold">{formatCurrency(data.revenue.total)}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <IndianRupee className="h-6 w-6 text-green-600" />
+                <Banknote className="h-6 w-6 text-green-600" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">

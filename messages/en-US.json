@@ -19,7 +19,7 @@
   "auth": {
     "login": {
       "heading": "Welcome back",
-      "subheading": "Sign in to your DentalERP account",
+      "subheading": "Sign in to your Dentora account",
       "email": "Email",
       "password": "Password",
       "submit": "Sign in",
@@ -35,9 +35,7 @@
       "taxableAmount": "Taxable amount",
       "total": "Total",
       "amountInWords": "Amount in words",
-      "cgst": "CGST",
-      "sgst": "SGST",
-      "igst": "IGST"
+      "vat": "VAT"
     }
   }
 }

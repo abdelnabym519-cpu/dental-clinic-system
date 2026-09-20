@@ -254,7 +254,7 @@ describe('POST /api/communications/sms/bulk', () => {
     mockAuthError()
     const res = await bulkSMSPOST(
       makeReq('/api/communications/sms/bulk', 'POST', {
-        recipients: [{ phone: '9876543210', message: 'Test' }],
+        recipients: [{ phone: '01012345678', message: 'Test' }],
       })
     )
     expect(res.status).toBe(401)
@@ -267,7 +267,7 @@ describe('POST /api/communications/sms/bulk', () => {
     const res = await bulkSMSPOST(
       makeReq('/api/communications/sms/bulk', 'POST', {
         recipients: [
-          { phone: '9876543210', message: 'Hello 1' },
+          { phone: '01012345678', message: 'Hello 1' },
           { phone: '9876543211', message: 'Hello 2' },
           { phone: '9876543212', message: 'Hello 3' },
         ],

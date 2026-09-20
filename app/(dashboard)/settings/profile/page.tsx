@@ -41,7 +41,7 @@ export default async function ProfileSettingsPage() {
       <LanguagePreferenceCard
         locale={user.locale}
         hospitalLocale={user.hospital?.locale ?? null}
-        currency={user.hospital?.currency ?? 'INR'}
+        currency={user.hospital?.currency ?? 'EGP'}
         supportedLocales={locales}
         endpoint="/api/settings/profile"
       />

@@ -192,10 +192,10 @@ export default function CampaignAnalyticsPage() {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹{data.sms.totalCost.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">EGP {data.sms.totalCost.toFixed(2)}</div>
                   <p className="text-xs text-muted-foreground">
                     {data.sms.total > 0
-                      ? `₹${(data.sms.totalCost / data.sms.total).toFixed(4)}/msg`
+                      ? `EGP ${(data.sms.totalCost / data.sms.total).toFixed(4)}/msg`
                       : 'No cost data'}
                   </p>
                 </CardContent>
@@ -371,7 +371,7 @@ export default function CampaignAnalyticsPage() {
                         <TableCell className="text-right text-green-600">{c.sentCount}</TableCell>
                         <TableCell className="text-right text-red-600">{c.failedCount}</TableCell>
                         <TableCell className="text-right">
-                          ₹{c.actualCost > 0 ? c.actualCost.toFixed(2) : c.estimatedCost.toFixed(2)}
+                          EGP {c.actualCost > 0 ? c.actualCost.toFixed(2) : c.estimatedCost.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(c.createdAt).toLocaleDateString()}

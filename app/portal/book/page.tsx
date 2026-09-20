@@ -317,7 +317,7 @@ export default function BookAppointment() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Date</span>
                 <span className="font-medium">
-                  {new Date(selectedDate).toLocaleDateString('en-IN', {
+                  {new Date(selectedDate).toLocaleDateString('en-EG', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -374,7 +374,7 @@ export default function BookAppointment() {
               </p>
               <p>
                 <strong>Date:</strong>{' '}
-                {new Date(selectedDate).toLocaleDateString('en-IN', {
+                {new Date(selectedDate).toLocaleDateString('en-EG', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',

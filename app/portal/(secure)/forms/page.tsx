@@ -156,7 +156,7 @@ export default function PatientFormsPage() {
                       <div className="font-medium">{s.template.name}</div>
                       <div className="text-xs text-muted-foreground">
                         Submitted:{' '}
-                        {new Date(s.createdAt).toLocaleDateString('en-IN', {
+                        {new Date(s.createdAt).toLocaleDateString('en-EG', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',

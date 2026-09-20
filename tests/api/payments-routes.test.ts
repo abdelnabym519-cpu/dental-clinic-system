@@ -96,7 +96,7 @@ describe('GET /api/payments', () => {
             patientId: 'PT001',
             firstName: 'John',
             lastName: 'Doe',
-            phone: '9876543210',
+            phone: '01012345678',
           },
         },
       },
@@ -255,7 +255,7 @@ describe('POST /api/payments/create-order', () => {
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue({
       id: 'inv1',
       balanceAmount: 0,
-      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '9876543210' },
+      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '01012345678' },
       hospital: { name: 'Test Clinic' },
     } as any)
 
@@ -277,7 +277,7 @@ describe('POST /api/payments/create-order', () => {
       invoiceNo: 'INV001',
       balanceAmount: 5000,
       totalAmount: 10000,
-      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '9876543210' },
+      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '01012345678' },
       hospital: { name: 'Test Clinic' },
     } as any)
     vi.mocked(getGateway).mockResolvedValue(null)
@@ -300,7 +300,7 @@ describe('POST /api/payments/create-order', () => {
       invoiceNo: 'INV001',
       balanceAmount: 5000,
       totalAmount: 10000,
-      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '9876543210' },
+      patient: { firstName: 'John', lastName: 'Doe', email: 'j@test.com', phone: '01012345678' },
       hospital: { name: 'Test Clinic' },
     } as any)
 
@@ -342,7 +342,7 @@ describe('POST /api/payments/create-order', () => {
       invoiceNo: 'INV001',
       balanceAmount: 3000,
       totalAmount: 10000,
-      patient: { firstName: 'John', lastName: 'Doe', email: null, phone: '9876543210' },
+      patient: { firstName: 'John', lastName: 'Doe', email: null, phone: '01012345678' },
       hospital: { name: 'Test' },
     } as any)
 

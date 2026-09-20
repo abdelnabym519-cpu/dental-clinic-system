@@ -107,8 +107,8 @@ vi.mock('@/hooks/use-toast', () => ({
 }))
 
 vi.mock('@/lib/billing-utils', () => ({
-  formatCurrency: (n: number) => `₹${n.toLocaleString('en-IN')}`,
-  formatDate: (d: string) => new Date(d).toLocaleDateString('en-IN'),
+  formatCurrency: (n: number) => `EGP ${n.toLocaleString('en-EG')}`,
+  formatDate: (d: string) => new Date(d).toLocaleDateString('en-EG'),
 }))
 
 import { PatientInsurance } from '@/components/insurance/patient-insurance'

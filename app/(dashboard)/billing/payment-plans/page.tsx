@@ -23,7 +23,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
-  IndianRupee,
+  Banknote,
   Eye,
 } from 'lucide-react'
 import { format } from 'date-fns'
@@ -131,7 +131,7 @@ export default function PaymentPlansPage() {
   }
 
   const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+    return `EGP ${amount.toLocaleString('en-EG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   }
 
   return (
@@ -194,7 +194,7 @@ export default function PaymentPlansPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-            <IndianRupee className="h-4 w-4 text-orange-600" />
+            <Banknote className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             {loading ? (

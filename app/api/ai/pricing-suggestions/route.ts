@@ -114,12 +114,12 @@ ${Object.entries(doctorApptCount)
 PROCEDURES:
 ${procedures
   .slice(0, 20)
-  .map((p) => `  ${p.name} (${p.category || 'General'}) — ₹${p.basePrice}`)
+  .map((p) => `  ${p.name} (${p.category || 'General'}) — EGP ${p.basePrice}`)
   .join('\n')}
 
 REVENUE (Last 30 days):
 - Total invoices: ${recentInvoices.length}
-- Total revenue: ₹${recentInvoices.reduce((s, inv) => s + Number(inv.totalAmount), 0).toLocaleString()}
+- Total revenue: EGP ${recentInvoices.reduce((s, inv) => s + Number(inv.totalAmount), 0).toLocaleString()}
 - Working hours: ${hospital.workingHours || '09:00-18:00, Mon-Sat'}
 `
 

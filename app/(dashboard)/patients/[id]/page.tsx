@@ -857,12 +857,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                 )}
                                 {event.metadata.cost && (
                                   <span className="text-xs bg-muted px-2 py-1 rounded">
-                                    ₹{Number(event.metadata.cost).toLocaleString()}
+                                    EGP {Number(event.metadata.cost).toLocaleString()}
                                   </span>
                                 )}
                                 {event.metadata.amount && (
                                   <span className="text-xs bg-muted px-2 py-1 rounded">
-                                    ₹{Number(event.metadata.amount).toLocaleString()}
+                                    EGP {Number(event.metadata.amount).toLocaleString()}
                                   </span>
                                 )}
                               </div>
@@ -1347,8 +1347,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <TableRow key={invoice.id}>
                           <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                           <TableCell>{format(new Date(invoice.createdAt), 'PP')}</TableCell>
-                          <TableCell>₹{Number(invoice.totalAmount).toLocaleString()}</TableCell>
-                          <TableCell>₹{totalPaid.toLocaleString()}</TableCell>
+                          <TableCell>EGP {Number(invoice.totalAmount).toLocaleString()}</TableCell>
+                          <TableCell>EGP {totalPaid.toLocaleString()}</TableCell>
                           <TableCell>
                             <Badge
                               variant={

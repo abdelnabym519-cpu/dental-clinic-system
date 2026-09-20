@@ -116,7 +116,7 @@ const mockAppointments = [
     duration: 30,
     appointmentType: 'CHECKUP',
     status: 'SCHEDULED',
-    patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+    patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
     doctor: { firstName: 'Sarah', lastName: 'Smith' },
   },
   {
@@ -331,7 +331,7 @@ describe('CalendarView', () => {
           appointments: [
             {
               ...mockAppointments[0],
-              patient: { id: 'pat-77', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+              patient: { id: 'pat-77', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
             },
           ],
         }),

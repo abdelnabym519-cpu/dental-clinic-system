@@ -31,11 +31,11 @@ describe('Command Executors', () => {
         patientId: 'PAT-00006',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
       })
 
       const result = await execCreatePatient(
-        { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         'hospital-1'
       )
 
@@ -45,7 +45,7 @@ describe('Command Executors', () => {
     })
 
     it('rejects when firstName is missing', async () => {
-      const result = await execCreatePatient({ phone: '9876543210' } as any, 'h1')
+      const result = await execCreatePatient({ phone: '01012345678' } as any, 'h1')
       expect(result.success).toBe(false)
       expect(result.message).toContain('First name')
     })
@@ -60,12 +60,12 @@ describe('Command Executors', () => {
       ;(prisma.patient.findFirst as any).mockResolvedValue({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         patientId: 'PAT-00001',
       })
 
       const result = await execCreatePatient(
-        { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         'h1'
       )
       expect(result.success).toBe(false)
@@ -115,7 +115,7 @@ describe('Command Executors', () => {
   describe('execSearchPatients', () => {
     it('searches patients by query', async () => {
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { patientId: 'PAT-001', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { patientId: 'PAT-001', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
       ])
 
       const result = await execSearchPatients({ query: 'John' }, 'h1')
@@ -301,7 +301,7 @@ describe('Command Executors', () => {
           employeeId: 'EMP-001',
           firstName: 'Alice',
           lastName: 'Brown',
-          phone: '9876543210',
+          phone: '01012345678',
           user: { role: 'DOCTOR' },
         },
       ])

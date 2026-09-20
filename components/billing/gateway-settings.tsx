@@ -21,14 +21,12 @@ interface GatewayConfig {
   provider: string
   isEnabled: boolean
   isLiveMode: boolean
-  razorpayKeyId: string | null
-  razorpayKeySecret: string | null
-  phonepeMerchantId: string | null
-  phonepeSaltKey: string | null
-  phonepeSaltIndex: string | null
-  paytmMid: string | null
-  paytmMerchantKey: string | null
-  paytmWebsite: string | null
+  fawryMerchantCode: string | null
+  fawrySecretKey: string | null
+  paymobApiKey: string | null
+  paymobIntegrationId: string | null
+  paymobIframeId: string | null
+  instapayHandle: string | null
   webhookUrl: string | null
 }
 
@@ -42,19 +40,17 @@ export function GatewaySettings() {
   const [isEnabled, setIsEnabled] = useState(false)
   const [isLiveMode, setIsLiveMode] = useState(false)
 
-  // Razorpay
-  const [razorpayKeyId, setRazorpayKeyId] = useState('')
-  const [razorpayKeySecret, setRazorpayKeySecret] = useState('')
+  // Fawry
+  const [fawryMerchantCode, setFawryMerchantCode] = useState('')
+  const [fawrySecretKey, setFawrySecretKey] = useState('')
 
-  // PhonePe
-  const [phonepeMerchantId, setPhonepeMerchantId] = useState('')
-  const [phonepeSaltKey, setPhonepeSaltKey] = useState('')
-  const [phonepeSaltIndex, setPhonepeSaltIndex] = useState('1')
+  // Paymob
+  const [paymobApiKey, setPaymobApiKey] = useState('')
+  const [paymobIntegrationId, setPaymobIntegrationId] = useState('')
+  const [paymobIframeId, setPaymobIframeId] = useState('')
 
-  // Paytm
-  const [paytmMid, setPaytmMid] = useState('')
-  const [paytmMerchantKey, setPaytmMerchantKey] = useState('')
-  const [paytmWebsite, setPaytmWebsite] = useState('WEBSTAGING')
+  // InstaPay
+  const [instapayHandle, setInstapayHandle] = useState('')
 
   const [webhookUrl, setWebhookUrl] = useState('')
 
@@ -74,14 +70,12 @@ export function GatewaySettings() {
         setProvider(c.provider || '')
         setIsEnabled(c.isEnabled)
         setIsLiveMode(c.isLiveMode)
-        setRazorpayKeyId(c.razorpayKeyId || '')
-        setRazorpayKeySecret(c.razorpayKeySecret || '')
-        setPhonepeMerchantId(c.phonepeMerchantId || '')
-        setPhonepeSaltKey(c.phonepeSaltKey || '')
-        setPhonepeSaltIndex(c.phonepeSaltIndex || '1')
-        setPaytmMid(c.paytmMid || '')
-        setPaytmMerchantKey(c.paytmMerchantKey || '')
-        setPaytmWebsite(c.paytmWebsite || 'WEBSTAGING')
+        setFawryMerchantCode(c.fawryMerchantCode || '')
+        setFawrySecretKey(c.fawrySecretKey || '')
+        setPaymobApiKey(c.paymobApiKey || '')
+        setPaymobIntegrationId(c.paymobIntegrationId || '')
+        setPaymobIframeId(c.paymobIframeId || '')
+        setInstapayHandle(c.instapayHandle || '')
         setWebhookUrl(c.webhookUrl || '')
       }
     } catch {
@@ -110,14 +104,12 @@ export function GatewaySettings() {
           provider,
           isEnabled,
           isLiveMode,
-          razorpayKeyId,
-          razorpayKeySecret,
-          phonepeMerchantId,
-          phonepeSaltKey,
-          phonepeSaltIndex,
-          paytmMid,
-          paytmMerchantKey,
-          paytmWebsite,
+          fawryMerchantCode,
+          fawrySecretKey,
+          paymobApiKey,
+          paymobIntegrationId,
+          paymobIframeId,
+          instapayHandle,
         }),
       })
 
@@ -175,8 +167,7 @@ export function GatewaySettings() {
               Payment Gateway
             </CardTitle>
             <CardDescription>
-              Connect your own Razorpay, PhonePe, or Paytm merchant account to accept online
-              payments
+              Connect your own Fawry, Paymob, or InstaPay account to accept online payments
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -204,9 +195,9 @@ export function GatewaySettings() {
                 <SelectValue placeholder="Select a provider" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="RAZORPAY">Razorpay</SelectItem>
-                <SelectItem value="PHONEPE">PhonePe</SelectItem>
-                <SelectItem value="PAYTM">Paytm</SelectItem>
+                <SelectItem value="FAWRY">Fawry</SelectItem>
+                <SelectItem value="PAYMOB">Paymob</SelectItem>
+                <SelectItem value="INSTAPAY">InstaPay</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
@@ -230,42 +221,42 @@ export function GatewaySettings() {
           </div>
         </div>
 
-        {/* Razorpay Credentials */}
-        {provider === 'RAZORPAY' && (
+        {/* Fawry Credentials */}
+        {provider === 'FAWRY' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">Razorpay Credentials</h4>
+            <h4 className="font-medium text-sm">Fawry Credentials</h4>
             <p className="text-xs text-muted-foreground">
               Get these from your{' '}
               <a
-                href="https://dashboard.razorpay.com/app/keys"
+                href="https://fawry.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline inline-flex items-center gap-1"
               >
-                Razorpay Dashboard <ExternalLink className="h-3 w-3" />
+                Fawry Dashboard <ExternalLink className="h-3 w-3" />
               </a>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="rzp-key-id">Key ID</Label>
+                <Label htmlFor="fawry-merchant">Merchant Code</Label>
                 <Input
-                  id="rzp-key-id"
-                  value={razorpayKeyId}
-                  onChange={(e) => setRazorpayKeyId(e.target.value)}
-                  placeholder="rzp_test_..."
+                  id="fawry-merchant"
+                  value={fawryMerchantCode}
+                  onChange={(e) => setFawryMerchantCode(e.target.value)}
+                  placeholder="e.g. 1AbCdEfGhIjK"
                 />
               </div>
               <div>
-                <Label htmlFor="rzp-key-secret">
-                  Key Secret
+                <Label htmlFor="fawry-secret">
+                  Secure Key
                   <Shield className="h-3 w-3 inline ml-1 text-muted-foreground" />
                 </Label>
                 <Input
-                  id="rzp-key-secret"
+                  id="fawry-secret"
                   type="password"
-                  value={razorpayKeySecret}
-                  onChange={(e) => setRazorpayKeySecret(e.target.value)}
-                  placeholder="Enter key secret"
+                  value={fawrySecretKey}
+                  onChange={(e) => setFawrySecretKey(e.target.value)}
+                  placeholder="Enter secure key"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Stored encrypted. Leave unchanged to keep existing.
@@ -275,106 +266,73 @@ export function GatewaySettings() {
           </div>
         )}
 
-        {/* PhonePe Credentials */}
-        {provider === 'PHONEPE' && (
+        {/* Paymob Credentials */}
+        {provider === 'PAYMOB' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">PhonePe PG Credentials</h4>
+            <h4 className="font-medium text-sm">Paymob (Accept) Credentials</h4>
             <p className="text-xs text-muted-foreground">
               Get these from your{' '}
               <a
-                href="https://business.phonepe.com"
+                href="https://accept.paymob.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline inline-flex items-center gap-1"
               >
-                PhonePe Business Dashboard <ExternalLink className="h-3 w-3" />
+                Paymob Dashboard <ExternalLink className="h-3 w-3" />
               </a>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="pp-merchant-id">Merchant ID</Label>
-                <Input
-                  id="pp-merchant-id"
-                  value={phonepeMerchantId}
-                  onChange={(e) => setPhonepeMerchantId(e.target.value)}
-                  placeholder="MERCHANTUAT"
-                />
-              </div>
-              <div>
-                <Label htmlFor="pp-salt-key">
-                  Salt Key
+                <Label htmlFor="paymob-api-key">
+                  API Key
                   <Shield className="h-3 w-3 inline ml-1 text-muted-foreground" />
                 </Label>
                 <Input
-                  id="pp-salt-key"
+                  id="paymob-api-key"
                   type="password"
-                  value={phonepeSaltKey}
-                  onChange={(e) => setPhonepeSaltKey(e.target.value)}
-                  placeholder="Enter salt key"
+                  value={paymobApiKey}
+                  onChange={(e) => setPaymobApiKey(e.target.value)}
+                  placeholder="Enter API key"
                 />
               </div>
               <div>
-                <Label htmlFor="pp-salt-index">Salt Index</Label>
+                <Label htmlFor="paymob-integration">Integration ID</Label>
                 <Input
-                  id="pp-salt-index"
-                  value={phonepeSaltIndex}
-                  onChange={(e) => setPhonepeSaltIndex(e.target.value)}
-                  placeholder="1"
+                  id="paymob-integration"
+                  value={paymobIntegrationId}
+                  onChange={(e) => setPaymobIntegrationId(e.target.value)}
+                  placeholder="e.g. 123456"
+                />
+              </div>
+              <div>
+                <Label htmlFor="paymob-iframe">Iframe ID</Label>
+                <Input
+                  id="paymob-iframe"
+                  value={paymobIframeId}
+                  onChange={(e) => setPaymobIframeId(e.target.value)}
+                  placeholder="e.g. 789012"
                 />
               </div>
             </div>
           </div>
         )}
 
-        {/* Paytm Credentials */}
-        {provider === 'PAYTM' && (
+        {/* InstaPay Credentials */}
+        {provider === 'INSTAPAY' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">Paytm PG Credentials</h4>
+            <h4 className="font-medium text-sm">InstaPay Handle</h4>
             <p className="text-xs text-muted-foreground">
-              Get these from your{' '}
-              <a
-                href="https://business.paytm.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline inline-flex items-center gap-1"
-              >
-                Paytm Business Dashboard <ExternalLink className="h-3 w-3" />
-              </a>
+              The clinic&apos;s InstaPay address (IPA) patients transfer to — e.g. dentora@instapay
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="ptm-mid">Merchant ID (MID)</Label>
+                <Label htmlFor="instapay-handle">InstaPay Handle</Label>
                 <Input
-                  id="ptm-mid"
-                  value={paytmMid}
-                  onChange={(e) => setPaytmMid(e.target.value)}
-                  placeholder="YOUR_MID"
+                  id="instapay-handle"
+                  value={instapayHandle}
+                  onChange={(e) => setInstapayHandle(e.target.value)}
+                  placeholder="clinic@instapay"
                 />
-              </div>
-              <div>
-                <Label htmlFor="ptm-key">
-                  Merchant Key
-                  <Shield className="h-3 w-3 inline ml-1 text-muted-foreground" />
-                </Label>
-                <Input
-                  id="ptm-key"
-                  type="password"
-                  value={paytmMerchantKey}
-                  onChange={(e) => setPaytmMerchantKey(e.target.value)}
-                  placeholder="Enter merchant key"
-                />
-              </div>
-              <div>
-                <Label htmlFor="ptm-website">Website</Label>
-                <Select value={paytmWebsite} onValueChange={setPaytmWebsite}>
-                  <SelectTrigger id="ptm-website">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="WEBSTAGING">WEBSTAGING (Test)</SelectItem>
-                    <SelectItem value="DEFAULT">DEFAULT (Live)</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>

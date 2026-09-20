@@ -31,7 +31,7 @@ class TemplateService {
       key: 'phone',
       label: 'Phone Number',
       description: "Patient's phone number",
-      example: '9876543210',
+      example: '01012345678',
     },
     {
       key: 'email',
@@ -76,7 +76,7 @@ class TemplateService {
       key: 'treatmentCost',
       label: 'Treatment Cost',
       description: 'Cost of treatment',
-      example: '₹5,000',
+      example: 'EGP 5,000',
     },
 
     {
@@ -89,14 +89,14 @@ class TemplateService {
       key: 'invoiceAmount',
       label: 'Invoice Amount',
       description: 'Total invoice amount',
-      example: '₹5,000',
+      example: 'EGP 5,000',
     },
-    { key: 'paidAmount', label: 'Paid Amount', description: 'Amount paid', example: '₹3,000' },
+    { key: 'paidAmount', label: 'Paid Amount', description: 'Amount paid', example: 'EGP 3,000' },
     {
       key: 'balanceAmount',
       label: 'Balance Amount',
       description: 'Remaining balance',
-      example: '₹2,000',
+      example: 'EGP 2,000',
     },
     { key: 'dueDate', label: 'Due Date', description: 'Payment due date', example: '31-Jan-2026' },
 
@@ -122,7 +122,7 @@ class TemplateService {
       key: 'clinicAddress',
       label: 'Clinic Address',
       description: 'Clinic full address',
-      example: '123 Main St, Chennai',
+      example: '15 شارع التحرير، القاهرة',
     },
 
     {
@@ -354,7 +354,7 @@ class TemplateService {
         category: 'PAYMENT' as TemplateCategory,
         channel: 'SMS' as CommunicationChannel,
         content:
-          'Dear {{patientName}}, this is a reminder that payment of ₹{{balanceAmount}} for Invoice {{invoiceNo}} is pending. Due date: {{dueDate}}. Pay at {{clinicName}} or call {{clinicPhone}}',
+          'Dear {{patientName}}, this is a reminder that payment of EGP {{balanceAmount}} for Invoice {{invoiceNo}} is pending. Due date: {{dueDate}}. Pay at {{clinicName}} or call {{clinicPhone}}',
         language: 'en',
         isDefault: true,
       },
@@ -363,7 +363,7 @@ class TemplateService {
         category: 'PAYMENT' as TemplateCategory,
         channel: 'SMS' as CommunicationChannel,
         content:
-          'Dear {{patientName}}, we have received your payment of ₹{{paidAmount}} for Invoice {{invoiceNo}}. Thank you! - {{clinicName}}',
+          'Dear {{patientName}}, we have received your payment of EGP {{paidAmount}} for Invoice {{invoiceNo}}. Thank you! - {{clinicName}}',
         language: 'en',
         isDefault: true,
       },
@@ -430,9 +430,9 @@ class TemplateService {
           <h3>Invoice Details:</h3>
           <ul>
             <li><strong>Invoice No:</strong> {{invoiceNo}}</li>
-            <li><strong>Total Amount:</strong> ₹{{invoiceAmount}}</li>
-            <li><strong>Paid Amount:</strong> ₹{{paidAmount}}</li>
-            <li><strong>Balance:</strong> ₹{{balanceAmount}}</li>
+            <li><strong>Total Amount:</strong> EGP {{invoiceAmount}}</li>
+            <li><strong>Paid Amount:</strong> EGP {{paidAmount}}</li>
+            <li><strong>Balance:</strong> EGP {{balanceAmount}}</li>
             <li><strong>Due Date:</strong> {{dueDate}}</li>
           </ul>
           <p>The detailed invoice is attached to this email.</p>

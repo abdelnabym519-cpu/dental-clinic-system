@@ -1,10 +1,10 @@
-// SMS Service for Indian SMS Gateways
-// Supports: MSG91, TextLocal, Fast2SMS, Twilio India
+// SMS Service for Egyptian SMS Gateways
+// Supports: Vodafone Business, Etisalat, Orange, and Twilio (international)
 
 import prisma from '@/lib/prisma'
 
 export interface SMSConfig {
-  gateway: 'MSG91' | 'TEXTLOCAL' | 'FAST2SMS' | 'TWILIO'
+  gateway: 'VODAFONE' | 'ETISALAT' | 'ORANGE' | 'TWILIO'
   apiKey: string
   senderId: string
   route?: string
@@ -36,7 +36,7 @@ class SMSService {
     }
 
     this.config = {
-      gateway: (settings.find((s) => s.key === 'sms.gateway')?.value || 'MSG91') as any,
+      gateway: (settings.find((s) => s.key === 'sms.gateway')?.value || 'VODAFONE') as any,
       apiKey: settings.find((s) => s.key === 'sms.apiKey')?.value || '',
       senderId: settings.find((s) => s.key === 'sms.senderId')?.value || '',
       route: settings.find((s) => s.key === 'sms.route')?.value,
@@ -49,8 +49,8 @@ class SMSService {
   }
 
   async sendSMS(payload: SMSPayload): Promise<string> {
-    // Validate phone number (Indian format)
-    if (!this.isValidIndianPhoneNumber(payload.phone)) {
+    // Validate phone number (Egyptian format: 01XXXXXXXXX)
+    if (!this.isValidEgyptianPhoneNumber(payload.phone)) {
       throw new Error('Invalid phone number format')
     }
 
@@ -69,9 +69,9 @@ class SMSService {
       }
     }
 
-    // Check time restrictions (9 AM to 9 PM IST)
+    // Check time restrictions (9 AM to 9 PM Cairo time)
     if (!this.isWithinAllowedTime()) {
-      throw new Error('SMS cannot be sent outside 9 AM - 9 PM IST')
+      throw new Error('SMS cannot be sent outside 9 AM - 9 PM Cairo time')
     }
 
     // Create SMS log entry
@@ -137,12 +137,12 @@ class SMSService {
     }
 
     switch (this.config?.gateway) {
-      case 'MSG91':
-        return this.sendViaMSG91(payload)
-      case 'TEXTLOCAL':
-        return this.sendViaTextLocal(payload)
-      case 'FAST2SMS':
-        return this.sendViaFast2SMS(payload)
+      case 'VODAFONE':
+        return this.sendViaVodafone(payload)
+      case 'ETISALAT':
+        return this.sendViaEtisalat(payload)
+      case 'ORANGE':
+        return this.sendViaOrange(payload)
       case 'TWILIO':
         return this.sendViaTwilio(payload)
       default:
@@ -150,99 +150,90 @@ class SMSService {
     }
   }
 
-  private async sendViaMSG91(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
-    const url = 'https://api.msg91.com/api/v5/flow/'
+  /** Vodafone Egypt Business SMS. */
+  private async sendViaVodafone(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
+    const url = 'https://api.vodafone.com.eg/sms/v1/send'
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        authkey: this.config?.apiKey || '',
+        Authorization: `Bearer ${this.config?.apiKey || ''}`,
+      },
+      body: JSON.stringify({
+        senderName: this.config?.senderId,
+        recipients: [`+20${this.normalizePhoneNumber(payload.phone)}`],
+        content: payload.message,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      throw new Error(data.error_description || 'Failed to send SMS via Vodafone')
+    }
+
+    return {
+      messageId: data.messageId || data.requestId || '',
+      cost: data.cost,
+    }
+  }
+
+  /** Etisalat Egypt Business SMS. */
+  private async sendViaEtisalat(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
+    const url = 'https://api.etisalat.com.eg/sms/v1/send'
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': this.config?.apiKey || '',
       },
       body: JSON.stringify({
         sender: this.config?.senderId,
-        route: this.config?.route || '4',
-        country: '91',
-        sms: [
-          {
-            message: payload.message,
-            to: [this.normalizePhoneNumber(payload.phone)],
-          },
-        ],
+        msisdn: `+20${this.normalizePhoneNumber(payload.phone)}`,
+        message: payload.message,
       }),
     })
 
     const data = await response.json()
 
-    if (data.type === 'error') {
-      throw new Error(data.message || 'Failed to send SMS via MSG91')
+    if (data.statusCode && data.statusCode >= 400) {
+      throw new Error(data.message || 'Failed to send SMS via Etisalat')
     }
 
     return {
-      messageId: data.requestId || data.message_id || '',
+      messageId: data.messageId || '',
       cost: data.cost,
     }
   }
 
-  private async sendViaTextLocal(
-    payload: SMSPayload
-  ): Promise<{ messageId: string; cost?: number }> {
-    const url = 'https://api.textlocal.in/send/'
-
-    const params = new URLSearchParams({
-      apikey: this.config?.apiKey || '',
-      numbers: this.normalizePhoneNumber(payload.phone),
-      sender: this.config?.senderId || '',
-      message: payload.message,
-    })
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params,
-    })
-
-    const data = await response.json()
-
-    if (data.status !== 'success') {
-      throw new Error(data.errors?.[0]?.message || 'Failed to send SMS via TextLocal')
-    }
-
-    return {
-      messageId: data.messages?.[0]?.id || '',
-      cost: data.cost,
-    }
-  }
-
-  private async sendViaFast2SMS(
-    payload: SMSPayload
-  ): Promise<{ messageId: string; cost?: number }> {
-    const url = 'https://www.fast2sms.com/dev/bulkV2'
+  /** Orange Egypt Business SMS. */
+  private async sendViaOrange(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
+    const url = 'https://api.orange.com.eg/sms/v1/send'
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        authorization: this.config?.apiKey || '',
+        Authorization: `Bearer ${this.config?.apiKey || ''}`,
       },
       body: JSON.stringify({
-        sender_id: this.config?.senderId,
-        message: payload.message,
-        route: this.config?.route || 'v3',
-        numbers: this.normalizePhoneNumber(payload.phone),
+        sender: this.config?.senderId,
+        to: `+20${this.normalizePhoneNumber(payload.phone)}`,
+        text: payload.message,
       }),
     })
 
     const data = await response.json()
 
-    if (!data.return || data.status_code !== 200) {
-      throw new Error(data.message || 'Failed to send SMS via Fast2SMS')
+    if (data.error) {
+      throw new Error(data.error_description || 'Failed to send SMS via Orange')
     }
 
     return {
-      messageId: data.request_id || '',
+      messageId: data.messageId || '',
+      cost: data.cost,
     }
   }
 
@@ -253,7 +244,7 @@ class SMSService {
     const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
 
     const params = new URLSearchParams({
-      To: '+91' + this.normalizePhoneNumber(payload.phone),
+      To: '+20' + this.normalizePhoneNumber(payload.phone),
       From: this.config?.senderId || '',
       Body: payload.message,
     })
@@ -278,27 +269,33 @@ class SMSService {
     }
   }
 
-  private isValidIndianPhoneNumber(phone: string): boolean {
-    // Remove all non-digit characters
-    const cleaned = phone.replace(/\D/g, '')
-
-    // Check if it's a valid 10-digit Indian mobile number
-    return /^[6-9]\d{9}$/.test(cleaned)
+  private isValidEgyptianPhoneNumber(phone: string): boolean {
+    // Egyptian mobile: 01XXXXXXXXX (optionally with +20 / 0020 country code)
+    let cleaned = phone.replace(/[\s()-]/g, '')
+    if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
+    if (cleaned.startsWith('0020')) cleaned = cleaned.slice(4)
+    else if (cleaned.startsWith('20') && cleaned.length === 12) cleaned = cleaned.slice(2)
+    return /^01[0125]\d{8}$/.test(cleaned)
   }
 
   private normalizePhoneNumber(phone: string): string {
-    // Remove all non-digit characters and return 10-digit number
-    return phone.replace(/\D/g, '').slice(-10)
+    // Return the 10-digit national number without the leading zero (1XXXXXXXXX)
+    const cleaned = phone.replace(/\D/g, '')
+    if (cleaned.length === 11 && cleaned.startsWith('01')) return cleaned.slice(1)
+    if (cleaned.length === 12 && cleaned.startsWith('20')) return cleaned.slice(2)
+    return cleaned.slice(-10)
   }
 
   private isWithinAllowedTime(): boolean {
     const now = new Date()
-    const istOffset = 5.5 * 60 * 60 * 1000 // IST is UTC+5:30
-    const istTime = new Date(now.getTime() + istOffset)
-    const hours = istTime.getUTCHours()
+    // Hour of day in Africa/Cairo (UTC+2, UTC+3 during DST)
+    const cairoHour = parseInt(
+      new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: 'numeric', hour12: false }).format(now),
+      10
+    )
 
-    // Allow SMS between 9 AM and 9 PM IST
-    return hours >= 9 && hours < 21
+    // Allow SMS between 9 AM and 9 PM Cairo time
+    return cairoHour >= 9 && cairoHour < 21
   }
 
   async processTemplate(templateId: string, variables: Record<string, string>): Promise<string> {
@@ -369,7 +366,7 @@ class SMSService {
     // Implementation depends on gateway
     return {
       balance: 0,
-      currency: 'INR',
+      currency: 'EGP',
     }
   }
 }

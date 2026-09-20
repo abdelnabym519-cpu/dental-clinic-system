@@ -54,7 +54,7 @@ describe('Forms API', () => {
       ;(prisma.patient.findUnique as any).mockResolvedValue({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         dateOfBirth: new Date('1990-01-01'),
         patientId: 'PAT001',
       })
@@ -64,9 +64,9 @@ describe('Forms API', () => {
         phone: '0001112222',
         email: 'clinic@test.com',
         address: '123 Main St',
-        city: 'Mumbai',
+        city: 'Cairo',
         state: 'MH',
-        pincode: '400001',
+        pincode: '11513',
         logo: null,
       })
 

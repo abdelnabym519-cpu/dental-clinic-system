@@ -28,15 +28,15 @@ function createRequest(body: any) {
 
 const validOnboardingData = {
   address: '123 Main St',
-  city: 'Mumbai',
-  state: 'Maharashtra',
-  pincode: '400001',
+  city: 'Cairo',
+  state: 'القاهرة',
+  pincode: '11513',
   tagline: 'Best dental clinic',
   gstNumber: '27AAPFU0939F1ZV',
   registrationNo: 'MH/12345',
   workingHours: JSON.stringify({ mon: '9:00-18:00', tue: '9:00-18:00' }),
   upiId: 'clinic@upi',
-  bankName: 'HDFC Bank',
+  bankName: 'National Bank of Egypt',
   bankAccountNo: '1234567890',
   bankIfsc: 'HDFC0001234',
   bankAccountName: 'Dental Clinic',
@@ -127,9 +127,9 @@ describe('Onboarding API — POST /api/onboarding', () => {
         data: expect.objectContaining({
           onboardingCompleted: true,
           address: '123 Main St',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pincode: '400001',
+          city: 'Cairo',
+          state: 'القاهرة',
+          pincode: '11513',
           gstNumber: '27AAPFU0939F1ZV',
         }),
       })
@@ -145,9 +145,9 @@ describe('Onboarding API — POST /api/onboarding', () => {
 
     const minimalData = {
       address: '123 Main St',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001',
+      city: 'Cairo',
+      state: 'القاهرة',
+      pincode: '11513',
     }
 
     const res = await POST(createRequest(minimalData))
@@ -193,11 +193,11 @@ describe('Onboarding API — GET /api/onboarding', () => {
       name: 'Test Clinic',
       slug: 'test-clinic',
       email: 'clinic@test.com',
-      phone: '9876543210',
+      phone: '01012345678',
       address: '123 Main St',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001',
+      city: 'Cairo',
+      state: 'القاهرة',
+      pincode: '11513',
       onboardingCompleted: true,
       plan: 'FREE',
     })
@@ -223,12 +223,12 @@ describe('Onboarding API — GET /api/onboarding', () => {
       name: 'Test Clinic',
       slug: 'test-clinic',
       email: 'clinic@test.com',
-      phone: '9876543210',
+      phone: '01012345678',
       tagline: 'Best clinic',
       address: '123 St',
-      city: 'Delhi',
-      state: 'Delhi',
-      pincode: '110001',
+      city: 'Alexandria',
+      state: 'Alexandria',
+      pincode: '11599',
       alternatePhone: '9999999999',
       website: 'https://clinic.com',
       gstNumber: '07AAPFU0939F1ZV',

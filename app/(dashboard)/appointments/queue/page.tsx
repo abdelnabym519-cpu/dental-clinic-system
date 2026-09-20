@@ -337,7 +337,7 @@ export default function QueueManagementPage() {
     </Card>
   )
 
-  const today = new Date().toLocaleDateString('en-IN', {
+  const today = new Date().toLocaleDateString('en-EG', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

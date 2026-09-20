@@ -150,16 +150,16 @@ describe('GatewaySettings', () => {
   it('renders description text', async () => {
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText(/Connect your own Razorpay, PhonePe, or Paytm/)).toBeInTheDocument()
+      expect(screen.getByText(/Connect your own Fawry, Paymob, or InstaPay/)).toBeInTheDocument()
     })
   })
 
   it('renders provider select with three options', async () => {
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText('Razorpay')).toBeInTheDocument()
-      expect(screen.getByText('PhonePe')).toBeInTheDocument()
-      expect(screen.getByText('Paytm')).toBeInTheDocument()
+      expect(screen.getByText('Fawry')).toBeInTheDocument()
+      expect(screen.getByText('Paymob')).toBeInTheDocument()
+      expect(screen.getByText('InstaPay')).toBeInTheDocument()
     })
   })
 
@@ -187,48 +187,46 @@ describe('GatewaySettings', () => {
     })
   })
 
-  it('shows Razorpay fields when RAZORPAY selected', async () => {
+  it('shows Fawry fields when FAWRY selected', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: false },
+        config: { provider: 'FAWRY', isEnabled: true, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText('Razorpay Credentials')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('rzp_test_...')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Enter key secret')).toBeInTheDocument()
+      expect(screen.getByText('Fawry Credentials')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('e.g. 1AbCdEfGhIjK')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Enter secure key')).toBeInTheDocument()
     })
   })
 
-  it('shows PhonePe fields when PHONEPE selected', async () => {
+  it('shows Paymob fields when PAYMOB selected', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'PHONEPE', isEnabled: false, isLiveMode: false },
+        config: { provider: 'PAYMOB', isEnabled: false, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText('PhonePe PG Credentials')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('MERCHANTUAT')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Enter salt key')).toBeInTheDocument()
+      expect(screen.getByText('Paymob (Accept) Credentials')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Enter API key')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('e.g. 123456')).toBeInTheDocument()
     })
   })
 
-  it('shows Paytm fields when PAYTM selected', async () => {
+  it('shows InstaPay fields when INSTAPAY selected', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'PAYTM', isEnabled: false, isLiveMode: false },
+        config: { provider: 'INSTAPAY', isEnabled: false, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText('Paytm PG Credentials')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('YOUR_MID')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Enter merchant key')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('clinic@instapay')).toBeInTheDocument()
     })
   })
 
@@ -236,7 +234,7 @@ describe('GatewaySettings', () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: false },
+        config: { provider: 'FAWRY', isEnabled: true, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
@@ -249,7 +247,7 @@ describe('GatewaySettings', () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: false, isLiveMode: false },
+        config: { provider: 'FAWRY', isEnabled: false, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
@@ -262,7 +260,7 @@ describe('GatewaySettings', () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: true },
+        config: { provider: 'FAWRY', isEnabled: true, isLiveMode: true },
       }),
     })
     render(<GatewaySettings />)
@@ -276,10 +274,10 @@ describe('GatewaySettings', () => {
       ok: true,
       json: async () => ({
         config: {
-          provider: 'RAZORPAY',
+          provider: 'FAWRY',
           isEnabled: true,
           isLiveMode: false,
-          webhookUrl: 'https://example.com/api/webhooks/payment/razorpay',
+          webhookUrl: 'https://example.com/api/webhooks/payment/fawry',
         },
       }),
     })
@@ -287,7 +285,7 @@ describe('GatewaySettings', () => {
     await waitFor(() => {
       expect(screen.getByText('Webhook URL')).toBeInTheDocument()
       expect(
-        screen.getByDisplayValue('https://example.com/api/webhooks/payment/razorpay')
+        screen.getByDisplayValue('https://example.com/api/webhooks/payment/fawry')
       ).toBeInTheDocument()
     })
   })
@@ -302,12 +300,12 @@ describe('GatewaySettings', () => {
   })
 
   it('saves config successfully', async () => {
-    // First load with Razorpay config
+    // First load with Fawry config
     fetchMock
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: false },
+          config: { provider: 'FAWRY', isEnabled: true, isLiveMode: false },
         }),
       })
       // PUT save response
@@ -319,7 +317,7 @@ describe('GatewaySettings', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: false },
+          config: { provider: 'FAWRY', isEnabled: true, isLiveMode: false },
         }),
       })
 
@@ -340,7 +338,7 @@ describe('GatewaySettings', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          config: { provider: 'RAZORPAY', isEnabled: true, isLiveMode: false },
+          config: { provider: 'FAWRY', isEnabled: true, isLiveMode: false },
         }),
       })
       .mockResolvedValueOnce({
@@ -362,11 +360,11 @@ describe('GatewaySettings', () => {
     })
   })
 
-  it('shows encrypted note for Razorpay secret', async () => {
+  it('shows encrypted note for the Fawry secure key', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: false, isLiveMode: false },
+        config: { provider: 'FAWRY', isEnabled: false, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
@@ -377,16 +375,16 @@ describe('GatewaySettings', () => {
     })
   })
 
-  it('renders Razorpay Dashboard link', async () => {
+  it('renders Fawry Dashboard link', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
-        config: { provider: 'RAZORPAY', isEnabled: false, isLiveMode: false },
+        config: { provider: 'FAWRY', isEnabled: false, isLiveMode: false },
       }),
     })
     render(<GatewaySettings />)
     await waitFor(() => {
-      expect(screen.getByText('Razorpay Dashboard')).toBeInTheDocument()
+      expect(screen.getByText('Fawry Dashboard')).toBeInTheDocument()
     })
   })
 })

@@ -135,7 +135,7 @@ export async function handleCancellationWaitlist(slot: CancelledSlot): Promise<{
   })
 
   const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'your doctor'
-  const dateStr = slot.scheduledDate.toLocaleDateString('en-IN', {
+  const dateStr = slot.scheduledDate.toLocaleDateString('en-EG', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',

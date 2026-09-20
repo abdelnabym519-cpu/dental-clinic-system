@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { calculateInvoiceTotals, gstConfig } from '@/lib/billing-utils'
+import { calculateInvoiceTotals, vatConfig } from '@/lib/billing-utils'
 import { DiscountType, InvoiceStatus } from '@prisma/client'
 
 // GET - Get single invoice with full details
@@ -126,8 +126,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       items,
       discountType,
       discountValue,
-      cgstRate = existingInvoice.cgstRate,
-      sgstRate = existingInvoice.sgstRate,
+      vatRate = existingInvoice.cgstRate,
       dueDate,
       notes,
       termsAndConditions,
@@ -154,8 +153,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         })),
         (discountType || existingInvoice.discountType) as DiscountType,
         discountValue !== undefined ? discountValue : Number(existingInvoice.discountValue),
-        cgstRate,
-        sgstRate
+        Number(vatRate)
       )
 
       updateData = {
@@ -165,9 +163,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         discountValue: discountValue !== undefined ? discountValue : existingInvoice.discountValue,
         discountAmount: calculatedTotals.discountAmount,
         taxableAmount: calculatedTotals.taxableAmount,
-        cgstRate,
+        cgstRate: vatRate,
         cgstAmount: calculatedTotals.cgstAmount,
-        sgstRate,
+        sgstRate: 0,
         sgstAmount: calculatedTotals.sgstAmount,
         totalAmount: calculatedTotals.totalAmount,
         balanceAmount: calculatedTotals.totalAmount - Number(existingInvoice.paidAmount),

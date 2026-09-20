@@ -87,7 +87,7 @@ describe('Patients API - Comprehensive Tests', () => {
           patientId: 'PAT202500001',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         },
         {
           id: '2',
@@ -243,7 +243,7 @@ describe('Patients API - Comprehensive Tests', () => {
       const newPatient = {
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'john@example.com',
         gender: 'MALE',
         dateOfBirth: '1990-01-15',
@@ -283,7 +283,7 @@ describe('Patients API - Comprehensive Tests', () => {
     it('should reject duplicate phone numbers within the same hospital', async () => {
       mockPrisma.patient.findFirst.mockResolvedValue({
         id: 'existing-patient',
-        phone: '9876543210',
+        phone: '01012345678',
       })
 
       const request = new NextRequest('http://localhost/api/patients', {
@@ -291,7 +291,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const response = await POST(request)
@@ -309,7 +309,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const response = await POST(request)
@@ -337,7 +337,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       await POST(request)
@@ -367,7 +367,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           medicalHistory: {
             allergies: 'Penicillin',
             conditions: 'Diabetes',
@@ -400,7 +400,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           // Optional fields
           dateOfBirth: null,
           age: 30,
@@ -408,8 +408,8 @@ describe('Patients API - Comprehensive Tests', () => {
           bloodGroup: 'O+',
           email: 'john@example.com',
           address: '123 Main St',
-          city: 'Mumbai',
-          state: 'Maharashtra',
+          city: 'Cairo',
+          state: 'القاهرة',
           pincode: '400001',
           aadharNumber: '123456789012',
           occupation: 'Engineer',
@@ -431,7 +431,7 @@ describe('Patients API - Comprehensive Tests', () => {
       mockPrisma.patient.findFirst.mockResolvedValue(null)
       mockPrisma.patient.create.mockResolvedValue({ id: '1' })
 
-      const validPhoneNumbers = ['9876543210', '8765432109', '7654321098', '6543210987']
+      const validPhoneNumbers = ['01012345678', '8765432109', '7654321098', '6543210987']
 
       for (const phone of validPhoneNumbers) {
         const request = new NextRequest('http://localhost/api/patients', {
@@ -494,7 +494,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           hospitalId: 'different-hospital-id', // Should be ignored
         }),
       })
@@ -526,7 +526,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const response = await POST(request)
@@ -535,7 +535,7 @@ describe('Patients API - Comprehensive Tests', () => {
       // Duplicate check should include hospitalId
       expect(mockPrisma.patient.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { hospitalId: 'hospital-A', phone: '9876543210' },
+          where: { hospitalId: 'hospital-A', phone: '01012345678' },
         })
       )
     })
@@ -612,7 +612,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: longName,
           lastName: longName,
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const response = await POST(request)
@@ -630,7 +630,7 @@ describe('Patients API - Comprehensive Tests', () => {
         body: JSON.stringify({
           firstName: 'राम',
           lastName: 'कुमार',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const response = await POST(request)

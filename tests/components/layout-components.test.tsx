@@ -462,7 +462,7 @@ describe('GlobalSearch', () => {
       ok: true,
       json: async () => ({
         patients: [
-          { id: 'p1', label: 'John Doe', sublabel: '+91 9876543210', href: '/patients/p1' },
+          { id: 'p1', label: 'John Doe', sublabel: '+20 101 234 5678', href: '/patients/p1' },
         ],
         appointments: [],
         invoices: [],

@@ -13,14 +13,12 @@ vi.mock('@/lib/billing-utils', () => ({
     subtotal: 10000,
     discountAmount: 500,
     taxableAmount: 9500,
-    cgstAmount: 427.5,
-    sgstAmount: 427.5,
-    totalAmount: 10355,
+    cgstAmount: 1330,
+    sgstAmount: 0,
+    totalTax: 1330,
+    totalAmount: 10830,
   }),
-  gstConfig: {
-    cgstRate: 9,
-    sgstRate: 9,
-  },
+  vatConfig: { rate: 14, defaultTaxable: true },
 }))
 
 // Mock Prisma
@@ -340,8 +338,7 @@ describe('Invoices API - Comprehensive Tests', () => {
         body: JSON.stringify({
           patientId: mockPatientId,
           items: [{ description: 'Service', quantity: 1, unitPrice: 10000 }],
-          cgstRate: 9,
-          sgstRate: 9,
+          vatRate: 14,
         }),
       })
       await POST(request)
@@ -350,10 +347,10 @@ describe('Invoices API - Comprehensive Tests', () => {
       expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            cgstRate: 9,
-            sgstRate: 9,
-            cgstAmount: 427.5,
-            sgstAmount: 427.5,
+            cgstRate: 14,
+            sgstRate: 0,
+            cgstAmount: 1330,
+            sgstAmount: 0,
           }),
         })
       )
@@ -492,7 +489,6 @@ describe('Invoices API - Comprehensive Tests', () => {
         ]),
         expect.anything(),
         expect.anything(),
-        expect.anything(),
         expect.anything()
       )
     })
@@ -533,8 +529,8 @@ describe('Invoices API - Comprehensive Tests', () => {
       expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            totalAmount: 10355,
-            balanceAmount: 10355,
+            totalAmount: 10830,
+            balanceAmount: 10830,
           }),
         })
       )
@@ -698,8 +694,8 @@ describe('Invoices API - Comprehensive Tests', () => {
       expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            cgstRate: 9, // Default from gstConfig
-            sgstRate: 9,
+            cgstRate: 14, // Default from vatConfig (Egyptian VAT)
+            sgstRate: 0,
           }),
         })
       )
@@ -713,8 +709,7 @@ describe('Invoices API - Comprehensive Tests', () => {
         body: JSON.stringify({
           patientId: mockPatientId,
           items: [{ description: 'Service', quantity: 1, unitPrice: 1000 }],
-          cgstRate: 6,
-          sgstRate: 6,
+          vatRate: 7,
         }),
       })
       await POST(request)
@@ -722,8 +717,8 @@ describe('Invoices API - Comprehensive Tests', () => {
       expect(mockPrisma.invoice.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            cgstRate: 6,
-            sgstRate: 6,
+            cgstRate: 7,
+            sgstRate: 0,
           }),
         })
       )

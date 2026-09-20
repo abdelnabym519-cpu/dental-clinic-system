@@ -8,9 +8,9 @@ import {
   formatPhone,
   generatePatientId,
   generateInvoiceNo,
-  calculateGST,
-  validateAadhar,
-  validateIndianPhone,
+  calculateVAT,
+  validateNationalId,
+  validateEgyptianPhone,
 } from '@/lib/utils'
 
 describe('Utils - cn (classnames merger)', () => {
@@ -96,17 +96,17 @@ describe('Utils - formatDateTime', () => {
 })
 
 describe('Utils - formatPhone', () => {
-  it('should format 10-digit Indian phone numbers', () => {
-    const result = formatPhone('9876543210')
-    expect(result).toBe('+91 98765 43210')
+  it('should format 11-digit Egyptian local phone numbers', () => {
+    const result = formatPhone('01012345678')
+    expect(result).toBe('+20 101 234 5678')
   })
 
   it('should handle phone with existing formatting', () => {
-    const result = formatPhone('+91-9876-543210')
-    expect(result).toBe('+91 98765 43210')
+    const result = formatPhone('+20-101-234-5678')
+    expect(result).toBe('+20 101 234 5678')
   })
 
-  it('should return original for non-10-digit numbers', () => {
+  it('should return original for non-phone numbers', () => {
     expect(formatPhone('12345')).toBe('12345')
     expect(formatPhone('12345678901234')).toBe('12345678901234')
   })
@@ -156,73 +156,71 @@ describe('Utils - generateInvoiceNo', () => {
   })
 })
 
-describe('Utils - calculateGST', () => {
-  it('should calculate GST correctly with default rates', () => {
-    const result = calculateGST(1000)
+describe('Utils - calculateVAT', () => {
+  it('should calculate VAT correctly with the default Egyptian rate (14%)', () => {
+    const result = calculateVAT(1000)
     expect(result.subtotal).toBe(1000)
-    expect(result.cgst).toBe(90)
-    expect(result.sgst).toBe(90)
-    expect(result.total).toBe(1180)
+    expect(result.vat).toBe(140)
+    expect(result.total).toBe(1140)
   })
 
-  it('should calculate GST with custom rates', () => {
-    const result = calculateGST(1000, 6, 6)
+  it('should calculate VAT with custom rates', () => {
+    const result = calculateVAT(1000, 7)
     expect(result.subtotal).toBe(1000)
-    expect(result.cgst).toBe(60)
-    expect(result.sgst).toBe(60)
-    expect(result.total).toBe(1120)
+    expect(result.vat).toBe(70)
+    expect(result.total).toBe(1070)
   })
 
   it('should handle zero amount', () => {
-    const result = calculateGST(0)
+    const result = calculateVAT(0)
     expect(result.total).toBe(0)
   })
 
   it('should handle decimal amounts', () => {
-    const result = calculateGST(99.99)
+    const result = calculateVAT(99.99)
     expect(result.subtotal).toBe(99.99)
-    expect(result.total).toBeCloseTo(117.99, 1)
+    expect(result.total).toBeCloseTo(113.99, 1)
   })
 })
 
-describe('Utils - validateAadhar', () => {
-  it('should validate correct 12-digit Aadhar', () => {
-    expect(validateAadhar('123456789012')).toBe(true)
+describe('Utils - validateNationalId', () => {
+  it('should validate correct 14-digit Egyptian national ID', () => {
+    expect(validateNationalId('29801011201234')).toBe(true)
   })
 
-  it('should validate Aadhar with spaces', () => {
-    expect(validateAadhar('1234 5678 9012')).toBe(true)
+  it('should validate national ID with spaces', () => {
+    expect(validateNationalId('2980 1011 2012 34')).toBe(true)
   })
 
-  it('should validate Aadhar with dashes', () => {
-    expect(validateAadhar('1234-5678-9012')).toBe(true)
+  it('should validate national ID with dashes', () => {
+    expect(validateNationalId('2980-1011-2012-34')).toBe(true)
   })
 
-  it('should reject invalid Aadhar numbers', () => {
-    expect(validateAadhar('12345678901')).toBe(false) // 11 digits
-    expect(validateAadhar('1234567890123')).toBe(false) // 13 digits
-    expect(validateAadhar('')).toBe(false)
+  it('should reject invalid national ID numbers', () => {
+    expect(validateNationalId('2980101120123')).toBe(false) // 13 digits
+    expect(validateNationalId('298010112012345')).toBe(false) // 15 digits
+    expect(validateNationalId('')).toBe(false)
   })
 })
 
-describe('Utils - validateIndianPhone', () => {
-  it('should validate correct Indian phone numbers', () => {
-    expect(validateIndianPhone('9876543210')).toBe(true)
-    expect(validateIndianPhone('8765432109')).toBe(true)
-    expect(validateIndianPhone('7654321098')).toBe(true)
-    expect(validateIndianPhone('6543210987')).toBe(true)
+describe('Utils - validateEgyptianPhone', () => {
+  it('should validate correct Egyptian phone numbers', () => {
+    expect(validateEgyptianPhone('01012345678')).toBe(true)
+    expect(validateEgyptianPhone('01123456789')).toBe(true)
+    expect(validateEgyptianPhone('01234567890')).toBe(true)
+    expect(validateEgyptianPhone('01512345678')).toBe(true)
   })
 
   it('should validate phone numbers with formatting', () => {
-    expect(validateIndianPhone('+91-9876543210')).toBe(true)
-    expect(validateIndianPhone('91 9876543210')).toBe(true)
+    expect(validateEgyptianPhone('+20-1012345678')).toBe(true)
+    expect(validateEgyptianPhone('20 1012345678')).toBe(true)
   })
 
   it('should reject invalid phone numbers', () => {
-    expect(validateIndianPhone('1234567890')).toBe(false) // Starts with 1
-    expect(validateIndianPhone('5234567890')).toBe(false) // Starts with 5
-    expect(validateIndianPhone('987654321')).toBe(false) // 9 digits
-    expect(validateIndianPhone('98765432101')).toBe(false) // 11 digits
-    expect(validateIndianPhone('')).toBe(false)
+    expect(validateEgyptianPhone('03012345678')).toBe(false) // Starts with 03
+    expect(validateEgyptianPhone('01412345678')).toBe(false) // Invalid prefix 014
+    expect(validateEgyptianPhone('0101234567')).toBe(false) // 10 digits
+    expect(validateEgyptianPhone('010123456789')).toBe(false) // 12 digits
+    expect(validateEgyptianPhone('')).toBe(false)
   })
 })

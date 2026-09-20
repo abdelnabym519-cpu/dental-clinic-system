@@ -5,7 +5,7 @@ describe('PDF Generator Service', () => {
   const baseData = {
     clinicName: 'Test Dental Clinic',
     clinicAddress: '123 Main St',
-    clinicPhone: '9876543210',
+    clinicPhone: '01012345678',
     clinicEmail: 'clinic@test.com',
     patientName: 'John Doe',
     patientId: 'PAT202600001',
@@ -34,7 +34,7 @@ describe('PDF Generator Service', () => {
 
   it('includes clinic contact info', () => {
     const html = generateFormPdfHtml(baseData)
-    expect(html).toContain('9876543210')
+    expect(html).toContain('01012345678')
     expect(html).toContain('clinic@test.com')
   })
 

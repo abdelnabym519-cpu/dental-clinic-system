@@ -73,13 +73,13 @@ export async function GET() {
       executions: totalExecs,
       insights: totalInsights,
       tokens: costAgg._sum.tokensUsed ?? 0,
-      costINR: Number(costAgg._sum.cost ?? 0),
+      costEGP: Number(costAgg._sum.cost ?? 0),
     },
     thisMonth: {
       conversations: monthConvos,
       executions: monthExecs,
       tokens: monthCostAgg._sum.tokensUsed ?? 0,
-      costINR: Number(monthCostAgg._sum.cost ?? 0),
+      costEGP: Number(monthCostAgg._sum.cost ?? 0),
     },
     skillBreakdown,
   })

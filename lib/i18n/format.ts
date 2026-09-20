@@ -3,7 +3,7 @@
  *
  * Before this existed there were three near-duplicate `formatCurrency`
  * implementations (lib/utils.ts, lib/billing-utils.ts, lib/treatment-utils.ts),
- * each hardcoding `en-IN` and `INR` with slightly different fraction-digit
+ * each hardcoding `en-EG` and `EGP` with slightly different fraction-digit
  * rules. Those modules now delegate here and keep their own defaults, so
  * behaviour is unchanged while there is finally one place to add a locale.
  *
@@ -13,7 +13,7 @@ import { defaultLocale, getLocaleDefaults, resolveLocale } from './config'
 
 export interface CurrencyFormatOptions {
   locale?: string
-  /** ISO 4217. Defaults to the locale's currency (INR for en-IN). */
+  /** ISO 4217. Defaults to the locale's currency (EGP for ar-EG). */
   currency?: string
   minimumFractionDigits?: number
   maximumFractionDigits?: number
@@ -41,7 +41,7 @@ function toDate(date: Date | string | number | null | undefined): Date | null {
 
 /**
  * Format a monetary amount. Note that digit grouping is locale-specific, not
- * just the symbol: en-IN groups 100000 as `1,00,000`, en-US as `100,000`.
+ * just the symbol/order: ar-EG renders Eastern Arabic digits, en-EG `EGP 1,000.00`.
  */
 export function formatCurrency(
   amount: number | string | null | undefined,
@@ -52,8 +52,8 @@ export function formatCurrency(
   const {
     minimumFractionDigits = 0,
     maximumFractionDigits = 2,
-    // Format the fallback rather than hardcoding a symbol, so a non-INR
-    // clinic does not get a stray rupee sign on empty values.
+    // Format the fallback rather than hardcoding a symbol, so a non-EGP
+    // clinic does not get a stray currency sign on empty values.
     fallback = new Intl.NumberFormat(locale, {
       style: 'currency',
       currency,

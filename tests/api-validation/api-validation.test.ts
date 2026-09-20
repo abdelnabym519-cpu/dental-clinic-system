@@ -110,11 +110,12 @@ vi.mock('@/lib/billing-utils', () => ({
     subtotal: 1000,
     discountAmount: 0,
     taxableAmount: 1000,
-    cgstAmount: 90,
-    sgstAmount: 90,
-    totalAmount: 1180,
+    cgstAmount: 140,
+    sgstAmount: 0,
+    totalTax: 140,
+    totalAmount: 1140,
   }),
-  gstConfig: { cgstRate: 9, sgstRate: 9 },
+  vatConfig: { rate: 14, defaultTaxable: true },
 }))
 
 vi.mock('@prisma/client', () => ({

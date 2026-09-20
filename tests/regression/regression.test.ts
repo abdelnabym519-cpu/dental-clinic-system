@@ -88,7 +88,7 @@ describe('Regression: Input Validation', () => {
       firstName: 'John',
       lastName: null,
       email: undefined,
-      phone: '9876543210',
+      phone: '01012345678',
     }
     expect(patient.firstName).toBeTruthy()
     expect(patient.lastName).toBeNull()

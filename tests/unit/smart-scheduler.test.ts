@@ -18,7 +18,7 @@ describe('Smart Scheduler Service', () => {
         { id: 'w2', patientId: 'p2', preferredDays: ['MONDAY'], preferredTime: 'MORNING' },
       ])
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         { id: 'p2', firstName: 'Jane', lastName: 'Smith', phone: '9876543211' },
       ])
 
@@ -42,7 +42,7 @@ describe('Smart Scheduler Service', () => {
         { id: 'w1', patientId: 'p1', preferredDays: ['TUESDAY', 'WEDNESDAY'], preferredTime: null },
       ])
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
       ])
 
       // Monday slot - patient prefers Tuesday/Wednesday
@@ -63,7 +63,7 @@ describe('Smart Scheduler Service', () => {
         { id: 'w1', patientId: 'p1', preferredDays: null, preferredTime: 'EVENING' },
       ])
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
       ])
 
       // Morning slot - patient prefers evening
@@ -99,7 +99,7 @@ describe('Smart Scheduler Service', () => {
         { id: 'w1', patientId: 'p1', preferredDays: null, preferredTime: 'AFTERNOON' },
       ])
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
       ])
 
       const slot = {
@@ -122,7 +122,7 @@ describe('Smart Scheduler Service', () => {
         { id: 'w2', patientId: 'p2', preferredDays: null, preferredTime: null },
       ])
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         { id: 'p2', firstName: 'Jane', lastName: 'Smith', phone: '9876543211' },
       ])
       ;(prisma.staff.findUnique as any).mockResolvedValue({ firstName: 'Alice', lastName: 'Brown' })

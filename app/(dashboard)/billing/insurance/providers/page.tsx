@@ -289,7 +289,7 @@ export default function InsuranceProvidersPage() {
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g., Star Health Insurance"
+                  placeholder="e.g., MetLife Egypt"
                 />
               </div>
               <div>

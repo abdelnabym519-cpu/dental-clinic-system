@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/cron/collections
- * Scheduled: daily 10:00 IST
+ * Scheduled: daily 10:00 Africa/Cairo
  *
  * 1) Identifies overdue invoices, classifies by escalation tier,
  *    and creates notifications for the appropriate staff.
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
       if (daysOverdue >= 21) {
         tier = 'tier4'
         notifyRole = 'ADMIN'
-        message = `ESCALATION: Invoice ${invoice.invoiceNo} for ${invoice.patient.firstName} ${invoice.patient.lastName} is ${daysOverdue} days overdue (₹${Number(invoice.balanceAmount).toLocaleString('en-IN')}). Requires manager attention.`
+        message = `ESCALATION: Invoice ${invoice.invoiceNo} for ${invoice.patient.firstName} ${invoice.patient.lastName} is ${daysOverdue} days overdue (EGP ${Number(invoice.balanceAmount).toLocaleString('en-EG')}). Requires manager attention.`
       } else if (daysOverdue >= 14) {
         tier = 'tier3'
         notifyRole = 'ACCOUNTANT'
@@ -150,7 +150,7 @@ export async function GET(req: Request) {
                 hospitalId: hospital.id,
                 userId: accountant.id,
                 title: 'Installment Due Soon',
-                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — ₹${Number(schedule.amount).toLocaleString('en-IN')} due in 3 days.`,
+                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — EGP ${Number(schedule.amount).toLocaleString('en-EG')} due in 3 days.`,
                 type: 'PAYMENT',
                 entityType: 'PaymentPlan',
                 entityId: plan.id,
@@ -176,7 +176,7 @@ export async function GET(req: Request) {
                 hospitalId: hospital.id,
                 userId: accountant.id,
                 title: 'Installment Due Today',
-                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — ₹${Number(schedule.amount).toLocaleString('en-IN')} is due today.`,
+                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — EGP ${Number(schedule.amount).toLocaleString('en-EG')} is due today.`,
                 type: 'PAYMENT',
                 entityType: 'PaymentPlan',
                 entityId: plan.id,
@@ -204,7 +204,7 @@ export async function GET(req: Request) {
                 hospitalId: hospital.id,
                 userId: admin.id,
                 title: 'Installment Overdue',
-                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — ₹${Number(schedule.amount).toLocaleString('en-IN')} is ${daysDiff} days overdue.`,
+                message: `Payment plan installment #${schedule.installmentNo} for ${plan.patient.firstName} ${plan.patient.lastName} (Invoice ${plan.invoice.invoiceNo}) — EGP ${Number(schedule.amount).toLocaleString('en-EG')} is ${daysDiff} days overdue.`,
                 type: 'PAYMENT',
                 entityType: 'PaymentPlan',
                 entityId: plan.id,

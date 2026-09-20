@@ -275,7 +275,7 @@ export default function LabWorkPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleDateString('en-EG', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -283,9 +283,9 @@ export default function LabWorkPage() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       maximumFractionDigits: 0,
     }).format(amount)
   }

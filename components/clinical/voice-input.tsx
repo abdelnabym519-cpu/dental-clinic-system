@@ -11,7 +11,7 @@ interface VoiceInputProps {
   className?: string
 }
 
-export function VoiceInput({ onTranscript, language = 'en-IN', className }: VoiceInputProps) {
+export function VoiceInput({ onTranscript, language = 'en-EG', className }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [interimText, setInterimText] = useState('')

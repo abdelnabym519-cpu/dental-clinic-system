@@ -247,10 +247,10 @@ describe('GET /api/settings/clinic', () => {
     const mockClinic = {
       id: 'h1',
       name: 'Test Dental Clinic',
-      phone: '9876543210',
+      phone: '01012345678',
       address: '123 Main St',
-      city: 'Delhi',
-      state: 'Delhi',
+      city: 'Alexandria',
+      state: 'Alexandria',
       pincode: '110001',
       slug: 'test-dental',
     }
@@ -293,10 +293,10 @@ describe('POST /api/settings/clinic', () => {
     mockAuth()
     const clinicData = {
       name: 'Updated Clinic',
-      phone: '9876543210',
+      phone: '01012345678',
       address: '456 New Rd',
-      city: 'Mumbai',
-      state: 'Maharashtra',
+      city: 'Cairo',
+      state: 'القاهرة',
       pincode: '400001',
     }
     vi.mocked(prisma.hospital.update).mockResolvedValue({ id: 'h1', ...clinicData } as any)
@@ -317,10 +317,10 @@ describe('POST /api/settings/clinic', () => {
     mockAuth()
     const res = await clinicPOST(
       makeReq('/api/settings/clinic', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         address: '456 New Rd',
-        city: 'Mumbai',
-        state: 'Maharashtra',
+        city: 'Cairo',
+        state: 'القاهرة',
         pincode: '400001',
       })
     )
@@ -335,7 +335,7 @@ describe('POST /api/settings/clinic', () => {
     await clinicPOST(
       makeReq('/api/settings/clinic', 'POST', {
         name: 'Clinic',
-        phone: '9876543210',
+        phone: '01012345678',
         address: 'Addr',
         city: 'City',
         state: 'State',

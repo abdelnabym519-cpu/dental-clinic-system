@@ -60,7 +60,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'valid-token-123',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(200)
@@ -89,7 +89,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'invalid-token',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(400)
@@ -107,7 +107,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'valid-token-123',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(400)
@@ -126,7 +126,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'valid-token-123',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(400)
@@ -147,7 +147,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'valid-token-123',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(400)
@@ -163,7 +163,7 @@ describe('POST /api/public/invite/accept', () => {
       makePostRequest({
         token: 'valid-token-123',
         password: 'SecurePass123!',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(409)

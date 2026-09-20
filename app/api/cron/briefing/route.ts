@@ -5,7 +5,7 @@ import { getModelByTier } from '@/lib/ai/models'
 
 /**
  * GET /api/cron/briefing
- * Scheduled: daily 07:30 IST
+ * Scheduled: daily 07:30 Africa/Cairo
  * Generates morning briefings for all hospitals and creates notifications for ADMIN users.
  * Secured via CRON_SECRET header.
  */

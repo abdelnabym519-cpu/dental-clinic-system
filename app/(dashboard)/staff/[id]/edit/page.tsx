@@ -408,7 +408,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pincode">Pincode</Label>
+                  <Label htmlFor="pincode">Postal Code</Label>
                   <Input
                     id="pincode"
                     value={formData.pincode}
@@ -456,7 +456,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNumber">Aadhar Number</Label>
+                  <Label htmlFor="aadharNumber">National ID (الرقم القومي)</Label>
                   <Input
                     id="aadharNumber"
                     value={formData.aadharNumber}
@@ -464,7 +464,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="panNumber">PAN Number</Label>
+                  <Label htmlFor="panNumber">Commercial Register (السجل التجاري)</Label>
                   <Input
                     id="panNumber"
                     value={formData.panNumber}
@@ -534,7 +534,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="salary">Monthly Salary (₹)</Label>
+                <Label htmlFor="salary">Monthly Salary (EGP )</Label>
                 <Input
                   id="salary"
                   type="number"
@@ -553,7 +553,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bankIfsc">IFSC Code</Label>
+                  <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
                   <Input
                     id="bankIfsc"
                     value={formData.bankIfsc}

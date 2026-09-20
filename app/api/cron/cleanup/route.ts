@@ -6,7 +6,7 @@
  * Removes expired AIInsight records.
  *
  * Secured via CRON_SECRET env var (Bearer token).
- * Schedule: daily at 2:00 AM IST.
+ * Schedule: daily at 2:00 AM Africa/Cairo.
  *
  * curl -X POST https://<host>/api/cron/cleanup \
  *   -H "Authorization: Bearer <CRON_SECRET>"

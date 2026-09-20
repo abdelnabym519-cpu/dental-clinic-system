@@ -100,7 +100,7 @@ describe('GET /api/lab-vendors', () => {
   it('returns vendors with pagination', async () => {
     mockAuth()
     const mockVendors = [
-      { id: 'v1', name: 'Lab A', phone: '9876543210', isActive: true },
+      { id: 'v1', name: 'Lab A', phone: '01012345678', isActive: true },
       { id: 'v2', name: 'Lab B', phone: '9876543211', isActive: true },
     ]
     vi.mocked(prisma.labVendor.count).mockResolvedValue(2)
@@ -177,7 +177,7 @@ describe('POST /api/lab-vendors', () => {
     vi.mocked(prisma.labVendor.create).mockResolvedValue({
       id: 'v1',
       name: 'Lab A',
-      phone: '9876543210',
+      phone: '01012345678',
       hospitalId: 'h1',
       isActive: true,
     } as any)
@@ -185,7 +185,7 @@ describe('POST /api/lab-vendors', () => {
     const res = await vendorsPOST(
       makeReq('/api/lab-vendors', 'POST', {
         name: 'Lab A',
-        phone: '9876543210',
+        phone: '01012345678',
         contactPerson: 'Dr. Smith',
         email: 'lab@example.com',
       })
@@ -225,7 +225,7 @@ describe('GET /api/lab-vendors/[id]', () => {
       id: 'v1',
       code: 'LV001',
       name: 'Lab A',
-      phone: '9876543210',
+      phone: '01012345678',
       status: LabVendorStatus.ACTIVE,
     } as any)
 
@@ -291,7 +291,7 @@ describe('PUT /api/lab-vendors/[id]', () => {
       makeReq('/api/lab-vendors/v1', 'PUT', {
         code: 'LV001',
         name: 'Updated Lab',
-        phone: '9876543210',
+        phone: '01012345678',
         status: 'blocked',
         creditLimit: 5000,
       }),
@@ -383,8 +383,8 @@ describe('GET /api/lab-orders/[id]', () => {
       },
       patient: {
         patientId: 'PAT001',
-        firstName: 'Rahul',
-        lastName: 'Sharma',
+        firstName: 'Karim',
+        lastName: 'Mansour',
         phone: '99',
         email: 'r@x.com',
       },
@@ -405,7 +405,7 @@ describe('GET /api/lab-orders/[id]', () => {
 
     expect(res.status).toBe(200)
     expect(body.data.vendorName).toBe('Lab A')
-    expect(body.data.patientName).toBe('Rahul Sharma')
+    expect(body.data.patientName).toBe('Karim Mansour')
     expect(body.data.createdByName).toBe('Admin')
     expect(body.data.history[0].changedByName).toBe('Admin')
     expect(body.data.documents[0].uploadedByName).toBe('Admin')

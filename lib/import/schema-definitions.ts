@@ -140,7 +140,8 @@ export const INVOICE_STATUS_ALIASES: Record<string, string> = {
 export const PAYMENT_METHOD_ALIASES: Record<string, string> = {
   Cash: 'CASH',
   Card: 'CARD',
-  UPI: 'UPI',
+  INSTAPAY: 'INSTAPAY',
+  FAWRY: 'FAWRY',
   'Bank Transfer': 'BANK_TRANSFER',
   Cheque: 'CHEQUE',
   Check: 'CHEQUE',
@@ -154,7 +155,8 @@ export const PAYMENT_METHOD_ALIASES: Record<string, string> = {
   'Debit Card': 'CARD',
   cash: 'CASH',
   card: 'CARD',
-  upi: 'UPI',
+  instapay: 'INSTAPAY',
+  fawry: 'FAWRY',
   cheque: 'CHEQUE',
   online: 'ONLINE',
 }
@@ -187,8 +189,8 @@ const PATIENT_FIELDS: FieldDefinition[] = [
     name: 'phone',
     type: 'string',
     required: true,
-    description: '10-digit mobile number',
-    pattern: /^\d{10}$/,
+    description: 'Egyptian mobile number (01XXXXXXXXX)',
+    pattern: /^01[0125]\d{8}$/,
   },
   { name: 'email', type: 'string', required: false, description: 'Email address' },
   { name: 'dateOfBirth', type: 'date', required: false, description: 'Date of birth' },
@@ -221,7 +223,7 @@ const PATIENT_FIELDS: FieldDefinition[] = [
   { name: 'address', type: 'string', required: false, description: 'Full address' },
   { name: 'city', type: 'string', required: false, description: 'City' },
   { name: 'state', type: 'string', required: false, description: 'State' },
-  { name: 'pincode', type: 'string', required: false, description: 'PIN code' },
+  { name: 'pincode', type: 'string', required: false, description: 'Postal code (5 digits)' },
   { name: 'occupation', type: 'string', required: false, description: 'Occupation' },
   {
     name: 'referredBy',
@@ -305,7 +307,7 @@ const STAFF_FIELDS: FieldDefinition[] = [
   { name: 'address', type: 'string', required: false, description: 'Address' },
   { name: 'city', type: 'string', required: false, description: 'City' },
   { name: 'state', type: 'string', required: false, description: 'State' },
-  { name: 'pincode', type: 'string', required: false, description: 'PIN code' },
+  { name: 'pincode', type: 'string', required: false, description: 'Postal code (5 digits)' },
   { name: 'aadharNumber', type: 'string', required: false, description: 'Aadhar number' },
   { name: 'panNumber', type: 'string', required: false, description: 'PAN number' },
 ]
@@ -462,13 +464,13 @@ const INVOICE_FIELDS: FieldDefinition[] = [
     name: 'cgstAmount',
     type: 'decimal',
     required: false,
-    description: 'CGST amount (defaults to 0)',
+    description: 'VAT amount (defaults to 0)'
   },
   {
     name: 'sgstAmount',
     type: 'decimal',
     required: false,
-    description: 'SGST amount (defaults to 0)',
+    description: 'Secondary tax amount (defaults to 0)'
   },
   { name: 'discountAmount', type: 'decimal', required: false, description: 'Discount amount' },
   {
@@ -503,7 +505,7 @@ const PAYMENT_FIELDS: FieldDefinition[] = [
     type: 'enum',
     required: true,
     description: 'Payment method',
-    enumValues: ['CASH', 'CARD', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'INSURANCE', 'WALLET', 'ONLINE'],
+    enumValues: ['CASH', 'CARD', 'INSTAPAY', 'FAWRY', 'BANK_TRANSFER', 'CHEQUE', 'INSURANCE', 'WALLET', 'ONLINE'],
     enumAliases: PAYMENT_METHOD_ALIASES,
   },
   { name: 'paymentDate', type: 'date', required: false, description: 'Payment date' },
@@ -515,7 +517,7 @@ const PAYMENT_FIELDS: FieldDefinition[] = [
   },
   { name: 'bankName', type: 'string', required: false, description: 'Bank name' },
   { name: 'chequeNumber', type: 'string', required: false, description: 'Cheque number' },
-  { name: 'upiId', type: 'string', required: false, description: 'UPI ID' },
+  { name: 'instapayHandle', type: 'string', required: false, description: 'InstaPay handle' },
   {
     name: 'status',
     type: 'enum',
@@ -682,7 +684,7 @@ export function resolveEnum(
   return null
 }
 
-/** Try to parse a date string in common Indian/international formats */
+/** Try to parse a date string in common international formats */
 export function parseDate(value: string): Date | null {
   if (!value) return null
   const trimmed = value.trim()
@@ -693,7 +695,7 @@ export function parseDate(value: string): Date | null {
     if (!isNaN(d.getTime())) return d
   }
 
-  // DD/MM/YYYY or DD-MM-YYYY (Indian standard — try first)
+  // DD/MM/YYYY or DD-MM-YYYY (Egyptian standard — try first)
   const ddmm = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
   if (ddmm) {
     const [, day, month, year] = ddmm

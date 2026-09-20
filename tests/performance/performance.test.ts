@@ -63,9 +63,9 @@ describe('3.1 Page Load Performance Patterns', () => {
       const patientListItem = {
         id: '1',
         patientId: 'PAT001',
-        firstName: 'Rahul',
-        lastName: 'Sharma',
-        phone: '9876543210',
+        firstName: 'Karim',
+        lastName: 'Mansour',
+        phone: '01012345678',
         age: 35,
         gender: 'MALE',
         lastVisit: '2026-03-01',
@@ -82,7 +82,7 @@ describe('3.1 Page Load Performance Patterns', () => {
     it('search uses server-side filtering not client-side', () => {
       // Verify search param is sent to API, not filtered locally
       const searchRequest = {
-        url: '/api/patients?search=Rahul&page=1&limit=20',
+        url: '/api/patients?search=Karim&page=1&limit=20',
         method: 'GET',
       }
       expect(searchRequest.url).toContain('search=')
@@ -208,10 +208,10 @@ describe('3.2 API Response Time Patterns', () => {
         hospitalId: 'h1',
         isActive: true,
         OR: [
-          { firstName: { contains: 'Rahul' } },
-          { lastName: { contains: 'Rahul' } },
-          { phone: { contains: 'Rahul' } },
-          { patientId: { contains: 'Rahul' } },
+          { firstName: { contains: 'Karim' } },
+          { lastName: { contains: 'Karim' } },
+          { phone: { contains: 'Karim' } },
+          { patientId: { contains: 'Karim' } },
         ],
       }
 
@@ -221,7 +221,7 @@ describe('3.2 API Response Time Patterns', () => {
     })
 
     it('search uses OR conditions for multi-field matching', () => {
-      const searchQuery = 'Sharma'
+      const searchQuery = 'Mansour'
       const orConditions = [
         { firstName: { contains: searchQuery } },
         { lastName: { contains: searchQuery } },

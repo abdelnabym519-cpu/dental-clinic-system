@@ -120,7 +120,7 @@ export default function PatientFormPage({ params }: { params: Promise<{ id: stri
             <h1 className="text-2xl font-bold">{template.name}</h1>
             <p className="text-sm text-muted-foreground">
               Submitted on{' '}
-              {new Date(existingSubmission.createdAt).toLocaleDateString('en-IN', {
+              {new Date(existingSubmission.createdAt).toLocaleDateString('en-EG', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',

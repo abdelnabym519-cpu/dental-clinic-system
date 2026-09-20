@@ -116,13 +116,13 @@ export default function PrescriptionsPage() {
                 Medications: rx.medications
                   .map((m) => `${m.medicationName} ${m.dosage} ${m.frequency} ${m.duration}`)
                   .join('; '),
-                Date: new Date(rx.createdAt).toLocaleDateString('en-IN', {
+                Date: new Date(rx.createdAt).toLocaleDateString('en-EG', {
                   day: '2-digit',
                   month: 'short',
                   year: 'numeric',
                 }),
                 'Valid Until': rx.validUntil
-                  ? new Date(rx.validUntil).toLocaleDateString('en-IN', {
+                  ? new Date(rx.validUntil).toLocaleDateString('en-EG', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -210,7 +210,7 @@ export default function PrescriptionsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {new Date(rx.createdAt).toLocaleDateString('en-IN', {
+                      {new Date(rx.createdAt).toLocaleDateString('en-EG', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',

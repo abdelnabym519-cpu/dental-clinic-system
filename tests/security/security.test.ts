@@ -442,58 +442,58 @@ describe('Security — Input Validation & Injection', () => {
   })
 
   describe('Phone Number Validation', () => {
-    let validateIndianPhone: any
+    let validateEgyptianPhone: any
 
     beforeEach(async () => {
       const mod = await import('@/lib/utils')
-      validateIndianPhone = mod.validateIndianPhone
+      validateEgyptianPhone = mod.validateEgyptianPhone
     })
 
-    it('accepts valid 10-digit Indian phone number', () => {
-      expect(validateIndianPhone('9876543210')).toBe(true)
+    it('accepts valid 11-digit Egyptian phone number', () => {
+      expect(validateEgyptianPhone('01012345678')).toBe(true)
     })
 
-    it('accepts with +91 prefix', () => {
-      expect(validateIndianPhone('+919876543210')).toBe(true)
+    it('accepts with +20 prefix', () => {
+      expect(validateEgyptianPhone('+201012345678')).toBe(true)
     })
 
-    it('rejects number with less than 10 digits', () => {
-      expect(validateIndianPhone('98765')).toBe(false)
+    it('rejects number with less than 11 digits', () => {
+      expect(validateEgyptianPhone('010123')).toBe(false)
     })
 
-    it('rejects number with more than 10 digits', () => {
-      expect(validateIndianPhone('98765432101')).toBe(false)
+    it('rejects number with more than 11 digits', () => {
+      expect(validateEgyptianPhone('010123456789')).toBe(false)
     })
 
     it('rejects letters in phone number', () => {
-      expect(validateIndianPhone('98765abcde')).toBe(false)
+      expect(validateEgyptianPhone('01012abcde8')).toBe(false)
     })
   })
 
-  describe('Aadhaar Validation', () => {
-    let validateAadhar: any
+  describe('National ID Validation', () => {
+    let validateNationalId: any
 
     beforeEach(async () => {
       const mod = await import('@/lib/utils')
-      validateAadhar = mod.validateAadhar
+      validateNationalId = mod.validateNationalId
     })
 
-    it('accepts valid 12-digit Aadhaar', () => {
-      expect(validateAadhar('234567890123')).toBe(true)
+    it('accepts valid 14-digit Egyptian national ID', () => {
+      expect(validateNationalId('29801011201234')).toBe(true)
     })
 
-    it('rejects 11-digit number', () => {
-      expect(validateAadhar('23456789012')).toBe(false)
+    it('rejects 13-digit number', () => {
+      expect(validateNationalId('2980101120123')).toBe(false)
     })
 
-    it('accepts any 12-digit number (basic length validation)', () => {
+    it('accepts any 14-digit number (basic length validation)', () => {
       // Current implementation does basic length check only
-      expect(validateAadhar('023456789012')).toBe(true)
-      expect(validateAadhar('123456789012')).toBe(true)
+      expect(validateNationalId('01234567890123')).toBe(true)
+      expect(validateNationalId('12345678901234')).toBe(true)
     })
 
     it('rejects letters', () => {
-      expect(validateAadhar('23456789012a')).toBe(false)
+      expect(validateNationalId('2980101120123a')).toBe(false)
     })
   })
 

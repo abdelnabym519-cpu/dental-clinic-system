@@ -145,7 +145,7 @@ describe('Appointments Today & Waitlist API', () => {
         .mockResolvedValueOnce(0) // notified
         .mockResolvedValueOnce(0) // booked
       ;(prisma.patient.findMany as any).mockResolvedValue([
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210', patientId: 'PAT001' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678', patientId: 'PAT001' },
         {
           id: 'p2',
           firstName: 'Jane',

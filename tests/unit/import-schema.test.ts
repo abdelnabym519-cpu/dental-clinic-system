@@ -109,7 +109,8 @@ describe('Enum Aliases', () => {
     expect(PAYMENT_METHOD_ALIASES['Cash']).toBe('CASH')
     expect(PAYMENT_METHOD_ALIASES['Credit Card']).toBe('CARD')
     expect(PAYMENT_METHOD_ALIASES['NEFT']).toBe('BANK_TRANSFER')
-    expect(PAYMENT_METHOD_ALIASES['upi']).toBe('UPI')
+    expect(PAYMENT_METHOD_ALIASES['INSTAPAY']).toBe('INSTAPAY')
+    expect(PAYMENT_METHOD_ALIASES['FAWRY']).toBe('FAWRY')
   })
 })
 
@@ -425,9 +426,9 @@ describe('coerceValue', () => {
       type: 'string',
       required: false,
       description: 'test',
-      pattern: /^\d{10}$/,
+      pattern: /^01[0125]\d{8}$/,
     }
-    const valid = coerceValue('9876543210', field)
+    const valid = coerceValue('01012345678', field)
     expect(valid.error).toBeUndefined()
 
     const invalid = coerceValue('12345', field)

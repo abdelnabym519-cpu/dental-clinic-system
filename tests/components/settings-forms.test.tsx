@@ -95,19 +95,19 @@ const clinicData = (overrides = {}) => ({
   data: {
     name: 'Demo Dental Clinic',
     tagline: 'Best dental care',
-    phone: '9876543210',
+    phone: '01012345678',
     alternatePhone: '',
     email: 'dev@dental.com',
     website: 'https://demo-dental.com',
     address: '123 Main St',
-    city: 'Chennai',
-    state: 'Tamil Nadu',
-    pincode: '600001',
+    city: 'Cairo',
+    state: 'القاهرة',
+    pincode: '11513',
     slug: 'dr-dev-dental',
     logo: null,
     registrationNo: 'REG001',
-    gstNumber: '29ABCDE1234F1Z5',
-    panNumber: 'ABCDE1234F',
+    gstNumber: '123456789',
+    panNumber: 'CR 987654321',
     workingHours: null,
     bankName: 'HDFC Bank',
     bankAccountNo: '1234567890',
@@ -173,10 +173,10 @@ describe('ClinicSettingsPage', () => {
         expect(screen.getByDisplayValue('Demo Dental Clinic')).toBeInTheDocument()
       })
 
-      expect(screen.getByDisplayValue('9876543210')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('01012345678')).toBeInTheDocument()
       expect(screen.getByDisplayValue('dev@dental.com')).toBeInTheDocument()
       expect(screen.getByDisplayValue('123 Main St')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('Chennai')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Cairo')).toBeInTheDocument()
       expect(screen.getByDisplayValue('REG001')).toBeInTheDocument()
     })
 
@@ -238,7 +238,7 @@ describe('ClinicSettingsPage', () => {
       })
     })
 
-    it('renders GST number field', async () => {
+    it('renders the Tax ID field', async () => {
       ;(global.fetch as any).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(clinicData()),
@@ -247,7 +247,7 @@ describe('ClinicSettingsPage', () => {
       render(<ClinicSettingsPage />)
 
       await waitFor(() => {
-        expect(screen.getByDisplayValue('29ABCDE1234F1Z5')).toBeInTheDocument()
+        expect(screen.getByDisplayValue('123456789')).toBeInTheDocument()
       })
     })
 

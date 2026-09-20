@@ -63,7 +63,7 @@ describe('GET /api/lab-orders', () => {
         id: 'lo1',
         orderNumber: 'LAB20260001',
         workType: 'CROWN',
-        labVendor: { id: 'v1', name: 'Lab A', phone: '9876543210', avgTurnaround: 5 },
+        labVendor: { id: 'v1', name: 'Lab A', phone: '01012345678', avgTurnaround: 5 },
         patient: {
           id: 'p1',
           patientId: 'PT001',

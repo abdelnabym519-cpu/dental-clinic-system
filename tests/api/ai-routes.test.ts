@@ -376,7 +376,7 @@ describe('POST /api/ai/command', () => {
       firstName: 'John',
       lastName: 'Doe',
       age: 30,
-      phone: '9876543210',
+      phone: '01012345678',
       medicalHistory: {
         drugAllergies: 'Penicillin',
         hasDiabetes: false,
@@ -850,7 +850,7 @@ describe('GET /api/ai/usage', () => {
     expect(data.allTime.executions).toBe(300)
     expect(data.allTime.insights).toBe(25)
     expect(data.allTime.tokens).toBe(500000)
-    expect(data.allTime.costINR).toBe(120.5)
+    expect(data.allTime.costEGP).toBe(120.5)
     expect(data.thisMonth.executions).toBe(45)
     expect(data.thisMonth.tokens).toBe(100000)
     expect(data.skillBreakdown).toBeDefined()
@@ -929,7 +929,7 @@ describe('POST /api/ai/clinical', () => {
         firstName: 'Alice',
         lastName: 'Smith',
         age: 32,
-        phone: '9876543210',
+        phone: '01012345678',
         aiSummary: null,
         aiSummaryAt: null,
       } as any)
@@ -1024,7 +1024,7 @@ describe('POST /api/ai/clinical', () => {
           patientId: 'PAT-001',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           email: null,
           dateOfBirth: null,
         },
@@ -1054,7 +1054,7 @@ describe('POST /api/ai/clinical', () => {
           type: 'duplicate_check',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
         }),
       })
       const res = await clinicalPOST(req)

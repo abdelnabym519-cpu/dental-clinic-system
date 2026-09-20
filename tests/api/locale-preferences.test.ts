@@ -269,8 +269,8 @@ describe('/api/patient-portal/profile', () => {
   it('returns the override and the resolved locale', async () => {
     signedInAsPatient()
     prisma.patient.findUnique.mockResolvedValue({
-      firstName: 'Ravi',
-      lastName: 'Kumar',
+      firstName: 'Omar',
+      lastName: 'Khaled',
       locale: 'en-US',
       hospital: { locale: 'ar-EG' },
     })

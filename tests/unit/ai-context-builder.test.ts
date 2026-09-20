@@ -65,8 +65,8 @@ function makeMockPatient(overrides: Record<string, unknown> = {}) {
   return {
     id: 'pat-001',
     patientId: 'PAT-2025-001',
-    firstName: 'Ramesh',
-    lastName: 'Kumar',
+    firstName: 'Mohamed',
+    lastName: 'Ahmed',
     age: 45,
     gender: 'Male',
     hospitalId: 'hosp-001',
@@ -176,7 +176,7 @@ describe('buildContext', () => {
       expect(ctx.patient).toBeDefined()
       expect(ctx.patient!.id).toBe('pat-001')
       expect(ctx.patient!.patientId).toBe('PAT-2025-001')
-      expect(ctx.patient!.name).toBe('Ramesh Kumar')
+      expect(ctx.patient!.name).toBe('Mohamed Ahmed')
       expect(ctx.patient!.age).toBe(45)
       expect(ctx.patient!.gender).toBe('Male')
     })
@@ -719,7 +719,7 @@ describe('serializeContext', () => {
       patient: {
         id: 'pat-001',
         patientId: 'PAT-2025-001',
-        name: 'Ramesh Kumar',
+        name: 'Mohamed Ahmed',
         age: 45,
         gender: 'Male',
         medicalFlags: ['Diabetes (Type 2)', 'Hypertension'],
@@ -737,7 +737,7 @@ describe('serializeContext', () => {
     it('includes patient name and ID', () => {
       const result = serializeContext(fullCtx)
 
-      expect(result).toContain('Patient: Ramesh Kumar | ID: PAT-2025-001')
+      expect(result).toContain('Patient: Mohamed Ahmed | ID: PAT-2025-001')
     })
 
     it('includes age and gender', () => {
@@ -758,10 +758,10 @@ describe('serializeContext', () => {
       expect(result).toContain('Current medications: Metformin 500mg')
     })
 
-    it('includes outstanding balance with rupee formatting', () => {
+    it('includes outstanding balance with EGP formatting', () => {
       const result = serializeContext(fullCtx)
 
-      expect(result).toMatch(/Outstanding balance: ₹[\d,]+/)
+      expect(result).toMatch(/Outstanding balance: EGP [\d,]+/)
     })
 
     it('includes risk score out of 100', () => {
@@ -878,7 +878,7 @@ describe('serializeContext', () => {
         patient: {
           id: 'pat-001',
           patientId: 'PAT-2025-001',
-          name: 'Ramesh Kumar',
+          name: 'Mohamed Ahmed',
           age: 45,
           gender: 'Male',
           medicalFlags: [],

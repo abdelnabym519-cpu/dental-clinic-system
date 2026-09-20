@@ -5,16 +5,16 @@
 
 export interface GatewayOrder {
   orderId: string // Gateway's order/transaction ID
-  amount: number // Amount in smallest currency unit (paise)
+  amount: number // Amount in smallest currency unit (piasters)
   currency: string
   receipt: string // Our invoice reference
-  provider: string // razorpay / phonepe / paytm
+  provider: string // fawry / paymob / instapay
   status: string
   metadata?: Record<string, unknown>
 }
 
 export interface CreateOrderParams {
-  amount: number // Amount in INR (rupees, not paise)
+  amount: number // Amount in EGP (pounds, not piasters)
   currency: string
   invoiceId: string
   receipt: string // Invoice number
@@ -45,7 +45,7 @@ export interface CheckoutConfig {
 
 export interface RefundParams {
   paymentId: string
-  amount: number // Amount in INR (rupees)
+  amount: number // Amount in EGP (pounds)
   reason?: string
 }
 
@@ -59,17 +59,15 @@ export interface RefundResult {
 export interface GatewayCredentials {
   provider: string
   isLiveMode: boolean
-  // Razorpay
-  razorpayKeyId?: string
-  razorpayKeySecret?: string
-  // PhonePe
-  phonepeMerchantId?: string
-  phonepeSaltKey?: string
-  phonepeSaltIndex?: string
-  // Paytm
-  paytmMid?: string
-  paytmMerchantKey?: string
-  paytmWebsite?: string
+  // Fawry
+  fawryMerchantCode?: string
+  fawrySecretKey?: string
+  // Paymob
+  paymobApiKey?: string
+  paymobIntegrationId?: string
+  paymobIframeId?: string
+  // InstaPay
+  instapayHandle?: string
   // Webhook
   webhookSecret?: string
 }

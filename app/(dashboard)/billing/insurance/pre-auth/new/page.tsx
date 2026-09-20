@@ -319,7 +319,7 @@ export default function NewPreAuthPage() {
                     />
                   </div>
                   <div className="col-span-3">
-                    {i === 0 && <Label className="text-xs">Cost (₹) *</Label>}
+                    {i === 0 && <Label className="text-xs">Cost (EGP ) *</Label>}
                     <Input
                       type="number"
                       placeholder="0"

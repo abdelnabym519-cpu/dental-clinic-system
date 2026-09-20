@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Edit,
   BadgeCheck,
-  IndianRupee,
+  Banknote,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/billing-utils'
 
@@ -479,7 +479,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   type="number"
                   value={form.annualMaximum}
                   onChange={(e) => setForm({ ...form, annualMaximum: e.target.value })}
-                  placeholder="₹"
+                  placeholder="EGP "
                 />
               </div>
               <div>
@@ -488,7 +488,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   type="number"
                   value={form.deductible}
                   onChange={(e) => setForm({ ...form, deductible: e.target.value })}
-                  placeholder="₹"
+                  placeholder="EGP "
                 />
               </div>
               <div>

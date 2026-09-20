@@ -44,13 +44,13 @@ import {
   formatCurrency,
   formatDate,
   formatPhone,
-  validateAadhar,
-  validateIndianPhone,
-  validateGSTIN,
+  validateNationalId,
+  validateEgyptianPhone,
+  validateTaxId,
 } from '@/lib/utils'
 import {
-  gstConfig,
-  calculateGST,
+  vatConfig,
+  calculateVAT,
   discountTypeConfig,
   formatCurrency as billingFormatCurrency,
   numberToWords,
@@ -145,116 +145,106 @@ describe('Section 10.1 — Current Locale (Egypt)', () => {
   // ─── Phone Number Format ────────────────────────────────────────────
 
   describe('Phone Number Format', () => {
-    it('formatPhone adds +91 prefix for 10-digit number', () => {
-      const result = formatPhone('9876543210')
-      expect(result).toBe('+91 98765 43210')
+    it('formatPhone formats Egyptian local numbers with the +20 country code', () => {
+      const result = formatPhone('01012345678')
+      expect(result).toBe('+20 101 234 5678')
     })
 
-    it('formatPhone handles 12-digit number with 91 prefix', () => {
-      const result = formatPhone('919876543210')
-      expect(result).toBe('+91 98765 43210')
+    it('formatPhone handles the 20-prefixed country-code form', () => {
+      const result = formatPhone('201012345678')
+      expect(result).toBe('+20 101 234 5678')
     })
 
-    it('validateIndianPhone accepts valid numbers starting with 6', () => {
-      expect(validateIndianPhone('6123456789')).toBe(true)
+    it('validateEgyptianPhone accepts the four Egyptian prefixes', () => {
+      expect(validateEgyptianPhone('01012345678')).toBe(true)
+      expect(validateEgyptianPhone('01112345678')).toBe(true)
+      expect(validateEgyptianPhone('01212345678')).toBe(true)
+      expect(validateEgyptianPhone('01512345678')).toBe(true)
     })
 
-    it('validateIndianPhone accepts valid numbers starting with 7', () => {
-      expect(validateIndianPhone('7123456789')).toBe(true)
+    it('validateEgyptianPhone accepts +20 country-code forms', () => {
+      expect(validateEgyptianPhone('+201012345678')).toBe(true)
+      expect(validateEgyptianPhone('+20 101 234 5678')).toBe(true)
     })
 
-    it('validateIndianPhone accepts valid numbers starting with 8', () => {
-      expect(validateIndianPhone('8123456789')).toBe(true)
+    it('validateEgyptianPhone rejects non-Egyptian prefixes', () => {
+      expect(validateEgyptianPhone('03012345678')).toBe(false)
+      expect(validateEgyptianPhone('01412345678')).toBe(false)
+      expect(validateEgyptianPhone('06123456789')).toBe(false)
     })
 
-    it('validateIndianPhone accepts valid numbers starting with 9', () => {
-      expect(validateIndianPhone('9123456789')).toBe(true)
-    })
-
-    it('validateIndianPhone rejects numbers starting with 0-5', () => {
-      expect(validateIndianPhone('0123456789')).toBe(false)
-      expect(validateIndianPhone('1234567890')).toBe(false)
-      expect(validateIndianPhone('2345678901')).toBe(false)
-      expect(validateIndianPhone('3456789012')).toBe(false)
-      expect(validateIndianPhone('4567890123')).toBe(false)
-      expect(validateIndianPhone('5678901234')).toBe(false)
-    })
-
-    it('validateIndianPhone rejects wrong length', () => {
-      expect(validateIndianPhone('98765')).toBe(false)
-      expect(validateIndianPhone('987654321')).toBe(false) // 9 digits
-      expect(validateIndianPhone('98765432101')).toBe(false) // 11 digits
+    it('validateEgyptianPhone rejects wrong length', () => {
+      expect(validateEgyptianPhone('0101234567')).toBe(false) // 10 digits
+      expect(validateEgyptianPhone('010123456789')).toBe(false) // 12 digits
     })
   })
 
   // ─── GST Format ─────────────────────────────────────────────────────
 
-  describe('GST Format', () => {
-    it('gstConfig has CGST 9% and SGST 9%', () => {
-      expect(gstConfig.cgstRate).toBe(9)
-      expect(gstConfig.sgstRate).toBe(9)
+  describe('VAT Format', () => {
+    it('vatConfig uses the Egyptian standard rate of 14%', () => {
+      expect(vatConfig.rate).toBe(14)
     })
 
-    it('calculateGST(1000) gives 90 CGST + 90 SGST = 180 tax, 1180 total', () => {
-      const result = calculateGST(1000)
-      expect(result.cgstAmount).toBe(90)
-      expect(result.sgstAmount).toBe(90)
-      expect(result.totalTax).toBe(180)
-      expect(result.grandTotal).toBe(1180)
+    it('calculateVAT(1000) gives 140 tax, 1140 total', () => {
+      const result = calculateVAT(1000)
+      expect(result.vatAmount).toBe(140)
+      expect(result.totalTax).toBe(140)
+      expect(result.grandTotal).toBe(1140)
     })
 
-    it('GST is 18% total (standard Indian goods & services tax)', () => {
-      expect(gstConfig.cgstRate + gstConfig.sgstRate).toBe(18)
-      expect(gstConfig.igstRate).toBe(18)
+    it('VAT is the single Egyptian rate (no split components)', () => {
+      expect(vatConfig.defaultTaxable).toBe(true)
     })
   })
 
   // ─── Aadhaar Validation ─────────────────────────────────────────────
 
-  describe('Aadhaar Validation', () => {
-    it('validateAadhar accepts 12-digit numbers', () => {
-      expect(validateAadhar('123456789012')).toBe(true)
+  describe('National ID Validation', () => {
+    it('validateNationalId accepts 14-digit numbers', () => {
+      expect(validateNationalId('29801011201234')).toBe(true)
     })
 
     it('rejects shorter numbers', () => {
-      expect(validateAadhar('12345678901')).toBe(false) // 11 digits
+      expect(validateNationalId('2980101120123')).toBe(false) // 13 digits
     })
 
     it('rejects longer numbers', () => {
-      expect(validateAadhar('1234567890123')).toBe(false) // 13 digits
+      expect(validateNationalId('298010112012345')).toBe(false) // 15 digits
     })
 
     it('handles formatted input with spaces', () => {
-      expect(validateAadhar('1234 5678 9012')).toBe(true)
+      expect(validateNationalId('2980 1011 2012 34')).toBe(true)
     })
 
     it('handles formatted input with dashes', () => {
-      expect(validateAadhar('1234-5678-9012')).toBe(true)
+      expect(validateNationalId('2980-1011-2012-34')).toBe(true)
     })
   })
 
   // ─── Number to Words (Indian) ───────────────────────────────────────
 
-  describe('Number to Words (Indian)', () => {
-    it('numberToWords(1) returns "One Rupees Only"', () => {
-      expect(numberToWords(1)).toBe('One Rupees Only')
+  describe('Number to Words (Egyptian)', () => {
+    it('numberToWords(1) returns "One Egyptian Pounds Only"', () => {
+      expect(numberToWords(1)).toBe('One Egyptian Pounds Only')
     })
 
-    it('numberToWords(100000) contains "Lakh" (not "Hundred Thousand")', () => {
+    it('numberToWords(100000) uses international grouping (no "Lakh")', () => {
       const result = numberToWords(100000)
-      expect(result).toContain('Lakh')
-      expect(result).not.toContain('Hundred Thousand')
+      expect(result).toContain('Hundred Thousand')
+      expect(result).not.toContain('Lakh')
     })
 
-    it('numberToWords(10000000) contains "Crore"', () => {
+    it('numberToWords(10000000) contains "Million" (no "Crore")', () => {
       const result = numberToWords(10000000)
-      expect(result).toContain('Crore')
+      expect(result).toContain('Million')
+      expect(result).not.toContain('Crore')
     })
 
-    it('numberToWords(1500.50) contains "Rupees" and "Paise"', () => {
+    it('numberToWords(1500.50) contains "Egyptian Pounds" and "Piasters"', () => {
       const result = numberToWords(1500.5)
-      expect(result).toContain('Rupees')
-      expect(result).toContain('Paise')
+      expect(result).toContain('Egyptian Pounds')
+      expect(result).toContain('Piasters')
     })
 
     it('numberToWords(0) returns "Zero"', () => {
@@ -264,48 +254,25 @@ describe('Section 10.1 — Current Locale (Egypt)', () => {
 
   // ─── GSTIN Validation ──────────────────────────────────────────────
 
-  describe('GSTIN Validation', () => {
-    it('accepts valid GSTIN (27AAPFU0939F1ZV)', () => {
-      expect(validateGSTIN('27AAPFU0939F1ZV')).toBe(true)
+  describe('Tax ID Validation', () => {
+    it('accepts a 9-digit Egyptian tax registration number', () => {
+      expect(validateTaxId('123456789')).toBe(true)
     })
 
-    it('accepts valid GSTIN from different states', () => {
-      // State code 07 = Delhi
-      expect(validateGSTIN('07AAPFU0939F1ZV')).toBe(true)
-      // State code 33 = Tamil Nadu
-      expect(validateGSTIN('33AAPFU0939F1ZV')).toBe(true)
+    it('rejects shorter numbers', () => {
+      expect(validateTaxId('12345678')).toBe(false)
     })
 
-    it('rejects GSTIN shorter than 15 characters', () => {
-      expect(validateGSTIN('27AAPFU0939F')).toBe(false)
+    it('rejects longer numbers', () => {
+      expect(validateTaxId('1234567890')).toBe(false)
     })
 
-    it('rejects GSTIN longer than 15 characters', () => {
-      expect(validateGSTIN('27AAPFU0939F1ZVXX')).toBe(false)
-    })
-
-    it('rejects GSTIN with invalid state code (00)', () => {
-      expect(validateGSTIN('00AAPFU0939F1ZV')).toBe(false)
-    })
-
-    it('rejects GSTIN with state code > 37', () => {
-      expect(validateGSTIN('99AAPFU0939F1ZV')).toBe(false)
+    it('rejects non-numeric input', () => {
+      expect(validateTaxId('12345A789')).toBe(false)
     })
 
     it('rejects empty string', () => {
-      expect(validateGSTIN('')).toBe(false)
-    })
-
-    it('rejects lowercase GSTIN', () => {
-      expect(validateGSTIN('27aapfu0939f1zv')).toBe(false)
-    })
-
-    it('rejects GSTIN without Z in 13th position', () => {
-      expect(validateGSTIN('27AAPFU0939F1AV')).toBe(false)
-    })
-
-    it('rejects GSTIN with special characters', () => {
-      expect(validateGSTIN('27AAPFU0939F1Z!')).toBe(false)
+      expect(validateTaxId('')).toBe(false)
     })
   })
 

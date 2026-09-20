@@ -104,9 +104,9 @@ export default function DashboardPage() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -442,7 +442,7 @@ export default function DashboardPage() {
                     formatter={(value, _name, item) => {
                       if (typeof value !== 'number') return ''
                       // Match on dataKey, not name: the <Bar> sets a display
-                      // name ("Revenue (₹)"), and that is what recharts passes
+                      // name ("Revenue (EGP )"), and that is what recharts passes
                       // as `name`, so comparing it to 'revenue' never matched.
                       if (item?.dataKey === 'revenue') return formatCurrency(value)
                       return value
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                   />
                   <Legend />
                   <Bar yAxisId="left" dataKey="count" fill="#8884d8" name="Count" />
-                  <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue (₹)" />
+                  <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue (EGP )" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (

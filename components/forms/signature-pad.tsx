@@ -239,7 +239,7 @@ export function SignaturePad({
       </div>
       <p className="text-xs text-muted-foreground">
         Signed on:{' '}
-        {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+        {new Date().toLocaleDateString('en-EG', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
     </div>
   )

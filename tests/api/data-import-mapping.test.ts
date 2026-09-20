@@ -40,7 +40,7 @@ describe('POST /api/data-import/ai-mapping', () => {
       hospitalId: 'hospital-1',
       entityType: 'patients',
       sourceColumns: ['Name', 'Mobile', 'DOB'],
-      previewData: [{ Name: 'John Doe', Mobile: '9876543210', DOB: '1990-01-15' }],
+      previewData: [{ Name: 'John Doe', Mobile: '01012345678', DOB: '1990-01-15' }],
     })
 
     const aiResponse = JSON.stringify({

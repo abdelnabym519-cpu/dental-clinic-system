@@ -204,7 +204,7 @@ export default function FormsSettingsPage() {
                     </TableCell>
                     <TableCell className="text-right">{t._count.submissions}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {new Date(t.createdAt).toLocaleDateString('en-IN')}
+                      {new Date(t.createdAt).toLocaleDateString('en-EG')}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

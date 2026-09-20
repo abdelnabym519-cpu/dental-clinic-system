@@ -58,7 +58,7 @@ test.describe('Payment Recording Workflow', () => {
       await page.waitForTimeout(1000)
       await expect(
         page
-          .getByText(/₹|INR|amount/i)
+          .getByText(/EGP|amount/i)
           .first()
           .or(page.getByText(/no.*payment|no.*data/i).first())
           .first()

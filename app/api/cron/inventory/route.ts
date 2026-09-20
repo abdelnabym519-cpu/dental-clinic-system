@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/cron/inventory
- * Scheduled: daily 06:00 IST
+ * Scheduled: daily 06:00 Africa/Cairo
  * Analyses upcoming procedures (next 14 days), estimates material needs,
  * compares with current stock, and creates alerts for items that will run out.
  */

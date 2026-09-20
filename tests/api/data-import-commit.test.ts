@@ -68,7 +68,7 @@ describe('POST /api/data-import/commit', () => {
     mockParsers.parseFile.mockResolvedValue({
       columns: ['Name', 'Phone'],
       rows: [
-        { Name: 'John Doe', Phone: '9876543210' },
+        { Name: 'John Doe', Phone: '01012345678' },
         { Name: 'Jane Smith', Phone: '9876543211' },
       ],
       totalRows: 2,
@@ -156,7 +156,7 @@ describe('POST /api/data-import/commit', () => {
     mockParsers.parseFile.mockResolvedValue({
       columns: ['Name', 'Phone'],
       rows: [
-        { Name: 'John Doe', Phone: '9876543210' },
+        { Name: 'John Doe', Phone: '01012345678' },
         { Name: '', Phone: '' }, // missing required fields
       ],
       totalRows: 2,

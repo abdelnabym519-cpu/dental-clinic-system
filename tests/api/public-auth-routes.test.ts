@@ -52,7 +52,7 @@ const validSignup = {
   hospitalName: 'Test Dental Clinic',
   adminName: 'John Doe',
   email: 'admin@testdental.com',
-  phone: '9876543210',
+  phone: '01012345678',
   password: 'secureP@ss123',
 }
 

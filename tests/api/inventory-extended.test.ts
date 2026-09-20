@@ -219,7 +219,7 @@ describe('POST /api/inventory/suppliers', () => {
       makeReq('/api/inventory/suppliers', 'POST', {
         code: 'SUP001',
         name: 'Acme',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     expect(res.status).toBe(409)
@@ -234,7 +234,7 @@ describe('POST /api/inventory/suppliers', () => {
       makeReq('/api/inventory/suppliers', 'POST', {
         code: 'SUP002',
         name: 'New Supplier',
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     const body = await res.json()

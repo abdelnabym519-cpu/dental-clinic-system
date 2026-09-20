@@ -147,7 +147,7 @@ describe('8.1 CRUD Operations', () => {
         id: PATIENT_ID,
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalId: HOSPITAL_A,
       })
 
@@ -156,7 +156,7 @@ describe('8.1 CRUD Operations', () => {
         body: JSON.stringify({
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           gender: 'MALE',
         }),
       })

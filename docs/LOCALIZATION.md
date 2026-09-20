@@ -1,107 +1,68 @@
-# Localization & Internationalization
+# Localization — Arabic (Egypt) first, bilingual by design
 
-**Status:** step 1 (locale plumbing) is implemented, including the per-person
-locale override described in §2.1; steps 2–5 are still proposals. See §3 for the
-running order.
+Dentora is built for Egyptian dental clinics, and that assumption is
+deliberately baked into the product rather than patched over:
 
-DentalERP was built for Indian dental clinics, and that assumption is not confined
-to display strings — it reaches into the invoice schema, the tax maths and the seed
-data. This document maps what is actually India-specific today, proposes an
-architecture, and suggests an order of work.
+- **Arabic (ar-EG, RTL)** is the primary locale and the first-boot default.
+- **Egyptian English (en-EG)** and **international English (en-US)** are the
+  secondary locales. The retired `en-IN` locale is not supported anywhere;
+  legacy records fall through the resolution cascade to the clinic's locale.
+- Currency is **EGP (ج.م)** everywhere, formatted through the single
+  locale-aware formatter (`lib/i18n/format.ts`) — never a raw glyph in markup.
+- Tax is **Egyptian VAT at 14%**, a single rate. The legacy
+  `cgstRate/cgstAmount` columns carry it (`sgstRate/sgstAmount` stay 0 for
+  backwards compatibility); the UI shows one "VAT (14%)" row.
+- Timezone is **Africa/Cairo** end to end: locale defaults, scheduling,
+  calendar integrations, and message templates.
+- Phone numbers are Egyptian mobiles — `01XXXXXXXXX` local
+  (010/011/012/015) or `+20 1X…` international — validated by
+  `validateEgyptianPhone()` in `lib/utils.ts`.
+- Addresses use the **27 Egyptian governorates**; postal codes are 5-digit.
+- Payment rails are **Fawry, Paymob (Accept) and InstaPay**, plus cash,
+  bank cards, mobile wallets (Vodafone Cash / Orange / Etisalat), bank
+  transfer and cheque.
 
-## 1. Where we are
+This document maps what is locale-aware today, how resolution works, and the
+conventions contributors must follow.
 
-`next-intl` is wired up and `lib/i18n/` holds the locale config, the request
-config and the one formatting module. What remains is the volume: every
-user-facing string is still a literal in a `.tsx` file, and the tax model is
-still India-shaped.
+## 1. What is localized today
 
-The counts below are what step 2 onwards has to work through:
+| Concern            | Implementation                                                        |
+| ------------------ | --------------------------------------------------------------------- |
+| Currency & numbers | `lib/i18n/format.ts` — single `Intl`-based module                      |
+| Dates & times      | `lib/i18n/format.ts` + `Africa/Cairo` from `lib/i18n/config.ts`        |
+| UI strings         | `messages/ar-EG.json`, `messages/en-US.json` via `next-intl`           |
+| Locale resolution  | `lib/i18n/request.ts` cascade (see §2.1)                               |
+| `<html lang/dir>`  | `app/layout.tsx` — cookie choice → default; `directionFor()`          |
+| Tax                | `vatConfig` / `calculateVAT()` in `lib/billing-utils.ts` (VAT 14%)     |
+| Phones             | `validateEgyptianPhone()` in `lib/utils.ts`                            |
+| Seeds              | `prisma/seed.ts` — Egyptian clinic, staff, patients, suppliers         |
+| Payment gateways   | `lib/payment-gateways/` — Fawry, Paymob, InstaPay adapters             |
 
-| Coupling                      | Count | Where                                 |
-| ----------------------------- | ----- | ------------------------------------- |
-| `en-IN` locale literals       | 90    | `lib/`, `components/`, `app/`         |
-| `₹` glyph hardcoded in markup | 91    | mostly `app/(dashboard)/**`           |
-| `'INR'` currency literals     | 28    | formatting helpers and chart tooltips |
-
-`lib/utils.ts`, `lib/billing-utils.ts` and `lib/treatment-utils.ts` used to
-carry three near-duplicate `formatCurrency`/`formatDate` pairs, each hardcoding
-`en-IN` with slightly different fraction-digit rules. They now delegate to
-[`lib/i18n/format.ts`](../lib/i18n/format.ts) and keep their own defaults, so
-their output is byte-identical to before. Each also takes an optional `locale`
-argument, which is the seam the rest of the work hangs off.
-
-### The parts that are not strings
-
-This is the half that makes localization more than a find-and-replace.
-
-1. **Taxation.** [`lib/billing-utils.ts:210`](../lib/billing-utils.ts#L210) defines
-   `gstConfig` (`cgstRate: 9`, `sgstRate: 9`, `igstRate: 18`) and
-   [`calculateGST()`](../lib/billing-utils.ts#L218) computes a CGST/SGST split.
-   The `Invoice` model stores that split as first-class columns —
-   `cgstRate`, `sgstRate`, `cgstAmount`, `sgstAmount` in
-   [`prisma/schema.prisma`](../prisma/schema.prisma). **A schema shaped like this
-   cannot represent EU VAT, US state + local sales tax, or a zero-rated
-   medical exemption.** This is the single largest piece of work.
-
-2. **Amount in words.** [`numberToWords()`](../lib/billing-utils.ts#L572) prints
-   invoice totals using the Indian numbering system (`Thousand`, `Lakh`, `Crore`)
-   and splits into rupees/paise. Short-scale locales need `Million` / `Billion`.
-
-3. **Clinic identity fields.** The `Hospital` model carries `gstNumber`,
-   `panNumber`, `bankIfsc`, `upiId`, `pincode` and a free-text `state` — all
-   India-specific, none optional in the UI.
-
-4. **Address forms.** Hardcoded Indian state dropdowns appear in
-   `app/(dashboard)/onboarding/page.tsx`, `patients/new/page.tsx`,
-   `staff/new/page.tsx`, `settings/clinic/page.tsx` and `lab/vendors/page.tsx`.
-
-5. **Seed data.** [`prisma/seed.ts`](../prisma/seed.ts) seeds an Indian medication
-   list and a procedure catalogue. Which drugs may be prescribed is a matter of
-   national regulation, so this data is inherently per-country.
-
-## 2. Proposed architecture
-
-### Framework: `next-intl`
-
-Recommended over the alternatives for this codebase:
-
-- **App Router native.** The app is Next.js 16 App Router. `next-intl` works in
-  Server Components, so pages stay server-rendered and the full message catalogue
-  is not shipped to the browser.
-- **`next-i18next` is not an option** — it is Pages Router only.
-- **`react-i18next`** works but pushes components toward `"use client"` and a
-  larger bundle.
-- It builds on the `Intl` primitives we already need for currency and dates, so
-  one API covers strings, numbers, dates, plurals and relative time.
-
-The choice is deliberately reversible: the message-catalogue layout below is
-essentially identical under `react-i18next`, so switching later is mechanical.
-
-### Locale resolution: per-clinic, not per-URL
+## 2. Locale resolution: per-clinic, not per-URL
 
 This is a logged-in B2B application, not a public marketing site. The locale
-should hang off the **`Hospital` record**, not a `/[locale]/` URL segment — that
+hangs off the **`Hospital` record**, not a `/[locale]/` URL segment — that
 avoids restructuring every route in `app/(dashboard)/`.
 
-On the `Hospital` model (already added):
+On the `Hospital` model:
 
 ```prisma
-locale    String @default("en-IN")  // BCP 47
-country   String @default("IN")     // ISO 3166-1 alpha-2, drives the tax provider
-currency  String @default("INR")    // ISO 4217
-timezone  String @default("Asia/Kolkata")
+locale    String @default("ar-EG")       // BCP 47
+country   String @default("EG")          // ISO 3166-1 alpha-2
+currency  String @default("EGP")         // ISO 4217
+timezone  String @default("Africa/Cairo")
 ```
 
-The patient-facing surfaces — the patient portal, public booking and public
-payment pages — resolve the locale from the clinic being booked, with an optional
-override for the patient's own preference. That override is §2.1.
+Patient-facing surfaces — the patient portal, public booking and public
+payment pages — resolve the locale from the clinic being booked, with an
+optional override for the patient's own preference.
 
 ### 2.1 The resolution cascade — implemented
 
-`Hospital.locale` is the clinic's setting. `User.locale` and `Patient.locale` sit
-on top of it as personal overrides. Resolution walks from most specific to least
-and takes the first **supported** value:
+`Hospital.locale` is the clinic's setting. `User.locale` and `Patient.locale`
+sit on top of it as personal overrides. Resolution walks from most specific to
+least and takes the first **supported** value:
 
 | Surface                   | Resolution                                     | Entry point                                                |
 | ------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
@@ -124,7 +85,7 @@ model User {
 ```
 
 A default would make "never expressed a preference" indistinguishable from
-"explicitly chose en-IN", so a clinic changing its own locale would silently
+"explicitly chose en-EG", so a clinic changing its own locale would silently
 fail to propagate to everyone who had never touched the setting.
 
 Three behaviours follow from that, covered by
@@ -136,117 +97,57 @@ for what the endpoints actually write:
 - **Clearing the picker persists `NULL`**, not the clinic's current value.
   Re-selecting whatever the clinic uses today would pin the user to it.
 - **An unsupported stored value falls through to the next candidate**, not
-  straight to the default. If a locale is retired, its users should land on
-  their clinic's locale. This is why resolution uses
-  `resolveLocaleCascade(...candidates)` rather than
+  straight to the default. If a locale is retired (as `en-IN` was during the
+  Egyptian pivot), its users should land on their clinic's locale. This is why
+  resolution uses `resolveLocaleCascade(...candidates)` rather than
   `resolveLocale(user ?? clinic)` — the latter treats a non-null unsupported
   value as a decision and skips the clinic entirely.
-- **`?lang=` is never written anywhere.** An anonymous visitor has no account to
-  store it against, and persisting it would let a shared link change what other
-  visitors see.
+- **`?lang=` is never written anywhere.** An anonymous visitor has no account
+  to store it against, and persisting it would let a shared link change what
+  other visitors see.
 
 Failure is never fatal: no session, an unreachable database or a retired locale
 all resolve to the default rather than throwing. Formatting must not be able to
 take a page down.
 
-**What the override currently changes.** Number and date formatting, and how
-amounts are grouped and punctuated — not which currency the clinic bills in, and
-not the interface language, because no component calls `useTranslations` yet.
-That is step 2 below.
+**What the override changes.** Interface language, number and date formatting,
+and how amounts are grouped and punctuated — not which currency the clinic
+bills in. Currency follows the clinic (`EGP`).
 
-### Layout
+## 3. Layout
 
 ```
 messages/
-  en-IN.json
-  en-US.json
-  de-DE.json          # etc.
+  ar-EG.json         # primary locale (RTL)
+  en-US.json         # English catalogue
 lib/i18n/
-  config.ts           # supported locales, default, resolution helpers
-  request.ts          # next-intl getRequestConfig — reads Hospital.locale
-  format.ts           # the single locale-aware currency/date/number module
-lib/tax/
-  types.ts            # TaxProvider interface
-  providers/
-    india-gst.ts      # extracted from lib/billing-utils.ts
-    eu-vat.ts
-    us-sales-tax.ts
-  index.ts            # registry: country code -> provider
-prisma/seed-data/
-  IN/{medications,procedures}.ts
-  US/{medications,procedures}.ts
+  config.ts          # supported locales, default, resolution helpers
+  request.ts         # next-intl getRequestConfig — reads the cascade
+  format.ts          # the single locale-aware currency/date/number module
+lib/payment-gateways/
+  fawry.ts           # Fawry IPC charge API (sha256-signed)
+  paymob.ts          # Paymob Accept (auth → order → payment key → iframe)
+  instapay.ts        # InstaPay references + handle-based transfers
+prisma/seed.ts       # Egyptian clinic, staff, patients, catalogue
 ```
-
-### The tax abstraction
-
-The key move is to stop treating "CGST + SGST" as the shape of tax and start
-treating it as _one_ possible breakdown:
-
-```ts
-export interface TaxComponent {
-  code: string // 'CGST' | 'SGST' | 'VAT' | 'STATE_SALES_TAX'
-  label: string // display name, localized
-  rate: number // percent
-  amount: number
-}
-
-export interface TaxResult {
-  taxableAmount: number
-  components: TaxComponent[]
-  totalTax: number
-  grandTotal: number
-}
-
-export interface TaxProvider {
-  readonly country: string
-  calculate(
-    lineItems: TaxableLineItem[],
-    context: { placeOfSupply?: string; clinicRegion?: string }
-  ): TaxResult
-}
-```
-
-`IndiaGSTProvider` reproduces today's behaviour exactly, including the
-intra-state (CGST+SGST) versus inter-state (IGST) split that `gstConfig` already
-anticipates but `calculateGST()` does not yet implement.
-
-On the schema side, `Invoice.cgstRate/sgstRate/cgstAmount/sgstAmount` are replaced
-by a single `taxComponents Json` column holding the serialized `TaxComponent[]`,
-with `taxAmount` retained as the scalar total for queries and reporting. The
-existing columns should be kept through one release and backfilled, so historical
-invoices keep rendering correctly — **an invoice must always re-render with the
-tax breakdown that was in force when it was issued**, never with today's rates.
-
-## 3. Suggested order of work
-
-Sequenced so that contributors are not editing the same files simultaneously.
-
-1. ~~**Locale plumbing.**~~ **Done.** `next-intl` wiring, the four `Hospital`
-   columns, and `lib/i18n/format.ts` — the single formatting module the three
-   former `formatCurrency`/`formatDate` copies now delegate to. Defaults are
-   unchanged (`en-IN`/INR), so this step is invisible to existing clinics.
-   The per-person override in §2.1 is part of this step: nullable `User.locale`
-   and `Patient.locale`, the resolution cascade, and a picker on both surfaces.
-   Also invisible by default — a clinic that changes nothing sees no change.
-2. **String extraction.** Move literals into `messages/en-IN.json`, one module at
-   a time (billing, then patients, then appointments…). Mechanical and highly
-   parallelizable once step 1 sets the conventions.
-3. **Tax provider abstraction** plus the schema migration and backfill.
-4. **Per-country seed data** — medications, procedures, state/region lists.
-5. **A second locale end-to-end** as the proof. A non-English, non-INR locale
-   (e.g. `de-DE`) exercises VAT, decimal-comma formatting and string expansion
-   all at once; a second _English_ locale would mostly exercise currency only.
 
 ## 4. Conventions
 
 - **Message keys** are namespaced by feature, not by page:
-  `billing.invoice.taxBreakdown`, not `invoicePage.label7`.
+  `billing.invoice.total`, not `invoicePage.label7`.
 - **Never concatenate translated fragments.** Use ICU message format with
   placeholders so translators control word order.
-- **No raw `₹` in markup.** Always go through the formatter — the symbol,
-  its position and the digit grouping are all locale-dependent
-  (`en-IN` groups as `1,00,000`; most locales as `100,000`).
-- **Dates in the database stay UTC.** Only presentation is localized.
+- **No raw `ج.م` or `EGP` in markup.** Always go through the formatter — the
+  symbol, its position and the digit grouping are all locale-dependent
+  (`ar-EG` renders `١٬٠٠٠٫٠٠ ج.م.‏`; `en-EG` renders `EGP 1,000.00`).
+- **Bilingual content (Arabic + English) is the default** for patient-facing
+  text: reminders, intake forms, payment instructions. Staff-only admin text
+  may be English-only, but Arabic-first is preferred.
+- **Dates in the database stay UTC.** Only presentation is localized; the
+  display timezone is Africa/Cairo.
 - **Clinical free text is not translated.** Patient notes, prescriptions and
   diagnoses are entered by clinicians and stored verbatim; machine-translating
   them would be a safety problem.
+- **Egyptian Arabic numerals**: `ar-EG` formats with Arabic-Indic digits by
+  default; the formatter accepts an explicit `numberingSystem` override for
+  screens where Latin digits are operationally clearer.

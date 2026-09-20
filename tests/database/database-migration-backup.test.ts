@@ -263,15 +263,15 @@ describe('8.3 Data Migration', () => {
 
     it('import validates required fields before commit', () => {
       const requiredPatientFields = ['firstName', 'lastName', 'phone']
-      const importRow = { firstName: 'Rahul', lastName: '', phone: '9876543210' }
+      const importRow = { firstName: 'Mohamed', lastName: '', phone: '01012345678' }
 
       const missingFields = requiredPatientFields.filter((f) => !importRow[f])
       expect(missingFields).toContain('lastName')
     })
 
     it('import detects duplicate records by unique fields', () => {
-      const existingPhones = ['9876543210', '9876543211']
-      const importPhone = '9876543210'
+      const existingPhones = ['01012345678', '9876543211']
+      const importPhone = '01012345678'
 
       const isDuplicate = existingPhones.includes(importPhone)
       expect(isDuplicate).toBe(true)
@@ -348,7 +348,7 @@ describe('8.4 Backup & Recovery', () => {
       const data: any = {}
 
       if (type === 'full' || type === 'patients') {
-        mockPrisma.patient.findMany.mockResolvedValue([{ id: 'p1', firstName: 'Rahul' }])
+        mockPrisma.patient.findMany.mockResolvedValue([{ id: 'p1', firstName: 'Mohamed' }])
         data.patients = await mockPrisma.patient.findMany({
           where: { hospitalId: 'h1' },
           include: { medicalHistory: true },
@@ -428,7 +428,7 @@ describe('8.4 Backup & Recovery', () => {
     it('backup handles null/undefined fields gracefully', () => {
       const record = {
         id: '1',
-        firstName: 'Rahul',
+        firstName: 'Mohamed',
         middleName: null,
         email: undefined,
         notes: '',

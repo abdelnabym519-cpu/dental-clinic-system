@@ -84,7 +84,7 @@ export default function ClinicSettingsPage() {
     website: '',
     address: '',
     city: '',
-    state: 'Tamil Nadu',
+    state: 'القاهرة',
     pincode: '',
     registrationNo: '',
     gstNumber: '',
@@ -120,7 +120,7 @@ export default function ClinicSettingsPage() {
           website: result.data.website || '',
           address: result.data.address || '',
           city: result.data.city || '',
-          state: result.data.state || 'Tamil Nadu',
+          state: result.data.state || 'القاهرة',
           pincode: result.data.pincode || '',
           registrationNo: result.data.registrationNo || '',
           gstNumber: result.data.gstNumber || '',
@@ -380,7 +380,7 @@ export default function ClinicSettingsPage() {
                   id="alternatePhone"
                   value={formData.alternatePhone}
                   onChange={(e) => handleChange('alternatePhone', e.target.value)}
-                  placeholder="9876543210"
+                  placeholder="01012345678"
                 />
               </div>
 
@@ -434,7 +434,7 @@ export default function ClinicSettingsPage() {
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleChange('city', e.target.value)}
-                  placeholder="Chennai"
+                  placeholder="القاهرة"
                   required
                 />
               </div>
@@ -450,7 +450,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="pincode">Pincode *</Label>
+                <Label htmlFor="pincode">Postal Code *</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}
@@ -482,22 +482,22 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="gstNumber">GST Number</Label>
+                <Label htmlFor="gstNumber">Tax ID (الرقم الضريبي)</Label>
                 <Input
                   id="gstNumber"
                   value={formData.gstNumber}
                   onChange={(e) => handleChange('gstNumber', e.target.value)}
-                  placeholder="29XXXXX1234X1ZX"
+                  placeholder="123456789"
                 />
               </div>
 
               <div>
-                <Label htmlFor="panNumber">PAN Number</Label>
+                <Label htmlFor="panNumber">Commercial Register (السجل التجاري)</Label>
                 <Input
                   id="panNumber"
                   value={formData.panNumber}
                   onChange={(e) => handleChange('panNumber', e.target.value)}
-                  placeholder="ABCDE1234F"
+                  placeholder="987654321"
                 />
               </div>
             </div>
@@ -578,7 +578,7 @@ export default function ClinicSettingsPage() {
                   id="bankName"
                   value={formData.bankName}
                   onChange={(e) => handleChange('bankName', e.target.value)}
-                  placeholder="State Bank of India"
+                  placeholder="البنك الأهلي المصري"
                 />
               </div>
 
@@ -593,22 +593,22 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="bankIfsc">IFSC Code</Label>
+                <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
                 <Input
                   id="bankIfsc"
                   value={formData.bankIfsc}
                   onChange={(e) => handleChange('bankIfsc', e.target.value)}
-                  placeholder="SBIN0001234"
+                  placeholder="NBEGEGCX"
                 />
               </div>
 
               <div>
-                <Label htmlFor="upiId">UPI ID</Label>
+                <Label htmlFor="upiId">InstaPay Handle</Label>
                 <Input
                   id="upiId"
                   value={formData.upiId}
                   onChange={(e) => handleChange('upiId', e.target.value)}
-                  placeholder="clinic@upi"
+                  placeholder="clinic@instapay"
                 />
               </div>
             </div>

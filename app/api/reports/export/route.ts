@@ -94,7 +94,7 @@ async function generateExcelReport(
       break
 
     case 'financial':
-      worksheet.addRow(['Metric', 'Value (INR)']).eachCell((cell) => {
+      worksheet.addRow(['Metric', 'Value (EGP)']).eachCell((cell) => {
         cell.style = headerStyle
       })
       worksheet.addRow(['Total Revenue', data.totalRevenue.toFixed(2)])
@@ -106,7 +106,7 @@ async function generateExcelReport(
 
       if (data.paymentMethodBreakdown.length > 0) {
         worksheet.addRow([]) // Empty row
-        worksheet.addRow(['Payment Method', 'Amount (INR)', 'Percentage']).eachCell((cell) => {
+        worksheet.addRow(['Payment Method', 'Amount (EGP)', 'Percentage']).eachCell((cell) => {
           cell.style = headerStyle
         })
         data.paymentMethodBreakdown.forEach((method: any) => {
@@ -151,7 +151,7 @@ async function generateExcelReport(
       if (data.staffProductivity.length > 0) {
         worksheet.addRow([]) // Empty row
         worksheet
-          .addRow(['Staff Member', 'Role', 'Appointments', 'Treatments', 'Revenue (INR)'])
+          .addRow(['Staff Member', 'Role', 'Appointments', 'Treatments', 'Revenue (EGP)'])
           .eachCell((cell) => {
             cell.style = headerStyle
           })
@@ -280,12 +280,12 @@ async function generatePDFReport(type: string, data: any, dateRange: string, hos
       ? `
     <h2>Financial Overview</h2>
     <table>
-      <tr><td class="metric">Total Revenue</td><td class="value">₹${data.totalRevenue.toFixed(2)}</td></tr>
-      <tr><td class="metric">Total Expenses</td><td class="value">₹${data.totalExpenses.toFixed(2)}</td></tr>
+      <tr><td class="metric">Total Revenue</td><td class="value">EGP ${data.totalRevenue.toFixed(2)}</td></tr>
+      <tr><td class="metric">Total Expenses</td><td class="value">EGP ${data.totalExpenses.toFixed(2)}</td></tr>
       <tr><td class="metric">Profit Margin</td><td class="value">${data.profitMargin.toFixed(2)}%</td></tr>
-      <tr><td class="metric">Avg. Bill Value</td><td class="value">₹${data.avgBillValue.toFixed(2)}</td></tr>
+      <tr><td class="metric">Avg. Bill Value</td><td class="value">EGP ${data.avgBillValue.toFixed(2)}</td></tr>
       <tr><td class="metric">Collection Efficiency</td><td class="value">${data.collectionEfficiency.toFixed(2)}%</td></tr>
-      <tr><td class="metric">Outstanding Amount</td><td class="value">₹${data.outstandingAmount.toFixed(2)}</td></tr>
+      <tr><td class="metric">Outstanding Amount</td><td class="value">EGP ${data.outstandingAmount.toFixed(2)}</td></tr>
     </table>
 
     ${
@@ -293,11 +293,11 @@ async function generatePDFReport(type: string, data: any, dateRange: string, hos
         ? `
       <h2>Payment Methods</h2>
       <table>
-        <tr><th>Method</th><th>Amount (₹)</th><th>Percentage</th></tr>
+        <tr><th>Method</th><th>Amount (EGP )</th><th>Percentage</th></tr>
         ${data.paymentMethodBreakdown
           .map(
             (m: any) => `
-          <tr><td>${m.method}</td><td>₹${m.amount.toFixed(2)}</td><td>${m.percentage.toFixed(2)}%</td></tr>
+          <tr><td>${m.method}</td><td>EGP ${m.amount.toFixed(2)}</td><td>${m.percentage.toFixed(2)}%</td></tr>
         `
           )
           .join('')}
@@ -330,11 +330,11 @@ async function generatePDFReport(type: string, data: any, dateRange: string, hos
         ? `
       <h2>Staff Productivity</h2>
       <table>
-        <tr><th>Staff</th><th>Role</th><th>Appointments</th><th>Treatments</th><th>Revenue (₹)</th></tr>
+        <tr><th>Staff</th><th>Role</th><th>Appointments</th><th>Treatments</th><th>Revenue (EGP )</th></tr>
         ${data.staffProductivity
           .map(
             (s: any) => `
-          <tr><td>${s.name}</td><td>${s.role}</td><td>${s.appointmentsHandled}</td><td>${s.treatmentsCompleted}</td><td>₹${s.revenue.toFixed(2)}</td></tr>
+          <tr><td>${s.name}</td><td>${s.role}</td><td>${s.appointmentsHandled}</td><td>${s.treatmentsCompleted}</td><td>EGP ${s.revenue.toFixed(2)}</td></tr>
         `
           )
           .join('')}

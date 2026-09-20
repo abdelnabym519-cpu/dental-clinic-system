@@ -111,7 +111,7 @@ describe('PaymentCheckout', () => {
 
     it('shows formatted amount', () => {
       render(<PaymentCheckout {...defaultProps} open={true} />)
-      // Amount should be formatted as INR currency
+      // Amount should be formatted as EGP currency
       const amountTexts = screen.getAllByText(/5,000/)
       expect(amountTexts.length).toBeGreaterThanOrEqual(1)
     })
@@ -133,20 +133,16 @@ describe('PaymentCheckout', () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          checkout: { provider: 'razorpay', key: 'rzp_test', amount: 500000, orderId: 'order_123' },
+          checkout: { provider: 'fawry', redirectUrl: 'https://atfawry.fawrystaging.com/pay/order_123' },
           order: { id: 'order_123' },
           hospital: { name: 'Test Clinic' },
-          patient: { name: 'John', email: 'john@test.com', phone: '9999999999' },
+          patient: { name: 'John', email: 'john@test.com', phone: '01012345678' },
         }),
       })
 
-      // Mock Razorpay constructor
-      const mockRazorpay = { open: vi.fn(), on: vi.fn() }
-      ;(window as any).Razorpay = vi.fn(() => mockRazorpay)
-
       render(<PaymentCheckout {...defaultProps} open={true} />)
 
-      // Find and click the "Pay ₹5,000" button (the main CTA)
+      // Find and click the "Pay EGP 5,000" button (the main CTA)
       const payButtons = screen.getAllByText(/Pay/)
       const mainPayBtn = payButtons.find((btn) =>
         btn.closest('button')?.textContent?.includes('5,000')
@@ -207,7 +203,7 @@ describe('PaymentCheckout', () => {
       })
     })
 
-    it('handles PhonePe redirect flow', async () => {
+    it('handles Fawry redirect flow', async () => {
       const originalHref = window.location.href
       delete (window as any).location
       ;(window as any).location = { href: '' }
@@ -215,7 +211,7 @@ describe('PaymentCheckout', () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          checkout: { provider: 'phonepe', redirectUrl: 'https://phonepe.com/pay/123' },
+          checkout: { provider: 'fawry', redirectUrl: 'https://atfawry.fawrystaging.com/pay/123' },
           order: {},
           hospital: { name: 'Test' },
           patient: { name: 'Test' },
@@ -227,7 +223,7 @@ describe('PaymentCheckout', () => {
       fireEvent.click(payButtons[payButtons.length - 1])
 
       await waitFor(() => {
-        expect(window.location.href).toBe('https://phonepe.com/pay/123')
+        expect(window.location.href).toBe('https://atfawry.fawrystaging.com/pay/123')
       })
 
       // Restore

@@ -75,7 +75,7 @@ export default function PatientAppointments() {
   }, [filter])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', {
+    new Date(d).toLocaleDateString('en-EG', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',

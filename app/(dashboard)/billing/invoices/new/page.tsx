@@ -33,14 +33,14 @@ import {
   Plus,
   Trash2,
   AlertCircle,
-  IndianRupee,
+  Banknote,
   Calculator,
   FileText,
 } from 'lucide-react'
 import {
   formatCurrency,
   calculateInvoiceTotals,
-  gstConfig,
+  vatConfig,
   paymentTermsOptions,
 } from '@/lib/billing-utils'
 
@@ -594,7 +594,7 @@ export default function NewInvoicePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="FIXED">₹ Fixed</SelectItem>
+                      <SelectItem value="FIXED">EGP  Fixed</SelectItem>
                       <SelectItem value="PERCENTAGE">% Percent</SelectItem>
                     </SelectContent>
                   </Select>
@@ -640,12 +640,8 @@ export default function NewInvoicePage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span>CGST ({gstConfig.cgstRate}%)</span>
+                  <span>VAT ({vatConfig.rate}%)</span>
                   <span>{formatCurrency(totals.cgstAmount)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>SGST ({gstConfig.sgstRate}%)</span>
-                  <span>{formatCurrency(totals.sgstAmount)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>

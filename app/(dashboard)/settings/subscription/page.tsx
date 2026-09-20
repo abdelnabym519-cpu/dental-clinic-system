@@ -311,7 +311,7 @@ export default function SubscriptionPage() {
                 <CardContent>
                   <div className="mb-4">
                     <span className="text-3xl font-bold">
-                      {plan.price === 'Custom' ? '' : '₹'}
+                      {plan.price === 'Custom' ? '' : 'EGP '}
                       {plan.price}
                     </span>
                     {plan.priceNote ? (

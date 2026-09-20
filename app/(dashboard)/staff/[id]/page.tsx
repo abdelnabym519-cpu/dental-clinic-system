@@ -136,7 +136,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleDateString('en-EG', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -145,9 +145,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return '-'
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -308,11 +308,11 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Aadhar Number</p>
+                    <p className="text-sm text-muted-foreground">National ID</p>
                     <p className="font-medium">{staff.aadharNumber || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">PAN Number</p>
+                    <p className="text-sm text-muted-foreground">Commercial Register</p>
                     <p className="font-medium">{staff.panNumber || '-'}</p>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="font-medium">{staff.bankAccountNo || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">IFSC Code</p>
+                    <p className="text-sm text-muted-foreground">SWIFT / BIC Code</p>
                     <p className="font-medium">{staff.bankIfsc || '-'}</p>
                   </div>
                 </div>

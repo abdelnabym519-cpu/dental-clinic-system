@@ -31,12 +31,12 @@ model Hospital {
   website             String?
   tagline             String?
 
-  // Localization. Defaults keep existing clinics on Indian formatting.
+  // Localization. Defaults target Egyptian clinics (Arabic-first).
   // `country` will select the tax provider — see docs/LOCALIZATION.md.
-  locale              String    @default("en-IN")
-  country             String    @default("IN")
-  currency            String    @default("INR")
-  timezone            String    @default("Asia/Kolkata")
+  locale              String    @default("ar-EG")
+  country             String    @default("EG")
+  currency            String    @default("EGP")
+  timezone            String    @default("Africa/Cairo")
 
   plan                Plan      @default(FREE)
   planExpiresAt       DateTime?
@@ -166,7 +166,7 @@ model SubscriptionPayment {
   id                String                    @id @default(cuid())
   subscriptionId    String
   amount            Decimal                   @db.Decimal(10, 2)
-  currency          String                    @default("INR")
+  currency          String                    @default("EGP")
   status            SubscriptionPaymentStatus @default(PENDING)
   paymentMethod     String?
   externalPaymentId String?
@@ -212,7 +212,7 @@ model User {
 
   // Personal locale override, BCP 47. NULL means "inherit from the clinic" and
   // is deliberately NOT defaulted: a default would be indistinguishable from an
-  // explicit choice of en-IN, so a clinic changing its own locale would
+  // explicit choice of a locale, so a clinic changing its own locale would
   // silently fail to propagate to every staff member who never expressed a
   // preference. See docs/LOCALIZATION.md.
   locale          String?
@@ -459,7 +459,7 @@ model Patient {
   email           String?
   address         String?    @db.Text
   city            String?
-  state           String?    @default("Tamil Nadu")
+  state           String?    @default("القاهرة")
   pincode         String?
   aadharNumber    String?
   occupation      String?
@@ -1006,8 +1006,8 @@ model Invoice {
   discountValue   Decimal?      @db.Decimal(10, 2)
   discountAmount  Decimal       @default(0) @db.Decimal(10, 2)
   taxableAmount   Decimal       @db.Decimal(10, 2)
-  cgstRate        Decimal       @default(9) @db.Decimal(5, 2)
-  sgstRate        Decimal       @default(9) @db.Decimal(5, 2)
+  cgstRate        Decimal       @default(14) @db.Decimal(5, 2)
+  sgstRate        Decimal       @default(0) @db.Decimal(5, 2)
   cgstAmount      Decimal       @db.Decimal(10, 2)
   sgstAmount      Decimal       @db.Decimal(10, 2)
   totalAmount     Decimal       @db.Decimal(10, 2)
@@ -1081,7 +1081,7 @@ model Payment {
   refundDate      DateTime?
   refundReason    String?
 
-  gateway           String?    // razorpay / phonepe / paytm
+  gateway           String?    // fawry / paymob / instapay (legacy rows may hold Indian providers)
   gatewayOrderId    String?    // Provider's order/transaction ID
   gatewayPaymentId  String?    // Provider's payment ID
   gatewayStatus     String?    // Provider-reported status
@@ -1157,18 +1157,27 @@ enum InvoiceStatus {
 enum PaymentMethod {
   CASH
   CARD
+  // Legacy Indian method — retained in the type for historical rows only.
   UPI
   BANK_TRANSFER
   CHEQUE
   INSURANCE
   WALLET
   ONLINE
+  // Egyptian methods
+  INSTAPAY
+  FAWRY
 }
 
 enum PaymentProvider {
+  // Legacy Indian providers — retained in the type for historical rows only.
   RAZORPAY
   PHONEPE
   PAYTM
+  // Egyptian providers
+  FAWRY
+  PAYMOB
+  INSTAPAY
 }
 
 enum PaymentStatus {
@@ -1296,19 +1305,28 @@ model PaymentGatewayConfig {
   isEnabled       Boolean         @default(false)
   isLiveMode      Boolean         @default(false)
 
-  // Razorpay
+  // Legacy Indian provider credentials — columns retained for data
+  // compatibility only; no UI or adapter reads them any more.
   razorpayKeyId       String?
   razorpayKeySecret   String?     // Encrypted at rest
-
-  // PhonePe
   phonepeMerchantId   String?
   phonepeSaltKey      String?     // Encrypted at rest
   phonepeSaltIndex    String?
-
-  // Paytm
   paytmMid            String?
   paytmMerchantKey    String?     // Encrypted at rest
-  paytmWebsite        String?     // WEBSTAGING or DEFAULT
+  paytmWebsite        String?
+
+  // Fawry
+  fawryMerchantCode   String?
+  fawrySecretKey      String?     // Encrypted at rest
+
+  // Paymob
+  paymobApiKey        String?     // Encrypted at rest
+  paymobIntegrationId String?
+  paymobIframeId      String?
+
+  // InstaPay
+  instapayHandle      String?     // e.g. dentora@instapay
 
   webhookSecret       String?     // For verifying incoming webhooks
   createdAt           DateTime    @default(now())

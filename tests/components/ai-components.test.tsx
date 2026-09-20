@@ -1631,13 +1631,13 @@ describe('AIUsageStats', () => {
         executions: 320,
         insights: 45,
         tokens: 1250000,
-        costINR: 245.5,
+        costEGP: 245.5,
       },
       thisMonth: {
         conversations: 25,
         executions: 60,
         tokens: 200000,
-        costINR: 42.3,
+        costEGP: 42.3,
       },
       skillBreakdown: [
         { skill: 'patient-intake', executions: 30, cost: 5.2 },
@@ -1673,7 +1673,7 @@ describe('AIUsageStats', () => {
         .replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) & 0xf))
         // Grouping/decimal separators are pure formatting punctuation:
         // Arabic thousands (U+066C) / decimal (U+066B) marks, ASCII , and .
-        // (2,00,000 en-IN / 2.00.000 de-DE / 42.30), plus narrow spaces.
+        // (2,00,000 en-EG / 2.00.000 de-DE / 42.30), plus narrow spaces.
         .replace(/[\u066B\u066C,.\u00A0\u202F\u2009]/g, '')
         // Any other punctuation delimits separate numbers.
         .replace(/[^\d]+/g, ' ')
@@ -1694,8 +1694,8 @@ describe('AIUsageStats', () => {
 
   it('renders skill breakdown bars', async () => {
     mockFetchResponse({
-      allTime: { conversations: 10, executions: 20, insights: 5, tokens: 1000, costINR: 10 },
-      thisMonth: { conversations: 5, executions: 10, tokens: 500, costINR: 5 },
+      allTime: { conversations: 10, executions: 20, insights: 5, tokens: 1000, costEGP: 10 },
+      thisMonth: { conversations: 5, executions: 10, tokens: 500, costEGP: 5 },
       skillBreakdown: [
         { skill: 'patient-intake', executions: 30, cost: 5 },
         { skill: 'smart-scheduler', executions: 20, cost: 3 },
@@ -1729,8 +1729,8 @@ describe('AIUsageStats', () => {
 
   it('shows disclaimer about AI cost estimates', async () => {
     mockFetchResponse({
-      allTime: { conversations: 1, executions: 1, insights: 0, tokens: 100, costINR: 0.5 },
-      thisMonth: { conversations: 1, executions: 1, tokens: 100, costINR: 0.5 },
+      allTime: { conversations: 1, executions: 1, insights: 0, tokens: 100, costEGP: 0.5 },
+      thisMonth: { conversations: 1, executions: 1, tokens: 100, costEGP: 0.5 },
       skillBreakdown: [],
     })
 
@@ -1745,8 +1745,8 @@ describe('AIUsageStats', () => {
 
   it('does not show skill breakdown when empty', async () => {
     mockFetchResponse({
-      allTime: { conversations: 1, executions: 1, insights: 0, tokens: 100, costINR: 0.5 },
-      thisMonth: { conversations: 1, executions: 1, tokens: 100, costINR: 0.5 },
+      allTime: { conversations: 1, executions: 1, insights: 0, tokens: 100, costEGP: 0.5 },
+      thisMonth: { conversations: 1, executions: 1, tokens: 100, costEGP: 0.5 },
       skillBreakdown: [],
     })
 
@@ -1761,8 +1761,8 @@ describe('AIUsageStats', () => {
 
   it('calls /api/ai/usage on mount', async () => {
     mockFetchResponse({
-      allTime: { conversations: 0, executions: 0, insights: 0, tokens: 0, costINR: 0 },
-      thisMonth: { conversations: 0, executions: 0, tokens: 0, costINR: 0 },
+      allTime: { conversations: 0, executions: 0, insights: 0, tokens: 0, costEGP: 0 },
+      thisMonth: { conversations: 0, executions: 0, tokens: 0, costEGP: 0 },
       skillBreakdown: [],
     })
 

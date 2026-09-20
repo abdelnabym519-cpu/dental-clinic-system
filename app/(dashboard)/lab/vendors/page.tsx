@@ -72,8 +72,8 @@ interface LabVendor {
   city: string
   state: string
   pincode: string
-  gstin: string
-  pan: string
+  taxId: string
+  registrationNo: string
   specializations: string
   avgTurnaround: number
   rating: number
@@ -121,10 +121,10 @@ export default function LabVendorsPage() {
     alternatePhone: '',
     address: '',
     city: '',
-    state: 'Tamil Nadu',
+    state: 'القاهرة',
     pincode: '',
-    gstin: '',
-    pan: '',
+    taxId: '',
+    registrationNo: '',
     specializations: '',
     avgTurnaround: 7,
     rating: 0,
@@ -180,10 +180,10 @@ export default function LabVendorsPage() {
         alternatePhone: vendor.alternatePhone || '',
         address: vendor.address || '',
         city: vendor.city || '',
-        state: vendor.state || 'Tamil Nadu',
+        state: vendor.state || 'القاهرة',
         pincode: vendor.pincode || '',
-        gstin: vendor.gstin || '',
-        pan: vendor.pan || '',
+        taxId: vendor.taxId || '',
+        registrationNo: vendor.panNumber || '',
         specializations: vendor.specializations || '',
         avgTurnaround: vendor.avgTurnaround,
         rating: vendor.rating,
@@ -203,10 +203,10 @@ export default function LabVendorsPage() {
         alternatePhone: '',
         address: '',
         city: '',
-        state: 'Tamil Nadu',
+        state: 'القاهرة',
         pincode: '',
-        gstin: '',
-        pan: '',
+        taxId: '',
+        registrationNo: '',
         specializations: '',
         avgTurnaround: 7,
         rating: 0,
@@ -644,7 +644,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pincode">Pincode</Label>
+                <Label htmlFor="pincode">Postal Code</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}

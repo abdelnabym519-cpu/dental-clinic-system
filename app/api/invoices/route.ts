@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { generateInvoiceNo, calculateInvoiceTotals, gstConfig } from '@/lib/billing-utils'
+import { generateInvoiceNo, calculateInvoiceTotals, vatConfig } from '@/lib/billing-utils'
 import { DiscountType, InvoiceStatus } from '@prisma/client'
 
 // GET - List invoices with filters
@@ -178,8 +178,7 @@ export async function POST(request: NextRequest) {
       items,
       discountType = 'FIXED',
       discountValue = 0,
-      cgstRate = gstConfig.cgstRate,
-      sgstRate = gstConfig.sgstRate,
+      vatRate = vatConfig.rate,
       dueDate,
       notes,
       termsAndConditions,
@@ -226,8 +225,7 @@ export async function POST(request: NextRequest) {
       })),
       discountType as DiscountType,
       discountValue,
-      cgstRate,
-      sgstRate
+      vatRate
     )
 
     // Generate invoice number
@@ -255,9 +253,9 @@ export async function POST(request: NextRequest) {
         discountValue,
         discountAmount: calculatedTotals.discountAmount,
         taxableAmount: calculatedTotals.taxableAmount,
-        cgstRate,
+        cgstRate: vatRate,
         cgstAmount: calculatedTotals.cgstAmount,
-        sgstRate,
+        sgstRate: 0,
         sgstAmount: calculatedTotals.sgstAmount,
         totalAmount: calculatedTotals.totalAmount,
         paidAmount: 0,

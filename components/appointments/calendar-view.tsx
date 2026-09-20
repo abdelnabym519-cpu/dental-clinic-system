@@ -405,7 +405,7 @@ export function CalendarView({
 
   const getDateLabel = () => {
     if (viewMode === 'day') {
-      return currentDate.toLocaleDateString('en-IN', {
+      return currentDate.toLocaleDateString('en-EG', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -414,16 +414,16 @@ export function CalendarView({
     } else if (viewMode === 'week') {
       const weekStart = startOfWeek(currentDate)
       const weekEnd = addDays(weekStart, 6)
-      return `${weekStart.toLocaleDateString('en-IN', {
+      return `${weekStart.toLocaleDateString('en-EG', {
         day: 'numeric',
         month: 'short',
-      })} - ${weekEnd.toLocaleDateString('en-IN', {
+      })} - ${weekEnd.toLocaleDateString('en-EG', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       })}`
     } else {
-      return currentDate.toLocaleDateString('en-IN', {
+      return currentDate.toLocaleDateString('en-EG', {
         month: 'long',
         year: 'numeric',
       })
@@ -646,7 +646,7 @@ export function CalendarView({
           groups.map(({ day, appts }) => (
             <div key={day.toISOString()}>
               <p className="mb-2 text-sm font-semibold">
-                {day.toLocaleDateString('en-IN', {
+                {day.toLocaleDateString('en-EG', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'short',
@@ -749,7 +749,7 @@ export function CalendarView({
               }`}
             >
               <p className="text-xs text-muted-foreground">
-                {day.toLocaleDateString('en-IN', { weekday: 'short' })}
+                {day.toLocaleDateString('en-EG', { weekday: 'short' })}
               </p>
               <p className="font-semibold">{day.getDate()}</p>
             </div>

@@ -37,7 +37,7 @@ Return ONLY valid JSON:
 
 RULES:
 - Be specific with suggestions — cite exact fields or codes to correct
-- Appeal letters must be professional and reference Indian dental insurance norms
+- Appeal letters must be professional and reference Egyptian dental insurance norms
 - Always suggest documentation to gather for appeals
 - If denial code is provided, base analysis on that specific code`,
 }

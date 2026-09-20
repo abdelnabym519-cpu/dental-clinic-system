@@ -396,7 +396,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Estimated Cost (INR) *</Label>
+                <Label>Estimated Cost (EGP) *</Label>
                 <Input
                   type="number"
                   step="0.01"

@@ -18,7 +18,7 @@ import {
   CreditCard,
   TrendingUp,
   AlertCircle,
-  IndianRupee,
+  Banknote,
   ArrowUpRight,
   ArrowDownRight,
   FileText,
@@ -154,7 +154,8 @@ export default function BillingPage() {
   const paymentMethodLabels: Record<string, string> = {
     CASH: 'Cash',
     CARD: 'Card',
-    UPI: 'UPI',
+    INSTAPAY: 'InstaPay',
+    FAWRY: 'Fawry',
     BANK_TRANSFER: 'Bank Transfer',
     CHEQUE: 'Cheque',
     INSURANCE: 'Insurance',
@@ -304,7 +305,7 @@ export default function BillingPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {loading ? (

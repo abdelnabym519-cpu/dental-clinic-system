@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-// Seeded by prisma/seed.ts against invoice INV-E2E-0001 (₹1,180 outstanding).
+// Seeded by prisma/seed.ts against invoice INV-E2E-0001 (EGP 1,140 outstanding).
 // Keep the two in sync — app/pay/[token] calls notFound() for an unknown
 // token, so a stale value here turns every spec below into a 404 assertion.
 const PAYMENT_TOKEN = 'e2e-payment-link-token'
@@ -32,12 +32,12 @@ test.describe('Public Payment Page', () => {
       await expect(page.getByText('Total Amount')).toBeVisible({ timeout: 10000 })
       await expect(page.getByText('Amount Due')).toBeVisible()
       // Seeded balance, rendered through formatCurrency.
-      await expect(page.getByText(/1,180/).first()).toBeVisible()
+      await expect(page.getByText(/1,140/).first()).toBeVisible()
     })
   })
 
   test.describe('Payment Gateway Selection', () => {
-    // There is no in-page gateway picker: the page renders a single "Pay ₹X"
+    // There is no in-page gateway picker: the page renders a single "Pay EGP X"
     // button and /api/public/payments/checkout decides the provider, which then
     // takes over in a hosted checkout. Left here as a marker in case gateway
     // choice is ever surfaced in our own UI.
@@ -48,7 +48,7 @@ test.describe('Public Payment Page', () => {
 
     test('should have Pay Now button', async ({ page }) => {
       await page.goto(`/pay/${PAYMENT_TOKEN}`)
-      // Rendered as "Pay ₹1,180.00" once the link is payable.
+      // Rendered as "Pay EGP 1,140.00" once the link is payable.
       await expect(page.getByRole('button', { name: /^Pay / })).toBeVisible({ timeout: 10000 })
     })
   })

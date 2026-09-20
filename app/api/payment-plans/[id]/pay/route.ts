@@ -144,7 +144,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
 
     return NextResponse.json({
-      message: `Payment of ₹${payAmount.toLocaleString('en-IN')} recorded`,
+      message: `Payment of EGP ${payAmount.toLocaleString('en-EG')} recorded`,
       payment: result.payment,
       remainingInstallments: result.remainingInstallments,
     })

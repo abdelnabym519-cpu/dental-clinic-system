@@ -463,7 +463,7 @@ export async function execCreateTreatment(params: Record<string, string>, hospit
 
   return {
     success: true,
-    message: `Treatment ${treatment.treatmentNo} created: ${procedure.name} for ${patient.firstName} ${patient.lastName} by Dr. ${doctor.firstName}. Cost: ₹${Number(treatment.cost).toLocaleString('en-IN')}.`,
+    message: `Treatment ${treatment.treatmentNo} created: ${procedure.name} for ${patient.firstName} ${patient.lastName} by Dr. ${doctor.firstName}. Cost: EGP ${Number(treatment.cost).toLocaleString('en-EG')}.`,
   }
 }
 
@@ -539,7 +539,7 @@ export async function execShowTreatments(params: Record<string, string>, hospita
       patient: `${t.patient.firstName} ${t.patient.lastName}`,
       procedure: t.procedure.name,
       doctor: `Dr. ${t.doctor.firstName}`,
-      cost: `₹${Number(t.cost).toLocaleString('en-IN')}`,
+      cost: `EGP ${Number(t.cost).toLocaleString('en-EG')}`,
       status: t.status,
       date: t.createdAt.toISOString().split('T')[0],
     })),
@@ -566,8 +566,9 @@ export async function execCreateInvoice(params: Record<string, string>, hospital
     }
 
   const subtotal = unbilled.reduce((s, t) => s + Number(t.cost), 0)
-  const cgstRate = 9
-  const sgstRate = 9
+  // Egyptian VAT: single 14% rate stored in the legacy cgst slot (sgst 0)
+  const cgstRate = 14
+  const sgstRate = 0
   const taxableAmount = subtotal
   const cgstAmount = (taxableAmount * cgstRate) / 100
   const sgstAmount = (taxableAmount * sgstRate) / 100
@@ -602,7 +603,7 @@ export async function execCreateInvoice(params: Record<string, string>, hospital
 
   return {
     success: true,
-    message: `Invoice ${invoice.invoiceNo} created for ${patient.firstName} ${patient.lastName}. Subtotal: ₹${subtotal.toLocaleString('en-IN')}, GST: ₹${(cgstAmount + sgstAmount).toFixed(2)}, Total: ₹${totalAmount.toFixed(2)}. Includes ${unbilled.length} treatment(s).`,
+    message: `Invoice ${invoice.invoiceNo} created for ${patient.firstName} ${patient.lastName}. Subtotal: EGP ${subtotal.toLocaleString('en-EG')}, VAT: EGP ${(cgstAmount + sgstAmount).toFixed(2)}, Total: EGP ${totalAmount.toFixed(2)}. Includes ${unbilled.length} treatment(s).`,
     invoiceNo: invoice.invoiceNo,
   }
 }
@@ -642,7 +643,7 @@ export async function execRecordPayment(params: Record<string, string>, hospital
   if (amount > Number(invoice.balanceAmount)) {
     return {
       success: false,
-      message: `Amount ₹${amount} exceeds balance ₹${Number(invoice.balanceAmount).toLocaleString('en-IN')}.`,
+      message: `Amount EGP ${amount} exceeds balance EGP ${Number(invoice.balanceAmount).toLocaleString('en-EG')}.`,
     }
   }
 
@@ -674,7 +675,7 @@ export async function execRecordPayment(params: Record<string, string>, hospital
 
   return {
     success: true,
-    message: `Payment ${paymentNo} of ₹${amount.toLocaleString('en-IN')} recorded for invoice ${invoice.invoiceNo} (${invoice.patient.firstName} ${invoice.patient.lastName}). ${newBalance <= 0 ? 'Invoice fully paid.' : `Remaining balance: ₹${newBalance.toFixed(2)}.`}`,
+    message: `Payment ${paymentNo} of EGP ${amount.toLocaleString('en-EG')} recorded for invoice ${invoice.invoiceNo} (${invoice.patient.firstName} ${invoice.patient.lastName}). ${newBalance <= 0 ? 'Invoice fully paid.' : `Remaining balance: EGP ${newBalance.toFixed(2)}.`}`,
   }
 }
 
@@ -699,9 +700,9 @@ export async function execShowInvoices(params: Record<string, string>, hospitalI
     invoices: invoices.map((i) => ({
       invoiceNo: i.invoiceNo,
       patient: `${i.patient.firstName} ${i.patient.lastName}`,
-      total: `₹${Number(i.totalAmount).toLocaleString('en-IN')}`,
-      paid: `₹${Number(i.paidAmount).toLocaleString('en-IN')}`,
-      balance: `₹${Number(i.balanceAmount).toLocaleString('en-IN')}`,
+      total: `EGP ${Number(i.totalAmount).toLocaleString('en-EG')}`,
+      paid: `EGP ${Number(i.paidAmount).toLocaleString('en-EG')}`,
+      balance: `EGP ${Number(i.balanceAmount).toLocaleString('en-EG')}`,
       status: i.status,
       date: i.createdAt.toISOString().split('T')[0],
     })),
@@ -718,11 +719,11 @@ export async function execCheckOverdue(hospitalId: string) {
   return {
     success: true,
     count: overdue.length,
-    totalOverdue: `₹${overdue.reduce((s, i) => s + Number(i.balanceAmount), 0).toLocaleString('en-IN')}`,
+    totalOverdue: `EGP ${overdue.reduce((s, i) => s + Number(i.balanceAmount), 0).toLocaleString('en-EG')}`,
     invoices: overdue.map((i) => ({
       invoiceNo: i.invoiceNo,
       patient: `${i.patient.firstName} ${i.patient.lastName}`,
-      balance: `₹${Number(i.balanceAmount).toLocaleString('en-IN')}`,
+      balance: `EGP ${Number(i.balanceAmount).toLocaleString('en-EG')}`,
     })),
   }
 }
@@ -759,8 +760,8 @@ export async function execShowRevenue(params: Record<string, string>, hospitalId
   return {
     success: true,
     period,
-    totalBilled: `₹${billed.toLocaleString('en-IN')}`,
-    totalCollected: `₹${collected.toLocaleString('en-IN')}`,
+    totalBilled: `EGP ${billed.toLocaleString('en-EG')}`,
+    totalCollected: `EGP ${collected.toLocaleString('en-EG')}`,
     collectionRate: billed > 0 ? `${((collected / billed) * 100).toFixed(1)}%` : 'N/A',
     invoiceCount: invoices.length,
   }
@@ -1256,7 +1257,7 @@ export async function execDailySummary(hospitalId: string) {
         remaining: todayAppointments - completedToday - cancelledToday - noShowToday,
       },
       billing: {
-        todayCollected: `₹${Number(todayRevenue._sum.amount || 0).toLocaleString('en-IN')}`,
+        todayCollected: `EGP ${Number(todayRevenue._sum.amount || 0).toLocaleString('en-EG')}`,
         pendingInvoices,
         overdueInvoices,
       },
@@ -1311,7 +1312,7 @@ export async function execCheckPatient(params: Record<string, string>, hospitalI
       gender: patient.gender,
       email: patient.email,
       medicalFlags: flags,
-      outstandingBalance: `₹${patient.invoices.reduce((s, i) => s + Number(i.balanceAmount), 0).toLocaleString('en-IN')}`,
+      outstandingBalance: `EGP ${patient.invoices.reduce((s, i) => s + Number(i.balanceAmount), 0).toLocaleString('en-EG')}`,
       recentAppointments: patient.appointments.map(
         (a) => `${a.scheduledDate.toISOString().split('T')[0]} – ${a.appointmentType} (${a.status})`
       ),

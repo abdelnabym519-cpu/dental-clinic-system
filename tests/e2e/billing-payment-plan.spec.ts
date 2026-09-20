@@ -97,7 +97,7 @@ test.describe('Payment Plans (EMI)', () => {
       // Total amount and per-installment breakdown
       await expect(
         page
-          .getByText(/total|amount|₹|per.*installment/i)
+          .getByText(/total|amount|EGP|per.*installment/i)
           .first()
           .or(page.locator('body'))
           .first()

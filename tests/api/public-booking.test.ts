@@ -91,7 +91,7 @@ describe('POST /api/public/[slug]/book', () => {
 
   it('returns 400 when required fields missing', async () => {
     const res = await publicBookPOST(
-      makeReq('/api/public/test/book', 'POST', { phone: '9876543210' }),
+      makeReq('/api/public/test/book', 'POST', { phone: '01012345678' }),
       makeParams('test')
     )
     expect(res.status).toBe(400)
@@ -102,7 +102,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/nonexistent/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd1',
         date: '2026-03-15',
         time: '10:00',
@@ -120,7 +120,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/test/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd1',
         date: '2026-03-15',
         time: '10:00',
@@ -139,7 +139,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/test/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd1',
         date: '2026-03-15',
         time: '10:00',
@@ -163,7 +163,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/test/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd-none',
         date: '2026-03-15',
         time: '10:00',
@@ -193,7 +193,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/test/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd1',
         date: '2026-03-15',
         time: '10:00',
@@ -231,7 +231,7 @@ describe('POST /api/public/[slug]/book', () => {
 
     const res = await publicBookPOST(
       makeReq('/api/public/test/book', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         doctorId: 'd1',
         date: '2026-03-15',
         time: '10:00',

@@ -232,7 +232,7 @@ export default function NewPaymentPlanPage() {
   }
 
   const formatCurrency = (amount: number) =>
-    `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+    `EGP ${amount.toLocaleString('en-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 
   return (
     <div className="space-y-6">
@@ -385,7 +385,7 @@ export default function NewPaymentPlanPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Down Payment (₹)</Label>
+                  <Label>Down Payment (EGP )</Label>
                   <Input
                     type="number"
                     min={0}

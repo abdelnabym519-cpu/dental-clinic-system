@@ -22,14 +22,22 @@ export function formatDateTime(date: Date | string, locale?: string): string {
   return baseFormatDateTime(date, { locale })
 }
 
+/** Egyptian mobile display format: 01012345678 → +20 101 234 5678 */
 export function formatPhone(phone: string): string {
   if (!phone) return ''
   const cleaned = phone.replace(/\D/g, '')
-  if (cleaned.length === 10) {
-    return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`
+  // 01XXXXXXXXX (local) or 20 1XXXXXXXXX / 201XXXXXXXXX (country-code forms)
+  if (cleaned.length === 11 && cleaned.startsWith('01')) {
+    const rest = cleaned.slice(1) // 1XXXXXXXXX
+    return `+20 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
   }
-  if (cleaned.length === 12 && cleaned.startsWith('91')) {
-    return `+91 ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`
+  if (cleaned.length === 12 && cleaned.startsWith('20')) {
+    const rest = cleaned.slice(2)
+    return `+20 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+  }
+  if (cleaned.length === 13 && cleaned.startsWith('200')) {
+    const rest = cleaned.slice(3)
+    return `+20 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
   }
   return phone
 }
@@ -50,37 +58,36 @@ export function generateInvoiceNo(): string {
   return `INV-${year}${month}-${random}`
 }
 
-export function calculateGST(amount: number, cgstRate: number = 9, sgstRate: number = 9) {
-  const cgst = (amount * cgstRate) / 100
-  const sgst = (amount * sgstRate) / 100
+/** Egyptian VAT — standard rate 14% (ضريبة القيمة المضافة). */
+export function calculateVAT(amount: number, rate: number = 14) {
+  const vat = Math.round(((amount * rate) / 100) * 100) / 100
   return {
     subtotal: amount,
-    cgst,
-    sgst,
-    total: amount + cgst + sgst,
+    vat,
+    total: Math.round((amount + vat) * 100) / 100,
   }
 }
 
-export function validateAadhar(aadhar: string): boolean {
-  const cleaned = aadhar.replace(/\D/g, '')
-  return cleaned.length === 12
+/** Egyptian National ID: exactly 14 digits. */
+export function validateNationalId(nationalId: string): boolean {
+  const cleaned = nationalId.replace(/[\s-]/g, '')
+  return /^\d{14}$/.test(cleaned)
 }
 
-export function validateIndianPhone(phone: string): boolean {
-  let cleaned = phone.replace(/\D/g, '')
-  // Strip country code if present
-  if (cleaned.length === 12 && cleaned.startsWith('91')) {
-    cleaned = cleaned.slice(2)
-  }
-  return /^[6-9]\d{9}$/.test(cleaned)
+/**
+ * Egyptian mobile validation: 01XXXXXXXXX local, +20/00 20 country-code forms.
+ * Valid prefixes: 010, 011, 012, 015.
+ */
+export function validateEgyptianPhone(phone: string): boolean {
+  let cleaned = phone.replace(/[\s()-]/g, '')
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
+  if (cleaned.startsWith('0020')) cleaned = '0' + cleaned.slice(4)
+  else if (cleaned.startsWith('20') && cleaned.length === 12) cleaned = '0' + cleaned.slice(2)
+  return /^01[0125]\d{8}$/.test(cleaned)
 }
 
-export function validateGSTIN(gstin: string): boolean {
-  // GSTIN format: 2 digits (state code) + 10 chars PAN + 1 alphanumeric + Z + 1 check digit
-  // Example: 27AAPFU0939F1ZV
-  const pattern = /^[0-3][0-9][A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
-  if (!pattern.test(gstin) || gstin.length !== 15) return false
-  // State code must be 01-37
-  const stateCode = parseInt(gstin.substring(0, 2), 10)
-  return stateCode >= 1 && stateCode <= 37
+/** Egyptian Tax Registration Number: exactly 9 digits. */
+export function validateTaxId(taxId: string): boolean {
+  const cleaned = taxId.replace(/[\s-]/g, '')
+  return /^\d{9}$/.test(cleaned)
 }

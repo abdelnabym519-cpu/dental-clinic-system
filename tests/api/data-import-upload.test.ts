@@ -64,7 +64,7 @@ describe('POST /api/data-import/upload', () => {
     mockParsers.parseFile.mockResolvedValue({
       columns: ['Name', 'Phone', 'Email'],
       rows: [
-        { Name: 'John Doe', Phone: '9876543210', Email: 'john@test.com' },
+        { Name: 'John Doe', Phone: '01012345678', Email: 'john@test.com' },
         { Name: 'Jane Smith', Phone: '9876543211', Email: 'jane@test.com' },
       ],
       totalRows: 2,

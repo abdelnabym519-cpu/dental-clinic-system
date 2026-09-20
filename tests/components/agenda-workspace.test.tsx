@@ -109,7 +109,7 @@ import { AppointmentDialog } from '@/components/agenda/appointment-dialog'
 const doctorsPayload = {
   doctors: [
     { id: 'doc-1', firstName: 'Arun', lastName: 'Vijay', specialization: 'Prosthodontics' },
-    { id: 'doc-2', firstName: 'Meera', lastName: 'Nair', specialization: 'Orthodontics' },
+    { id: 'doc-2', firstName: 'Mariam', lastName: 'Ibrahim', specialization: 'Orthodontics' },
   ],
 }
 const patientsPayload = {

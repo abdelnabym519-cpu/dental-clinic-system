@@ -32,7 +32,7 @@ import {
   MoreHorizontal,
   Crown,
   Users,
-  IndianRupee,
+  Banknote,
   UserPlus,
   X,
   ArrowLeft,
@@ -390,7 +390,7 @@ export default function MembershipPlansPage() {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  const formatCurrency = (price: number) => `\u20B9${Number(price).toLocaleString('en-IN')}`
+  const formatCurrency = (price: number) => `\u20B9${Number(price).toLocaleString('en-EG')}`
 
   const formatDuration = (months: number) => {
     if (months === 1) return '1 month'
@@ -400,7 +400,7 @@ export default function MembershipPlansPage() {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
+    return new Date(dateStr).toLocaleDateString('en-EG', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -639,9 +639,9 @@ export default function MembershipPlansPage() {
                 {/* Price & Duration */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                    <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
                     <span className="text-2xl font-bold">
-                      {Number(plan.price).toLocaleString('en-IN')}
+                      {Number(plan.price).toLocaleString('en-EG')}
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">

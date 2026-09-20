@@ -236,7 +236,7 @@ describe('GET /api/prescriptions', () => {
           patientId: 'PT001',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           dateOfBirth: null,
         },
         doctor: { id: 's1', firstName: 'Dr', lastName: 'Smith' },

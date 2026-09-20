@@ -36,7 +36,6 @@ import {
   MoreHorizontal,
   Eye,
   RotateCcw,
-  IndianRupee,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -155,7 +154,7 @@ export default function PaymentsPage() {
         return <Banknote className="h-4 w-4" />
       case 'CARD':
         return <CreditCard className="h-4 w-4" />
-      case 'UPI':
+      case 'INSTAPAY':
         return <Smartphone className="h-4 w-4" />
       case 'BANK_TRANSFER':
         return <Building2 className="h-4 w-4" />
@@ -197,7 +196,7 @@ export default function PaymentsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Received</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -229,7 +228,7 @@ export default function PaymentsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Collection</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -278,7 +277,8 @@ export default function PaymentsPage() {
                   <SelectItem value="all">All Methods</SelectItem>
                   <SelectItem value="CASH">Cash</SelectItem>
                   <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="INSTAPAY">InstaPay</SelectItem>
+                  <SelectItem value="FAWRY">Fawry</SelectItem>
                   <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
                   <SelectItem value="CHEQUE">Cheque</SelectItem>
                   <SelectItem value="INSURANCE">Insurance</SelectItem>

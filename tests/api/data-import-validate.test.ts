@@ -86,7 +86,7 @@ describe('POST /api/data-import/validate', () => {
     })
     mockParsers.parseFile.mockResolvedValue({
       columns: ['Name', 'Phone'],
-      rows: [{ Name: 'John Doe', Phone: '9876543210' }],
+      rows: [{ Name: 'John Doe', Phone: '01012345678' }],
       totalRows: 1,
     })
 
@@ -124,12 +124,12 @@ describe('POST /api/data-import/validate', () => {
     })
     mockParsers.parseFile.mockResolvedValue({
       columns: ['Name', 'Phone'],
-      rows: [{ Name: 'John', Phone: '9876543210' }],
+      rows: [{ Name: 'John', Phone: '01012345678' }],
       totalRows: 1,
     })
 
     ;(prisma.patient.findMany as any).mockResolvedValue([
-      { phone: '9876543210', patientId: 'PAT-00001' },
+      { phone: '01012345678', patientId: 'PAT-00001' },
     ])
     ;(prisma.dataImportJob.update as any).mockResolvedValue({})
 

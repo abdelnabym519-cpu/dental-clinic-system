@@ -95,14 +95,10 @@ export function PayPage({
       setState('checkout')
 
       switch (checkout.provider) {
-        case 'razorpay':
-          await handleRazorpay(checkout, order)
-          break
-        case 'phonepe':
+        case 'fawry':
+        case 'paymob':
+        case 'instapay':
           handleRedirect(checkout.redirectUrl)
-          break
-        case 'paytm':
-          handlePaytmRedirect(checkout)
           break
         default:
           throw new Error('Unsupported provider')
@@ -113,61 +109,6 @@ export function PayPage({
     }
   }, [token, amount])
 
-  const handleRazorpay = async (
-    checkout: Record<string, unknown>,
-    order: Record<string, unknown>
-  ) => {
-    if (!(window as unknown as Record<string, unknown>).Razorpay) {
-      await loadScript('https://checkout.razorpay.com/v1/checkout.js')
-    }
-
-    const RazorpayConstructor = (window as unknown as Record<string, unknown>).Razorpay as new (
-      options: Record<string, unknown>
-    ) => {
-      open: () => void
-      on: (event: string, handler: () => void) => void
-    }
-
-    return new Promise<void>((resolve, reject) => {
-      const options = {
-        key: checkout.key,
-        amount: checkout.amount,
-        currency: 'INR',
-        name: hospital.name,
-        description: `Payment for ${invoice.invoiceNo}`,
-        order_id: checkout.orderId,
-        prefill: {
-          name: patient.name,
-          contact: patient.phone,
-        },
-        theme: { color: '#0f172a' },
-        handler: async (response: Record<string, string>) => {
-          await verifyPayment({
-            token,
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          })
-          resolve()
-        },
-        modal: {
-          ondismiss: () => {
-            setState('idle')
-            reject(new Error('Cancelled'))
-          },
-        },
-      }
-
-      const rzp = new RazorpayConstructor(options)
-      rzp.on('payment.failed', () => {
-        setState('error')
-        setErrorMsg('Payment failed. Please try again.')
-        reject(new Error('Failed'))
-      })
-      rzp.open()
-    })
-  }
-
   const handleRedirect = (url: string) => {
     if (url) window.location.href = url
     else {
@@ -176,29 +117,6 @@ export function PayPage({
     }
   }
 
-  const handlePaytmRedirect = (checkout: Record<string, unknown>) => {
-    const mid = checkout.mid as string
-    const orderId = checkout.orderId as string
-    const txnToken = checkout.txnToken as string
-    const paytmAmount = checkout.amount as number
-    const isProduction = !mid.includes('TEST')
-    const baseUrl = isProduction ? 'https://securegw.paytm.in' : 'https://securegw-stage.paytm.in'
-
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = `${baseUrl}/theia/api/v1/showPaymentPage?mid=${mid}&orderId=${orderId}`
-
-    const fields = { mid, orderId, txnToken, AMOUNT: String(paytmAmount) }
-    for (const [key, value] of Object.entries(fields)) {
-      const input = document.createElement('input')
-      input.type = 'hidden'
-      input.name = key
-      input.value = value
-      form.appendChild(input)
-    }
-    document.body.appendChild(form)
-    form.submit()
-  }
 
   const verifyPayment = async (params: Record<string, string>) => {
     setState('verifying')
@@ -355,17 +273,3 @@ export function PayPage({
   )
 }
 
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`)
-    if (existing) {
-      resolve()
-      return
-    }
-    const script = document.createElement('script')
-    script.src = src
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load: ${src}`))
-    document.head.appendChild(script)
-  })
-}

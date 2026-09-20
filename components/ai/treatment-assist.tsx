@@ -32,7 +32,7 @@ export interface TreatmentAssistProps {
  * Tabs:
  *   Drug Check      – interaction / allergy check against patient history
  *   Cost Estimate   – AI cost breakdown for the selected procedure(s)
- *   Consent Form    – generated consent in English / Tamil / Hindi
+ *   Consent Form    – generated consent in English / Arabic
  *   Clinical Notes  – expands brief doctor notes into structured docs
  */
 export function TreatmentAssist({
@@ -317,20 +317,20 @@ function CostEstimate({
                   <span className="text-muted-foreground ml-1">×{item.quantity}</span>
                 )}
               </span>
-              <span className="font-medium">₹{Number(item.total).toLocaleString()}</span>
+              <span className="font-medium">EGP {Number(item.total).toLocaleString()}</span>
             </div>
           ))}
           <div className="flex justify-between text-xs text-muted-foreground pt-1">
             <span>Subtotal</span>
-            <span>₹{Number(result.subtotal || 0).toLocaleString()}</span>
+            <span>EGP {Number(result.subtotal || 0).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>GST (12%)</span>
-            <span>₹{Number(result.gst || 0).toLocaleString()}</span>
+            <span>VAT (14%)</span>
+            <span>EGP {Number(result.vat || 0).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm font-semibold border-t pt-1.5 mt-1">
             <span>Total</span>
-            <span>₹{Number(result.grandTotal || 0).toLocaleString()}</span>
+            <span>EGP {Number(result.grandTotal || 0).toLocaleString()}</span>
           </div>
           {result.notes && (
             <p className="text-xs text-muted-foreground italic mt-1">{String(result.notes)}</p>
@@ -400,8 +400,7 @@ function ConsentForm({
           className="text-xs border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="English">English</option>
-          <option value="Tamil">Tamil</option>
-          <option value="Hindi">Hindi</option>
+          <option value="Arabic">العربية</option>
         </select>
         <button
           onClick={onGenerate}

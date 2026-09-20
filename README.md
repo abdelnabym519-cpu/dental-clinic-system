@@ -1,8 +1,8 @@
-# DentalERP - Free Open Source Dental Clinic Management Software for India
+# Dentora - Free Open Source Dental Clinic Management Software for Egypt
 
-A comprehensive, AI-powered **dental hospital management system** built with Next.js 16, designed for **dental clinics and multi-branch hospital chains in India**. Includes GST-compliant billing, Razorpay/PhonePe/Paytm payments, patient portal, tele-dentistry, 16 AI skills, and more — completely **free and open source**.
+A comprehensive, AI-powered **dental hospital management system** built with Next.js 16, designed for **dental clinics and multi-branch hospital chains in Egypt**. Includes VAT-compliant billing, Fawry/Paymob/InstaPay payments, bilingual Arabic/English UI, patient portal, tele-dentistry, 16 AI skills, and more — completely **free and open source**.
 
-> **Looking for dental practice management software in India?** DentalERP is a free alternative to expensive proprietary dental software. Self-host it on your own server with full control over your patient data.
+> **Looking for dental practice management software in Egypt?** Dentora is a free alternative to expensive proprietary dental software. Self-host it on your own server with full control over your patient data.
 
 ## Features
 
@@ -11,7 +11,7 @@ A comprehensive, AI-powered **dental hospital management system** built with Nex
 - **Patient Management** — Records, medical history, dental charting, document uploads
 - **Appointment Scheduling** — Calendar view, slot management, reminders, no-show prediction
 - **Treatment Plans** — Treatment tracking, procedure catalog, AI-assisted treatment advice
-- **Billing & Invoicing** — GST-compliant invoicing, payment tracking, payment plans (EMI)
+- **Billing & Invoicing** — VAT-compliant (14%) invoicing, payment tracking, payment plans (EMI)
 - **Prescriptions** — Digital prescriptions, medication database, print/PDF export
 - **Inventory Management** — Stock tracking, low-stock alerts, AI-powered demand forecasting
 - **Lab Integration** — Lab order management, status tracking, work coordination
@@ -28,7 +28,7 @@ A comprehensive, AI-powered **dental hospital management system** built with Nex
 - **Sterilization Tracking** — Instrument management, sterilization logs, compliance reporting
 - **Dental Imaging** — Interactive SVG dental arch viewer with condition mapping
 - **IoT Device Integration** — Medical device data logging and monitoring
-- **Payment Gateways** — Razorpay, PhonePe, Paytm integration (encrypted credentials)
+- **Payment Gateways** — Fawry, Paymob (Accept), InstaPay integration (encrypted credentials)
 - **Reports & Analytics** — Revenue, appointments, treatment stats, exportable to Excel
 - **Audit Logging** — Full audit trail for compliance
 - **Multi-branch Support** — Hospital-scoped data isolation via NextAuth
@@ -171,7 +171,7 @@ npx prisma migrate deploy
 
 | Role        | Email                   | Password    |
 | ----------- | ----------------------- | ----------- |
-| Super Admin | `admin@demo-dental.com` | `Admin@123` |
+| Super Admin | `admin@dentora-dental.com` | `Admin@123` |
 
 > **Warning**: Change the default password immediately in production.
 
@@ -352,8 +352,8 @@ Compose plugin. Building or developing from source needs:
 
 ## Documentation
 
-- [Self-hosting](SELF_HOSTING.md) — running DentalERP on your own server from a published image, with backups, TLS and upgrades.
-- [Infrastructure Roadmap](docs/INFRASTRUCTURE.md) — how DentalERP is packaged and deployed, and what is planned next. Feedback welcome, especially on the phases not yet built.
+- [Self-hosting](SELF_HOSTING.md) — running Dentora on your own server from a published image, with backups, TLS and upgrades.
+- [Infrastructure Roadmap](docs/INFRASTRUCTURE.md) — how Dentora is packaged and deployed, and what is planned next. Feedback welcome, especially on the phases not yet built.
 - [File storage](docs/STORAGE.md) — local disk vs S3, and how to move between them without losing files.
 - [Localization](docs/LOCALIZATION.md) — locale support and the message catalogue.
 

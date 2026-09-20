@@ -31,7 +31,7 @@ function getHeaders(): Record<string, string> {
     Authorization: `Bearer ${key}`,
     'Content-Type': 'application/json',
     'HTTP-Referer': process.env.NEXTAUTH_URL || 'http://localhost:3000',
-    'X-Title': 'DentalERP AI',
+    'X-Title': 'Dentora AI',
   }
 }
 

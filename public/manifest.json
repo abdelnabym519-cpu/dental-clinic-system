@@ -1,6 +1,6 @@
 {
-  "name": "DentalERP - Dental Hospital Management",
-  "short_name": "DentalERP",
+  "name": "Dentora - Dental Hospital Management",
+  "short_name": "Dentora",
   "description": "Comprehensive dental hospital management system",
   "start_url": "/dashboard",
   "display": "standalone",

@@ -69,7 +69,7 @@ describe('Accessibility — Screen Reader & ARIA', () => {
     it('pages should set document title', () => {
       // All dashboard pages use next/head or metadata to set title
       // Verify the pattern exists
-      document.title = 'Patients | DentalERP'
+      document.title = 'Patients | Dentora'
       expect(document.title).toBeTruthy()
       expect(document.title.length).toBeGreaterThan(0)
     })
@@ -551,7 +551,7 @@ describe('Accessibility — WCAG 2.1 AA', () => {
             <tr>
               <td>INV-001</td>
               <td>John Doe</td>
-              <td>₹5,000</td>
+              <td>EGP 5,000</td>
               <td>Paid</td>
             </tr>
           </tbody>

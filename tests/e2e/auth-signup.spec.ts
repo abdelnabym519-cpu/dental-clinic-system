@@ -50,7 +50,7 @@ test.describe('Signup Flow', () => {
     }
     const phoneInput = page.getByLabel(/phone/i)
     if (await phoneInput.isVisible()) {
-      await phoneInput.fill('9876543210')
+      await phoneInput.fill('01012345678')
     }
     const passwordInput = page
       .getByLabel(/^password$/i)
@@ -136,7 +136,7 @@ test.describe('Signup Flow', () => {
 
     const phoneInput = page.getByLabel(/phone/i)
     if (await phoneInput.isVisible()) {
-      await phoneInput.fill('9876543210')
+      await phoneInput.fill('01012345678')
     }
     const passwordInput = page
       .getByLabel(/^password$/i)

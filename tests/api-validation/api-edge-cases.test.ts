@@ -104,7 +104,7 @@ describe('API Edge Cases — PATCH Partial Updates', () => {
         id: 'p1',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'john@test.com',
         hospitalId: 'hosp-1',
         isActive: true,
@@ -134,7 +134,7 @@ describe('API Edge Cases — PATCH Partial Updates', () => {
         id: 'p1',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'john@test.com',
         hospitalId: 'hosp-1',
       }
@@ -298,11 +298,11 @@ describe('API Edge Cases — Conflict Detection', () => {
   it('detects duplicate phone number within same hospital', async () => {
     // Simulate checking for existing patient with same phone
     mockPrisma.patient.findMany.mockResolvedValue([
-      { id: 'p-existing', phone: '9876543210', hospitalId: 'hosp-1' },
+      { id: 'p-existing', phone: '01012345678', hospitalId: 'hosp-1' },
     ])
 
     const existing = await mockPrisma.patient.findMany({
-      where: { phone: '9876543210', hospitalId: 'hosp-1' },
+      where: { phone: '01012345678', hospitalId: 'hosp-1' },
     })
 
     expect(existing.length).toBe(1)
@@ -313,7 +313,7 @@ describe('API Edge Cases — Conflict Detection', () => {
     mockPrisma.patient.findMany.mockResolvedValue([])
 
     const existing = await mockPrisma.patient.findMany({
-      where: { phone: '9876543210', hospitalId: 'hosp-2' },
+      where: { phone: '01012345678', hospitalId: 'hosp-2' },
     })
 
     expect(existing.length).toBe(0)

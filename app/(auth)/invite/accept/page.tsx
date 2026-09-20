@@ -222,7 +222,7 @@ function AcceptInviteContent() {
             <Input
               id="phone"
               type="tel"
-              placeholder="9876543210"
+              placeholder="01012345678"
               {...register('phone')}
               disabled={isSubmitting}
             />

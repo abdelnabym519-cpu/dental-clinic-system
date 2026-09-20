@@ -23,7 +23,7 @@ BEHAVIOR:
   • 0–30: Low risk
   • 31–60: Moderate risk (flag for doctor review)
   • 61–100: High risk (must be reviewed before any treatment)
-- Support English, Tamil, and Hindi
+- Support Arabic and English
 
 RISK SCORING GUIDE:
 - Allergies to drugs: +15

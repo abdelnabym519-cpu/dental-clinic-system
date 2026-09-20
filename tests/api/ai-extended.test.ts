@@ -120,7 +120,7 @@ describe('POST /api/ai/query', () => {
     mockComplete.mockResolvedValue({ content: aiResponse })
     mockExtractJSON.mockReturnValue(aiResponse)
     vi.mocked(prisma.patient.findMany).mockResolvedValue([
-      { firstName: 'John', lastName: 'Doe', patientId: 'PAT001', age: 35, phone: '9876543210' },
+      { firstName: 'John', lastName: 'Doe', patientId: 'PAT001', age: 35, phone: '01012345678' },
     ] as any)
     vi.mocked(prisma.aISkillExecution.create).mockResolvedValue({} as any)
 

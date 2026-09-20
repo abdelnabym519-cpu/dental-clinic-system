@@ -135,7 +135,7 @@ export default function ChatPage() {
   const prevMsgCountRef = useRef(0)
 
   const voice = useWebVoice({
-    lang: 'en-IN',
+    lang: 'en-EG',
     onFinalTranscript: (text) => {
       if (text.trim() && !chatLoading) {
         isVoiceRequest.current = true

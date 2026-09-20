@@ -26,7 +26,7 @@ const onboardingSchema = z.object({
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
-  pincode: z.string().min(5, 'Valid pincode is required'),
+  pincode: z.string().min(5, 'Valid postal code is required'),
   alternatePhone: z.string().optional(),
   website: z.string().optional(),
   gstNumber: z.string().optional(),
@@ -233,14 +233,14 @@ export default function OnboardingPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city">City *</Label>
-                      <Input id="city" placeholder="Chennai" {...register('city')} />
+                      <Input id="city" placeholder="القاهرة" {...register('city')} />
                       {errors.city && (
                         <p className="text-sm text-destructive">{errors.city.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State *</Label>
-                      <Input id="state" placeholder="Tamil Nadu" {...register('state')} />
+                      <Input id="state" placeholder="القاهرة" {...register('state')} />
                       {errors.state && (
                         <p className="text-sm text-destructive">{errors.state.message}</p>
                       )}
@@ -249,8 +249,8 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="pincode">Pincode *</Label>
-                      <Input id="pincode" placeholder="600001" {...register('pincode')} />
+                      <Label htmlFor="pincode">Postal Code *</Label>
+                      <Input id="pincode" placeholder="11513" {...register('pincode')} />
                       {errors.pincode && (
                         <p className="text-sm text-destructive">{errors.pincode.message}</p>
                       )}
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
                       <Label htmlFor="alternatePhone">Alternate Phone</Label>
                       <Input
                         id="alternatePhone"
-                        placeholder="9876543210"
+                        placeholder="01012345678"
                         {...register('alternatePhone')}
                       />
                     </div>
@@ -271,10 +271,10 @@ export default function OnboardingPage() {
                       <Input id="website" placeholder="www.myclinic.com" {...register('website')} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="gstNumber">GST Number</Label>
+                      <Label htmlFor="gstNumber">Tax ID (الرقم الضريبي)</Label>
                       <Input
                         id="gstNumber"
-                        placeholder="33AAACX1234X1ZX"
+                        placeholder="123456789"
                         {...register('gstNumber')}
                       />
                     </div>
@@ -339,8 +339,8 @@ export default function OnboardingPage() {
                   </p>
 
                   <div className="space-y-2">
-                    <Label htmlFor="upiId">UPI ID</Label>
-                    <Input id="upiId" placeholder="clinic@upi" {...register('upiId')} />
+                    <Label htmlFor="upiId">InstaPay Handle</Label>
+                    <Input id="upiId" placeholder="clinic@instapay" {...register('upiId')} />
                   </div>
 
                   <div className="border-t pt-4 mt-4">
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
                         <Label htmlFor="bankName">Bank Name</Label>
                         <Input
                           id="bankName"
-                          placeholder="State Bank of India"
+                          placeholder="البنك الأهلي المصري"
                           {...register('bankName')}
                         />
                       </div>
@@ -364,10 +364,10 @@ export default function OnboardingPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="bankIfsc">IFSC Code</Label>
+                          <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
                           <Input
                             id="bankIfsc"
-                            placeholder="SBIN0001234"
+                            placeholder="NBEGEGCX"
                             {...register('bankIfsc')}
                           />
                         </div>
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
                         <Label htmlFor="bankAccountName">Account Holder Name</Label>
                         <Input
                           id="bankAccountName"
-                          placeholder="Dr. John Smith"
+                          placeholder="Dr. Ahmed Mahmoud"
                           {...register('bankAccountName')}
                         />
                       </div>

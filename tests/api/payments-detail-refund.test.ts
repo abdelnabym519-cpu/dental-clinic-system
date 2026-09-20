@@ -52,7 +52,7 @@ describe('Payments Detail & Refund API', () => {
             patientId: 'PAT001',
             firstName: 'John',
             lastName: 'Doe',
-            phone: '9876543210',
+            phone: '01012345678',
             email: 'john@test.com',
           },
         },

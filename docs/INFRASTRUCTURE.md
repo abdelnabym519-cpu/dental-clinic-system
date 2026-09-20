@@ -102,7 +102,7 @@ model User {
 }
 ```
 
-A default value would make "never expressed a preference" indistinguishable from "explicitly chose en-IN". A clinic that later switched its default would silently fail to propagate to every staff member who had never touched the setting. That costs nothing on day one and is expensive to unpick a year later.
+A default value would make "never expressed a preference" indistinguishable from "explicitly chose en-EG". A clinic that later switched its default would silently fail to propagate to every staff member who had never touched the setting. That costs nothing on day one and is expensive to unpick a year later.
 
 Two consequences of that decision, both of which shipped and both of which have tests:
 

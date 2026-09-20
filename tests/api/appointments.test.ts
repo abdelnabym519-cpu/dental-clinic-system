@@ -105,13 +105,13 @@ describe('Appointments API - GET /api/appointments', () => {
           patientId: 'PAT202500001',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           email: 'john@example.com',
         },
         doctor: {
           id: 'doctor-1',
-          firstName: 'Priya',
-          lastName: 'Patel',
+          firstName: 'Noura',
+          lastName: 'Atibi',
           specialization: 'General Dentistry',
         },
       },
@@ -211,12 +211,12 @@ describe('Appointments API - POST /api/appointments', () => {
         patientId: 'PAT202500001',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
       },
       doctor: {
         id: 'doctor-1',
-        firstName: 'Priya',
-        lastName: 'Patel',
+        firstName: 'Noura',
+        lastName: 'Atibi',
       },
     } as any)
 

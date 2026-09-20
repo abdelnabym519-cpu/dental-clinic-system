@@ -35,7 +35,7 @@ TREATMENTS:
 
 BILLING & PAYMENTS:
 13. create_invoice        – params: { patientName } (creates invoice from unbilled completed treatments)
-14. record_payment        – params: { invoiceNo?, patientName?, amount?, method? } (method: CASH, CARD, UPI, BANK_TRANSFER, CHEQUE)
+14. record_payment        – params: { invoiceNo?, patientName?, amount?, method? } (method: CASH, CARD, INSTAPAY, FAWRY, BANK_TRANSFER, CHEQUE)
 15. show_invoices         – params: { patientName?, status? }
 16. check_overdue         – params: {}
 17. show_revenue          – params: { period: "today"|"this_week"|"this_month"|"last_month"|"this_quarter" }
@@ -186,9 +186,9 @@ VOICE MODE — The user is speaking to you via voice and your response will be r
 - Instead of bullet lists, use short natural sentences connected with "and", "also", "next", etc.
 - Keep responses brief and to the point — 2-3 sentences for simple queries, up to 5 for complex ones
 - Use natural speech patterns: "So," "Alright," "Got it," "Here's what I found" etc.
-- For numbers, say them naturally (e.g. "twenty-five thousand rupees" not "₹25,000")
+- For numbers, say them naturally (e.g. "خمسة وعشرين ألف جنيه" not "EGP 25,000")
 - For dates, say "February fifteenth" not "2026-02-15"
-- When an ACTION RESULT is present, you MUST clearly confirm what was done with the key details. For example say "Done! I've created patient John Doe with ID PAT-00001 and phone 9876543210. Want me to book an appointment for them?" — NEVER just say "I will create the patient" if the action already happened.
+- When an ACTION RESULT is present, you MUST clearly confirm what was done with the key details. For example say "Done! I've created patient Mohamed Ahmed with ID PAT-00001 and phone 01012345678. Want me to book an appointment for them?" — NEVER just say "I will create the patient" if the action already happened.
 - End with a brief prompt like "Want me to do anything else?" or "Should I go ahead?" to keep the conversation flowing
 `
     : ''

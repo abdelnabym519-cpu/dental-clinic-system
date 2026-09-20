@@ -110,52 +110,48 @@ describe('GET /api/settings/billing/gateway', () => {
     expect(body.config).toBeNull()
   })
 
-  it('returns config with masked secrets for Razorpay', async () => {
+  it('returns config with masked secrets for Fawry', async () => {
     mockAuth()
     vi.mocked(prisma.paymentGatewayConfig.findUnique).mockResolvedValue({
-      provider: 'RAZORPAY',
+      provider: 'FAWRY',
       isEnabled: true,
       isLiveMode: false,
-      razorpayKeyId: 'rzp_test_abc123',
-      razorpayKeySecret: 'enc_secret_key_xyz',
-      phonepeMerchantId: null,
-      phonepeSaltKey: null,
-      phonepeSaltIndex: null,
-      paytmMid: null,
-      paytmMerchantKey: null,
-      paytmWebsite: null,
+      fawryMerchantCode: 'EG-MERCHANT-001',
+      fawrySecretKey: 'enc_secret_key_xyz',
+      paymobApiKey: null,
+      paymobIntegrationId: null,
+      paymobIframeId: null,
+      instapayHandle: null,
     } as any)
 
     const res = await gatewayGET()
     const body = await res.json()
 
-    expect(body.config.provider).toBe('RAZORPAY')
+    expect(body.config.provider).toBe('FAWRY')
     expect(body.config.isEnabled).toBe(true)
-    expect(body.config.razorpayKeySecret).toMatch(/^\*\*\*\*/)
-    expect(body.config.webhookUrl).toContain('/api/webhooks/payment/razorpay')
+    expect(body.config.fawrySecretKey).toMatch(/^\*\*\*\*/)
+    expect(body.config.webhookUrl).toContain('/api/webhooks/payment/fawry')
   })
 
-  it('masks PhonePe salt key', async () => {
+  it('masks Paymob API key', async () => {
     mockAuth()
     vi.mocked(prisma.paymentGatewayConfig.findUnique).mockResolvedValue({
-      provider: 'PHONEPE',
+      provider: 'PAYMOB',
       isEnabled: true,
       isLiveMode: true,
-      razorpayKeyId: null,
-      razorpayKeySecret: null,
-      phonepeMerchantId: 'MERCHANT123',
-      phonepeSaltKey: 'enc_salt_key_12345',
-      phonepeSaltIndex: '1',
-      paytmMid: null,
-      paytmMerchantKey: null,
-      paytmWebsite: null,
+      fawryMerchantCode: null,
+      fawrySecretKey: null,
+      paymobApiKey: 'enc_api_key_12345',
+      paymobIntegrationId: '456123',
+      paymobIframeId: '789456',
+      instapayHandle: null,
     } as any)
 
     const res = await gatewayGET()
     const body = await res.json()
 
-    expect(body.config.provider).toBe('PHONEPE')
-    expect(body.config.phonepeSaltKey).toMatch(/^\*\*\*\*/)
+    expect(body.config.provider).toBe('PAYMOB')
+    expect(body.config.paymobApiKey).toMatch(/^\*\*\*\*/)
   })
 })
 
@@ -184,21 +180,21 @@ describe('PUT /api/settings/billing/gateway', () => {
     expect(body.error).toContain('provider')
   })
 
-  it('creates Razorpay config with encrypted secret', async () => {
+  it('creates Fawry config with encrypted secret', async () => {
     mockAuth()
     vi.mocked(prisma.paymentGatewayConfig.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.paymentGatewayConfig.upsert).mockResolvedValue({
-      provider: 'RAZORPAY',
+      provider: 'FAWRY',
       isEnabled: true,
       isLiveMode: false,
     } as any)
 
     const res = await gatewayPUT(
       makeReq('/api/settings/billing/gateway', 'PUT', {
-        provider: 'RAZORPAY',
+        provider: 'FAWRY',
         isEnabled: true,
-        razorpayKeyId: 'rzp_test_123',
-        razorpayKeySecret: 'my_secret_key',
+        fawryMerchantCode: 'EG-MERCHANT-001',
+        fawrySecretKey: 'my_secret_key',
       })
     )
     const body = await res.json()
@@ -211,51 +207,50 @@ describe('PUT /api/settings/billing/gateway', () => {
   it('preserves existing secret when masked value sent', async () => {
     mockAuth()
     vi.mocked(prisma.paymentGatewayConfig.findUnique).mockResolvedValue({
-      provider: 'RAZORPAY',
-      razorpayKeySecret: 'enc_old_secret',
+      provider: 'FAWRY',
+      fawrySecretKey: 'enc_old_secret',
     } as any)
     vi.mocked(prisma.paymentGatewayConfig.upsert).mockResolvedValue({
-      provider: 'RAZORPAY',
+      provider: 'FAWRY',
       isEnabled: true,
       isLiveMode: false,
     } as any)
 
     const res = await gatewayPUT(
       makeReq('/api/settings/billing/gateway', 'PUT', {
-        provider: 'RAZORPAY',
+        provider: 'FAWRY',
         isEnabled: true,
-        razorpayKeyId: 'rzp_test_123',
-        razorpayKeySecret: '****cret',
+        fawryMerchantCode: 'EG-MERCHANT-001',
+        fawrySecretKey: '****cret',
       })
     )
 
     expect(mockEncrypt).not.toHaveBeenCalled()
     const upsertCall = vi.mocked(prisma.paymentGatewayConfig.upsert).mock.calls[0][0] as any
-    expect(upsertCall.update.razorpayKeySecret).toBe('enc_old_secret')
+    expect(upsertCall.update.fawrySecretKey).toBe('enc_old_secret')
   })
 
   it('clears other provider fields when switching provider', async () => {
     mockAuth()
     vi.mocked(prisma.paymentGatewayConfig.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.paymentGatewayConfig.upsert).mockResolvedValue({
-      provider: 'PAYTM',
+      provider: 'INSTAPAY',
       isEnabled: true,
       isLiveMode: false,
     } as any)
 
     await gatewayPUT(
       makeReq('/api/settings/billing/gateway', 'PUT', {
-        provider: 'PAYTM',
-        paytmMid: 'MID123',
-        paytmMerchantKey: 'key123',
-        paytmWebsite: 'WEBSTAGING',
+        provider: 'INSTAPAY',
+        instapayHandle: 'dentora@instapay',
       })
     )
 
     const upsertCall = vi.mocked(prisma.paymentGatewayConfig.upsert).mock.calls[0][0] as any
-    expect(upsertCall.update.razorpayKeyId).toBeNull()
-    expect(upsertCall.update.razorpayKeySecret).toBeNull()
-    expect(upsertCall.update.phonepeMerchantId).toBeNull()
+    expect(upsertCall.update.fawryMerchantCode).toBeNull()
+    expect(upsertCall.update.fawrySecretKey).toBeNull()
+    expect(upsertCall.update.paymobApiKey).toBeNull()
+    expect(upsertCall.update.instapayHandle).toBe('dentora@instapay')
   })
 })
 
@@ -681,7 +676,7 @@ describe('POST /api/settings/communications/test', () => {
     const res = await commTestPOST(
       makeReq('/api/settings/communications/test', 'POST', {
         type: 'sms',
-        testData: { phone: '9876543210' },
+        testData: { phone: '01012345678' },
       })
     )
     const body = await res.json()
@@ -699,7 +694,7 @@ describe('POST /api/settings/communications/test', () => {
     const res = await commTestPOST(
       makeReq('/api/settings/communications/test', 'POST', {
         type: 'sms',
-        testData: { phone: '9876543210' },
+        testData: { phone: '01012345678' },
       })
     )
     const body = await res.json()

@@ -41,7 +41,7 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  IndianRupee,
+  Banknote,
   CalendarClock,
   Ban,
   CreditCard,
@@ -276,7 +276,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   }
 
   const formatCurrency = (amount: number) =>
-    `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+    `EGP ${amount.toLocaleString('en-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 
   if (loading) {
     return (
@@ -350,7 +350,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(plan.totalAmount)}</div>
@@ -620,7 +620,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Amount (₹)</Label>
+              <Label>Amount (EGP )</Label>
               <Input
                 type="number"
                 value={payAmount}
@@ -637,7 +637,8 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
                 <SelectContent>
                   <SelectItem value="CASH">Cash</SelectItem>
                   <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="INSTAPAY">InstaPay</SelectItem>
+                  <SelectItem value="FAWRY">Fawry</SelectItem>
                   <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
                   <SelectItem value="CHEQUE">Cheque</SelectItem>
                   <SelectItem value="ONLINE">Online</SelectItem>

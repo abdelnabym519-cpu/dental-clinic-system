@@ -5,56 +5,55 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/providers'
 import { LanguageProvider, LOCALE_COOKIE } from '@/components/providers/language-provider'
-import { directionFor, translate } from '@/lib/i18n/dictionary'
+import { directionFor } from '@/lib/i18n/dictionary'
 import { resolveLocale } from '@/lib/i18n/config'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'DentalERP - Open Source Dental Hospital Management Software India',
-    template: '%s | DentalERP',
+    default: 'Dentora — Egyptian Dental Clinic Management',
+    template: '%s | Dentora',
   },
   description:
-    'Free open-source dental clinic management software for India. Patient records, appointment scheduling, GST billing, inventory, AI-powered treatment planning, insurance claims, tele-dentistry. Built for Indian dental hospitals and clinics.',
+    'Dental clinic management for Egypt. Patient records, appointment scheduling, VAT billing, inventory, AI-powered treatment planning, insurance claims, tele-dentistry. Built for Egyptian dental hospitals and clinics.',
   keywords: [
-    'dental software India',
+    'dental software Egypt',
     'dental clinic management software',
     'dental hospital management system',
     'dental ERP',
     'dental practice management',
     'open source dental software',
-    'free dental software India',
-    'dental billing software GST',
+    'برنامج عيادات أسنان',
+    'نظام إدارة عيادات',
     'patient management system dental',
     'appointment scheduling dental',
-    'dental clinic software free',
-    'hospital management system India',
-    'HMS India',
+    'dental clinic software',
+    'hospital management system Egypt',
     'dental records software',
     'AI dental software',
-    'tele-dentistry India',
+    'tele-dentistry Egypt',
     'dental inventory management',
-    'dental insurance claims India',
+    'dental insurance claims',
     'dental lab management',
     'multi-branch dental software',
   ],
-  authors: [{ name: 'Abinauv Selvaraj' }],
-  creator: 'Abinauv Selvaraj',
+  authors: [{ name: 'Dentora' }],
+  creator: 'Dentora',
   manifest: '/manifest.json',
   openGraph: {
     type: 'website',
-    locale: 'en_IN',
-    title: 'DentalERP - Open Source Dental Hospital Management Software',
+    locale: 'ar_EG',
+    title: 'Dentora — Egyptian Dental Clinic Management',
     description:
-      'Free, AI-powered dental clinic management system built for Indian dental hospitals. Patient records, GST billing, appointments, inventory, insurance, tele-dentistry and more.',
-    siteName: 'DentalERP',
+      'AI-powered dental clinic management system built for Egyptian dental clinics. Patient records, VAT billing, appointments, inventory, insurance, tele-dentistry and more.',
+    siteName: 'Dentora',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'DentalERP - Open Source Dental Hospital Management Software',
+    title: 'Dentora — Egyptian Dental Clinic Management',
     description:
-      'Free, AI-powered dental clinic management system for India. 16 AI skills, GST billing, patient portal, tele-dentistry.',
+      'AI-powered dental clinic management system for Egypt. 16 AI skills, VAT billing, patient portal, tele-dentistry.'
   },
   robots: {
     index: true,
@@ -63,7 +62,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'DentalERP',
+    title: 'Dentora',
   },
 }
 

@@ -191,7 +191,7 @@ export default function PrescriptionDetailPage() {
                   {prescription.prescriptionNo}
                 </Badge>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(prescription.createdAt).toLocaleDateString('en-IN', {
+                  {new Date(prescription.createdAt).toLocaleDateString('en-EG', {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric',
@@ -294,7 +294,7 @@ export default function PrescriptionDetailPage() {
             {prescription.validUntil && (
               <p className="text-xs text-muted-foreground mb-6">
                 Valid until:{' '}
-                {new Date(prescription.validUntil).toLocaleDateString('en-IN', {
+                {new Date(prescription.validUntil).toLocaleDateString('en-EG', {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric',

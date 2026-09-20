@@ -206,7 +206,7 @@ describe('GET /api/ai/patient-segments', () => {
         patientId: 'PAT001',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         createdAt: new Date('2025-01-01'),
       },
     ]
@@ -260,7 +260,7 @@ describe('GET /api/ai/patient-segments', () => {
         patientId: 'PAT001',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         createdAt: new Date('2025-01-01'),
       },
     ])

@@ -77,9 +77,9 @@ export default function SuppliersPage() {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'EGP',
       minimumFractionDigits: 0,
     }).format(amount)
   }

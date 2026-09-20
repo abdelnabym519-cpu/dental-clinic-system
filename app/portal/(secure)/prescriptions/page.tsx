@@ -49,7 +49,7 @@ export default function PatientPrescriptions() {
   }, [])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', {
+    new Date(d).toLocaleDateString('en-EG', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

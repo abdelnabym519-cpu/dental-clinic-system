@@ -115,14 +115,14 @@ describe('GET /api/insurance-claims', () => {
     vi.mocked(prisma.insuranceClaim.count).mockResolvedValue(0)
     vi.mocked(prisma.insuranceClaim.aggregate).mockResolvedValue({ _sum: {} } as any)
 
-    await claimsGET(makeReq('/api/insurance-claims?status=DRAFT&patientId=p1&provider=ICICI'))
+    await claimsGET(makeReq('/api/insurance-claims?status=DRAFT&patientId=p1&provider=MetLife'))
 
     expect(prisma.insuranceClaim.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           status: 'DRAFT',
           patientId: 'p1',
-          insuranceProvider: { contains: 'ICICI' },
+          insuranceProvider: { contains: 'MetLife' },
         }),
       })
     )
@@ -166,7 +166,7 @@ describe('POST /api/insurance-claims', () => {
     const res = await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p1',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 5000,
       })
@@ -185,7 +185,7 @@ describe('POST /api/insurance-claims', () => {
     const res = await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p1',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 0,
       })
@@ -200,7 +200,7 @@ describe('POST /api/insurance-claims', () => {
     const res = await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p-none',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 5000,
       })
@@ -216,7 +216,7 @@ describe('POST /api/insurance-claims', () => {
     const res = await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p1',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 5000,
         invoiceIds: ['inv1', 'inv-missing'],
@@ -245,7 +245,7 @@ describe('POST /api/insurance-claims', () => {
     const res = await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p1',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 5000,
       })
@@ -268,7 +268,7 @@ describe('POST /api/insurance-claims', () => {
     await claimsPOST(
       makeReq('/api/insurance-claims', 'POST', {
         patientId: 'p1',
-        insuranceProvider: 'ICICI',
+        insuranceProvider: 'MetLife',
         policyNumber: 'POL001',
         claimAmount: 5000,
         invoiceIds: ['inv1', 'inv2'],

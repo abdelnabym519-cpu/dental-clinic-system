@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/cron/recall
- * Scheduled: weekly (Monday 07:00 IST)
+ * Scheduled: weekly (Monday 07:00 Africa/Cairo)
  * Identifies patients who need to be recalled:
  *   1. No visit in 6+ months
  *   2. Incomplete treatment plans

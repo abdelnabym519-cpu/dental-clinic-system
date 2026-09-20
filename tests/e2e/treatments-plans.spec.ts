@@ -97,7 +97,7 @@ test.describe('Treatment Plans', () => {
       await page.waitForTimeout(1000)
       await expect(
         page
-          .getByText(/total|amount|cost|₹/i)
+          .getByText(/total|amount|cost|EGP/i)
           .or(page.locator('body'))
           .first()
       ).toBeVisible({ timeout: 5000 })

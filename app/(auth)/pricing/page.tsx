@@ -119,7 +119,7 @@ const faqs = [
   {
     question: 'What payment methods do you accept?',
     answer:
-      'We accept all major credit/debit cards, UPI, net banking, and can arrange invoicing for Enterprise customers.',
+      'We accept all major credit/debit cards, InstaPay, mobile wallets (Vodafone Cash, Orange, Etisalat), and bank transfers, and can arrange invoicing for Enterprise customers.',
   },
   {
     question: 'Can I get a refund?',
@@ -143,7 +143,7 @@ export default function PricingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
               D
             </div>
-            <span className="font-semibold">DentalERP</span>
+            <span className="font-semibold">Dentora</span>
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/login">
@@ -208,7 +208,7 @@ export default function PricingPage() {
                   <CardDescription>{plan.description}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
-                      {plan.price === 'Custom' ? '' : '₹'}
+                      {plan.price === 'Custom' ? '' : 'EGP '}
                       {plan.price}
                     </span>
                     {plan.priceNote ? (
@@ -278,7 +278,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t mt-24 py-8">
         <div className="container text-center text-sm text-muted-foreground">
-          DentalERP - Complete Dental Practice Management Solution
+          Dentora - Complete Dental Practice Management Solution
         </div>
       </footer>
     </div>

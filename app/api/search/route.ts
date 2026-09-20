@@ -151,13 +151,13 @@ export async function GET(req: NextRequest) {
       appointments: appointments.map((a): SearchResult => ({
         id: a.id,
         label: `${a.appointmentNo} — ${a.patient.firstName} ${a.patient.lastName}`,
-        sublabel: `${new Date(a.scheduledDate).toLocaleDateString('en-IN')} ${a.scheduledTime} · Dr. ${a.doctor.firstName} ${a.doctor.lastName} · ${a.status}`,
+        sublabel: `${new Date(a.scheduledDate).toLocaleDateString('en-EG')} ${a.scheduledTime} · Dr. ${a.doctor.firstName} ${a.doctor.lastName} · ${a.status}`,
         href: `/appointments/${a.id}`,
       })),
       invoices: invoices.map((inv): SearchResult => ({
         id: inv.id,
         label: `${inv.invoiceNo} — ${inv.patient.firstName} ${inv.patient.lastName}`,
-        sublabel: `₹${Number(inv.totalAmount).toLocaleString('en-IN')} · ${inv.status}`,
+        sublabel: `EGP ${Number(inv.totalAmount).toLocaleString('en-EG')} · ${inv.status}`,
         href: `/billing/invoices/${inv.id}`,
       })),
       staff: staff.map((s): SearchResult => ({

@@ -465,7 +465,7 @@ describe('POST /api/referrals', () => {
       makeReq('/api/referrals', 'POST', {
         referrerPatientId: 'p1',
         referredName: 'Jane',
-        referredPhone: '9876543210',
+        referredPhone: '01012345678',
       })
     )
     expect(res.status).toBe(403)
@@ -485,7 +485,7 @@ describe('POST /api/referrals', () => {
       makeReq('/api/referrals', 'POST', {
         referrerPatientId: 'p-none',
         referredName: 'Jane',
-        referredPhone: '9876543210',
+        referredPhone: '01012345678',
       })
     )
     expect(res.status).toBe(404)
@@ -505,7 +505,7 @@ describe('POST /api/referrals', () => {
       makeReq('/api/referrals', 'POST', {
         referrerPatientId: 'p1',
         referredName: 'Jane',
-        referredPhone: '9876543210',
+        referredPhone: '01012345678',
       })
     )
     expect(res.status).toBe(201)

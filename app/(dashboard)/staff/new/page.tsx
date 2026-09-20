@@ -40,7 +40,7 @@ export default function NewStaffPage() {
     gender: '',
     address: '',
     city: '',
-    state: 'Tamil Nadu',
+    state: 'القاهرة',
     pincode: '',
 
     // Documents
@@ -249,7 +249,7 @@ export default function NewStaffPage() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="01012345678"
                     required
                   />
                 </div>
@@ -259,7 +259,7 @@ export default function NewStaffPage() {
                     id="alternatePhone"
                     value={formData.alternatePhone}
                     onChange={(e) => handleChange('alternatePhone', e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="01012345678"
                   />
                 </div>
               </div>
@@ -282,7 +282,7 @@ export default function NewStaffPage() {
                     id="city"
                     value={formData.city}
                     onChange={(e) => handleChange('city', e.target.value)}
-                    placeholder="Chennai"
+                    placeholder="القاهرة"
                   />
                 </div>
                 <div className="space-y-2">
@@ -291,16 +291,16 @@ export default function NewStaffPage() {
                     id="state"
                     value={formData.state}
                     onChange={(e) => handleChange('state', e.target.value)}
-                    placeholder="Tamil Nadu"
+                    placeholder="القاهرة"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pincode">Pincode</Label>
+                  <Label htmlFor="pincode">Postal Code</Label>
                   <Input
                     id="pincode"
                     value={formData.pincode}
                     onChange={(e) => handleChange('pincode', e.target.value)}
-                    placeholder="600001"
+                    placeholder="11513"
                   />
                 </div>
               </div>
@@ -346,21 +346,21 @@ export default function NewStaffPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNumber">Aadhar Number</Label>
+                  <Label htmlFor="aadharNumber">National ID (الرقم القومي)</Label>
                   <Input
                     id="aadharNumber"
                     value={formData.aadharNumber}
                     onChange={(e) => handleChange('aadharNumber', e.target.value)}
-                    placeholder="1234 5678 9012"
+                    placeholder="14-digit national ID"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="panNumber">PAN Number</Label>
+                  <Label htmlFor="panNumber">Commercial Register (السجل التجاري)</Label>
                   <Input
                     id="panNumber"
                     value={formData.panNumber}
                     onChange={(e) => handleChange('panNumber', e.target.value)}
-                    placeholder="ABCDE1234F"
+                    placeholder="CR number"
                   />
                 </div>
               </div>
@@ -426,7 +426,7 @@ export default function NewStaffPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="salary">Monthly Salary (₹)</Label>
+                <Label htmlFor="salary">Monthly Salary (EGP)</Label>
                 <Input
                   id="salary"
                   type="number"
@@ -447,12 +447,12 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bankIfsc">IFSC Code</Label>
+                  <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
                   <Input
                     id="bankIfsc"
                     value={formData.bankIfsc}
                     onChange={(e) => handleChange('bankIfsc', e.target.value)}
-                    placeholder="HDFC0001234"
+                    placeholder="NBEGEGCX"
                   />
                 </div>
               </div>
@@ -481,7 +481,7 @@ export default function NewStaffPage() {
                   id="emergencyPhone"
                   value={formData.emergencyPhone}
                   onChange={(e) => handleChange('emergencyPhone', e.target.value)}
-                  placeholder="+91 98765 43210"
+                  placeholder="01012345678"
                 />
               </div>
             </CardContent>

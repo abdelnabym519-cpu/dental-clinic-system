@@ -28,7 +28,7 @@ Guidelines:
 - Include both common and rare complications
 - Tailor instructions to the specific dental procedure
 - Follow standard dental consent form best practices
-- Include culturally appropriate language for an Indian dental clinic context
+- Include culturally appropriate language for an Egyptian dental clinic context (Arabic or English)
 
 Context about the clinic and patient:
 ${contextStr}

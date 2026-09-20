@@ -1,24 +1,46 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createHmac, createHash } from 'crypto'
-import { RazorpayGateway } from '@/lib/payment-gateways/razorpay'
-import { PhonePeGateway } from '@/lib/payment-gateways/phonepe'
-import { PaytmGateway } from '@/lib/payment-gateways/paytm'
+import { FawryGateway } from '@/lib/payment-gateways/fawry'
+import { PaymobGateway } from '@/lib/payment-gateways/paymob'
+import { InstapayGateway } from '@/lib/payment-gateways/instapay'
 import type {
   CreateOrderParams,
   GatewayCredentials,
   GatewayOrder,
 } from '@/lib/payment-gateways/types'
 
-// ---- Shared test fixtures ----
+// ---- Shared test fixtures (Egyptian) ----
 
 const ORDER_PARAMS: CreateOrderParams = {
   amount: 1500,
-  currency: 'INR',
-  invoiceId: 'INV-2025-001',
-  receipt: 'INV-2025-001',
-  customerName: 'Rahul Sharma',
-  customerEmail: 'rahul@example.com',
-  customerPhone: '9876543210',
+  currency: 'EGP',
+  invoiceId: 'INV-2026-001',
+  receipt: 'INV-2026-001',
+  customerName: 'محمد أحمد السيد',
+  customerEmail: 'mohamed@example.com',
+  customerPhone: '01012345678',
+}
+
+const FAWRY_CREDS: GatewayCredentials = {
+  provider: 'FAWRY',
+  isLiveMode: false,
+  fawryMerchantCode: 'EG-MERCHANT-001',
+  fawrySecretKey: 'fawry-secret-key',
+}
+
+const PAYMOB_CREDS: GatewayCredentials = {
+  provider: 'PAYMOB',
+  isLiveMode: false,
+  paymobApiKey: 'paymob-api-key',
+  paymobIntegrationId: '456123',
+  paymobIframeId: '789456',
+}
+
+const INSTAPAY_CREDS: GatewayCredentials = {
+  provider: 'INSTAPAY',
+  isLiveMode: false,
+  instapayHandle: 'dentora@instapay',
+  webhookSecret: 'instapay-webhook-secret',
 }
 
 // ---- fetch mock ----
@@ -30,710 +52,367 @@ beforeEach(() => {
 })
 
 // ==========================================================================
-// Razorpay Gateway
+// Fawry Gateway (Egypt)
 // ==========================================================================
 
-describe('RazorpayGateway', () => {
-  const creds: GatewayCredentials = {
-    provider: 'RAZORPAY',
-    isLiveMode: false,
-    razorpayKeyId: 'rzp_test_key123',
-    razorpayKeySecret: 'rzp_secret_abc',
-  }
-
-  // ---------- Constructor ----------
-  describe('constructor', () => {
-    it('creates instance with valid credentials', () => {
-      const gw = new RazorpayGateway(creds)
-      expect(gw).toBeDefined()
-    })
-
-    it('throws when keyId is missing', () => {
-      expect(() => new RazorpayGateway({ ...creds, razorpayKeyId: undefined })).toThrow(
-        'Razorpay credentials'
-      )
-    })
-
-    it('throws when keySecret is missing', () => {
-      expect(() => new RazorpayGateway({ ...creds, razorpayKeySecret: undefined })).toThrow(
-        'Razorpay credentials'
-      )
-    })
+describe('FawryGateway', () => {
+  it('requires merchant code and secret key', () => {
+    expect(() => new FawryGateway({ provider: 'FAWRY', isLiveMode: false })).toThrow(
+      /Fawry credentials/
+    )
   })
 
-  // ---------- createOrder ----------
-  describe('createOrder', () => {
-    it('creates an order with correct amount in paise', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'order_123', currency: 'INR', status: 'created' }),
-      })
+  it('creates a signed charge request and returns a pending order', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ referenceNumber: 'FWRY-99001', checkoutUrl: 'https://atfawry.fawrystaging.com/pay/99001' }),
+        { status: 200 }
+      )
+    )
 
-      const gw = new RazorpayGateway(creds)
-      const order = await gw.createOrder(ORDER_PARAMS)
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const order = await gateway.createOrder(ORDER_PARAMS)
 
-      expect(order.orderId).toBe('order_123')
-      expect(order.amount).toBe(150000) // 1500 * 100
-      expect(order.currency).toBe('INR')
-      expect(order.provider).toBe('razorpay')
-      expect(order.metadata?.razorpayOrderId).toBe('order_123')
-    })
+    expect(order.provider).toBe('fawry')
+    expect(order.status).toBe('PENDING')
+    expect(order.orderId).toBe('FWRY-99001')
+    expect(order.currency).toBe('EGP')
+    expect(String(order.metadata?.redirectUrl)).toContain('/pay/99001')
 
-    it('sends correct auth header', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'order_1', currency: 'INR', status: 'created' }),
-      })
+    const [, init] = mockFetch.mock.calls[0]
+    const body = JSON.parse(init.body)
+    expect(body.merchantCode).toBe('EG-MERCHANT-001')
+    expect(body.language).toBe('ar-eg')
+    expect(body.currencyCode).toBe('EGP')
+    expect(body.chargeItems[0].price).toBe(150000) // piasters
+    expect(body.chargeItems[0].itemId).toBe('INV-2026-001')
+    expect(body.merchantRefNum).toMatch(/^INV-2026-001-\d+$/)
 
-      const gw = new RazorpayGateway(creds)
-      await gw.createOrder(ORDER_PARAMS)
-
-      const [url, opts] = mockFetch.mock.calls[0]
-      expect(url).toContain('https://api.razorpay.com/v1/orders')
-      const expectedAuth = Buffer.from(
-        `${creds.razorpayKeyId}:${creds.razorpayKeySecret}`
-      ).toString('base64')
-      expect(opts.headers.Authorization).toBe(`Basic ${expectedAuth}`)
-    })
-
-    it('sends amount in paise in request body', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'o1', currency: 'INR', status: 'created' }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      await gw.createOrder({ ...ORDER_PARAMS, amount: 99.99 })
-
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.amount).toBe(9999) // Math.round(99.99 * 100)
-    })
-
-    it('throws on API error', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => ({ error: { description: 'Bad Request' } }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      await expect(gw.createOrder(ORDER_PARAMS)).rejects.toThrow('Bad Request')
-    })
+    // signature = sha256(merchantCode + merchantRefNum + secretKey)
+    const expected = createHash('sha256')
+      .update(body.merchantCode + body.merchantRefNum + 'fawry-secret-key')
+      .digest('hex')
+    expect(body.signature).toBe(expected)
   })
 
-  // ---------- verifyPayment ----------
-  describe('verifyPayment', () => {
-    it('verifies valid signature', async () => {
-      const orderId = 'order_123'
-      const paymentId = 'pay_456'
-      const sig = createHmac('sha256', creds.razorpayKeySecret!)
-        .update(`${orderId}|${paymentId}`)
-        .digest('hex')
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          status: 'captured',
+  it('verifies payment status PAID', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          status: 'PAID',
+          fawryRefNumber: 'FWRY-99001',
           amount: 150000,
-          method: 'upi',
+          paymentMethod: 'CARD',
         }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      const result = await gw.verifyPayment({ orderId, paymentId, signature: sig })
-
-      expect(result.verified).toBe(true)
-      expect(result.transactionId).toBe(paymentId)
-      expect(result.status).toBe('COMPLETED')
-      expect(result.amount).toBe(1500)
-      expect(result.method).toBe('upi')
-    })
-
-    it('rejects invalid signature', async () => {
-      const gw = new RazorpayGateway(creds)
-      const result = await gw.verifyPayment({
-        orderId: 'order_123',
-        paymentId: 'pay_456',
-        signature: 'invalid_sig',
-      })
-
-      expect(result.verified).toBe(false)
-      expect(result.status).toBe('FAILED')
-    })
-
-    it('returns non-captured status as-is', async () => {
-      const orderId = 'order_x'
-      const paymentId = 'pay_y'
-      const sig = createHmac('sha256', creds.razorpayKeySecret!)
-        .update(`${orderId}|${paymentId}`)
-        .digest('hex')
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ status: 'authorized', amount: 50000, method: 'card' }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      const result = await gw.verifyPayment({ orderId, paymentId, signature: sig })
-
-      expect(result.verified).toBe(true)
-      expect(result.status).toBe('authorized')
-    })
-  })
-
-  // ---------- verifyWebhook ----------
-  describe('verifyWebhook', () => {
-    it('verifies valid webhook signature', () => {
-      const body = '{"event":"payment.captured"}'
-      const secret = 'webhook_secret_123'
-      const sig = createHmac('sha256', secret).update(body).digest('hex')
-
-      const gw = new RazorpayGateway(creds)
-      expect(gw.verifyWebhook(body, sig, secret)).toBe(true)
-    })
-
-    it('rejects invalid webhook signature', () => {
-      const gw = new RazorpayGateway(creds)
-      expect(gw.verifyWebhook('{"event":"test"}', 'wrong_sig', 'secret')).toBe(false)
-    })
-  })
-
-  // ---------- getCheckoutConfig ----------
-  describe('getCheckoutConfig', () => {
-    it('returns correct checkout config', () => {
-      const gw = new RazorpayGateway(creds)
-      const order: GatewayOrder = {
-        orderId: 'order_abc',
-        amount: 150000,
-        currency: 'INR',
-        receipt: 'INV-001',
-        provider: 'razorpay',
-        status: 'created',
-      }
-
-      const config = gw.getCheckoutConfig(order, creds)
-      expect(config.provider).toBe('razorpay')
-      expect(config.key).toBe(creds.razorpayKeyId)
-      expect(config.orderId).toBe('order_abc')
-      expect(config.amount).toBe(150000)
-      expect(config.currency).toBe('INR')
-    })
-  })
-
-  // ---------- initiateRefund ----------
-  describe('initiateRefund', () => {
-    it('initiates refund with correct amount', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'refund_001', status: 'processed', amount: 50000 }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      const result = await gw.initiateRefund({ paymentId: 'pay_123', amount: 500 })
-
-      expect(result.success).toBe(true)
-      expect(result.refundId).toBe('refund_001')
-      expect(result.amount).toBe(500)
-
-      const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(body.amount).toBe(50000)
-    })
-
-    it('sends POST to correct refund URL', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'r1', status: 'processed', amount: 10000 }),
-      })
-
-      const gw = new RazorpayGateway(creds)
-      await gw.initiateRefund({ paymentId: 'pay_xyz', amount: 100, reason: 'Customer request' })
-
-      expect(mockFetch.mock.calls[0][0]).toContain('/payments/pay_xyz/refund')
-    })
-  })
-})
-
-// ==========================================================================
-// PhonePe Gateway
-// ==========================================================================
-
-describe('PhonePeGateway', () => {
-  const creds: GatewayCredentials = {
-    provider: 'PHONEPE',
-    isLiveMode: false,
-    phonepeMerchantId: 'MERCHANT_TEST',
-    phonepeSaltKey: 'salt_key_abc',
-    phonepeSaltIndex: '1',
-  }
-
-  // ---------- Constructor ----------
-  describe('constructor', () => {
-    it('creates instance with valid credentials', () => {
-      const gw = new PhonePeGateway(creds)
-      expect(gw).toBeDefined()
-    })
-
-    it('throws when merchantId is missing', () => {
-      expect(() => new PhonePeGateway({ ...creds, phonepeMerchantId: undefined })).toThrow(
-        'PhonePe credentials'
+        { status: 200 }
       )
-    })
+    )
 
-    it('throws when saltKey is missing', () => {
-      expect(() => new PhonePeGateway({ ...creds, phonepeSaltKey: undefined })).toThrow(
-        'PhonePe credentials'
-      )
-    })
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const result = await gateway.verifyPayment({ orderId: 'FWRY-99001', paymentId: 'FWRY-99001', signature: '' })
 
-    it('uses sandbox URL when isLiveMode is false', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: {
-            instrumentResponse: { redirectInfo: { url: 'https://sandbox.phonepe.com/pay' } },
-          },
-        }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      await gw.createOrder(ORDER_PARAMS)
-
-      expect(mockFetch.mock.calls[0][0]).toContain('api-preprod.phonepe.com')
-    })
-
-    it('uses production URL when isLiveMode is true', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: { instrumentResponse: { redirectInfo: { url: 'https://phonepe.com/pay' } } },
-        }),
-      })
-
-      const gw = new PhonePeGateway({ ...creds, isLiveMode: true })
-      await gw.createOrder(ORDER_PARAMS)
-
-      expect(mockFetch.mock.calls[0][0]).toContain('api.phonepe.com')
-    })
+    expect(result.verified).toBe(true)
+    expect(result.status).toBe('PAID')
+    expect(result.amount).toBe(1500)
+    expect(result.method).toBe('CARD')
   })
 
-  // ---------- createOrder ----------
-  describe('createOrder', () => {
-    it('creates order with correct provider and amount', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          success: true,
-          data: { instrumentResponse: { redirectInfo: { url: 'https://phonepe.com/redirect' } } },
-        }),
-      })
+  it('does not verify unpaid status', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ status: 'UNPAID', fawryRefNumber: 'FWRY-99001' }), { status: 200 })
+    )
 
-      const gw = new PhonePeGateway(creds)
-      const order = await gw.createOrder(ORDER_PARAMS)
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const result = await gateway.verifyPayment({ orderId: 'FWRY-99001', paymentId: 'FWRY-99001', signature: '' })
 
-      expect(order.provider).toBe('phonepe')
-      expect(order.amount).toBe(150000)
-      expect(order.currency).toBe('INR')
-      expect(order.status).toBe('CREATED')
-      expect(order.orderId).toContain('TXN_')
-      expect(order.metadata?.redirectUrl).toBe('https://phonepe.com/redirect')
-    })
-
-    it('sends X-VERIFY checksum header', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: {} }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      await gw.createOrder(ORDER_PARAMS)
-
-      const headers = mockFetch.mock.calls[0][1].headers
-      expect(headers['X-VERIFY']).toBeDefined()
-      expect(headers['X-VERIFY']).toContain('###1') // salt index
-    })
-
-    it('throws on failed order creation', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: false, message: 'Invalid merchant' }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      await expect(gw.createOrder(ORDER_PARAMS)).rejects.toThrow('Invalid merchant')
-    })
+    expect(result.verified).toBe(false)
   })
 
-  // ---------- verifyPayment ----------
-  describe('verifyPayment', () => {
-    it('returns verified on payment success', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          success: true,
-          code: 'PAYMENT_SUCCESS',
-          data: {
-            transactionId: 'txn_abc',
-            amount: 150000,
-            paymentInstrument: { type: 'UPI' },
-          },
-        }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      const result = await gw.verifyPayment({
-        orderId: 'TXN_001',
-        paymentId: 'pay_001',
-        signature: '',
-      })
-
-      expect(result.verified).toBe(true)
-      expect(result.transactionId).toBe('txn_abc')
-      expect(result.status).toBe('COMPLETED')
-      expect(result.amount).toBe(1500)
-      expect(result.method).toBe('UPI')
-    })
-
-    it('returns unverified on payment failure', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          success: false,
-          code: 'PAYMENT_DECLINED',
-        }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      const result = await gw.verifyPayment({
-        orderId: 'TXN_001',
-        paymentId: 'pay_001',
-        signature: '',
-      })
-
-      expect(result.verified).toBe(false)
-      expect(result.status).toBe('PAYMENT_DECLINED')
-    })
-  })
-
-  // ---------- verifyWebhook ----------
-  describe('verifyWebhook', () => {
-    it('returns false for invalid JSON body', () => {
-      const gw = new PhonePeGateway(creds)
-      expect(gw.verifyWebhook('not-json', 'sig', 'secret')).toBe(false)
-    })
-
-    it('verifies webhook with matching checksum', () => {
-      const response = Buffer.from('{"status":"SUCCESS"}').toString('base64')
-      const body = JSON.stringify({ response })
-      const string = response + '/pg/v1/status' + creds.phonepeSaltKey
-      const expectedChecksum = createHash('sha256').update(string).digest('hex') + '###1'
-
-      const gw = new PhonePeGateway(creds)
-      expect(gw.verifyWebhook(body, expectedChecksum, '')).toBe(true)
-    })
-  })
-
-  // ---------- getCheckoutConfig ----------
-  describe('getCheckoutConfig', () => {
-    it('returns redirect URL and provider', () => {
-      const gw = new PhonePeGateway(creds)
-      const order: GatewayOrder = {
-        orderId: 'TXN_001',
-        amount: 150000,
-        currency: 'INR',
-        receipt: 'INV-001',
-        provider: 'phonepe',
-        status: 'CREATED',
-        metadata: { redirectUrl: 'https://phonepe.com/redirect' },
-      }
-
-      const config = gw.getCheckoutConfig(order, creds)
-      expect(config.provider).toBe('phonepe')
-      expect(config.redirectUrl).toBe('https://phonepe.com/redirect')
-      expect(config.merchantTransactionId).toBe('TXN_001')
-    })
-  })
-
-  // ---------- initiateRefund ----------
-  describe('initiateRefund', () => {
-    it('initiates refund and returns result', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, code: 'REFUND_INITIATED' }),
-      })
-
-      const gw = new PhonePeGateway(creds)
-      const result = await gw.initiateRefund({ paymentId: 'pay_123', amount: 500 })
-
-      expect(result.success).toBe(true)
-      expect(result.refundId).toContain('REFUND_pay_123')
-      expect(result.amount).toBe(500)
-    })
-  })
-})
-
-// ==========================================================================
-// Paytm Gateway
-// ==========================================================================
-
-describe('PaytmGateway', () => {
-  const creds: GatewayCredentials = {
-    provider: 'PAYTM',
-    isLiveMode: false,
-    paytmMid: 'MID_TEST_001',
-    paytmMerchantKey: 'merchant_key_abc',
-    paytmWebsite: 'WEBSTAGING',
-  }
-
-  // ---------- Constructor ----------
-  describe('constructor', () => {
-    it('creates instance with valid credentials', () => {
-      const gw = new PaytmGateway(creds)
-      expect(gw).toBeDefined()
-    })
-
-    it('throws when mid is missing', () => {
-      expect(() => new PaytmGateway({ ...creds, paytmMid: undefined })).toThrow('Paytm credentials')
-    })
-
-    it('throws when merchantKey is missing', () => {
-      expect(() => new PaytmGateway({ ...creds, paytmMerchantKey: undefined })).toThrow(
-        'Paytm credentials'
-      )
-    })
-  })
-
-  // ---------- createOrder ----------
-  describe('createOrder', () => {
-    it('creates order with correct provider and metadata', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: {
-            resultInfo: { resultStatus: 'S' },
-            txnToken: 'token_xyz',
-          },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      const order = await gw.createOrder(ORDER_PARAMS)
-
-      expect(order.provider).toBe('paytm')
-      expect(order.amount).toBe(150000)
-      expect(order.currency).toBe('INR')
-      expect(order.status).toBe('CREATED')
-      expect(order.orderId).toContain('ORDER_')
-      expect(order.metadata?.txnToken).toBe('token_xyz')
-      expect(order.metadata?.mid).toBe('MID_TEST_001')
-    })
-
-    it('uses staging URL when isLiveMode is false', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: { resultInfo: { resultStatus: 'S' }, txnToken: 'tok' },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      await gw.createOrder(ORDER_PARAMS)
-
-      expect(mockFetch.mock.calls[0][0]).toContain('securegw-stage.paytm.in')
-    })
-
-    it('uses production URL when isLiveMode is true', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: { resultInfo: { resultStatus: 'S' }, txnToken: 'tok' },
-        }),
-      })
-
-      const gw = new PaytmGateway({ ...creds, isLiveMode: true })
-      await gw.createOrder(ORDER_PARAMS)
-
-      expect(mockFetch.mock.calls[0][0]).toContain('securegw.paytm.in')
-    })
-
-    it('throws on failed transaction initiation', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: { resultInfo: { resultStatus: 'F', resultMsg: 'Invalid MID' } },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      await expect(gw.createOrder(ORDER_PARAMS)).rejects.toThrow('Invalid MID')
-    })
-  })
-
-  // ---------- verifyPayment ----------
-  describe('verifyPayment', () => {
-    it('returns verified on TXN_SUCCESS', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: {
-            resultInfo: { resultStatus: 'TXN_SUCCESS' },
-            txnId: 'txn_paytm_001',
-            txnAmount: '1500.00',
-            paymentMode: 'UPI',
-          },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      const result = await gw.verifyPayment({
-        orderId: 'ORDER_001',
-        paymentId: 'pay_001',
-        signature: '',
-      })
-
-      expect(result.verified).toBe(true)
-      expect(result.transactionId).toBe('txn_paytm_001')
-      expect(result.status).toBe('COMPLETED')
-      expect(result.amount).toBe(1500)
-      expect(result.method).toBe('UPI')
-    })
-
-    it('returns unverified on failure', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: {
-            resultInfo: { resultStatus: 'TXN_FAILURE' },
-          },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      const result = await gw.verifyPayment({
-        orderId: 'ORDER_001',
-        paymentId: 'pay_001',
-        signature: '',
-      })
-
-      expect(result.verified).toBe(false)
-      expect(result.status).toBe('TXN_FAILURE')
-    })
-  })
-
-  // ---------- verifyWebhook ----------
-  describe('verifyWebhook', () => {
-    it('returns false for invalid JSON body', () => {
-      const gw = new PaytmGateway(creds)
-      expect(gw.verifyWebhook('not-json', '', '')).toBe(false)
-    })
-
-    it('returns false when no signature in body', () => {
-      const gw = new PaytmGateway(creds)
-      const body = JSON.stringify({ body: { txnId: '123' } })
-      expect(gw.verifyWebhook(body, '', '')).toBe(false)
-    })
-  })
-
-  // ---------- getCheckoutConfig ----------
-  describe('getCheckoutConfig', () => {
-    it('returns correct checkout config with txnToken', () => {
-      const gw = new PaytmGateway(creds)
-      const order: GatewayOrder = {
-        orderId: 'ORDER_001',
-        amount: 150000,
-        currency: 'INR',
-        receipt: 'INV-001',
-        provider: 'paytm',
-        status: 'CREATED',
-        metadata: { txnToken: 'token_abc', mid: 'MID_TEST_001', orderId: 'ORDER_001' },
-      }
-
-      const config = gw.getCheckoutConfig(order, creds)
-      expect(config.provider).toBe('paytm')
-      expect(config.txnToken).toBe('token_abc')
-      expect(config.orderId).toBe('ORDER_001')
-      expect(config.mid).toBe('MID_TEST_001')
-      expect(config.amount).toBe(1500) // converted back from paise
-    })
-  })
-
-  // ---------- initiateRefund ----------
-  describe('initiateRefund', () => {
-    it('initiates refund and returns pending status', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: { resultInfo: { resultStatus: 'PENDING' } },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      const result = await gw.initiateRefund({
-        paymentId: 'txn_001',
-        amount: 500,
-        reason: 'Overcharge',
-      })
-
-      expect(result.success).toBe(true)
-      expect(result.refundId).toContain('REFUND_txn_001')
-      expect(result.amount).toBe(500)
-      expect(result.status).toBe('PENDING')
-    })
-
-    it('sends POST to refund/apply endpoint', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          body: { resultInfo: { resultStatus: 'PENDING' } },
-        }),
-      })
-
-      const gw = new PaytmGateway(creds)
-      await gw.initiateRefund({ paymentId: 'txn_002', amount: 100 })
-
-      expect(mockFetch.mock.calls[0][0]).toContain('/refund/apply')
-    })
-  })
-})
-
-// ==========================================================================
-// Gateway Factory / Types
-// ==========================================================================
-
-describe('Gateway Types', () => {
-  it('all gateways implement the PaymentGateway interface', () => {
-    const methods = [
-      'createOrder',
-      'verifyPayment',
-      'verifyWebhook',
-      'getCheckoutConfig',
-      'initiateRefund',
-    ]
-
-    const razorpay = new RazorpayGateway({
-      provider: 'RAZORPAY',
-      isLiveMode: false,
-      razorpayKeyId: 'k',
-      razorpayKeySecret: 's',
-    })
-    const phonepe = new PhonePeGateway({
-      provider: 'PHONEPE',
-      isLiveMode: false,
-      phonepeMerchantId: 'm',
-      phonepeSaltKey: 's',
-    })
-    const paytm = new PaytmGateway({
-      provider: 'PAYTM',
-      isLiveMode: false,
-      paytmMid: 'm',
-      paytmMerchantKey: 'k',
-    })
-
-    for (const method of methods) {
-      expect(typeof (razorpay as any)[method]).toBe('function')
-      expect(typeof (phonepe as any)[method]).toBe('function')
-      expect(typeof (paytm as any)[method]).toBe('function')
+  it('verifies webhook signature sha256(ref+merchantRef+status+amount+method+secret)', () => {
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const payload = {
+      fawryRefNumber: 'FWRY-99001',
+      merchantRefNum: 'INV-2026-001-1700000000000',
+      orderStatus: 'PAID',
+      paymentAmount: 1500.0,
+      paymentMethod: 'CARD',
     }
+    const body = JSON.stringify(payload)
+    const signature = createHash('sha256')
+      .update(
+        payload.fawryRefNumber +
+          payload.merchantRefNum +
+          payload.orderStatus +
+          String(payload.paymentAmount) +
+          payload.paymentMethod +
+          'fawry-secret-key'
+      )
+      .digest('hex')
+
+    expect(gateway.verifyWebhook(body, signature, 'ignored-secret')).toBe(true)
+    expect(gateway.verifyWebhook(body, signature.replace(/./, '0'), 'ignored-secret')).toBe(false)
+  })
+
+  it('rejects malformed webhook payloads', () => {
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    expect(gateway.verifyWebhook('not-json', 'sig', 'secret')).toBe(false)
+  })
+
+  it('returns hosted checkout config from order metadata', () => {
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const order: GatewayOrder = {
+      orderId: 'FWRY-99001',
+      amount: 1500,
+      currency: 'EGP',
+      receipt: 'INV-2026-001',
+      provider: 'fawry',
+      status: 'PENDING',
+      metadata: { redirectUrl: 'https://atfawry.fawrystaging.com/pay/99001' },
+    }
+    const config = gateway.getCheckoutConfig(order, FAWRY_CREDS)
+    expect(config.provider).toBe('fawry')
+    expect(config.redirectUrl).toContain('/pay/99001')
+    expect(config.orderId).toBe('FWRY-99001')
+  })
+
+  it('initiates refunds against the Fawry refund endpoint', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ referenceNumber: 'RFD-1', status: 'SUCCESS' }), { status: 200 })
+    )
+
+    const gateway = new FawryGateway(FAWRY_CREDS)
+    const refund = await gateway.initiateRefund({ paymentId: 'FWRY-99001', amount: 500, reason: 'duplicate' })
+
+    expect(refund.success).toBe(true)
+    expect(refund.amount).toBe(500)
+    const [, init] = mockFetch.mock.calls[0]
+    expect(JSON.parse(init.body).refundAmount).toBe(50000) // piasters
+  })
+})
+
+// ==========================================================================
+// Paymob Gateway (Accept, Egypt)
+// ==========================================================================
+
+describe('PaymobGateway', () => {
+  it('requires api key and integration id', () => {
+    expect(() => new PaymobGateway({ provider: 'PAYMOB', isLiveMode: false })).toThrow(
+      /Paymob credentials/
+    )
+  })
+
+  it('creates auth → order → payment key and returns an iframe redirect', async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'AUTH-TOKEN' }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 424242 }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'PAY-KEY' }), { status: 201 }))
+
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    const order = await gateway.createOrder(ORDER_PARAMS)
+
+    expect(order.provider).toBe('paymob')
+    expect(order.orderId).toBe('424242')
+    expect(order.status).toBe('PENDING')
+    expect(String(order.metadata?.redirectUrl)).toBe(
+      'https://accept.paymob.com/api/acceptance/iframes/789456?payment_token=PAY-KEY'
+    )
+
+    // order call carries amount in piasters and an Egyptian merchant order id
+    const orderCall = JSON.parse(mockFetch.mock.calls[1][1].body)
+    expect(orderCall.amount_cents).toBe(150000)
+    expect(orderCall.currency).toBe('EGP')
+    expect(orderCall.merchant_order_id).toMatch(/^INV-2026-001-\d+$/)
+
+    // billing data is Egyptian
+    const keyCall = JSON.parse(mockFetch.mock.calls[2][1].body)
+    expect(keyCall.billing_data.country).toBe('EG')
+    expect(keyCall.billing_data.city).toBe('Cairo')
+    expect(keyCall.integration_id).toBe(456123)
+  })
+
+  it('verifies payment via order state SUCCESS', async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'AUTH-TOKEN' }), { status: 201 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 987654,
+            state: 'SUCCESS',
+            amount_cents: 150000,
+            paid_amount_cents: 150000,
+            source: { type: 'card' },
+          }),
+          { status: 200 }
+        )
+      )
+
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    const result = await gateway.verifyPayment({ orderId: '424242', paymentId: '987654', signature: '' })
+
+    expect(result.verified).toBe(true)
+    expect(result.amount).toBe(1500)
+    expect(result.method).toBe('card')
+  })
+
+  it('verifies webhook HMAC-SHA512 over the canonical field order', () => {
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    const tx = {
+      amount_cents: 150000,
+      created_at: '2026-02-15T10:30:00Z',
+      currency: 'EGP',
+      error_success: null,
+      merchant_order_id: 'INV-2026-001-1700000000000',
+      order_id: 424242,
+      paid_amount_cents: 150000,
+      pending: false,
+      source_data: { pan: '1234', sub_type: 'MasterCard', type: 'card' },
+      success: true,
+    }
+    const body = JSON.stringify({ type: 'TRANSACTION', obj: tx })
+    const concatenated =
+      String(tx.amount_cents) +
+      tx.created_at +
+      tx.currency +
+      '' +
+      tx.merchant_order_id +
+      String(tx.order_id) +
+      String(tx.paid_amount_cents) +
+      String(tx.pending) +
+      tx.source_data.pan +
+      tx.source_data.sub_type +
+      tx.source_data.type +
+      String(tx.success)
+    const signature = createHmac('sha512', 'webhook-secret').update(concatenated).digest('hex')
+
+    expect(gateway.verifyWebhook(body, signature, 'webhook-secret')).toBe(true)
+    expect(gateway.verifyWebhook(body, signature.replace(/./, 'f'), 'webhook-secret')).toBe(false)
+  })
+
+  it('rejects malformed webhook payloads', () => {
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    expect(gateway.verifyWebhook('not-json', 'sig', 'secret')).toBe(false)
+  })
+
+  it('returns hosted checkout config from order metadata', () => {
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    const order: GatewayOrder = {
+      orderId: '424242',
+      amount: 1500,
+      currency: 'EGP',
+      receipt: 'INV-2026-001',
+      provider: 'paymob',
+      status: 'PENDING',
+      metadata: {
+        redirectUrl: 'https://accept.paymob.com/api/acceptance/iframes/789456?payment_token=PAY-KEY',
+      },
+    }
+    const config = gateway.getCheckoutConfig(order, PAYMOB_CREDS)
+    expect(config.provider).toBe('paymob')
+    expect(String(config.redirectUrl)).toContain('payment_token=PAY-KEY')
+    expect(config.orderId).toBe('424242')
+  })
+
+  it('initiates refunds against the Paymob refund endpoint', async () => {
+    mockFetch
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'AUTH-TOKEN' }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 555001, pending: true }), { status: 201 }))
+
+    const gateway = new PaymobGateway(PAYMOB_CREDS)
+    const refund = await gateway.initiateRefund({ paymentId: '987654', amount: 500 })
+
+    expect(refund.success).toBe(true)
+    expect(refund.status).toBe('PENDING')
+    const refundCall = JSON.parse(mockFetch.mock.calls[1][1].body)
+    expect(refundCall.amount_cents).toBe(50000)
+    expect(refundCall.transaction_id).toBe('987654')
+  })
+})
+
+// ==========================================================================
+// InstaPay Gateway (Egypt)
+// ==========================================================================
+
+describe('InstapayGateway', () => {
+  it('requires an InstaPay handle', () => {
+    expect(() => new InstapayGateway({ provider: 'INSTAPAY', isLiveMode: false })).toThrow(
+      /InstaPay credentials/
+    )
+  })
+
+  it('generates a unique IP- reference without any network call', async () => {
+    const gateway = new InstapayGateway(INSTAPAY_CREDS)
+    const order = await gateway.createOrder(ORDER_PARAMS)
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(order.provider).toBe('instapay')
+    expect(order.status).toBe('PENDING')
+    expect(order.orderId).toMatch(/^IP-INV-2026-001-[0-9a-f]{8}$/)
+    expect(order.metadata?.instapayHandle).toBe('dentora@instapay')
+    expect(String(order.metadata?.redirectUrl)).toContain('/pay/instapay?reference=')
+  })
+
+  it('verifies payments only on explicit confirmation', async () => {
+    const gateway = new InstapayGateway(INSTAPAY_CREDS)
+
+    const confirmed = await gateway.verifyPayment({
+      orderId: 'IP-INV-2026-001-abcdef12',
+      paymentId: 'BANK-TRX-1',
+      signature: '',
+      confirmed: true,
+      amount: 1500,
+    })
+    expect(confirmed.verified).toBe(true)
+    expect(confirmed.status).toBe('PAID')
+    expect(confirmed.method).toBe('instapay')
+
+    const unconfirmed = await gateway.verifyPayment({
+      orderId: 'IP-INV-2026-001-abcdef12',
+      paymentId: '',
+      signature: '',
+    })
+    expect(unconfirmed.verified).toBe(false)
+    expect(unconfirmed.status).toBe('PENDING')
+  })
+
+  it('verifies webhook HMAC-SHA256 over the raw body', () => {
+    const gateway = new InstapayGateway(INSTAPAY_CREDS)
+    const body = JSON.stringify({ reference: 'IP-INV-2026-001-abcdef12', status: 'COMPLETED' })
+    const signature = createHmac('sha256', 'instapay-webhook-secret').update(body).digest('hex')
+
+    expect(gateway.verifyWebhook(body, signature, 'instapay-webhook-secret')).toBe(true)
+    expect(gateway.verifyWebhook(body, signature.replace(/./, 'a'), 'instapay-webhook-secret')).toBe(false)
+  })
+
+  it('rejects webhooks when no secret is configured', () => {
+    const gateway = new InstapayGateway({ provider: 'INSTAPAY', isLiveMode: false, instapayHandle: 'dentora@instapay' })
+    expect(gateway.verifyWebhook('{}', 'sig', '')).toBe(false)
+  })
+
+  it('surfaces the handle, reference and amount in checkout config', () => {
+    const gateway = new InstapayGateway(INSTAPAY_CREDS)
+    const order: GatewayOrder = {
+      orderId: 'IP-INV-2026-001-abcdef12',
+      amount: 1500,
+      currency: 'EGP',
+      receipt: 'INV-2026-001',
+      provider: 'instapay',
+      status: 'PENDING',
+      metadata: { reference: 'IP-INV-2026-001-abcdef12', redirectUrl: '/pay/instapay?reference=x&amount=1500' },
+    }
+    const config = gateway.getCheckoutConfig(order, INSTAPAY_CREDS)
+    expect(config.provider).toBe('instapay')
+    expect(config.instapayHandle).toBe('dentora@instapay')
+    expect(config.reference).toBe('IP-INV-2026-001-abcdef12')
+    expect(config.amount).toBe(1500)
+  })
+
+  it('acknowledges refunds as pending external transfers', async () => {
+    const gateway = new InstapayGateway(INSTAPAY_CREDS)
+    const refund = await gateway.initiateRefund({ paymentId: 'IP-INV-2026-001-abcdef12', amount: 300 })
+
+    expect(refund.success).toBe(true)
+    expect(refund.status).toBe('PENDING')
+    expect(refund.refundId).toMatch(/^IPR-[0-9a-f]{8}$/)
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })

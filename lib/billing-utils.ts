@@ -86,15 +86,20 @@ export const paymentMethodConfig: Record<
     icon: 'CreditCard',
     description: 'Debit/Credit card',
   },
-  UPI: {
-    label: 'UPI',
+  INSTAPAY: {
+    label: 'InstaPay',
     icon: 'Smartphone',
-    description: 'UPI payment (GPay, PhonePe, etc.)',
+    description: 'InstaPay bank transfer',
+  },
+  FAWRY: {
+    label: 'Fawry',
+    icon: 'Store',
+    description: 'Fawry payment (POS, retail network)',
   },
   BANK_TRANSFER: {
     label: 'Bank Transfer',
     icon: 'Building2',
-    description: 'NEFT/RTGS/IMPS',
+    description: 'Bank account transfer',
   },
   CHEQUE: {
     label: 'Cheque',
@@ -107,9 +112,9 @@ export const paymentMethodConfig: Record<
     description: 'Insurance claim payment',
   },
   WALLET: {
-    label: 'Wallet',
+    label: 'Mobile Wallet',
     icon: 'Wallet',
-    description: 'Digital wallet',
+    description: 'Vodafone Cash, Orange Money, Etisalat Cash',
   },
   ONLINE: {
     label: 'Online',
@@ -226,37 +231,33 @@ export const discountTypeConfig: Record<
   },
 }
 
-// GST Configuration (Indian Tax)
-export const gstConfig = {
-  cgstRate: 9, // Central GST
-  sgstRate: 9, // State GST
-  igstRate: 18, // Integrated GST (for inter-state)
+// VAT Configuration (Egyptian tax — ضريبة القيمة المضافة, standard 14%)
+export const vatConfig = {
+  rate: 14,
   defaultTaxable: true,
 }
 
-// Calculate GST breakdown
-export function calculateGST(
+// Calculate VAT breakdown. Egyptian invoices store the single VAT amount in
+// the legacy `cgst` fields (sgst stays 0) so historical consumers summing
+// cgst+sgst keep reading the correct tax total.
+export function calculateVAT(
   subtotal: number,
-  cgstRate: number = gstConfig.cgstRate,
-  sgstRate: number = gstConfig.sgstRate
+  vatRate: number = vatConfig.rate
 ): {
   subtotal: number
-  cgstAmount: number
-  sgstAmount: number
+  vatAmount: number
   totalTax: number
   grandTotal: number
 } {
-  const cgstAmount = (subtotal * cgstRate) / 100
-  const sgstAmount = (subtotal * sgstRate) / 100
-  const totalTax = cgstAmount + sgstAmount
-  const grandTotal = subtotal + totalTax
+  const vatAmount = Math.round(((subtotal * vatRate) / 100) * 100) / 100
+  const totalTax = vatAmount
+  const grandTotal = Math.round((subtotal + totalTax) * 100) / 100
 
   return {
     subtotal: Math.round(subtotal * 100) / 100,
-    cgstAmount: Math.round(cgstAmount * 100) / 100,
-    sgstAmount: Math.round(sgstAmount * 100) / 100,
+    vatAmount: Math.round(vatAmount * 100) / 100,
     totalTax: Math.round(totalTax * 100) / 100,
-    grandTotal: Math.round(grandTotal * 100) / 100,
+    grandTotal,
   }
 }
 
@@ -286,13 +287,13 @@ export function calculateDiscount(
   }
 }
 
-// Calculate invoice totals
+// Calculate invoice totals (Egyptian VAT: a single rate stored in the legacy
+// cgst fields — sgst remains 0 so cgst+sgst still equals the tax total)
 export function calculateInvoiceTotals(
   items: Array<{ quantity: number; unitPrice: number; taxable: boolean }>,
   discountType: DiscountType = 'FIXED',
   discountValue: number = 0,
-  cgstRate: number = gstConfig.cgstRate,
-  sgstRate: number = gstConfig.sgstRate
+  vatRate: number = vatConfig.rate
 ): {
   subtotal: number
   discountAmount: number
@@ -327,9 +328,9 @@ export function calculateInvoiceTotals(
   const taxableAmount = taxableSubtotal - taxableDiscount
   const nonTaxableAmount = nonTaxableSubtotal - (discountAmount - taxableDiscount)
 
-  // Calculate GST only on taxable amount
-  const cgstAmount = (taxableAmount * cgstRate) / 100
-  const sgstAmount = (taxableAmount * sgstRate) / 100
+  // Calculate VAT only on the taxable amount
+  const cgstAmount = (taxableAmount * vatRate) / 100
+  const sgstAmount = 0
   const totalTax = cgstAmount + sgstAmount
 
   const totalAmount = taxableAmount + nonTaxableAmount + totalTax
@@ -525,7 +526,8 @@ export function getDueDays(dueDate: Date | string | null): {
 export const paymentMethodIcons = {
   CASH: 'Banknote',
   CARD: 'CreditCard',
-  UPI: 'Smartphone',
+  INSTAPAY: 'Smartphone',
+  FAWRY: 'Store',
   BANK_TRANSFER: 'Building2',
   CHEQUE: 'FileText',
   INSURANCE: 'Shield',
@@ -550,7 +552,7 @@ export function calculateDueDate(invoiceDate: Date, paymentTermDays: number): Da
   return dueDate
 }
 
-// Number to words (Indian format) for invoice amounts
+// Number to words (international format) for invoice amounts in Egyptian Pounds
 export function numberToWords(num: number): string {
   if (num === 0) return 'Zero'
 
@@ -590,7 +592,7 @@ export function numberToWords(num: number): string {
     'Ninety',
   ]
 
-  const scales = ['', 'Thousand', 'Lakh', 'Crore']
+  const scales = ['', 'Thousand', 'Million', 'Billion']
 
   function convertGroup(n: number): string {
     if (n === 0) return ''
@@ -599,39 +601,39 @@ export function numberToWords(num: number): string {
     return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convertGroup(n % 100) : '')
   }
 
-  // Handle Indian numbering system
-  const rupees = Math.floor(num)
-  const paise = Math.round((num - rupees) * 100)
+  // International grouping (thousand / million / billion)
+  const pounds = Math.floor(num)
+  const piasters = Math.round((num - pounds) * 100)
 
   let result = ''
 
-  // Crores (10,000,000+)
-  if (rupees >= 10000000) {
-    result += convertGroup(Math.floor(rupees / 10000000)) + ' Crore '
+  // Billions (1,000,000,000+)
+  if (pounds >= 1000000000) {
+    result += convertGroup(Math.floor(pounds / 1000000000)) + ' Billion '
   }
 
-  // Lakhs (100,000 - 9,999,999)
-  const afterCrore = rupees % 10000000
-  if (afterCrore >= 100000) {
-    result += convertGroup(Math.floor(afterCrore / 100000)) + ' Lakh '
+  // Millions (1,000,000 - 999,999,999)
+  const afterBillion = pounds % 1000000000
+  if (afterBillion >= 1000000) {
+    result += convertGroup(Math.floor(afterBillion / 1000000)) + ' Million '
   }
 
-  // Thousands (1,000 - 99,999)
-  const afterLakh = afterCrore % 100000
-  if (afterLakh >= 1000) {
-    result += convertGroup(Math.floor(afterLakh / 1000)) + ' Thousand '
+  // Thousands (1,000 - 999,999)
+  const afterMillion = afterBillion % 1000000
+  if (afterMillion >= 1000) {
+    result += convertGroup(Math.floor(afterMillion / 1000)) + ' Thousand '
   }
 
   // Hundreds and below
-  const afterThousand = afterLakh % 1000
+  const afterThousand = afterMillion % 1000
   if (afterThousand > 0) {
     result += convertGroup(afterThousand)
   }
 
-  result = result.trim() + ' Rupees'
+  result = result.trim() + ' Egyptian Pounds'
 
-  if (paise > 0) {
-    result += ' and ' + convertGroup(paise) + ' Paise'
+  if (piasters > 0) {
+    result += ' and ' + convertGroup(piasters) + ' Piasters'
   }
 
   result += ' Only'

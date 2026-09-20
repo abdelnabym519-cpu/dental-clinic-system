@@ -66,7 +66,7 @@ describe('POST /api/cron/automations', () => {
       .mockResolvedValueOnce([{ id: 'p1' }, { id: 'p2' }] as any) // matched by trigger
       .mockResolvedValueOnce([
         // fetched for SMS
-        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+        { id: 'p1', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         { id: 'p2', firstName: 'Jane', lastName: 'Smith', phone: '9876543211' },
       ] as any)
 

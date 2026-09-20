@@ -27,7 +27,7 @@ export default function CommunicationSettingsPage() {
   const [loadingSettings, setLoadingSettings] = useState(true)
 
   // SMS Settings
-  const [smsGateway, setSmsGateway] = useState('MSG91')
+  const [smsGateway, setSmsGateway] = useState('VODAFONE')
   const [smsApiKey, setSmsApiKey] = useState('')
   const [smsSenderId, setSmsSenderId] = useState('')
   const [smsRoute, setSmsRoute] = useState('4')
@@ -71,7 +71,7 @@ export default function CommunicationSettingsPage() {
 
       // Load SMS settings
       if (data.sms) {
-        setSmsGateway(data.sms.gateway || 'MSG91')
+        setSmsGateway(data.sms.gateway || 'VODAFONE')
         setSmsApiKey(data.sms.apiKey || '')
         setSmsSenderId(data.sms.senderId || '')
         setSmsRoute(data.sms.route || '4')
@@ -353,7 +353,7 @@ export default function CommunicationSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>SMS Gateway Settings</CardTitle>
-              <CardDescription>Configure your Indian SMS gateway provider</CardDescription>
+              <CardDescription>Configure your Egyptian SMS gateway provider</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
@@ -374,10 +374,10 @@ export default function CommunicationSettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MSG91">MSG91</SelectItem>
-                      <SelectItem value="TEXTLOCAL">TextLocal</SelectItem>
-                      <SelectItem value="FAST2SMS">Fast2SMS</SelectItem>
-                      <SelectItem value="TWILIO">Twilio India</SelectItem>
+                      <SelectItem value="VODAFONE">Vodafone Business SMS</SelectItem>
+                      <SelectItem value="ETISALAT">Etisalat eSMS</SelectItem>
+                      <SelectItem value="ORANGE">Orange Egypt SMS</SelectItem>
+                      <SelectItem value="TWILIO">Twilio</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -405,15 +405,15 @@ export default function CommunicationSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sms-route">Route (for MSG91/TextLocal)</Label>
+                  <Label htmlFor="sms-route">Route / Sender type</Label>
                   <Input
                     id="sms-route"
-                    placeholder="4"
+                    placeholder="transactional"
                     value={smsRoute}
                     onChange={(e) => setSmsRoute(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Route 4 = Transactional, Route 1 = Promotional
+                    Gateway route or sender classification (e.g. transactional / promotional)
                   </p>
                 </div>
               </div>
@@ -427,12 +427,12 @@ export default function CommunicationSettingsPage() {
                     <Label htmlFor="test-phone">Test Phone Number</Label>
                     <Input
                       id="test-phone"
-                      placeholder="9876543210"
+                      placeholder="01012345678"
                       value={testPhone}
                       onChange={(e) => setTestPhone(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter a 10-digit Indian mobile number
+                      Enter an Egyptian mobile number (e.g. 01012345678)
                     </p>
                   </div>
                   <Button onClick={handleTestSMS} disabled={testing} variant="outline">
@@ -446,7 +446,7 @@ export default function CommunicationSettingsPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">TRAI Compliance</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• SMS will only be sent between 9 AM - 9 PM IST</li>
+                  <li>• SMS will only be sent between 9 AM - 9 PM Cairo time</li>
                   <li>• DND registry will be checked before sending</li>
                   <li>• Patient consent is required for promotional messages</li>
                 </ul>

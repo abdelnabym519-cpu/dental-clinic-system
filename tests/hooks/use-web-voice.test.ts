@@ -142,21 +142,21 @@ describe('useWebVoice', () => {
   })
 
   it('startListening sets lang from options', () => {
-    const { result } = renderHook(() => useWebVoice({ lang: 'hi-IN' }))
+    const { result } = renderHook(() => useWebVoice({ lang: 'en-US' }))
     act(() => {
       result.current.startListening()
     })
     const instance = MockSpeechRecognition.mock.results[0].value
-    expect(instance.lang).toBe('hi-IN')
+    expect(instance.lang).toBe('en-US')
   })
 
-  it('defaults lang to en-IN', () => {
+  it('defaults lang to ar-EG', () => {
     const { result } = renderHook(() => useWebVoice())
     act(() => {
       result.current.startListening()
     })
     const instance = MockSpeechRecognition.mock.results[0].value
-    expect(instance.lang).toBe('en-IN')
+    expect(instance.lang).toBe('ar-EG')
   })
 
   it('stopListening sets state to idle', () => {

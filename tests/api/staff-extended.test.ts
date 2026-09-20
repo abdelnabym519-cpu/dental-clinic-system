@@ -68,7 +68,7 @@ describe('GET /api/staff/doctors', () => {
         firstName: 'Dr',
         lastName: 'Smith',
         specialization: 'Orthodontics',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'smith@clinic.com',
       },
       {

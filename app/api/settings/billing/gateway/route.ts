@@ -29,14 +29,12 @@ export async function GET() {
       provider: config.provider,
       isEnabled: config.isEnabled,
       isLiveMode: config.isLiveMode,
-      razorpayKeyId: config.razorpayKeyId,
-      razorpayKeySecret: config.razorpayKeySecret ? mask(decrypt(config.razorpayKeySecret)) : null,
-      phonepeMerchantId: config.phonepeMerchantId,
-      phonepeSaltKey: config.phonepeSaltKey ? mask(decrypt(config.phonepeSaltKey)) : null,
-      phonepeSaltIndex: config.phonepeSaltIndex,
-      paytmMid: config.paytmMid,
-      paytmMerchantKey: config.paytmMerchantKey ? mask(decrypt(config.paytmMerchantKey)) : null,
-      paytmWebsite: config.paytmWebsite,
+      fawryMerchantCode: config.fawryMerchantCode,
+      fawrySecretKey: config.fawrySecretKey ? mask(decrypt(config.fawrySecretKey)) : null,
+      paymobApiKey: config.paymobApiKey ? mask(decrypt(config.paymobApiKey)) : null,
+      paymobIntegrationId: config.paymobIntegrationId,
+      paymobIframeId: config.paymobIframeId,
+      instapayHandle: config.instapayHandle,
       webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhooks/payment/${config.provider.toLowerCase()}`,
     },
   })
@@ -56,19 +54,17 @@ export async function PUT(req: NextRequest) {
     provider,
     isEnabled,
     isLiveMode,
-    razorpayKeyId,
-    razorpayKeySecret,
-    phonepeMerchantId,
-    phonepeSaltKey,
-    phonepeSaltIndex,
-    paytmMid,
-    paytmMerchantKey,
-    paytmWebsite,
+    fawryMerchantCode,
+    fawrySecretKey,
+    paymobApiKey,
+    paymobIntegrationId,
+    paymobIframeId,
+    instapayHandle,
   } = body
 
-  if (!provider || !['RAZORPAY', 'PHONEPE', 'PAYTM'].includes(provider)) {
+  if (!provider || !['FAWRY', 'PAYMOB', 'INSTAPAY'].includes(provider)) {
     return NextResponse.json(
-      { error: 'Valid provider is required (RAZORPAY, PHONEPE, PAYTM)' },
+      { error: 'Valid provider is required (FAWRY, PAYMOB, INSTAPAY)' },
       { status: 400 }
     )
   }
@@ -84,56 +80,45 @@ export async function PUT(req: NextRequest) {
     isLiveMode: isLiveMode ?? false,
   }
 
-  // Razorpay fields
-  if (provider === 'RAZORPAY') {
-    data.razorpayKeyId = razorpayKeyId || null
-    // Only encrypt if it's a new value (not masked)
-    if (razorpayKeySecret && !razorpayKeySecret.startsWith('****')) {
-      data.razorpayKeySecret = encrypt(razorpayKeySecret)
-    } else if (existing?.provider === 'RAZORPAY') {
-      data.razorpayKeySecret = existing.razorpayKeySecret
+  // Fawry fields
+  if (provider === 'FAWRY') {
+    data.fawryMerchantCode = fawryMerchantCode || null
+    if (fawrySecretKey && !fawrySecretKey.startsWith('****')) {
+      data.fawrySecretKey = encrypt(fawrySecretKey)
+    } else if (existing?.provider === 'FAWRY') {
+      data.fawrySecretKey = existing.fawrySecretKey
     }
     // Clear other provider fields
-    data.phonepeMerchantId = null
-    data.phonepeSaltKey = null
-    data.phonepeSaltIndex = null
-    data.paytmMid = null
-    data.paytmMerchantKey = null
-    data.paytmWebsite = null
+    data.paymobApiKey = null
+    data.paymobIntegrationId = null
+    data.paymobIframeId = null
+    data.instapayHandle = null
   }
 
-  // PhonePe fields
-  if (provider === 'PHONEPE') {
-    data.phonepeMerchantId = phonepeMerchantId || null
-    if (phonepeSaltKey && !phonepeSaltKey.startsWith('****')) {
-      data.phonepeSaltKey = encrypt(phonepeSaltKey)
-    } else if (existing?.provider === 'PHONEPE') {
-      data.phonepeSaltKey = existing.phonepeSaltKey
+  // Paymob fields
+  if (provider === 'PAYMOB') {
+    if (paymobApiKey && !paymobApiKey.startsWith('****')) {
+      data.paymobApiKey = encrypt(paymobApiKey)
+    } else if (existing?.provider === 'PAYMOB') {
+      data.paymobApiKey = existing.paymobApiKey
     }
-    data.phonepeSaltIndex = phonepeSaltIndex || null
+    data.paymobIntegrationId = paymobIntegrationId || null
+    data.paymobIframeId = paymobIframeId || null
     // Clear other provider fields
-    data.razorpayKeyId = null
-    data.razorpayKeySecret = null
-    data.paytmMid = null
-    data.paytmMerchantKey = null
-    data.paytmWebsite = null
+    data.fawryMerchantCode = null
+    data.fawrySecretKey = null
+    data.instapayHandle = null
   }
 
-  // Paytm fields
-  if (provider === 'PAYTM') {
-    data.paytmMid = paytmMid || null
-    if (paytmMerchantKey && !paytmMerchantKey.startsWith('****')) {
-      data.paytmMerchantKey = encrypt(paytmMerchantKey)
-    } else if (existing?.provider === 'PAYTM') {
-      data.paytmMerchantKey = existing.paytmMerchantKey
-    }
-    data.paytmWebsite = paytmWebsite || null
+  // InstaPay fields
+  if (provider === 'INSTAPAY') {
+    data.instapayHandle = instapayHandle || null
     // Clear other provider fields
-    data.razorpayKeyId = null
-    data.razorpayKeySecret = null
-    data.phonepeMerchantId = null
-    data.phonepeSaltKey = null
-    data.phonepeSaltIndex = null
+    data.fawryMerchantCode = null
+    data.fawrySecretKey = null
+    data.paymobApiKey = null
+    data.paymobIntegrationId = null
+    data.paymobIframeId = null
   }
 
   const config = await prisma.paymentGatewayConfig.upsert({

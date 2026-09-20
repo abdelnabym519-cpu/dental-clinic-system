@@ -79,7 +79,7 @@ export function CommandBar() {
               if (e.key === 'Enter') handleSubmit()
               if (e.key === 'Escape') setOpen(false)
             }}
-            placeholder="Type a command… e.g. 'Book appointment for Raj Kumar tomorrow at 10am'"
+            placeholder="Type a command… e.g. 'Book appointment for Mohamed Ahmed tomorrow at 10am'"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">ESC</span>

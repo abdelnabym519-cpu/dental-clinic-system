@@ -41,7 +41,7 @@ describe('CommunicationTriggersService', () => {
           patient: {
             firstName: 'John',
             lastName: 'Doe',
-            phone: '9876543210',
+            phone: '01012345678',
             email: 'john@test.com',
           },
           doctor: { firstName: 'Alice', lastName: 'Brown', user: {} },
@@ -70,7 +70,7 @@ describe('CommunicationTriggersService', () => {
       await communicationTriggersService.sendAppointmentReminders24Hours()
 
       expect(mockSmsService.sendSMS).toHaveBeenCalledWith(
-        expect.objectContaining({ phone: '9876543210', patientId: 'pat-1' })
+        expect.objectContaining({ phone: '01012345678', patientId: 'pat-1' })
       )
       expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'john@test.com', patientId: 'pat-1' })
@@ -87,7 +87,7 @@ describe('CommunicationTriggersService', () => {
           appointmentNo: 'APT-001',
           scheduledDate: new Date('2026-03-04'),
           scheduledTime: '10:00',
-          patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+          patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
           doctor: { firstName: 'Alice', lastName: 'Brown', user: {} },
         },
       ])
@@ -118,7 +118,7 @@ describe('CommunicationTriggersService', () => {
           appointmentNo: 'APT-001',
           scheduledDate: new Date('2026-03-04'),
           scheduledTime: '10:00',
-          patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+          patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
           doctor: { firstName: 'Alice', lastName: 'Brown', user: {} },
         },
       ])
@@ -143,7 +143,7 @@ describe('CommunicationTriggersService', () => {
           hospitalId: 'h1',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           dateOfBirth: dob,
           isActive: true,
         },
@@ -164,7 +164,7 @@ describe('CommunicationTriggersService', () => {
       await communicationTriggersService.sendBirthdayWishes()
 
       expect(mockSmsService.sendSMS).toHaveBeenCalledWith(
-        expect.objectContaining({ phone: '9876543210', patientId: 'pat-1' })
+        expect.objectContaining({ phone: '01012345678', patientId: 'pat-1' })
       )
     })
 
@@ -178,7 +178,7 @@ describe('CommunicationTriggersService', () => {
           hospitalId: 'h1',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           dateOfBirth: dob,
           isActive: true,
         },
@@ -203,7 +203,7 @@ describe('CommunicationTriggersService', () => {
           hospitalId: 'h1',
           firstName: 'John',
           lastName: 'Doe',
-          phone: '9876543210',
+          phone: '01012345678',
           dateOfBirth: dob,
           isActive: true,
         },
@@ -225,7 +225,7 @@ describe('CommunicationTriggersService', () => {
           totalAmount: 5000,
           balanceAmount: 3000,
           dueDate: new Date('2026-02-15'),
-          patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+          patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         },
       ])
 
@@ -244,7 +244,7 @@ describe('CommunicationTriggersService', () => {
       await communicationTriggersService.sendPaymentReminders()
 
       expect(mockSmsService.sendSMS).toHaveBeenCalledWith(
-        expect.objectContaining({ phone: '9876543210', patientId: 'pat-1' })
+        expect.objectContaining({ phone: '01012345678', patientId: 'pat-1' })
       )
     })
 
@@ -257,7 +257,7 @@ describe('CommunicationTriggersService', () => {
           invoiceNo: 'INV-001',
           totalAmount: 5000,
           balanceAmount: 3000,
-          patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+          patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         },
       ])
 
@@ -280,7 +280,7 @@ describe('CommunicationTriggersService', () => {
           orderNumber: 'LAB-001',
           workType: 'Crown',
           notes: '',
-          patient: { firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+          patient: { firstName: 'John', lastName: 'Doe', phone: '01012345678' },
         },
       ])
 
@@ -296,7 +296,7 @@ describe('CommunicationTriggersService', () => {
       await communicationTriggersService.sendLabWorkReadyNotifications()
 
       expect(mockSmsService.sendSMS).toHaveBeenCalledWith(
-        expect.objectContaining({ phone: '9876543210', patientId: 'pat-1' })
+        expect.objectContaining({ phone: '01012345678', patientId: 'pat-1' })
       )
       expect(prisma.labOrder.update).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -566,7 +566,7 @@ describe('Accessibility — Automated axe-core Audit', () => {
         </nav>
         <main>
           <h1>Dashboard</h1>
-          <p>Welcome to DentalERP</p>
+          <p>Welcome to Dentora</p>
         </main>
       </div>
     )

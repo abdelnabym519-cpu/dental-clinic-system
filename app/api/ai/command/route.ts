@@ -64,7 +64,7 @@ ANALYTICS:
 `.trim()
 
 function commandParserPrompt(contextStr: string, today: string) {
-  return `You are a command parser for DentalERP. Parse the user's natural-language command into a structured action.
+  return `You are a command parser for Dentora. Parse the user's natural-language command into a structured action.
 
 Available intents:
 ${INTENTS}
@@ -76,7 +76,7 @@ Rules:
 - confidence: 0.0–1.0
 - If nothing matches, use "general"
 - Gender values: MALE, FEMALE, OTHER
-- Payment methods: CASH, CARD, UPI, BANK_TRANSFER, CHEQUE
+- Payment methods: CASH, CARD, INSTAPAY, FAWRY, BANK_TRANSFER, CHEQUE
 - Respond ONLY with valid JSON — no markdown, no explanation
 
 CONTEXT:

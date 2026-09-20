@@ -20,7 +20,7 @@ vi.mock('@/lib/utils', () => ({
 }))
 
 vi.mock('@/lib/billing-utils', () => ({
-  formatCurrency: (val: number) => `₹${val.toLocaleString('en-IN')}`,
+  formatCurrency: (val: number) => `EGP ${val.toLocaleString('en-EG')}`,
   calculateInvoiceTotals: (items: any[], discountType: string, discountValue: number) => {
     const subtotal = items.reduce((sum: number, i: any) => sum + i.quantity * i.unitPrice, 0)
     const discountAmount =
@@ -29,20 +29,19 @@ vi.mock('@/lib/billing-utils', () => ({
     const taxable = items
       .filter((i: any) => i.taxable)
       .reduce((sum: number, i: any) => sum + i.quantity * i.unitPrice, 0)
-    const cgst = (Math.max(0, taxable - discountAmount) * 9) / 100
-    const sgst = cgst
+    const vat = (Math.max(0, taxable - discountAmount) * 14) / 100
     return {
       subtotal,
       discountAmount,
       taxableAmount: taxable,
       nonTaxableAmount: subtotal - taxable,
-      cgstAmount: cgst,
-      sgstAmount: sgst,
-      totalTax: cgst + sgst,
-      totalAmount: afterDiscount + cgst + sgst,
+      cgstAmount: vat,
+      sgstAmount: 0,
+      totalTax: vat,
+      totalAmount: afterDiscount + vat,
     }
   },
-  gstConfig: { cgstRate: 9, sgstRate: 9 },
+  vatConfig: { rate: 14, defaultTaxable: true },
   paymentTermsOptions: [
     { value: 0, label: 'Due on Receipt' },
     { value: 7, label: 'Net 7' },
@@ -192,10 +191,9 @@ describe('NewInvoicePage', () => {
       expect(screen.getByTestId('select-item-30')).toBeInTheDocument()
     })
 
-    it('renders GST breakdown labels', () => {
+    it('renders the VAT breakdown label', () => {
       render(<NewInvoicePage />)
-      expect(screen.getByText('CGST (9%)')).toBeInTheDocument()
-      expect(screen.getByText('SGST (9%)')).toBeInTheDocument()
+      expect(screen.getByText('VAT (14%)')).toBeInTheDocument()
     })
 
     it('renders "Create & Send Invoice" and "Save as Draft" buttons', () => {
@@ -246,7 +244,7 @@ describe('NewInvoicePage', () => {
                 patientId: 'PAT001',
                 firstName: 'John',
                 lastName: 'Doe',
-                phone: '9876543210',
+                phone: '01012345678',
                 email: null,
               },
             ],
@@ -284,7 +282,7 @@ describe('NewInvoicePage', () => {
                     patientId: 'PAT001',
                     firstName: 'John',
                     lastName: 'Doe',
-                    phone: '9876543210',
+                    phone: '01012345678',
                     email: null,
                   },
                 ],

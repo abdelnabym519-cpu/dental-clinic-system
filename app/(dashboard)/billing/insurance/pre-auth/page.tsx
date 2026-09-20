@@ -35,7 +35,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  IndianRupee,
+  Banknote,
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/billing-utils'
 

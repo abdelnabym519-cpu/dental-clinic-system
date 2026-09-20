@@ -50,48 +50,48 @@ describe('POST /api/webhooks/payment/[provider]', () => {
   })
 
   it('returns 400 for invalid JSON body', async () => {
-    const req = new NextRequest('http://localhost/api/webhooks/payment/razorpay', {
+    const req = new NextRequest('http://localhost/api/webhooks/payment/fawry', {
       method: 'POST',
       body: 'not-json{{{',
       headers: { 'Content-Type': 'text/plain' },
     })
-    const res = await webhookPOST(req, makeParams('razorpay') as any)
+    const res = await webhookPOST(req, makeParams('fawry') as any)
     expect(res.status).toBe(400)
   })
 
-  it('handles razorpay webhook — extracts order_id', async () => {
+  it('handles fawry webhook — extracts merchantRefNum', async () => {
     vi.mocked(prisma.payment.findFirst).mockResolvedValue({
       id: 'pay1',
       hospitalId: 'h1',
       status: 'COMPLETED',
-      gatewayOrderId: 'order_123',
+      gatewayOrderId: 'INV-2026-001-1700000000000',
     } as any)
 
     const res = await webhookPOST(
       makeReq(
-        'razorpay',
+        'fawry',
         {
-          payload: {
-            payment: {
-              entity: { order_id: 'order_123', status: 'captured' },
-            },
-          },
+          fawryRefNumber: 'FWRY-99001',
+          merchantRefNum: 'INV-2026-001-1700000000000',
+          orderStatus: 'PAID',
+          paymentAmount: 1500,
+          paymentMethod: 'CARD',
         },
-        { 'x-razorpay-signature': 'sig123' }
+        { 'x-fawry-signature': 'sig123' }
       ),
-      makeParams('razorpay') as any
+      makeParams('fawry') as any
     )
     const body = await res.json()
 
     expect(body.status).toBe('already_processed')
   })
 
-  it('handles razorpay webhook — updates pending payment on verified', async () => {
+  it('handles fawry webhook — updates pending payment on verified signature', async () => {
     vi.mocked(prisma.payment.findFirst).mockResolvedValue({
       id: 'pay1',
       hospitalId: 'h1',
       status: 'PENDING',
-      gatewayOrderId: 'order_456',
+      gatewayOrderId: 'INV-2026-001-1700000000000',
     } as any)
 
     const mockGateway = {
@@ -105,70 +105,114 @@ describe('POST /api/webhooks/payment/[provider]', () => {
 
     const res = await webhookPOST(
       makeReq(
-        'razorpay',
+        'fawry',
         {
-          payload: {
-            payment: {
-              entity: { order_id: 'order_456', status: 'captured' },
-            },
-          },
+          fawryRefNumber: 'FWRY-99002',
+          merchantRefNum: 'INV-2026-001-1700000000000',
+          orderStatus: 'PAID',
+          paymentAmount: 1500,
+          paymentMethod: 'CARD',
         },
-        { 'x-razorpay-signature': 'sig456' }
+        { 'x-fawry-signature': 'sig456' }
       ),
-      makeParams('razorpay') as any
+      makeParams('fawry') as any
     )
     const body = await res.json()
 
     expect(body.status).toBe('ok')
+    expect(mockGateway.verifyWebhook).toHaveBeenCalledWith(
+      expect.stringContaining('FWRY-99002'),
+      'sig456',
+      'whsec_123'
+    )
     expect(prisma.payment.update).toHaveBeenCalledWith({
       where: { id: 'pay1' },
       data: { gatewayStatus: 'captured', status: 'COMPLETED' },
     })
   })
 
-  it('handles phonepe webhook — decodes base64 response', async () => {
-    const phonepeData = JSON.stringify({
-      data: { merchantTransactionId: 'order_789' },
-    })
-    const base64 = Buffer.from(phonepeData).toString('base64')
-
+  it('handles paymob webhook — extracts obj.order_id', async () => {
     vi.mocked(prisma.payment.findFirst).mockResolvedValue({
       id: 'pay2',
       hospitalId: 'h1',
       status: 'COMPLETED',
+      gatewayOrderId: '424242',
     } as any)
 
     const res = await webhookPOST(
-      makeReq('phonepe', { response: base64 }, { 'x-verify': 'verify123' }),
-      makeParams('phonepe') as any
+      makeReq(
+        'paymob',
+        {
+          type: 'TRANSACTION',
+          obj: {
+            id: 987654,
+            order_id: 424242,
+            amount_cents: 150000,
+            success: true,
+          },
+        },
+        { 'x-paymob-hmac': 'hmac123' }
+      ),
+      makeParams('paymob') as any
     )
     const body = await res.json()
 
     expect(body.status).toBe('already_processed')
   })
 
-  it('handles paytm webhook — extracts ORDERID', async () => {
+  it('handles instapay webhook — extracts the payment reference', async () => {
     vi.mocked(prisma.payment.findFirst).mockResolvedValue({
       id: 'pay3',
       hospitalId: 'h1',
       status: 'COMPLETED',
+      gatewayOrderId: 'IP-INV-2026-001-abcdef12',
     } as any)
 
     const res = await webhookPOST(
-      makeReq('paytm', {
-        body: { ORDERID: 'order_paytm_001', STATUS: 'TXN_SUCCESS' },
+      makeReq('instapay', {
+        reference: 'IP-INV-2026-001-abcdef12',
+        status: 'COMPLETED',
       }),
-      makeParams('paytm') as any
+      makeParams('instapay') as any
     )
     const body = await res.json()
 
     expect(body.status).toBe('already_processed')
   })
 
+  it('skips update when the webhook signature fails verification', async () => {
+    vi.mocked(prisma.payment.findFirst).mockResolvedValue({
+      id: 'pay4',
+      hospitalId: 'h1',
+      status: 'PENDING',
+      gatewayOrderId: 'IP-INV-2026-001-abcdef12',
+    } as any)
+
+    const mockGateway = {
+      verifyWebhook: vi.fn().mockReturnValue(false),
+    }
+    mockGetGateway.mockResolvedValue({
+      gateway: mockGateway,
+      credentials: { webhookSecret: 'whsec_123' },
+    })
+
+    const res = await webhookPOST(
+      makeReq('instapay', {
+        reference: 'IP-INV-2026-001-abcdef12',
+        status: 'COMPLETED',
+      }),
+      makeParams('instapay') as any
+    )
+    const body = await res.json()
+
+    expect(body.status).toBe('ok')
+    expect(prisma.payment.update).not.toHaveBeenCalled()
+  })
+
   it('acknowledges webhook when order_id cannot be extracted', async () => {
     const res = await webhookPOST(
-      makeReq('razorpay', { payload: {} }),
-      makeParams('razorpay') as any
+      makeReq('fawry', { orderStatus: 'PAID' }),
+      makeParams('fawry') as any
     )
     const body = await res.json()
 
@@ -180,10 +224,12 @@ describe('POST /api/webhooks/payment/[provider]', () => {
     vi.mocked(prisma.payment.findFirst).mockRejectedValue(new Error('DB down'))
 
     const res = await webhookPOST(
-      makeReq('razorpay', {
-        payload: { payment: { entity: { order_id: 'order_err' } } },
+      makeReq('fawry', {
+        fawryRefNumber: 'FWRY-ERR',
+        merchantRefNum: 'INV-ERR-1',
+        orderStatus: 'PAID',
       }),
-      makeParams('razorpay') as any
+      makeParams('fawry') as any
     )
     const body = await res.json()
 

@@ -39,7 +39,7 @@ export default async function PortalProfilePage() {
       <LanguagePreferenceCard
         locale={patient.locale}
         hospitalLocale={patient.hospital?.locale ?? null}
-        currency={patient.hospital?.currency ?? 'INR'}
+        currency={patient.hospital?.currency ?? 'EGP'}
         supportedLocales={locales}
         endpoint="/api/patient-portal/profile"
         description="Choose how dates and amounts are shown to you in the portal."

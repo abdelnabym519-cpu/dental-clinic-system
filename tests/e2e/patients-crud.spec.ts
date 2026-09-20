@@ -113,7 +113,7 @@ test.describe('Patient Management', () => {
       // the emergency "Contact Phone".
       const phoneInput = page.getByLabel('Phone *')
       if (await phoneInput.isVisible()) {
-        await phoneInput.fill('9876543210')
+        await phoneInput.fill('01012345678')
       }
       const emailInput = page.getByLabel(/email/i)
       if (await emailInput.isVisible()) {

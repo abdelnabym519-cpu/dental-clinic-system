@@ -32,9 +32,8 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-  IndianRupee,
-  CreditCard,
   Banknote,
+  CreditCard,
 } from 'lucide-react'
 import { dateRangePresets, formatCurrency, formatDate } from '@/lib/billing-utils'
 
@@ -112,7 +111,7 @@ export default function FinancialReportsPage() {
       date: string
       cash: number
       card: number
-      upi: number
+      instapay: number
       bankTransfer: number
       total: number
       count: number
@@ -664,7 +663,7 @@ export default function FinancialReportsPage() {
                         Card
                       </div>
                     </TableHead>
-                    <TableHead className="text-right">UPI</TableHead>
+                    <TableHead className="text-right">InstaPay</TableHead>
                     <TableHead className="text-right">Bank Transfer</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                     <TableHead className="text-center">Count</TableHead>
@@ -709,7 +708,7 @@ export default function FinancialReportsPage() {
                         <TableCell className="font-medium">{formatDate(day.date)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(day.cash)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(day.card)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.upi)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(day.instapay)}</TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(day.bankTransfer)}
                         </TableCell>

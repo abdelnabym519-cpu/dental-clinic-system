@@ -206,7 +206,7 @@ async function costEstimate(hospitalId: string, body: Record<string, unknown>) {
         {
           role: 'system',
           content:
-            'Generate a dental treatment cost breakdown. Include base costs, materials estimate, and GST at 12%.\n\nOutput valid JSON ONLY:\n{"lineItems":[{"description":"...","quantity":1,"unitCost":0,"total":0}],"subtotal":0,"gst":0,"grandTotal":0,"notes":"..."}',
+            'Generate a dental treatment cost breakdown. Include base costs, materials estimate, and Egyptian VAT at 14%.\n\nOutput valid JSON ONLY:\n{"lineItems":[{"description":"...","quantity":1,"unitCost":0,"total":0}],"subtotal":0,"vat":0,"grandTotal":0,"notes":"..."}',
         },
         {
           role: 'user',
@@ -226,7 +226,7 @@ async function costEstimate(hospitalId: string, body: Record<string, unknown>) {
     const data = safeParseJSON(response.content) ?? {
       lineItems: [],
       subtotal: 0,
-      gst: 0,
+      vat: 0,
       grandTotal: 0,
     }
     return NextResponse.json({ success: true, data })

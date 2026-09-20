@@ -228,7 +228,7 @@ export default function AISettingsPage() {
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="text-xs font-medium text-muted-foreground">
-              Financial Approval Limit (₹)
+              Financial Approval Limit (EGP )
             </label>
             <input
               type="number"
@@ -245,7 +245,7 @@ export default function AISettingsPage() {
           </div>
           <div className="flex-1">
             <label className="text-xs font-medium text-muted-foreground">
-              Monthly AI Budget (₹)
+              Monthly AI Budget (EGP )
             </label>
             <input
               type="number"

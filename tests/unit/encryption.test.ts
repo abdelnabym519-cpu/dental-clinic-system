@@ -4,7 +4,7 @@ import { encrypt, decrypt, generateEncryptionKey } from '@/lib/encryption'
 describe('Encryption (AES-256-GCM)', () => {
   describe('encrypt() + decrypt() round-trip', () => {
     it('decrypts back to original plaintext', () => {
-      const plaintext = 'Hello, DentalERP!'
+      const plaintext = 'Hello, Dentora!'
       const encrypted = encrypt(plaintext)
       expect(decrypt(encrypted)).toBe(plaintext)
     })

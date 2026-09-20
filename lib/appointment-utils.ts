@@ -110,7 +110,7 @@ export function formatTime(time: string): string {
 // Format date for display
 export function formatDate(date: Date | string): string {
   const d = new Date(date)
-  return d.toLocaleDateString('en-IN', {
+  return d.toLocaleDateString('en-EG', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

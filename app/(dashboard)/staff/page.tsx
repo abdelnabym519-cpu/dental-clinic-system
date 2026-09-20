@@ -184,7 +184,7 @@ export default function StaffPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleDateString('en-EG', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

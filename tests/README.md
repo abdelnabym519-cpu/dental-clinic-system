@@ -1,8 +1,8 @@
-# DentalERP — Test Suite
+# Dentora — Test Suite
 
 ## Overview
 
-The DentalERP test suite uses **Vitest** (unit/integration) and **Playwright** (E2E) to provide comprehensive test coverage across the entire application.
+The Dentora test suite uses **Vitest** (unit/integration) and **Playwright** (E2E) to provide comprehensive test coverage across the entire application.
 
 | Metric                    | Count                                                           |
 | ------------------------- | --------------------------------------------------------------- |

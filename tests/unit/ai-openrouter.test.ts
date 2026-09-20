@@ -118,7 +118,7 @@ describe('complete', () => {
     const headers = (options as RequestInit).headers as Record<string, string>
     expect(headers['Authorization']).toBe('Bearer test-openrouter-api-key')
     expect(headers['Content-Type']).toBe('application/json')
-    expect(headers['X-Title']).toBe('DentalERP AI')
+    expect(headers['X-Title']).toBe('Dentora AI')
     expect(headers['HTTP-Referer']).toBe('http://localhost:3000')
   })
 

@@ -720,7 +720,7 @@ export default function LoyaltyPage() {
                     {transactions.map((tx) => (
                       <TableRow key={tx.id}>
                         <TableCell className="whitespace-nowrap text-sm">
-                          {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                          {new Date(tx.createdAt).toLocaleDateString('en-EG', {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric',

@@ -51,7 +51,7 @@ test.describe('Patient Portal', () => {
         .getByLabel(/phone/i)
         .or(page.getByPlaceholder(/phone|mobile|number/i))
         .first()
-      await phoneInput.fill('9876543210')
+      await phoneInput.fill('01012345678')
 
       // Fill clinic slug if required
       const clinicInput = page

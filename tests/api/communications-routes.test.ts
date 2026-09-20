@@ -232,7 +232,7 @@ describe('POST /api/communications/sms', () => {
     mockAuthError()
     const res = await smsPOST(
       makeReq('/api/communications/sms', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         message: 'Hello',
       })
     )
@@ -245,7 +245,7 @@ describe('POST /api/communications/sms', () => {
 
     const res = await smsPOST(
       makeReq('/api/communications/sms', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         message: 'Test message',
       })
     )
@@ -271,7 +271,7 @@ describe('POST /api/communications/sms', () => {
     mockAuth()
     const res = await smsPOST(
       makeReq('/api/communications/sms', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         message: 'x'.repeat(501),
       })
     )
@@ -294,7 +294,7 @@ describe('GET /api/communications/sms', () => {
 
   it('returns SMS history', async () => {
     mockAuth()
-    const mockHistory = [{ id: 'sms1', phone: '9876543210', status: 'DELIVERED' }]
+    const mockHistory = [{ id: 'sms1', phone: '01012345678', status: 'DELIVERED' }]
     vi.mocked(smsService.getSMSHistory).mockResolvedValue(mockHistory as any)
 
     const res = await smsGET(makeReq('/api/communications/sms'))
@@ -309,13 +309,13 @@ describe('GET /api/communications/sms', () => {
     mockAuth()
     vi.mocked(smsService.getSMSHistory).mockResolvedValue([])
 
-    await smsGET(makeReq('/api/communications/sms?status=DELIVERED&phone=9876543210&limit=50'))
+    await smsGET(makeReq('/api/communications/sms?status=DELIVERED&phone=01012345678&limit=50'))
 
     expect(smsService.getSMSHistory).toHaveBeenCalledWith(
       expect.objectContaining({
         hospitalId: 'h1',
         status: 'DELIVERED',
-        phone: '9876543210',
+        phone: '01012345678',
         limit: 50,
       })
     )

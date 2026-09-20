@@ -43,7 +43,7 @@ interface UseWebVoiceOptions {
 }
 
 export function useWebVoice(opts: UseWebVoiceOptions = {}) {
-  const { lang = 'en-IN', onFinalTranscript, onSpeakEnd } = opts
+  const { lang = 'ar-EG', onFinalTranscript, onSpeakEnd } = opts
 
   const [state, setState] = useState<VoiceState>('idle')
   const [transcript, setTranscript] = useState('')

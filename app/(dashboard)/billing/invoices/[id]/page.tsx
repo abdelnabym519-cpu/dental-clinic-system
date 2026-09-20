@@ -47,7 +47,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  IndianRupee,
   Banknote,
   Smartphone,
   Building2,
@@ -66,7 +65,6 @@ import {
   formatDateTime,
   getDueDays,
   numberToWords,
-  gstConfig,
 } from '@/lib/billing-utils'
 import { PaymentCheckout } from '@/components/billing/payment-checkout'
 
@@ -287,7 +285,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         return <Banknote className="h-4 w-4" />
       case 'CARD':
         return <CreditCard className="h-4 w-4" />
-      case 'UPI':
+      case 'INSTAPAY':
         return <Smartphone className="h-4 w-4" />
       case 'BANK_TRANSFER':
         return <Building2 className="h-4 w-4" />
@@ -512,12 +510,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">CGST ({invoice.cgstRate}%)</span>
+                      <span className="text-muted-foreground">VAT ({invoice.cgstRate}%)</span>
                       <span>{formatCurrency(invoice.cgstAmount)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">SGST ({invoice.sgstRate}%)</span>
-                      <span>{formatCurrency(invoice.sgstAmount)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
@@ -763,7 +757,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             <div className="space-y-2">
               <Label>Amount</Label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Banknote className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="number"
                   value={paymentAmount}
@@ -785,7 +779,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 <SelectContent>
                   <SelectItem value="CASH">Cash</SelectItem>
                   <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="INSTAPAY">InstaPay</SelectItem>
+                    <SelectItem value="FAWRY">Fawry</SelectItem>
                   <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
                   <SelectItem value="CHEQUE">Cheque</SelectItem>
                 </SelectContent>

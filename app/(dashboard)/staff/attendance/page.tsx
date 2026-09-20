@@ -209,7 +209,7 @@ export default function AttendancePage() {
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleTimeString('en-IN', {
+    return new Date(dateString).toLocaleTimeString('en-EG', {
       hour: '2-digit',
       minute: '2-digit',
     })
@@ -233,7 +233,7 @@ export default function AttendancePage() {
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-lg font-medium">
-            {new Date().toLocaleDateString('en-IN', {
+            {new Date().toLocaleDateString('en-EG', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',

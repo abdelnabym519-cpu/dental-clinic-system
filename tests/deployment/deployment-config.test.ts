@@ -438,7 +438,7 @@ describe('9.5 Rollback Testing Patterns', () => {
       entityId: 'p1',
       userId: 'user-1',
       hospitalId: 'h1',
-      details: JSON.stringify({ field: 'phone', oldValue: '9876543210', newValue: '9876543211' }),
+      details: JSON.stringify({ field: 'phone', oldValue: '01012345678', newValue: '9876543211' }),
       timestamp: new Date().toISOString(),
     }
 

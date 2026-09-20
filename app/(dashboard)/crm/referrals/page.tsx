@@ -504,7 +504,7 @@ export default function ReferralsPage() {
                         <StatusBadge status={referral.status} />
                       </TableCell>
                       <TableCell>
-                        {new Date(referral.createdAt).toLocaleDateString('en-IN')}
+                        {new Date(referral.createdAt).toLocaleDateString('en-EG')}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { decrypt } from '@/lib/encryption'
-import { RazorpayGateway } from './razorpay'
-import { PhonePeGateway } from './phonepe'
-import { PaytmGateway } from './paytm'
+import { FawryGateway } from './fawry'
+import { PaymobGateway } from './paymob'
+import { InstapayGateway } from './instapay'
 import type { PaymentGateway, GatewayCredentials } from './types'
 
 export type { PaymentGateway, GatewayCredentials }
@@ -37,25 +37,17 @@ export async function getGateway(hospitalId: string): Promise<{
 
   // Decrypt secrets based on provider
   switch (config.provider) {
-    case 'RAZORPAY':
-      credentials.razorpayKeyId = config.razorpayKeyId || undefined
-      credentials.razorpayKeySecret = config.razorpayKeySecret
-        ? decrypt(config.razorpayKeySecret)
-        : undefined
+    case 'FAWRY':
+      credentials.fawryMerchantCode = config.fawryMerchantCode || undefined
+      credentials.fawrySecretKey = config.fawrySecretKey ? decrypt(config.fawrySecretKey) : undefined
       break
-    case 'PHONEPE':
-      credentials.phonepeMerchantId = config.phonepeMerchantId || undefined
-      credentials.phonepeSaltKey = config.phonepeSaltKey
-        ? decrypt(config.phonepeSaltKey)
-        : undefined
-      credentials.phonepeSaltIndex = config.phonepeSaltIndex || undefined
+    case 'PAYMOB':
+      credentials.paymobApiKey = config.paymobApiKey ? decrypt(config.paymobApiKey) : undefined
+      credentials.paymobIntegrationId = config.paymobIntegrationId || undefined
+      credentials.paymobIframeId = config.paymobIframeId || undefined
       break
-    case 'PAYTM':
-      credentials.paytmMid = config.paytmMid || undefined
-      credentials.paytmMerchantKey = config.paytmMerchantKey
-        ? decrypt(config.paytmMerchantKey)
-        : undefined
-      credentials.paytmWebsite = config.paytmWebsite || undefined
+    case 'INSTAPAY':
+      credentials.instapayHandle = config.instapayHandle || undefined
       break
   }
 
@@ -68,12 +60,12 @@ export async function getGateway(hospitalId: string): Promise<{
  */
 function createGateway(credentials: GatewayCredentials): PaymentGateway {
   switch (credentials.provider) {
-    case 'RAZORPAY':
-      return new RazorpayGateway(credentials)
-    case 'PHONEPE':
-      return new PhonePeGateway(credentials)
-    case 'PAYTM':
-      return new PaytmGateway(credentials)
+    case 'FAWRY':
+      return new FawryGateway(credentials)
+    case 'PAYMOB':
+      return new PaymobGateway(credentials)
+    case 'INSTAPAY':
+      return new InstapayGateway(credentials)
     default:
       throw new Error(`Unsupported payment provider: ${credentials.provider}`)
   }

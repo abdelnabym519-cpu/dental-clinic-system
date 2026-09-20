@@ -72,12 +72,12 @@ describe('Patients API - GET /api/patients', () => {
         patientId: 'PAT202500001',
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'john@example.com',
         gender: 'MALE',
         age: 35,
         bloodGroup: 'O+',
-        city: 'Mumbai',
+        city: 'Cairo',
       },
     ]
 
@@ -155,7 +155,7 @@ describe('Patients API - POST /api/patients', () => {
 
     const request = new NextRequest('http://localhost:3000/api/patients', {
       method: 'POST',
-      body: JSON.stringify({ firstName: 'John', lastName: 'Doe', phone: '9876543210' }),
+      body: JSON.stringify({ firstName: 'John', lastName: 'Doe', phone: '01012345678' }),
     })
     const response = await POST(request)
 
@@ -169,7 +169,7 @@ describe('Patients API - POST /api/patients', () => {
       patientId: 'PAT202500001',
       firstName: 'John',
       lastName: 'Doe',
-      phone: '9876543210',
+      phone: '01012345678',
       hospitalId: 'hospital-1',
     } as any)
 
@@ -178,7 +178,7 @@ describe('Patients API - POST /api/patients', () => {
       body: JSON.stringify({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
         email: 'john@example.com',
         gender: 'MALE',
         age: 35,
@@ -209,7 +209,7 @@ describe('Patients API - POST /api/patients', () => {
   it('should return 409 for duplicate phone number', async () => {
     vi.mocked(prisma.patient.findFirst).mockResolvedValue({
       id: 'existing-patient',
-      phone: '9876543210',
+      phone: '01012345678',
     } as any)
 
     const request = new NextRequest('http://localhost:3000/api/patients', {
@@ -217,7 +217,7 @@ describe('Patients API - POST /api/patients', () => {
       body: JSON.stringify({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
       }),
     })
     const response = await POST(request)
@@ -239,7 +239,7 @@ describe('Patients API - POST /api/patients', () => {
       body: JSON.stringify({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
       }),
     })
     const response = await POST(request)
@@ -258,7 +258,7 @@ describe('Patients API - POST /api/patients', () => {
       body: JSON.stringify({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '9876543210',
+        phone: '01012345678',
       }),
     })
     const response = await POST(request)

@@ -84,7 +84,7 @@ const FIXTURES = [
     id: 'a3', appointmentNo: 'APT20260003', scheduledDate: '2026-03-11', scheduledTime: '10:30',
     duration: 60, appointmentType: 'FOLLOW_UP', status: 'CHECKED_IN',
     patient: { firstName: 'Salma', lastName: 'Ibrahim', phone: '012' },
-    doctor: { firstName: 'Meera', lastName: 'Nair' },
+    doctor: { firstName: 'Mariam', lastName: 'Ibrahim' },
   },
   {
     id: 'a4', appointmentNo: 'APT20260004', scheduledDate: '2026-03-12', scheduledTime: '14:00',

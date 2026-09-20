@@ -44,7 +44,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
   it('returns 400 when phone or hospitalSlug missing', async () => {
     const res = await sendOtpPOST(
-      makeReq('/api/patient-portal/auth/send-otp', 'POST', { phone: '9876543210' })
+      makeReq('/api/patient-portal/auth/send-otp', 'POST', { phone: '01012345678' })
     )
     const body = await res.json()
 
@@ -57,7 +57,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
     const res = await sendOtpPOST(
       makeReq('/api/patient-portal/auth/send-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalSlug: 'nonexistent-clinic',
       })
     )
@@ -76,7 +76,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
     const res = await sendOtpPOST(
       makeReq('/api/patient-portal/auth/send-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalSlug: 'test-clinic',
       })
     )
@@ -96,7 +96,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
     const res = await sendOtpPOST(
       makeReq('/api/patient-portal/auth/send-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalSlug: 'test-clinic',
       })
     )
@@ -117,7 +117,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
     const res = await sendOtpPOST(
       makeReq('/api/patient-portal/auth/send-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalSlug: 'test-clinic',
       })
     )
@@ -139,7 +139,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
 
     const res = await sendOtpPOST(
       makeReq('/api/patient-portal/auth/send-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         hospitalSlug: 'test-clinic',
       })
     )
@@ -151,7 +151,7 @@ describe('POST /api/patient-portal/auth/send-otp', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           hospitalId: 'h1',
-          phone: '9876543210',
+          phone: '01012345678',
           otp: '123456',
         }),
       })
@@ -169,7 +169,7 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
   it('returns 400 when fields missing', async () => {
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
       })
     )
     const body = await res.json()
@@ -183,7 +183,7 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
 
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         otp: '123456',
         hospitalSlug: 'nonexistent',
       })
@@ -198,7 +198,7 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
 
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         otp: '999999',
         hospitalSlug: 'test-clinic',
       })
@@ -220,7 +220,7 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
 
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         otp: '123456',
         hospitalSlug: 'test-clinic',
       })
@@ -241,7 +241,7 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
 
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         otp: '999999',
         hospitalSlug: 'test-clinic',
       })
@@ -272,13 +272,13 @@ describe('POST /api/patient-portal/auth/verify-otp', () => {
       patientId: 'PT001',
       firstName: 'John',
       lastName: 'Doe',
-      phone: '9876543210',
+      phone: '01012345678',
       email: 'john@example.com',
     } as any)
 
     const res = await verifyOtpPOST(
       makeReq('/api/patient-portal/auth/verify-otp', 'POST', {
-        phone: '9876543210',
+        phone: '01012345678',
         otp: '123456',
         hospitalSlug: 'test-clinic',
       })

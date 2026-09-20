@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
-  calculateGST,
+  calculateVAT,
   calculateDiscount,
   calculateInvoiceTotals,
   formatCurrency,
@@ -13,43 +13,41 @@ import {
   numberToWords,
   getDateRangeFromPreset,
   getPatientName,
-  gstConfig,
+  vatConfig,
 } from '@/lib/billing-utils'
 
-describe('Billing Utils - calculateGST', () => {
-  it('should calculate GST with default rates', () => {
-    const result = calculateGST(1000)
+describe('Billing Utils - calculateVAT', () => {
+  it('should calculate VAT with the default Egyptian rate (14%)', () => {
+    const result = calculateVAT(1000)
     expect(result.subtotal).toBe(1000)
-    expect(result.cgstAmount).toBe(90)
-    expect(result.sgstAmount).toBe(90)
-    expect(result.totalTax).toBe(180)
-    expect(result.grandTotal).toBe(1180)
+    expect(result.vatAmount).toBe(140)
+    expect(result.totalTax).toBe(140)
+    expect(result.grandTotal).toBe(1140)
   })
 
-  it('should calculate GST with custom rates', () => {
-    const result = calculateGST(1000, 6, 6)
-    expect(result.cgstAmount).toBe(60)
-    expect(result.sgstAmount).toBe(60)
-    expect(result.totalTax).toBe(120)
-    expect(result.grandTotal).toBe(1120)
+  it('should calculate VAT with a custom rate', () => {
+    const result = calculateVAT(1000, 7)
+    expect(result.vatAmount).toBe(70)
+    expect(result.totalTax).toBe(70)
+    expect(result.grandTotal).toBe(1070)
   })
 
   it('should handle zero subtotal', () => {
-    const result = calculateGST(0)
+    const result = calculateVAT(0)
     expect(result.grandTotal).toBe(0)
     expect(result.totalTax).toBe(0)
   })
 
   it('should round to 2 decimal places', () => {
-    const result = calculateGST(99.99)
-    expect(result.cgstAmount).toBe(9)
-    expect(result.grandTotal).toBeCloseTo(117.99, 2)
+    const result = calculateVAT(99.99)
+    expect(result.vatAmount).toBe(14)
+    expect(result.grandTotal).toBeCloseTo(113.99, 2)
   })
 
   it('should handle large amounts', () => {
-    const result = calculateGST(1000000)
-    expect(result.totalTax).toBe(180000)
-    expect(result.grandTotal).toBe(1180000)
+    const result = calculateVAT(1000000)
+    expect(result.totalTax).toBe(140000)
+    expect(result.grandTotal).toBe(1140000)
   })
 })
 
@@ -96,8 +94,8 @@ describe('Billing Utils - calculateInvoiceTotals', () => {
     expect(result.subtotal).toBe(1000)
     expect(result.taxableAmount).toBe(1000)
     expect(result.nonTaxableAmount).toBe(0)
-    expect(result.totalTax).toBe(180)
-    expect(result.totalAmount).toBe(1180)
+    expect(result.totalTax).toBe(140)
+    expect(result.totalAmount).toBe(1140)
   })
 
   it('should calculate totals for mixed taxable/non-taxable items', () => {
@@ -110,8 +108,8 @@ describe('Billing Utils - calculateInvoiceTotals', () => {
     expect(result.subtotal).toBe(1000)
     expect(result.taxableAmount).toBe(500)
     expect(result.nonTaxableAmount).toBe(500)
-    expect(result.totalTax).toBe(90) // 18% of 500
-    expect(result.totalAmount).toBe(1090)
+    expect(result.totalTax).toBe(70) // 14% of 500
+    expect(result.totalAmount).toBe(1070)
   })
 
   it('should apply discount before tax calculation', () => {
@@ -121,8 +119,8 @@ describe('Billing Utils - calculateInvoiceTotals', () => {
     expect(result.subtotal).toBe(1000)
     expect(result.discountAmount).toBe(100)
     expect(result.taxableAmount).toBe(900)
-    expect(result.totalTax).toBe(162) // 18% of 900
-    expect(result.totalAmount).toBe(1062)
+    expect(result.totalTax).toBe(126) // 14% of 900
+    expect(result.totalAmount).toBe(1026)
   })
 
   it('should handle empty items array', () => {
@@ -312,35 +310,35 @@ describe('Billing Utils - numberToWords', () => {
   })
 
   it('should convert small numbers', () => {
-    expect(numberToWords(5)).toBe('Five Rupees Only')
-    expect(numberToWords(15)).toBe('Fifteen Rupees Only')
-    expect(numberToWords(99)).toBe('Ninety Nine Rupees Only')
+    expect(numberToWords(5)).toBe('Five Egyptian Pounds Only')
+    expect(numberToWords(15)).toBe('Fifteen Egyptian Pounds Only')
+    expect(numberToWords(99)).toBe('Ninety Nine Egyptian Pounds Only')
   })
 
   it('should convert hundreds', () => {
-    expect(numberToWords(100)).toBe('One Hundred Rupees Only')
-    expect(numberToWords(500)).toBe('Five Hundred Rupees Only')
-    expect(numberToWords(999)).toBe('Nine Hundred Ninety Nine Rupees Only')
+    expect(numberToWords(100)).toBe('One Hundred Egyptian Pounds Only')
+    expect(numberToWords(500)).toBe('Five Hundred Egyptian Pounds Only')
+    expect(numberToWords(999)).toBe('Nine Hundred Ninety Nine Egyptian Pounds Only')
   })
 
-  it('should convert thousands (Indian format)', () => {
-    expect(numberToWords(1000)).toBe('One Thousand Rupees Only')
-    expect(numberToWords(50000)).toBe('Fifty Thousand Rupees Only')
+  it('should convert thousands', () => {
+    expect(numberToWords(1000)).toBe('One Thousand Egyptian Pounds Only')
+    expect(numberToWords(50000)).toBe('Fifty Thousand Egyptian Pounds Only')
   })
 
-  it('should convert lakhs (Indian format)', () => {
-    expect(numberToWords(100000)).toBe('One Lakh Rupees Only')
-    expect(numberToWords(500000)).toBe('Five Lakh Rupees Only')
+  it('should convert hundred-thousands (international grouping)', () => {
+    expect(numberToWords(100000)).toBe('One Hundred Thousand Egyptian Pounds Only')
+    expect(numberToWords(500000)).toBe('Five Hundred Thousand Egyptian Pounds Only')
   })
 
-  it('should convert crores (Indian format)', () => {
-    expect(numberToWords(10000000)).toBe('One Crore Rupees Only')
+  it('should convert millions (international grouping)', () => {
+    expect(numberToWords(10000000)).toBe('Ten Million Egyptian Pounds Only')
   })
 
-  it('should handle decimal amounts (paise)', () => {
+  it('should handle decimal amounts (piasters)', () => {
     const result = numberToWords(100.5)
-    expect(result).toContain('One Hundred Rupees')
-    expect(result).toContain('Fifty Paise')
+    expect(result).toContain('One Hundred Egyptian Pounds')
+    expect(result).toContain('Fifty Piasters')
   })
 })
 
@@ -408,11 +406,9 @@ describe('Billing Utils - getPatientName', () => {
   })
 })
 
-describe('Billing Utils - gstConfig', () => {
-  it('should have correct default values', () => {
-    expect(gstConfig.cgstRate).toBe(9)
-    expect(gstConfig.sgstRate).toBe(9)
-    expect(gstConfig.igstRate).toBe(18)
-    expect(gstConfig.defaultTaxable).toBe(true)
+describe('Billing Utils - vatConfig', () => {
+  it('should have the Egyptian standard VAT rate', () => {
+    expect(vatConfig.rate).toBe(14)
+    expect(vatConfig.defaultTaxable).toBe(true)
   })
 })

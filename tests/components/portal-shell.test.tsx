@@ -53,7 +53,7 @@ const defaultProps = {
   patient: {
     name: 'John Doe',
     patientId: 'PAT-001',
-    phone: '9876543210',
+    phone: '01012345678',
   },
   hospital: {
     name: 'Bright Smile Dental',

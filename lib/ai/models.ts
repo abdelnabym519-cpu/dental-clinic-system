@@ -34,7 +34,7 @@ export const AI_MODELS: Record<string, ModelConfig> = {
   query: { model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.1 },
   /** Appointment scheduling with conflict resolution */
   scheduling: { model: 'google/gemini-2.5-pro', maxTokens: 2048, temperature: 0.3 },
-  /** Financial calculations, GST, billing */
+  /** Financial calculations, VAT, billing */
   billing: { model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.1 },
   /** Analytics, forecasting, segmentation */
   insights: { model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.3 },
@@ -66,7 +66,7 @@ export const SKILL_MODEL_MAP: Record<string, string> = {
   'smart-scheduler': 'chat', // slot lookup, simple conflict check
 
   // ── Pro tier — requires analysis / reasoning ─────────────────────────
-  'billing-agent': 'billing', // GST calc, multi-step invoicing
+  'billing-agent': 'billing', // VAT calc, multi-step invoicing
   'inventory-manager': 'insights', // demand prediction, anomaly detection
   'clinic-analyst': 'reports', // trend analysis, executive summaries
   'no-show-predictor': 'insights', // pattern analysis, risk scoring

@@ -190,7 +190,7 @@ describe('GET /api/search', () => {
   it('searches across all entity types', async () => {
     mockAuth()
     vi.mocked(prisma.patient.findMany).mockResolvedValue([
-      { id: 'p1', patientId: 'PT001', firstName: 'John', lastName: 'Doe', phone: '9876543210' },
+      { id: 'p1', patientId: 'PT001', firstName: 'John', lastName: 'Doe', phone: '01012345678' },
     ] as any)
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
       {

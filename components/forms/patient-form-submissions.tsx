@@ -156,7 +156,7 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
                     <div className="flex-1 min-w-0">
                       <div className="font-medium">{s.template.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(s.createdAt).toLocaleDateString('en-IN', {
+                        {new Date(s.createdAt).toLocaleDateString('en-EG', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',

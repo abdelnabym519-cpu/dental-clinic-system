@@ -32,11 +32,12 @@ vi.mock('@/lib/billing-utils', () => ({
     subtotal: 5000,
     discountAmount: 0,
     taxableAmount: 5000,
-    cgstAmount: 450,
-    sgstAmount: 450,
-    totalAmount: 5900,
+    cgstAmount: 700,
+    sgstAmount: 0,
+    totalTax: 700,
+    totalAmount: 5700,
   }),
-  gstConfig: { cgstRate: 9, sgstRate: 9 },
+  vatConfig: { rate: 14, defaultTaxable: true },
 }))
 
 import { prisma } from '@/lib/prisma'
@@ -62,10 +63,10 @@ describe('Complete Business Workflows', () => {
 
   describe('Workflow 1: New Patient Registration → Appointment → Treatment → Invoice → Payment', () => {
     const patientData = {
-      firstName: 'Rahul',
-      lastName: 'Sharma',
-      phone: '9876543210',
-      email: 'rahul@example.com',
+      firstName: 'Karim',
+      lastName: 'Mansour',
+      phone: '01012345678',
+      email: 'karim@example.com',
       gender: 'MALE',
       age: 35,
     }
@@ -91,7 +92,7 @@ describe('Complete Business Workflows', () => {
       })
 
       expect(patient.patientId).toBe('PAT202500001')
-      expect(patient.firstName).toBe('Rahul')
+      expect(patient.firstName).toBe('Karim')
     })
 
     it('Step 2: Should book an appointment for the patient', async () => {

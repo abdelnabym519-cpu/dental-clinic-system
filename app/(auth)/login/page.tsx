@@ -90,7 +90,7 @@ function LoginForm() {
             <Input
               id="email"
               type="email"
-              placeholder="admin@demo-dental.com"
+              placeholder="admin@dentora-dental.com"
               {...register('email')}
               disabled={isLoading}
             />
@@ -126,7 +126,7 @@ function LoginForm() {
 
         <div className="mt-4 text-center text-xs text-muted-foreground border-t pt-4">
           <p>Demo credentials:</p>
-          <p className="font-mono mt-1">admin@demo-dental.com / Admin@123</p>
+          <p className="font-mono mt-1">admin@dentora-dental.com / Admin@123</p>
         </div>
       </CardContent>
     </Card>

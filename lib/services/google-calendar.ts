@@ -160,17 +160,17 @@ export async function createCalendarEvent(
       `Doctor: ${appointment.doctorName}`,
       `Type: ${appointment.appointmentType}`,
       appointment.chiefComplaint ? `Chief Complaint: ${appointment.chiefComplaint}` : '',
-      `\nManaged by DentalERP`,
+      `\nManaged by Dentora`,
     ]
       .filter(Boolean)
       .join('\n'),
     start: {
       dateTime: startDateTime.toISOString(),
-      timeZone: 'Asia/Kolkata',
+      timeZone: 'Africa/Cairo',
     },
     end: {
       dateTime: endDateTime.toISOString(),
-      timeZone: 'Asia/Kolkata',
+      timeZone: 'Africa/Cairo',
     },
     extendedProperties: {
       private: {
