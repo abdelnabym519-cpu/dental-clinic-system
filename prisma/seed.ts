@@ -32,7 +32,9 @@ async function main() {
   // Create default hospital
   const hospital = await prisma.hospital.upsert({
     where: { slug: 'demo-dental-clinic' },
-    update: {},
+    // isActive: true on BOTH legs — a re-run against an existing row must
+    // re-activate it, never inherit a deactivated state.
+    update: { isActive: true },
     create: {
       name: 'عيادة دنتورا للأسنان',
       slug: 'demo-dental-clinic',
@@ -72,7 +74,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@dentora-dental.com' },
-    update: {},
+    update: { isActive: true },
     create: {
       email: 'admin@dentora-dental.com',
       name: 'محمد عبدالنبي',
@@ -81,6 +83,7 @@ async function main() {
       phone: '01001234567',
       hospitalId: hospital.id,
       isHospitalAdmin: true,
+      isActive: true,
       staff: {
         create: {
           employeeId: 'EMP001',
@@ -104,7 +107,7 @@ async function main() {
   const doctorPassword = await bcrypt.hash('Doctor@123', 10)
   const doctor = await prisma.user.upsert({
     where: { email: 'doctor@dentora-dental.com' },
-    update: {},
+    update: { isActive: true },
     create: {
       email: 'doctor@dentora-dental.com',
       name: 'د. أحمد محمود',
@@ -113,6 +116,7 @@ async function main() {
       phone: '01012345610',
       hospitalId: hospital.id,
       isHospitalAdmin: false,
+      isActive: true,
       staff: {
         create: {
           employeeId: 'EMP002',
@@ -136,7 +140,7 @@ async function main() {
   const receptionistPassword = await bcrypt.hash('Reception@123', 10)
   const receptionist = await prisma.user.upsert({
     where: { email: 'reception@dentora-dental.com' },
-    update: {},
+    update: { isActive: true },
     create: {
       email: 'reception@dentora-dental.com',
       name: 'سارة خالد',
@@ -145,6 +149,7 @@ async function main() {
       phone: '01012345620',
       hospitalId: hospital.id,
       isHospitalAdmin: false,
+      isActive: true,
       staff: {
         create: {
           employeeId: 'EMP003',
@@ -1484,7 +1489,7 @@ async function main() {
   if (appointmentCount === 0 && seededPatients.length) {
     const doctor2User = await prisma.user.upsert({
       where: { email: 'doctor2@dentora-dental.com' },
-      update: {},
+      update: { isActive: true },
       create: {
         email: 'doctor2@dentora-dental.com',
         name: 'Dr. Marwa Sherif',
@@ -1492,6 +1497,7 @@ async function main() {
         role: Role.DOCTOR,
         phone: '01012345630',
         hospitalId: hospital.id,
+        isActive: true,
         staff: {
           create: {
             employeeId: 'EMP0002',
@@ -1741,6 +1747,14 @@ async function main() {
 
     console.log('Created e2e invoice and payment link')
   }
+
+  // ---- Login guarantee (last write of the seed) ----
+  // `migrate reset` + seed must leave the app immediately loginable. Whatever
+  // any section above produced (upsert update-legs, legacy/partial rows), force
+  // every hospital and user active so the auth check in lib/auth.ts
+  // (user.isActive && hospital.isActive) always passes for seeded accounts.
+  await prisma.hospital.updateMany({ data: { isActive: true } })
+  await prisma.user.updateMany({ data: { isActive: true } })
 
   console.log('Database seed completed successfully!')
 }
