@@ -74,7 +74,10 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@dentora-dental.com' },
-    update: { isActive: true },
+    // Re-stamp the documented credential on re-runs: a row that survived from
+    // an older seed keeps a hash nobody may know — reset must always yield a
+    // loginable account.
+    update: { isActive: true, password: hashedPassword },
     create: {
       email: 'admin@dentora-dental.com',
       name: 'محمد عبدالنبي',
@@ -107,7 +110,10 @@ async function main() {
   const doctorPassword = await bcrypt.hash('Doctor@123', 10)
   const doctor = await prisma.user.upsert({
     where: { email: 'doctor@dentora-dental.com' },
-    update: { isActive: true },
+    // Re-stamp the documented credential on re-runs: a row that survived from
+    // an older seed keeps a hash nobody may know — reset must always yield a
+    // loginable account.
+    update: { isActive: true, password: doctorPassword },
     create: {
       email: 'doctor@dentora-dental.com',
       name: 'د. أحمد محمود',
@@ -140,7 +146,10 @@ async function main() {
   const receptionistPassword = await bcrypt.hash('Reception@123', 10)
   const receptionist = await prisma.user.upsert({
     where: { email: 'reception@dentora-dental.com' },
-    update: { isActive: true },
+    // Re-stamp the documented credential on re-runs: a row that survived from
+    // an older seed keeps a hash nobody may know — reset must always yield a
+    // loginable account.
+    update: { isActive: true, password: receptionistPassword },
     create: {
       email: 'reception@dentora-dental.com',
       name: 'سارة خالد',
@@ -1489,7 +1498,10 @@ async function main() {
   if (appointmentCount === 0 && seededPatients.length) {
     const doctor2User = await prisma.user.upsert({
       where: { email: 'doctor2@dentora-dental.com' },
-      update: { isActive: true },
+      // Re-stamp the documented credential on re-runs: a row that survived from
+      // an older seed keeps a hash nobody may know — reset must always yield a
+      // loginable account.
+      update: { isActive: true, password: hashedPassword },
       create: {
         email: 'doctor2@dentora-dental.com',
         name: 'Dr. Marwa Sherif',

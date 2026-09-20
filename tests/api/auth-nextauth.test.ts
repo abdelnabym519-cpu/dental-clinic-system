@@ -18,6 +18,9 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
     },
   },
+  // lib/auth's authorize() consults this to distinguish "no such user" from
+  // "Prisma client unavailable (fallback mode)".
+  isPrismaFallback: vi.fn(() => false),
 }))
 
 // Mock auth.config
@@ -74,6 +77,8 @@ async function getAuthorize() {
         findUnique: vi.fn(),
       },
     },
+    // lib/auth's authorize() consults this when a lookup returns null.
+    isPrismaFallback: vi.fn(() => false),
   }))
 
   vi.doMock('@/lib/auth.config', () => ({

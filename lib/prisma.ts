@@ -59,16 +59,43 @@ try {
   PrismaClientCtor = undefined
 }
 
+/**
+ * True when the process is running on the null-returning fallback client
+ * instead of a real Prisma client (generated client missing/unusable).
+ * The auth layer uses this to tell "wrong password" apart from "database
+ * client unavailable" — before this flag, a stale `@prisma/client` after a
+ * `migrate reset` produced silent, misleading "Invalid email or password".
+ */
+let usingFallbackClient = false
+
+export function isPrismaFallback(): boolean {
+  return usingFallbackClient
+}
+
+function warnFallback(reason: string) {
+  // Loud, once: every query resolves to null in this mode, so anything that
+  // looks up a user (login!) fails without an obvious cause.
+  if (usingFallbackClient) return
+  usingFallbackClient = true
+  console.error(
+    `[dentora] Prisma client unavailable (${reason}). Running in fallback mode: ` +
+      `ALL database queries resolve to null — login and every data page will fail. ` +
+      `Fix: run "npx prisma generate", then RESTART the dev server.`
+  )
+}
+
 function createPrismaClient(): PrismaClient {
   if (!PrismaClientCtor) {
+    warnFallback('generated client not found')
     return makeFallbackPrismaClient()
   }
   try {
     return new PrismaClientCtor({
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     })
-  } catch {
+  } catch (e) {
     // Return a proxy fallback in dev environments when native query engine is not compiled
+    warnFallback(`client failed to construct: ${e instanceof Error ? e.message : String(e)}`)
     return makeFallbackPrismaClient()
   }
 }
