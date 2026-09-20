@@ -12,6 +12,11 @@ import React from 'react'
 // Global mocks
 // ---------------------------------------------------------------------------
 
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn().mockResolvedValue({ user: { id: 'smoke-user', role: 'ADMIN' } }),
+  getCurrentUser: vi.fn().mockResolvedValue({ id: 'smoke-user', role: 'ADMIN' }),
+}))
+
 vi.mock('@/lib/utils', () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
 }))
@@ -428,8 +433,13 @@ describe('Smoke Tests — Pages render without crashing', () => {
 
   it('Settings page loads', async () => {
     const { default: SettingsPage } = await import('@/app/(dashboard)/settings/page')
-    const container = await smokeRender(SettingsPage)
-    expect(container.innerHTML).toBeTruthy()
+    // Server component: resolve it directly (client render cannot await JSX
+    // returned by an async component), then render the resolved element.
+    const element = await SettingsPage()
+    const { container } = render(element)
+    await waitFor(() => {
+      expect(container.innerHTML.length).toBeGreaterThan(0)
+    })
   })
 
   it('AI chat page loads', async () => {

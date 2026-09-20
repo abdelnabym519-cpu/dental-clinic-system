@@ -3,11 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock NextResponse
 const mockRedirect = vi.fn()
+const mockRewrite = vi.fn()
 const mockNext = vi.fn().mockReturnValue({ type: 'next' })
 
 vi.mock('next/server', () => ({
   NextResponse: {
     redirect: (...args: any[]) => mockRedirect(...args),
+    rewrite: (...args: any[]) => mockRewrite(...args),
     next: () => mockNext(),
   },
 }))
@@ -32,6 +34,7 @@ describe('middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRedirect.mockImplementation((url) => ({ type: 'redirect', url }))
+    mockRewrite.mockImplementation((url) => ({ type: 'rewrite', url }))
     mockNext.mockReturnValue({ type: 'next' })
   })
 
@@ -128,9 +131,85 @@ describe('middleware', () => {
     expect(mockRedirect).not.toHaveBeenCalled()
   })
 
-  it('redirects DOCTOR from /settings to /dashboard', () => {
+  it('serves the hub to DOCTOR without redirecting to /dashboard', () => {
     middleware(makeRequest('/settings', { user: { role: 'DOCTOR' } }))
+    expect(mockNext).toHaveBeenCalled()
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('rewrites DOCTOR from /settings/clinic to the Access Denied page (not a redirect)', () => {
+    middleware(makeRequest('/settings/clinic', { user: { role: 'DOCTOR' } }))
+    expect(mockRewrite).toHaveBeenCalled()
+    const url = mockRewrite.mock.calls[0][0]
+    expect(url.pathname).toBe('/settings/access-denied')
+    expect(mockRedirect).not.toHaveBeenCalled()
+    expect(mockNext).not.toHaveBeenCalled()
+  })
+
+  it('allows DOCTOR to access /settings/profile', () => {
+    middleware(makeRequest('/settings/profile', { user: { role: 'DOCTOR' } }))
+    expect(mockNext).toHaveBeenCalled()
+    expect(mockRewrite).not.toHaveBeenCalled()
+  })
+
+  it('allows RECEPTIONIST to access /settings/profile', () => {
+    middleware(makeRequest('/settings/profile', { user: { role: 'RECEPTIONIST' } }))
+    expect(mockNext).toHaveBeenCalled()
+  })
+
+  it('allows LAB_TECH to access /settings/profile', () => {
+    middleware(makeRequest('/settings/profile', { user: { role: 'LAB_TECH' } }))
+    expect(mockNext).toHaveBeenCalled()
+  })
+
+  it('rewrites LAB_TECH from /settings/billing to the Access Denied page', () => {
+    middleware(makeRequest('/settings/billing', { user: { role: 'LAB_TECH' } }))
+    expect(mockRewrite).toHaveBeenCalled()
+    const url = mockRewrite.mock.calls[0][0]
+    expect(url.pathname).toBe('/settings/access-denied')
+  })
+
+  it('allows ACCOUNTANT to access /settings/billing and /settings/profile', () => {
+    middleware(makeRequest('/settings/billing', { user: { role: 'ACCOUNTANT' } }))
+    expect(mockNext).toHaveBeenCalled()
+    middleware(makeRequest('/settings/profile', { user: { role: 'ACCOUNTANT' } }))
+    expect(mockNext).toHaveBeenCalledTimes(2)
+  })
+
+  it('rewrites ACCOUNTANT from /settings/communications to the Access Denied page', () => {
+    middleware(makeRequest('/settings/communications', { user: { role: 'ACCOUNTANT' } }))
+    expect(mockRewrite).toHaveBeenCalled()
+    const url = mockRewrite.mock.calls[0][0]
+    expect(url.pathname).toBe('/settings/access-denied')
+  })
+
+  it('allows ADMIN to access every settings section', () => {
+    for (const section of ['clinic', 'billing', 'communications', 'appointments', 'system']) {
+      vi.clearAllMocks()
+      mockRewrite.mockImplementation((url) => ({ type: 'rewrite', url }))
+      mockNext.mockReturnValue({ type: 'next' })
+      middleware(makeRequest(`/settings/${section}`, { user: { role: 'ADMIN' } }))
+      expect(mockNext).toHaveBeenCalled()
+      expect(mockRewrite).not.toHaveBeenCalled()
+    }
+  })
+
+  it('keeps the Access Denied page reachable for every role', () => {
+    for (const role of ['ADMIN', 'DOCTOR', 'RECEPTIONIST', 'ACCOUNTANT', 'LAB_TECH']) {
+      vi.clearAllMocks()
+      mockRewrite.mockImplementation((url) => ({ type: 'rewrite', url }))
+      mockNext.mockReturnValue({ type: 'next' })
+      middleware(makeRequest('/settings/access-denied', { user: { role } }))
+      expect(mockNext).toHaveBeenCalled()
+    }
+  })
+
+  it('still sends unauthenticated visitors to /login (never to the hub)', () => {
+    middleware(makeRequest('/settings/clinic', null))
     expect(mockRedirect).toHaveBeenCalled()
+    const url = mockRedirect.mock.calls[0][0]
+    expect(url.pathname).toBe('/login')
+    expect(url.searchParams.get('callbackUrl')).toBe('/settings/clinic')
   })
 
   it('allows DOCTOR to access /treatments', () => {

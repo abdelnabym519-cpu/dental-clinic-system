@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 
+import { AccessDenied } from '@/components/settings/access-denied'
 import { LanguagePreferenceCard } from '@/components/i18n/language-preference-card'
 import { auth } from '@/lib/auth'
+import { canAccessSettingsSection } from '@/lib/settings-access'
 import { locales } from '@/lib/i18n/config'
 import { prisma } from '@/lib/prisma'
 
@@ -13,6 +15,13 @@ export default async function ProfileSettingsPage() {
   const session = await auth()
   if (!session?.user?.id) {
     redirect('/login')
+  }
+
+  // Defense in depth: middleware enforces the same rule for every /settings
+  // route (rewriting unauthorized roles to the Access Denied page); this page
+  // re-checks so authorization never depends on middleware alone.
+  if (!canAccessSettingsSection('/settings/profile', session.user.role)) {
+    return <AccessDenied section="profile" />
   }
 
   const user = await prisma.user.findUnique({

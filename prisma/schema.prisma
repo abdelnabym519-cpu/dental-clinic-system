@@ -2042,6 +2042,17 @@ model CommunicationTemplate {
   @@index([channel])
 }
 
+// Lifecycle of outbound SMS / email log entries (6-state — matches the
+// SMSLog.status and EmailLog.status DB columns).
+enum MessageStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
 model SMSLog {
   id              String        @id @default(cuid())
   hospitalId      String
@@ -2247,15 +2258,6 @@ enum CommunicationChannel {
   EMAIL
   WHATSAPP
   IN_APP
-}
-
-enum MessageStatus {
-  PENDING
-  QUEUED
-  SENT
-  DELIVERED
-  FAILED
-  CANCELLED
 }
 
 enum SurveyType {
@@ -2685,7 +2687,7 @@ model MessageQueue {
   payload       Json           // { text, attachment?: { filename, mimeType, dataBase64 } }
   scheduledAt   DateTime
   sentAt        DateTime?
-  status        MessageStatus  @default(PENDING)
+  status        MessageQueueStatus @default(PENDING)
   attempts      Int            @default(0)
   lastError     String?
   createdAt     DateTime       @default(now())
@@ -2706,7 +2708,7 @@ enum MessageChannel {
   SMS
 }
 
-enum MessageStatus {
+enum MessageQueueStatus {
   PENDING
   SENT
   FAILED

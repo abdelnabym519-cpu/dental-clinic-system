@@ -1,9 +1,13 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
+import { canAccessSettingsSection, settingsSectionFromPath } from '@/lib/settings-access'
 
-// Routes that require specific roles
+// Routes that require specific roles.
+// NOTE: /settings is intentionally NOT here — the settings area has its own
+// fine-grained RBAC in lib/settings-access.ts, enforced below by rewriting
+// unauthorized roles to /settings/access-denied (a proper forbidden page)
+// instead of redirecting them to /dashboard.
 const roleRoutes: Record<string, string[]> = {
-  '/settings': ['ADMIN'],
   '/staff': ['ADMIN'],
   '/inventory': ['ADMIN'],
   '/billing': ['ADMIN', 'ACCOUNTANT', 'RECEPTIONIST'],
@@ -69,8 +73,16 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  // Check role-based access
+  // Settings-area RBAC (lib/settings-access.ts): unauthorized roles get the
+  // Access Denied page in place — same URL, no redirect to /dashboard.
+  // The check runs after authentication, so an anonymous visitor still gets
+  // the standard redirect to /login with a callbackUrl above.
   const userRole = session.user.role
+  if (settingsSectionFromPath(pathname) !== null && !canAccessSettingsSection(pathname, userRole)) {
+    return NextResponse.rewrite(new URL('/settings/access-denied', nextUrl))
+  }
+
+  // Check role-based access
   for (const [path, roles] of Object.entries(roleRoutes)) {
     if (pathname.startsWith(path)) {
       if (!roles.includes(userRole)) {
