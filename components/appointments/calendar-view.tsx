@@ -116,6 +116,13 @@ const DAY_START_H = AGENDA_START_MINUTES / 60
 const DAY_END_H = AGENDA_END_MINUTES / 60
 const HOURS = Array.from({ length: DAY_END_H - DAY_START_H }, (_, i) => DAY_START_H + i)
 const WEEK_TOTAL_PX = (DAY_END_H - DAY_START_H) * WEEK_HOUR_PX
+/**
+ * Height of one hour row as a percentage of the grid column, so the time
+ * grid stretches to fill the available viewport height (§ fill-height)
+ * while the `max(100%, …)` column heights keep the designed pixel size as
+ * the floor (internal scroll kicks in below it).
+ */
+const HOUR_ROW_HEIGHT = `${100 / HOURS.length}%`
 
 export function CalendarView({
   initialDate = new Date(),
@@ -688,21 +695,24 @@ export function CalendarView({
     const totalPx = (DAY_END_H - DAY_START_H) * HOUR_PX
 
     return (
-      <div className="rounded-lg border overflow-hidden" data-testid="day-view">
-        <div className="grid grid-cols-[80px_1fr] divide-x">
+      <div
+        className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
+        data-testid="day-view"
+      >
+        <div className="grid min-h-0 flex-1 grid-cols-[80px_1fr] grid-rows-[minmax(0,1fr)] divide-x overflow-y-auto">
           {/* Time column */}
-          <div className="bg-muted/30">
+          <div className="bg-muted/30" style={{ height: `max(100%, ${totalPx}px)` }}>
             {HOURS.map((h) => (
-              <div key={h} className="px-2 text-xs text-muted-foreground" style={{ height: HOUR_PX }}>
+              <div key={h} className="px-2 text-xs text-muted-foreground" style={{ height: HOUR_ROW_HEIGHT }}>
                 {formatTime(`${String(h).padStart(2, '0')}:00`)}
               </div>
             ))}
           </div>
 
           {/* Appointment column */}
-          <div className="relative" style={{ height: totalPx }}>
+          <div className="relative" style={{ height: `max(100%, ${totalPx}px)` }}>
             {HOURS.map((h) => (
-              <div key={h} className="border-b" style={{ height: HOUR_PX }} />
+              <div key={h} className="border-b" style={{ height: HOUR_ROW_HEIGHT }} />
             ))}
             {showAvailability && renderAvailabilityOverlays(currentDate)}
 
@@ -724,7 +734,10 @@ export function CalendarView({
     const weekDays = getWeekDays()
 
     return (
-      <div className="rounded-lg border overflow-hidden" data-testid="week-view">
+      <div
+        className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
+        data-testid="week-view"
+      >
         {/* Header */}
         <div className="grid grid-cols-[80px_repeat(7,1fr)] divide-x bg-muted/30">
           <div className="p-2" />
@@ -744,14 +757,14 @@ export function CalendarView({
         </div>
 
         {/* Time grid */}
-        <div className="grid grid-cols-[80px_repeat(7,1fr)] divide-x overflow-x-auto">
+        <div className="grid min-h-0 flex-1 grid-cols-[80px_repeat(7,1fr)] grid-rows-[minmax(0,1fr)] divide-x overflow-x-auto overflow-y-auto">
           {/* Time column */}
-          <div className="bg-muted/30">
+          <div className="bg-muted/30" style={{ height: `max(100%, ${WEEK_TOTAL_PX}px)` }}>
             {HOURS.map((h) => (
               <div
                 key={h}
                 className="px-2 text-xs text-muted-foreground"
-                style={{ height: WEEK_HOUR_PX }}
+                style={{ height: HOUR_ROW_HEIGHT }}
               >
                 {formatTime(`${String(h).padStart(2, '0')}:00`)}
               </div>
@@ -763,9 +776,13 @@ export function CalendarView({
             const dayAppointments = getAppointmentsForDate(day)
 
             return (
-              <div key={day.toISOString()} className="relative" style={{ height: WEEK_TOTAL_PX }}>
+              <div
+                key={day.toISOString()}
+                className="relative"
+                style={{ height: `max(100%, ${WEEK_TOTAL_PX}px)` }}
+              >
                 {HOURS.map((h) => (
-                  <div key={h} className="border-b" style={{ height: WEEK_HOUR_PX }} />
+                  <div key={h} className="border-b" style={{ height: HOUR_ROW_HEIGHT }} />
                 ))}
                 {showAvailability && renderAvailabilityOverlays(day)}
 
@@ -784,7 +801,10 @@ export function CalendarView({
     const monthDays = getMonthDays()
 
     return (
-      <div className="rounded-lg border overflow-hidden" data-testid="month-view">
+      <div
+        className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
+        data-testid="month-view"
+      >
         {/* Header */}
         <div className="grid grid-cols-7 bg-muted/30">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
@@ -795,7 +815,7 @@ export function CalendarView({
         </div>
 
         {/* Days grid */}
-        <div className="grid grid-cols-7">
+        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 overflow-y-auto">
           {monthDays.map(({ date, isCurrentMonth }, index) => {
             const dayAppointments = getAppointmentsForDate(date)
             const isToday = date.toDateString() === new Date().toDateString()
@@ -852,7 +872,7 @@ export function CalendarView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col space-y-4">
       {/* Calendar Header */}
       {!hideToolbar && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -951,13 +971,13 @@ export function CalendarView({
         <>
           {viewMode === 'day' && (
             <>
-              <div className="hidden md:block">{renderDayView()}</div>
+              <div className="hidden min-h-0 flex-1 flex-col md:flex">{renderDayView()}</div>
               <div className="md:hidden">{renderMobileList([currentDate])}</div>
             </>
           )}
           {viewMode === 'week' && (
             <>
-              <div className="hidden md:block">{renderWeekView()}</div>
+              <div className="hidden min-h-0 flex-1 flex-col md:flex">{renderWeekView()}</div>
               <div className="md:hidden">{renderMobileList(getWeekDays())}</div>
             </>
           )}
