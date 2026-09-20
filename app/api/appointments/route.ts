@@ -14,6 +14,7 @@ import {
   type RecurrencePattern,
 } from '@/lib/agenda-availability'
 import { isValidTime, parseDateKey, toDateKey } from '@/lib/agenda-utils'
+import { queueAppointmentMessages } from '@/lib/messaging/service'
 
 // Roles allowed to mutate the schedule. Reads stay available to every
 // authenticated role; the server enforces this split on POST/PUT/DELETE.
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
       priority = 'NORMAL',
       chiefComplaint,
       notes,
+      contactPhone,
       isVirtual = false,
       recurrence,
     } = body
@@ -198,6 +200,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 3K — optional manual contact number override for messaging. Stored as
+    // provided (trimmed); normalization/validation happens before sending.
+    const contactPhoneOverride =
+      typeof contactPhone === 'string' && contactPhone.trim()
+        ? contactPhone.trim().slice(0, 30)
+        : null
 
     // Validate time format (HH:MM)
     if (!isValidTime(scheduledTime)) {
@@ -360,6 +369,7 @@ export async function POST(request: NextRequest) {
               chairNumber,
               roomId: roomId || null,
               recurrenceGroupId,
+              contactPhone: contactPhoneOverride,
               appointmentType,
               priority,
               chiefComplaint,
@@ -431,6 +441,39 @@ export async function POST(request: NextRequest) {
         console.error('Failed to create video consultation:', videoErr)
         // Appointment is still created — video setup can be retried
       }
+    }
+
+    // Messaging platform (3C/3D/3E/3J): queue patient confirmation, doctor
+    // notification and the 24h/1h reminder pair. Failure-isolated — booking
+    // has already succeeded and must never depend on messaging.
+    try {
+      if (appointment?.id) {
+        const [patientRow, doctorRow] = await Promise.all([
+          prisma.patient.findUnique({
+            where: { id: patientId },
+            select: { id: true, firstName: true, lastName: true, phone: true },
+          }),
+          prisma.staff.findUnique({
+            where: { id: doctorId },
+            select: { id: true, firstName: true, lastName: true, phone: true },
+          }),
+        ])
+        if (patientRow && doctorRow) {
+          await queueAppointmentMessages({
+            id: appointment.id,
+            hospitalId,
+            scheduledDate: parseDateKey(scheduledDate),
+            scheduledTime,
+            duration,
+            appointmentType,
+            contactPhone: contactPhoneOverride,
+            patient: patientRow,
+            doctor: doctorRow,
+          })
+        }
+      }
+    } catch (msgErr) {
+      console.error('Failed to queue appointment messages (non-fatal):', msgErr)
     }
 
     return NextResponse.json(appointment, { status: 201 })

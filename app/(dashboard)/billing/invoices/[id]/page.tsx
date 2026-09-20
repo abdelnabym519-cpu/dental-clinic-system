@@ -55,6 +55,7 @@ import {
   Copy,
   Check,
   Loader2,
+  MessageCircle,
 } from 'lucide-react'
 import {
   invoiceStatusConfig,
@@ -157,6 +158,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   // Payment dialog state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(showPaymentDialog)
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false)
+  const [whatsAppQueued, setWhatsAppQueued] = useState<boolean | null>(null)
   const [paymentSubmitting, setPaymentSubmitting] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -347,6 +350,39 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
+          <Button
+            variant="outline"
+            className="text-green-700"
+            aria-label="إرسال الفاتورة عبر واتساب"
+            disabled={sendingWhatsApp}
+            onClick={async () => {
+              setSendingWhatsApp(true)
+              try {
+                const res = await fetch(`/api/communications/invoices/${invoice.id}/send`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({}),
+                })
+                const data = await res.json().catch(() => ({}))
+                if (!res.ok) throw new Error(data.error || 'Failed to queue the invoice message')
+                setWhatsAppQueued(true)
+              } catch {
+                setWhatsAppQueued(false)
+              } finally {
+                setSendingWhatsApp(false)
+              }
+            }}
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            إرسال عبر واتساب
+          </Button>
+          {whatsAppQueued !== null && (
+            <span className="self-center text-xs" role="status">
+              {whatsAppQueued
+                ? '✅ تمت إضافة الفاتورة إلى قائمة الإرسال'
+                : '⚠️ تعذر الإرسال — تحقق من رقم الهاتف'}
+            </span>
+          )}
           {['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(invoice.status) && (
             <>
               <PaymentCheckout

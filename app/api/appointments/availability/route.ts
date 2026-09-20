@@ -39,22 +39,42 @@ export async function GET(request: NextRequest) {
       select: { workingHours: true },
     })
 
-    const [shifts, leaves, holidays] = await Promise.all([
-      prisma.staffShift.findMany({
-        where: { hospitalId, staffId: doctorId },
-      }),
-      prisma.leave.findMany({
-        where: {
-          hospitalId,
-          staffId: doctorId,
-          status: 'APPROVED',
-          startDate: { lte: weekEnd },
-          endDate: { gte: weekStart },
-        },
-        select: { startDate: true, endDate: true, leaveType: true, status: true },
-      }),
-      prisma.holiday.findMany({ where: { hospitalId } }),
-    ])
+    const [shifts, doctorBreaks, blockedSlots, leaves, holidays] = (
+      await Promise.all([
+        prisma.staffShift.findMany({
+          where: { hospitalId, staffId: doctorId },
+        }),
+        prisma.doctorBreak
+          .findMany({
+            where: { hospitalId, staffId: doctorId, isActive: true },
+            select: { dayOfWeek: true, startTime: true, endTime: true, label: true },
+          })
+          .catch(() => []),
+        prisma.blockedSlot
+          .findMany({
+            where: {
+              hospitalId,
+              isActive: true,
+              OR: [{ staffId: doctorId }, { staffId: null }],
+              startAt: { lte: weekEnd },
+              endAt: { gte: weekStart },
+            },
+            select: { startAt: true, endAt: true, reason: true, staffId: true },
+          })
+          .catch(() => []),
+        prisma.leave.findMany({
+          where: {
+            hospitalId,
+            staffId: doctorId,
+            status: 'APPROVED',
+            startDate: { lte: weekEnd },
+            endDate: { gte: weekStart },
+          },
+          select: { startDate: true, endDate: true, leaveType: true, status: true },
+        }),
+        prisma.holiday.findMany({ where: { hospitalId } }),
+      ])
+    ).map((v) => v ?? [])
 
     // Per-day effective windows: doctor shift → clinic week schedule →
     // built-in defaults. The UI shades exactly what the booking gate enforces.
@@ -100,6 +120,10 @@ export async function GET(request: NextRequest) {
         name: h.name,
         isRecurring: h.isRecurring,
       })),
+      breaks: doctorBreaks as Array<{ dayOfWeek: number; startTime: string; endTime: string; label?: string | null }>,
+      blockedSlots: (blockedSlots as Array<{ startAt: Date; endAt: Date; reason?: string | null }>).map(
+        (b) => ({ startAt: b.startAt.toISOString(), endAt: b.endAt.toISOString(), reason: b.reason ?? null })
+      ),
     })
   } catch (err) {
     console.error('Error loading availability:', err)

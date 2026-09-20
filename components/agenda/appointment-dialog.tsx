@@ -35,6 +35,7 @@ export interface AppointmentDialogAppointment {
   chiefComplaint?: string | null
   notes?: string | null
   roomId?: string | null
+  contactPhone?: string | null
 }
 
 interface AppointmentDialogProps {
@@ -86,6 +87,7 @@ export function AppointmentDialog({
     chiefComplaint: '',
     notes: '',
     roomId: 'none',
+    contactPhone: '',
   })
   const [recurrenceEnabled, setRecurrenceEnabled] = useState(false)
   const [recurrence, setRecurrence] = useState({
@@ -111,6 +113,7 @@ export function AppointmentDialog({
         chiefComplaint: appointment.chiefComplaint || '',
         notes: appointment.notes || '',
         roomId: appointment.roomId || 'none',
+        contactPhone: appointment.contactPhone || '',
       })
     } else {
       setForm({
@@ -124,6 +127,7 @@ export function AppointmentDialog({
         chiefComplaint: '',
         notes: '',
         roomId: 'none',
+        contactPhone: '',
       })
     }
   }, [open, appointment, defaults])
@@ -152,6 +156,7 @@ export function AppointmentDialog({
         chiefComplaint: form.chiefComplaint || undefined,
         notes: form.notes || undefined,
         roomId: form.roomId && form.roomId !== 'none' ? form.roomId : undefined,
+        contactPhone: form.contactPhone.trim() || undefined,
       }
       if (!editing && recurrenceEnabled) {
         payload.recurrence = {
@@ -410,6 +415,21 @@ export function AppointmentDialog({
               onChange={(e) => set('chiefComplaint')(e.target.value)}
               placeholder="e.g. Tooth pain, upper right"
             />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="apt-contact-phone">WhatsApp number override (optional)</Label>
+            <Input
+              id="apt-contact-phone"
+              value={form.contactPhone}
+              onChange={(e) => set('contactPhone')(e.target.value)}
+              placeholder="e.g. 01012345678 — confirmation & reminders go here"
+              aria-label="WhatsApp contact number override"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty to use the patient&apos;s stored number. Invalid numbers are skipped
+              safely.
+            </p>
           </div>
 
           <div className="grid gap-2">

@@ -80,6 +80,8 @@ interface AvailabilityContext {
   >
   leaves: Array<{ startDate: string; endDate: string; leaveType: string; status: string }>
   holidays: Array<{ date: string; name: string; isRecurring: boolean }>
+  breaks?: Array<{ dayOfWeek: number; startTime: string; endTime: string; label?: string | null }>
+  blockedSlots?: Array<{ startAt: string; endAt: string; reason?: string | null }>
 }
 
 interface CalendarViewProps {
@@ -322,6 +324,58 @@ export function CalendarView({
             }}
           />
         )}
+        {/* Per-doctor recurring breaks */}
+        {(availability.breaks ?? [])
+          .filter((b) => b.dayOfWeek === day.getDay())
+          .map((b, i) => (
+            <div
+              key={`break-${i}`}
+              aria-hidden
+              title={`Break${b.label ? `: ${b.label}` : ''}`}
+              className="absolute left-0 right-0 bg-orange-100/80 dark:bg-orange-900/25 pointer-events-none"
+              style={{
+                top: `${pct(timeToMinutes(b.startTime) - AGENDA_START_MINUTES)}%`,
+                height: `${pct(
+                  Math.max(timeToMinutes(b.endTime) - timeToMinutes(b.startTime), 0)
+                )}%`,
+              }}
+            />
+          ))}
+        {/* One-off blocked slots (meetings / maintenance) */}
+        {(availability.blockedSlots ?? []).map((slot, i) => {
+          const start = new Date(slot.startAt)
+          const end = new Date(slot.endAt)
+          const dayStart = new Date(day)
+          dayStart.setHours(0, 0, 0, 0)
+          const dayEnd = new Date(dayStart)
+          dayEnd.setDate(dayEnd.getDate() + 1)
+          if (end <= dayStart || start >= dayEnd) return null
+          const fromMin = Math.max(
+            (start.getTime() - dayStart.getTime()) / 60000,
+            AGENDA_START_MINUTES
+          )
+          const toMin = Math.min(
+            (end.getTime() - dayStart.getTime()) / 60000,
+            AGENDA_END_MINUTES
+          )
+          if (toMin <= AGENDA_START_MINUTES || fromMin >= AGENDA_END_MINUTES) return null
+          return (
+            <div
+              key={`blocked-${i}`}
+              role="status"
+              title={`Blocked${slot.reason ? `: ${slot.reason}` : ''}`}
+              className="absolute left-0 right-0 z-[5] bg-zinc-300/70 dark:bg-zinc-700/50 pointer-events-none flex items-start justify-center"
+              style={{
+                top: `${pct(fromMin - AGENDA_START_MINUTES)}%`,
+                height: `${pct(toMin - fromMin)}%`,
+              }}
+            >
+              <span className="text-[9px] font-medium text-zinc-600 dark:text-zinc-300 truncate px-1">
+                {slot.reason || 'Blocked'}
+              </span>
+            </div>
+          )
+        })}
         {/* Clinic closed the whole day */}
         {!window && !onLeave && (
           <div

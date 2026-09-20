@@ -16,8 +16,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { MessageLogPanel } from '@/components/communications/message-log-panel'
 
 export default function CommunicationSettingsPage() {
+  // (WhatsApp/SMS platform: the Message Log tab below renders the live
+  // MessageQueue audit — provider configuration itself is env-based.)
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -341,6 +344,7 @@ export default function CommunicationSettingsPage() {
         <TabsList>
           <TabsTrigger value="sms">SMS Configuration</TabsTrigger>
           <TabsTrigger value="email">Email Configuration</TabsTrigger>
+          <TabsTrigger value="message-log">Message Log (WhatsApp/SMS)</TabsTrigger>
           <TabsTrigger value="reviews">Google Reviews</TabsTrigger>
         </TabsList>
 
@@ -609,6 +613,10 @@ export default function CommunicationSettingsPage() {
           </Card>
         </TabsContent>
         {/* Google Reviews Configuration */}
+        <TabsContent value="message-log">
+          <MessageLogPanel />
+        </TabsContent>
+
         <TabsContent value="reviews">
           <Card>
             <CardHeader>

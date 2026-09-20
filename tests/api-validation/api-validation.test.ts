@@ -83,6 +83,15 @@ vi.mock('@/lib/prisma', () => {
       findMany: vi.fn().mockResolvedValue([]),
     },
     room: { findFirst: vi.fn().mockResolvedValue(null) },
+    doctorBreak: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    blockedSlot: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+
     videoConsultation: { create: vi.fn() },
     stockTransaction: { create: vi.fn() },
     $transaction: vi.fn((fn: any) => fn(prismaMock)),

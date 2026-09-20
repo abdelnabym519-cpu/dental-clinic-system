@@ -74,7 +74,7 @@ import {
   TestTube,
   Smile,
   Shield,
-  Pen,
+  Pen,  MessageCircle,
 } from 'lucide-react'
 import { DentalChart } from '@/components/dental-chart'
 import { Patient360 } from '@/components/ai/patient-360'
@@ -352,6 +352,29 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         variant: 'destructive',
         title: 'Error',
         description: 'Failed to download document',
+      })
+    }
+  }
+
+  // Messaging platform (3H): queue a patient-file image for WhatsApp delivery.
+  const handleSendDocumentWhatsApp = async (doc: Document) => {
+    try {
+      const res = await fetch(`/api/communications/documents/${doc.id}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Failed to queue the image')
+      toast({
+        title: 'Queued for WhatsApp',
+        description: `${doc.originalName} will be sent to the patient.`,
+      })
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to queue the image',
+        variant: 'destructive',
       })
     }
   }
@@ -1055,6 +1078,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                       Annotate
                                     </DropdownMenuItem>
                                   </>
+                                )}
+                                {isImage && (
+                                  <DropdownMenuItem onClick={() => handleSendDocumentWhatsApp(doc)}>
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    إرسال عبر واتساب
+                                  </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem onClick={() => handleDownloadDocument(doc)}>
                                   <Download className="h-4 w-4 mr-2" />

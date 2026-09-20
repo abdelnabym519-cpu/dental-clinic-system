@@ -100,6 +100,9 @@ model Hospital {
   leaves              Leave[]
   rooms               Room[]
   appointmentReminders AppointmentReminder[]
+  doctorBreaks        DoctorBreak[]
+  blockedSlots        BlockedSlot[]
+  messageQueue        MessageQueue[]
   aiConversations     AIConversation[]
   aiSkillExecutions   AISkillExecution[]
   aiInsights          AIInsight[]
@@ -349,6 +352,8 @@ model Staff {
   prescriptions   Prescription[]
   attendance      Attendance[]
   shifts          StaffShift[]
+  breaks            DoctorBreak[]
+  blockedSlots      BlockedSlot[]
   leaves          Leave[]
   videoConsultations VideoConsultation[] @relation("DoctorVideoConsultations")
 
@@ -484,6 +489,7 @@ model Patient {
   prescriptions   Prescription[]
   invoices        Invoice[]
   documents       Document[]
+  queuedMessages  MessageQueue[]
   labOrders       LabOrder[]
   riskScores      PatientRiskScore[]
   insurancePolicies PatientInsurance[]
@@ -591,6 +597,7 @@ model Appointment {
   chairNumber     Int?
   roomId          String?
   recurrenceGroupId String?
+  contactPhone    String?
 
   appointmentType AppointmentType   @default(CONSULTATION)
   status          AppointmentStatus @default(SCHEDULED)
@@ -619,6 +626,7 @@ model Appointment {
   reminders       AppointmentReminder[]
   videoConsultation VideoConsultation?
   room            Room?             @relation(fields: [roomId], references: [id])
+  queuedMessages  MessageQueue[]
 
   @@unique([hospitalId, appointmentNo])
   @@index([roomId])
@@ -2578,6 +2586,7 @@ model Room {
 
   hospital     Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   appointments Appointment[]
+  blockedSlots BlockedSlot[]
 
   @@unique([hospitalId, name])
   @@index([hospitalId])
@@ -2601,6 +2610,103 @@ model Waitlist {
 
   @@index([hospitalId])
   @@index([status])
+}
+
+// ── Agenda Phase 2b: per-doctor recurring breaks & arbitrary blocked time ──
+model DoctorBreak {
+  id          String   @id @default(cuid())
+  hospitalId  String
+  staffId     String
+  dayOfWeek   Int      // 0 (Sunday) – 6 (Saturday), matches StaffShift
+  startTime   String   // HH:MM 24h
+  endTime     String   // HH:MM 24h
+  label       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  staff    Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([hospitalId])
+  @@index([staffId, dayOfWeek])
+}
+
+model BlockedSlot {
+  id         String   @id @default(cuid())
+  hospitalId String
+  staffId    String?  // optional: clinic-wide block when null
+  roomId     String?
+  startAt    DateTime
+  endAt      DateTime
+  reason     String?
+  isActive   Boolean  @default(true)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  hospital Hospital  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: Set Null)
+  room     Room?     @relation(fields: [roomId], references: [id], onDelete: Set Null)
+
+  @@index([hospitalId, startAt])
+  @@index([staffId])
+  @@index([roomId])
+}
+
+// ── Messaging platform: provider-agnostic outbound message queue ──────────
+model MessageQueue {
+  id            String         @id @default(cuid())
+  hospitalId    String
+  appointmentId String?
+  patientId     String?
+  recipient     String         // E.164 phone number
+  channel       MessageChannel
+  provider      String?        // provider that handled the last attempt
+  messageType   MessageType
+  payload       Json           // { text, attachment?: { filename, mimeType, dataBase64 } }
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  status        MessageStatus  @default(PENDING)
+  attempts      Int            @default(0)
+  lastError     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  hospital    Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Set Null)
+  patient     Patient?     @relation(fields: [patientId], references: [id], onDelete: Set Null)
+
+  @@index([hospitalId])
+  @@index([status, scheduledAt])
+  @@index([appointmentId])
+  @@index([patientId])
+}
+
+enum MessageChannel {
+  WHATSAPP
+  SMS
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum MessageType {
+  APPOINTMENT_CONFIRMATION
+  APPOINTMENT_REMINDER_24H
+  APPOINTMENT_REMINDER_1H
+  DOCTOR_NEW_APPOINTMENT
+  DOCTOR_CANCELLATION
+  DOCTOR_RESCHEDULE
+  PRESCRIPTION
+  INVOICE
+  RADIOLOGY
+  REVIEW_REQUEST
+  TEST
 }
 
 enum WaitlistStatus {

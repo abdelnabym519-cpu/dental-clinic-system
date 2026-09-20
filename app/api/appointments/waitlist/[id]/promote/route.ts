@@ -88,8 +88,18 @@ export async function POST(
     const horizonEnd = new Date()
     horizonEnd.setDate(horizonEnd.getDate() + SEARCH_HORIZON_DAYS)
 
-    const [shifts, leaves, holidays] = await Promise.all([
+    const settled = await Promise.all([
       prisma.staffShift.findMany({ where: { hospitalId } }),
+      prisma.doctorBreak.findMany({
+        where: { hospitalId, isActive: true },
+        select: { staffId: true, dayOfWeek: true, startTime: true, endTime: true },
+      }).catch(() => []),
+      prisma.blockedSlot
+        .findMany({
+          where: { hospitalId, isActive: true, startAt: { lte: horizonEnd }, endAt: { gte: new Date() } },
+          select: { staffId: true, startAt: true, endAt: true },
+        })
+        .catch(() => []),
       prisma.leave.findMany({
         where: {
           hospitalId,
@@ -100,6 +110,7 @@ export async function POST(
       }),
       prisma.holiday.findMany({ where: { hospitalId } }),
     ])
+    const [shifts, leaves, holidays, doctorBreaks, blockedSlots] = settled.map((v) => v ?? [])
 
     const holidayEntries = (holidays as Array<{ date: Date; isRecurring: boolean }>).map((h) => ({
       date: toDateKey(h.date),
@@ -156,6 +167,29 @@ export async function POST(
             })
           )
             continue
+
+          // Per-doctor recurring break on this weekday.
+          const slotStartMin = slotMin
+          const breakHit = (doctorBreaks as Array<{ staffId: string; dayOfWeek: number; startTime: string; endTime: string }>).some(
+            (b) => {
+              if (b.staffId !== doctor.id || b.dayOfWeek !== weekday) return false
+              const bStart = timeToMinutes(b.startTime)
+              const bEnd = timeToMinutes(b.endTime)
+              return slotStartMin < bEnd && slotStartMin + duration > bStart
+            }
+          )
+          if (breakHit) continue
+
+          // One-off blocked slots overlapping this candidate slot.
+          const slotStartAt = new Date(`${dateKey}T${startTime}:00`)
+          const slotEndAt = new Date(slotStartAt.getTime() + duration * 60000)
+          const blockedHit = (blockedSlots as Array<{ staffId: string | null; startAt: Date; endAt: Date }>).some(
+            (b) =>
+              (!b.staffId || b.staffId === doctor.id) &&
+              b.startAt < slotEndAt &&
+              b.endAt > slotStartAt
+          )
+          if (blockedHit) continue
 
           const scheduledDate = parseDateKey(dateKey)
           scheduledDate.setHours(0, 0, 0, 0)

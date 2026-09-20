@@ -1591,6 +1591,102 @@ async function main() {
     console.log('Created waitlist entry')
   }
 
+  // ── Messaging platform + Phase-2b demo rows ──────────────────────────────
+  // A recurring doctor lunch break, a one-off blocked slot (equipment
+  // maintenance) and sample MessageQueue rows (a sent confirmation and a
+  // pending reminder) so the panels have real data on a fresh database.
+
+  const breakCount = await prisma.doctorBreak.count({ where: { hospitalId: hospital.id } })
+  if (breakCount === 0) {
+    await prisma.doctorBreak.createMany({
+      data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+        hospitalId: hospital.id,
+        staffId: doctorStaff.id,
+        dayOfWeek,
+        startTime: '13:00',
+        endTime: '14:00',
+        label: 'Lunch break',
+      })),
+    })
+    console.log('Created doctor lunch breaks')
+  }
+
+  const blockedCount = await prisma.blockedSlot.count({ where: { hospitalId: hospital.id } })
+  if (blockedCount === 0) {
+    const maintenanceStart = new Date()
+    maintenanceStart.setDate(maintenanceStart.getDate() + 3)
+    maintenanceStart.setHours(9, 0, 0, 0)
+    const maintenanceEnd = new Date(maintenanceStart)
+    maintenanceEnd.setHours(12, 0, 0, 0)
+    await prisma.blockedSlot.create({
+      data: {
+        hospitalId: hospital.id,
+        startAt: maintenanceStart,
+        endAt: maintenanceEnd,
+        reason: 'Equipment maintenance',
+      },
+    })
+    console.log('Created blocked slot demo')
+  }
+
+  const queueCount = await prisma.messageQueue.count({ where: { hospitalId: hospital.id } })
+  if (queueCount === 0 && seededPatients.length) {
+    const demoPatient = seededPatients[0]
+    const doctorRow = await prisma.staff.findFirst({
+      where: { hospitalId: hospital.id, employeeId: 'EMP0001' },
+      select: { id: true, firstName: true, lastName: true, phone: true },
+    })
+    const recipient = (demoPatient as unknown as { phone?: string | null }).phone || '+201000000000'
+    const now = new Date()
+    await prisma.messageQueue.createMany({
+      data: [
+        {
+          hospitalId: hospital.id,
+          patientId: demoPatient.id,
+          recipient,
+          channel: 'WHATSAPP',
+          provider: 'mock-whatsapp',
+          messageType: 'APPOINTMENT_CONFIRMATION',
+          payload: {
+            text: `مرحباً ${demoPatient.firstName} 👋\nتم تأكيد موعدك في ${hospital.name} ✅`,
+          },
+          scheduledAt: new Date(now.getTime() - 3600_000),
+          sentAt: new Date(now.getTime() - 3500_000),
+          status: 'SENT',
+          attempts: 1,
+        },
+        {
+          hospitalId: hospital.id,
+          patientId: demoPatient.id,
+          recipient,
+          channel: 'WHATSAPP',
+          messageType: 'APPOINTMENT_REMINDER_24H',
+          payload: {
+            text: 'تذكير بموعدك 🔔\nلديك موعد غداً',
+          },
+          scheduledAt: new Date(now.getTime() + 12 * 3600_000),
+          status: 'PENDING',
+        },
+        ...(doctorRow
+          ? [
+              {
+                hospitalId: hospital.id,
+                recipient: doctorRow.phone || '+201100000000',
+                channel: 'WHATSAPP' as const,
+                messageType: 'DOCTOR_NEW_APPOINTMENT' as const,
+                payload: { text: 'موعد جديد 📋' },
+                scheduledAt: new Date(now.getTime() - 3000_000),
+                sentAt: new Date(now.getTime() - 2900_000),
+                status: 'SENT' as const,
+                attempts: 1,
+              },
+            ]
+          : []),
+      ],
+    })
+    console.log('Created message queue demo rows')
+  }
+
   console.log('Created appointments')
 
   // Invoice + payment link with a fixed token.

@@ -55,6 +55,15 @@ vi.mock('@/lib/prisma', () => ({
     },
     hospital: { findUnique: vi.fn().mockResolvedValue({ workingHours: null }) },
     room: { findFirst: vi.fn().mockResolvedValue(null) },
+    doctorBreak: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    blockedSlot: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+
   },
 }))
 

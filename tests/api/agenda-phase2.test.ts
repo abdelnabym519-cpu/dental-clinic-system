@@ -52,6 +52,14 @@ vi.mock('@/lib/prisma', () => ({
       count: vi.fn().mockResolvedValue(0),
     },
     $transaction: vi.fn(),
+    doctorBreak: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    blockedSlot: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
 }))
 
@@ -81,6 +89,7 @@ import {
   DELETE as remindersDELETE,
 } from '@/app/api/appointments/reminders/route'
 import { GET as availabilityGET } from '@/app/api/appointments/availability/route'
+import { POST as blockedSlotsPOST } from '@/app/api/blocked-slots/route'
 import { POST as promotePOST } from '@/app/api/appointments/waitlist/[id]/promote/route'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { toDateKey } from '@/lib/agenda-utils'
@@ -140,6 +149,10 @@ beforeEach(() => {
   prisma.hospital.findUnique.mockResolvedValue({ workingHours: null })
   prisma.room.findFirst.mockResolvedValue(null)
   prisma.room.findMany.mockResolvedValue([])
+  prisma.doctorBreak.findFirst.mockResolvedValue(null)
+  prisma.doctorBreak.findMany.mockResolvedValue([])
+  prisma.blockedSlot.findFirst.mockResolvedValue(null)
+  prisma.blockedSlot.findMany.mockResolvedValue([])
   prisma.appointmentReminder.findMany.mockResolvedValue([])
   prisma.waitlist.findMany.mockResolvedValue([])
   prisma.waitlist.count.mockResolvedValue(0)
@@ -376,6 +389,49 @@ describe('Agenda Phase-2 — series editing scope (4J, PUT applyTo)', () => {
     expect(future1).toBeTruthy()
     expect(toDateKey(new Date(future1[0].data.scheduledDate))).toBe('2027-06-22')
     expect(future1[0].data.scheduledTime).toBe('11:00')
+  })
+})
+
+describe('Agenda Phase-2b — per-doctor breaks & blocked slots (2B/2D)', () => {
+  beforeEach(seedValidPatientAndDoctor)
+
+  it('rejects a booking inside a recurring doctor break (DOCTOR_ON_BREAK)', async () => {
+    prisma.doctorBreak.findMany.mockResolvedValue([
+      { startTime: '12:30', endTime: '13:30', label: 'Lunch' },
+    ])
+    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '12:45', duration: 30 }))
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('DOCTOR_ON_BREAK')
+    expect(body.error).toContain('Lunch')
+  })
+
+  it('rejects a booking overlapping an arbitrary blocked slot (SLOT_BLOCKED)', async () => {
+    prisma.blockedSlot.findMany.mockResolvedValue([{ id: 'bs-1', reason: 'Equipment maintenance' }])
+    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.code).toBe('SLOT_BLOCKED')
+    expect(body.error).toContain('Equipment maintenance')
+  })
+
+  it('a different doctor is not blocked by another doctor’s private break', async () => {
+    prisma.doctorBreak.findMany.mockResolvedValue([]) // queried per-doctor
+    prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
+    // 15:00 avoids the default 13:00–14:00 clinic lunch on purpose.
+    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '15:00', duration: 30 }))
+    expect(res.status).toBe(201)
+  })
+
+  it('blocked-slot creation rejects end before start (400)', async () => {
+    const res = await blockedSlotsPOST(
+      new NextRequest('http://localhost/api/blocked-slots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startAt: '2027-06-15T10:00:00.000Z', endAt: '2027-06-15T09:00:00.000Z' }),
+      })
+    )
+    expect(res.status).toBe(400)
   })
 })
 

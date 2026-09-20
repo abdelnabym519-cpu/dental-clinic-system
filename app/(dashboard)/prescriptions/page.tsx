@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ClipboardList, Plus, Search, Eye, Trash2, Loader2 } from 'lucide-react'
+import { ClipboardList, Plus, Search, Eye, Trash2, Loader2, MessageCircle } from 'lucide-react'
 import { ExportMenu } from '@/components/ui/export-menu'
 
 interface Prescription {

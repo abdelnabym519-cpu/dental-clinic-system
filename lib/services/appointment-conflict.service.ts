@@ -30,7 +30,9 @@ export interface AvailabilityViolation {
     | 'OUTSIDE_WORKING_HOURS'
     | 'DURING_BREAK'
     | 'DOCTOR_ON_LEAVE'
+    | 'DOCTOR_ON_BREAK'
     | 'CLINIC_HOLIDAY'
+    | 'SLOT_BLOCKED'
     | 'ROOM_CONFLICT'
   message: string
 }
@@ -135,6 +137,47 @@ export async function findAvailabilityViolation(
   }))
   if (isOnApprovedLeave(dateKey, leaveWindows)) {
     return { code: 'DOCTOR_ON_LEAVE', message: 'Doctor is unavailable on this date (approved leave)' }
+  }
+
+  // 2b. Recurring per-doctor break (Agenda Phase 2b) — same overlap math.
+  const dayOfWeek0 = parseDateKey(dateKey).getDay()
+  const breaks = (await prisma.doctorBreak.findMany({
+    where: { hospitalId, staffId: doctorId, dayOfWeek: dayOfWeek0, isActive: true },
+    select: { startTime: true, endTime: true, label: true },
+  })) ?? []
+  const startMin0 = timeToMinutes(scheduledTime)
+  const hittingBreak = breaks.find(
+    (b: { startTime: string; endTime: string }) =>
+      isValidTime(b.startTime) &&
+      isValidTime(b.endTime) &&
+      timeRangesOverlap(startMin0, duration, timeToMinutes(b.startTime), Math.max(timeToMinutes(b.endTime) - timeToMinutes(b.startTime), 0))
+  )
+  if (hittingBreak) {
+    return {
+      code: 'DOCTOR_ON_BREAK',
+      message: `Overlaps the doctor's break${hittingBreak.label ? ` (${hittingBreak.label})` : ''} (${hittingBreak.startTime}–${hittingBreak.endTime})`,
+    }
+  }
+
+  // 2d. Arbitrary blocked slots (meetings/maintenance) — clinic-wide or for
+  // this doctor, overlapping the requested [start, start+duration) window.
+  const [hours, minutes] = scheduledTime.split(':').map(Number)
+  const slotStart = new Date(scheduledDate)
+  slotStart.setHours(hours || 0, minutes || 0, 0, 0)
+  const slotEnd = new Date(slotStart.getTime() + duration * 60000)
+  const blocked = (await prisma.blockedSlot.findMany({
+    where: {
+      hospitalId,
+      isActive: true,
+      OR: [{ staffId: doctorId }, { staffId: null }],
+      startAt: { lt: slotEnd },
+      endAt: { gt: slotStart },
+    },
+    select: { id: true, reason: true },
+  })) ?? []
+  if (blocked.length > 0) {
+    const reason = blocked[0]?.reason ? ` (${blocked[0].reason})` : ''
+    return { code: 'SLOT_BLOCKED', message: `The requested time is blocked${reason}` }
   }
 
   // 3. Working window: doctor shift → hospital week schedule / flat config →

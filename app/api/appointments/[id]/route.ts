@@ -8,6 +8,7 @@ import {
   findAvailabilityViolation,
 } from '@/lib/services/appointment-conflict.service'
 import { isValidTime, toDateKey, parseDateKey } from '@/lib/agenda-utils'
+import { queueDoctorCancellation, queueDoctorReschedule, queueReviewRequest, type QueueableAppointment } from '@/lib/messaging/service'
 
 // Roles allowed to mutate the schedule (edit / reschedule / cancel / status).
 const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
@@ -153,6 +154,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (scheduledTime !== undefined) updateData.scheduledTime = scheduledTime
     if (duration !== undefined) updateData.duration = duration
     if (chairNumber !== undefined) updateData.chairNumber = chairNumber
+    if (typeof body.contactPhone === 'string') {
+      updateData.contactPhone = body.contactPhone.trim().slice(0, 30) || null
+    }
     if (roomId !== undefined) updateData.roomId = roomId
     if (appointmentType !== undefined) updateData.appointmentType = appointmentType
     if (status !== undefined) updateData.status = status
@@ -337,6 +341,54 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         },
       },
     })
+
+    // Messaging platform (3G/3I/3J): doctor cancellation / reschedule notices
+    // and the post-visit review request. Failure-isolated; booking flows never
+    // depend on messaging.
+    try {
+      const previous = existingAppointment as typeof appointment & { status: string }
+      // The include above carries doctor names but not the phone — fetch it
+      // so doctor notices (3J) can actually be delivered.
+      const doctorRow = await prisma.staff.findUnique({
+        where: { id: existingAppointment.doctorId },
+        select: { id: true, firstName: true, lastName: true, phone: true },
+      })
+      const messagingBase = {
+        id: appointment.id,
+        hospitalId,
+        scheduledDate: (appointment.scheduledDate ?? existingAppointment.scheduledDate) as Date,
+        scheduledTime: (appointment.scheduledTime ?? existingAppointment.scheduledTime) as string,
+        duration: (appointment.duration ?? existingAppointment.duration) as number,
+        appointmentType: existingAppointment.appointmentType,
+        status: (appointment.status ?? previous.status) as string,
+        contactPhone: (appointment.contactPhone ?? (existingAppointment as { contactPhone?: string | null }).contactPhone) as string | null,
+        patient: appointment.patient ?? { id: existingAppointment.patientId, firstName: '', lastName: '', phone: null },
+        doctor:
+          doctorRow ?? {
+            id: existingAppointment.doctorId,
+            firstName: '',
+            lastName: '',
+            phone: null,
+          },
+      } as QueueableAppointment
+      if (status === 'CANCELLED' && previous.status !== 'CANCELLED') {
+        await queueDoctorCancellation(messagingBase)
+      } else if (
+        status === 'COMPLETED' &&
+        previous.status !== 'COMPLETED'
+      ) {
+        await queueReviewRequest(messagingBase)
+      } else if (
+        (scheduledDate !== undefined || scheduledTime !== undefined) &&
+        (toDateKey(new Date(scheduledDate ?? existingAppointment.scheduledDate)) !==
+          toDateKey(existingAppointment.scheduledDate) ||
+          (scheduledTime ?? existingAppointment.scheduledTime) !== existingAppointment.scheduledTime)
+      ) {
+        await queueDoctorReschedule(messagingBase)
+      }
+    } catch (msgErr) {
+      console.error('Failed to queue appointment change messages (non-fatal):', msgErr)
+    }
 
     // Smart Scheduler: When appointment is cancelled, notify matching waitlist patients
     if (status === 'CANCELLED' && existingAppointment.status !== 'CANCELLED') {
