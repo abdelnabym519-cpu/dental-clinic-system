@@ -36,26 +36,27 @@ describe('Utils - cn (classnames merger)', () => {
 })
 
 describe('Utils - formatCurrency', () => {
-  it('should format positive amounts correctly in INR', () => {
+  it('should format positive amounts correctly in EGP', () => {
     const result = formatCurrency(1000)
-    expect(result).toContain('1,000')
-    expect(result).toMatch(/₹|INR/)
+    expect(result).toContain('ج.م')
+    expect(result).not.toMatch(/₹|\bINR\b/)
   })
 
   it('should format zero correctly', () => {
     const result = formatCurrency(0)
-    expect(result).toContain('0')
+    expect(result).toContain('٠')
   })
 
   it('should format decimal amounts correctly', () => {
-    const result = formatCurrency(1234.56)
+    const result = formatCurrency(1234.56, 'en-EG')
     expect(result).toContain('1,234')
   })
 
-  it('should format large amounts with Indian comma format', () => {
-    const result = formatCurrency(1234567)
-    // Indian format: 12,34,567
-    expect(result).toMatch(/12,34,567|1,234,567/)
+  it('should format large amounts with thousands grouping', () => {
+    const result = formatCurrency(1234567, 'en-EG')
+    expect(result).toContain('1,234,567')
+    // The Indian lakh grouping must never come back.
+    expect(result).not.toContain('12,34,567')
   })
 })
 
@@ -63,14 +64,14 @@ describe('Utils - formatDate', () => {
   it('should format Date object correctly', () => {
     const date = new Date('2024-01-15')
     const result = formatDate(date)
-    expect(result).toContain('15')
-    expect(result).toContain('2024')
+    expect(result).toContain('١٥')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should format date string correctly', () => {
     const result = formatDate('2024-06-20')
-    expect(result).toContain('20')
-    expect(result).toContain('2024')
+    expect(result).toContain('٢٠')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should handle invalid dates gracefully', () => {
@@ -83,14 +84,14 @@ describe('Utils - formatDateTime', () => {
   it('should include both date and time', () => {
     const date = new Date('2024-01-15T14:30:00')
     const result = formatDateTime(date)
-    expect(result).toContain('15')
-    expect(result).toContain('2024')
+    expect(result).toContain('١٥')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should format string dates with time', () => {
     const result = formatDateTime('2024-06-20T09:15:00')
-    expect(result).toContain('20')
-    expect(result).toContain('2024')
+    expect(result).toContain('٢٠')
+    expect(result).toContain('٢٠٢٤')
   })
 })
 

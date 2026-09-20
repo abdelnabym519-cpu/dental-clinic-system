@@ -9,7 +9,7 @@ import {
 
 describe('resolveLocaleCascade', () => {
   it('takes the most specific supported candidate', () => {
-    expect(resolveLocaleCascade('en-US', 'en-IN')).toBe('en-US')
+    expect(resolveLocaleCascade('en-US', 'ar-EG')).toBe('en-US')
   })
 
   // The reason both columns are nullable. Null is not a preference, it is the
@@ -27,10 +27,10 @@ describe('resolveLocaleCascade', () => {
   it('propagates a clinic change to users who have not overridden', () => {
     const users = [{ locale: null }, { locale: null }, { locale: 'en-US' }]
 
-    const before = users.map((u) => resolveLocaleCascade(u.locale, 'en-IN'))
+    const before = users.map((u) => resolveLocaleCascade(u.locale, 'ar-EG'))
     const after = users.map((u) => resolveLocaleCascade(u.locale, 'en-US'))
 
-    expect(before).toEqual(['en-IN', 'en-IN', 'en-US'])
+    expect(before).toEqual(['ar-EG', 'ar-EG', 'en-US'])
     expect(after).toEqual(['en-US', 'en-US', 'en-US'])
   })
 
@@ -51,13 +51,13 @@ describe('resolveLocaleCascade', () => {
   it('is case sensitive, matching the stored BCP 47 tags exactly', () => {
     // Guards against a "helpful" normalisation being added later without a
     // migration of the values already in the column.
-    expect(resolveLocaleCascade('EN-us', 'en-IN')).toBe('en-IN')
+    expect(resolveLocaleCascade('EN-us', 'ar-EG')).toBe('ar-EG')
   })
 })
 
 describe('resolvePublicLocale', () => {
   it('honours ?lang= over the clinic locale', () => {
-    expect(resolvePublicLocale('en-IN', 'en-US')).toBe('en-US')
+    expect(resolvePublicLocale('ar-EG', 'en-US')).toBe('en-US')
   })
 
   it('falls back to the clinic when ?lang= is absent or unsupported', () => {
@@ -68,8 +68,8 @@ describe('resolvePublicLocale', () => {
 
   // Next surfaces `?lang=a&lang=b` as an array.
   it('takes the first value of a repeated query parameter', () => {
-    expect(resolvePublicLocale('en-IN', ['en-US', 'de-DE'])).toBe('en-US')
-    expect(resolvePublicLocale('en-IN', [])).toBe('en-IN')
+    expect(resolvePublicLocale('ar-EG', ['en-US', 'de-DE'])).toBe('en-US')
+    expect(resolvePublicLocale('ar-EG', [])).toBe('ar-EG')
   })
 
   it('falls back to the default when the clinic locale is missing too', () => {
@@ -82,7 +82,7 @@ describe('getLocaleLabel', () => {
   // data the runtime ships, and pinning it makes the suite fail on a Node
   // upgrade for no useful reason.
   it('names each supported locale by region rather than by tag', () => {
-    expect(getLocaleLabel('en-IN')).toMatch(/English.*India/)
+    expect(getLocaleLabel('ar-EG')).toMatch(/Arabic.*Egypt/)
     expect(getLocaleLabel('en-US')).toMatch(/English.*United States/)
   })
 

@@ -247,12 +247,13 @@ describe('getTreatmentStatusBadge()', () => {
 // formatCurrency (treatment-utils version)
 // ---------------------------------------------------------------------------
 describe('formatCurrency() — treatment-utils', () => {
-  it('formats number in INR', () => {
-    expect(formatCurrency(2500)).toMatch(/₹/)
-    expect(formatCurrency(2500)).toMatch(/2,500/)
+  it('formats number in EGP', () => {
+    expect(formatCurrency(2500)).toContain('ج.م')
+    expect(formatCurrency(2500)).not.toMatch(/₹/)
+    expect(formatCurrency(2500)).toContain('٢٬٥٠٠')
   })
 
   it('formats string input', () => {
-    expect(formatCurrency('1500')).toMatch(/1,500/)
+    expect(formatCurrency('1500')).toContain('١٬٥٠٠')
   })
 })

@@ -133,41 +133,44 @@ describe('Billing Utils - calculateInvoiceTotals', () => {
 })
 
 describe('Billing Utils - formatCurrency', () => {
-  it('should format positive amounts in INR', () => {
+  it('should format positive amounts in EGP', () => {
     const result = formatCurrency(1234.56)
-    expect(result).toContain('1,234.56')
-    expect(result).toContain('₹')
+    expect(result).toContain('١٬٢٣٤٫٥٦')
+    expect(result).toContain('ج.م')
+    expect(result).not.toContain('₹')
   })
 
   it('should handle null/undefined', () => {
-    expect(formatCurrency(null)).toBe('₹0.00')
-    expect(formatCurrency(undefined)).toBe('₹0.00')
+    expect(formatCurrency(null)).toContain('٠٫٠٠')
+    expect(formatCurrency(null)).toContain('ج.م')
+    expect(formatCurrency(undefined)).toContain('٠٫٠٠')
   })
 
   it('should handle string amounts', () => {
-    expect(formatCurrency('1234.56')).toContain('1,234.56')
+    expect(formatCurrency('1234.56')).toContain('١٬٢٣٤٫٥٦')
   })
 
   it('should handle invalid string amounts', () => {
-    expect(formatCurrency('invalid')).toBe('₹0.00')
+    expect(formatCurrency('invalid')).toContain('٠٫٠٠')
+    expect(formatCurrency('invalid')).toContain('ج.م')
   })
 
   it('should format zero correctly', () => {
-    expect(formatCurrency(0)).toContain('0.00')
+    expect(formatCurrency(0)).toContain('٠٫٠٠')
   })
 })
 
 describe('Billing Utils - formatDate', () => {
   it('should format Date object', () => {
     const result = formatDate(new Date('2024-01-15'))
-    expect(result).toContain('15')
-    expect(result).toContain('2024')
+    expect(result).toContain('١٥')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should format date string', () => {
     const result = formatDate('2024-06-20')
-    expect(result).toContain('20')
-    expect(result).toContain('2024')
+    expect(result).toContain('٢٠')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should handle null/undefined', () => {
@@ -179,8 +182,8 @@ describe('Billing Utils - formatDate', () => {
 describe('Billing Utils - formatDateTime', () => {
   it('should format Date with time', () => {
     const result = formatDateTime(new Date('2024-01-15T14:30:00'))
-    expect(result).toContain('15')
-    expect(result).toContain('2024')
+    expect(result).toContain('١٥')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should handle null/undefined', () => {

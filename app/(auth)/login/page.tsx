@@ -4,6 +4,8 @@ import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { LanguageToggle } from '@/components/i18n/language-toggle'
+import { useLanguage } from '@/components/providers/language-provider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
@@ -26,6 +28,7 @@ function LoginForm() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const { t } = useLanguage()
 
   const {
     register,
@@ -74,13 +77,16 @@ function LoginForm() {
             D
           </div>
         </div>
-        <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-        <CardDescription>Sign in to your DentalERP account</CardDescription>
+        <CardTitle className="text-2xl font-bold">{t('auth.welcome')}</CardTitle>
+        <CardDescription>{t('auth.signInSubtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 flex justify-center">
+          <LanguageToggle aria-label={t('auth.language')} />
+        </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -91,7 +97,7 @@ function LoginForm() {
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
@@ -105,7 +111,7 @@ function LoginForm() {
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in
+            {t('auth.signInAction')}
           </Button>
         </form>
 

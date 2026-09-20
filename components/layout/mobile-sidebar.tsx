@@ -9,6 +9,8 @@ import { getNavigationForRole } from '@/config/nav'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useSidebar } from './sidebar-context'
+import { translateLabel } from '@/lib/i18n/dictionary'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface MobileSidebarProps {
   role: string
@@ -21,6 +23,8 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
   const pathname = usePathname()
   const navigation = getNavigationForRole(role)
   const { mobileOpen, setMobileOpen } = useSidebar()
+  const { locale } = useLanguage()
+  const t = (label: string) => translateLabel(locale, label)
 
   // Close on route change
   useEffect(() => {
@@ -86,7 +90,7 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
             {navigation.map((section, sectionIndex) => (
               <div key={section.title} className={sectionIndex > 0 ? 'mt-4' : ''}>
                 <h4 className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {section.title}
+                  {t(section.title)}
                 </h4>
                 <div className="flex flex-col gap-0.5">
                   {section.items.map((item) => {
@@ -106,7 +110,7 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.title}</span>
+                        <span className="truncate">{t(item.title)}</span>
                         {item.badge && (
                           <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                             {item.badge}

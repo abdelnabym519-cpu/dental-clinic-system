@@ -222,7 +222,7 @@ export const discountTypeConfig: Record<
   },
   FIXED: {
     label: 'Fixed Amount',
-    symbol: '₹',
+    symbol: 'ج.م',
   },
 }
 

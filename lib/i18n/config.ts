@@ -5,15 +5,16 @@
  * is a logged-in B2B app, so there is no need for `/[locale]/` segments and no
  * need to restructure every route under app/(dashboard).
  *
- * See docs/LOCALIZATION.md for the wider plan.
+ * The product targets Egyptian dental clinics: Arabic (ar-EG, RTL) is the
+ * primary locale, with Egyptian English (en-EG) and international English
+ * (en-US) available. See docs/LOCALIZATION.md for the wider plan.
  */
 
-export const locales = ['en-IN', 'en-US'] as const
+export const locales = ['ar-EG', 'en-EG', 'en-US'] as const
 
 export type Locale = (typeof locales)[number]
 
-/** India remains the default — this app started as an Indian dental ERP. */
-export const defaultLocale: Locale = 'en-IN'
+export const defaultLocale: Locale = 'ar-EG'
 
 export interface LocaleDefaults {
   /** ISO 4217 currency code. */
@@ -25,8 +26,16 @@ export interface LocaleDefaults {
 }
 
 export const localeDefaults: Record<Locale, LocaleDefaults> = {
-  'en-IN': { currency: 'INR', country: 'IN', timezone: 'Asia/Kolkata' },
+  'ar-EG': { currency: 'EGP', country: 'EG', timezone: 'Africa/Cairo' },
+  'en-EG': { currency: 'EGP', country: 'EG', timezone: 'Africa/Cairo' },
   'en-US': { currency: 'USD', country: 'US', timezone: 'America/New_York' },
+}
+
+/** Locales written right-to-left — drives `<html dir>` and layout mirroring. */
+export const rtlLocales: readonly Locale[] = ['ar-EG']
+
+export function isRTL(locale: string | null | undefined): boolean {
+  return rtlLocales.includes(locale as Locale)
 }
 
 export function isSupportedLocale(value: string | null | undefined): value is Locale {
@@ -57,7 +66,7 @@ export function resolveLocale(value: string | null | undefined): Locale {
  * Note that an *unsupported* stored value also falls through rather than
  * dropping straight to `defaultLocale`. If a user picked `de-DE` while it was
  * supported and it later was not, they should see their clinic's locale, not
- * en-IN. `resolveLocale(user.locale ?? hospital.locale)` would get this wrong,
+ * ar-EG. `resolveLocale(user.locale ?? hospital.locale)` would get this wrong,
  * which is why this exists as a separate function.
  */
 export function resolveLocaleCascade(...candidates: (string | null | undefined)[]): Locale {
@@ -92,7 +101,7 @@ export function getLocaleDefaults(value: string | null | undefined): LocaleDefau
 }
 
 /**
- * Human-readable name for a locale, e.g. `en-IN` -> "English (India)".
+ * Human-readable name for a locale, e.g. `ar-EG` -> "العربية (مصر)".
  *
  * Derived from `Intl` rather than a hardcoded table so that adding a locale to
  * `locales` above is genuinely the only step. Falls back to the tag itself on
@@ -100,9 +109,8 @@ export function getLocaleDefaults(value: string | null | undefined): LocaleDefau
  */
 export function getLocaleLabel(locale: string, displayIn = 'en'): string {
   try {
-    // `languageDisplay: 'standard'` keeps the list internally consistent. The
-    // default ('dialect') renders en-US as "American English" while en-IN
-    // stays "English (India)", which reads like a mistake in a dropdown.
+    // `languageDisplay: 'standard'` keeps the list internally consistent —
+    // the default ('dialect') renders en-US as "American English".
     return (
       new Intl.DisplayNames([displayIn], {
         type: 'language',

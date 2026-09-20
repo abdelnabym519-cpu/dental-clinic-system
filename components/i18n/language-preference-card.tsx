@@ -87,8 +87,13 @@ export function LanguagePreferenceCard({
             : `Formatting now uses ${getLocaleLabel(selected)}.`,
       })
 
-      // The locale is resolved server-side on every request, so the rest of
-      // the app only picks up the change once the server components re-render.
+      // Mirror the choice into the locale cookie and the live document so
+      // <html lang dir> (rendered from the cookie by the root layout) flips
+      // immediately, then let the server components re-render.
+      const chosen = selected === INHERIT ? hospitalLocale || 'ar-EG' : selected
+      document.cookie = `dentora-locale=${encodeURIComponent(chosen)}; path=/; max-age=31536000; samesite=lax`
+      document.documentElement.lang = chosen
+      document.documentElement.dir = chosen.startsWith('ar') ? 'rtl' : 'ltr'
       router.refresh()
     } catch (error) {
       toast({

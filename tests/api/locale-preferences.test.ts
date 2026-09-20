@@ -85,7 +85,7 @@ describe('PATCH /api/settings/profile', () => {
     signedInAsStaff()
     prisma.user.update.mockResolvedValue({
       locale: 'en-US',
-      hospital: { locale: 'en-IN' },
+      hospital: { locale: 'ar-EG' },
     })
 
     const res = await profilePATCH(makeReq('/api/settings/profile', 'PATCH', { locale: 'en-US' }))
@@ -122,7 +122,7 @@ describe('PATCH /api/settings/profile', () => {
 
   it('treats an empty string the same as clearing', async () => {
     signedInAsStaff()
-    prisma.user.update.mockResolvedValue({ locale: null, hospital: { locale: 'en-IN' } })
+    prisma.user.update.mockResolvedValue({ locale: null, hospital: { locale: 'ar-EG' } })
 
     const res = await profilePATCH(makeReq('/api/settings/profile', 'PATCH', { locale: '' }))
 
@@ -160,7 +160,7 @@ describe('PATCH /api/settings/profile', () => {
   // A user id in the body must be ignored — this endpoint is not an admin tool.
   it('always writes the session user, never an id from the body', async () => {
     signedInAsStaff()
-    prisma.user.update.mockResolvedValue({ locale: 'en-US', hospital: { locale: 'en-IN' } })
+    prisma.user.update.mockResolvedValue({ locale: 'en-US', hospital: { locale: 'ar-EG' } })
 
     await profilePATCH(
       makeReq('/api/settings/profile', 'PATCH', { locale: 'en-US', id: 'someone-else' })
@@ -191,7 +191,8 @@ describe('GET /api/settings/profile', () => {
     expect(body.data.locale).toBeNull()
     expect(body.data.hospitalLocale).toBe('en-US')
     expect(body.data.effectiveLocale).toBe('en-US')
-    expect(body.data.supportedLocales).toContain('en-IN')
+    expect(body.data.supportedLocales).toContain('ar-EG')
+    expect(body.data.supportedLocales).not.toContain('en-IN')
   })
 
   it('returns 404 when the session user no longer exists', async () => {
@@ -225,7 +226,7 @@ describe('/api/patient-portal/profile', () => {
   // The portal is the one authenticated surface where the caller is not staff.
   it('writes the cookie patient, never an id from the body', async () => {
     signedInAsPatient()
-    prisma.patient.update.mockResolvedValue({ locale: 'en-US', hospital: { locale: 'en-IN' } })
+    prisma.patient.update.mockResolvedValue({ locale: 'en-US', hospital: { locale: 'ar-EG' } })
 
     await portalProfilePATCH(
       makeReq('/api/patient-portal/profile', 'PATCH', {
@@ -242,7 +243,7 @@ describe('/api/patient-portal/profile', () => {
 
   it('clears the override to null', async () => {
     signedInAsPatient()
-    prisma.patient.update.mockResolvedValue({ locale: null, hospital: { locale: 'en-IN' } })
+    prisma.patient.update.mockResolvedValue({ locale: null, hospital: { locale: 'ar-EG' } })
 
     const res = await portalProfilePATCH(
       makeReq('/api/patient-portal/profile', 'PATCH', { locale: null })
@@ -251,7 +252,7 @@ describe('/api/patient-portal/profile', () => {
 
     expect(res.status).toBe(200)
     expect(body.locale).toBeNull()
-    expect(body.effectiveLocale).toBe('en-IN')
+    expect(body.effectiveLocale).toBe('ar-EG')
   })
 
   it('rejects an unsupported locale with 400', async () => {
@@ -271,7 +272,7 @@ describe('/api/patient-portal/profile', () => {
       firstName: 'Ravi',
       lastName: 'Kumar',
       locale: 'en-US',
-      hospital: { locale: 'en-IN' },
+      hospital: { locale: 'ar-EG' },
     })
 
     const res = await portalProfileGET(makeReq('/api/patient-portal/profile'))
@@ -292,7 +293,7 @@ describe('getLocaleForRequest', () => {
     auth.mockResolvedValue({ user: STAFF })
     prisma.user.findUnique.mockResolvedValue({
       locale: 'en-US',
-      hospital: { locale: 'en-IN' },
+      hospital: { locale: 'ar-EG' },
     })
 
     expect(await getLocaleForRequest()).toBe('en-US')
@@ -314,7 +315,7 @@ describe('getLocaleForRequest', () => {
     auth.mockResolvedValue({ user: STAFF })
     prisma.user.findUnique.mockResolvedValue({
       locale: null,
-      hospital: { locale: 'en-IN' },
+      hospital: { locale: 'ar-EG' },
     })
 
     await getLocaleForRequest()
@@ -332,7 +333,7 @@ describe('getLocaleForRequest', () => {
     getAuthenticatedPatient.mockResolvedValue(PATIENT)
     prisma.patient.findUnique.mockResolvedValue({
       locale: 'en-US',
-      hospital: { locale: 'en-IN' },
+      hospital: { locale: 'ar-EG' },
     })
 
     expect(await getLocaleForRequest()).toBe('en-US')
@@ -342,7 +343,7 @@ describe('getLocaleForRequest', () => {
     auth.mockResolvedValue(null)
     getAuthenticatedPatient.mockResolvedValue(null)
 
-    expect(await getLocaleForRequest()).toBe('en-IN')
+    expect(await getLocaleForRequest()).toBe('ar-EG')
   })
 
   // Load-bearing: a formatting concern must never take a page down.
@@ -350,13 +351,13 @@ describe('getLocaleForRequest', () => {
     auth.mockResolvedValue({ user: STAFF })
     prisma.user.findUnique.mockRejectedValue(new Error("Can't reach database server"))
 
-    await expect(getLocaleForRequest()).resolves.toBe('en-IN')
+    await expect(getLocaleForRequest()).resolves.toBe('ar-EG')
   })
 
   it('returns the default rather than throwing when auth() fails', async () => {
     auth.mockRejectedValue(new Error('JWT decryption failed'))
 
-    await expect(getLocaleForRequest()).resolves.toBe('en-IN')
+    await expect(getLocaleForRequest()).resolves.toBe('ar-EG')
   })
 
   it('falls through an unsupported stored override to the clinic', async () => {
@@ -385,12 +386,12 @@ describe('getLocaleForPatientRequest', () => {
   it('returns the default when there is no portal cookie', async () => {
     getAuthenticatedPatient.mockResolvedValue(null)
 
-    expect(await getLocaleForPatientRequest()).toBe('en-IN')
+    expect(await getLocaleForPatientRequest()).toBe('ar-EG')
   })
 
   it('returns the default rather than throwing when the lookup fails', async () => {
     getAuthenticatedPatient.mockRejectedValue(new Error('boom'))
 
-    await expect(getLocaleForPatientRequest()).resolves.toBe('en-IN')
+    await expect(getLocaleForPatientRequest()).resolves.toBe('ar-EG')
   })
 })

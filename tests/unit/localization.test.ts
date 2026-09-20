@@ -57,70 +57,71 @@ import {
   formatDateTime as billingFormatDateTime,
 } from '@/lib/billing-utils'
 
-describe('Section 10.1 — Current Locale (India)', () => {
+describe('Section 10.1 — Current Locale (Egypt)', () => {
   // ─── Currency Display ───────────────────────────────────────────────
 
   describe('Currency Display', () => {
-    it('formatCurrency from utils displays ₹ symbol', () => {
+    it('formatCurrency from utils displays the Egyptian pound symbol', () => {
       const result = formatCurrency(500)
-      expect(result).toContain('₹')
+      expect(result).toContain('ج.م')
+      expect(result).not.toContain('₹')
     })
 
-    it('billingFormatCurrency displays ₹ with 2 decimal places', () => {
+    it('billingFormatCurrency displays EGP with 2 decimal places', () => {
       const result = billingFormatCurrency(500)
-      expect(result).toContain('₹')
-      expect(result).toMatch(/500\.00/)
+      expect(result).toContain('ج.م')
+      expect(result).toMatch(/٥٠٠٫٠٠/)
     })
 
-    it('uses Indian number formatting — lakhs (1,00,000 not 100,000)', () => {
+    it('formats 100,000 in Arabic-Indic numerals (ar-EG default)', () => {
       const result = formatCurrency(100000)
-      // en-IN formats 100000 as 1,00,000
-      expect(result).toContain('1,00,000')
+      expect(result).toContain('١٠٠٬٠٠٠')
+      // No Indian lakh grouping may leak through.
+      expect(result).not.toContain('1,00,000')
     })
 
-    it('uses Indian number formatting — crores', () => {
+    it('formats millions in the Egyptian (western-grouping) system', () => {
       const result = formatCurrency(10000000)
-      // en-IN formats 10000000 as 1,00,00,000
-      expect(result).toContain('1,00,00,000')
+      expect(result).toContain('١٠٬٠٠٠٬٠٠٠')
     })
 
-    it('zero amount renders as ₹0', () => {
+    it('zero amount renders as EGP 0', () => {
       const result = formatCurrency(0)
-      expect(result).toContain('₹')
-      expect(result).toMatch(/0/)
+      expect(result).toContain('ج.م')
+      expect(result).toMatch(/٠/)
     })
 
-    it('large amounts use crore formatting in billing', () => {
+    it('large amounts group in thousands in billing', () => {
       const result = billingFormatCurrency(25000000)
-      // 2,50,00,000.00
-      expect(result).toContain('2,50,00,000')
+      // ٢٥٬٠٠٠٬٠٠٠٫٠٠
+      expect(result).toContain('٢٥٬٠٠٠٬٠٠٠')
     })
 
     it('negative amounts are handled', () => {
       const result = formatCurrency(-1500)
-      expect(result).toContain('₹')
-      expect(result).toContain('1,500')
+      expect(result).toContain('ج.م')
+      expect(result).toContain('١٬٥٠٠')
     })
 
-    it('discountTypeConfig.FIXED.symbol is ₹', () => {
-      expect(discountTypeConfig.FIXED.symbol).toBe('₹')
+    it('discountTypeConfig.FIXED.symbol is the Egyptian pound', () => {
+      expect(discountTypeConfig.FIXED.symbol).toBe('ج.م')
     })
   })
 
   // ─── Date Format ────────────────────────────────────────────────────
 
   describe('Date Format', () => {
-    it('formatDate uses en-IN locale', () => {
+    it('formatDate uses ar-EG locale', () => {
       const result = formatDate(new Date(2026, 2, 8)) // March 8, 2026
-      // en-IN with day:2-digit, month:short, year:numeric => "08 Mar 2026"
-      expect(result).toMatch(/08/)
-      expect(result).toMatch(/Mar/)
-      expect(result).toMatch(/2026/)
+      // ar-EG with day:2-digit, month:short, year:numeric => "٠٨ مارس ٢٠٢٦"
+      expect(result).toMatch(/٠٨/)
+      expect(result).toContain('مارس')
+      expect(result).toContain('٢٠٢٦')
     })
 
-    it('output format is DD Mon YYYY', () => {
+    it('output format is DD Mon YYYY (Arabic month names)', () => {
       const result = formatDate(new Date(2026, 0, 15)) // Jan 15, 2026
-      expect(result).toMatch(/15.*Jan.*2026/)
+      expect(result).toMatch(/١٥.*يناير.*٢٠٢٦/)
     })
 
     it('invalid date returns "-"', () => {
@@ -129,15 +130,15 @@ describe('Section 10.1 — Current Locale (India)', () => {
 
     it('string date input works', () => {
       const result = formatDate('2026-03-08')
-      expect(result).toMatch(/Mar/)
-      expect(result).toMatch(/2026/)
+      expect(result).toContain('مارس')
+      expect(result).toContain('٢٠٢٦')
     })
 
     it('Date object input works', () => {
       const result = formatDate(new Date(2025, 11, 25)) // Dec 25, 2025
-      expect(result).toMatch(/25/)
-      expect(result).toMatch(/Dec/)
-      expect(result).toMatch(/2025/)
+      expect(result).toMatch(/٢٥/)
+      expect(result).toContain('ديسمبر')
+      expect(result).toContain('٢٠٢٥')
     })
   })
 
@@ -311,20 +312,19 @@ describe('Section 10.1 — Current Locale (India)', () => {
   // ─── Time Format ────────────────────────────────────────────────────
 
   describe('Time Format', () => {
-    it('billingFormatDateTime uses 12-hour AM/PM format', () => {
+    it('billingFormatDateTime uses 12-hour format with Arabic ص/م markers', () => {
       // 14:30 (2:30 PM)
       const date = new Date(2026, 2, 8, 14, 30, 0)
       const result = billingFormatDateTime(date)
-      // en-IN with hour12:true should produce am/pm or AM/PM
-      expect(result).toMatch(/[apAP][mM]/)
+      expect(result).toMatch(/[صم]/)
     })
 
     it('billingFormatDateTime includes date components', () => {
       const date = new Date(2026, 2, 8, 10, 15, 0)
       const result = billingFormatDateTime(date)
-      expect(result).toMatch(/08/)
-      expect(result).toMatch(/Mar/)
-      expect(result).toMatch(/2026/)
+      expect(result).toContain('٠٨')
+      expect(result).toContain('مارس')
+      expect(result).toContain('٢٠٢٦')
     })
   })
 })

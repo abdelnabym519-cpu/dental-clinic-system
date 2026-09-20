@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { cookies } from 'next/headers'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/providers'
+import { LanguageProvider, LOCALE_COOKIE } from '@/components/providers/language-provider'
+import { directionFor, translate } from '@/lib/i18n/dictionary'
+import { resolveLocale } from '@/lib/i18n/config'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -69,12 +73,19 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Locale precedence for <html lang/dir>: explicit cookie choice (login /
+  // profile selector) → default. Authenticated users' stored User.locale is
+  // mirrored into the cookie by the profile selector.
+  const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value
+  const locale = resolveLocale(cookieLocale)
+  const dir = directionFor(locale)
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {children}
+          <LanguageProvider initialLocale={locale}>{children}</LanguageProvider>
           <Toaster />
         </Providers>
       </body>

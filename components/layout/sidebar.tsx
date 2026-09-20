@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { PanelLeftClose, PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getNavigationForRole } from '@/config/nav'
+import { translateLabel } from '@/lib/i18n/dictionary'
+import { useLanguage } from '@/components/providers/language-provider'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -21,6 +23,8 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
   const pathname = usePathname()
   const navigation = getNavigationForRole(role)
   const { isCollapsed, toggleSidebar } = useSidebar()
+  const { locale } = useLanguage()
+  const t = (label: string) => translateLabel(locale, label)
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -118,7 +122,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
                 {/* Section Title - hidden when collapsed */}
                 {!isCollapsed && (
                   <h4 className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {section.title}
+                    {t(section.title)}
                   </h4>
                 )}
                 <div className="flex flex-col gap-1">
@@ -145,7 +149,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
                             </Link>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="flex items-center gap-2">
-                            {item.title}
+                            {t(item.title)}
                             {item.badge && (
                               <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                                 {item.badge}
@@ -168,7 +172,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{item.title}</span>
+                        <span className="truncate">{t(item.title)}</span>
                         {item.badge && (
                           <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                             {item.badge}

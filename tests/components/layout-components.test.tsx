@@ -155,6 +155,16 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { MobileSidebar } from '@/components/layout/mobile-sidebar'
 import { GlobalSearch } from '@/components/layout/global-search'
 import { NotificationTray } from '@/components/layout/notification-tray'
+import { LanguageProvider } from '@/components/providers/language-provider'
+
+/**
+ * Sidebar labels follow the app locale (Arabic by default). Render under an
+ * explicit English locale to keep the English navigation assertions, and see
+ * the bilingual suite for the Arabic side.
+ */
+const withEnglish = (ui: React.ReactElement) => (
+  <LanguageProvider initialLocale="en-EG">{ui}</LanguageProvider>
+)
 
 // ===================================================================
 // Sidebar
@@ -167,30 +177,30 @@ describe('Sidebar', () => {
   })
 
   it('renders hospital name when provided', () => {
-    render(<Sidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(screen.getByText('Test Clinic')).toBeInTheDocument()
   })
 
   it('renders default name when hospitalName omitted', () => {
-    render(<Sidebar role="ADMIN" />)
+    render(withEnglish(<Sidebar role="ADMIN" />))
     expect(screen.getByText('Dental Clinic')).toBeInTheDocument()
   })
 
   it('renders all navigation items from config', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getByText('Overview')).toBeInTheDocument()
     expect(screen.getByText('Patients')).toBeInTheDocument()
     expect(screen.getByText('Appointments')).toBeInTheDocument()
   })
 
   it('renders section titles', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Operations')).toBeInTheDocument()
   })
 
   it('renders navigation links with correct hrefs', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     const links = screen.getAllByRole('link')
     const hrefs = links.map((l) => l.getAttribute('href'))
     expect(hrefs).toContain('/dashboard')
@@ -199,7 +209,7 @@ describe('Sidebar', () => {
   })
 
   it('calls toggleSidebar on collapse button click', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     // Find button with sr-only text "Collapse sidebar"
     const collapseBtn = screen.getByText('Collapse sidebar').closest('button')
     expect(collapseBtn).toBeInTheDocument()
@@ -209,13 +219,13 @@ describe('Sidebar', () => {
 
   it('shows expand button when collapsed', () => {
     mockIsCollapsed = true
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getAllByText('Expand sidebar').length).toBeGreaterThanOrEqual(1)
   })
 
   it('hides section titles when collapsed', () => {
     mockIsCollapsed = true
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     // Section titles hidden when collapsed (not rendered)
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
     expect(screen.queryByText('Operations')).not.toBeInTheDocument()
@@ -223,17 +233,17 @@ describe('Sidebar', () => {
 
   it('hides hospital name when collapsed', () => {
     mockIsCollapsed = true
-    render(<Sidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(screen.queryByText('Test Clinic')).not.toBeInTheDocument()
   })
 
   it('shows badge on nav items', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getByText('3')).toBeInTheDocument()
   })
 
   it('renders plan label when provided', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" plan="PROFESSIONAL" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" plan="PROFESSIONAL" />))
     expect(screen.getByText('Professional')).toBeInTheDocument()
   })
 
@@ -248,13 +258,13 @@ describe('Sidebar', () => {
   })
 
   it('renders version in footer', () => {
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getByText('Dental ERP v1.0')).toBeInTheDocument()
   })
 
   it('shows short version when collapsed', () => {
     mockIsCollapsed = true
-    render(<Sidebar role="ADMIN" hospitalName="X" />)
+    render(withEnglish(<Sidebar role="ADMIN" hospitalName="X" />))
     expect(screen.getByText('v1.0')).toBeInTheDocument()
   })
 
@@ -282,38 +292,38 @@ describe('MobileSidebar', () => {
   })
 
   it('renders navigation items when open', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(screen.getByText('Overview')).toBeInTheDocument()
     expect(screen.getByText('Patients')).toBeInTheDocument()
     expect(screen.getByText('Appointments')).toBeInTheDocument()
   })
 
   it('shows hospital name', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(screen.getByText('Test Clinic')).toBeInTheDocument()
   })
 
   it('renders nothing when closed', () => {
     mockMobileOpen = false
-    const { container } = render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    const { container } = render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(container.innerHTML).toBe('')
   })
 
   it('calls setMobileOpen(false) on close button click', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     const buttons = screen.getAllByRole('button')
     fireEvent.click(buttons[0])
     expect(mockSetMobileOpen).toHaveBeenCalledWith(false)
   })
 
   it('closes on Escape key', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(mockSetMobileOpen).toHaveBeenCalledWith(false)
   })
 
   it('closes on backdrop click', () => {
-    const { container } = render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    const { container } = render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     // Backdrop is the first child div inside the fixed overlay
     const backdrop = container.querySelector('.fixed.inset-0.bg-background\\/80')
     if (backdrop) {
@@ -323,7 +333,7 @@ describe('MobileSidebar', () => {
   })
 
   it('renders navigation links with correct hrefs', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     const links = screen.getAllByRole('link')
     const hrefs = links.map((l) => l.getAttribute('href'))
     expect(hrefs).toContain('/dashboard')
@@ -332,7 +342,7 @@ describe('MobileSidebar', () => {
   })
 
   it('shows section titles', () => {
-    render(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
     expect(screen.getByText('Operations')).toBeInTheDocument()
   })
