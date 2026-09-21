@@ -317,7 +317,7 @@ export default function LabVendorsPage() {
     return (
       <Badge className={config.className}>
         <Icon className="mr-1 h-3 w-3" />
-        {config.label}
+        {t(config.label)}
       </Badge>
     )
   }
@@ -327,15 +327,15 @@ export default function LabVendorsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lab Vendors</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Lab Vendors')}</h1>
           <p className="text-muted-foreground">
-            Manage external laboratory vendors and their information
+            {t('Manage external laboratory vendors and their information')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push('/lab')}>
             <FlaskConical className="mr-2 h-4 w-4" />
-            Back to Lab Orders
+            {t('Back to Lab Orders')}
           </Button>
           <Button onClick={() => handleOpenDialog()}>
             <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
@@ -346,7 +346,7 @@ export default function LabVendorsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Vendors')}</CardTitle>
             <FlaskConical className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -355,7 +355,7 @@ export default function LabVendorsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Vendors</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Active Vendors')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -366,7 +366,7 @@ export default function LabVendorsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Avg. Rating')}</CardTitle>
             <Star className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -386,7 +386,7 @@ export default function LabVendorsPage() {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search vendors..."
+                placeholder={t('Search vendors...')}
                 className="pl-8"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -419,8 +419,8 @@ export default function LabVendorsPage() {
           ) : vendors.length === 0 ? (
             <div className="text-center py-12">
               <FlaskConical className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No vendors found</h3>
-              <p className="text-muted-foreground">Get started by adding your first lab vendor</p>
+              <h3 className="mt-4 text-lg font-semibold">{t('No vendors found')}</h3>
+              <p className="text-muted-foreground">{t('Get started by adding your first lab vendor')}</p>
               <Button className="mt-4" onClick={() => handleOpenDialog()}>
                 <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
             </div>
@@ -429,11 +429,11 @@ export default function LabVendorsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Vendor Code</TableHead>
+                    <TableHead>{t('Vendor Code')}</TableHead>
                     <TableHead>{t('ui.name')}</TableHead>
                     <TableHead>{t('ui.contact')}</TableHead>
                     <TableHead>{t('ui.specializations')}</TableHead>
-                    <TableHead>Turnaround</TableHead>
+                    <TableHead>{t('Turnaround')}</TableHead>
                     <TableHead>{t('ui.rating')}</TableHead>
                     <TableHead>{t('ui.status')}</TableHead>
                     <TableHead className="text-right">{t('ui.actions')}</TableHead>
@@ -543,7 +543,7 @@ export default function LabVendorsPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingVendor ? 'Edit Lab Vendor' : 'Add Lab Vendor'}</DialogTitle>
-            <DialogDescription>Enter the vendor information below</DialogDescription>
+            <DialogDescription>{t('Enter the vendor information below')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -627,7 +627,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="state">Governorate (المحافظة)</Label>
+                <Label htmlFor="state">{t('Governorate')}</Label>
                 <Input
                   id="state"
                   value={formData.state}
@@ -636,7 +636,7 @@ export default function LabVendorsPage() {
                 <datalist id="egypt-governorates">
                   {EGYPT_GOVERNORATES.map((g) => (
                     <option key={g.value} value={g.value}>
-                      {g.label}
+                      {t(g.label)}
                     </option>
                   ))}
                 </datalist>
@@ -677,7 +677,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rating">Quality Rating</Label>
+                <Label htmlFor="rating">{t('Quality Rating')}</Label>
                 <Input
                   id="rating"
                   type="number"

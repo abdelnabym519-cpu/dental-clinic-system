@@ -172,8 +172,8 @@ export default function FinancialReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financial Reports</h1>
-          <p className="text-muted-foreground">View detailed financial analytics and reports</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Financial Reports')}</h1>
+          <p className="text-muted-foreground">{t('View detailed financial analytics and reports')}</p>
         </div>
         <div className="flex gap-2">
           <Select
@@ -223,15 +223,15 @@ export default function FinancialReportsPage() {
             <AlertCircle className="h-4 w-4" />{t('ui.outstanding')}</TabsTrigger>
           <TabsTrigger value="procedure_revenue" className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4" />
-            By Procedure
+            {t('By Procedure')}
           </TabsTrigger>
           <TabsTrigger value="doctor_revenue" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            By Doctor
+            {t('By Doctor')}
           </TabsTrigger>
           <TabsTrigger value="daily_collection" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Daily Collection
+            {t('Daily Collection')}
           </TabsTrigger>
         </TabsList>
 
@@ -252,7 +252,7 @@ export default function FinancialReportsPage() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-green-600">{t('ui.current')}</CardTitle>
-                    <CardDescription>Not yet due</CardDescription>
+                    <CardDescription>{t('Not yet due')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -310,7 +310,7 @@ export default function FinancialReportsPage() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-red-700">90+ Days</CardTitle>
-                    <CardDescription>Critical</CardDescription>
+                    <CardDescription>{t('Critical')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -328,7 +328,7 @@ export default function FinancialReportsPage() {
           {/* Outstanding Invoices Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Outstanding Invoices</CardTitle>
+              <CardTitle>{t('Outstanding Invoices')}</CardTitle>
               <CardDescription>
                 Total: {formatCurrency(outstandingData?.totals.totalOutstanding || 0)} from{' '}
                 {outstandingData?.totals.invoiceCount || 0} invoices
@@ -373,7 +373,7 @@ export default function FinancialReportsPage() {
                   ) : outstandingData?.invoices.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                        No outstanding invoices
+                        {t('No outstanding invoices')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -435,7 +435,7 @@ export default function FinancialReportsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Revenue by Procedure</CardTitle>
+              <CardTitle>{t('Revenue by Procedure')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <Table className="min-w-[700px]">
@@ -444,7 +444,7 @@ export default function FinancialReportsPage() {
                     <TableHead>{t('ui.procedure')}</TableHead>
                     <TableHead>{t('ui.category')}</TableHead>
                     <TableHead className="text-center">{t('ui.count')}</TableHead>
-                    <TableHead className="text-right">Avg. Revenue</TableHead>
+                    <TableHead className="text-right">{t('Avg. Revenue')}</TableHead>
                     <TableHead className="text-right">{t('ui.total_revenue')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -530,7 +530,7 @@ export default function FinancialReportsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Doctors</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('Active Doctors')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -544,7 +544,7 @@ export default function FinancialReportsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Revenue by Doctor</CardTitle>
+              <CardTitle>{t('Revenue by Doctor')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <Table className="min-w-[700px]">
@@ -552,7 +552,7 @@ export default function FinancialReportsPage() {
                   <TableRow>
                     <TableHead>{t('ui.doctor')}</TableHead>
                     <TableHead className="text-center">{t('ui.treatments')}</TableHead>
-                    <TableHead className="text-right">Avg. per Treatment</TableHead>
+                    <TableHead className="text-right">{t('Avg. per Treatment')}</TableHead>
                     <TableHead className="text-right">{t('ui.total_revenue')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -577,7 +577,7 @@ export default function FinancialReportsPage() {
                   ) : doctorData?.byDoctor.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                        No doctor data available
+                        {t('No doctor data available')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -612,7 +612,7 @@ export default function FinancialReportsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Collection</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('Total Collection')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -626,7 +626,7 @@ export default function FinancialReportsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('Total Payments')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -640,7 +640,7 @@ export default function FinancialReportsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Daily Collection Breakdown</CardTitle>
+              <CardTitle>{t('Daily Collection Breakdown')}</CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
               <Table className="min-w-[800px]">
@@ -691,7 +691,7 @@ export default function FinancialReportsPage() {
                   ) : dailyData?.dailyData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                        No collection data available
+                        {t('No collection data available')}
                       </TableCell>
                     </TableRow>
                   ) : (

@@ -91,7 +91,7 @@ export default function PatientAppointments() {
         <Link href="/portal/book">
           <Button>
             <CalendarPlus className="h-4 w-4 mr-2" />
-            Book New
+            {t('Book New')}
           </Button>
         </Link>
       </div>
@@ -99,7 +99,7 @@ export default function PatientAppointments() {
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
           <TabsTrigger value="upcoming">{t('ui.upcoming')}</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
+          <TabsTrigger value="past">{t('Past')}</TabsTrigger>
           <TabsTrigger value="all">{t('ui.all')}</TabsTrigger>
         </TabsList>
 
@@ -114,7 +114,7 @@ export default function PatientAppointments() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No {filter} appointments found</p>
+                <p>No {filter} {t('appointments found')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -143,7 +143,7 @@ export default function PatientAppointments() {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {apt.appointmentNo} &middot; {apt.duration} min &middot;{' '}
+                          {apt.appointmentNo} &middot; {apt.duration} {t('min')} &middot;{' '}
                           {apt.appointmentType.replace('_', ' ')}
                         </p>
                       </div>

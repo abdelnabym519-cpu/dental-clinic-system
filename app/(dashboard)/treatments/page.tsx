@@ -207,30 +207,30 @@ export default function TreatmentsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.treatments')}</h1>
-          <p className="text-muted-foreground">Manage patient treatments and clinical records</p>
+          <p className="text-muted-foreground">{t('Manage patient treatments and clinical records')}</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu
             filename="treatments"
             getData={() =>
-              treatments.map((t) => ({
-                'Treatment No': t.treatmentNo,
-                Patient: `${t.patient.firstName} ${t.patient.lastName}`,
-                'Patient ID': t.patient.patientId,
-                'Patient Phone': t.patient.phone,
-                Doctor: `Dr. ${t.doctor.firstName} ${t.doctor.lastName}`,
-                Specialization: t.doctor.specialization || '',
-                Procedure: t.procedure.name,
-                'Procedure Code': t.procedure.code,
-                Category: t.procedure.category,
-                Diagnosis: t.diagnosis || '',
-                'Chief Complaint': t.chiefComplaint || '',
-                Teeth: t.toothNumbers || '',
-                Cost: Number(t.cost),
-                Status: t.status,
-                'Follow-up Required': t.followUpRequired ? 'Yes' : 'No',
-                'Follow-up Date': t.followUpDate || '',
-                Date: formatDate(t.createdAt),
+              treatments.map((opt) => ({
+                'Treatment No': opt.treatmentNo,
+                Patient: `${opt.patient.firstName} ${opt.patient.lastName}`,
+                'Patient ID': opt.patient.patientId,
+                'Patient Phone': opt.patient.phone,
+                Doctor: `Dr. ${opt.doctor.firstName} ${opt.doctor.lastName}`,
+                Specialization: opt.doctor.specialization || '',
+                Procedure: opt.procedure.name,
+                'Procedure Code': opt.procedure.code,
+                Category: opt.procedure.category,
+                Diagnosis: opt.diagnosis || '',
+                'Chief Complaint': opt.chiefComplaint || '',
+                Teeth: opt.toothNumbers || '',
+                Cost: Number(opt.cost),
+                Status: opt.status,
+                'Follow-up Required': opt.followUpRequired ? 'Yes' : 'No',
+                'Follow-up Date': opt.followUpDate || '',
+                Date: formatDate(opt.createdAt),
               }))
             }
           />
@@ -252,7 +252,7 @@ export default function TreatmentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by patient name, treatment number, or diagnosis..."
+                placeholder={t('Search by patient name, treatment number, or diagnosis...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -265,7 +265,7 @@ export default function TreatmentsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('ui.all_status')}</SelectItem>
-                  <SelectItem value="PLANNED">Planned</SelectItem>
+                  <SelectItem value="PLANNED">{t('Planned')}</SelectItem>
                   <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
                   <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
                   <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
@@ -276,7 +276,7 @@ export default function TreatmentsPage() {
                   <SelectValue placeholder={t('ui.follow_up_2')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Treatments</SelectItem>
+                  <SelectItem value="all">{t('All Treatments')}</SelectItem>
                   <SelectItem value="required">{t('ui.follow_up_required')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -350,11 +350,11 @@ export default function TreatmentsPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Stethoscope className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No treatments found</p>
+                      <p className="text-muted-foreground">{t('No treatments found')}</p>
                       <Link href="/treatments/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
-                          Create New Treatment
+                          {t('Create New Treatment')}
                         </Button>
                       </Link>
                     </div>

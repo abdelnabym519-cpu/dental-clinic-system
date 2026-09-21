@@ -336,7 +336,7 @@ export default function ProceduresSettingsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.procedures')}</h1>
-          <p className="text-muted-foreground">Manage dental procedures catalog</p>
+          <p className="text-muted-foreground">{t('Manage dental procedures catalog')}</p>
         </div>
         <Button onClick={openCreateDialog}>
           <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
@@ -349,7 +349,7 @@ export default function ProceduresSettingsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search procedures..."
+                placeholder={t('Search procedures...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -394,7 +394,7 @@ export default function ProceduresSettingsPage() {
                 <TableHead>{t('ui.name')}</TableHead>
                 <TableHead>{t('ui.category')}</TableHead>
                 <TableHead>{t('ui.duration')}</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>{t('Price')}</TableHead>
                 <TableHead>{t('ui.status')}</TableHead>
                 <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
@@ -431,7 +431,7 @@ export default function ProceduresSettingsPage() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Stethoscope className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No procedures found</p>
+                      <p className="text-muted-foreground">{t('No procedures found')}</p>
                       <Button variant="outline" size="sm" onClick={openCreateDialog}>
                         <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
                     </div>
@@ -445,7 +445,7 @@ export default function ProceduresSettingsPage() {
                       <div className="font-medium">{procedure.name}</div>
                       {procedure.description && (
                         <div className="text-sm text-muted-foreground line-clamp-1">
-                          {procedure.description}
+                          {t(procedure.description)}
                         </div>
                       )}
                     </TableCell>
@@ -456,7 +456,7 @@ export default function ProceduresSettingsPage() {
                         {procedureCategoryConfig[procedure.category]?.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>{procedure.defaultDuration} min</TableCell>
+                    <TableCell>{procedure.defaultDuration} {t('min')}</TableCell>
                     <TableCell className="font-medium">
                       {formatCurrency(procedure.basePrice)}
                     </TableCell>
@@ -561,7 +561,7 @@ export default function ProceduresSettingsPage() {
                   className="uppercase"
                 />
                 {dialogMode === 'edit' && (
-                  <p className="text-xs text-muted-foreground">Code cannot be changed</p>
+                  <p className="text-xs text-muted-foreground">{t('Code cannot be changed')}</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -590,7 +590,7 @@ export default function ProceduresSettingsPage() {
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Procedure name"
+                placeholder={t('Procedure name')}
               />
             </div>
 
@@ -598,9 +598,9 @@ export default function ProceduresSettingsPage() {
               <Label htmlFor="description">{t('ui.description')}</Label>
               <Textarea
                 id="description"
-                value={formData.description}
+                value={t(formData.description)}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description of the procedure"
+                placeholder={t('Brief description of the procedure')}
                 rows={2}
               />
             </div>
@@ -629,12 +629,12 @@ export default function ProceduresSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="materials">Materials</Label>
+              <Label htmlFor="materials">{t('Materials')}</Label>
               <Textarea
                 id="materials"
                 value={formData.materials}
                 onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
-                placeholder="List of materials used"
+                placeholder={t('List of materials used')}
                 rows={2}
               />
             </div>
@@ -645,7 +645,7 @@ export default function ProceduresSettingsPage() {
                 id="preInstructions"
                 value={formData.preInstructions}
                 onChange={(e) => setFormData({ ...formData, preInstructions: e.target.value })}
-                placeholder="Instructions for patients before the procedure"
+                placeholder={t('Instructions for patients before the procedure')}
                 rows={2}
               />
             </div>
@@ -656,7 +656,7 @@ export default function ProceduresSettingsPage() {
                 id="postInstructions"
                 value={formData.postInstructions}
                 onChange={(e) => setFormData({ ...formData, postInstructions: e.target.value })}
-                placeholder="Instructions for patients after the procedure"
+                placeholder={t('Instructions for patients after the procedure')}
                 rows={2}
               />
             </div>
@@ -688,7 +688,7 @@ export default function ProceduresSettingsPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Procedure</DialogTitle>
+            <DialogTitle>{t('Delete Procedure')}</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete "{selectedProcedure?.name}"? If this procedure is used
               in treatments, it will be deactivated instead.

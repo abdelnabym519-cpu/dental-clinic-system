@@ -124,22 +124,22 @@ export default function FormsSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Form Templates</h1>
+          <h1 className="text-2xl font-bold">{t('Form Templates')}</h1>
           <p className="text-muted-foreground">
-            Create and manage intake forms, consent forms, and custom forms
+            {t('Create and manage intake forms, consent forms, and custom forms')}
           </p>
         </div>
         <Button asChild>
           <Link href="/settings/forms/new">
             <Plus className="h-4 w-4 mr-2" />
-            New Template
+            {t('New Template')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Templates</CardTitle>
+          <CardTitle>{t('All Templates')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -147,9 +147,9 @@ export default function FormsSettingsPage() {
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-1">No form templates yet</h3>
+              <h3 className="text-lg font-medium mb-1">{t('No form templates yet')}</h3>
               <p className="text-muted-foreground mb-4">
-                Create your first form template to start collecting patient information
+                {t('Create your first form template to start collecting patient information')}
               </p>
               <div className="flex items-center gap-3 justify-center">
                 <Button asChild>
@@ -157,7 +157,7 @@ export default function FormsSettingsPage() {
                     <Plus className="h-4 w-4 mr-2" />{t('ui.create_template')}</Link>
                 </Button>
                 <Button variant="outline" onClick={handleSeedDefaults}>
-                  Load Default Templates
+                  {t('Load Default Templates')}
                 </Button>
               </div>
             </div>
@@ -168,7 +168,7 @@ export default function FormsSettingsPage() {
                   <TableHead>{t('ui.name')}</TableHead>
                   <TableHead>{t('ui.type')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
-                  <TableHead className="text-right">Submissions</TableHead>
+                  <TableHead className="text-right">{t('Submissions')}</TableHead>
                   <TableHead>{t('ui.created')}</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
@@ -183,13 +183,13 @@ export default function FormsSettingsPage() {
                           <div className="font-medium">{tf.name}</div>
                           {tf.description && (
                             <div className="text-xs text-muted-foreground line-clamp-1">
-                              {tf.description}
+                              {t(tf.description)}
                             </div>
                           )}
                         </div>
                         {tf.isDefault && (
                           <Badge variant="secondary" className="text-xs">
-                            Default
+                            {t('Default')}
                           </Badge>
                         )}
                       </div>
@@ -217,7 +217,7 @@ export default function FormsSettingsPage() {
                           <DropdownMenuItem asChild>
                             <Link href={`/settings/forms/${tf.id}`}>
                               <Eye className="h-4 w-4 mr-2" />
-                              View / Edit
+                              {t('View / Edit')}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem

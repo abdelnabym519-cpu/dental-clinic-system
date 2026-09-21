@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 
 interface Duplicate {
@@ -31,6 +32,7 @@ export function DuplicateDetector({
   dateOfBirth?: string
   onSelect: (existingId: string) => void
 }) {
+  const { t } = useLanguage()
   const [duplicates, setDuplicates] = useState<Duplicate[]>([])
   const [checking, setChecking] = useState(false)
 
@@ -98,7 +100,7 @@ export function DuplicateDetector({
               onClick={() => onSelect(d.id)}
               className="text-xs rounded-md border border-primary text-primary px-2.5 py-1 hover:bg-primary/10 transition-colors"
             >
-              Use existing
+              {t('Use existing')}
             </button>
           </div>
         ))}

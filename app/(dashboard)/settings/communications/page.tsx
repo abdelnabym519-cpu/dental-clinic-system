@@ -344,24 +344,24 @@ export default function CommunicationSettingsPage() {
 
       <Tabs defaultValue="sms" className="w-full">
         <TabsList>
-          <TabsTrigger value="sms">SMS Configuration</TabsTrigger>
-          <TabsTrigger value="email">Email Configuration</TabsTrigger>
+          <TabsTrigger value="sms">{t('SMS Configuration')}</TabsTrigger>
+          <TabsTrigger value="email">{t('Email Configuration')}</TabsTrigger>
           <TabsTrigger value="message-log">Message Log (WhatsApp/SMS)</TabsTrigger>
-          <TabsTrigger value="reviews">Google Reviews</TabsTrigger>
+          <TabsTrigger value="reviews">{t('Google Reviews')}</TabsTrigger>
         </TabsList>
 
         {/* SMS Configuration */}
         <TabsContent value="sms">
           <Card>
             <CardHeader>
-              <CardTitle>SMS Gateway Settings</CardTitle>
-              <CardDescription>Configure your Egyptian SMS gateway provider</CardDescription>
+              <CardTitle>{t('SMS Gateway Settings')}</CardTitle>
+              <CardDescription>{t('Configure your Egyptian SMS gateway provider')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Enable SMS</Label>
-                  <p className="text-sm text-muted-foreground">Turn on/off SMS communication</p>
+                  <Label>{t('Enable SMS')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Turn on/off SMS communication')}</p>
                 </div>
                 <Switch checked={smsEnabled} onCheckedChange={setSmsEnabled} />
               </div>
@@ -370,44 +370,44 @@ export default function CommunicationSettingsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="sms-gateway">SMS Gateway</Label>
+                  <Label htmlFor="sms-gateway">{t('SMS Gateway')}</Label>
                   <Select value={smsGateway} onValueChange={setSmsGateway}>
                     <SelectTrigger id="sms-gateway">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="VODAFONE">Vodafone Business SMS</SelectItem>
-                      <SelectItem value="ETISALAT">Etisalat eSMS</SelectItem>
-                      <SelectItem value="ORANGE">Orange Egypt SMS</SelectItem>
-                      <SelectItem value="TWILIO">Twilio</SelectItem>
+                      <SelectItem value="VODAFONE">{t('Vodafone Business SMS')}</SelectItem>
+                      <SelectItem value="ETISALAT">{t('Etisalat eSMS')}</SelectItem>
+                      <SelectItem value="ORANGE">{t('Orange Egypt SMS')}</SelectItem>
+                      <SelectItem value="TWILIO">{t('Twilio')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sms-sender-id">Sender ID</Label>
+                  <Label htmlFor="sms-sender-id">{t('Sender ID')}</Label>
                   <Input
                     id="sms-sender-id"
-                    placeholder="DENTAL"
+                    placeholder={t('DENTAL')}
                     value={smsSenderId}
                     onChange={(e) => setSmsSenderId(e.target.value)}
                   />
-                  <p className="text-xs text-muted-foreground">Approved sender ID from gateway</p>
+                  <p className="text-xs text-muted-foreground">{t('Approved sender ID from gateway')}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sms-api-key">API Key / Auth Key</Label>
+                  <Label htmlFor="sms-api-key">{t('API Key / Auth Key')}</Label>
                   <Input
                     id="sms-api-key"
                     type="password"
-                    placeholder="Enter your API key"
+                    placeholder={t('Enter your API key')}
                     value={smsApiKey}
                     onChange={(e) => setSmsApiKey(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sms-route">Route / Sender type</Label>
+                  <Label htmlFor="sms-route">{t('Route / Sender type')}</Label>
                   <Input
                     id="sms-route"
                     placeholder="transactional"
@@ -423,10 +423,10 @@ export default function CommunicationSettingsPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">Test SMS Connection</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('Test SMS Connection')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="test-phone">Test Phone Number</Label>
+                    <Label htmlFor="test-phone">{t('Test Phone Number')}</Label>
                     <Input
                       id="test-phone"
                       placeholder="01012345678"
@@ -446,7 +446,7 @@ export default function CommunicationSettingsPage() {
               <Separator />
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-900 mb-2">TRAI Compliance</h4>
+                <h4 className="font-semibold text-blue-900 mb-2">{t('TRAI Compliance')}</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>• SMS will only be sent between 9 AM - 9 PM Cairo time</li>
                   <li>• DND registry will be checked before sending</li>
@@ -465,7 +465,7 @@ export default function CommunicationSettingsPage() {
         <TabsContent value="email">
           <Card>
             <CardHeader>
-              <CardTitle>Email SMTP Settings</CardTitle>
+              <CardTitle>{t('Email SMTP Settings')}</CardTitle>
               <CardDescription>
                 Configure your email server (Hostinger, Gmail, etc.)
               </CardDescription>
@@ -473,8 +473,8 @@ export default function CommunicationSettingsPage() {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Enable Email</Label>
-                  <p className="text-sm text-muted-foreground">Turn on/off email communication</p>
+                  <Label>{t('Enable Email')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Turn on/off email communication')}</p>
                 </div>
                 <Switch checked={emailEnabled} onCheckedChange={setEmailEnabled} />
               </div>
@@ -482,10 +482,10 @@ export default function CommunicationSettingsPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">SMTP Server Configuration</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('SMTP Server Configuration')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email-host">SMTP Host</Label>
+                    <Label htmlFor="email-host">{t('SMTP Host')}</Label>
                     <Input
                       id="email-host"
                       placeholder="smtp.hostinger.com"
@@ -495,7 +495,7 @@ export default function CommunicationSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email-port">SMTP Port</Label>
+                    <Label htmlFor="email-port">{t('SMTP Port')}</Label>
                     <Input
                       id="email-port"
                       placeholder="587"
@@ -505,7 +505,7 @@ export default function CommunicationSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email-user">SMTP Username</Label>
+                    <Label htmlFor="email-user">{t('SMTP Username')}</Label>
                     <Input
                       id="email-user"
                       placeholder="info@yourclinic.com"
@@ -515,11 +515,11 @@ export default function CommunicationSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email-password">SMTP Password</Label>
+                    <Label htmlFor="email-password">{t('SMTP Password')}</Label>
                     <Input
                       id="email-password"
                       type="password"
-                      placeholder="Enter SMTP password"
+                      placeholder={t('Enter SMTP password')}
                       value={emailPassword}
                       onChange={(e) => setEmailPassword(e.target.value)}
                     />
@@ -535,10 +535,10 @@ export default function CommunicationSettingsPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">Email Sender Details</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('Email Sender Details')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email-from-name">From Name</Label>
+                    <Label htmlFor="email-from-name">{t('From Name')}</Label>
                     <Input
                       id="email-from-name"
                       placeholder={t('ui.your_dental_clinic')}
@@ -548,7 +548,7 @@ export default function CommunicationSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email-from-email">From Email</Label>
+                    <Label htmlFor="email-from-email">{t('From Email')}</Label>
                     <Input
                       id="email-from-email"
                       type="email"
@@ -574,10 +574,10 @@ export default function CommunicationSettingsPage() {
               <Separator />
 
               <div>
-                <h3 className="text-lg font-semibold mb-4">Test Email Connection</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('Test Email Connection')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="test-email">Test Email Address</Label>
+                    <Label htmlFor="test-email">{t('Test Email Address')}</Label>
                     <Input
                       id="test-email"
                       type="email"
@@ -586,7 +586,7 @@ export default function CommunicationSettingsPage() {
                       onChange={(e) => setTestEmail(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter an email address to receive the test email
+                      {t('Enter an email address to receive the test email')}
                     </p>
                   </div>
                   <Button onClick={handleTestEmail} disabled={testing} variant="outline">
@@ -599,7 +599,7 @@ export default function CommunicationSettingsPage() {
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h4 className="font-semibold text-green-900 mb-2">
-                  Recommended Settings for Hostinger
+                  {t('Recommended Settings for Hostinger')}
                 </h4>
                 <ul className="text-sm text-green-800 space-y-1">
                   <li>• SMTP Host: smtp.hostinger.com</li>
@@ -622,14 +622,14 @@ export default function CommunicationSettingsPage() {
         <TabsContent value="reviews">
           <Card>
             <CardHeader>
-              <CardTitle>Google Reviews Settings</CardTitle>
+              <CardTitle>{t('Google Reviews Settings')}</CardTitle>
               <CardDescription>
-                Automatically request Google reviews from satisfied patients
+                {t('Automatically request Google reviews from satisfied patients')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="google-review-url">Google Review URL</Label>
+                <Label htmlFor="google-review-url">{t('Google Review URL')}</Label>
                 <Input
                   id="google-review-url"
                   placeholder="https://g.page/r/YOUR_PLACE_ID/review"
@@ -646,9 +646,9 @@ export default function CommunicationSettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Auto-Request Reviews</Label>
+                  <Label>{t('Auto-Request Reviews')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Automatically send review requests after appointments
+                    {t('Automatically send review requests after appointments')}
                   </p>
                 </div>
                 <Switch checked={autoReviewRequests} onCheckedChange={setAutoReviewRequests} />
@@ -666,14 +666,14 @@ export default function CommunicationSettingsPage() {
                   onChange={(e) => setReviewRequestDelay(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Hours after appointment completion before sending the review request SMS
+                  {t('Hours after appointment completion before sending the review request SMS')}
                 </p>
               </div>
 
               <Separator />
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <h4 className="font-semibold text-amber-900 mb-2">Review Gating</h4>
+                <h4 className="font-semibold text-amber-900 mb-2">{t('Review Gating')}</h4>
                 <ul className="text-sm text-amber-800 space-y-1">
                   <li>
                     • Review requests are only sent to patients who rated their satisfaction 4/5 or

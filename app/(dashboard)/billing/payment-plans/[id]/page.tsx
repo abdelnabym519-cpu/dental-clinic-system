@@ -258,7 +258,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       case 'OVERDUE':
         return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.overdue')}</Badge>
       case 'WAIVED':
-        return <Badge variant="secondary">Waived</Badge>
+        return <Badge variant="secondary">{t('Waived')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -297,10 +297,10 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   if (!plan) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Payment plan not found</p>
+        <p className="text-muted-foreground">{t('Payment plan not found')}</p>
         <Link href="/billing/payment-plans">
           <Button variant="outline" className="mt-4">
-            Back to Payment Plans
+            {t('Back to Payment Plans')}
           </Button>
         </Link>
       </div>
@@ -321,7 +321,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">Payment Plan</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t('Payment Plan')}</h1>
               {statusBadge(plan.status)}
             </div>
             <p className="text-muted-foreground">
@@ -402,7 +402,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {plan.nextDueDate ? format(new Date(plan.nextDueDate), 'dd MMM') : '—'}
             </div>
             {plan.overdueInstallments > 0 && (
-              <p className="text-xs text-red-600">{plan.overdueInstallments} overdue</p>
+              <p className="text-xs text-red-600">{plan.overdueInstallments} {t('overdue')}</p>
             )}
           </CardContent>
         </Card>
@@ -412,7 +412,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Payment Progress</span>
+            <span className="text-sm font-medium">{t('Payment Progress')}</span>
             <span className="text-sm text-muted-foreground">{Math.round(progressPercent)}%</span>
           </div>
           <div className="h-3 rounded-full bg-muted overflow-hidden">
@@ -469,11 +469,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         {/* Invoice Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Invoice Details</CardTitle>
+            <CardTitle className="text-base">{t('Invoice Details')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Invoice No</span>
+              <span className="text-muted-foreground">{t('Invoice No')}</span>
               <Link
                 href={`/billing/invoices/${plan.invoice.id}`}
                 className="text-blue-600 hover:underline font-medium"
@@ -482,7 +482,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               </Link>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Invoice Total</span>
+              <span className="text-muted-foreground">{t('Invoice Total')}</span>
               <span className="font-medium">{formatCurrency(plan.invoice.totalAmount)}</span>
             </div>
             <div className="flex justify-between">
@@ -499,7 +499,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         {/* Plan Terms */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Plan Terms</CardTitle>
+            <CardTitle className="text-base">{t('Plan Terms')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -511,7 +511,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               <span>{plan.installments}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Interest Rate</span>
+              <span className="text-muted-foreground">{t('Interest Rate')}</span>
               <span>{Number(plan.interestRate)}%</span>
             </div>
             <div className="flex justify-between">
@@ -542,7 +542,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       <Card>
         <CardHeader>
           <CardTitle>{t('ui.installment_schedule')}</CardTitle>
-          <CardDescription>Track and manage each installment payment</CardDescription>
+          <CardDescription>{t('Track and manage each installment payment')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <Table className="min-w-[900px]">
@@ -552,8 +552,8 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
                 <TableHead>{t('ui.due_date')}</TableHead>
                 <TableHead>{t('ui.amount')}</TableHead>
                 <TableHead>{t('ui.status')}</TableHead>
-                <TableHead>Paid Date</TableHead>
-                <TableHead>Paid Amount</TableHead>
+                <TableHead>{t('Paid Date')}</TableHead>
+                <TableHead>{t('Paid Amount')}</TableHead>
                 <TableHead>{t('ui.payment_method')}</TableHead>
                 <TableHead className="w-[140px]">{t('ui.actions')}</TableHead>
               </TableRow>
@@ -592,14 +592,14 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
                         <div className="flex gap-1">
                           <Button size="sm" onClick={() => openPayDialog(schedule)}>
                             <CreditCard className="h-3 w-3 mr-1" />
-                            Pay
+                            {t('Pay')}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleWaive(schedule.id)}
                           >
-                            Waive
+                            {t('Waive')}
                           </Button>
                         </div>
                       )}
@@ -615,8 +615,8 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       <Dialog open={payDialog} onOpenChange={setPayDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record Installment Payment</DialogTitle>
-            <DialogDescription>Record a payment for this installment</DialogDescription>
+            <DialogTitle>{t('Record Installment Payment')}</DialogTitle>
+            <DialogDescription>{t('Record a payment for this installment')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -648,7 +648,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-2">
               <Label>Transaction ID (Optional)</Label>
               <Input
-                placeholder="Reference number..."
+                placeholder={t('Reference number...')}
                 value={payTransactionId}
                 onChange={(e) => setPayTransactionId(e.target.value)}
               />
@@ -660,7 +660,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {paying ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  {t('Processing...')}
                 </>
               ) : (
                 `Record Payment — ${formatCurrency(payAmount)}`
@@ -674,7 +674,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       <Dialog open={cancelDialog} onOpenChange={setCancelDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Payment Plan</DialogTitle>
+            <DialogTitle>{t('Cancel Payment Plan')}</DialogTitle>
             <DialogDescription>
               This will cancel the payment plan and waive all remaining installments. Payments
               already made will not be refunded.
@@ -686,7 +686,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {cancelling ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Cancelling...
+                  {t('Cancelling...')}
                 </>
               ) : (
                 'Cancel Plan'

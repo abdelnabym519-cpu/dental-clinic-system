@@ -89,6 +89,7 @@ const TYPE_BADGE_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 function usePatientSearch() {
+  const { t } = useLanguage()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Patient[]>([])
   const [searching, setSearching] = useState(false)
@@ -362,7 +363,7 @@ export default function LoyaltyPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Gift className="h-7 w-7 text-purple-500" />{t('ui.loyalty_points')}</h1>
-          <p className="text-muted-foreground">Award, redeem, and track loyalty points</p>
+          <p className="text-muted-foreground">{t('Award, redeem, and track loyalty points')}</p>
         </div>
       </div>
 
@@ -373,7 +374,7 @@ export default function LoyaltyPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-green-600" />{t('ui.award_points')}</CardTitle>
-            <CardDescription>Add loyalty points to a patient account</CardDescription>
+            <CardDescription>{t('Add loyalty points to a patient account')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAward} className="space-y-4">
@@ -455,7 +456,7 @@ export default function LoyaltyPage() {
                   id="awardPoints"
                   type="number"
                   min="1"
-                  placeholder="Enter points to award"
+                  placeholder={t('Enter points to award')}
                   value={awardPoints}
                   onChange={(e) => setAwardPoints(e.target.value)}
                   required
@@ -470,9 +471,9 @@ export default function LoyaltyPage() {
                     <SelectValue placeholder={t('ui.select_type')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {AWARD_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
+                    {AWARD_TYPES.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {t(opt.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -494,7 +495,7 @@ export default function LoyaltyPage() {
                 {awardSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Awarding...
+                    {t('Awarding...')}
                   </>
                 ) : (
                   <>
@@ -510,7 +511,7 @@ export default function LoyaltyPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Minus className="h-5 w-5 text-red-600" />{t('ui.redeem_points')}</CardTitle>
-            <CardDescription>Redeem loyalty points from a patient account</CardDescription>
+            <CardDescription>{t('Redeem loyalty points from a patient account')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRedeem} className="space-y-4">
@@ -588,7 +589,7 @@ export default function LoyaltyPage() {
               {/* Current balance highlight */}
               {redeemPatient && redeemBalance !== null && (
                 <div className="rounded-md bg-muted p-3 flex items-center justify-between">
-                  <span className="text-sm font-medium">Available Balance</span>
+                  <span className="text-sm font-medium">{t('Available Balance')}</span>
                   <span className="text-xl font-bold flex items-center gap-1">
                     <TrendingUp className="h-4 w-4 text-green-600" />
                     {redeemBalance.toLocaleString()} pts
@@ -604,7 +605,7 @@ export default function LoyaltyPage() {
                   type="number"
                   min="1"
                   max={redeemBalance ?? undefined}
-                  placeholder="Enter points to redeem"
+                  placeholder={t('Enter points to redeem')}
                   value={redeemPoints}
                   onChange={(e) => setRedeemPoints(e.target.value)}
                   required
@@ -637,7 +638,7 @@ export default function LoyaltyPage() {
                 {redeemSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Redeeming...
+                    {t('Redeeming...')}
                   </>
                 ) : (
                   <>
@@ -656,9 +657,9 @@ export default function LoyaltyPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-blue-500" />
-                Transaction Log
+                {t('Transaction Log')}
               </CardTitle>
-              <CardDescription>Recent loyalty point transactions</CardDescription>
+              <CardDescription>{t('Recent loyalty point transactions')}</CardDescription>
             </div>
             <div className="w-48">
               <Select
@@ -669,9 +670,9 @@ export default function LoyaltyPage() {
                   <SelectValue placeholder={t('ui.filter_by_type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {ALL_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {ALL_TYPES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {t(opt.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -732,7 +733,7 @@ export default function LoyaltyPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                          {tx.description}
+                          {t(tx.description)}
                         </TableCell>
                       </TableRow>
                     ))}

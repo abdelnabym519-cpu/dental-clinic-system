@@ -166,10 +166,10 @@ export function GatewaySettings() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              Payment Gateway
+              {t('Payment Gateway')}
             </CardTitle>
             <CardDescription>
-              Connect your own Fawry, Paymob, or InstaPay account to accept online payments
+              {t('Connect your own Fawry, Paymob, or InstaPay account to accept online payments')}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -179,7 +179,7 @@ export function GatewaySettings() {
             {isLiveMode && (
               <Badge variant="default" className="bg-blue-100 text-blue-700 border-0">{t('ui.live')}</Badge>
             )}
-            {!isLiveMode && provider && <Badge variant="secondary">Test Mode</Badge>}
+            {!isLiveMode && provider && <Badge variant="secondary">{t('Test Mode')}</Badge>}
           </div>
         </div>
       </CardHeader>
@@ -187,29 +187,29 @@ export function GatewaySettings() {
         {/* Provider Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Payment Provider</Label>
+            <Label>{t('Payment Provider')}</Label>
             <Select value={provider} onValueChange={setProvider}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a provider" />
+                <SelectValue placeholder={t('Select a provider')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="FAWRY">{t('ui.fawry')}</SelectItem>
-                <SelectItem value="PAYMOB">Paymob</SelectItem>
+                <SelectItem value="PAYMOB">{t('Paymob')}</SelectItem>
                 <SelectItem value="INSTAPAY">{t('ui.instapay')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Use your own merchant account credentials
+              {t('Use your own merchant account credentials')}
             </p>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="gateway-enabled">Enable Online Payments</Label>
+              <Label htmlFor="gateway-enabled">{t('Enable Online Payments')}</Label>
               <Switch id="gateway-enabled" checked={isEnabled} onCheckedChange={setIsEnabled} />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="gateway-live">
-                Live Mode
+                {t('Live Mode')}
                 <span className="text-xs text-muted-foreground ml-1">
                   (uncheck for test/sandbox)
                 </span>
@@ -222,7 +222,7 @@ export function GatewaySettings() {
         {/* Fawry Credentials */}
         {provider === 'FAWRY' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">Fawry Credentials</h4>
+            <h4 className="font-medium text-sm">{t('Fawry Credentials')}</h4>
             <p className="text-xs text-muted-foreground">
               Get these from your{' '}
               <a
@@ -236,7 +236,7 @@ export function GatewaySettings() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="fawry-merchant">Merchant Code</Label>
+                <Label htmlFor="fawry-merchant">{t('Merchant Code')}</Label>
                 <Input
                   id="fawry-merchant"
                   value={fawryMerchantCode}
@@ -246,7 +246,7 @@ export function GatewaySettings() {
               </div>
               <div>
                 <Label htmlFor="fawry-secret">
-                  Secure Key
+                  {t('Secure Key')}
                   <Shield className="h-3 w-3 inline ml-1 text-muted-foreground" />
                 </Label>
                 <Input
@@ -254,10 +254,10 @@ export function GatewaySettings() {
                   type="password"
                   value={fawrySecretKey}
                   onChange={(e) => setFawrySecretKey(e.target.value)}
-                  placeholder="Enter secure key"
+                  placeholder={t('Enter secure key')}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Stored encrypted. Leave unchanged to keep existing.
+                  {t('Stored encrypted. Leave unchanged to keep existing.')}
                 </p>
               </div>
             </div>
@@ -267,7 +267,7 @@ export function GatewaySettings() {
         {/* Paymob Credentials */}
         {provider === 'PAYMOB' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">Paymob (Accept) Credentials</h4>
+            <h4 className="font-medium text-sm">{t('Paymob (Accept) Credentials')}</h4>
             <p className="text-xs text-muted-foreground">
               Get these from your{' '}
               <a
@@ -282,7 +282,7 @@ export function GatewaySettings() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="paymob-api-key">
-                  API Key
+                  {t('API Key')}
                   <Shield className="h-3 w-3 inline ml-1 text-muted-foreground" />
                 </Label>
                 <Input
@@ -290,11 +290,11 @@ export function GatewaySettings() {
                   type="password"
                   value={paymobApiKey}
                   onChange={(e) => setPaymobApiKey(e.target.value)}
-                  placeholder="Enter API key"
+                  placeholder={t('Enter API key')}
                 />
               </div>
               <div>
-                <Label htmlFor="paymob-integration">Integration ID</Label>
+                <Label htmlFor="paymob-integration">{t('Integration ID')}</Label>
                 <Input
                   id="paymob-integration"
                   value={paymobIntegrationId}
@@ -303,7 +303,7 @@ export function GatewaySettings() {
                 />
               </div>
               <div>
-                <Label htmlFor="paymob-iframe">Iframe ID</Label>
+                <Label htmlFor="paymob-iframe">{t('Iframe ID')}</Label>
                 <Input
                   id="paymob-iframe"
                   value={paymobIframeId}
@@ -320,7 +320,7 @@ export function GatewaySettings() {
           <div className="space-y-4 border-t pt-4">
             <h4 className="font-medium text-sm">{t('ui.instapay_handle')}</h4>
             <p className="text-xs text-muted-foreground">
-              The clinic&apos;s InstaPay address (IPA) patients transfer to — e.g. dentora@instapay
+              {t("The clinic's InstaPay address (IPA) patients transfer to — e.g. dentora@instapay")}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -339,7 +339,7 @@ export function GatewaySettings() {
         {/* Webhook URL */}
         {provider && webhookUrl && (
           <div className="border-t pt-4">
-            <Label>Webhook URL</Label>
+            <Label>{t('Webhook URL')}</Label>
             <p className="text-xs text-muted-foreground mb-2">
               Configure this URL in your {provider.charAt(0) + provider.slice(1).toLowerCase()}{' '}
               dashboard to receive payment notifications

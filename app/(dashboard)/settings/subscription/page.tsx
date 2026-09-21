@@ -167,8 +167,8 @@ export default function SubscriptionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Subscription & Billing</h1>
-        <p className="text-muted-foreground">Manage your subscription and view usage</p>
+        <h1 className="text-2xl font-bold">{t('Subscription & Billing')}</h1>
+        <p className="text-muted-foreground">{t('Manage your subscription and view usage')}</p>
       </div>
 
       {/* Current Plan Usage */}
@@ -177,8 +177,8 @@ export default function SubscriptionPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Current Plan</CardTitle>
-                <CardDescription>Your current usage and limits</CardDescription>
+                <CardTitle>{t('Current Plan')}</CardTitle>
+                <CardDescription>{t('Your current usage and limits')}</CardDescription>
               </div>
               <Badge
                 variant={hospitalData.plan === 'FREE' ? 'secondary' : 'default'}
@@ -240,7 +240,7 @@ export default function SubscriptionPage() {
             {/* Storage Usage */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Storage</span>
+                <span>{t('Storage')}</span>
                 <span className="text-muted-foreground">
                   {hospitalData.currentStorageMB} MB /{' '}
                   {hospitalData.maxStorageMB === -1
@@ -269,7 +269,7 @@ export default function SubscriptionPage() {
 
       {/* Available Plans */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Available Plans</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('Available Plans')}</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => {
             const Icon = plan.icon
@@ -306,7 +306,7 @@ export default function SubscriptionPage() {
                       )}
                     </div>
                   </div>
-                  <CardDescription>{plan.description}</CardDescription>
+                  <CardDescription>{t(plan.description)}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="mb-4">

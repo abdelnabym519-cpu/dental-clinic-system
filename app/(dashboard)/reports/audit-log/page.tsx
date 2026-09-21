@@ -120,7 +120,7 @@ export default function AuditLogPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6" /> Audit Log
           </h1>
-          <p className="text-muted-foreground">{total.toLocaleString()} total events</p>
+          <p className="text-muted-foreground">{total.toLocaleString()} {t('total events')}</p>
         </div>
         <Button variant="outline" onClick={exportLogs}>
           <Download className="h-4 w-4 mr-2" /> Export CSV
@@ -132,7 +132,7 @@ export default function AuditLogPage() {
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search logs..."
+            placeholder={t('Search logs...')}
             className="pl-9"
             value={search}
             onChange={(e) => {
@@ -152,11 +152,11 @@ export default function AuditLogPage() {
             <SelectValue placeholder={t('ui.action')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Actions</SelectItem>
-            <SelectItem value="CREATE">Create</SelectItem>
-            <SelectItem value="UPDATE">Update</SelectItem>
+            <SelectItem value="all">{t('All Actions')}</SelectItem>
+            <SelectItem value="CREATE">{t('Create')}</SelectItem>
+            <SelectItem value="UPDATE">{t('Update')}</SelectItem>
             <SelectItem value="DELETE">{t('ui.delete')}</SelectItem>
-            <SelectItem value="LOGIN">Login</SelectItem>
+            <SelectItem value="LOGIN">{t('Login')}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -167,14 +167,14 @@ export default function AuditLogPage() {
           }}
         >
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Entity" />
+            <SelectValue placeholder={t('Entity')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Entities</SelectItem>
+            <SelectItem value="all">{t('All Entities')}</SelectItem>
             <SelectItem value="Patient">{t('ui.patient')}</SelectItem>
             <SelectItem value="Appointment">{t('ui.appointment')}</SelectItem>
             <SelectItem value="Invoice">{t('ui.invoice')}</SelectItem>
-            <SelectItem value="User">User</SelectItem>
+            <SelectItem value="User">{t('User')}</SelectItem>
             <SelectItem value="Treatment">{t('ui.treatment')}</SelectItem>
           </SelectContent>
         </Select>
@@ -184,7 +184,7 @@ export default function AuditLogPage() {
       {logs.length === 0 ? (
         <EmptyState
           icon={Activity}
-          title="No audit logs found"
+          title={t('No audit logs found')}
           description="No activity matches your current filters. Try adjusting your search criteria."
         />
       ) : (

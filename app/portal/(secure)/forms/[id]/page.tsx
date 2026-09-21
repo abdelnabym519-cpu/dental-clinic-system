@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,6 +27,7 @@ interface Submission {
 }
 
 export default function PatientFormPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
   const [template, setTemplate] = useState<Template | null>(null)
@@ -98,12 +100,12 @@ export default function PatientFormPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="max-w-lg mx-auto text-center py-12 space-y-4">
         <CheckCircle2 className="h-16 w-16 mx-auto text-green-500" />
-        <h2 className="text-2xl font-bold">Form Submitted</h2>
+        <h2 className="text-2xl font-bold">{t('Form Submitted')}</h2>
         <p className="text-muted-foreground">
           Your {template.name} has been submitted successfully. The clinic team will review it
           shortly.
         </p>
-        <Button onClick={() => router.push('/portal/forms')}>Back to Forms</Button>
+        <Button onClick={() => router.push('/portal/forms')}>{t('Back to Forms')}</Button>
       </div>
     )
   }

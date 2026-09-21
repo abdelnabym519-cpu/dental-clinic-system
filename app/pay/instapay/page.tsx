@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +22,7 @@ import {
  * reference), so this page only presents the transfer details.
  */
 export default function InstaPayInstructionsPage() {
+  const { t } = useLanguage()
   const [reference, setReference] = useState('')
   const [amount, setAmount] = useState('')
   const [handle, setHandle] = useState('')
@@ -50,14 +52,14 @@ export default function InstaPayInstructionsPage() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Smartphone className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-xl">الدفع عبر InstaPay</CardTitle>
-          <p className="text-sm text-muted-foreground">Complete your payment with InstaPay</p>
+          <CardTitle className="text-xl">{t('Pay with InstaPay')}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t('Complete your payment with InstaPay')}</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Amount */}
           <div className="rounded-lg border bg-muted/30 p-4 text-center">
-            <p className="text-xs text-muted-foreground">المبلغ المطلوب / Amount due</p>
-            <p className="text-3xl font-bold">{amount ? `${amount} ج.م` : '—'}</p>
+            <p className="text-xs text-muted-foreground">{t('Amount due')}</p>
+            <p className="text-3xl font-bold">{amount ? `${amount} ${t('currency.egp')}` : '—'}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {amount ? `EGP ${Number(amount).toLocaleString('en-EG')}` : ''}
             </p>
@@ -65,7 +67,7 @@ export default function InstaPayInstructionsPage() {
 
           {/* InstaPay handle */}
           <div>
-            <p className="text-sm font-medium mb-1">حوِّل إلى عنوان InstaPay للعيادة</p>
+            <p className="text-sm font-medium mb-1">{t("Transfer to the clinic's InstaPay address")}</p>
             <p className="text-sm text-muted-foreground mb-2">
               Transfer to the clinic&apos;s InstaPay address (IPA)
             </p>
@@ -77,9 +79,9 @@ export default function InstaPayInstructionsPage() {
 
           {/* Reference */}
           <div>
-            <p className="text-sm font-medium mb-1">رقم المرجع (اكتبه في تعليمات التحويل)</p>
+            <p className="text-sm font-medium mb-1">{t('Reference number (include it in the transfer note)')}</p>
             <p className="text-sm text-muted-foreground mb-2">
-              Payment reference — include it in the transfer note
+              {t('Payment reference — include it in the transfer note')}
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 rounded-md border p-3 font-mono text-sm truncate" dir="ltr">
@@ -89,7 +91,7 @@ export default function InstaPayInstructionsPage() {
                 type="button"
                 onClick={copyReference}
                 className="shrink-0 rounded-md border p-3 hover:bg-muted"
-                aria-label="Copy reference"
+                aria-label={t('Copy reference')}
               >
                 {copied ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
@@ -104,22 +106,23 @@ export default function InstaPayInstructionsPage() {
 
           {/* Steps */}
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            <li>افتح تطبيق البنك واختر InstaPay / تحويل فوري</li>
-            <li>حوِّل المبلغ إلى العنوان أعلاه</li>
-            <li>اكتب رقم المرجع في ملاحظات التحويل</li>
-            <li>سيتم تأكيد الدفع من العيادة بعد وصول التحويل</li>
+            <li>{t('Open your bank app and choose InstaPay / Instant transfer')}</li>
+            <li>{t('Transfer the amount to the address above')}</li>
+            <li>{t('Write the reference number in the transfer notes')}</li>
+            <li>{t('The clinic will confirm the payment once the transfer arrives')}</li>
           </ol>
 
           <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
             <Clock className="h-4 w-4 shrink-0 mt-0.5" />
             <p>
-              لا تُغلق الصفحة حتى تُكمل التحويل — تأكيد الدفع يظهر في الفاتورة خلال دقائق من
-              استلام التحويل. / The clinic confirms the payment once the transfer arrives.
+              {t(
+                'The clinic confirms the payment once the transfer arrives. Do not close this page until the transfer is complete.'
+              )}
             </p>
           </div>
 
           <Badge variant="outline" className="w-full justify-center">
-            عيادة دنتورا للأسنان — Dentora Dental Clinic
+            {t('Dentora Dental Clinic')}
           </Badge>
         </CardContent>
       </Card>

@@ -288,8 +288,8 @@ export default function LeavesPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Leave Management</h1>
-            <p className="text-muted-foreground">Manage staff leave requests</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t('Leave Management')}</h1>
+            <p className="text-muted-foreground">{t('Manage staff leave requests')}</p>
           </div>
         </div>
         <Button onClick={() => setNewDialogOpen(true)}>
@@ -341,7 +341,7 @@ export default function LeavesPage() {
                 <TableHead>{t('ui.employee')}</TableHead>
                 <TableHead>{t('ui.leave_type')}</TableHead>
                 <TableHead>{t('ui.duration')}</TableHead>
-                <TableHead>Days</TableHead>
+                <TableHead>{t('Days')}</TableHead>
                 <TableHead>{t('ui.reason')}</TableHead>
                 <TableHead>{t('ui.status')}</TableHead>
                 <TableHead className="text-right">{t('ui.actions')}</TableHead>
@@ -379,7 +379,7 @@ export default function LeavesPage() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Calendar className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No leave requests found</p>
+                      <p className="text-muted-foreground">{t('No leave requests found')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -496,7 +496,7 @@ export default function LeavesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('ui.new_leave_request')}</DialogTitle>
-            <DialogDescription>Create a leave request for a staff member</DialogDescription>
+            <DialogDescription>{t('Create a leave request for a staff member')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -507,7 +507,7 @@ export default function LeavesPage() {
                 onValueChange={(value) => setNewLeaveForm((prev) => ({ ...prev, staffId: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select staff member" />
+                  <SelectValue placeholder={t('Select staff member')} />
                 </SelectTrigger>
                 <SelectContent>
                   {staffList.map((staff) => (
@@ -528,7 +528,7 @@ export default function LeavesPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select leave type" />
+                  <SelectValue placeholder={t('Select leave type')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="CASUAL">{t('ui.casual_leave')}</SelectItem>
@@ -569,7 +569,7 @@ export default function LeavesPage() {
               <Textarea
                 value={newLeaveForm.reason}
                 onChange={(e) => setNewLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
-                placeholder="Optional reason for leave"
+                placeholder={t('Optional reason for leave')}
                 rows={3}
               />
             </div>

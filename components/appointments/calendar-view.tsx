@@ -325,7 +325,7 @@ export function CalendarView({
         {breakStart && breakEnd && (
           <div
             aria-hidden
-            title="Clinic break"
+            title={t('Clinic break')}
             className="absolute left-0 right-0 bg-amber-100/70 dark:bg-amber-900/20 pointer-events-none"
             style={{
               top: `${pct(timeToMinutes(breakStart) - AGENDA_START_MINUTES)}%`,
@@ -638,7 +638,7 @@ export function CalendarView({
         {groups.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
             <Calendar className="h-8 w-8" />
-            <p className="text-sm">No appointments in this period</p>
+            <p className="text-sm">{t('No appointments in this period')}</p>
           </div>
         ) : (
           groups.map(({ day, appts }) => (
@@ -717,7 +717,7 @@ export function CalendarView({
             {dayAppointments.length === 0 && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Calendar className="h-8 w-8" />
-                <p className="text-sm">No appointments scheduled for this day</p>
+                <p className="text-sm">{t('No appointments scheduled for this day')}</p>
               </div>
             )}
 
@@ -875,14 +875,14 @@ export function CalendarView({
       {!hideToolbar && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="icon" onClick={navigatePrevious} aria-label="Previous period">
+            <Button variant="outline" size="icon" onClick={navigatePrevious} aria-label={t('Previous period')}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={navigateNext} aria-label="Next period">
+            <Button variant="outline" size="icon" onClick={navigateNext} aria-label={t('Next period')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
+              {t('Today')}
             </Button>
             <h2 className="text-lg font-semibold ml-2">{getDateLabel()}</h2>
           </div>
@@ -890,7 +890,7 @@ export function CalendarView({
           <div className="flex items-center gap-2">
             {providers && providers.length > 0 && (
               <Select value={doctorId} onValueChange={setDoctorId}>
-                <SelectTrigger className="w-[190px]" aria-label="Filter by provider">
+                <SelectTrigger className="w-[190px]" aria-label={t('Filter by provider')}>
                   <SelectValue placeholder={t('ui.all_providers')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -911,15 +911,15 @@ export function CalendarView({
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search patient…"
-                  aria-label="Search appointments by patient name or number"
+                  placeholder={t('Search patient…')}
+                  aria-label={t('Search appointments by patient name or number')}
                   className="h-9 w-[180px] pl-7"
                 />
               </div>
             )}
             {rooms && rooms.length > 0 && (
               <Select value={roomId} onValueChange={setRoomId}>
-                <SelectTrigger className="w-[150px]" aria-label="Filter by room">
+                <SelectTrigger className="w-[150px]" aria-label={t('Filter by room')}>
                   <SelectValue placeholder={t('ui.all_rooms')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -938,8 +938,8 @@ export function CalendarView({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="day">{t('ui.day')}</SelectItem>
-                <SelectItem value="week">Week</SelectItem>
-                <SelectItem value="month">Month</SelectItem>
+                <SelectItem value="week">{t('Week')}</SelectItem>
+                <SelectItem value="month">{t('Month')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -950,7 +950,7 @@ export function CalendarView({
       {loading ? (
         <div className="flex items-center justify-center h-96" role="status" aria-live="polite">
           <RefreshCw className="h-5 w-5 mr-2 animate-spin text-muted-foreground" />
-          <span className="text-muted-foreground">Loading calendar...</span>
+          <span className="text-muted-foreground">{t('Loading calendar...')}</span>
         </div>
       ) : error ? (
         <Card>
@@ -958,7 +958,7 @@ export function CalendarView({
             <Calendar className="h-10 w-10 text-destructive/60" />
             <p className="text-sm font-medium text-destructive">{error}</p>
             <p className="text-xs text-muted-foreground">
-              The schedule could not be loaded. Check your connection and try again.
+              {t('The schedule could not be loaded. Check your connection and try again.')}
             </p>
             <Button variant="outline" size="sm" onClick={fetchAppointments}>
               <RefreshCw className="h-4 w-4 mr-2" />{t('ui.retry')}</Button>
@@ -985,14 +985,14 @@ export function CalendarView({
       {/* Legend — status is communicated by label + tone, not color alone */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Status legend</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('Status legend')}</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
             {Object.entries(appointmentStatusConfig).map(([key, config]) => (
               <div key={key} className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded border ${config.bgColor}`} />
-                <span>{config.label}</span>
+                <span>{t(config.label)}</span>
               </div>
             ))}
           </div>

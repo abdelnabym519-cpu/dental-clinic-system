@@ -188,8 +188,8 @@ export default function EditPatientPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Edit Patient</h1>
-          <p className="text-muted-foreground">Update patient information</p>
+          <h1 className="text-2xl font-bold">{t('Edit Patient')}</h1>
+          <p className="text-muted-foreground">{t('Update patient information')}</p>
         </div>
       </div>
 
@@ -264,7 +264,7 @@ export default function EditPatientPage() {
                 <SelectContent>
                   {BLOOD_GROUPS.map((bg) => (
                     <SelectItem key={bg.value} value={bg.value}>
-                      {bg.label}
+                      {t(bg.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -357,7 +357,7 @@ export default function EditPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadharNumber">National ID (الرقم القومي)</Label>
+              <Label htmlFor="aadharNumber">{t('National ID')}</Label>
               <Input
                 id="aadharNumber"
                 value={form.aadharNumber}

@@ -162,7 +162,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white rounded-t-lg">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="bg-red-600 text-white border-red-600 animate-pulse">
-              LIVE
+              {t('LIVE')}
             </Badge>
             <div className="flex items-center gap-1 text-sm">
               <Clock className="h-3 w-3" />
@@ -199,7 +199,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center justify-center px-4 py-3 bg-gray-900 rounded-b-lg">
           <Button variant="destructive" size="lg" onClick={leaveCall} className="rounded-full px-6">
             <Phone className="h-5 w-5 mr-2 rotate-[135deg]" />
-            Leave Call
+            {t('Leave Call')}
           </Button>
         </div>
       </div>

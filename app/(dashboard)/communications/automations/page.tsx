@@ -197,7 +197,7 @@ export default function AutomationsPage() {
       return
     }
 
-    const triggerConfig = TRIGGER_TYPES.find((t) => t.value === formTriggerType)
+    const triggerConfig = TRIGGER_TYPES.find((opt) => opt.value === formTriggerType)
     const actionConfig = ACTION_TYPES.find((a) => a.value === formActionType)
 
     const triggerParams: Record<string, number | string> = {}
@@ -290,7 +290,7 @@ export default function AutomationsPage() {
   }
 
   const getTriggerLabel = (trigger: Automation['trigger']) => {
-    const config = TRIGGER_TYPES.find((t) => t.value === trigger.type)
+    const config = TRIGGER_TYPES.find((opt) => opt.value === trigger.type)
     if (!config) return trigger.type
     if (trigger.params.days) {
       return config.label.replace('X', String(trigger.params.days))
@@ -304,13 +304,13 @@ export default function AutomationsPage() {
   }
 
   // Filter templates based on selected action type
-  const filteredTemplates = templates.filter((t) => {
-    if (formActionType === 'SEND_SMS') return t.channel === 'SMS'
-    if (formActionType === 'SEND_EMAIL') return t.channel === 'EMAIL'
+  const filteredTemplates = templates.filter((opt) => {
+    if (formActionType === 'SEND_SMS') return opt.channel === 'SMS'
+    if (formActionType === 'SEND_EMAIL') return opt.channel === 'EMAIL'
     return true
   })
 
-  const selectedTrigger = TRIGGER_TYPES.find((t) => t.value === formTriggerType)
+  const selectedTrigger = TRIGGER_TYPES.find((opt) => opt.value === formTriggerType)
   const selectedAction = ACTION_TYPES.find((a) => a.value === formActionType)
 
   return (
@@ -318,9 +318,9 @@ export default function AutomationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Marketing Automations</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('Marketing Automations')}</h2>
           <p className="text-muted-foreground">
-            Create rules to automatically send messages based on patient events
+            {t('Create rules to automatically send messages based on patient events')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -329,7 +329,7 @@ export default function AutomationsPage() {
           </Button>
           <Button onClick={openCreateDialog}>
             <Plus className="h-4 w-4 mr-2" />
-            New Automation
+            {t('New Automation')}
           </Button>
         </div>
       </div>
@@ -343,13 +343,13 @@ export default function AutomationsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Zap className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No automations yet</h3>
+            <h3 className="text-lg font-semibold">{t('No automations yet')}</h3>
             <p className="text-muted-foreground text-sm mt-1 mb-4">
-              Create your first automation rule to start engaging patients automatically
+              {t('Create your first automation rule to start engaging patients automatically')}
             </p>
             <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Automation
+              {t('Create Automation')}
             </Button>
           </CardContent>
         </Card>
@@ -360,7 +360,7 @@ export default function AutomationsPage() {
               Active Rules ({automations.filter((a) => a.isActive).length}/{automations.length})
             </CardTitle>
             <CardDescription>
-              Automation rules are evaluated daily by the cron scheduler
+              {t('Automation rules are evaluated daily by the cron scheduler')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -368,11 +368,11 @@ export default function AutomationsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('ui.name')}</TableHead>
-                  <TableHead>Trigger</TableHead>
+                  <TableHead>{t('Trigger')}</TableHead>
                   <TableHead>{t('ui.action')}</TableHead>
                   <TableHead className="text-center">{t('ui.active')}</TableHead>
-                  <TableHead className="text-right">Runs</TableHead>
-                  <TableHead>Last Run</TableHead>
+                  <TableHead className="text-right">{t('Runs')}</TableHead>
+                  <TableHead>{t('Last Run')}</TableHead>
                   <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -431,14 +431,14 @@ export default function AutomationsPage() {
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Automation' : 'New Automation'}</DialogTitle>
             <DialogDescription>
-              Define the trigger condition and action for this automation rule
+              {t('Define the trigger condition and action for this automation rule')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Name */}
             <div className="space-y-2">
-              <Label>Automation Name</Label>
+              <Label>{t('Automation Name')}</Label>
               <Input
                 placeholder="e.g., Re-engage inactive patients"
                 value={formName}
@@ -453,17 +453,17 @@ export default function AutomationsPage() {
                 value={formTriggerType}
                 onValueChange={(v) => {
                   setFormTriggerType(v)
-                  const config = TRIGGER_TYPES.find((t) => t.value === v)
+                  const config = TRIGGER_TYPES.find((opt) => opt.value === v)
                   if (config) setFormTriggerDays(String(config.defaultParam))
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select trigger..." />
+                  <SelectValue placeholder={t('Select trigger...')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {TRIGGER_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
+                  {TRIGGER_TYPES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {t(opt.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -494,12 +494,12 @@ export default function AutomationsPage() {
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select action..." />
+                  <SelectValue placeholder={t('Select action...')} />
                 </SelectTrigger>
                 <SelectContent>
                   {ACTION_TYPES.map((a) => (
                     <SelectItem key={a.value} value={a.value}>
-                      {a.label}
+                      {t(a.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -509,20 +509,20 @@ export default function AutomationsPage() {
             {/* Template selection */}
             {selectedAction?.needsTemplate && (
               <div className="space-y-2">
-                <Label>Message Template</Label>
+                <Label>{t('Message Template')}</Label>
                 <Select value={formTemplateId} onValueChange={setFormTemplateId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select template..." />
+                    <SelectValue placeholder={t('Select template...')} />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredTemplates.length === 0 ? (
                       <SelectItem value="none" disabled>
-                        No templates found — create one first
+                        {t('No templates found — create one first')}
                       </SelectItem>
                     ) : (
-                      filteredTemplates.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name} ({t.category})
+                      filteredTemplates.map((opt) => (
+                        <SelectItem key={opt.id} value={opt.id}>
+                          {opt.name} ({opt.category})
                         </SelectItem>
                       ))
                     )}
@@ -535,7 +535,7 @@ export default function AutomationsPage() {
             {formActionType === 'CREATE_NOTIFICATION' && (
               <>
                 <div className="space-y-2">
-                  <Label>Notification Title</Label>
+                  <Label>{t('Notification Title')}</Label>
                   <Input
                     placeholder="e.g., Patient Follow-up Required"
                     value={formNotifTitle}
@@ -543,7 +543,7 @@ export default function AutomationsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Notification Message</Label>
+                  <Label>{t('Notification Message')}</Label>
                   <Input
                     placeholder="e.g., Patient has not visited in 6 months"
                     value={formNotifMessage}

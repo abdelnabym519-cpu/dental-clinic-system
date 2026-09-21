@@ -104,13 +104,13 @@ export default function PatientBills() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Bills & Payments</h1>
+      <h1 className="text-2xl font-bold">{t('Bills & Payments')}</h1>
 
       <Tabs value={statusFilter} onValueChange={setStatusFilter}>
         <TabsList>
           <TabsTrigger value="all">{t('ui.all')}</TabsTrigger>
           <TabsTrigger value="PENDING">{t('ui.pending')}</TabsTrigger>
-          <TabsTrigger value="PARTIALLY_PAID">Partial</TabsTrigger>
+          <TabsTrigger value="PARTIALLY_PAID">{t('Partial')}</TabsTrigger>
           <TabsTrigger value="PAID">{t('ui.paid')}</TabsTrigger>
         </TabsList>
 
@@ -125,7 +125,7 @@ export default function PatientBills() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <Receipt className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No bills found</p>
+                <p>{t('No bills found')}</p>
               </CardContent>
             </Card>
           ) : (

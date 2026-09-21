@@ -11,6 +11,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Check, Building2, Zap, Crown, Server, ArrowLeft } from 'lucide-react'
 
+import { getServerTranslator } from '@/lib/i18n/server'
+
 const plans = [
   {
     id: 'FREE',
@@ -133,7 +135,11 @@ const faqs = [
   },
 ]
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Server component: the locale comes from the `dentora-locale` cookie, so the
+  // plan copy is already Arabic in the server-rendered HTML.
+  const { t } = await getServerTranslator()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/5">
       {/* Header */}
@@ -148,11 +154,11 @@ export default function PricingPage() {
           <nav className="flex items-center gap-4">
             <Link href="/login">
               <Button variant="ghost" size="sm">
-                Sign In
+                {t('Sign In')}
               </Button>
             </Link>
             <Link href="/signup">
-              <Button size="sm">Get Started</Button>
+              <Button size="sm">{t('Get Started')}</Button>
             </Link>
           </nav>
         </div>
@@ -165,16 +171,16 @@ export default function PricingPage() {
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to home
+          {t('Back to home')}
         </Link>
 
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Simple, transparent pricing
+            {t('Simple, transparent pricing')}
           </h1>
           <p className="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
-            Choose the perfect plan for your dental practice. Start free and scale as you grow.
+            {t('Choose the perfect plan for your dental practice. Start free and scale as you grow.')}
           </p>
         </div>
 
@@ -191,7 +197,7 @@ export default function PricingPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary">Most Popular</Badge>
+                    <Badge className="bg-primary">{t('Most Popular')}</Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -204,17 +210,17 @@ export default function PricingPage() {
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
+                  <CardTitle className="text-xl">{t(plan.name)}</CardTitle>
+                  <CardDescription>{t(plan.description)}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
                       {plan.price === 'Custom' ? '' : 'EGP '}
                       {plan.price}
                     </span>
                     {plan.priceNote ? (
-                      <span className="text-muted-foreground"> {plan.priceNote}</span>
+                      <span className="text-muted-foreground"> {t(plan.priceNote)}</span>
                     ) : plan.price !== '0' && plan.price !== 'Custom' ? (
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">{t('/month')}</span>
                     ) : null}
                   </div>
                 </CardHeader>
@@ -223,7 +229,7 @@ export default function PricingPage() {
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2 text-sm">
                         <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                        <span>{feature}</span>
+                        <span>{t(feature)}</span>
                       </li>
                     ))}
                   </ul>
@@ -231,7 +237,7 @@ export default function PricingPage() {
                 <CardFooter>
                   <Link href="/signup" className="w-full">
                     <Button className="w-full" variant={plan.ctaVariant}>
-                      {plan.cta}
+                      {t(plan.cta)}
                     </Button>
                   </Link>
                 </CardFooter>
@@ -242,15 +248,15 @@ export default function PricingPage() {
 
         {/* FAQ Section */}
         <div className="mt-24 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Frequently asked questions</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{t('Frequently asked questions')}</h2>
           <div className="space-y-6">
             {faqs.map((faq) => (
               <Card key={faq.question}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{faq.question}</CardTitle>
+                  <CardTitle className="text-lg">{t(faq.question)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{faq.answer}</p>
+                  <p className="text-muted-foreground">{t(faq.answer)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -261,13 +267,13 @@ export default function PricingPage() {
         <div className="mt-24 text-center">
           <Card className="bg-primary text-primary-foreground max-w-3xl mx-auto">
             <CardContent className="py-12">
-              <h2 className="text-2xl font-bold mb-4">Ready to get started?</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('Ready to get started?')}</h2>
               <p className="text-lg opacity-90 mb-8">
-                Start with our free plan and upgrade when you need more.
+                {t('Start with our free plan and upgrade when you need more.')}
               </p>
               <Link href="/signup">
                 <Button size="lg" variant="secondary">
-                  Create Free Account
+                  {t('Create Free Account')}
                 </Button>
               </Link>
             </CardContent>
@@ -278,7 +284,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t mt-24 py-8">
         <div className="container text-center text-sm text-muted-foreground">
-          Dentora - Complete Dental Practice Management Solution
+          {t('Dentora - Complete Dental Practice Management Solution')}
         </div>
       </footer>
     </div>

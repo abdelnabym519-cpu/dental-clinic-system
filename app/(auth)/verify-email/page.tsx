@@ -113,7 +113,7 @@ function VerifyEmailContent() {
         {status === 'error' && (
           <div className="space-y-2">
             <Button asChild variant="outline" className="w-full">
-              <Link href="/signup">Try signing up again</Link>
+              <Link href="/signup">{t('Try signing up again')}</Link>
             </Button>
             <Button asChild variant="ghost" className="w-full">
               <Link href="/login">{t('ui.back_to_login')}</Link>
@@ -124,11 +124,11 @@ function VerifyEmailContent() {
         {status === 'pending' && (
           <div className="space-y-4">
             <div className="text-center text-sm text-muted-foreground">
-              <p>Didn&apos;t receive the email?</p>
-              <p>Check your spam folder or click below to resend.</p>
+              <p>{t("Didn't receive the email?")}</p>
+              <p>{t('Check your spam folder or click below to resend.')}</p>
             </div>
             <Button variant="outline" className="w-full" onClick={resendVerification}>
-              Resend Verification Email
+              {t('Resend Verification Email')}
             </Button>
             <Button asChild variant="ghost" className="w-full">
               <Link href="/login">{t('ui.back_to_login')}</Link>

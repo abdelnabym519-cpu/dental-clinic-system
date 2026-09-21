@@ -171,7 +171,7 @@ export default function PaymentsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.payments')}</h1>
-          <p className="text-muted-foreground">View and manage all payment transactions</p>
+          <p className="text-muted-foreground">{t('View and manage all payment transactions')}</p>
         </div>
         <ExportMenu
           filename="payments"
@@ -197,7 +197,7 @@ export default function PaymentsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Received</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Received')}</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -213,7 +213,7 @@ export default function PaymentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Refunded</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Refunded')}</CardTitle>
             <RotateCcw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -229,7 +229,7 @@ export default function PaymentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Collection</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Net Collection')}</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -251,7 +251,7 @@ export default function PaymentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by payment number, invoice, or patient..."
+                placeholder={t('Search by payment number, invoice, or patient...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -354,7 +354,7 @@ export default function PaymentsPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <CreditCard className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No payments found</p>
+                      <p className="text-muted-foreground">{t('No payments found')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -424,14 +424,14 @@ export default function PaymentsPage() {
                             onClick={() => router.push(`/billing/invoices/${payment.invoice.id}`)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            View Invoice
+                            {t('View Invoice')}
                           </DropdownMenuItem>
                           {payment.status === 'COMPLETED' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/billing/payments/${payment.id}/refund`)}
                             >
                               <RotateCcw className="h-4 w-4 mr-2" />
-                              Process Refund
+                              {t('Process Refund')}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>

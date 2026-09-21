@@ -287,7 +287,7 @@ export default function QueueManagementPage() {
           {appointment.waitTime !== null && appointment.waitTime > 0 && (
             <Badge variant="outline" className="text-xs">
               <Timer className="h-3 w-3 mr-1" />
-              {appointment.waitTime} min wait
+              {appointment.waitTime} {t('min wait')}
             </Badge>
           )}
         </div>
@@ -341,7 +341,7 @@ export default function QueueManagementPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Today&apos;s Queue</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("Today's Queue")}</h1>
           <p className="text-muted-foreground">{today}</p>
         </div>
         <div className="flex gap-2">
@@ -427,16 +427,16 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Timer className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Avg Wait</span>
+              <span className="text-sm text-muted-foreground">{t('Avg Wait')}</span>
             </div>
-            <p className="text-2xl font-bold">{stats.avgWaitTime} min</p>
+            <p className="text-2xl font-bold">{stats.avgWaitTime} {t('min')}</p>
           </CardContent>
         </Card>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse text-muted-foreground">Loading queue...</div>
+          <div className="animate-pulse text-muted-foreground">{t('Loading queue...')}</div>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
@@ -447,11 +447,11 @@ export default function QueueManagementPage() {
                 <Clock className="h-5 w-5" />
                 Waiting ({queue.waiting.length})
               </CardTitle>
-              <CardDescription>Patients checked in and waiting</CardDescription>
+              <CardDescription>{t('Patients checked in and waiting')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 max-h-[500px] overflow-y-auto">
               {queue.waiting.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No patients waiting</p>
+                <p className="text-center text-muted-foreground py-8">{t('No patients waiting')}</p>
               ) : (
                 queue.waiting.map((apt) => <AppointmentCard key={apt.id} appointment={apt} />)
               )}
@@ -465,11 +465,11 @@ export default function QueueManagementPage() {
                 <Play className="h-5 w-5" />
                 In Progress ({queue.inProgress.length})
               </CardTitle>
-              <CardDescription>Currently being attended</CardDescription>
+              <CardDescription>{t('Currently being attended')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 max-h-[500px] overflow-y-auto">
               {queue.inProgress.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No treatments in progress</p>
+                <p className="text-center text-muted-foreground py-8">{t('No treatments in progress')}</p>
               ) : (
                 queue.inProgress.map((apt) => <AppointmentCard key={apt.id} appointment={apt} />)
               )}
@@ -483,11 +483,11 @@ export default function QueueManagementPage() {
                 <Calendar className="h-5 w-5" />
                 Upcoming ({queue.upcoming.length})
               </CardTitle>
-              <CardDescription>Scheduled appointments today</CardDescription>
+              <CardDescription>{t('Scheduled appointments today')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 max-h-[500px] overflow-y-auto">
               {queue.upcoming.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No more appointments today</p>
+                <p className="text-center text-muted-foreground py-8">{t('No more appointments today')}</p>
               ) : (
                 queue.upcoming.map((apt) => <AppointmentCard key={apt.id} appointment={apt} />)
               )}

@@ -143,8 +143,8 @@ export default function NewPatientPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">New Patient</h1>
-          <p className="text-muted-foreground">Register a new patient</p>
+          <h1 className="text-2xl font-bold">{t('New Patient')}</h1>
+          <p className="text-muted-foreground">{t('Register a new patient')}</p>
         </div>
       </div>
 
@@ -219,7 +219,7 @@ export default function NewPatientPage() {
                 <SelectContent>
                   {BLOOD_GROUPS.map((bg) => (
                     <SelectItem key={bg.value} value={bg.value}>
-                      {bg.label}
+                      {t(bg.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -295,7 +295,7 @@ export default function NewPatientPage() {
 <datalist id="egypt-governorates">
                   {EGYPT_GOVERNORATES.map((g) => (
                     <option key={g.value} value={g.value}>
-                      {g.label}
+                      {t(g.label)}
                     </option>
                   ))}
                 </datalist>
@@ -417,7 +417,7 @@ export default function NewPatientPage() {
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Create Patient
+                {t('Create Patient')}
               </>
             )}
           </Button>

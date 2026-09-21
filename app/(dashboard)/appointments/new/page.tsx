@@ -244,7 +244,7 @@ export default function NewAppointmentPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_appointment')}</h1>
-          <p className="text-muted-foreground">Schedule a new appointment for a patient</p>
+          <p className="text-muted-foreground">{t('Schedule a new appointment for a patient')}</p>
         </div>
       </div>
 
@@ -255,7 +255,7 @@ export default function NewAppointmentPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
-              <CardDescription>Select the patient for this appointment</CardDescription>
+              <CardDescription>{t('Select the patient for this appointment')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {selectedPatient ? (
@@ -281,7 +281,7 @@ export default function NewAppointmentPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Search patient by name, phone, or ID..."
+                      placeholder={t('Search patient by name, phone, or ID...')}
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
                       className="pl-9"
@@ -293,7 +293,7 @@ export default function NewAppointmentPage() {
                         <p>{t('ui.no_patients_found')}</p>
                         <Link href="/patients/new">
                           <Button variant="link" size="sm">
-                            Add New Patient
+                            {t('Add New Patient')}
                           </Button>
                         </Link>
                       </div>
@@ -329,7 +329,7 @@ export default function NewAppointmentPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />{t('ui.schedule')}</CardTitle>
-              <CardDescription>Select doctor, date, and time for the appointment</CardDescription>
+              <CardDescription>{t('Select doctor, date, and time for the appointment')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -388,7 +388,7 @@ export default function NewAppointmentPage() {
                     <Loader2 className="h-4 w-4 animate-spin" />{t('ui.loading_available_slots')}</div>
                 ) : !selectedDoctor || !selectedDate ? (
                   <p className="p-4 text-sm text-muted-foreground">
-                    Select doctor and date to see available slots
+                    {t('Select doctor and date to see available slots')}
                   </p>
                 ) : timeSlots.length === 0 ? (
                   <p className="p-4 text-sm text-muted-foreground">{t('ui.no_available_slots_for_this_date')}</p>
@@ -425,7 +425,7 @@ export default function NewAppointmentPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />{t('ui.appointment_details')}</CardTitle>
-              <CardDescription>Additional information about the appointment</CardDescription>
+              <CardDescription>{t('Additional information about the appointment')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
@@ -483,7 +483,7 @@ export default function NewAppointmentPage() {
                       Virtual Visit (Video Consultation)
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Enable to create a tele-dentistry video consultation for this appointment
+                      {t('Enable to create a tele-dentistry video consultation for this appointment')}
                     </p>
                   </div>
                   <Switch checked={isVirtual} onCheckedChange={setIsVirtual} />

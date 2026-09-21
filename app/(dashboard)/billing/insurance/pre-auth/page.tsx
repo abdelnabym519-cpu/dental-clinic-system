@@ -143,7 +143,7 @@ export default function PreAuthorizationsPage() {
     return (
       <Badge variant={config.variant} className="gap-1">
         <Icon className="h-3 w-3" />
-        {config.label}
+        {t(config.label)}
       </Badge>
     )
   }
@@ -152,13 +152,13 @@ export default function PreAuthorizationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pre-Authorizations</h1>
-          <p className="text-muted-foreground">Manage insurance pre-authorization requests</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('Pre-Authorizations')}</h1>
+          <p className="text-muted-foreground">{t('Manage insurance pre-authorization requests')}</p>
         </div>
         <Button asChild>
           <Link href="/billing/insurance/pre-auth/new">
             <Plus className="h-4 w-4 mr-2" />
-            New Pre-Auth
+            {t('New Pre-Auth')}
           </Link>
         </Button>
       </div>
@@ -175,7 +175,7 @@ export default function PreAuthorizationsPage() {
             >
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{count}</div>
-                <div className="text-sm text-muted-foreground">{config.label}</div>
+                <div className="text-sm text-muted-foreground">{t(config.label)}</div>
               </CardContent>
             </Card>
           )
@@ -188,7 +188,7 @@ export default function PreAuthorizationsPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by auth number or patient..."
+                placeholder={t('Search by auth number or patient...')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -211,7 +211,7 @@ export default function PreAuthorizationsPage() {
                 <SelectItem value="all">{t('ui.all_statuses')}</SelectItem>
                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>
-                    {config.label}
+                    {t(config.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -228,7 +228,7 @@ export default function PreAuthorizationsPage() {
           ) : preAuths.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileCheck className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No pre-authorizations found</p>
+              <p className="font-medium">{t('No pre-authorizations found')}</p>
             </div>
           ) : (
             <>
@@ -239,7 +239,7 @@ export default function PreAuthorizationsPage() {
                     <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>{t('ui.provider')}</TableHead>
                     <TableHead>{t('ui.procedures')}</TableHead>
-                    <TableHead className="text-right">Est. Cost</TableHead>
+                    <TableHead className="text-right">{t('Est. Cost')}</TableHead>
                     <TableHead className="text-right">{t('ui.approved')}</TableHead>
                     <TableHead>{t('ui.status')}</TableHead>
                     <TableHead>{t('ui.date')}</TableHead>
@@ -326,13 +326,13 @@ export default function PreAuthorizationsPage() {
       <Dialog open={!!viewItem} onOpenChange={() => setViewItem(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Pre-Authorization Details</DialogTitle>
+            <DialogTitle>{t('Pre-Authorization Details')}</DialogTitle>
           </DialogHeader>
           {viewItem && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Auth Number</p>
+                  <p className="text-sm text-muted-foreground">{t('Auth Number')}</p>
                   <p className="font-medium">{viewItem.authNumber || 'Not assigned'}</p>
                 </div>
                 {getStatusBadge(viewItem.status)}
@@ -350,7 +350,7 @@ export default function PreAuthorizationsPage() {
                   <p className="font-medium">{viewItem.policy.provider.name}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Policy</p>
+                  <p className="text-muted-foreground">{t('Policy')}</p>
                   <p className="font-medium">{viewItem.policy.policyNumber}</p>
                 </div>
                 <div>
@@ -359,7 +359,7 @@ export default function PreAuthorizationsPage() {
                 </div>
                 {viewItem.approvedAmount && (
                   <div>
-                    <p className="text-muted-foreground">Approved Amount</p>
+                    <p className="text-muted-foreground">{t('Approved Amount')}</p>
                     <p className="font-medium text-green-600">
                       {formatCurrency(Number(viewItem.approvedAmount))}
                     </p>
@@ -395,7 +395,7 @@ export default function PreAuthorizationsPage() {
 
               {viewItem.denialReason && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Denial Reason</p>
+                  <p className="text-sm text-muted-foreground">{t('Denial Reason')}</p>
                   <p className="text-sm text-destructive">{viewItem.denialReason}</p>
                 </div>
               )}

@@ -174,13 +174,13 @@ export function PayPage({
           {isExpired && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 text-yellow-700 text-sm">
               <Clock className="h-4 w-4" />
-              This payment link has expired. Please contact the clinic for a new link.
+              {t('This payment link has expired. Please contact the clinic for a new link.')}
             </div>
           )}
           {isUsed && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 text-blue-700 text-sm">
               <CheckCircle className="h-4 w-4" />
-              This payment link has already been used.
+              {t('This payment link has already been used.')}
             </div>
           )}
           {isPaid && (
@@ -213,7 +213,7 @@ export function PayPage({
             )}
             <Separator />
             <div className="flex justify-between font-semibold">
-              <span>Amount Due</span>
+              <span>{t('Amount Due')}</span>
               <span className="text-lg">{formatCurrency(amount)}</span>
             </div>
           </div>
@@ -245,7 +245,7 @@ export function PayPage({
           {state === 'success' && (
             <div className="flex flex-col items-center py-6 gap-3">
               <CheckCircle className="h-12 w-12 text-green-500" />
-              <p className="font-medium text-green-700">Payment Successful!</p>
+              <p className="font-medium text-green-700">{t('Payment Successful!')}</p>
               <p className="text-sm text-muted-foreground text-center">
                 {formatCurrency(amount)} has been received for invoice {invoice.invoiceNo}. Thank
                 you!
@@ -265,7 +265,7 @@ export function PayPage({
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            Secure payment powered by your clinic&apos;s payment gateway
+            {t("Secure payment powered by your clinic's payment gateway")}
           </p>
         </CardContent>
       </Card>

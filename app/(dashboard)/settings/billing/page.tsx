@@ -102,10 +102,10 @@ export default function BillingSettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Receipt className="w-8 h-8" />
-          Billing Settings
+          {t('Billing Settings')}
         </h1>
         <p className="text-muted-foreground">
-          Configure invoicing, tax rates, and payment settings
+          {t('Configure invoicing, tax rates, and payment settings')}
         </p>
       </div>
 
@@ -116,8 +116,8 @@ export default function BillingSettingsPage() {
         {/* Tax Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Tax Configuration</CardTitle>
-            <CardDescription>VAT (ضريبة القيمة المضافة) rate for invoicing</CardDescription>
+            <CardTitle>{t('Tax Configuration')}</CardTitle>
+            <CardDescription>{t('VAT (ضريبة القيمة المضافة) rate for invoicing')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,33 +147,33 @@ export default function BillingSettingsPage() {
         {/* Invoice Format */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Format</CardTitle>
-            <CardDescription>Customize invoice and receipt numbering</CardDescription>
+            <CardTitle>{t('Invoice Format')}</CardTitle>
+            <CardDescription>{t('Customize invoice and receipt numbering')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                <Label htmlFor="invoicePrefix">{t('Invoice Prefix')}</Label>
                 <Input
                   id="invoicePrefix"
                   value={settings.invoicePrefix}
                   onChange={(e) => setSettings({ ...settings, invoicePrefix: e.target.value })}
-                  placeholder="INV"
+                  placeholder={t('INV')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="receiptPrefix">Receipt Prefix</Label>
+                <Label htmlFor="receiptPrefix">{t('Receipt Prefix')}</Label>
                 <Input
                   id="receiptPrefix"
                   value={settings.receiptPrefix}
                   onChange={(e) => setSettings({ ...settings, receiptPrefix: e.target.value })}
-                  placeholder="REC"
+                  placeholder={t('REC')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="invoiceStartingNumber">Starting Number</Label>
+                <Label htmlFor="invoiceStartingNumber">{t('Starting Number')}</Label>
                 <Input
                   id="invoiceStartingNumber"
                   type="number"
@@ -198,7 +198,7 @@ export default function BillingSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.payment_terms')}</CardTitle>
-            <CardDescription>Default payment policies</CardDescription>
+            <CardDescription>{t('Default payment policies')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -212,7 +212,7 @@ export default function BillingSettingsPage() {
                     setSettings({ ...settings, defaultPaymentTerms: e.target.value })
                   }
                 />
-                <p className="text-sm text-muted-foreground mt-1">Days until payment is due</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('Days until payment is due')}</p>
               </div>
 
               <div>
@@ -224,18 +224,18 @@ export default function BillingSettingsPage() {
                   value={settings.lateFeePercentage}
                   onChange={(e) => setSettings({ ...settings, lateFeePercentage: e.target.value })}
                 />
-                <p className="text-sm text-muted-foreground mt-1">Late payment penalty</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('Late payment penalty')}</p>
               </div>
 
               <div>
-                <Label htmlFor="minimumDueAmount">Minimum Due Amount</Label>
+                <Label htmlFor="minimumDueAmount">{t('Minimum Due Amount')}</Label>
                 <Input
                   id="minimumDueAmount"
                   type="number"
                   value={settings.minimumDueAmount}
                   onChange={(e) => setSettings({ ...settings, minimumDueAmount: e.target.value })}
                 />
-                <p className="text-sm text-muted-foreground mt-1">Minimum invoice amount</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('Minimum invoice amount')}</p>
               </div>
             </div>
           </CardContent>
@@ -244,28 +244,28 @@ export default function BillingSettingsPage() {
         {/* Currency */}
         <Card>
           <CardHeader>
-            <CardTitle>Currency Settings</CardTitle>
-            <CardDescription>Configure currency display</CardDescription>
+            <CardTitle>{t('Currency Settings')}</CardTitle>
+            <CardDescription>{t('Configure currency display')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="currencyCode">Currency Code</Label>
+                <Label htmlFor="currencyCode">{t('Currency Code')}</Label>
                 <Input
                   id="currencyCode"
                   value={settings.currencyCode}
                   onChange={(e) => setSettings({ ...settings, currencyCode: e.target.value })}
-                  placeholder="EGP"
+                  placeholder={t('EGP')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="currencySymbol">Currency Symbol</Label>
+                <Label htmlFor="currencySymbol">{t('Currency Symbol')}</Label>
                 <Input
                   id="currencySymbol"
                   value={settings.currencySymbol}
                   onChange={(e) => setSettings({ ...settings, currencySymbol: e.target.value })}
-                  placeholder="EGP "
+                  placeholder={t('EGP ')}
                 />
               </div>
             </div>
@@ -275,34 +275,34 @@ export default function BillingSettingsPage() {
         {/* Invoice Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Footer</CardTitle>
-            <CardDescription>Default notes and terms for invoices</CardDescription>
+            <CardTitle>{t('Invoice Footer')}</CardTitle>
+            <CardDescription>{t('Default notes and terms for invoices')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="invoiceNotes">Invoice Notes</Label>
+              <Label htmlFor="invoiceNotes">{t('Invoice Notes')}</Label>
               <Textarea
                 id="invoiceNotes"
                 value={settings.invoiceNotes}
                 onChange={(e) => setSettings({ ...settings, invoiceNotes: e.target.value })}
                 rows={2}
-                placeholder="Thank you for choosing our services."
+                placeholder={t('Thank you for choosing our services.')}
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Appears at the bottom of invoices
+                {t('Appears at the bottom of invoices')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="termsAndConditions">Terms and Conditions</Label>
+              <Label htmlFor="termsAndConditions">{t('Terms and Conditions')}</Label>
               <Textarea
                 id="termsAndConditions"
                 value={settings.termsAndConditions}
                 onChange={(e) => setSettings({ ...settings, termsAndConditions: e.target.value })}
                 rows={4}
-                placeholder="Payment is due within 30 days..."
+                placeholder={t('Payment is due within 30 days...')}
               />
-              <p className="text-sm text-muted-foreground mt-1">Payment terms and conditions</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('Payment terms and conditions')}</p>
             </div>
           </CardContent>
         </Card>

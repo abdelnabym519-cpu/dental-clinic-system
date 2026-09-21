@@ -221,8 +221,8 @@ export default function DevicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Device Management</h1>
-          <p className="text-muted-foreground">Monitor and manage connected IoT devices</p>
+          <h1 className="text-2xl font-bold">{t('Device Management')}</h1>
+          <p className="text-muted-foreground">{t('Monitor and manage connected IoT devices')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchDevices}>
@@ -234,7 +234,7 @@ export default function DevicesPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Register New Device</DialogTitle>
+                <DialogTitle>{t('Register New Device')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -252,9 +252,9 @@ export default function DevicesPage() {
                       <SelectValue placeholder={t('ui.select_type')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {DEVICE_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                      {DEVICE_TYPES.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -277,7 +277,7 @@ export default function DevicesPage() {
                   />
                 </div>
                 <div>
-                  <Label>IP Address</Label>
+                  <Label>{t('IP Address')}</Label>
                   <Input
                     value={formIp}
                     onChange={(e) => setFormIp(e.target.value)}
@@ -299,7 +299,7 @@ export default function DevicesPage() {
               <Monitor className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">{summary.total}</p>
-                <p className="text-xs text-muted-foreground">Total Devices</p>
+                <p className="text-xs text-muted-foreground">{t('Total Devices')}</p>
               </div>
             </div>
           </CardContent>
@@ -358,9 +358,9 @@ export default function DevicesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('ui.all_types')}</SelectItem>
-            {DEVICE_TYPES.map((t) => (
-              <SelectItem key={t.value} value={t.value}>
-                {t.label}
+            {DEVICE_TYPES.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {t(opt.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -388,10 +388,10 @@ export default function DevicesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-center py-8 text-muted-foreground">Loading devices...</p>
+            <p className="text-center py-8 text-muted-foreground">{t('Loading devices...')}</p>
           ) : devices.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
-              No devices registered. Click &quot;Register Device&quot; to add one.
+              {t('No devices registered. Click "Register Device" to add one.')}
             </p>
           ) : (
             <Table>
@@ -401,8 +401,8 @@ export default function DevicesPage() {
                   <TableHead>{t('ui.type')}</TableHead>
                   <TableHead>{t('ui.location')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
-                  <TableHead>Last Ping</TableHead>
-                  <TableHead>Latest Data</TableHead>
+                  <TableHead>{t('Last Ping')}</TableHead>
+                  <TableHead>{t('Latest Data')}</TableHead>
                   <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -425,7 +425,7 @@ export default function DevicesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {DEVICE_TYPES.find((t) => t.value === device.type)?.label || device.type}
+                          {DEVICE_TYPES.find((opt) => opt.value === device.type)?.label || device.type}
                         </Badge>
                       </TableCell>
                       <TableCell>{device.location || '—'}</TableCell>
@@ -465,7 +465,7 @@ export default function DevicesPage() {
                             </p>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">No data</span>
+                          <span className="text-xs text-muted-foreground">{t('No data')}</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -490,21 +490,21 @@ export default function DevicesPage() {
       {/* API Integration Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Device Integration API</CardTitle>
+          <CardTitle className="text-sm">{t('Device Integration API')}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>Connected devices can push data using these endpoints:</p>
           <div className="bg-muted/50 p-3 rounded-md font-mono text-xs space-y-1">
             <p>
-              <span className="text-green-600 font-semibold">POST</span> /api/devices/register —
+              <span className="text-green-600 font-semibold">{t('POST')}</span> /api/devices/register —
               Register new device
             </p>
             <p>
-              <span className="text-blue-600 font-semibold">POST</span> /api/devices/data — Push
+              <span className="text-blue-600 font-semibold">{t('POST')}</span> /api/devices/data — Push
               sensor readings
             </p>
             <p>
-              <span className="text-purple-600 font-semibold">GET</span> /api/devices/status — Get
+              <span className="text-purple-600 font-semibold">{t('GET')}</span> /api/devices/status — Get
               device statuses
             </p>
           </div>

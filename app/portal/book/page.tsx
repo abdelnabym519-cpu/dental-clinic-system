@@ -189,7 +189,7 @@ export default function BookAppointment() {
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5" /> Select Doctor
             </CardTitle>
-            <CardDescription>Choose your preferred doctor</CardDescription>
+            <CardDescription>{t('Choose your preferred doctor')}</CardDescription>
           </CardHeader>
           <CardContent>
             {doctorsLoading ? (
@@ -200,7 +200,7 @@ export default function BookAppointment() {
               </div>
             ) : doctors.length === 0 ? (
               <p className="text-muted-foreground text-center py-4">
-                No doctors available for booking
+                {t('No doctors available for booking')}
               </p>
             ) : (
               <div className="space-y-2">
@@ -260,12 +260,12 @@ export default function BookAppointment() {
 
             {selectedDate && (
               <div className="space-y-2">
-                <Label>Available Time Slots</Label>
+                <Label>{t('Available Time Slots')}</Label>
                 {slotsLoading ? (
                   <Skeleton className="h-32" />
                 ) : availableSlots.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-4 text-center">
-                    No slots available on this date
+                    {t('No slots available on this date')}
                   </p>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
@@ -358,7 +358,7 @@ export default function BookAppointment() {
         <Card>
           <CardContent className="py-8 text-center space-y-4">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
-            <h2 className="text-xl font-bold text-green-700">Booking Confirmed!</h2>
+            <h2 className="text-xl font-bold text-green-700">{t('Booking Confirmed!')}</h2>
             <div className="p-4 rounded-lg bg-green-50 space-y-2 text-sm">
               <p>
                 <strong>Appointment:</strong> {bookingResult.appointmentNo}
@@ -385,7 +385,7 @@ export default function BookAppointment() {
               </p>
             </div>
             <Button onClick={() => router.push('/portal/appointments')}>
-              View My Appointments
+              {t('View My Appointments')}
             </Button>
           </CardContent>
         </Card>

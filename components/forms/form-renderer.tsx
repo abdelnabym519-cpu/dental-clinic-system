@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -69,6 +70,7 @@ export function FormRenderer({
   signatureLabel,
   submitLabel = 'Submit Form',
 }: FormRendererProps) {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState<Record<string, unknown>>(initialData)
   const [signature, setSignature] = useState<string | null>(initialSignature)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -367,10 +369,10 @@ export function FormRenderer({
               />
             ) : signature ? (
               <div className="border rounded-lg p-2 bg-background">
-                <img src={signature} alt="Signature" className="max-h-[150px]" />
+                <img src={signature} alt={t('Signature')} className="max-h-[150px]" />
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No signature</p>
+              <p className="text-sm text-muted-foreground italic">{t('No signature')}</p>
             )}
             {errors['_signature'] && (
               <p className="text-xs text-destructive">{errors['_signature']}</p>

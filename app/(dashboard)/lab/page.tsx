@@ -249,7 +249,7 @@ export default function LabWorkPage() {
     return (
       <Badge className={config.className}>
         <Icon className="mr-1 h-3 w-3" />
-        {config.label}
+        {t(config.label)}
       </Badge>
     )
   }
@@ -262,7 +262,7 @@ export default function LabWorkPage() {
     }
 
     const config = configs[priority] || configs.normal
-    return <Badge className={config.className}>{config.label}</Badge>
+    return <Badge className={config.className}>{t(config.label)}</Badge>
   }
 
   // workType is the LabWorkType enum (NIGHT_GUARD, ...), so lower-case the
@@ -297,9 +297,9 @@ export default function LabWorkPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lab Work Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Lab Work Management')}</h1>
           <p className="text-muted-foreground">
-            Manage lab orders, vendors, and track work progress
+            {t('Manage lab orders, vendors, and track work progress')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -331,7 +331,7 @@ export default function LabWorkPage() {
           />
           <Button variant="outline" onClick={() => router.push('/lab/vendors')}>
             <Users className="mr-2 h-4 w-4" />
-            Manage Vendors
+            {t('Manage Vendors')}
           </Button>
           <Button onClick={() => router.push('/lab/orders/new')}>
             <Plus className="mr-2 h-4 w-4" />{t('ui.new_lab_order')}</Button>
@@ -342,7 +342,7 @@ export default function LabWorkPage() {
       <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Orders')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -412,7 +412,7 @@ export default function LabWorkPage() {
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search orders, patients..."
+                placeholder={t('Search orders, patients...')}
                 className="pl-8"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -427,11 +427,11 @@ export default function LabWorkPage() {
                 <SelectItem value="CREATED">{t('ui.created')}</SelectItem>
                 <SelectItem value="SENT_TO_LAB">{t('ui.sent_to_lab')}</SelectItem>
                 <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
-                <SelectItem value="QUALITY_CHECK">Quality Check</SelectItem>
+                <SelectItem value="QUALITY_CHECK">{t('Quality Check')}</SelectItem>
                 <SelectItem value="READY">{t('ui.ready')}</SelectItem>
                 <SelectItem value="DELIVERED">{t('ui.delivered')}</SelectItem>
-                <SelectItem value="FITTED">Fitted</SelectItem>
-                <SelectItem value="REMAKE_REQUIRED">Remake Required</SelectItem>
+                <SelectItem value="FITTED">{t('Fitted')}</SelectItem>
+                <SelectItem value="REMAKE_REQUIRED">{t('Remake Required')}</SelectItem>
                 <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
               </SelectContent>
             </Select>
@@ -454,17 +454,17 @@ export default function LabWorkPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('ui.all_work_types')}</SelectItem>
-                <SelectItem value="CROWN">Crown</SelectItem>
-                <SelectItem value="BRIDGE">Bridge</SelectItem>
-                <SelectItem value="DENTURE">Denture</SelectItem>
-                <SelectItem value="PARTIAL_DENTURE">Partial Denture</SelectItem>
-                <SelectItem value="IMPLANT_CROWN">Implant Crown</SelectItem>
-                <SelectItem value="VENEER">Veneer</SelectItem>
-                <SelectItem value="INLAY_ONLAY">Inlay/Onlay</SelectItem>
-                <SelectItem value="NIGHT_GUARD">Night Guard</SelectItem>
-                <SelectItem value="RETAINER">Retainer</SelectItem>
-                <SelectItem value="ALIGNER">Aligner</SelectItem>
-                <SelectItem value="MODEL">Model</SelectItem>
+                <SelectItem value="CROWN">{t('Crown')}</SelectItem>
+                <SelectItem value="BRIDGE">{t('Bridge')}</SelectItem>
+                <SelectItem value="DENTURE">{t('Denture')}</SelectItem>
+                <SelectItem value="PARTIAL_DENTURE">{t('Partial Denture')}</SelectItem>
+                <SelectItem value="IMPLANT_CROWN">{t('Implant Crown')}</SelectItem>
+                <SelectItem value="VENEER">{t('Veneer')}</SelectItem>
+                <SelectItem value="INLAY_ONLAY">{t('Inlay/Onlay')}</SelectItem>
+                <SelectItem value="NIGHT_GUARD">{t('Night Guard')}</SelectItem>
+                <SelectItem value="RETAINER">{t('Retainer')}</SelectItem>
+                <SelectItem value="ALIGNER">{t('Aligner')}</SelectItem>
+                <SelectItem value="MODEL">{t('Model')}</SelectItem>
                 <SelectItem value="OTHER">{t('ui.other')}</SelectItem>
               </SelectContent>
             </Select>
@@ -476,7 +476,7 @@ export default function LabWorkPage() {
                 <SelectItem value="all">{t('ui.all_priorities')}</SelectItem>
                 <SelectItem value="normal">{t('ui.normal')}</SelectItem>
                 <SelectItem value="urgent">{t('ui.urgent')}</SelectItem>
-                <SelectItem value="rush">Rush</SelectItem>
+                <SelectItem value="rush">{t('Rush')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -495,8 +495,8 @@ export default function LabWorkPage() {
           ) : orders.length === 0 ? (
             <div className="text-center py-12">
               <FlaskConical className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">No lab orders found</h3>
-              <p className="text-muted-foreground">Get started by creating your first lab order</p>
+              <h3 className="mt-4 text-lg font-semibold">{t('No lab orders found')}</h3>
+              <p className="text-muted-foreground">{t('Get started by creating your first lab order')}</p>
               <Button className="mt-4" onClick={() => router.push('/lab/orders/new')}>
                 <Plus className="mr-2 h-4 w-4" />{t('ui.create_lab_order')}</Button>
             </div>
@@ -505,12 +505,12 @@ export default function LabWorkPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order No.</TableHead>
+                    <TableHead>{t('Order No.')}</TableHead>
                     <TableHead>{t('ui.patient')}</TableHead>
-                    <TableHead>Work Type</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Order Date</TableHead>
-                    <TableHead>Expected</TableHead>
+                    <TableHead>{t('Work Type')}</TableHead>
+                    <TableHead>{t('Vendor')}</TableHead>
+                    <TableHead>{t('Order Date')}</TableHead>
+                    <TableHead>{t('Expected')}</TableHead>
                     <TableHead>{t('ui.status')}</TableHead>
                     <TableHead>{t('ui.priority')}</TableHead>
                     <TableHead>{t('ui.cost')}</TableHead>
@@ -555,7 +555,7 @@ export default function LabWorkPage() {
                               onClick={() => router.push(`/lab/orders/${order.id}/edit`)}
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit Order
+                              {t('Edit Order')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

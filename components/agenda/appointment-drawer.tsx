@@ -229,7 +229,7 @@ export function AppointmentDrawer({
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={`Appointment ${appointment.appointmentNo} details`}>
       <button
         type="button"
-        aria-label="Close details"
+        aria-label={t('Close details')}
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
       />
@@ -268,13 +268,13 @@ export function AppointmentDrawer({
 
         {/* One-click status transitions */}
         <section className="mb-5">
-          <h3 className="mb-2 text-sm font-semibold">Visit status</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t('Visit status')}</h3>
           <div className="flex flex-wrap gap-2">
             {capabilities.canAdvance && status === 'SCHEDULED' && (
               <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus('CONFIRMED')}>{t('ui.confirm')}</Button>
             )}
             {capabilities.canCheckIn && (status === 'SCHEDULED' || status === 'CONFIRMED') && (
-              <Button size="sm" disabled={busy} aria-label="Check in patient" onClick={() => setStatus('CHECKED_IN')}>
+              <Button size="sm" disabled={busy} aria-label={t('Check in patient')} onClick={() => setStatus('CHECKED_IN')}>
                 <LogIn className="h-3.5 w-3.5 mr-1" />{t('ui.check_in_2')}</Button>
             )}
             {capabilities.canAdvance && status === 'CHECKED_IN' && (
@@ -305,7 +305,7 @@ export function AppointmentDrawer({
         {/* Clinical context — one click into the existing patient modules */}
         {patientId && (
           <section className="mb-5">
-            <h3 className="mb-2 text-sm font-semibold">Clinical context</h3>
+            <h3 className="mb-2 text-sm font-semibold">{t('Clinical context')}</h3>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/patients/${patientId}?tab=appointments`}>
@@ -324,7 +324,7 @@ export function AppointmentDrawer({
               </Button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Treatment plans live in the patient file&apos;s Treatments tab.
+              {t("Treatment plans live in the patient file's Treatments tab.")}
             </p>
           </section>
         )}
@@ -338,7 +338,7 @@ export function AppointmentDrawer({
             {remindersLoading ? (
               <p className="text-xs text-muted-foreground">Loading reminders…</p>
             ) : reminders.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No reminders scheduled.</p>
+              <p className="text-xs text-muted-foreground">{t('No reminders scheduled.')}</p>
             ) : (
               <ul className="mb-3 space-y-1">
                 {reminders.map((r) => (
@@ -367,7 +367,7 @@ export function AppointmentDrawer({
               <div className="grid gap-1">
                 <Label htmlFor="drawer-remind-channel" className="text-xs">{t('ui.channel')}</Label>
                 <Select value={remindChannel} onValueChange={setRemindChannel}>
-                  <SelectTrigger id="drawer-remind-channel" className="w-[130px]" aria-label="Reminder channel">
+                  <SelectTrigger id="drawer-remind-channel" className="w-[130px]" aria-label={t('Reminder channel')}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -379,7 +379,7 @@ export function AppointmentDrawer({
               </div>
               <div className="grid gap-1">
                 <Label htmlFor="drawer-remind-at" className="text-xs">
-                  Send at
+                  {t('Send at')}
                 </Label>
                 <Input
                   id="drawer-remind-at"
@@ -402,7 +402,7 @@ export function AppointmentDrawer({
         )}
 
         <section className="space-y-2 text-sm">
-          <h3 className="text-sm font-semibold">Details</h3>
+          <h3 className="text-sm font-semibold">{t('Details')}</h3>
           <p>
             <span className="text-muted-foreground">Provider:</span> Dr.{' '}
             {getDoctorName(appointment.doctor)}

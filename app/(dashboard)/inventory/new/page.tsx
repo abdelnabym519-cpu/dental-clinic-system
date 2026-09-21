@@ -110,7 +110,7 @@ export default function NewInventoryItemPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Add New Inventory Item</h1>
+        <h1 className="text-3xl font-bold">{t('Add New Inventory Item')}</h1>
         <Link
           href="/inventory"
           className="px-4 py-2 bg-muted-foreground text-white rounded-lg hover:bg-muted-foreground/80"
@@ -158,7 +158,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select Category</option>
+              <option value="">{t('Select Category')}</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -232,7 +232,7 @@ export default function NewInventoryItemPage() {
 
           {/* Reorder Point */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Reorder Point</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('Reorder Point')}</label>
             <input
               type="number"
               name="reorderLevel"
@@ -245,7 +245,7 @@ export default function NewInventoryItemPage() {
 
           {/* Maximum Stock */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Maximum Stock</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('Maximum Stock')}</label>
             <input
               type="number"
               name="maximumStock"
@@ -286,7 +286,7 @@ export default function NewInventoryItemPage() {
 
           {/* HSN Code */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">HSN Code</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('HSN Code')}</label>
             <input
               type="text"
               name="hsnCode"
@@ -314,7 +314,7 @@ export default function NewInventoryItemPage() {
           {/* Preferred Supplier */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Preferred Supplier
+              {t('Preferred Supplier')}
             </label>
             <select
               name="preferredSupplierId"
@@ -334,7 +334,7 @@ export default function NewInventoryItemPage() {
           {/* Storage Location */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Storage Location
+              {t('Storage Location')}
             </label>
             <input
               type="text"
@@ -369,7 +369,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               className="w-4 h-4 text-blue-600"
             />
-            <span className="text-sm">Requires Expiry Tracking</span>
+            <span className="text-sm">{t('Requires Expiry Tracking')}</span>
           </label>
 
           <label className="flex items-center space-x-2">
@@ -380,7 +380,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               className="w-4 h-4 text-blue-600"
             />
-            <span className="text-sm">Requires Batch Tracking</span>
+            <span className="text-sm">{t('Requires Batch Tracking')}</span>
           </label>
 
           <label className="flex items-center space-x-2">

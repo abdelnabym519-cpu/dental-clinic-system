@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -49,6 +50,7 @@ const navItems = [
 ]
 
 export function PortalShell({ patient, hospital, children }: PortalShellProps) {
+  const { t } = useLanguage()
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -122,7 +124,7 @@ export function PortalShell({ patient, hospital, children }: PortalShellProps) {
                 )}
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
           </nav>
@@ -147,7 +149,7 @@ export function PortalShell({ patient, hospital, children }: PortalShellProps) {
                     )}
                   >
                     <item.icon className="h-4 w-4" />
-                    {item.label}
+                    {t(item.label)}
                   </Link>
                 ))}
               </nav>

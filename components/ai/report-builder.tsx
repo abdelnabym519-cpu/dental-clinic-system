@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,7 @@ interface QueryResult {
  * results as a dynamic table.  Supports exporting results as JSON.
  */
 export function ReportBuilder() {
+  const { t } = useLanguage()
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<QueryResult | null>(null)
@@ -87,7 +89,7 @@ export function ReportBuilder() {
           <span>🤖</span> Natural Language Report Builder
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Ask questions in plain English — AI queries your data and returns results.
+          {t('Ask questions in plain English — AI queries your data and returns results.')}
         </p>
       </div>
 
@@ -134,7 +136,7 @@ export function ReportBuilder() {
       {/* recent history (shown when idle) */}
       {history.length > 0 && !result && !loading && (
         <div>
-          <p className="text-xs text-muted-foreground font-medium mb-1">Recent queries</p>
+          <p className="text-xs text-muted-foreground font-medium mb-1">{t('Recent queries')}</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {history.slice(0, 5).map((h, i) => (
               <button
@@ -212,7 +214,7 @@ export function ReportBuilder() {
           {/* empty state */}
           {result.success && (!result.rows || result.rows.length === 0) && (
             <div className="p-3 text-sm text-muted-foreground">
-              No results found for this query.
+              {t('No results found for this query.')}
             </div>
           )}
 

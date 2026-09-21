@@ -169,7 +169,7 @@ export default function InvoicesPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.invoices')}</h1>
-          <p className="text-muted-foreground">Manage patient invoices and billing</p>
+          <p className="text-muted-foreground">{t('Manage patient invoices and billing')}</p>
         </div>
         <Link href="/billing/invoices/new">
           <Button>
@@ -184,7 +184,7 @@ export default function InvoicesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by invoice number, patient name, or phone..."
+                placeholder={t('Search by invoice number, patient name, or phone...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -199,7 +199,7 @@ export default function InvoicesPage() {
                   <SelectItem value="all">{t('ui.all_status')}</SelectItem>
                   <SelectItem value="DRAFT">{t('ui.draft')}</SelectItem>
                   <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
-                  <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
+                  <SelectItem value="PARTIALLY_PAID">{t('Partially Paid')}</SelectItem>
                   <SelectItem value="PAID">{t('ui.paid')}</SelectItem>
                   <SelectItem value="OVERDUE">{t('ui.overdue')}</SelectItem>
                   <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
@@ -226,7 +226,7 @@ export default function InvoicesPage() {
                 size="sm"
               >
                 <AlertCircle className="h-4 w-4 mr-2" />
-                Overdue Only
+                {t('Overdue Only')}
               </Button>
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function InvoicesPage() {
                       <Link href="/billing/invoices/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
-                          Create New Invoice
+                          {t('Create New Invoice')}
                         </Button>
                       </Link>
                     </div>
@@ -343,7 +343,7 @@ export default function InvoicesPage() {
                             {dueDays.isOverdue && invoice.status !== 'PAID' && (
                               <span className="text-xs text-red-600 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {dueDays.label}
+                                {t(dueDays.label)}
                               </span>
                             )}
                           </div>
@@ -392,7 +392,7 @@ export default function InvoicesPage() {
                                 className="text-red-600"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Cancel Invoice
+                                {t('Cancel Invoice')}
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

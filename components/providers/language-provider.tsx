@@ -1,8 +1,12 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { defaultLocale, resolveLocale, type Locale } from '@/lib/i18n/config'
-import { directionFor, translate } from '@/lib/i18n/dictionary'
+import { defaultLocale, LOCALE_COOKIE, resolveLocale, type Locale } from '@/lib/i18n/config'
+import { directionFor, translateText } from '@/lib/i18n/dictionary'
+
+// Re-exported so existing imports (`app/layout.tsx`, tests) keep working; the
+// canonical definition now lives in lib/i18n/config.
+export { LOCALE_COOKIE }
 
 /**
  * Client-side language context.
@@ -21,15 +25,13 @@ interface LanguageContextValue {
   setLocale: (locale: string) => void
 }
 
-export const LOCALE_COOKIE = 'dentora-locale'
-
 const LanguageContext = createContext<LanguageContextValue>({
   locale: defaultLocale,
   dir: directionFor(defaultLocale),
   // Default resolution goes through the ENGLISH dictionary, not the raw key:
   // components rendered outside a LanguageProvider (legacy tests, partial
   // mounts) keep showing the exact English strings they always showed.
-  t: (key, vars) => translate('en-EG', key, vars),
+  t: (key, vars) => translateText('en-EG', key, vars),
   setLocale: () => {},
 })
 
@@ -71,7 +73,7 @@ export function LanguageProvider({
     () => ({
       locale,
       dir: directionFor(locale),
-      t: (key, vars) => translate(locale, key, vars),
+      t: (key, vars) => translateText(locale, key, vars),
       setLocale,
     }),
     [locale, setLocale]

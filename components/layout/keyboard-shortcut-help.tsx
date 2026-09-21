@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -31,6 +32,7 @@ const SHORTCUTS = [
 ]
 
 export function KeyboardShortcutHelp() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
@@ -68,7 +70,7 @@ export function KeyboardShortcutHelp() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Keyboard Shortcuts</DialogTitle>
+          <DialogTitle>{t('Keyboard Shortcuts')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-6">
           {SHORTCUTS.map((section) => (
@@ -78,8 +80,8 @@ export function KeyboardShortcutHelp() {
               </h4>
               <div className="space-y-2">
                 {section.items.map((item) => (
-                  <div key={item.description} className="flex items-center justify-between text-sm">
-                    <span>{item.description}</span>
+                  <div key={t(item.description)} className="flex items-center justify-between text-sm">
+                    <span>{t(item.description)}</span>
                     <div className="flex items-center gap-1">
                       {item.keys.map((key, i) => (
                         <span key={i}>

@@ -164,7 +164,7 @@ export default function TreatmentPlansPage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t('ui.treatment_plans')}</h1>
-            <p className="text-muted-foreground">Create and manage comprehensive treatment plans</p>
+            <p className="text-muted-foreground">{t('Create and manage comprehensive treatment plans')}</p>
           </div>
         </div>
         <Link href="/treatments/plans/new">
@@ -180,7 +180,7 @@ export default function TreatmentPlansPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by patient name, plan number, or title..."
+                placeholder={t('Search by patient name, plan number, or title...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -194,8 +194,8 @@ export default function TreatmentPlansPage() {
                 <SelectContent>
                   <SelectItem value="all">{t('ui.all_status')}</SelectItem>
                   <SelectItem value="DRAFT">{t('ui.draft')}</SelectItem>
-                  <SelectItem value="PROPOSED">Proposed</SelectItem>
-                  <SelectItem value="ACCEPTED">Accepted</SelectItem>
+                  <SelectItem value="PROPOSED">{t('Proposed')}</SelectItem>
+                  <SelectItem value="ACCEPTED">{t('Accepted')}</SelectItem>
                   <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
                   <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
                   <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
@@ -206,9 +206,9 @@ export default function TreatmentPlansPage() {
                   <SelectValue placeholder={t('ui.consent')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value="all">{t('All Plans')}</SelectItem>
                   <SelectItem value="true">{t('ui.consent_given')}</SelectItem>
-                  <SelectItem value="false">Pending Consent</SelectItem>
+                  <SelectItem value="false">{t('Pending Consent')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -222,7 +222,7 @@ export default function TreatmentPlansPage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Plan</TableHead>
+                <TableHead>{t('Plan')}</TableHead>
                 <TableHead>{t('ui.patient')}</TableHead>
                 <TableHead>{t('ui.procedures')}</TableHead>
                 <TableHead>{t('ui.progress')}</TableHead>
@@ -263,7 +263,7 @@ export default function TreatmentPlansPage() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <FileText className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No treatment plans found</p>
+                      <p className="text-muted-foreground">{t('No treatment plans found')}</p>
                       <Link href="/treatments/plans/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />{t('ui.create_treatment_plan')}</Button>

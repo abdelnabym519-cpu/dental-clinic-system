@@ -260,7 +260,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Appointment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Edit Appointment')}</h1>
           <p className="text-muted-foreground">{appointment.appointmentNo}</p>
         </div>
       </div>
@@ -273,7 +273,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
               <CardDescription>
-                Patient cannot be changed for an existing appointment
+                {t('Patient cannot be changed for an existing appointment')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -292,7 +292,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />{t('ui.schedule')}</CardTitle>
-              <CardDescription>Update the doctor, date, or time</CardDescription>
+              <CardDescription>{t('Update the doctor, date, or time')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -424,7 +424,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                       <SelectValue placeholder={t('ui.select_chair')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Not assigned</SelectItem>
+                      <SelectItem value="none">{t('Not assigned')}</SelectItem>
                       <SelectItem value="1">Chair 1</SelectItem>
                       <SelectItem value="2">Chair 2</SelectItem>
                       <SelectItem value="3">Chair 3</SelectItem>

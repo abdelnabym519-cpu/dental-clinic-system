@@ -168,17 +168,17 @@ export default function AppointmentSettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Calendar className="w-8 h-8" />
-          Appointment Settings
+          {t('Appointment Settings')}
         </h1>
-        <p className="text-muted-foreground">Configure appointment scheduling and timing</p>
+        <p className="text-muted-foreground">{t('Configure appointment scheduling and timing')}</p>
       </div>
 
       <div className="space-y-6">
         {/* Slot Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Time Slot Configuration</CardTitle>
-            <CardDescription>Set default appointment duration and buffer time</CardDescription>
+            <CardTitle>{t('Time Slot Configuration')}</CardTitle>
+            <CardDescription>{t('Set default appointment duration and buffer time')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -209,12 +209,12 @@ export default function AppointmentSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.working_hours')}</CardTitle>
-            <CardDescription>Set clinic operating hours</CardDescription>
+            <CardDescription>{t('Set clinic operating hours')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="startTime">Clinic Start Time</Label>
+                <Label htmlFor="startTime">{t('Clinic Start Time')}</Label>
                 <Input
                   id="startTime"
                   type="time"
@@ -224,7 +224,7 @@ export default function AppointmentSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="endTime">Clinic End Time</Label>
+                <Label htmlFor="endTime">{t('Clinic End Time')}</Label>
                 <Input
                   id="endTime"
                   type="time"
@@ -234,7 +234,7 @@ export default function AppointmentSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="lunchBreakStart">Lunch Break Start</Label>
+                <Label htmlFor="lunchBreakStart">{t('Lunch Break Start')}</Label>
                 <Input
                   id="lunchBreakStart"
                   type="time"
@@ -244,7 +244,7 @@ export default function AppointmentSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="lunchBreakEnd">Lunch Break End</Label>
+                <Label htmlFor="lunchBreakEnd">{t('Lunch Break End')}</Label>
                 <Input
                   id="lunchBreakEnd"
                   type="time"
@@ -259,8 +259,8 @@ export default function AppointmentSettingsPage() {
         {/* Booking Settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Booking Settings</CardTitle>
-            <CardDescription>Configure booking restrictions and reminders</CardDescription>
+            <CardTitle>{t('Booking Settings')}</CardTitle>
+            <CardDescription>{t('Configure booking restrictions and reminders')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,7 +275,7 @@ export default function AppointmentSettingsPage() {
                   }
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  How far in advance patients can book appointments
+                  {t('How far in advance patients can book appointments')}
                 </p>
               </div>
 
@@ -290,7 +290,7 @@ export default function AppointmentSettingsPage() {
                   }
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  When to send appointment reminders
+                  {t('When to send appointment reminders')}
                 </p>
               </div>
             </div>
@@ -300,17 +300,17 @@ export default function AppointmentSettingsPage() {
         {/* Holidays */}
         <Card>
           <CardHeader>
-            <CardTitle>Holiday Calendar</CardTitle>
-            <CardDescription>Manage clinic holidays and closures</CardDescription>
+            <CardTitle>{t('Holiday Calendar')}</CardTitle>
+            <CardDescription>{t('Manage clinic holidays and closures')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Add Holiday Form */}
             <div className="border rounded-lg p-4 bg-muted/50">
-              <h4 className="font-semibold mb-3">Add New Holiday</h4>
+              <h4 className="font-semibold mb-3">{t('Add New Holiday')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="md:col-span-1">
                   <Input
-                    placeholder="Holiday name"
+                    placeholder={t('Holiday name')}
                     value={newHoliday.name}
                     onChange={(e) => setNewHoliday({ ...newHoliday, name: e.target.value })}
                   />
@@ -325,7 +325,7 @@ export default function AppointmentSettingsPage() {
                 <div>
                   <Button onClick={handleAddHoliday} className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Holiday
+                    {t('Add Holiday')}
                   </Button>
                 </div>
               </div>
@@ -333,9 +333,9 @@ export default function AppointmentSettingsPage() {
 
             {/* Holidays List */}
             <div className="space-y-2">
-              <h4 className="font-semibold">Upcoming Holidays</h4>
+              <h4 className="font-semibold">{t('Upcoming Holidays')}</h4>
               {holidays.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No holidays configured</p>
+                <p className="text-sm text-muted-foreground">{t('No holidays configured')}</p>
               ) : (
                 <div className="space-y-2">
                   {holidays.map((holiday) => (

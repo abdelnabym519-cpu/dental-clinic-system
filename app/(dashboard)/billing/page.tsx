@@ -181,19 +181,19 @@ export default function BillingPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('billing.title')}</h1>
-          <p className="text-muted-foreground">Manage invoices, payments, and financial reports</p>
+          <p className="text-muted-foreground">{t('Manage invoices, payments, and financial reports')}</p>
         </div>
         <div className="flex gap-2">
           <Select value={datePreset} onValueChange={setDatePreset}>
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Select period" />
+              <SelectValue placeholder={t('Select period')} />
             </SelectTrigger>
             <SelectContent>
               {dateRangePresets
                 .filter((p) => p.value !== 'custom')
                 .map((preset) => (
                   <SelectItem key={preset.value} value={preset.value}>
-                    {preset.label}
+                    {t(preset.label)}
                   </SelectItem>
                 ))}
             </SelectContent>
@@ -267,11 +267,11 @@ export default function BillingPage() {
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-red-600" />
               <div>
-                <p className="font-medium text-red-900">Error loading billing data</p>
+                <p className="font-medium text-red-900">{t('Error loading billing data')}</p>
                 <p className="text-sm text-red-700">{error}</p>
                 {error.includes('permission') && (
                   <p className="text-xs text-red-600 mt-1">
-                    Your account needs ADMIN or ACCOUNTANT role to view billing reports.
+                    {t('Your account needs ADMIN or ACCOUNTANT role to view billing reports.')}
                   </p>
                 )}
               </div>
@@ -285,7 +285,7 @@ export default function BillingPage() {
         {/* Total Billed */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Billed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Billed')}</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -351,7 +351,7 @@ export default function BillingPage() {
         {/* Insurance */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Insurance Claims</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Insurance Claims')}</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -376,8 +376,8 @@ export default function BillingPage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common billing tasks</CardDescription>
+            <CardTitle>{t('Quick Actions')}</CardTitle>
+            <CardDescription>{t('Common billing tasks')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Link href="/billing/invoices" className="block">
@@ -389,37 +389,37 @@ export default function BillingPage() {
             <Link href="/billing/payments" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <CreditCard className="h-4 w-4 mr-2" />
-                View All Payments
+                {t('View All Payments')}
               </Button>
             </Link>
             <Link href="/billing/payment-plans" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <CalendarClock className="h-4 w-4 mr-2" />
-                Payment Plans
+                {t('Payment Plans')}
               </Button>
             </Link>
             <Link href="/billing/insurance" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <Shield className="h-4 w-4 mr-2" />
-                Insurance Claims
+                {t('Insurance Claims')}
               </Button>
             </Link>
             <Link href="/billing/insurance/providers" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <Shield className="h-4 w-4 mr-2" />
-                Insurance Providers
+                {t('Insurance Providers')}
               </Button>
             </Link>
             <Link href="/billing/insurance/pre-auth" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <FileText className="h-4 w-4 mr-2" />
-                Pre-Authorizations
+                {t('Pre-Authorizations')}
               </Button>
             </Link>
             <Link href="/billing/reports" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Financial Reports
+                {t('Financial Reports')}
               </Button>
             </Link>
           </CardContent>
@@ -428,8 +428,8 @@ export default function BillingPage() {
         {/* Payment Methods */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Methods</CardTitle>
-            <CardDescription>Collection by payment type</CardDescription>
+            <CardTitle>{t('Payment Methods')}</CardTitle>
+            <CardDescription>{t('Collection by payment type')}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -442,7 +442,7 @@ export default function BillingPage() {
               <div className="space-y-3">
                 {data?.breakdowns.byPaymentMethod.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No payments recorded
+                    {t('No payments recorded')}
                   </p>
                 ) : (
                   data?.breakdowns.byPaymentMethod.map((method) => (
@@ -455,7 +455,7 @@ export default function BillingPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-medium">{formatCurrency(method.amount)}</div>
-                        <div className="text-xs text-muted-foreground">{method.count} payments</div>
+                        <div className="text-xs text-muted-foreground">{method.count} {t('payments')}</div>
                       </div>
                     </div>
                   ))
@@ -468,8 +468,8 @@ export default function BillingPage() {
         {/* Invoice Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Status</CardTitle>
-            <CardDescription>Invoices by current status</CardDescription>
+            <CardTitle>{t('Invoice Status')}</CardTitle>
+            <CardDescription>{t('Invoices by current status')}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -482,7 +482,7 @@ export default function BillingPage() {
               <div className="space-y-3">
                 {data?.breakdowns.byInvoiceStatus.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No invoices created
+                    {t('No invoices created')}
                   </p>
                 ) : (
                   data?.breakdowns.byInvoiceStatus.map((status) => {
@@ -530,14 +530,14 @@ export default function BillingPage() {
       {!loading && data && (
         <Card>
           <CardHeader>
-            <CardTitle>Collection Rate</CardTitle>
-            <CardDescription>Percentage of billed amount collected</CardDescription>
+            <CardTitle>{t('Collection Rate')}</CardTitle>
+            <CardDescription>{t('Percentage of billed amount collected')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Collection Progress</span>
+                  <span className="text-sm text-muted-foreground">{t('Collection Progress')}</span>
                   <span className="text-sm font-medium">
                     {data.summary.totalBilled > 0
                       ? Math.round((data.summary.totalCollected / data.summary.totalBilled) * 100)
@@ -565,17 +565,17 @@ export default function BillingPage() {
               </div>
               <div className="flex gap-6 text-sm">
                 <div>
-                  <div className="text-muted-foreground">Billed</div>
+                  <div className="text-muted-foreground">{t('Billed')}</div>
                   <div className="font-medium">{formatCurrency(data.summary.totalBilled)}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Collected</div>
+                  <div className="text-muted-foreground">{t('Collected')}</div>
                   <div className="font-medium text-green-600">
                     {formatCurrency(data.summary.totalCollected)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Discounts</div>
+                  <div className="text-muted-foreground">{t('Discounts')}</div>
                   <div className="font-medium text-orange-600">
                     {formatCurrency(data.summary.totalDiscounts)}
                   </div>
@@ -593,9 +593,9 @@ export default function BillingPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-600" />
-                Cash Flow Forecast
+                {t('Cash Flow Forecast')}
               </CardTitle>
-              <CardDescription>AI-projected income for the next 30 days</CardDescription>
+              <CardDescription>{t('AI-projected income for the next 30 days')}</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -615,7 +615,7 @@ export default function BillingPage() {
         <CardContent>
           {!cashFlowData ? (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Click &quot;Generate Forecast&quot; to project cash flow using AI analysis
+              {t('Click "Generate Forecast" to project cash flow using AI analysis')}
             </p>
           ) : (
             <div className="space-y-4">
@@ -631,13 +631,13 @@ export default function BillingPage() {
                   <div className="text-lg font-bold text-blue-700">
                     {formatCurrency(cashFlowData.summary?.avgDaily || 0)}
                   </div>
-                  <div className="text-xs text-blue-600">Avg Daily</div>
+                  <div className="text-xs text-blue-600">{t('Avg Daily')}</div>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-purple-50">
                   <div className="text-lg font-bold text-purple-700">
                     {cashFlowData.summary?.bestDay || 'N/A'}
                   </div>
-                  <div className="text-xs text-purple-600">Best Day</div>
+                  <div className="text-xs text-purple-600">{t('Best Day')}</div>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-amber-50">
                   <Badge
@@ -651,14 +651,14 @@ export default function BillingPage() {
                   >
                     {cashFlowData.summary?.trend || 'STABLE'}
                   </Badge>
-                  <div className="text-xs text-amber-600 mt-1">Trend</div>
+                  <div className="text-xs text-amber-600 mt-1">{t('Trend')}</div>
                 </div>
               </div>
 
               {/* Weekly totals */}
               {cashFlowData.weeklyTotals?.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Weekly Breakdown</h4>
+                  <h4 className="text-sm font-medium">{t('Weekly Breakdown')}</h4>
                   {cashFlowData.weeklyTotals.map((week: any) => (
                     <div key={week.week} className="flex items-center justify-between text-sm">
                       <span>
@@ -675,7 +675,7 @@ export default function BillingPage() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-amber-700 mb-1">
                     <AlertCircle className="h-4 w-4" />
-                    Potential Shortfalls
+                    {t('Potential Shortfalls')}
                   </div>
                   {cashFlowData.summary.potentialShortfalls.map((s: string, i: number) => (
                     <p key={i} className="text-xs text-amber-600">
@@ -694,8 +694,8 @@ export default function BillingPage() {
         {/* Claims Aging */}
         <Card>
           <CardHeader>
-            <CardTitle>Claims Aging</CardTitle>
-            <CardDescription>Outstanding invoices by overdue period</CardDescription>
+            <CardTitle>{t('Claims Aging')}</CardTitle>
+            <CardDescription>{t('Outstanding invoices by overdue period')}</CardDescription>
           </CardHeader>
           <CardContent>
             {!agingData ? (
@@ -716,9 +716,9 @@ export default function BillingPage() {
                   const total = agingData.totals.totalOutstanding || 1
                   const pct = Math.round((bucket.data.amount / total) * 100)
                   return (
-                    <div key={bucket.label} className="space-y-1">
+                    <div key={t(bucket.label)} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span>{bucket.label}</span>
+                        <span>{t(bucket.label)}</span>
                         <div className="text-right">
                           <span className="font-medium">{formatCurrency(bucket.data.amount)}</span>
                           <span className="text-muted-foreground ml-2">({bucket.data.count})</span>
@@ -749,12 +749,12 @@ export default function BillingPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Payment Plans</CardTitle>
-                <CardDescription>Installment plan overview</CardDescription>
+                <CardTitle>{t('Payment Plans')}</CardTitle>
+                <CardDescription>{t('Installment plan overview')}</CardDescription>
               </div>
               <Link href="/billing/payment-plans">
                 <Button variant="outline" size="sm">
-                  View All
+                  {t('View All')}
                 </Button>
               </Link>
             </div>
@@ -771,28 +771,28 @@ export default function BillingPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 rounded-lg bg-blue-50">
                     <div className="text-2xl font-bold text-blue-700">{planSummary.active}</div>
-                    <div className="text-xs text-blue-600">Active Plans</div>
+                    <div className="text-xs text-blue-600">{t('Active Plans')}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-green-50">
                     <div className="text-2xl font-bold text-green-700">{planSummary.completed}</div>
-                    <div className="text-xs text-green-600">Completed</div>
+                    <div className="text-xs text-green-600">{t('Completed')}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-red-50">
                     <div className="text-2xl font-bold text-red-700">{planSummary.defaulted}</div>
-                    <div className="text-xs text-red-600">Defaulted</div>
+                    <div className="text-xs text-red-600">{t('Defaulted')}</div>
                   </div>
                   <div className="text-center p-3 rounded-lg bg-orange-50">
                     <div className="text-2xl font-bold text-orange-700">
                       {formatCurrency(planSummary.totalOutstanding)}
                     </div>
-                    <div className="text-xs text-orange-600">Outstanding EMI</div>
+                    <div className="text-xs text-orange-600">{t('Outstanding EMI')}</div>
                   </div>
                 </div>
                 <div className="pt-2">
                   <Link href="/billing/payment-plans/new">
                     <Button className="w-full" variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create New Payment Plan
+                      {t('Create New Payment Plan')}
                     </Button>
                   </Link>
                 </div>

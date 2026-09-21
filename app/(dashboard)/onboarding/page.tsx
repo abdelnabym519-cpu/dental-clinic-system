@@ -194,7 +194,7 @@ export default function OnboardingPage() {
                   >
                     <Icon className="h-5 w-5" />
                   </div>
-                  <span className="mt-2 text-xs text-muted-foreground">{step.title}</span>
+                  <span className="mt-2 text-xs text-muted-foreground">{t(step.title)}</span>
                 </div>
               )
             })}
@@ -222,7 +222,7 @@ export default function OnboardingPage() {
                     <Label htmlFor="tagline">Tagline (optional)</Label>
                     <Input
                       id="tagline"
-                      placeholder="Your smile, our priority"
+                      placeholder={t('Your smile, our priority')}
                       {...register('tagline')}
                     />
                   </div>
@@ -244,7 +244,7 @@ export default function OnboardingPage() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="state">Governorate (المحافظة) *</Label>
+                      <Label htmlFor="state">{t('Governorate')} *</Label>
                       <Input
                         id="state"
                         placeholder="القاهرة"
@@ -254,7 +254,7 @@ export default function OnboardingPage() {
                       <datalist id="egypt-governorates">
                         {EGYPT_GOVERNORATES.map((g) => (
                     <option key={g.value} value={g.value}>
-                      {g.label}
+                      {t(g.label)}
                     </option>
                   ))}
                       </datalist>
@@ -288,7 +288,7 @@ export default function OnboardingPage() {
                       <Input id="website" placeholder="www.myclinic.com" {...register('website')} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="gstNumber">Tax ID (الرقم الضريبي)</Label>
+                      <Label htmlFor="gstNumber">{t('Tax ID')}</Label>
                       <Input
                         id="gstNumber"
                         placeholder="123456789"
@@ -301,7 +301,7 @@ export default function OnboardingPage() {
                     <Label htmlFor="registrationNo">{t('ui.registration_number')}</Label>
                     <Input
                       id="registrationNo"
-                      placeholder="MED-2024-12345"
+                      placeholder={t('MED-2024-12345')}
                       {...register('registrationNo')}
                     />
                   </div>
@@ -341,7 +341,7 @@ export default function OnboardingPage() {
                         </>
                       )}
                       {hours.closed && (
-                        <span className="text-sm text-muted-foreground">Closed</span>
+                        <span className="text-sm text-muted-foreground">{t('Closed')}</span>
                       )}
                     </div>
                   ))}
@@ -352,7 +352,7 @@ export default function OnboardingPage() {
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Configure your payment options for invoices. All fields are optional.
+                    {t('Configure your payment options for invoices. All fields are optional.')}
                   </p>
 
                   <div className="space-y-2">
@@ -361,7 +361,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="border-t pt-4 mt-4">
-                    <h4 className="font-medium mb-4">Bank Details</h4>
+                    <h4 className="font-medium mb-4">{t('Bank Details')}</h4>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="bankName">{t('ui.bank_name')}</Label>
@@ -384,16 +384,16 @@ export default function OnboardingPage() {
                           <Label htmlFor="bankIfsc">{t('ui.swift_bic_code')}</Label>
                           <Input
                             id="bankIfsc"
-                            placeholder="NBEGEGCX"
+                            placeholder={t('NBEGEGCX')}
                             {...register('bankIfsc')}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="bankAccountName">Account Holder Name</Label>
+                        <Label htmlFor="bankAccountName">{t('Account Holder Name')}</Label>
                         <Input
                           id="bankAccountName"
-                          placeholder="Dr. Ahmed Mahmoud"
+                          placeholder={t('Dr. Ahmed Mahmoud')}
                           {...register('bankAccountName')}
                         />
                       </div>
@@ -410,13 +410,13 @@ export default function OnboardingPage() {
                       <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Setup Complete!</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('Setup Complete!')}</h3>
                   <p className="text-muted-foreground mb-6">
                     Your clinic is now ready. Start by adding your first patient or exploring the
                     dashboard.
                   </p>
                   <Button onClick={() => router.push('/dashboard')} className="w-full">
-                    Go to Dashboard
+                    {t('Go to Dashboard')}
                   </Button>
                 </div>
               )}
@@ -449,7 +449,7 @@ export default function OnboardingPage() {
 
         {currentStep < 4 && (
           <p className="text-center text-sm text-muted-foreground mt-4">
-            You can always update these settings later from the Settings page.
+            {t('You can always update these settings later from the Settings page.')}
           </p>
         )}
       </div>

@@ -89,7 +89,7 @@ export default function SuppliersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Supplier Management</h1>
+        <h1 className="text-3xl font-bold">{t('Supplier Management')}</h1>
         <div className="flex gap-2">
           <Link
             href="/inventory"
@@ -109,7 +109,7 @@ export default function SuppliersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
-            placeholder="Search by name, code, contact person..."
+            placeholder={t('Search by name, code, contact person...')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -133,7 +133,7 @@ export default function SuppliersPage() {
         {loading ? (
           <div className="p-8 text-center">{t('ui.loading')}</div>
         ) : suppliers.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No suppliers found</div>
+          <div className="p-8 text-center text-muted-foreground">{t('No suppliers found')}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -148,7 +148,7 @@ export default function SuppliersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.status')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.items')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Total Business
+                      {t('Total Business')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.actions')}</th>
                   </tr>
@@ -229,7 +229,7 @@ export default function SuppliersPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Add New Supplier</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('Add New Supplier')}</h2>
             <p className="text-muted-foreground mb-4">
               Supplier form will be implemented here. For now, please use the API directly or create
               a dedicated page.

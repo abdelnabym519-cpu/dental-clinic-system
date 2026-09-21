@@ -215,7 +215,7 @@ export default function NewTreatmentPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_treatment')}</h1>
-          <p className="text-muted-foreground">Record a new treatment for a patient</p>
+          <p className="text-muted-foreground">{t('Record a new treatment for a patient')}</p>
         </div>
       </div>
 
@@ -232,7 +232,7 @@ export default function NewTreatmentPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />{t('ui.patient_information')}</CardTitle>
-            <CardDescription>Select the patient for this treatment</CardDescription>
+            <CardDescription>{t('Select the patient for this treatment')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {selectedPatient ? (
@@ -306,9 +306,9 @@ export default function NewTreatmentPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Stethoscope className="h-5 w-5" />
-              Treatment Details
+              {t('Treatment Details')}
             </CardTitle>
-            <CardDescription>Select the doctor and procedure</CardDescription>
+            <CardDescription>{t('Select the doctor and procedure')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,7 +319,7 @@ export default function NewTreatmentPage() {
                   onValueChange={(value) => setFormData({ ...formData, doctorId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select doctor" />
+                    <SelectValue placeholder={t('Select doctor')} />
                   </SelectTrigger>
                   <SelectContent>
                     {doctors.map((doctor) => (
@@ -365,7 +365,7 @@ export default function NewTreatmentPage() {
                   </p>
                 )}
                 <div className="flex gap-4 mt-2 text-sm">
-                  <span>Duration: {selectedProcedure.defaultDuration} min</span>
+                  <span>Duration: {selectedProcedure.defaultDuration} {t('min')}</span>
                   <span>Base Price: {formatCurrency(selectedProcedure.basePrice)}</span>
                 </div>
               </div>
@@ -379,7 +379,7 @@ export default function NewTreatmentPage() {
                 step="0.01"
                 value={formData.cost}
                 onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                placeholder="Enter treatment cost"
+                placeholder={t('Enter treatment cost')}
               />
             </div>
           </CardContent>
@@ -398,7 +398,7 @@ export default function NewTreatmentPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.clinical_notes')}</CardTitle>
-            <CardDescription>Document the clinical findings and treatment notes</CardDescription>
+            <CardDescription>{t('Document the clinical findings and treatment notes')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -407,7 +407,7 @@ export default function NewTreatmentPage() {
                 id="chiefComplaint"
                 value={formData.chiefComplaint}
                 onChange={(e) => setFormData({ ...formData, chiefComplaint: e.target.value })}
-                placeholder="Patient's main concern or reason for visit..."
+                placeholder={t("Patient's main concern or reason for visit...")}
                 rows={2}
               />
             </div>
@@ -418,7 +418,7 @@ export default function NewTreatmentPage() {
                 id="diagnosis"
                 value={formData.diagnosis}
                 onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-                placeholder="Clinical diagnosis..."
+                placeholder={t('Clinical diagnosis...')}
                 rows={2}
               />
             </div>
@@ -429,7 +429,7 @@ export default function NewTreatmentPage() {
                 id="findings"
                 value={formData.findings}
                 onChange={(e) => setFormData({ ...formData, findings: e.target.value })}
-                placeholder="Examination findings..."
+                placeholder={t('Examination findings...')}
                 rows={2}
               />
             </div>
@@ -450,7 +450,7 @@ export default function NewTreatmentPage() {
                 id="procedureNotes"
                 value={formData.procedureNotes}
                 onChange={(e) => setFormData({ ...formData, procedureNotes: e.target.value })}
-                placeholder="Details of the procedure performed... (use mic for voice dictation)"
+                placeholder={t('Details of the procedure performed... (use mic for voice dictation)')}
                 rows={3}
               />
             </div>
@@ -461,7 +461,7 @@ export default function NewTreatmentPage() {
                 id="materialsUsed"
                 value={formData.materialsUsed}
                 onChange={(e) => setFormData({ ...formData, materialsUsed: e.target.value })}
-                placeholder="List of materials and supplies used..."
+                placeholder={t('List of materials and supplies used...')}
                 rows={2}
               />
             </div>
@@ -522,7 +522,7 @@ export default function NewTreatmentPage() {
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Create Treatment
+                {t('Create Treatment')}
               </>
             )}
           </Button>

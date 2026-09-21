@@ -239,7 +239,7 @@ export function ChatWidget() {
                   aria-label="Toggle hands-free mode"
                   title="Hands-free: voice in + voice out, continuous"
                 >
-                  HF
+                  {t('HF')}
                 </button>
               )}
               {/* TTS toggle */}
@@ -290,13 +290,13 @@ export function ChatWidget() {
           <div className="flex-1 overflow-auto p-3 space-y-3">
             {chatMessages.length === 0 && (
               <div className="text-center text-sm text-muted-foreground mt-8 px-4">
-                <p className="font-medium mb-1">How can I help?</p>
+                <p className="font-medium mb-1">{t('How can I help?')}</p>
                 <p className="text-xs">
-                  Ask about patients, appointments, billing, inventory, or anything else.
+                  {t('Ask about patients, appointments, billing, inventory, or anything else.')}
                 </p>
                 {voice.voiceSupported && (
                   <p className="text-xs text-primary mt-1">
-                    Tap the mic or enable Hands-Free mode for voice control
+                    {t('Tap the mic or enable Hands-Free mode for voice control')}
                   </p>
                 )}
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
@@ -414,7 +414,7 @@ export function ChatWidget() {
               disabled={chatLoading || !input.trim()}
               className="rounded-md bg-primary px-3 py-2 text-primary-foreground text-sm disabled:opacity-40 hover:opacity-90 transition-opacity"
             >
-              Send
+              {t('Send')}
             </button>
           </div>
         </div>

@@ -233,9 +233,9 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Treatment not found</p>
+        <p className="text-muted-foreground">{t('Treatment not found')}</p>
         <Link href="/treatments">
-          <Button variant="outline">Back to Treatments</Button>
+          <Button variant="outline">{t('Back to Treatments')}</Button>
         </Link>
       </div>
     )
@@ -297,7 +297,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5" />
-                Procedure Details
+                {t('Procedure Details')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -327,7 +327,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                   <div className="font-medium text-lg">{formatCurrency(treatment.cost)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Base Price</div>
+                  <div className="text-sm text-muted-foreground">{t('Base Price')}</div>
                   <div className="font-medium">{formatCurrency(treatment.procedure.basePrice)}</div>
                 </div>
               </div>
@@ -353,7 +353,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
           {teeth.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Teeth Affected</CardTitle>
+                <CardTitle>{t('Teeth Affected')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -415,7 +415,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               {treatment.complications && (
                 <div>
                   <div className="text-sm font-medium text-muted-foreground text-amber-600">
-                    Complications
+                    {t('Complications')}
                   </div>
                   <p className="mt-1">{treatment.complications}</p>
                 </div>
@@ -426,7 +426,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                 !treatment.findings &&
                 !treatment.procedureNotes && (
                   <p className="text-muted-foreground text-center py-4">
-                    No clinical notes recorded
+                    {t('No clinical notes recorded')}
                   </p>
                 )}
             </CardContent>
@@ -436,7 +436,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
           {(treatment.procedure.preInstructions || treatment.procedure.postInstructions) && (
             <Card>
               <CardHeader>
-                <CardTitle>Instructions</CardTitle>
+                <CardTitle>{t('Instructions')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {treatment.procedure.preInstructions && (
@@ -562,10 +562,10 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                     {formatDate(treatment.followUpDate)}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Date not scheduled</p>
+                  <p className="text-sm text-muted-foreground">{t('Date not scheduled')}</p>
                 )}
                 <Button variant="outline" size="sm" className="w-full mt-4">
-                  Schedule Follow-up
+                  {t('Schedule Follow-up')}
                 </Button>
               </CardContent>
             </Card>
@@ -583,7 +583,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                   {treatment.prescriptions.length} prescription(s) issued
                 </div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
-                  View Prescriptions
+                  {t('View Prescriptions')}
                 </Button>
               </CardContent>
             </Card>
@@ -599,7 +599,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               <CardContent>
                 <div className="text-sm">{treatment.invoiceItems.length} invoice item(s)</div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
-                  View Invoices
+                  {t('View Invoices')}
                 </Button>
               </CardContent>
             </Card>
@@ -612,7 +612,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{t('ui.complete_treatment')}</DialogTitle>
-            <DialogDescription>Add final notes and complete this treatment.</DialogDescription>
+            <DialogDescription>{t('Add final notes and complete this treatment.')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -637,7 +637,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                     procedureNotes: e.target.value,
                   })
                 }
-                placeholder="Final procedure notes... (use mic for voice dictation)"
+                placeholder={t('Final procedure notes... (use mic for voice dictation)')}
                 rows={3}
               />
             </div>
@@ -653,7 +653,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                     materialsUsed: e.target.value,
                   })
                 }
-                placeholder="List materials used..."
+                placeholder={t('List materials used...')}
                 rows={2}
               />
             </div>
@@ -669,7 +669,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                     complications: e.target.value,
                   })
                 }
-                placeholder="Document any complications..."
+                placeholder={t('Document any complications...')}
                 rows={2}
               />
             </div>
@@ -719,14 +719,14 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Treatment</DialogTitle>
+            <DialogTitle>{t('Cancel Treatment')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this treatment? This action cannot be undone.
+              {t('Are you sure you want to cancel this treatment? This action cannot be undone.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
-              Keep Treatment
+              {t('Keep Treatment')}
             </Button>
             <Button variant="destructive" onClick={handleCancelTreatment} disabled={actionLoading}>
               {actionLoading ? 'Cancelling...' : 'Cancel Treatment'}

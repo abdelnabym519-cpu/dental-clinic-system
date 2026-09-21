@@ -124,8 +124,8 @@ export default function VideoConsultationsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Video Consultations</h1>
-          <p className="text-muted-foreground">Manage tele-dentistry video consultations</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Video Consultations')}</h1>
+          <p className="text-muted-foreground">{t('Manage tele-dentistry video consultations')}</p>
         </div>
       </div>
 
@@ -204,7 +204,7 @@ export default function VideoConsultationsPage() {
               setPage(1)
             }}
           >
-            {f.label}
+            {t(f.label)}
           </Button>
         ))}
       </div>
@@ -238,7 +238,7 @@ export default function VideoConsultationsPage() {
               ) : consultations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No video consultations found
+                    {t('No video consultations found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -283,7 +283,7 @@ export default function VideoConsultationsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {c.duration != null ? `${c.duration} min` : '—'}
+                      {c.duration != null ? `${c.duration} ${t('min')}` : '—'}
                     </TableCell>
                     <TableCell>{statusBadge(c.status)}</TableCell>
                     <TableCell>

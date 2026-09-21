@@ -5,7 +5,7 @@ import React from 'react'
 
 import ar from '../../locales/ar.json'
 import en from '../../locales/en.json'
-import { translate, directionFor } from '@/lib/i18n/dictionary'
+import { translate, translateText, directionFor } from '@/lib/i18n/dictionary'
 
 /**
  * Arabic-mode completeness gates (i18n master mandate):
@@ -92,6 +92,79 @@ describe('pass-2 coverage (ui.* namespace, 465 curated strings)', () => {
     expect(translate('ar-EG', 'ui.new_prescription')).toBe('وصفة طبية جديدة')
     expect(translate('ar-EG', 'ui.lab_orders')).toBe('طلبات المختبر')
     expect(translate('en-EG', 'ui.new_prescription')).toBe('New Prescription')
+  })
+})
+
+describe('pass-3 coverage (profile, language selector, toasts, breadcrumbs)', () => {
+  it('ships the mandated profile keys in both locales', () => {
+    const expected: [string, string, string][] = [
+      ['profile.title', 'My Profile', 'ملفي الشخصي'],
+      ['profile.subtitle', 'Preferences that apply to your account only', 'تفضيلات تنطبق على حسابك فقط'],
+      ['profile.languageFormatting', 'Language & Formatting', 'اللغة والتنسيق'],
+      ['profile.languageLabel', 'Language', 'اللغة'],
+      ['profile.save', 'Save', 'حفظ'],
+      ['language.arabic', 'Arabic', 'العربية'],
+      ['language.english', 'English', 'الإنجليزية'],
+      ['language.egypt', 'Egypt', 'مصر'],
+      ['language.clinicDefault', 'Use clinic default', 'استخدام الافتراضي للعيادة'],
+      ['toast.languageUpdated', 'Language updated', 'تم تحديث اللغة'],
+      ['toast.savedSuccessfully', 'Saved successfully', 'تم الحفظ بنجاح'],
+      ['toast.errorSaving', 'Error saving', 'خطأ في الحفظ'],
+      ['toast.deletedSuccessfully', 'Deleted successfully', 'تم الحذف بنجاح'],
+      ['toast.createdSuccessfully', 'Created successfully', 'تم الإنشاء بنجاح'],
+      ['toast.updatedSuccessfully', 'Updated successfully', 'تم التحديث بنجاح'],
+      ['breadcrumb.profile', 'Profile', 'الملف الشخصي'],
+      ['breadcrumb.settings', 'Settings', 'الإعدادات'],
+      ['breadcrumb.dashboard', 'Dashboard', 'لوحة المعلومات'],
+      ['breadcrumb.details', 'Details', 'التفاصيل'],
+    ]
+    for (const [key, enValue, arValue] of expected) {
+      expect(en[key], `en:${key}`).toBe(enValue)
+      expect(ar[key], `ar:${key}`).toBe(arValue)
+    }
+    // No literal English left in the Arabic profile card copy.
+    expect(ar['profile.languageDescription']).not.toMatch(/[A-Za-z]{4,}/)
+    expect(ar['profile.languageNote']).not.toMatch(/[A-Za-z]{4,}/)
+  })
+
+  it('resolves every pass-3 string through the dictionary (key or English label)', () => {
+    // Keys…
+    expect(translateText('ar-EG', 'profile.title')).toBe('ملفي الشخصي')
+    expect(translateText('ar-EG', 'toast.languageUpdated')).toBe('تم تحديث اللغة')
+    // …and bare English labels, which is how the swept call sites reference them.
+    expect(translateText('ar-EG', 'Language & Formatting')).toBe('اللغة والتنسيق')
+    expect(translateText('ar-EG', 'Save')).toBe('حفظ')
+    expect(translateText('ar-EG', 'Staff Management')).toBe('إدارة الموظفين')
+    expect(translateText('en-EG', 'Staff Management')).toBe('Staff Management')
+    // Unknown text is returned untouched, never as an empty string or a key.
+    expect(translateText('ar-EG', 'Not a curated label at all')).toBe('Not a curated label at all')
+  })
+
+  it('translates the toast copy that the toaster layer localizes', () => {
+    for (const label of [
+      'Language updated',
+      'Saved successfully',
+      'Deleted successfully',
+      'Created successfully',
+      'Updated successfully',
+      'Error',
+      'Success',
+      'Validation Error',
+      'Something went wrong. Please try again.',
+    ]) {
+      const arabic = translateText('ar-EG', label)
+      expect(arabic, label).not.toBe(label)
+      expect(arabic).toMatch(/[\u0600-\u06FF]/)
+      expect(translateText('en-EG', label)).toBe(label)
+    }
+  })
+
+  it('covers the pass-3 namespaces with meaningful volume', () => {
+    const p3 = arKeys.filter((k) => k.startsWith('p3.'))
+    expect(p3.length).toBeGreaterThan(1200)
+    // Arabic values must actually be Arabic, not copies of the English source.
+    const nonArabic = p3.filter((k) => !/[\u0600-\u06FF]/.test(ar[k]) && !/^(Google|Microsoft|Dentora|Paymob|Twilio|Fawry|InstaPay|OpenRouter|SMTP|Webhook|API|HMRC|NPS|SLA|VIP|EGP|AB)/i.test(en[k]))
+    expect(nonArabic).toEqual([])
   })
 })
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ interface UsageStats {
  * Fetches from GET /api/ai/usage (admin-only).
  */
 export function AIUsageStats() {
+  const { t } = useLanguage()
   const [stats, setStats] = useState<UsageStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -89,19 +91,19 @@ export function AIUsageStats() {
     <div className="space-y-4">
       {/* section header */}
       <div>
-        <h3 className="text-sm font-semibold">AI Usage Dashboard</h3>
+        <h3 className="text-sm font-semibold">{t('AI Usage Dashboard')}</h3>
         <p className="text-xs text-muted-foreground mt-0.5">
-          This-month vs all-time usage statistics
+          {t('This-month vs all-time usage statistics')}
         </p>
       </div>
 
       {/* top-line cards */}
       <div className="grid grid-cols-3 gap-3">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-lg border p-3 bg-muted/30">
+          <div key={t(card.label)} className="rounded-lg border p-3 bg-muted/30">
             <div className="flex items-center gap-1.5 mb-1">
               <span>{card.icon}</span>
-              <span className="text-xs text-muted-foreground">{card.label}</span>
+              <span className="text-xs text-muted-foreground">{t(card.label)}</span>
             </div>
             <p className="text-lg font-bold">
               {card.format ? card.format(card.thisMonth) : card.thisMonth}
@@ -118,23 +120,23 @@ export function AIUsageStats() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span>💰</span>
-            <span className="text-xs font-semibold">Estimated AI Cost</span>
+            <span className="text-xs font-semibold">{t('Estimated AI Cost')}</span>
           </div>
           <span className="text-xs text-muted-foreground">via OpenRouter</span>
         </div>
         <div className="flex items-center gap-6 mt-2">
           <div>
-            <p className="text-xs text-muted-foreground">This Month</p>
+            <p className="text-xs text-muted-foreground">{t('This Month')}</p>
             <p className="text-sm font-bold">EGP {stats.thisMonth.costEGP.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">All-Time</p>
+            <p className="text-xs text-muted-foreground">{t('All-Time')}</p>
             <p className="text-sm font-semibold text-muted-foreground">
               EGP {stats.allTime.costEGP.toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Insights Generated</p>
+            <p className="text-xs text-muted-foreground">{t('Insights Generated')}</p>
             <p className="text-sm font-semibold">{stats.allTime.insights}</p>
           </div>
         </div>
@@ -166,7 +168,7 @@ export function AIUsageStats() {
       )}
 
       <p className="text-xs text-muted-foreground italic">
-        Costs are estimates based on logged token usage.
+        {t('Costs are estimates based on logged token usage.')}
       </p>
     </div>
   )

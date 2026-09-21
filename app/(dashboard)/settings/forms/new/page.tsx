@@ -196,8 +196,8 @@ export default function NewFormTemplatePage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">New Form Template</h1>
-            <p className="text-muted-foreground">Design a custom form for patients</p>
+            <h1 className="text-2xl font-bold">{t('New Form Template')}</h1>
+            <p className="text-muted-foreground">{t('Design a custom form for patients')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -243,9 +243,9 @@ export default function NewFormTemplatePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {FORM_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                      {FORM_TYPES.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -258,7 +258,7 @@ export default function NewFormTemplatePage() {
                   id="desc"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of this form..."
+                  placeholder={t('Brief description of this form...')}
                   rows={2}
                 />
               </div>
@@ -285,7 +285,7 @@ export default function NewFormTemplatePage() {
                   <div className="flex items-center gap-2 mb-2">
                     <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {FIELD_TYPES.find((t) => t.value === field.type)?.label || field.type}
+                      {FIELD_TYPES.find((opt) => opt.value === field.type)?.label || field.type}
                     </Badge>
                     <span className="font-medium text-sm truncate flex-1">
                       {field.label || '(no label)'}
@@ -337,9 +337,9 @@ export default function NewFormTemplatePage() {
                         <div className="space-y-1">
                           <Label className="text-xs">{t('ui.label')}</Label>
                           <Input
-                            value={field.label}
+                            value={t(field.label)}
                             onChange={(e) => updateField(field.id, { label: e.target.value })}
-                            placeholder="Field label"
+                            placeholder={t('Field label')}
                           />
                         </div>
                         {!['heading', 'paragraph', 'signature', 'checkbox'].includes(
@@ -352,7 +352,7 @@ export default function NewFormTemplatePage() {
                               onChange={(e) =>
                                 updateField(field.id, { placeholder: e.target.value })
                               }
-                              placeholder="Placeholder text"
+                              placeholder={t('Placeholder text')}
                             />
                           </div>
                         )}
@@ -363,11 +363,11 @@ export default function NewFormTemplatePage() {
                         field.type
                       ) ? null : (
                         <div className="space-y-1">
-                          <Label className="text-xs">Help Text</Label>
+                          <Label className="text-xs">{t('Help Text')}</Label>
                           <Input
                             value={field.description || ''}
                             onChange={(e) => updateField(field.id, { description: e.target.value })}
-                            placeholder="Optional help text"
+                            placeholder={t('Optional help text')}
                           />
                         </div>
                       )}
@@ -433,7 +433,7 @@ export default function NewFormTemplatePage() {
                   onClick={() => addField(ft.value)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  {ft.label}
+                  {t(ft.label)}
                 </Button>
               ))}
             </CardContent>

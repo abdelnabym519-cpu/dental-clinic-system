@@ -264,7 +264,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
         <h2 className="text-xl font-semibold">{t('ui.appointment_not_found')}</h2>
         <p className="text-muted-foreground mb-4">
-          The appointment you&apos;re looking for doesn&apos;t exist.
+          {t("The appointment you're looking for doesn't exist.")}
         </p>
         <Link href="/appointments">
           <Button>{t('ui.back_to_appointments')}</Button>
@@ -290,7 +290,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               {appointment.isVirtual && (
                 <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
                   <Video className="h-3 w-3 mr-1" />
-                  Virtual
+                  {t('Virtual')}
                 </Badge>
               )}
             </div>
@@ -304,7 +304,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               <Link href={`/video/${appointment.videoConsultationId}`}>
                 <Button className="bg-green-600 hover:bg-green-700">
                   <Video className="h-4 w-4 mr-2" />
-                  Join Video Call
+                  {t('Join Video Call')}
                 </Button>
               </Link>
             )}
@@ -358,10 +358,10 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('ui.duration')}</p>
-                <p className="font-medium">{appointment.duration} minutes</p>
+                <p className="font-medium">{appointment.duration} {t('minutes')}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Chair</p>
+                <p className="text-sm text-muted-foreground">{t('Chair')}</p>
                 <p className="font-medium">
                   {appointment.chairNumber ? `Chair ${appointment.chairNumber}` : 'Not assigned'}
                 </p>
@@ -390,7 +390,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                   )}
                   {appointment.checkedOutAt && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Checked Out</p>
+                      <p className="text-sm text-muted-foreground">{t('Checked Out')}</p>
                       <p className="font-medium">
                         {new Date(appointment.checkedOutAt).toLocaleTimeString()}
                       </p>
@@ -398,8 +398,8 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                   )}
                   {appointment.waitTime !== null && appointment.waitTime > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Wait Time</p>
-                      <p className="font-medium">{appointment.waitTime} minutes</p>
+                      <p className="text-sm text-muted-foreground">{t('Wait Time')}</p>
+                      <p className="font-medium">{appointment.waitTime} {t('minutes')}</p>
                     </div>
                   )}
                 </div>
@@ -517,7 +517,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
             <div className="pt-2">
               <Link href={`/patients/${appointment.patient.id}`}>
                 <Button variant="outline" className="w-full">
-                  View Full Patient Profile
+                  {t('View Full Patient Profile')}
                 </Button>
               </Link>
             </div>
@@ -558,7 +558,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
           </CardHeader>
           <CardContent>
             {appointment.treatments.length === 0 ? (
-              <p className="text-muted-foreground">No treatments recorded yet.</p>
+              <p className="text-muted-foreground">{t('No treatments recorded yet.')}</p>
             ) : (
               <div className="space-y-3">
                 {appointment.treatments.map((treatment) => (
@@ -585,14 +585,14 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
           <DialogHeader>
             <DialogTitle>{t('ui.cancel_appointment')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this appointment? This action cannot be undone.
+              {t('Are you sure you want to cancel this appointment? This action cannot be undone.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="reason">Cancellation Reason</Label>
+            <Label htmlFor="reason">{t('Cancellation Reason')}</Label>
             <Input
               id="reason"
-              placeholder="Enter reason for cancellation"
+              placeholder={t('Enter reason for cancellation')}
               value={cancellationReason}
               onChange={(e) => setCancellationReason(e.target.value)}
               className="mt-2"
@@ -600,7 +600,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
-              Keep Appointment
+              {t('Keep Appointment')}
             </Button>
             <Button
               variant="destructive"

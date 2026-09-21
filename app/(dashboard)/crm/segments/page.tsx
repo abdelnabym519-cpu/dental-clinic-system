@@ -194,10 +194,10 @@ export default function SegmentsPage() {
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Icon className={`h-4 w-4 ${config.color}`} />
-                  <span className="text-xs font-medium truncate">{config.label}</span>
+                  <span className="text-xs font-medium truncate">{t(config.label)}</span>
                 </div>
                 <div className="text-2xl font-bold">{segment?.count || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">{config.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t(config.description)}</p>
               </CardContent>
             </Card>
           )
@@ -209,7 +209,7 @@ export default function SegmentsPage() {
         <TabsList className="grid grid-cols-6 w-full">
           {Object.entries(SEGMENT_CONFIG).map(([key, config]) => (
             <TabsTrigger key={key} value={key} className="text-xs">
-              {config.label}
+              {t(config.label)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -222,14 +222,14 @@ export default function SegmentsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <config.icon className={`h-5 w-5 ${config.color}`} />
-                    {config.label}
+                    {t(config.label)}
                     <Badge variant="outline">{segment?.count || 0}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!segment || segment.patients.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      No patients in this segment
+                      {t('No patients in this segment')}
                     </p>
                   ) : (
                     <Table>
@@ -238,8 +238,8 @@ export default function SegmentsPage() {
                           <TableHead>{t('ui.patient_id')}</TableHead>
                           <TableHead>{t('ui.name')}</TableHead>
                           <TableHead>{t('ui.phone')}</TableHead>
-                          <TableHead>Last Visit</TableHead>
-                          <TableHead className="text-right">Total Spend</TableHead>
+                          <TableHead>{t('Last Visit')}</TableHead>
+                          <TableHead className="text-right">{t('Total Spend')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -276,7 +276,7 @@ export default function SegmentsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-purple-600" />
-              AI Churn Prediction
+              {t('AI Churn Prediction')}
             </CardTitle>
             <CardDescription>
               RFM analysis with churn risk scores — avg risk: {aiData.summary?.avgChurnRisk || 0}%
@@ -316,7 +316,7 @@ export default function SegmentsPage() {
                 ].map((s) => (
                   <div key={s.label} className={`text-center p-2 rounded-lg ${s.color}`}>
                     <div className="text-xl font-bold">{s.count || 0}</div>
-                    <div className="text-xs">{s.label}</div>
+                    <div className="text-xs">{t(s.label)}</div>
                   </div>
                 ))}
               </div>
@@ -324,7 +324,7 @@ export default function SegmentsPage() {
               {/* Retention actions */}
               {aiData.summary?.topRetentionActions?.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-700 mb-1">Top Retention Actions</p>
+                  <p className="text-sm font-medium text-blue-700 mb-1">{t('Top Retention Actions')}</p>
                   {aiData.summary.topRetentionActions.map((a: string, i: number) => (
                     <p key={i} className="text-xs text-blue-600">
                       • {a}
@@ -338,12 +338,12 @@ export default function SegmentsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('ui.patient')}</TableHead>
-                    <TableHead>Segment</TableHead>
+                    <TableHead>{t('Segment')}</TableHead>
                     <TableHead>Recency (days)</TableHead>
                     <TableHead>{t('ui.frequency')}</TableHead>
-                    <TableHead>Spend</TableHead>
-                    <TableHead>Churn Risk</TableHead>
-                    <TableHead>Recommendation</TableHead>
+                    <TableHead>{t('Spend')}</TableHead>
+                    <TableHead>{t('Churn Risk')}</TableHead>
+                    <TableHead>{t('Recommendation')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

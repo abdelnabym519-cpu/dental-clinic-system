@@ -22,23 +22,25 @@ export function LanguageToggle({ className }: { className?: string }) {
       <Languages className="mx-1 h-4 w-4 text-muted-foreground" aria-hidden />
       <Button
         type="button"
+        lang="ar"
         variant={locale === 'ar-EG' ? 'default' : 'ghost'}
         size="sm"
         className="h-7 px-2 text-xs"
         aria-pressed={locale === 'ar-EG'}
         onClick={() => setLocale('ar-EG')}
       >
-        العربية
+        {t('language.arabic')}
       </Button>
       <Button
         type="button"
+        lang="en"
         variant={locale.startsWith('en') ? 'default' : 'ghost'}
         size="sm"
         className="h-7 px-2 text-xs"
         aria-pressed={locale.startsWith('en')}
         onClick={() => setLocale('en-EG')}
       >
-        English
+        {t('language.english')}
       </Button>
     </div>
   )

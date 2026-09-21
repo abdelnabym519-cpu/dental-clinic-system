@@ -156,7 +156,7 @@ export function NotificationTray() {
               onClick={markAllRead}
             >
               <CheckCheck className="mr-1 h-3 w-3" />
-              Mark all read
+              {t('Mark all read')}
             </Button>
           )}
         </div>
@@ -167,7 +167,7 @@ export function NotificationTray() {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-sm text-muted-foreground">
               <Bell className="mb-2 h-8 w-8 opacity-30" />
-              No notifications yet
+              {t('No notifications yet')}
             </div>
           ) : (
             <div>

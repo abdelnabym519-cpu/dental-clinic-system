@@ -27,6 +27,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 function InsightCard({ insight, onDismiss }: { insight: Insight; onDismiss: () => void }) {
+  const { t } = useLanguage()
   return (
     <div
       className={cn(
@@ -55,7 +56,7 @@ function InsightCard({ insight, onDismiss }: { insight: Insight; onDismiss: () =
         <button
           onClick={onDismiss}
           className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-          aria-label="Dismiss insight"
+          aria-label={t('Dismiss insight')}
         >
           <svg
             width="14"
@@ -91,7 +92,7 @@ export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">AI Insights</h3>
+        <h3 className="text-sm font-semibold">{t('AI Insights')}</h3>
         <button
           onClick={generateInsights}
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
@@ -108,7 +109,7 @@ export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
 
       {/* Empty */}
       {!insightsLoading && visible.length === 0 && (
-        <p className="text-xs text-muted-foreground">No active insights right now.</p>
+        <p className="text-xs text-muted-foreground">{t('No active insights right now.')}</p>
       )}
 
       {/* Insight cards */}

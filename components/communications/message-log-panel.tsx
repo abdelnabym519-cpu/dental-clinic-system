@@ -114,7 +114,7 @@ export function MessageLogPanel() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="all">{t('All statuses')}</SelectItem>
             <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
             <SelectItem value="SENT">{t('ui.sent')}</SelectItem>
             <SelectItem value="FAILED">{t('ui.failed')}</SelectItem>
@@ -122,16 +122,16 @@ export function MessageLogPanel() {
           </SelectContent>
         </Select>
         <Select value={channel} onValueChange={setChannel}>
-          <SelectTrigger className="w-[150px]" aria-label="Filter by channel">
+          <SelectTrigger className="w-[150px]" aria-label={t('Filter by channel')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All channels</SelectItem>
+            <SelectItem value="all">{t('All channels')}</SelectItem>
             <SelectItem value="WHATSAPP">{t('ui.whatsapp')}</SelectItem>
             <SelectItem value="SMS">{t('ui.sms')}</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="sm" onClick={load} aria-label="Refresh message log">
+        <Button variant="outline" size="sm" onClick={load} aria-label={t('Refresh message log')}>
           <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
         <span className="ml-auto text-xs text-muted-foreground">{total} messages</span>
       </div>
@@ -156,11 +156,11 @@ export function MessageLogPanel() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2">Recipient</th>
+                <th className="px-3 py-2">{t('Recipient')}</th>
                 <th className="px-3 py-2">{t('ui.channel')}</th>
                 <th className="px-3 py-2">{t('ui.type')}</th>
                 <th className="px-3 py-2">{t('ui.status')}</th>
-                <th className="px-3 py-2">Scheduled / Sent</th>
+                <th className="px-3 py-2">{t('Scheduled / Sent')}</th>
                 <th className="px-3 py-2">{t('ui.message')}</th>
                 <th className="px-3 py-2" />
               </tr>

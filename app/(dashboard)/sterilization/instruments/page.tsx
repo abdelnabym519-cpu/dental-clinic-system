@@ -219,7 +219,7 @@ export default function InstrumentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t('ui.instruments')}</h2>
-          <p className="text-muted-foreground">Manage dental instruments and equipment</p>
+          <p className="text-muted-foreground">{t('Manage dental instruments and equipment')}</p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
@@ -230,7 +230,7 @@ export default function InstrumentsPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search instruments..."
+            placeholder={t('Search instruments...')}
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -274,9 +274,9 @@ export default function InstrumentsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No instruments found</h3>
+            <h3 className="text-lg font-semibold">{t('No instruments found')}</h3>
             <p className="text-muted-foreground text-sm mt-1 mb-4">
-              Add your first instrument to start tracking
+              {t('Add your first instrument to start tracking')}
             </p>
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
@@ -293,8 +293,8 @@ export default function InstrumentsPage() {
                   <TableHead>Serial #</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>{t('ui.location')}</TableHead>
-                  <TableHead className="text-right">Cycles</TableHead>
-                  <TableHead>Last Sterilized</TableHead>
+                  <TableHead className="text-right">{t('Cycles')}</TableHead>
+                  <TableHead>{t('Last Sterilized')}</TableHead>
                   <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -358,7 +358,7 @@ export default function InstrumentsPage() {
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>{editingId ? 'Edit Instrument' : 'Add Instrument'}</DialogTitle>
-            <DialogDescription>Enter instrument details</DialogDescription>
+            <DialogDescription>{t('Enter instrument details')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -377,7 +377,7 @@ export default function InstrumentsPage() {
                   onValueChange={(v) => setForm({ ...form, category: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
+                    <SelectValue placeholder={t('Select...')} />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map((c) => (
@@ -398,7 +398,7 @@ export default function InstrumentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>RFID Tag</Label>
+                <Label>{t('RFID Tag')}</Label>
                 <Input
                   value={form.rfidTag}
                   onChange={(e) => setForm({ ...form, rfidTag: e.target.value })}
@@ -415,7 +415,7 @@ export default function InstrumentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Max Sterilization Cycles</Label>
+                <Label>{t('Max Sterilization Cycles')}</Label>
                 <Input
                   type="number"
                   value={form.maxCycles}
@@ -425,7 +425,7 @@ export default function InstrumentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Purchase Date</Label>
+                <Label>{t('Purchase Date')}</Label>
                 <Input
                   type="date"
                   value={form.purchaseDate}
@@ -433,7 +433,7 @@ export default function InstrumentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Warranty Until</Label>
+                <Label>{t('Warranty Until')}</Label>
                 <Input
                   type="date"
                   value={form.warrantyDate}

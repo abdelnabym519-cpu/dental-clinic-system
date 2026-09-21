@@ -204,7 +204,7 @@ export default function NewLabOrderPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{t('ui.new_lab_order')}</h1>
-          <p className="text-muted-foreground">Create a new lab work order</p>
+          <p className="text-muted-foreground">{t('Create a new lab work order')}</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export default function NewLabOrderPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
-            <CardDescription>Select the patient for this lab order</CardDescription>
+            <CardDescription>{t('Select the patient for this lab order')}</CardDescription>
           </CardHeader>
           <CardContent>
             {selectedPatient ? (
@@ -288,9 +288,9 @@ export default function NewLabOrderPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FlaskConical className="h-5 w-5" />
-              Order Details
+              {t('Order Details')}
             </CardTitle>
-            <CardDescription>Specify the lab work details</CardDescription>
+            <CardDescription>{t('Specify the lab work details')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,7 +301,7 @@ export default function NewLabOrderPage() {
                   onValueChange={(v) => setForm((prev) => ({ ...prev, labVendorId: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select lab vendor" />
+                    <SelectValue placeholder={t('Select lab vendor')} />
                   </SelectTrigger>
                   <SelectContent>
                     {vendors.map((vendor) => (
@@ -321,12 +321,12 @@ export default function NewLabOrderPage() {
                   onValueChange={(v) => setForm((prev) => ({ ...prev, workType: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select work type" />
+                    <SelectValue placeholder={t('Select work type')} />
                   </SelectTrigger>
                   <SelectContent>
                     {WORK_TYPES.map((wt) => (
                       <SelectItem key={wt.value} value={wt.value}>
-                        {wt.label}
+                        {t(wt.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -345,7 +345,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Shade Guide</Label>
+                <Label>{t('Shade Guide')}</Label>
                 <Input
                   value={form.shadeGuide}
                   onChange={(e) => setForm((prev) => ({ ...prev, shadeGuide: e.target.value }))}
@@ -357,9 +357,9 @@ export default function NewLabOrderPage() {
             <div className="space-y-2">
               <Label>{t('ui.description')}</Label>
               <Textarea
-                value={form.description}
+                value={t(form.description)}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe the lab work required..."
+                placeholder={t('Describe the lab work required...')}
                 rows={3}
               />
             </div>
@@ -369,8 +369,8 @@ export default function NewLabOrderPage() {
         {/* Dates & Cost */}
         <Card>
           <CardHeader>
-            <CardTitle>Schedule & Cost</CardTitle>
-            <CardDescription>Set dates and estimated cost</CardDescription>
+            <CardTitle>{t('Schedule & Cost')}</CardTitle>
+            <CardDescription>{t('Set dates and estimated cost')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -385,7 +385,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Expected Delivery Date</Label>
+                <Label>{t('Expected Delivery Date')}</Label>
                 <Input
                   type="date"
                   value={form.expectedDate}
@@ -401,7 +401,7 @@ export default function NewLabOrderPage() {
                   min="0"
                   value={form.estimatedCost}
                   onChange={(e) => setForm((prev) => ({ ...prev, estimatedCost: e.target.value }))}
-                  placeholder="Enter estimated cost"
+                  placeholder={t('Enter estimated cost')}
                   required
                 />
               </div>
@@ -418,7 +418,7 @@ export default function NewLabOrderPage() {
             <Textarea
               value={form.notes}
               onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-              placeholder="Any special instructions or notes for the lab..."
+              placeholder={t('Any special instructions or notes for the lab...')}
               rows={3}
             />
           </CardContent>

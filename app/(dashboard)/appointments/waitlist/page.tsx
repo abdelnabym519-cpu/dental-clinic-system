@@ -226,8 +226,8 @@ export default function WaitlistPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Waitlist</h1>
-          <p className="text-muted-foreground">Manage patients waiting for appointment slots</p>
+          <h1 className="text-3xl font-bold">{t('Waitlist')}</h1>
+          <p className="text-muted-foreground">{t('Manage patients waiting for appointment slots')}</p>
         </div>
         <Dialog
           open={dialogOpen}
@@ -244,7 +244,7 @@ export default function WaitlistPage() {
             <DialogHeader>
               <DialogTitle>{t('ui.add_to_waitlist')}</DialogTitle>
               <DialogDescription>
-                Add a patient to the waitlist for the next available slot
+                {t('Add a patient to the waitlist for the next available slot')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -340,7 +340,7 @@ export default function WaitlistPage() {
                     <SelectItem value="any">{t('ui.any_time')}</SelectItem>
                     {TIME_SLOTS.map((slot) => (
                       <SelectItem key={slot.value} value={slot.value}>
-                        {slot.label}
+                        {t(slot.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -391,7 +391,7 @@ export default function WaitlistPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{summary.notified}</p>
-                <p className="text-sm text-muted-foreground">Notified</p>
+                <p className="text-sm text-muted-foreground">{t('Notified')}</p>
               </div>
             </div>
           </CardContent>
@@ -404,7 +404,7 @@ export default function WaitlistPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{summary.booked}</p>
-                <p className="text-sm text-muted-foreground">Booked</p>
+                <p className="text-sm text-muted-foreground">{t('Booked')}</p>
               </div>
             </div>
           </CardContent>
@@ -430,10 +430,10 @@ export default function WaitlistPage() {
         <CardHeader>
           <CardTitle>
             <Users className="h-5 w-5 inline mr-2" />
-            Waitlist Entries
+            {t('Waitlist Entries')}
           </CardTitle>
           <CardDescription>
-            Patients are automatically notified when matching slots open up
+            {t('Patients are automatically notified when matching slots open up')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -444,18 +444,18 @@ export default function WaitlistPage() {
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[200px] text-center">
               <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No waitlist entries</p>
+              <p className="text-muted-foreground">{t('No waitlist entries')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('ui.patient')}</TableHead>
-                  <TableHead>Doctor Preference</TableHead>
-                  <TableHead>Preferred Days</TableHead>
+                  <TableHead>{t('Doctor Preference')}</TableHead>
+                  <TableHead>{t('Preferred Days')}</TableHead>
                   <TableHead>{t('ui.time')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
-                  <TableHead>Added</TableHead>
+                  <TableHead>{t('Added')}</TableHead>
                   <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>

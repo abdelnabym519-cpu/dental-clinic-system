@@ -280,9 +280,9 @@ export default function EditFormTemplatePage({ params }: { params: Promise<{ id:
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {FORM_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
+                      {FORM_TYPES.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -318,7 +318,7 @@ export default function EditFormTemplatePage({ params }: { params: Promise<{ id:
                   <div className="flex items-center gap-2 mb-2">
                     <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                     <Badge variant="outline" className="text-xs shrink-0">
-                      {FIELD_TYPES.find((t) => t.value === field.type)?.label || field.type}
+                      {FIELD_TYPES.find((opt) => opt.value === field.type)?.label || field.type}
                     </Badge>
                     <span className="font-medium text-sm truncate flex-1">
                       {field.label || '(no label)'}
@@ -370,7 +370,7 @@ export default function EditFormTemplatePage({ params }: { params: Promise<{ id:
                         <div className="space-y-1">
                           <Label className="text-xs">{t('ui.label')}</Label>
                           <Input
-                            value={field.label}
+                            value={t(field.label)}
                             onChange={(e) => updateField(field.id, { label: e.target.value })}
                           />
                         </div>
@@ -448,7 +448,7 @@ export default function EditFormTemplatePage({ params }: { params: Promise<{ id:
                   onClick={() => addField(ft.value)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  {ft.label}
+                  {t(ft.label)}
                 </Button>
               ))}
             </CardContent>

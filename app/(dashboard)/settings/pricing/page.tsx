@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -60,6 +61,7 @@ interface PricingData {
 }
 
 export default function PricingSuggestionsPage() {
+  const { t } = useLanguage()
   const [data, setData] = useState<PricingData | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
@@ -100,9 +102,9 @@ export default function PricingSuggestionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Dynamic Pricing Advisor</h1>
+          <h1 className="text-2xl font-bold">{t('Dynamic Pricing Advisor')}</h1>
           <p className="text-muted-foreground">
-            AI-powered pricing recommendations based on demand patterns
+            {t('AI-powered pricing recommendations based on demand patterns')}
           </p>
         </div>
         <Button onClick={generateSuggestions} disabled={loading}>
@@ -120,7 +122,7 @@ export default function PricingSuggestionsPage() {
         <CardContent className="p-4 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-blue-800">Advisory Only</p>
+            <p className="font-medium text-blue-800">{t('Advisory Only')}</p>
             <p className="text-blue-700">
               These are AI-generated recommendations. No pricing changes are applied automatically.
               Review each suggestion and implement manually if appropriate.
@@ -133,7 +135,7 @@ export default function PricingSuggestionsPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">No Analysis Generated</p>
+            <p className="text-lg font-medium mb-2">{t('No Analysis Generated')}</p>
             <p className="text-muted-foreground mb-4">
               Click &quot;Generate Analysis&quot; to get AI-powered pricing recommendations based on
               your clinic&apos;s appointment and revenue data.
@@ -151,7 +153,7 @@ export default function PricingSuggestionsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <TrendingUp className="h-5 w-5 text-blue-500" />
-                    <p className="text-sm text-muted-foreground">Overall Demand</p>
+                    <p className="text-sm text-muted-foreground">{t('Overall Demand')}</p>
                   </div>
                   <p className="text-2xl font-bold">{data.summary.overallDemand}</p>
                 </CardContent>
@@ -160,7 +162,7 @@ export default function PricingSuggestionsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <DollarSign className="h-5 w-5 text-green-500" />
-                    <p className="text-sm text-muted-foreground">Revenue Opportunity</p>
+                    <p className="text-sm text-muted-foreground">{t('Revenue Opportunity')}</p>
                   </div>
                   <p className="text-2xl font-bold">
                     {'\u20B9'}
@@ -172,7 +174,7 @@ export default function PricingSuggestionsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles className="h-5 w-5 text-purple-500" />
-                    <p className="text-sm text-muted-foreground">Top Recommendation</p>
+                    <p className="text-sm text-muted-foreground">{t('Top Recommendation')}</p>
                   </div>
                   <p className="text-sm">{data.summary.topRecommendation}</p>
                 </CardContent>
@@ -191,7 +193,7 @@ export default function PricingSuggestionsPage() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Busiest Days</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('Busiest Days')}</p>
                     <div className="flex flex-wrap gap-1">
                       {data.peakAnalysis.busiestDays?.map((d) => (
                         <Badge key={d} className="bg-red-100 text-red-700">
@@ -201,7 +203,7 @@ export default function PricingSuggestionsPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Quietest Days</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('Quietest Days')}</p>
                     <div className="flex flex-wrap gap-1">
                       {data.peakAnalysis.quietestDays?.map((d) => (
                         <Badge key={d} className="bg-green-100 text-green-700">
@@ -211,7 +213,7 @@ export default function PricingSuggestionsPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Peak Hours</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('Peak Hours')}</p>
                     <div className="flex flex-wrap gap-1">
                       {data.peakAnalysis.busiestHours?.map((h) => (
                         <Badge key={h} variant="outline">
@@ -221,7 +223,7 @@ export default function PricingSuggestionsPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Off-Peak Hours</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('Off-Peak Hours')}</p>
                     <div className="flex flex-wrap gap-1">
                       {data.peakAnalysis.quietestHours?.map((h) => (
                         <Badge key={h} variant="outline">
@@ -233,11 +235,11 @@ export default function PricingSuggestionsPage() {
                 </div>
                 <div className="mt-4 flex gap-8">
                   <div>
-                    <p className="text-xs text-muted-foreground">Avg Utilization</p>
+                    <p className="text-xs text-muted-foreground">{t('Avg Utilization')}</p>
                     <p className="text-lg font-bold">{data.peakAnalysis.averageUtilization}%</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Peak Utilization</p>
+                    <p className="text-xs text-muted-foreground">{t('Peak Utilization')}</p>
                     <p className="text-lg font-bold">{data.peakAnalysis.peakUtilization}%</p>
                   </div>
                 </div>
@@ -265,7 +267,7 @@ export default function PricingSuggestionsPage() {
                             <TrendingUp className="h-5 w-5 text-blue-500" />
                           )}
                           <div>
-                            <p className="font-medium">{s.description}</p>
+                            <p className="font-medium">{t(s.description)}</p>
                             <p className="text-sm text-muted-foreground">{s.dayOrTime}</p>
                           </div>
                         </div>
@@ -336,7 +338,7 @@ export default function PricingSuggestionsPage() {
           {data.procedureDemand && data.procedureDemand.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Procedure Demand</CardTitle>
+                <CardTitle className="text-base">{t('Procedure Demand')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

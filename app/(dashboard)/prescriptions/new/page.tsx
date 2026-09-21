@@ -292,7 +292,7 @@ export default function NewPrescriptionPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <ClipboardList className="h-8 w-8" />{t('ui.new_prescription')}</h1>
-        <p className="text-muted-foreground">Create a new e-prescription for a patient</p>
+        <p className="text-muted-foreground">{t('Create a new e-prescription for a patient')}</p>
       </div>
 
       <div className="space-y-6">
@@ -300,7 +300,7 @@ export default function NewPrescriptionPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.patient')}</CardTitle>
-            <CardDescription>Select the patient for this prescription</CardDescription>
+            <CardDescription>{t('Select the patient for this prescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             {selectedPatient ? (
@@ -367,7 +367,7 @@ export default function NewPrescriptionPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Diagnosis / Condition</Label>
+              <Label>{t('Diagnosis / Condition')}</Label>
               <Input
                 value={diagnosis}
                 onChange={(e) => setDiagnosis(e.target.value)}
@@ -376,7 +376,7 @@ export default function NewPrescriptionPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Valid Until</Label>
+                <Label>{t('Valid Until')}</Label>
                 <Input
                   type="date"
                   value={validUntil}
@@ -392,7 +392,7 @@ export default function NewPrescriptionPage() {
           <CardHeader>
             <CardTitle>{t('ui.medications')}</CardTitle>
             <CardDescription>
-              Add medications from your drug catalog or type manually
+              {t('Add medications from your drug catalog or type manually')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -426,7 +426,7 @@ export default function NewPrescriptionPage() {
                       updateMedRow(index, 'medicationId', '')
                     }}
                     onFocus={() => setActiveMedRow(index)}
-                    placeholder="Search from catalog or type name..."
+                    placeholder={t('Search from catalog or type name...')}
                   />
                   {activeMedRow === index && medOptions.length > 0 && (
                     <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-md max-h-48 overflow-y-auto">
@@ -476,7 +476,7 @@ export default function NewPrescriptionPage() {
                     />
                   </div>
                   <div>
-                    <Label>Route</Label>
+                    <Label>{t('Route')}</Label>
                     <Select
                       value={med.route}
                       onValueChange={(v) => updateMedRow(index, 'route', v)}
@@ -494,13 +494,13 @@ export default function NewPrescriptionPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Timing</Label>
+                    <Label>{t('Timing')}</Label>
                     <Select
                       value={med.timing || undefined}
                       onValueChange={(v) => updateMedRow(index, 'timing', v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select" />
+                        <SelectValue placeholder={t('Select')} />
                       </SelectTrigger>
                       <SelectContent>
                         {TIMINGS.map((t) => (
@@ -523,11 +523,11 @@ export default function NewPrescriptionPage() {
                 </div>
 
                 <div>
-                  <Label>Special Instructions</Label>
+                  <Label>{t('Special Instructions')}</Label>
                   <Input
                     value={med.instructions}
                     onChange={(e) => updateMedRow(index, 'instructions', e.target.value)}
-                    placeholder="Take with warm water, avoid dairy..."
+                    placeholder={t('Take with warm water, avoid dairy...')}
                   />
                 </div>
               </div>
@@ -535,7 +535,7 @@ export default function NewPrescriptionPage() {
 
             <Button variant="outline" onClick={addMedRow} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Add Another Medication
+              {t('Add Another Medication')}
             </Button>
           </CardContent>
         </Card>
@@ -549,7 +549,7 @@ export default function NewPrescriptionPage() {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="General advice, follow-up instructions..."
+              placeholder={t('General advice, follow-up instructions...')}
               rows={3}
             />
           </CardContent>

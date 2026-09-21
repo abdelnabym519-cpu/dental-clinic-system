@@ -229,7 +229,7 @@ export default function AttendancePage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t('ui.attendance')}</h1>
-            <p className="text-muted-foreground">Track and manage staff attendance</p>
+            <p className="text-muted-foreground">{t('Track and manage staff attendance')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Total Staff</span>
+                <span className="text-sm text-muted-foreground">{t('Total Staff')}</span>
               </div>
               <p className="text-2xl font-bold mt-1">{todayData.summary.total}</p>
             </CardContent>
@@ -310,9 +310,9 @@ export default function AttendancePage() {
       {/* Attendance Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Today&apos;s Attendance</CardTitle>
+          <CardTitle>{t("Today's Attendance")}</CardTitle>
           <CardDescription>
-            Click on a staff member to mark or update their attendance
+            {t('Click on a staff member to mark or update their attendance')}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
@@ -469,7 +469,7 @@ export default function AttendancePage() {
               <Input
                 value={attendanceForm.notes}
                 onChange={(e) => setAttendanceForm((prev) => ({ ...prev, notes: e.target.value }))}
-                placeholder="Optional notes"
+                placeholder={t('Optional notes')}
               />
             </div>
           </div>

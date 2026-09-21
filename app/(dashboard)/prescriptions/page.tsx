@@ -101,7 +101,7 @@ export default function PrescriptionsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <ClipboardList className="h-8 w-8" />{t('ui.prescriptions')}</h1>
-          <p className="text-muted-foreground">Create and manage patient prescriptions</p>
+          <p className="text-muted-foreground">{t('Create and manage patient prescriptions')}</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu
@@ -142,7 +142,7 @@ export default function PrescriptionsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by prescription #, patient name..."
+              placeholder={t('Search by prescription #, patient name...')}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -164,8 +164,8 @@ export default function PrescriptionsPage() {
           ) : prescriptions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ClipboardList className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">No prescriptions found</p>
-              <p className="text-sm">Create your first prescription to get started.</p>
+              <p className="text-lg font-medium">{t('No prescriptions found')}</p>
+              <p className="text-sm">{t('Create your first prescription to get started.')}</p>
             </div>
           ) : (
             <Table>

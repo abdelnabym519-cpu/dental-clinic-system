@@ -198,8 +198,8 @@ export default function StaffPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Management</h1>
-          <p className="text-muted-foreground">Manage staff members, roles, and permissions</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Staff Management')}</h1>
+          <p className="text-muted-foreground">{t('Manage staff members, roles, and permissions')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ExportMenu
@@ -226,7 +226,7 @@ export default function StaffPage() {
           <Link href="/staff/leaves">
             <Button variant="outline">
               <Calendar className="h-4 w-4 mr-2" />
-              Leaves
+              {t('Leaves')}
             </Button>
           </Link>
           <Link href="/staff/new">
@@ -243,7 +243,7 @@ export default function StaffPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, employee ID, phone, or email..."
+                placeholder={t('Search by name, employee ID, phone, or email...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -255,11 +255,11 @@ export default function StaffPage() {
                   <SelectValue placeholder={t('ui.role')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">{t('All Roles')}</SelectItem>
                   <SelectItem value="ADMIN">{t('ui.admin')}</SelectItem>
                   <SelectItem value="DOCTOR">{t('ui.doctor')}</SelectItem>
                   <SelectItem value="RECEPTIONIST">{t('ui.receptionist')}</SelectItem>
-                  <SelectItem value="LAB_TECH">Lab Tech</SelectItem>
+                  <SelectItem value="LAB_TECH">{t('Lab Tech')}</SelectItem>
                   <SelectItem value="ACCOUNTANT">{t('ui.accountant')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -284,12 +284,12 @@ export default function StaffPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Employee ID</TableHead>
+                <TableHead>{t('Employee ID')}</TableHead>
                 <TableHead>{t('ui.name')}</TableHead>
                 <TableHead>{t('ui.contact')}</TableHead>
                 <TableHead>{t('ui.role')}</TableHead>
                 <TableHead>{t('ui.specialization')}</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead>{t('Joined')}</TableHead>
                 <TableHead>{t('ui.status')}</TableHead>
                 <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
@@ -402,7 +402,7 @@ export default function StaffPage() {
                               onClick={() => router.push(`/staff/${member.id}/performance`)}
                             >
                               <BarChart3 className="h-4 w-4 mr-2" />
-                              Performance
+                              {t('Performance')}
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
@@ -461,7 +461,7 @@ export default function StaffPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate Staff Member</AlertDialogTitle>
+            <AlertDialogTitle>{t('Deactivate Staff Member')}</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to deactivate{' '}
               <strong>

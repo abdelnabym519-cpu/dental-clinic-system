@@ -76,7 +76,7 @@ export default function PatientPrescriptions() {
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <Pill className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p>No prescriptions yet</p>
+            <p>{t('No prescriptions yet')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -105,7 +105,7 @@ export default function PatientPrescriptions() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{rx.medications.length} meds</Badge>
+                    <Badge variant="outline">{rx.medications.length} {t('meds')}</Badge>
                     {expandedId === rx.id ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (

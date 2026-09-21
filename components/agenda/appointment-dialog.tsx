@@ -215,7 +215,7 @@ export function AppointmentDialog({
           <div className="grid gap-2">
             <Label htmlFor="apt-patient">{t('agenda.patient')}</Label>
             <Select value={form.patientId} onValueChange={set('patientId')}>
-              <SelectTrigger id="apt-patient" aria-label="Patient">
+              <SelectTrigger id="apt-patient" aria-label={t('Patient')}>
                 <SelectValue placeholder={t('agenda.selectPatient')} />
               </SelectTrigger>
               <SelectContent className="max-h-60">
@@ -231,7 +231,7 @@ export function AppointmentDialog({
           <div className="grid gap-2">
             <Label htmlFor="apt-doctor">{t('agenda.provider')}</Label>
             <Select value={form.doctorId} onValueChange={set('doctorId')}>
-              <SelectTrigger id="apt-doctor" aria-label="Provider">
+              <SelectTrigger id="apt-doctor" aria-label={t('Provider')}>
                 <SelectValue placeholder={t('agenda.selectProvider')} />
               </SelectTrigger>
               <SelectContent className="max-h-60">
@@ -270,7 +270,7 @@ export function AppointmentDialog({
             <div className="grid gap-2">
               <Label htmlFor="apt-duration">{t('common.duration')}</Label>
               <Select value={form.duration} onValueChange={set('duration')}>
-                <SelectTrigger id="apt-duration" aria-label="Duration">
+                <SelectTrigger id="apt-duration" aria-label={t('Duration')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -285,7 +285,7 @@ export function AppointmentDialog({
             <div className="grid gap-2">
               <Label htmlFor="apt-type">{t('agenda.type')}</Label>
               <Select value={form.appointmentType} onValueChange={set('appointmentType')}>
-                <SelectTrigger id="apt-type" aria-label="Appointment type">
+                <SelectTrigger id="apt-type" aria-label={t('Appointment type')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -300,7 +300,7 @@ export function AppointmentDialog({
             <div className="grid gap-2">
               <Label htmlFor="apt-priority">{t('agenda.priority')}</Label>
               <Select value={form.priority} onValueChange={set('priority')}>
-                <SelectTrigger id="apt-priority" aria-label="Priority">
+                <SelectTrigger id="apt-priority" aria-label={t('Priority')}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -318,7 +318,7 @@ export function AppointmentDialog({
             <div className="grid gap-2">
               <Label htmlFor="apt-room">{t('common.room')}</Label>
               <Select value={form.roomId} onValueChange={set('roomId')}>
-                <SelectTrigger id="apt-room" aria-label="Room or chair">
+                <SelectTrigger id="apt-room" aria-label={t('Room or chair')}>
                   <SelectValue placeholder={t('agenda.noRoom')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -331,7 +331,7 @@ export function AppointmentDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Room double-bookings are rejected by the server.
+                {t('Room double-bookings are rejected by the server.')}
               </p>
             </div>
           )}
@@ -346,21 +346,21 @@ export function AppointmentDialog({
                   className="h-4 w-4"
                   checked={recurrenceEnabled}
                   onChange={(e) => setRecurrenceEnabled(e.target.checked)}
-                  aria-label="Repeat this appointment as a series"
+                  aria-label={t('Repeat this appointment as a series')}
                 />
-                Repeat this appointment as a series
+                {t('Repeat this appointment as a series')}
               </label>
               {recurrenceEnabled && (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="grid gap-2">
                     <Label htmlFor="apt-rec-pattern" className="text-xs">
-                      Pattern
+                      {t('Pattern')}
                     </Label>
                     <Select
                       value={recurrence.pattern}
                       onValueChange={(v) => setRecurrence((r) => ({ ...r, pattern: v }))}
                     >
-                      <SelectTrigger id="apt-rec-pattern" aria-label="Recurrence pattern">
+                      <SelectTrigger id="apt-rec-pattern" aria-label={t('Recurrence pattern')}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -374,7 +374,7 @@ export function AppointmentDialog({
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="apt-rec-count" className="text-xs">
-                      Occurrences
+                      {t('Occurrences')}
                     </Label>
                     <Input
                       id="apt-rec-count"
@@ -383,7 +383,7 @@ export function AppointmentDialog({
                       max={60}
                       value={recurrence.count}
                       onChange={(e) => setRecurrence((r) => ({ ...r, count: e.target.value }))}
-                      aria-label="Number of occurrences (max 60)"
+                      aria-label={t('Number of occurrences (max 60)')}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -395,7 +395,7 @@ export function AppointmentDialog({
                       type="date"
                       value={recurrence.endDate}
                       onChange={(e) => setRecurrence((r) => ({ ...r, endDate: e.target.value }))}
-                      aria-label="Series end date (optional, overrides occurrences)"
+                      aria-label={t('Series end date (optional, overrides occurrences)')}
                     />
                   </div>
                 </div>
@@ -411,7 +411,7 @@ export function AppointmentDialog({
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="apt-complaint">Chief complaint</Label>
+            <Label htmlFor="apt-complaint">{t('Chief complaint')}</Label>
             <Input
               id="apt-complaint"
               value={form.chiefComplaint}
@@ -427,7 +427,7 @@ export function AppointmentDialog({
               value={form.contactPhone}
               onChange={(e) => set('contactPhone')(e.target.value)}
               placeholder="e.g. 01012345678 — confirmation & reminders go here"
-              aria-label="WhatsApp contact number override"
+              aria-label={t('WhatsApp contact number override')}
             />
             <p className="text-xs text-muted-foreground">
               Leave empty to use the patient&apos;s stored number. Invalid numbers are skipped
@@ -436,20 +436,20 @@ export function AppointmentDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="apt-notes">Notes</Label>
+            <Label htmlFor="apt-notes">{t('Notes')}</Label>
             <Textarea
               id="apt-notes"
               value={form.notes}
               onChange={(e) => set('notes')(e.target.value)}
               rows={2}
-              placeholder="Internal notes (optional)"
+              placeholder={t('Internal notes (optional)')}
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button onClick={submit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

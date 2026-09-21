@@ -124,7 +124,7 @@ function PatientLoginForm() {
             <>
               {!clinic && (
                 <div className="space-y-2">
-                  <Label htmlFor="clinic">Clinic ID</Label>
+                  <Label htmlFor="clinic">{t('Clinic ID')}</Label>
                   <Input
                     id="clinic"
                     placeholder="e.g. smile-dental"
@@ -132,7 +132,7 @@ function PatientLoginForm() {
                     onChange={(e) => setClinicSlug(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Your clinic will provide this identifier
+                    {t('Your clinic will provide this identifier')}
                   </p>
                 </div>
               )}
@@ -143,7 +143,7 @@ function PatientLoginForm() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="Enter your 10-digit number"
+                    placeholder={t('Enter your 10-digit number')}
                     className="pl-10"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -159,14 +159,14 @@ function PatientLoginForm() {
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="otp">Verification Code</Label>
+                <Label htmlFor="otp">{t('Verification Code')}</Label>
                 <div className="relative">
                   <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="otp"
                     type="text"
                     inputMode="numeric"
-                    placeholder="Enter 6-digit OTP"
+                    placeholder={t('Enter 6-digit OTP')}
                     className="pl-10 text-center text-lg tracking-widest"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -190,13 +190,13 @@ function PatientLoginForm() {
                 }}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Change Phone Number
+                {t('Change Phone Number')}
               </Button>
             </>
           )}
 
           <p className="text-xs text-center text-muted-foreground pt-2">
-            Secure login powered by your clinic&apos;s patient portal
+            {t("Secure login powered by your clinic's patient portal")}
           </p>
         </CardContent>
       </Card>

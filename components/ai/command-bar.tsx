@@ -1,11 +1,13 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAI } from './ai-provider'
 import { cn } from '@/lib/utils'
 
 export function CommandBar() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<any>(null)
@@ -79,17 +81,17 @@ export function CommandBar() {
               if (e.key === 'Enter') handleSubmit()
               if (e.key === 'Escape') setOpen(false)
             }}
-            placeholder="Type a command… e.g. 'Book appointment for Mohamed Ahmed tomorrow at 10am'"
+            placeholder={t("Type a command… e.g. 'Book appointment for Mohamed Ahmed tomorrow at 10am'")}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">ESC</span>
+          <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">{t('ESC')}</span>
         </div>
 
         {/* Quick examples (shown when no query) */}
         {!query && !result && (
           <div className="p-3">
             <p className="mb-2 text-xs text-muted-foreground font-medium uppercase tracking-wide">
-              Quick commands
+              {t('Quick commands')}
             </p>
             <div className="flex flex-wrap gap-2">
               {[
@@ -113,7 +115,7 @@ export function CommandBar() {
             {history.length > 0 && (
               <>
                 <p className="mt-3 mb-1 text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                  Recent
+                  {t('Recent')}
                 </p>
                 <div className="flex flex-col gap-1">
                   {history.slice(0, 5).map((item, i) => (
@@ -149,7 +151,7 @@ export function CommandBar() {
               </span>
               {result.requiresApproval && (
                 <span className="rounded-full bg-amber-100 text-amber-800 text-xs px-2 py-0.5">
-                  Needs approval
+                  {t('Needs approval')}
                 </span>
               )}
             </div>
@@ -230,8 +232,8 @@ export function CommandBar() {
 
         {/* Footer hint */}
         <div className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
-          <span>Enter to execute • ESC to close</span>
-          <span>Powered by AI</span>
+          <span>{t('Enter to execute • ESC to close')}</span>
+          <span>{t('Powered by AI')}</span>
         </div>
       </div>
     </div>

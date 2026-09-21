@@ -141,13 +141,13 @@ export default function PaymentPlansPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payment Plans</h1>
-          <p className="text-muted-foreground">Manage installment payment plans for invoices</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Payment Plans')}</h1>
+          <p className="text-muted-foreground">{t('Manage installment payment plans for invoices')}</p>
         </div>
         <Link href="/billing/payment-plans/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            New Payment Plan
+            {t('New Payment Plan')}
           </Button>
         </Link>
       </div>
@@ -156,7 +156,7 @@ export default function PaymentPlansPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Plans</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Active Plans')}</CardTitle>
             <CalendarClock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -228,7 +228,7 @@ export default function PaymentPlansPage() {
               setPage(1)
             }}
           >
-            {f.label}
+            {t(f.label)}
           </Button>
         ))}
       </div>
@@ -264,7 +264,7 @@ export default function PaymentPlansPage() {
               ) : plans.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    No payment plans found
+                    {t('No payment plans found')}
                   </TableCell>
                 </TableRow>
               ) : (

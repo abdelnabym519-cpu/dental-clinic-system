@@ -2,14 +2,17 @@ import { redirect } from 'next/navigation'
 
 import { LanguagePreferenceCard } from '@/components/i18n/language-preference-card'
 import { locales } from '@/lib/i18n/config'
+import { getServerTranslator } from '@/lib/i18n/server'
 import { getAuthenticatedPatient } from '@/lib/patient-auth'
 import { prisma } from '@/lib/prisma'
 
-export const metadata = {
-  title: 'My Preferences',
+export async function generateMetadata() {
+  const { t } = await getServerTranslator()
+  return { title: t('My Preferences') }
 }
 
 export default async function PortalProfilePage() {
+  const { t } = await getServerTranslator()
   const authenticated = await getAuthenticatedPatient()
   if (!authenticated) {
     redirect('/portal/login')
@@ -30,9 +33,9 @@ export default async function PortalProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My Preferences</h1>
+        <h1 className="text-2xl font-bold">{t('My Preferences')}</h1>
         <p className="text-muted-foreground">
-          These apply to your portal only. Your clinic does not see them.
+          {t('These apply to your portal only. Your clinic does not see them.')}
         </p>
       </div>
 
@@ -42,7 +45,7 @@ export default async function PortalProfilePage() {
         currency={patient.hospital?.currency ?? 'EGP'}
         supportedLocales={locales}
         endpoint="/api/patient-portal/profile"
-        description="Choose how dates and amounts are shown to you in the portal."
+        description={t('Choose how dates and amounts are shown to you in the portal.')}
       />
     </div>
   )

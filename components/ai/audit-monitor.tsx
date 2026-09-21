@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ const SEVERITY_STYLES: Record<string, string> = {
  * Rendered on the Settings → Security page (or standalone).
  */
 export function AuditMonitor() {
+  const { t } = useLanguage()
   const [analysis, setAnalysis] = useState<AuditAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
   const [daysBack, setDaysBack] = useState(7)
@@ -62,7 +64,7 @@ export function AuditMonitor() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span>🛡️</span>
-          <h3 className="text-sm font-semibold">Audit Log Intelligence</h3>
+          <h3 className="text-sm font-semibold">{t('Audit Log Intelligence')}</h3>
         </div>
         <div className="flex items-center gap-2">
           <select

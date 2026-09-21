@@ -170,7 +170,7 @@ export default function ComplianceReportsPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">{t('ui.compliance_reports')}</h2>
         <p className="text-muted-foreground">
-          Sterilization compliance rates, indicator pass rates, and maintenance alerts
+          {t('Sterilization compliance rates, indicator pass rates, and maintenance alerts')}
         </p>
       </div>
 
@@ -178,7 +178,7 @@ export default function ComplianceReportsPage() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compliance Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Compliance Rate')}</CardTitle>
             <Shield className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -194,32 +194,32 @@ export default function ComplianceReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed Cycles</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Failed Cycles')}</CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{report.failCount}</div>
-            <p className="text-xs text-muted-foreground">{report.pendingCount} pending</p>
+            <p className="text-xs text-muted-foreground">{report.pendingCount} {t('pending')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bio Indicator Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Bio Indicator Rate')}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{report.bioIndicatorRate}%</div>
-            <p className="text-xs text-muted-foreground">Cycles with biological indicator</p>
+            <p className="text-xs text-muted-foreground">{t('Cycles with biological indicator')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chem Indicator Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Chem Indicator Rate')}</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{report.chemIndicatorRate}%</div>
-            <p className="text-xs text-muted-foreground">Cycles with chemical indicator</p>
+            <p className="text-xs text-muted-foreground">{t('Cycles with chemical indicator')}</p>
           </CardContent>
         </Card>
       </div>
@@ -230,7 +230,7 @@ export default function ComplianceReportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Sterilization Method Breakdown
+              {t('Sterilization Method Breakdown')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -238,8 +238,8 @@ export default function ComplianceReportsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('ui.method')}</TableHead>
-                  <TableHead className="text-right">Total Cycles</TableHead>
-                  <TableHead className="text-right">Pass Rate</TableHead>
+                  <TableHead className="text-right">{t('Total Cycles')}</TableHead>
+                  <TableHead className="text-right">{t('Pass Rate')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,10 +274,10 @@ export default function ComplianceReportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-700">
               <AlertTriangle className="h-5 w-5" />
-              Instruments Due for Retirement
+              {t('Instruments Due for Retirement')}
             </CardTitle>
             <CardDescription>
-              These instruments have exceeded their maximum sterilization cycles
+              {t('These instruments have exceeded their maximum sterilization cycles')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -313,10 +313,10 @@ export default function ComplianceReportsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-700">
               <Wrench className="h-5 w-5" />
-              Instruments Approaching Max Cycles
+              {t('Instruments Approaching Max Cycles')}
             </CardTitle>
             <CardDescription>
-              These instruments are above 80% of their maximum sterilization cycles
+              {t('These instruments are above 80% of their maximum sterilization cycles')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -354,9 +354,9 @@ export default function ComplianceReportsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No compliance data yet</h3>
+            <h3 className="text-lg font-semibold">{t('No compliance data yet')}</h3>
             <p className="text-muted-foreground text-sm mt-1">
-              Record sterilization cycles to see compliance reports
+              {t('Record sterilization cycles to see compliance reports')}
             </p>
           </CardContent>
         </Card>

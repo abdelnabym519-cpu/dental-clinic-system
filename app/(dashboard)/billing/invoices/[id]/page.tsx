@@ -315,10 +315,10 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="flex flex-col items-center justify-center h-96">
         <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-lg text-muted-foreground">Invoice not found</p>
+        <p className="text-lg text-muted-foreground">{t('Invoice not found')}</p>
         <Link href="/billing/invoices">
           <Button variant="outline" className="mt-4">
-            Back to Invoices
+            {t('Back to Invoices')}
           </Button>
         </Link>
       </div>
@@ -410,7 +410,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           {/* Patient Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Bill To</CardTitle>
+              <CardTitle>{t('Bill To')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-start gap-4">
@@ -617,7 +617,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           {/* Status Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Invoice Status</CardTitle>
+              <CardTitle>{t('Invoice Status')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -648,7 +648,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 <span className="font-semibold">{formatCurrency(invoice.totalAmount)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Amount Paid</span>
+                <span className="text-muted-foreground">{t('Amount Paid')}</span>
                 <span className="text-green-600 font-semibold">
                   {formatCurrency(invoice.paidAmount)}
                 </span>
@@ -670,12 +670,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Insurance Claim
+                  {t('Insurance Claim')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Claim Number</span>
+                  <span className="text-muted-foreground">{t('Claim Number')}</span>
                   <span className="font-medium">{invoice.insuranceClaim.claimNumber}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -730,7 +730,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <Link href={`/patients/${invoice.patient.id}`} className="block">
                 <Button variant="outline" className="w-full justify-start">
                   <User className="h-4 w-4 mr-2" />
-                  View Patient
+                  {t('View Patient')}
                 </Button>
               </Link>
             </CardContent>
@@ -766,7 +766,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <Label>{t('ui.payment_method')}</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select method" />
+                  <SelectValue placeholder={t('Select method')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="CASH">{t('ui.cash')}</SelectItem>
@@ -779,7 +779,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Payment Date</Label>
+              <Label>{t('Payment Date')}</Label>
               <Input
                 type="date"
                 value={paymentDate}
@@ -791,7 +791,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <Input
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="Transaction reference number"
+                placeholder={t('Transaction reference number')}
               />
             </div>
             <div className="space-y-2">

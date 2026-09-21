@@ -94,7 +94,7 @@ export default function UploadPhotoPage() {
               <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold">Photo Uploaded Successfully</h2>
+              <h2 className="text-xl font-semibold">{t('Photo Uploaded Successfully')}</h2>
               <p className="text-muted-foreground">
                 Your photo has been sent to your dentist for review. They will get back to you if an
                 in-person visit is needed.
@@ -110,10 +110,10 @@ export default function UploadPhotoPage() {
                     setCategory('')
                   }}
                 >
-                  Upload Another
+                  {t('Upload Another')}
                 </Button>
                 <Link href="/portal">
-                  <Button>Back to Portal</Button>
+                  <Button>{t('Back to Portal')}</Button>
                 </Link>
               </div>
             </div>
@@ -133,7 +133,7 @@ export default function UploadPhotoPage() {
         <div>
           <h1 className="text-2xl font-bold">{t('ui.upload_photo')}</h1>
           <p className="text-sm text-muted-foreground">
-            Send a dental photo to your doctor for triage
+            {t('Send a dental photo to your doctor for triage')}
           </p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function UploadPhotoPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Camera className="h-4 w-4" />
-            Photo for Triage
+            {t('Photo for Triage')}
           </CardTitle>
           <CardDescription>
             Take a clear photo of the area of concern. Your dentist will review it and advise
@@ -164,7 +164,7 @@ export default function UploadPhotoPage() {
               <div className="relative">
                 <img
                   src={preview}
-                  alt="Preview"
+                  alt={t('Preview')}
                   className="w-full rounded-lg border max-h-[300px] object-contain bg-muted/50"
                 />
                 <Button
@@ -182,7 +182,7 @@ export default function UploadPhotoPage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-medium">Tap to take or select a photo</p>
+                <p className="font-medium">{t('Tap to take or select a photo')}</p>
                 <p className="text-sm text-muted-foreground mt-1">JPEG, PNG, or WebP (max 10MB)</p>
               </div>
             )}
@@ -190,18 +190,18 @@ export default function UploadPhotoPage() {
 
           {/* Category */}
           <div className="space-y-2">
-            <Label>What is the concern?</Label>
+            <Label>{t('What is the concern?')}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
                 <SelectValue placeholder={t('ui.select_category')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pain">Pain / Toothache</SelectItem>
-                <SelectItem value="swelling">Swelling</SelectItem>
-                <SelectItem value="bleeding">Bleeding Gums</SelectItem>
-                <SelectItem value="broken">Broken / Chipped Tooth</SelectItem>
-                <SelectItem value="discoloration">Discoloration</SelectItem>
-                <SelectItem value="sensitivity">Sensitivity</SelectItem>
+                <SelectItem value="pain">{t('Pain / Toothache')}</SelectItem>
+                <SelectItem value="swelling">{t('Swelling')}</SelectItem>
+                <SelectItem value="bleeding">{t('Bleeding Gums')}</SelectItem>
+                <SelectItem value="broken">{t('Broken / Chipped Tooth')}</SelectItem>
+                <SelectItem value="discoloration">{t('Discoloration')}</SelectItem>
+                <SelectItem value="sensitivity">{t('Sensitivity')}</SelectItem>
                 <SelectItem value="other">{t('ui.other')}</SelectItem>
               </SelectContent>
             </Select>
@@ -213,7 +213,7 @@ export default function UploadPhotoPage() {
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your symptoms, when they started, and any other details..."
+              placeholder={t('Describe your symptoms, when they started, and any other details...')}
               rows={3}
             />
           </div>
@@ -228,7 +228,7 @@ export default function UploadPhotoPage() {
             {uploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Uploading...
+                {t('Uploading...')}
               </>
             ) : (
               <>
@@ -240,13 +240,13 @@ export default function UploadPhotoPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <h3 className="font-medium mb-2">Tips for a good photo</h3>
+          <h3 className="font-medium mb-2">{t('Tips for a good photo')}</h3>
           <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-            <li>Use good lighting — natural light works best</li>
-            <li>Keep the camera steady and in focus</li>
-            <li>Show the affected area clearly</li>
-            <li>Include surrounding teeth for context</li>
-            <li>Use a mirror if photographing the inside of your mouth</li>
+            <li>{t('Use good lighting — natural light works best')}</li>
+            <li>{t('Keep the camera steady and in focus')}</li>
+            <li>{t('Show the affected area clearly')}</li>
+            <li>{t('Include surrounding teeth for context')}</li>
+            <li>{t('Use a mirror if photographing the inside of your mouth')}</li>
           </ul>
         </CardContent>
       </Card>

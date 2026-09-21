@@ -123,7 +123,7 @@ export default function PrescriptionDetailPage() {
   if (!prescription) {
     return (
       <div className="container mx-auto p-6 max-w-4xl">
-        <p className="text-center text-muted-foreground py-20">Prescription not found</p>
+        <p className="text-center text-muted-foreground py-20">{t('Prescription not found')}</p>
       </div>
     )
   }
@@ -250,7 +250,7 @@ export default function PrescriptionDetailPage() {
               <thead>
                 <tr className="border-b text-left">
                   <th className="pb-2 font-medium w-8">#</th>
-                  <th className="pb-2 font-medium">Medication</th>
+                  <th className="pb-2 font-medium">{t('Medication')}</th>
                   <th className="pb-2 font-medium">{t('ui.dosage')}</th>
                   <th className="pb-2 font-medium">{t('ui.frequency')}</th>
                   <th className="pb-2 font-medium">{t('ui.duration')}</th>

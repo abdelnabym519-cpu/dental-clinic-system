@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { getLocaleLabel, resolveLocaleCascade } from '@/lib/i18n/config'
+import { resolveLocaleCascade } from '@/lib/i18n/config'
 import { formatCurrency, formatDate } from '@/lib/i18n/format'
 
 /**
@@ -46,6 +46,7 @@ interface LanguagePreferenceCardProps {
   supportedLocales: readonly string[]
   /** Endpoint accepting `PATCH { locale: string | null }`. */
   endpoint: string
+  /** Optional override; defaults to the localized settings description. */
   description?: string
 }
 
@@ -55,11 +56,22 @@ export function LanguagePreferenceCard({
   currency,
   supportedLocales,
   endpoint,
-  description = 'Choose how dates, numbers and amounts are formatted for you. Everyone else at this clinic is unaffected.',
+  description,
 }: LanguagePreferenceCardProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
+
+  /**
+   * Language names are shown in the language currently selected — Arabic mode
+   * reads "العربية (مصر)" / "الإنجليزية", English mode "Arabic (Egypt)" /
+   * "English". `Intl.DisplayNames` is deliberately not used: it depends on the
+   * runtime's ICU data, so the same build could render differently per host.
+   */
+  const localeName = (value: string): string =>
+    value.startsWith('ar')
+      ? `${t('language.arabic')} (${t('language.egypt')})`
+      : t('language.english')
 
   const [selected, setSelected] = useState(locale ?? INHERIT)
   const [saving, setSaving] = useState(false)
@@ -78,15 +90,15 @@ export function LanguagePreferenceCard({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}))
-        throw new Error(body.error || 'Failed to save language')
+        throw new Error(body.error || t('Failed to save language'))
       }
 
       toast({
-        title: 'Language updated',
+        title: t('toast.languageUpdated'),
         description:
           selected === INHERIT
-            ? 'You are now following the clinic default.'
-            : `Formatting now uses ${getLocaleLabel(selected)}.`,
+            ? t('toast.followingClinicDefault')
+            : t('toast.formattingUpdated', { language: localeName(selected) }),
       })
 
       // Mirror the choice into the locale cookie and the live document so
@@ -99,8 +111,8 @@ export function LanguagePreferenceCard({
       router.refresh()
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save language',
+        title: t('toast.error'),
+        description: error instanceof Error ? error.message : t('Failed to save language'),
         variant: 'destructive',
       })
     } finally {
@@ -113,34 +125,31 @@ export function LanguagePreferenceCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Languages className="h-5 w-5" />
-          Language & Formatting
+          {t('profile.languageFormatting')}
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>{description ?? t('profile.languageDescription')}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="locale">Language</Label>
+          <Label htmlFor="locale">{t('profile.languageLabel')}</Label>
           <Select value={selected} onValueChange={setSelected}>
             <SelectTrigger id="locale" className="max-w-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={INHERIT}>
-                Use clinic default
-                {hospitalLocale ? ` (${getLocaleLabel(hospitalLocale)})` : ''}
+                {t('language.clinicDefault')}
+                {hospitalLocale ? ` (${localeName(hospitalLocale)})` : ''}
               </SelectItem>
               {supportedLocales.map((value) => (
                 <SelectItem key={value} value={value}>
-                  {getLocaleLabel(value)}
+                  {localeName(value)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-sm text-muted-foreground">
-            Leaving this on the clinic default means it follows the clinic if the clinic&apos;s
-            language is ever changed.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('profile.languageNote')}</p>
         </div>
 
         <div className="rounded-md border p-4">
@@ -165,7 +174,7 @@ export function LanguagePreferenceCard({
       <CardFooter>
         <Button onClick={handleSave} disabled={saving || !dirty}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Save
+          {t('profile.save')}
         </Button>
       </CardFooter>
     </Card>

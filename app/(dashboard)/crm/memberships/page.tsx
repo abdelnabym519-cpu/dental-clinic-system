@@ -461,7 +461,7 @@ export default function MembershipPlansPage() {
         {detailPlan.benefits.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Plan Benefits</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('Plan Benefits')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-1.5">
@@ -469,7 +469,7 @@ export default function MembershipPlansPage() {
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
                     <span>
-                      {b.description}
+                      {t(b.description)}
                       {b.discountPercent ? (
                         <Badge variant="secondary" className="ml-2 text-xs">
                           {b.discountPercent}% off
@@ -486,7 +486,7 @@ export default function MembershipPlansPage() {
         {/* Members Table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Enrolled Patients</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Enrolled Patients')}</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingDetail ? (
@@ -498,9 +498,9 @@ export default function MembershipPlansPage() {
             ) : detailMembers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                <p className="font-medium">No enrolled patients yet</p>
+                <p className="font-medium">{t('No enrolled patients yet')}</p>
                 <p className="text-sm">
-                  Click &quot;Enroll Patient&quot; to add members to this plan
+                  {t('Click "Enroll Patient" to add members to this plan')}
                 </p>
               </div>
             ) : (
@@ -567,7 +567,7 @@ export default function MembershipPlansPage() {
         </div>
         <Button onClick={openCreatePlan}>
           <Plus className="h-4 w-4 mr-2" />
-          New Plan
+          {t('New Plan')}
         </Button>
       </div>
 
@@ -577,13 +577,13 @@ export default function MembershipPlansPage() {
           <CardContent className="py-16">
             <div className="text-center text-muted-foreground">
               <Crown className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium text-lg">No membership plans yet</p>
+              <p className="font-medium text-lg">{t('No membership plans yet')}</p>
               <p className="text-sm mb-4">
-                Create your first membership plan to start enrolling patients
+                {t('Create your first membership plan to start enrolling patients')}
               </p>
               <Button onClick={openCreatePlan}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create First Plan
+                {t('Create First Plan')}
               </Button>
             </div>
           </CardContent>
@@ -630,7 +630,7 @@ export default function MembershipPlansPage() {
                   </div>
                 </div>
                 {plan.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t(plan.description)}</p>
                 )}
               </CardHeader>
               <CardContent className="space-y-3">
@@ -663,7 +663,7 @@ export default function MembershipPlansPage() {
                       <div key={i} className="flex items-start gap-2 text-sm">
                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
                         <span className="text-muted-foreground line-clamp-1">
-                          {b.description}
+                          {t(b.description)}
                           {b.discountPercent ? ` (${b.discountPercent}% off)` : ''}
                         </span>
                       </div>
@@ -703,9 +703,9 @@ export default function MembershipPlansPage() {
             <div>
               <Label>{t('ui.description')}</Label>
               <Textarea
-                value={planForm.description}
+                value={t(planForm.description)}
                 onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
-                placeholder="Brief description of the plan..."
+                placeholder={t('Brief description of the plan...')}
                 rows={3}
               />
             </div>
@@ -743,14 +743,14 @@ export default function MembershipPlansPage() {
                 min="1"
                 value={planForm.maxMembers}
                 onChange={(e) => setPlanForm({ ...planForm, maxMembers: e.target.value })}
-                placeholder="Leave blank for unlimited"
+                placeholder={t('Leave blank for unlimited')}
               />
             </div>
 
             {/* Benefits */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label>Benefits</Label>
+                <Label>{t('Benefits')}</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addBenefit}>
                   <Plus className="h-3 w-3 mr-1" /> Add Benefit
                 </Button>
@@ -760,9 +760,9 @@ export default function MembershipPlansPage() {
                   <div key={index} className="flex items-start gap-2">
                     <div className="flex-1">
                       <Input
-                        value={benefit.description}
+                        value={t(benefit.description)}
                         onChange={(e) => updateBenefit(index, 'description', e.target.value)}
-                        placeholder="Benefit description"
+                        placeholder={t('Benefit description')}
                       />
                     </div>
                     <div className="w-24">
@@ -789,7 +789,7 @@ export default function MembershipPlansPage() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Add benefit descriptions with optional discount percentages
+                {t('Add benefit descriptions with optional discount percentages')}
               </p>
             </div>
 
@@ -798,7 +798,7 @@ export default function MembershipPlansPage() {
               <div>
                 <Label className="text-sm font-medium">{t('ui.active')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Inactive plans cannot accept new enrollments
+                  {t('Inactive plans cannot accept new enrollments')}
                 </p>
               </div>
               <Switch
@@ -833,7 +833,7 @@ export default function MembershipPlansPage() {
                 <Input
                   value={patientSearch}
                   onChange={(e) => handlePatientSearchChange(e.target.value)}
-                  placeholder="Type patient name or phone..."
+                  placeholder={t('Type patient name or phone...')}
                   className="pl-9"
                 />
               </div>
@@ -896,7 +896,7 @@ export default function MembershipPlansPage() {
               <div>
                 <Label className="text-sm font-medium">{t('ui.auto_renew')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Automatically renew when membership expires
+                  {t('Automatically renew when membership expires')}
                 </p>
               </div>
               <Switch checked={autoRenew} onCheckedChange={setAutoRenew} />

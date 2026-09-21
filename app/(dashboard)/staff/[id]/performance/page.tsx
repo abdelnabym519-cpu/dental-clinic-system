@@ -185,7 +185,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
     return (
       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Performance data not available</p>
+        <p className="text-muted-foreground">{t('Performance data not available')}</p>
         <Link href="/staff">
           <Button>{t('ui.back_to_staff_list')}</Button>
         </Link>
@@ -204,7 +204,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Performance Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('Performance Dashboard')}</h1>
             <p className="text-muted-foreground">
               {data.staff.name} ({data.staff.employeeId})
               {data.staff.specialization && ` - ${data.staff.specialization}`}
@@ -251,14 +251,14 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Patients Treated</p>
+                <p className="text-sm text-muted-foreground">{t('Patients Treated')}</p>
                 <p className="text-2xl font-bold">{data.patientsTreated}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Unique patients this period</p>
+            <p className="text-sm text-muted-foreground mt-2">{t('Unique patients this period')}</p>
           </CardContent>
         </Card>
 
@@ -266,7 +266,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Treatments Done</p>
+                <p className="text-sm text-muted-foreground">{t('Treatments Done')}</p>
                 <p className="text-2xl font-bold">{data.treatments.completed}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
@@ -290,7 +290,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
                 <FileText className="h-6 w-6 text-orange-600" />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Written this period</p>
+            <p className="text-sm text-muted-foreground mt-2">{t('Written this period')}</p>
           </CardContent>
         </Card>
       </div>
@@ -301,11 +301,11 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />{t('ui.appointments')}</CardTitle>
-            <CardDescription>Appointment statistics for the selected period</CardDescription>
+            <CardDescription>{t('Appointment statistics for the selected period')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm">Completion Rate</span>
+              <span className="text-sm">{t('Completion Rate')}</span>
               <span className="text-sm font-medium">{getCompletionRate()}%</span>
             </div>
             <Progress value={getCompletionRate()} className="h-2" />
@@ -345,11 +345,11 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />{t('ui.attendance')}</CardTitle>
-            <CardDescription>Attendance statistics for the selected period</CardDescription>
+            <CardDescription>{t('Attendance statistics for the selected period')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm">Attendance Rate</span>
+              <span className="text-sm">{t('Attendance Rate')}</span>
               <span className="text-sm font-medium">{getAttendanceRate()}%</span>
             </div>
             <Progress value={getAttendanceRate()} className="h-2" />
@@ -389,9 +389,9 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Procedure Breakdown
+              {t('Procedure Breakdown')}
             </CardTitle>
-            <CardDescription>Revenue and count by procedure category</CardDescription>
+            <CardDescription>{t('Revenue and count by procedure category')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

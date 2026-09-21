@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronRight, Home } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 import { cn } from '@/lib/utils'
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -73,6 +74,9 @@ function isUUID(segment: string): boolean {
 
 export function Breadcrumb({ className }: { className?: string }) {
   const pathname = usePathname()
+  // `t` resolves both dictionary keys and the English route labels below, so
+  // every crumb reuses the exact wording the sidebar already shows.
+  const { t } = useLanguage()
 
   const segments = pathname.split('/').filter(Boolean)
 
@@ -82,16 +86,18 @@ export function Breadcrumb({ className }: { className?: string }) {
     const href = '/' + segments.slice(0, index + 1).join('/')
     const isLast = index === segments.length - 1
     const label = isUUID(segment)
-      ? 'Details'
-      : ROUTE_LABELS[segment] ||
-        segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+      ? t('breadcrumb.details')
+      : t(
+          ROUTE_LABELS[segment] ||
+            segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+        )
 
     return { label, href, isLast }
   })
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t('breadcrumb.aria')}
       className={cn('flex items-center gap-1.5 text-sm text-muted-foreground', className)}
     >
       <Link href="/dashboard" className="hover:text-foreground transition-colors">

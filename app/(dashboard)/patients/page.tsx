@@ -135,7 +135,7 @@ export default function PatientsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('patients.title')}</h1>
-          <p className="text-muted-foreground">Manage patient records and information</p>
+          <p className="text-muted-foreground">{t('Manage patient records and information')}</p>
         </div>
         <div className="flex gap-2">
           <ExportMenu
@@ -157,7 +157,7 @@ export default function PatientsPage() {
           <Link href="/patients/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Patient
+              {t('New Patient')}
             </Button>
           </Link>
         </div>
@@ -179,21 +179,21 @@ export default function PatientsPage() {
             <div className="flex gap-2">
               <Select value={genderFilter} onValueChange={setGenderFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Gender" />
+                  <SelectValue placeholder={t('Gender')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Genders</SelectItem>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="all">{t('All Genders')}</SelectItem>
+                  <SelectItem value="MALE">{t('Male')}</SelectItem>
+                  <SelectItem value="FEMALE">{t('Female')}</SelectItem>
+                  <SelectItem value="OTHER">{t('Other')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={bloodGroupFilter} onValueChange={setBloodGroupFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Blood Group" />
+                  <SelectValue placeholder={t('Blood Group')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Blood Groups</SelectItem>
+                  <SelectItem value="all">{t('All Blood Groups')}</SelectItem>
                   <SelectItem value="A+">A+</SelectItem>
                   <SelectItem value="A-">A-</SelectItem>
                   <SelectItem value="B+">B+</SelectItem>
@@ -302,7 +302,7 @@ export default function PatientsPage() {
                     </TableCell>
                     <TableCell>{getGenderBadge(patient.gender)}</TableCell>
                     <TableCell>
-                      <div className="text-sm">{patient.age} years</div>
+                      <div className="text-sm">{patient.age} {t('years')}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{patient.bloodGroup || 'N/A'}</Badge>
@@ -320,20 +320,20 @@ export default function PatientsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/patients/${patient.id}`)}>
                             <Eye className="h-4 w-4 mr-2" />
-                            View Details
+                            {t('View Details')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => router.push(`/patients/${patient.id}/edit`)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            {t('Edit')}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => router.push(`/patients/${patient.id}/medical-history`)}
                           >
                             <FileText className="h-4 w-4 mr-2" />
-                            Medical History
+                            {t('Medical History')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -360,7 +360,7 @@ export default function PatientsPage() {
                   disabled={pagination.page <= 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  {t('Previous')}
                 </Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
@@ -371,7 +371,7 @@ export default function PatientsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
                 >
-                  Next
+                  {t('Next')}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

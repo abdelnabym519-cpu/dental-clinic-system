@@ -131,7 +131,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
-          <p className="text-muted-foreground">Loading your practice data...</p>
+          <p className="text-muted-foreground">{t('Loading your practice data...')}</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
@@ -164,7 +164,7 @@ export default function DashboardPage() {
               <p>{error || 'An error occurred'}</p>
             </div>
             <Button onClick={fetchDashboardStats} className="mt-4">
-              Retry
+              {t('Retry')}
             </Button>
           </CardContent>
         </Card>
@@ -176,9 +176,9 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome message */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('Dashboard')}</h1>
         <p className="text-muted-foreground">
-          Here&apos;s what&apos;s happening at your dental practice today.
+          {t("Here's what's happening at your dental practice today.")}
         </p>
       </div>
 
@@ -211,7 +211,7 @@ export default function DashboardPage() {
         {/* Today's Appointments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today&apos;s Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("Today's Appointments")}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>{t('dashboard.revenueOverview')}</CardTitle>
-            <CardDescription>Last 7 days revenue trend</CardDescription>
+            <CardDescription>{t('Last 7 days revenue trend')}</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             {stats.charts.last7DaysRevenue && stats.charts.last7DaysRevenue.length > 0 ? (
@@ -305,7 +305,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>{t('dashboard.upcomingAppointments')}</CardTitle>
-            <CardDescription>Next 5 scheduled appointments</CardDescription>
+            <CardDescription>{t('Next 5 scheduled appointments')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -332,7 +332,7 @@ export default function DashboardPage() {
               </Button>
               <Link href="/appointments" className="flex-1">
                 <Button variant="outline" className="w-full">
-                  View All Appointments
+                  {t('View All Appointments')}
                 </Button>
               </Link>
             </div>
@@ -345,7 +345,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('dashboard.appointmentsByStatus')}</CardTitle>
-            <CardDescription>This month's appointment distribution</CardDescription>
+            <CardDescription>{t("This month's appointment distribution")}</CardDescription>
           </CardHeader>
           <CardContent>
             {stats.charts.appointmentsByStatus && stats.charts.appointmentsByStatus.length > 0 ? (
@@ -379,7 +379,7 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                No appointment data available
+                {t('No appointment data available')}
               </p>
             )}
           </CardContent>
@@ -389,7 +389,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('dashboard.revenueTrend')}</CardTitle>
-            <CardDescription>Last 6 months revenue comparison</CardDescription>
+            <CardDescription>{t('Last 6 months revenue comparison')}</CardDescription>
           </CardHeader>
           <CardContent>
             {stats.charts.last6MonthsRevenue && stats.charts.last6MonthsRevenue.length > 0 ? (
@@ -467,7 +467,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Low Stock Alerts
+              {t('Low Stock Alerts')}
             </CardTitle>
             <CardDescription>{t('dashboard.lowStockDesc')}</CardDescription>
           </CardHeader>
@@ -494,7 +494,7 @@ export default function DashboardPage() {
             </div>
             <Link href="/inventory">
               <Button variant="outline" className="w-full mt-4">
-                View Inventory
+                {t('View Inventory')}
               </Button>
             </Link>
           </CardContent>

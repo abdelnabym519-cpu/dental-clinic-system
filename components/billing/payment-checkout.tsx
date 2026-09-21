@@ -146,7 +146,7 @@ export function PaymentCheckout({
       ) : (
         <Button onClick={() => setOpen(true)}>
           <CreditCard className="h-4 w-4 mr-2" />
-          Pay Online
+          {t('Pay Online')}
         </Button>
       )}
 
@@ -175,7 +175,7 @@ export function PaymentCheckout({
                   Pay {formatCurrency(amount)}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Secured payment via your clinic&apos;s payment gateway
+                  {t("Secured payment via your clinic's payment gateway")}
                 </p>
               </div>
             )}
@@ -220,6 +220,7 @@ export function PaymentCheckout({
 }
 
 function loadScript(src: string): Promise<void> {
+  const { t } = useLanguage()
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`)
     if (existing) {

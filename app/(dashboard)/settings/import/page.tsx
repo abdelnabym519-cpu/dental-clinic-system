@@ -378,10 +378,10 @@ export default function DataImportPage() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Upload className="h-6 w-6 text-emerald-600" />
-          Data Import
+          {t('Data Import')}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Import data from your previous ERP system using CSV, Excel, or PDF files
+          {t('Import data from your previous ERP system using CSV, Excel, or PDF files')}
         </p>
       </div>
 
@@ -407,7 +407,7 @@ export default function DataImportPage() {
                 )}
               >
                 {isDone ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
-                <span className="hidden sm:inline">{s.title}</span>
+                <span className="hidden sm:inline">{t(s.title)}</span>
               </div>
             </div>
           )
@@ -422,7 +422,7 @@ export default function DataImportPage() {
         {step === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Select data type and upload file</h2>
+              <h2 className="text-lg font-semibold mb-1">{t('Select data type and upload file')}</h2>
               <p className="text-sm text-muted-foreground">
                 Choose what type of data you're importing, then upload your file.
               </p>
@@ -430,7 +430,7 @@ export default function DataImportPage() {
 
             {/* Entity selection */}
             <div>
-              <label className="text-sm font-medium mb-3 block">What are you importing?</label>
+              <label className="text-sm font-medium mb-3 block">{t('What are you importing?')}</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {ENTITY_OPTIONS.map((opt) => {
                   const Icon = opt.icon
@@ -454,7 +454,7 @@ export default function DataImportPage() {
                       >
                         <Icon className="h-4 w-4" />
                       </div>
-                      <p className="text-sm font-medium">{opt.label}</p>
+                      <p className="text-sm font-medium">{t(opt.label)}</p>
                       <p className="text-xs text-muted-foreground">{opt.desc}</p>
                     </button>
                   )
@@ -465,7 +465,7 @@ export default function DataImportPage() {
             {/* File upload */}
             {entityType && (
               <div>
-                <label className="text-sm font-medium mb-3 block">Upload file</label>
+                <label className="text-sm font-medium mb-3 block">{t('Upload file')}</label>
                 <div
                   className={cn(
                     'border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer',
@@ -520,9 +520,9 @@ export default function DataImportPage() {
                   ) : (
                     <>
                       <Upload className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-                      <p className="text-sm font-medium">Drop your file here or click to browse</p>
+                      <p className="text-sm font-medium">{t('Drop your file here or click to browse')}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Supports CSV, Excel (.xlsx/.xls), and PDF — Max 20MB
+                        {t('Supports CSV, Excel (.xlsx/.xls), and PDF — Max 20MB')}
                       </p>
                     </>
                   )}
@@ -565,9 +565,9 @@ export default function DataImportPage() {
         {step === 2 && schema && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Map columns to {schema.label} fields</h2>
+              <h2 className="text-lg font-semibold mb-1">Map columns to {t(schema.label)} fields</h2>
               <p className="text-sm text-muted-foreground">
-                AI has suggested mappings below. Review and adjust as needed.
+                {t('AI has suggested mappings below. Review and adjust as needed.')}
               </p>
             </div>
 
@@ -609,7 +609,7 @@ export default function DataImportPage() {
               <div className="flex items-center justify-center py-12 gap-3">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  AI is analyzing your columns...
+                  {t('AI is analyzing your columns...')}
                 </span>
               </div>
             ) : (
@@ -617,10 +617,10 @@ export default function DataImportPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-muted/50 border-b">
-                      <th className="text-left px-4 py-2.5 font-medium">Source Column</th>
-                      <th className="text-left px-4 py-2.5 font-medium">Sample Value</th>
-                      <th className="text-left px-4 py-2.5 font-medium">Maps To</th>
-                      <th className="px-4 py-2.5 font-medium w-16 text-center">Confidence</th>
+                      <th className="text-left px-4 py-2.5 font-medium">{t('Source Column')}</th>
+                      <th className="text-left px-4 py-2.5 font-medium">{t('Sample Value')}</th>
+                      <th className="text-left px-4 py-2.5 font-medium">{t('Maps To')}</th>
+                      <th className="px-4 py-2.5 font-medium w-16 text-center">{t('Confidence')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -647,7 +647,7 @@ export default function DataImportPage() {
                                   value={f.name}
                                   disabled={usedTargets.has(f.name) && mapping[col] !== f.name}
                                 >
-                                  {f.name} {f.required ? '*' : ''} — {f.description}
+                                  {f.name} {f.required ? '*' : ''} — {t(f.description)}
                                 </option>
                               ))}
                             </select>
@@ -703,7 +703,7 @@ export default function DataImportPage() {
         {step === 3 && schema && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Preview mapped data</h2>
+              <h2 className="text-lg font-semibold mb-1">{t('Preview mapped data')}</h2>
               <p className="text-sm text-muted-foreground">
                 Showing first {Math.min(previewData.length, 5)} of {totalRows} rows. Click any cell
                 to edit.
@@ -780,9 +780,9 @@ export default function DataImportPage() {
         {step === 4 && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold mb-1">Validation Results</h2>
+              <h2 className="text-lg font-semibold mb-1">{t('Validation Results')}</h2>
               <p className="text-sm text-muted-foreground">
-                Review validation results before importing.
+                {t('Review validation results before importing.')}
               </p>
             </div>
 
@@ -803,7 +803,7 @@ export default function DataImportPage() {
                   </div>
                   <div className="border rounded-lg p-3 border-green-200 bg-green-50/50 dark:bg-green-950/20">
                     <p className="text-2xl font-bold text-green-600">{validation.validRows}</p>
-                    <p className="text-xs text-muted-foreground">Valid Rows</p>
+                    <p className="text-xs text-muted-foreground">{t('Valid Rows')}</p>
                   </div>
                   <div className="border rounded-lg p-3 border-red-200 bg-red-50/50 dark:bg-red-950/20">
                     <p className="text-2xl font-bold text-red-600">{validation.errorCount}</p>
@@ -811,7 +811,7 @@ export default function DataImportPage() {
                   </div>
                   <div className="border rounded-lg p-3 border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20">
                     <p className="text-2xl font-bold text-yellow-600">{validation.warningCount}</p>
-                    <p className="text-xs text-muted-foreground">Warnings</p>
+                    <p className="text-xs text-muted-foreground">{t('Warnings')}</p>
                   </div>
                 </div>
 
@@ -820,7 +820,7 @@ export default function DataImportPage() {
                   (validation.foreignKeyResolution.resolved > 0 ||
                     validation.foreignKeyResolution.unresolved.length > 0) && (
                     <div className="border rounded-lg p-4">
-                      <h3 className="text-sm font-medium mb-2">Reference Resolution</h3>
+                      <h3 className="text-sm font-medium mb-2">{t('Reference Resolution')}</h3>
                       <p className="text-xs text-muted-foreground">
                         {validation.foreignKeyResolution.resolved} references resolved successfully.
                         {validation.foreignKeyResolution.unresolved.length > 0 &&
@@ -906,16 +906,16 @@ export default function DataImportPage() {
             {!importResult ? (
               <>
                 <div>
-                  <h2 className="text-lg font-semibold mb-1">Confirm Import</h2>
+                  <h2 className="text-lg font-semibold mb-1">{t('Confirm Import')}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Review the summary below and confirm to start the import.
+                    {t('Review the summary below and confirm to start the import.')}
                   </p>
                 </div>
 
                 <div className="border rounded-lg p-6 max-w-lg mx-auto space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Data Type</p>
+                      <p className="text-muted-foreground">{t('Data Type')}</p>
                       <p className="font-medium">{schema?.label}</p>
                     </div>
                     <div>
@@ -927,7 +927,7 @@ export default function DataImportPage() {
                       <p className="font-medium">{totalRows}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Will Import</p>
+                      <p className="text-muted-foreground">{t('Will Import')}</p>
                       <p className="font-medium text-green-600">
                         {skipErrorRows ? (validation?.validRows ?? totalRows) : totalRows} records
                       </p>
@@ -953,12 +953,12 @@ export default function DataImportPage() {
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Importing... Please wait
+                        {t('Importing... Please wait')}
                       </>
                     ) : (
                       <>
                         <DatabaseZap className="h-4 w-4" />
-                        Confirm & Import Data
+                        {t('Confirm & Import Data')}
                       </>
                     )}
                   </button>
@@ -981,7 +981,7 @@ export default function DataImportPage() {
                       <CheckCircle2 className="h-8 w-8 text-green-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Import Complete!</h2>
+                      <h2 className="text-xl font-semibold">{t('Import Complete!')}</h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {importResult.imported} {schema?.label.toLowerCase()} imported successfully.
                         {importResult.skipped > 0 && ` ${importResult.skipped} rows skipped.`}
@@ -994,7 +994,7 @@ export default function DataImportPage() {
                       <X className="h-8 w-8 text-red-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Import Failed</h2>
+                      <h2 className="text-xl font-semibold">{t('Import Failed')}</h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {importResult.imported} imported, {importResult.skipped} failed.
                       </p>
@@ -1010,17 +1010,17 @@ export default function DataImportPage() {
                   </div>
                   <div className="border rounded-lg p-3 border-green-200">
                     <p className="text-lg font-bold text-green-600">{importResult.imported}</p>
-                    <p className="text-xs text-muted-foreground">Imported</p>
+                    <p className="text-xs text-muted-foreground">{t('Imported')}</p>
                   </div>
                   <div className="border rounded-lg p-3 border-red-200">
                     <p className="text-lg font-bold text-red-600">{importResult.skipped}</p>
-                    <p className="text-xs text-muted-foreground">Skipped</p>
+                    <p className="text-xs text-muted-foreground">{t('Skipped')}</p>
                   </div>
                 </div>
 
                 {importResult.errors.length > 0 && (
                   <div className="border rounded-lg p-4 text-left">
-                    <h3 className="text-sm font-medium mb-2">Error Log</h3>
+                    <h3 className="text-sm font-medium mb-2">{t('Error Log')}</h3>
                     <div className="max-h-40 overflow-auto space-y-1">
                       {importResult.errors.map((e, i) => (
                         <p key={i} className="text-xs text-red-600">
@@ -1036,7 +1036,7 @@ export default function DataImportPage() {
                     onClick={resetWizard}
                     className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
                   >
-                    Import Another File
+                    {t('Import Another File')}
                   </button>
                   <a
                     href={`/${entityType === 'inventory' ? 'inventory' : entityType}`}

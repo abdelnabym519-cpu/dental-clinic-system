@@ -241,13 +241,13 @@ export default function MedicationsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Pill className="h-8 w-8" />
-            Drug Catalog
+            {t('Drug Catalog')}
           </h1>
-          <p className="text-muted-foreground">Manage your medication database</p>
+          <p className="text-muted-foreground">{t('Manage your medication database')}</p>
         </div>
         <Button onClick={openAdd}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Medication
+          {t('Add Medication')}
         </Button>
       </div>
 
@@ -258,7 +258,7 @@ export default function MedicationsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search medications..."
+                placeholder={t('Search medications...')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -300,8 +300,8 @@ export default function MedicationsPage() {
           ) : medications.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Pill className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">No medications found</p>
-              <p className="text-sm">Add your first medication to build your drug catalog.</p>
+              <p className="text-lg font-medium">{t('No medications found')}</p>
+              <p className="text-sm">{t('Add your first medication to build your drug catalog.')}</p>
             </div>
           ) : (
             <Table>
@@ -310,8 +310,8 @@ export default function MedicationsPage() {
                   <TableHead>{t('ui.name')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.generic_name')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.category')}</TableHead>
-                  <TableHead className="hidden lg:table-cell">Form / Strength</TableHead>
-                  <TableHead className="hidden lg:table-cell">Default Dosage</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('Form / Strength')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('Default Dosage')}</TableHead>
                   <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -399,7 +399,7 @@ export default function MedicationsPage() {
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Amoxicillin"
+                  placeholder={t('Amoxicillin')}
                 />
               </div>
               <div className="md:col-span-2">
@@ -407,7 +407,7 @@ export default function MedicationsPage() {
                 <Input
                   value={formData.genericName}
                   onChange={(e) => setFormData((f) => ({ ...f, genericName: e.target.value }))}
-                  placeholder="Amoxicillin Trihydrate"
+                  placeholder={t('Amoxicillin Trihydrate')}
                 />
               </div>
               <div>
@@ -429,13 +429,13 @@ export default function MedicationsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Form</Label>
+                <Label>{t('Form')}</Label>
                 <Select
                   value={formData.form || undefined}
                   onValueChange={(v) => setFormData((f) => ({ ...f, form: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select form" />
+                    <SelectValue placeholder={t('Select form')} />
                   </SelectTrigger>
                   <SelectContent>
                     {FORMS.map((f) => (
@@ -447,7 +447,7 @@ export default function MedicationsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Strength</Label>
+                <Label>{t('Strength')}</Label>
                 <Input
                   value={formData.strength}
                   onChange={(e) => setFormData((f) => ({ ...f, strength: e.target.value }))}
@@ -455,17 +455,17 @@ export default function MedicationsPage() {
                 />
               </div>
               <div>
-                <Label>Manufacturer</Label>
+                <Label>{t('Manufacturer')}</Label>
                 <Input
                   value={formData.manufacturer}
                   onChange={(e) => setFormData((f) => ({ ...f, manufacturer: e.target.value }))}
-                  placeholder="Cipla"
+                  placeholder={t('Cipla')}
                 />
               </div>
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="text-sm font-medium mb-3">Default Prescription Values</h4>
+              <h4 className="text-sm font-medium mb-3">{t('Default Prescription Values')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>{t('ui.dosage')}</Label>
@@ -501,22 +501,22 @@ export default function MedicationsPage() {
             <div className="border-t pt-4">
               <div className="grid gap-4">
                 <div>
-                  <Label>Contraindications</Label>
+                  <Label>{t('Contraindications')}</Label>
                   <Textarea
                     value={formData.contraindications}
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, contraindications: e.target.value }))
                     }
-                    placeholder="Known allergies, drug interactions..."
+                    placeholder={t('Known allergies, drug interactions...')}
                     rows={2}
                   />
                 </div>
                 <div>
-                  <Label>Side Effects</Label>
+                  <Label>{t('Side Effects')}</Label>
                   <Textarea
                     value={formData.sideEffects}
                     onChange={(e) => setFormData((f) => ({ ...f, sideEffects: e.target.value }))}
-                    placeholder="Nausea, dizziness..."
+                    placeholder={t('Nausea, dizziness...')}
                     rows={2}
                   />
                 </div>

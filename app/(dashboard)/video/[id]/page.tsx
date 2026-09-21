@@ -193,7 +193,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
   if (!consultation) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Consultation not found</p>
+        <p className="text-muted-foreground">{t('Consultation not found')}</p>
         <Link href="/appointments">
           <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
         </Link>
@@ -319,7 +319,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
             )}
             <Link href={`/patients/${consultation.patient.id}`}>
               <Button variant="link" className="px-0 h-auto text-sm">
-                View Full Profile
+                {t('View Full Profile')}
               </Button>
             </Link>
           </CardContent>
@@ -330,7 +330,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Video className="h-4 w-4" />
-              Consultation Details
+              {t('Consultation Details')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -349,7 +349,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
               </div>
               {consultation.startedAt && (
                 <div>
-                  <p className="text-muted-foreground">Started At</p>
+                  <p className="text-muted-foreground">{t('Started At')}</p>
                   <p className="font-medium">
                     {format(new Date(consultation.startedAt), 'hh:mm a')}
                   </p>
@@ -357,20 +357,20 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
               )}
               {consultation.endedAt && (
                 <div>
-                  <p className="text-muted-foreground">Ended At</p>
+                  <p className="text-muted-foreground">{t('Ended At')}</p>
                   <p className="font-medium">{format(new Date(consultation.endedAt), 'hh:mm a')}</p>
                 </div>
               )}
               {consultation.duration != null && (
                 <div>
                   <p className="text-muted-foreground">{t('ui.duration')}</p>
-                  <p className="font-medium">{consultation.duration} min</p>
+                  <p className="font-medium">{consultation.duration} {t('min')}</p>
                 </div>
               )}
             </div>
             {consultation.appointment && (
               <div className="pt-2 border-t">
-                <p className="text-muted-foreground">Linked Appointment</p>
+                <p className="text-muted-foreground">{t('Linked Appointment')}</p>
                 <Link
                   href={`/appointments/${consultation.appointment.id}`}
                   className="text-blue-600 hover:underline"

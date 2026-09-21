@@ -286,17 +286,17 @@ export default function AppointmentsPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t('ui.appointments')}</h1>
-            <p className="text-muted-foreground">Manage and schedule patient appointments</p>
+            <p className="text-muted-foreground">{t('Manage and schedule patient appointments')}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="default" size="sm">
               <List className="h-4 w-4 mr-2" />
-              List
+              {t('List')}
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href="/agenda">
                 <CalendarDays className="h-4 w-4 mr-2" />
-                Calendar
+                {t('Calendar')}
               </Link>
             </Button>
             <ExportMenu
@@ -341,7 +341,7 @@ export default function AppointmentsPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by patient name, phone, or appointment number..."
+                  placeholder={t('Search by patient name, phone, or appointment number...')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -355,7 +355,7 @@ export default function AppointmentsPage() {
                   <SelectContent>
                     <SelectItem value="all">{t('ui.all_status')}</SelectItem>
                     <SelectItem value="SCHEDULED">{t('ui.scheduled')}</SelectItem>
-                    <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                    <SelectItem value="CONFIRMED">{t('Confirmed')}</SelectItem>
                     <SelectItem value="CHECKED_IN">{t('ui.checked_in')}</SelectItem>
                     <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
                     <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
@@ -399,7 +399,7 @@ export default function AppointmentsPage() {
                   <TableHead>{t('ui.date_time')}</TableHead>
                   <TableHead>{t('ui.type')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
-                  {showRisk && <TableHead>Risk</TableHead>}
+                  {showRisk && <TableHead>{t('Risk')}</TableHead>}
                   <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -439,7 +439,7 @@ export default function AppointmentsPage() {
                         <Link href="/appointments/new">
                           <Button variant="outline" size="sm">
                             <Plus className="h-4 w-4 mr-2" />
-                            Book New Appointment
+                            {t('Book New Appointment')}
                           </Button>
                         </Link>
                       </div>
@@ -488,7 +488,7 @@ export default function AppointmentsPage() {
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Clock className="h-3 w-3" />
                               {formatTime(appointment.scheduledTime)}
-                              <span className="text-xs">({appointment.duration} min)</span>
+                              <span className="text-xs">({appointment.duration} {t('min)')}</span>
                             </div>
                           </div>
                         </div>
@@ -500,7 +500,7 @@ export default function AppointmentsPage() {
                           {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) ? (
                             getRiskBadge(appointment.id)
                           ) : (
-                            <span className="text-xs text-muted-foreground">N/A</span>
+                            <span className="text-xs text-muted-foreground">{t('N/A')}</span>
                           )}
                         </TableCell>
                       )}
@@ -545,7 +545,7 @@ export default function AppointmentsPage() {
                                   className="text-amber-600"
                                 >
                                   <XCircle className="h-4 w-4 mr-2" />
-                                  Mark No Show
+                                  {t('Mark No Show')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => handleStatusChange(appointment.id, 'CANCELLED')}

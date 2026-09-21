@@ -189,7 +189,7 @@ export default function TransactionsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Stock Transactions</h1>
+        <h1 className="text-3xl font-bold">{t('Stock Transactions')}</h1>
         <div className="flex gap-2">
           <Link
             href="/inventory"
@@ -214,7 +214,7 @@ export default function TransactionsPage() {
           >
             <option value="">{t('ui.all_types')}</option>
             <option value="purchase">{t('ui.purchase')}</option>
-            <option value="sale">Sale</option>
+            <option value="sale">{t('Sale')}</option>
             <option value="adjustment">{t('ui.adjustment')}</option>
             <option value="return">{t('ui.return')}</option>
             <option value="usage">{t('ui.usage')}</option>
@@ -259,7 +259,7 @@ export default function TransactionsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.total_amount')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.supplier')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Performed By
+                      {t('Performed By')}
                     </th>
                   </tr>
                 </thead>
@@ -331,7 +331,7 @@ export default function TransactionsPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">New Stock Transaction</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('New Stock Transaction')}</h2>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -363,7 +363,7 @@ export default function TransactionsPage() {
                     required
                     className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select Item</option>
+                    <option value="">{t('Select Item')}</option>
                     {items.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} ({item.sku})
@@ -455,7 +455,7 @@ export default function TransactionsPage() {
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Record Transaction
+                  {t('Record Transaction')}
                 </button>
               </div>
             </form>

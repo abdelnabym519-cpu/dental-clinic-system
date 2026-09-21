@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog'
@@ -70,6 +71,7 @@ export function ImageAnnotator({
   onSave,
   readOnly = false,
 }: ImageAnnotatorProps) {
+  const { t } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -338,21 +340,21 @@ export function ImageAnnotator({
           {!readOnly && (
             <div className="flex items-center gap-1 px-4 py-2 bg-zinc-800 text-white border-b border-zinc-700 flex-wrap">
               {/* Drawing tools */}
-              {TOOLS.map((t) => (
+              {TOOLS.map((opt) => (
                 <Button
-                  key={t.id}
+                  key={opt.id}
                   variant="ghost"
                   size="sm"
                   className={`h-8 text-xs ${
-                    tool === t.id
+                    tool === opt.id
                       ? 'bg-white/20 text-white'
                       : 'text-zinc-400 hover:text-white hover:bg-white/10'
                   }`}
-                  onClick={() => setTool(t.id)}
-                  title={t.label}
+                  onClick={() => setTool(opt.id)}
+                  title={t(opt.label)}
                 >
-                  <t.icon className="h-3.5 w-3.5 mr-1" />
-                  {t.label}
+                  <opt.icon className="h-3.5 w-3.5 mr-1" />
+                  {t(opt.label)}
                 </Button>
               ))}
 
@@ -393,7 +395,7 @@ export function ImageAnnotator({
                 className="text-zinc-400 hover:text-white hover:bg-white/10 h-8 w-8"
                 onClick={handleUndo}
                 disabled={undoStack.length === 0}
-                title="Undo (Ctrl+Z)"
+                title={t('Undo (Ctrl+Z)')}
               >
                 <Undo2 className="h-4 w-4" />
               </Button>
@@ -403,7 +405,7 @@ export function ImageAnnotator({
                 className="text-zinc-400 hover:text-white hover:bg-white/10 h-8 w-8"
                 onClick={handleRedo}
                 disabled={redoStack.length === 0}
-                title="Redo (Ctrl+Y)"
+                title={t('Redo (Ctrl+Y)')}
               >
                 <Redo2 className="h-4 w-4" />
               </Button>
@@ -413,7 +415,7 @@ export function ImageAnnotator({
                 className="text-zinc-400 hover:text-white hover:bg-white/10 h-8 w-8"
                 onClick={handleClearAll}
                 disabled={annotations.length === 0}
-                title="Clear all"
+                title={t('Clear all')}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -458,7 +460,7 @@ export function ImageAnnotator({
                       type="text"
                       autoFocus
                       className="px-2 py-1 text-sm bg-black/80 text-white border border-zinc-500 rounded outline-none min-w-[150px]"
-                      placeholder="Type text..."
+                      placeholder={t('Type text...')}
                       value={textInput}
                       onChange={(e) => setTextInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -478,7 +480,7 @@ export function ImageAnnotator({
             {!imageLoaded && (
               <div className="text-zinc-400 flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading image...
+                {t('Loading image...')}
               </div>
             )}
           </div>
@@ -491,12 +493,12 @@ export function ImageAnnotator({
                 onClick={() => onOpenChange(false)}
                 className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 <Save className="h-4 w-4 mr-2" />
-                Save Annotations
+                {t('Save Annotations')}
               </Button>
             </DialogFooter>
           )}
@@ -513,6 +515,7 @@ function drawAnnotation(
   canvasW: number,
   canvasH: number
 ) {
+  const { t } = useLanguage()
   ctx.strokeStyle = ann.color
   ctx.fillStyle = ann.color
   ctx.lineWidth = ann.lineWidth

@@ -367,12 +367,12 @@ export default function ReferralsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Referrals')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.total}</div>
-            <p className="text-xs text-muted-foreground">All-time referrals</p>
+            <p className="text-xs text-muted-foreground">{t('All-time referrals')}</p>
           </CardContent>
         </Card>
 
@@ -383,7 +383,7 @@ export default function ReferralsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.converted}</div>
-            <p className="text-xs text-muted-foreground">Referrals converted to patients</p>
+            <p className="text-xs text-muted-foreground">{t('Referrals converted to patients')}</p>
           </CardContent>
         </Card>
 
@@ -394,18 +394,18 @@ export default function ReferralsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.rewarded}</div>
-            <p className="text-xs text-muted-foreground">Rewards distributed</p>
+            <p className="text-xs text-muted-foreground">{t('Rewards distributed')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Conversion Rate')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.conversionRate}%</div>
-            <p className="text-xs text-muted-foreground">Of total referrals</p>
+            <p className="text-xs text-muted-foreground">{t('Of total referrals')}</p>
           </CardContent>
         </Card>
       </div>
@@ -421,7 +421,7 @@ export default function ReferralsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, phone or referral code..."
+                placeholder={t('Search by name, phone or referral code...')}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -456,9 +456,9 @@ export default function ReferralsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('ui.referral_code')}</TableHead>
-                  <TableHead>Referrer</TableHead>
-                  <TableHead>Referred Name</TableHead>
-                  <TableHead>Referred Phone</TableHead>
+                  <TableHead>{t('Referrer')}</TableHead>
+                  <TableHead>{t('Referred Name')}</TableHead>
+                  <TableHead>{t('Referred Phone')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>{t('ui.created')}</TableHead>
                   <TableHead className="w-[60px]">{t('ui.actions')}</TableHead>
@@ -468,7 +468,7 @@ export default function ReferralsPage() {
                 {referrals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No referrals found.
+                      {t('No referrals found.')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -478,7 +478,7 @@ export default function ReferralsPage() {
                         <button
                           onClick={() => copyCode(referral.referralCode)}
                           className="flex items-center gap-1.5 group"
-                          title="Click to copy"
+                          title={t('Click to copy')}
                         >
                           <code className="font-mono text-sm bg-muted px-2 py-0.5 rounded">
                             {referral.referralCode}
@@ -513,7 +513,7 @@ export default function ReferralsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => copyCode(referral.referralCode)}>
                               <Copy className="mr-2 h-4 w-4" />
-                              Copy Code
+                              {t('Copy Code')}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -525,7 +525,7 @@ export default function ReferralsPage() {
                               }
                             >
                               <CheckCircle className="mr-2 h-4 w-4" />
-                              Mark Converted
+                              {t('Mark Converted')}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleUpdateStatus(referral.id, 'REWARDED')}
@@ -536,7 +536,7 @@ export default function ReferralsPage() {
                               }
                             >
                               <Gift className="mr-2 h-4 w-4" />
-                              Give Reward
+                              {t('Give Reward')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -590,7 +590,7 @@ export default function ReferralsPage() {
           <div className="space-y-4 pt-2">
             {/* Referrer Patient Search */}
             <div className="space-y-2">
-              <Label htmlFor="referrer">Referrer Patient</Label>
+              <Label htmlFor="referrer">{t('Referrer Patient')}</Label>
               <div className="relative" ref={dropdownRef}>
                 <Input
                   id="referrer"
@@ -641,10 +641,10 @@ export default function ReferralsPage() {
 
             {/* Referred Person Name */}
             <div className="space-y-2">
-              <Label htmlFor="referredName">Referred Person Name</Label>
+              <Label htmlFor="referredName">{t('Referred Person Name')}</Label>
               <Input
                 id="referredName"
-                placeholder="Full name of referred person"
+                placeholder={t('Full name of referred person')}
                 value={referredName}
                 onChange={(e) => setReferredName(e.target.value)}
               />
@@ -652,7 +652,7 @@ export default function ReferralsPage() {
 
             {/* Referred Person Phone */}
             <div className="space-y-2">
-              <Label htmlFor="referredPhone">Referred Person Phone</Label>
+              <Label htmlFor="referredPhone">{t('Referred Person Phone')}</Label>
               <Input
                 id="referredPhone"
                 placeholder={t('ui.phone_number_2')}
@@ -663,25 +663,25 @@ export default function ReferralsPage() {
 
             {/* Reward Type */}
             <div className="space-y-2">
-              <Label>Reward Type</Label>
+              <Label>{t('Reward Type')}</Label>
               <Select
                 value={rewardType}
                 onValueChange={(val) => setRewardType(val as 'POINTS' | 'DISCOUNT' | 'CREDIT')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select reward type" />
+                  <SelectValue placeholder={t('Select reward type')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="POINTS">{t('ui.points')}</SelectItem>
                   <SelectItem value="DISCOUNT">{t('ui.discount')}</SelectItem>
-                  <SelectItem value="CREDIT">Credit</SelectItem>
+                  <SelectItem value="CREDIT">{t('Credit')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Reward Value */}
             <div className="space-y-2">
-              <Label htmlFor="rewardValue">Reward Value</Label>
+              <Label htmlFor="rewardValue">{t('Reward Value')}</Label>
               <Input
                 id="rewardValue"
                 type="number"

@@ -217,9 +217,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Treatment plan not found</p>
+        <p className="text-muted-foreground">{t('Treatment plan not found')}</p>
         <Link href="/treatments/plans">
-          <Button variant="outline">Back to Treatment Plans</Button>
+          <Button variant="outline">{t('Back to Treatment Plans')}</Button>
         </Link>
       </div>
     )
@@ -253,13 +253,13 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           {plan.status === 'DRAFT' && (
             <Button onClick={() => handleStatusChange('PROPOSED')} disabled={actionLoading}>
               <FileText className="h-4 w-4 mr-2" />
-              Propose to Patient
+              {t('Propose to Patient')}
             </Button>
           )}
           {plan.status === 'PROPOSED' && !plan.consentGiven && (
             <Button onClick={() => setConsentDialogOpen(true)}>
               <ClipboardCheck className="h-4 w-4 mr-2" />
-              Record Consent
+              {t('Record Consent')}
             </Button>
           )}
           {plan.status === 'ACCEPTED' && (
@@ -291,7 +291,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           {/* Progress */}
           <Card>
             <CardHeader>
-              <CardTitle>Treatment Progress</CardTitle>
+              <CardTitle>{t('Treatment Progress')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -310,9 +310,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           {/* Procedures */}
           <Card>
             <CardHeader>
-              <CardTitle>Treatment Procedures</CardTitle>
+              <CardTitle>{t('Treatment Procedures')}</CardTitle>
               <CardDescription>
-                Procedures in this treatment plan, ordered by priority
+                {t('Procedures in this treatment plan, ordered by priority')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -446,8 +446,8 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
 
               {plan.estimatedDuration && (
                 <div>
-                  <div className="text-sm text-muted-foreground">Est. Duration</div>
-                  <div className="font-medium">{Math.round(plan.estimatedDuration / 60)} hours</div>
+                  <div className="text-sm text-muted-foreground">{t('Est. Duration')}</div>
+                  <div className="font-medium">{Math.round(plan.estimatedDuration / 60)} {t('hours')}</div>
                 </div>
               )}
 
@@ -466,7 +466,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                 )}
                 {plan.expectedEndDate && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Expected End</span>
+                    <span className="text-muted-foreground">{t('Expected End')}</span>
                     <span>{formatDate(plan.expectedEndDate)}</span>
                   </div>
                 )}
@@ -486,18 +486,18 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
       <Dialog open={consentDialogOpen} onOpenChange={setConsentDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Record Patient Consent</DialogTitle>
+            <DialogTitle>{t('Record Patient Consent')}</DialogTitle>
             <DialogDescription>
-              Confirm that the patient has given consent to proceed with this treatment plan.
+              {t('Confirm that the patient has given consent to proceed with this treatment plan.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">By recording consent, you confirm that:</p>
             <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-              <li>The treatment plan has been explained to the patient</li>
-              <li>All questions have been answered</li>
-              <li>The patient understands the costs and procedures involved</li>
-              <li>The patient has agreed to proceed</li>
+              <li>{t('The treatment plan has been explained to the patient')}</li>
+              <li>{t('All questions have been answered')}</li>
+              <li>{t('The patient understands the costs and procedures involved')}</li>
+              <li>{t('The patient has agreed to proceed')}</li>
             </ul>
           </div>
           <DialogFooter>
@@ -513,9 +513,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Treatment Plan</DialogTitle>
+            <DialogTitle>{t('Cancel Treatment Plan')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this treatment plan? This action cannot be undone.
+              {t('Are you sure you want to cancel this treatment plan? This action cannot be undone.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

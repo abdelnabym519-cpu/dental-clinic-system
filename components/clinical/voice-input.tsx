@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Mic, MicOff, Loader2 } from 'lucide-react'
@@ -12,6 +13,7 @@ interface VoiceInputProps {
 }
 
 export function VoiceInput({ onTranscript, language = 'en-EG', className }: VoiceInputProps) {
+  const { t } = useLanguage()
   const [isListening, setIsListening] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [interimText, setInterimText] = useState('')
@@ -129,7 +131,7 @@ export function VoiceInput({ onTranscript, language = 'en-EG', className }: Voic
         {isListening && !interimText && (
           <span className="flex items-center gap-1 text-xs text-red-500">
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            Listening...
+            {t('Listening...')}
           </span>
         )}
       </div>

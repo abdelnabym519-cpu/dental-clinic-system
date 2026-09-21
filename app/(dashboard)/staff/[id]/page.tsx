@@ -184,7 +184,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Staff member not found</p>
+        <p className="text-muted-foreground">{t('Staff member not found')}</p>
         <Link href="/staff">
           <Button>{t('ui.back_to_staff_list')}</Button>
         </Link>
@@ -228,7 +228,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
           <Link href={`/staff/${staff.id}/edit`}>
             <Button>
               <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
+              {t('Edit Profile')}
             </Button>
           </Link>
         </div>
@@ -252,7 +252,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Primary Phone</p>
+                    <p className="text-sm text-muted-foreground">{t('Primary Phone')}</p>
                     <p className="font-medium">{staff.phone}</p>
                   </div>
                   <div>
@@ -304,11 +304,11 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">National ID</p>
+                    <p className="text-sm text-muted-foreground">{t('National ID')}</p>
                     <p className="font-medium">{staff.aadharNumber || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Commercial Register</p>
+                    <p className="text-sm text-muted-foreground">{t('Commercial Register')}</p>
                     <p className="font-medium">{staff.panNumber || '-'}</p>
                   </div>
                 </div>
@@ -387,7 +387,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly Salary</p>
+                  <p className="text-sm text-muted-foreground">{t('Monthly Salary')}</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(staff.salary ? Number(staff.salary) : null)}
                   </p>
@@ -419,10 +419,10 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
               {staff.shifts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No work schedule configured</p>
+                  <p>{t('No work schedule configured')}</p>
                   <Link href={`/staff/${staff.id}/edit`}>
                     <Button variant="outline" className="mt-4">
-                      Configure Schedule
+                      {t('Configure Schedule')}
                     </Button>
                   </Link>
                 </div>
@@ -461,12 +461,12 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />{t('ui.documents')}</CardTitle>
-              <CardDescription>Staff documents and certifications</CardDescription>
+              <CardDescription>{t('Staff documents and certifications')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Document management coming soon</p>
+                <p>{t('Document management coming soon')}</p>
               </div>
             </CardContent>
           </Card>

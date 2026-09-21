@@ -237,7 +237,7 @@ export function ImageViewer({
                     className="text-white hover:bg-white/20 text-xs"
                     onClick={onCompare}
                   >
-                    Compare
+                    {t('Compare')}
                   </Button>
                 )}
                 {onDownload && (
@@ -431,7 +431,7 @@ export function ImageViewer({
                 onClick={resetTransforms}
                 title="Reset (0)"
               >
-                Reset
+                {t('Reset')}
               </Button>
 
               {/* Image counter */}

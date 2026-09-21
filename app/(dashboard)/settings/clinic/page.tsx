@@ -87,7 +87,7 @@ export default function ClinicSettingsPage() {
     website: '',
     address: '',
     city: '',
-    state: 'القاهرة',
+    state: t('Cairo'),
     pincode: '',
     registrationNo: '',
     gstNumber: '',
@@ -123,7 +123,7 @@ export default function ClinicSettingsPage() {
           website: result.data.website || '',
           address: result.data.address || '',
           city: result.data.city || '',
-          state: result.data.state || 'القاهرة',
+          state: result.data.state || t('Cairo'),
           pincode: result.data.pincode || '',
           registrationNo: result.data.registrationNo || '',
           gstNumber: result.data.gstNumber || '',
@@ -254,18 +254,18 @@ export default function ClinicSettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Building2 className="w-8 h-8" />
-          Clinic Information
+          {t('Clinic Information')}
         </h1>
-        <p className="text-muted-foreground">Manage your clinic details and contact information</p>
+        <p className="text-muted-foreground">{t('Manage your clinic details and contact information')}</p>
       </div>
 
       <div className="space-y-6">
         {/* Clinic Logo */}
         <Card>
           <CardHeader>
-            <CardTitle>Clinic Logo</CardTitle>
+            <CardTitle>{t('Clinic Logo')}</CardTitle>
             <CardDescription>
-              Upload your clinic logo to display in the sidebar and invoices
+              {t('Upload your clinic logo to display in the sidebar and invoices')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -274,7 +274,7 @@ export default function ClinicSettingsPage() {
               {logo ? (
                 <img
                   src={logo}
-                  alt="Clinic logo"
+                  alt={t('Clinic logo')}
                   className="h-20 w-20 rounded-lg object-cover border"
                 />
               ) : (
@@ -315,11 +315,11 @@ export default function ClinicSettingsPage() {
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Remove
+                    {t('Remove')}
                   </Button>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  JPEG, PNG, WebP, GIF or SVG. Max 2 MB.
+                  {t('JPEG, PNG, WebP, GIF or SVG. Max 2 MB.')}
                 </p>
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function ClinicSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.basic_information')}</CardTitle>
-            <CardDescription>Primary clinic details</CardDescription>
+            <CardDescription>{t('Primary clinic details')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -346,12 +346,12 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div className="md:col-span-2">
-                <Label htmlFor="tagline">Tagline / Motto</Label>
+                <Label htmlFor="tagline">{t('Tagline / Motto')}</Label>
                 <Input
                   id="tagline"
                   value={formData.tagline}
                   onChange={(e) => handleChange('tagline', e.target.value)}
-                  placeholder="Your Smile, Our Priority"
+                  placeholder={t('Your Smile, Our Priority')}
                 />
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function ClinicSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.contact_information')}</CardTitle>
-            <CardDescription>How patients can reach you</CardDescription>
+            <CardDescription>{t('How patients can reach you')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,7 +415,7 @@ export default function ClinicSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.address')}</CardTitle>
-            <CardDescription>Clinic location details</CardDescription>
+            <CardDescription>{t('Clinic location details')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -437,13 +437,13 @@ export default function ClinicSettingsPage() {
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleChange('city', e.target.value)}
-                  placeholder="القاهرة"
+                  placeholder={t('Cairo')}
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="state">Governorate (المحافظة) *</Label>
+                <Label htmlFor="state">{t('Governorate')} *</Label>
                 <Input
                   id="state"
                   value={formData.state}
@@ -454,7 +454,7 @@ export default function ClinicSettingsPage() {
                 <datalist id="egypt-governorates">
                   {EGYPT_GOVERNORATES.map((g) => (
                     <option key={g.value} value={g.value}>
-                      {g.label}
+                      {t(g.label)}
                     </option>
                   ))}
                 </datalist>
@@ -477,8 +477,8 @@ export default function ClinicSettingsPage() {
         {/* Registration & Tax */}
         <Card>
           <CardHeader>
-            <CardTitle>Registration & Tax Information</CardTitle>
-            <CardDescription>Legal and tax registration details</CardDescription>
+            <CardTitle>{t('Registration & Tax Information')}</CardTitle>
+            <CardDescription>{t('Legal and tax registration details')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -488,12 +488,12 @@ export default function ClinicSettingsPage() {
                   id="registrationNo"
                   value={formData.registrationNo}
                   onChange={(e) => handleChange('registrationNo', e.target.value)}
-                  placeholder="REG123456"
+                  placeholder={t('REG123456')}
                 />
               </div>
 
               <div>
-                <Label htmlFor="gstNumber">Tax ID (الرقم الضريبي)</Label>
+                <Label htmlFor="gstNumber">{t('Tax ID')}</Label>
                 <Input
                   id="gstNumber"
                   value={formData.gstNumber}
@@ -503,7 +503,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="panNumber">Commercial Register (السجل التجاري)</Label>
+                <Label htmlFor="panNumber">{t('Commercial Register')}</Label>
                 <Input
                   id="panNumber"
                   value={formData.panNumber}
@@ -519,14 +519,14 @@ export default function ClinicSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.working_hours')}</CardTitle>
-            <CardDescription>Clinic operating schedule</CardDescription>
+            <CardDescription>{t('Clinic operating schedule')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Header row */}
             <div className="hidden md:grid md:grid-cols-[140px_1fr_1fr_80px_40px] gap-3 items-center text-xs font-medium text-muted-foreground px-1">
               <span>{t('ui.day')}</span>
-              <span>Opens at</span>
-              <span>Closes at</span>
+              <span>{t('Opens at')}</span>
+              <span>{t('Closes at')}</span>
               <span className="text-center">{t('ui.open')}</span>
               <span />
             </div>
@@ -564,7 +564,7 @@ export default function ClinicSettingsPage() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title="Copy to all days"
+                    title={t('Copy to all days')}
                     onClick={() => copyToAll(day)}
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -578,8 +578,8 @@ export default function ClinicSettingsPage() {
         {/* Bank Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Bank & Payment Details</CardTitle>
-            <CardDescription>For invoicing and payment collection</CardDescription>
+            <CardTitle>{t('Bank & Payment Details')}</CardTitle>
+            <CardDescription>{t('For invoicing and payment collection')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -589,7 +589,7 @@ export default function ClinicSettingsPage() {
                   id="bankName"
                   value={formData.bankName}
                   onChange={(e) => handleChange('bankName', e.target.value)}
-                  placeholder="البنك الأهلي المصري"
+                  placeholder={t('National Bank of Egypt')}
                 />
               </div>
 
@@ -609,7 +609,7 @@ export default function ClinicSettingsPage() {
                   id="bankIfsc"
                   value={formData.bankIfsc}
                   onChange={(e) => handleChange('bankIfsc', e.target.value)}
-                  placeholder="NBEGEGCX"
+                  placeholder={t('NBEGEGCX')}
                 />
               </div>
 
@@ -631,22 +631,22 @@ export default function ClinicSettingsPage() {
           <CardHeader>
             <CardTitle>{t('ui.patient_portal')}</CardTitle>
             <CardDescription>
-              Allow patients to log in, view records, book appointments, and pay bills online
+              {t('Allow patients to log in, view records, book appointments, and pay bills online')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Enable Patient Portal</p>
+                <p className="text-sm font-medium">{t('Enable Patient Portal')}</p>
                 <p className="text-xs text-muted-foreground">
-                  Patients can access the portal via OTP login
+                  {t('Patients can access the portal via OTP login')}
                 </p>
               </div>
               <Switch checked={patientPortalEnabled} onCheckedChange={setPatientPortalEnabled} />
             </div>
             {patientPortalEnabled && hospitalSlug && (
               <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-                <p className="text-sm font-medium">Portal Login URL</p>
+                <p className="text-sm font-medium">{t('Portal Login URL')}</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 text-xs bg-background p-2 rounded border break-all">
                     {typeof window !== 'undefined' ? window.location.origin : ''}
@@ -666,7 +666,7 @@ export default function ClinicSettingsPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share this URL with patients so they can log in with their registered phone number
+                  {t('Share this URL with patients so they can log in with their registered phone number')}
                 </p>
               </div>
             )}

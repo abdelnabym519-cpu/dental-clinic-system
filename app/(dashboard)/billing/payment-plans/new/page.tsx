@@ -246,9 +246,9 @@ export default function NewPaymentPlanPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create Payment Plan</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Create Payment Plan')}</h1>
           <p className="text-muted-foreground">
-            Set up an installment plan for an outstanding invoice
+            {t('Set up an installment plan for an outstanding invoice')}
           </p>
         </div>
       </div>
@@ -259,8 +259,8 @@ export default function NewPaymentPlanPage() {
           {/* Invoice Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Select Invoice</CardTitle>
-              <CardDescription>Choose an unpaid or partially paid invoice</CardDescription>
+              <CardTitle>{t('Select Invoice')}</CardTitle>
+              <CardDescription>{t('Choose an unpaid or partially paid invoice')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {!selectedInvoice ? (
@@ -268,7 +268,7 @@ export default function NewPaymentPlanPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search by invoice number or patient name..."
+                      placeholder={t('Search by invoice number or patient name...')}
                       value={invoiceSearch}
                       onChange={(e) => setInvoiceSearch(e.target.value)}
                       className="pl-10"
@@ -351,13 +351,13 @@ export default function NewPaymentPlanPage() {
           {/* Plan Configuration */}
           <Card>
             <CardHeader>
-              <CardTitle>Plan Configuration</CardTitle>
-              <CardDescription>Configure installment frequency, count, and terms</CardDescription>
+              <CardTitle>{t('Plan Configuration')}</CardTitle>
+              <CardDescription>{t('Configure installment frequency, count, and terms')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Number of Installments</Label>
+                  <Label>{t('Number of Installments')}</Label>
                   <Input
                     type="number"
                     min={2}
@@ -373,9 +373,9 @@ export default function NewPaymentPlanPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="WEEKLY">Weekly</SelectItem>
-                      <SelectItem value="BIWEEKLY">Bi-weekly</SelectItem>
-                      <SelectItem value="MONTHLY">Monthly</SelectItem>
+                      <SelectItem value="WEEKLY">{t('Weekly')}</SelectItem>
+                      <SelectItem value="BIWEEKLY">{t('Bi-weekly')}</SelectItem>
+                      <SelectItem value="MONTHLY">{t('Monthly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -416,7 +416,7 @@ export default function NewPaymentPlanPage() {
               <div className="space-y-2">
                 <Label>Notes (Optional)</Label>
                 <Textarea
-                  placeholder="Any additional terms or notes..."
+                  placeholder={t('Any additional terms or notes...')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
@@ -438,7 +438,7 @@ export default function NewPaymentPlanPage() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Invoice Balance</div>
+                    <div className="text-muted-foreground">{t('Invoice Balance')}</div>
                     <div className="font-medium text-lg">
                       {formatCurrency(selectedInvoice.balanceAmount)}
                     </div>
@@ -450,23 +450,23 @@ export default function NewPaymentPlanPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Interest Amount</div>
+                    <div className="text-muted-foreground">{t('Interest Amount')}</div>
                     <div className="font-medium text-lg">{formatCurrency(interestAmount())}</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Total Plan Amount</div>
+                    <div className="text-muted-foreground">{t('Total Plan Amount')}</div>
                     <div className="font-medium text-lg text-blue-600">
                       {formatCurrency(totalPlanAmount())}
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">EMI Amount</div>
+                    <div className="text-muted-foreground">{t('EMI Amount')}</div>
                     <div className="font-bold text-xl text-green-600">
                       {schedule.length > 0 ? formatCurrency(schedule[0].amount) : '—'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Last Payment Date</div>
+                    <div className="text-muted-foreground">{t('Last Payment Date')}</div>
                     <div className="font-medium">
                       {schedule.length > 0
                         ? format(schedule[schedule.length - 1].dueDate, 'dd MMM yyyy')
@@ -483,7 +483,7 @@ export default function NewPaymentPlanPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('ui.installment_schedule')}</CardTitle>
-                <CardDescription>Preview of {installments} installments</CardDescription>
+                <CardDescription>Preview of {installments} {t('installments')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[400px] overflow-y-auto">
@@ -522,7 +522,7 @@ export default function NewPaymentPlanPage() {
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating Plan...
+                {t('Creating Plan...')}
               </>
             ) : (
               'Create Payment Plan'

@@ -98,7 +98,7 @@ export default function PatientDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t('Dashboard')}</h1>
         <Link href="/portal/book">
           <Button>
             <CalendarPlus className="h-4 w-4 mr-2" />{t('ui.book_appointment')}</Button>
@@ -128,7 +128,7 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.stats.totalVisits}</p>
-                <p className="text-xs text-muted-foreground">Total Visits</p>
+                <p className="text-xs text-muted-foreground">{t('Total Visits')}</p>
               </div>
             </div>
           </CardContent>
@@ -141,7 +141,7 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.stats.outstandingCount}</p>
-                <p className="text-xs text-muted-foreground">Pending Bills</p>
+                <p className="text-xs text-muted-foreground">{t('Pending Bills')}</p>
               </div>
             </div>
           </CardContent>
@@ -165,7 +165,7 @@ export default function PatientDashboard() {
         {/* Upcoming Appointments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Upcoming Appointments</CardTitle>
+            <CardTitle className="text-base">{t('Upcoming Appointments')}</CardTitle>
             <Link
               href="/portal/appointments"
               className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -175,7 +175,7 @@ export default function PatientDashboard() {
           <CardContent>
             {data.upcomingAppointments.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                No upcoming appointments
+                {t('No upcoming appointments')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -211,7 +211,7 @@ export default function PatientDashboard() {
         {/* Outstanding Bills */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Outstanding Bills</CardTitle>
+            <CardTitle className="text-base">{t('Outstanding Bills')}</CardTitle>
             <Link
               href="/portal/bills"
               className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -220,7 +220,7 @@ export default function PatientDashboard() {
           </CardHeader>
           <CardContent>
             {data.outstandingInvoices.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">All bills are paid!</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">{t('All bills are paid!')}</p>
             ) : (
               <div className="space-y-3">
                 {data.outstandingInvoices.map((inv) => (
@@ -255,7 +255,7 @@ export default function PatientDashboard() {
         {/* Recent Treatments */}
         <Card className="md:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base">Recent Treatments</CardTitle>
+            <CardTitle className="text-base">{t('Recent Treatments')}</CardTitle>
             <Link
               href="/portal/records"
               className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -265,24 +265,24 @@ export default function PatientDashboard() {
           <CardContent>
             {data.recentTreatments.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                No treatment records yet
+                {t('No treatment records yet')}
               </p>
             ) : (
               <div className="space-y-3">
-                {data.recentTreatments.map((t) => (
+                {data.recentTreatments.map((opt) => (
                   <div
-                    key={t.id}
+                    key={opt.id}
                     className="flex items-center justify-between p-3 rounded-lg border"
                   >
                     <div className="space-y-1">
-                      <p className="text-sm font-medium">{t.procedure.name}</p>
+                      <p className="text-sm font-medium">{opt.procedure.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Dr. {t.doctor.firstName} {t.doctor.lastName} &middot;{' '}
-                        {formatDate(t.createdAt)}
+                        Dr. {opt.doctor.firstName} {opt.doctor.lastName} &middot;{' '}
+                        {formatDate(opt.createdAt)}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {t.status}
+                      {opt.status}
                     </Badge>
                   </div>
                 ))}

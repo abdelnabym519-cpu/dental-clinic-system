@@ -112,7 +112,7 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
           {/* Toolbar */}
           <div className="flex items-center justify-between px-4 py-2 bg-black/80 text-white z-10">
             <div className="flex items-center gap-4">
-              <h3 className="text-sm font-medium">Compare Images</h3>
+              <h3 className="text-sm font-medium">{t('Compare Images')}</h3>
               <div className="flex items-center gap-1 bg-white/10 rounded-md p-0.5">
                 <Button
                   variant="ghost"
@@ -125,7 +125,7 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                   onClick={() => setMode('side-by-side')}
                 >
                   <Columns2 className="h-3.5 w-3.5 mr-1" />
-                  Side by Side
+                  {t('Side by Side')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -136,7 +136,7 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                   onClick={() => setMode('slider')}
                 >
                   <SplitSquareHorizontal className="h-3.5 w-3.5 mr-1" />
-                  Slider
+                  {t('Slider')}
                 </Button>
               </div>
             </div>

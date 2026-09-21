@@ -162,13 +162,13 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
-              Password Policy
+              {t('Password Policy')}
             </CardTitle>
-            <CardDescription>Configure password requirements for all users</CardDescription>
+            <CardDescription>{t('Configure password requirements for all users')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Minimum Password Length</Label>
+              <Label>{t('Minimum Password Length')}</Label>
               <Input
                 type="number"
                 value={passwordMinLength}
@@ -177,7 +177,7 @@ export default function SecuritySettingsPage() {
                 max="32"
               />
               <p className="text-sm text-muted-foreground">
-                Minimum: 6 characters, Maximum: 32 characters
+                {t('Minimum: 6 characters, Maximum: 32 characters')}
               </p>
             </div>
 
@@ -186,7 +186,7 @@ export default function SecuritySettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Require Uppercase Letters</Label>
+                  <Label>{t('Require Uppercase Letters')}</Label>
                   <p className="text-sm text-muted-foreground">
                     At least one uppercase letter (A-Z)
                   </p>
@@ -199,7 +199,7 @@ export default function SecuritySettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Require Lowercase Letters</Label>
+                  <Label>{t('Require Lowercase Letters')}</Label>
                   <p className="text-sm text-muted-foreground">
                     At least one lowercase letter (a-z)
                   </p>
@@ -212,7 +212,7 @@ export default function SecuritySettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Require Numbers</Label>
+                  <Label>{t('Require Numbers')}</Label>
                   <p className="text-sm text-muted-foreground">At least one number (0-9)</p>
                 </div>
                 <Switch
@@ -223,7 +223,7 @@ export default function SecuritySettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Require Special Characters</Label>
+                  <Label>{t('Require Special Characters')}</Label>
                   <p className="text-sm text-muted-foreground">
                     At least one special character (!@#$%)
                   </p>
@@ -246,7 +246,7 @@ export default function SecuritySettingsPage() {
                 min="0"
                 max="365"
               />
-              <p className="text-sm text-muted-foreground">Set to 0 to disable password expiry</p>
+              <p className="text-sm text-muted-foreground">{t('Set to 0 to disable password expiry')}</p>
             </div>
           </CardContent>
         </Card>
@@ -256,9 +256,9 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              Session Management
+              {t('Session Management')}
             </CardTitle>
-            <CardDescription>Configure user session timeout and security</CardDescription>
+            <CardDescription>{t('Configure user session timeout and security')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -271,7 +271,7 @@ export default function SecuritySettingsPage() {
                 max="1440"
               />
               <p className="text-sm text-muted-foreground">
-                Users will be logged out after this period of inactivity
+                {t('Users will be logged out after this period of inactivity')}
               </p>
             </div>
           </CardContent>
@@ -282,14 +282,14 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserX className="w-5 h-5" />
-              Login Security
+              {t('Login Security')}
             </CardTitle>
-            <CardDescription>Protect against brute force attacks</CardDescription>
+            <CardDescription>{t('Protect against brute force attacks')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Maximum Login Attempts</Label>
+                <Label>{t('Maximum Login Attempts')}</Label>
                 <Input
                   type="number"
                   value={maxLoginAttempts}
@@ -298,7 +298,7 @@ export default function SecuritySettingsPage() {
                   max="10"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Account will be locked after this many failed attempts
+                  {t('Account will be locked after this many failed attempts')}
                 </p>
               </div>
 
@@ -311,7 +311,7 @@ export default function SecuritySettingsPage() {
                   min="1"
                   max="1440"
                 />
-                <p className="text-sm text-muted-foreground">How long the account remains locked</p>
+                <p className="text-sm text-muted-foreground">{t('How long the account remains locked')}</p>
               </div>
             </div>
           </CardContent>
@@ -322,16 +322,16 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              Two-Factor Authentication
+              {t('Two-Factor Authentication')}
             </CardTitle>
-            <CardDescription>Add an extra layer of security to user accounts</CardDescription>
+            <CardDescription>{t('Add an extra layer of security to user accounts')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <Label>Require Two-Factor Authentication</Label>
+                <Label>{t('Require Two-Factor Authentication')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Force all users to enable 2FA for their accounts
+                  {t('Force all users to enable 2FA for their accounts')}
                 </p>
               </div>
               <Switch checked={requireTwoFactor} onCheckedChange={setRequireTwoFactor} />
@@ -344,13 +344,13 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              IP Address Management
+              {t('IP Address Management')}
             </CardTitle>
             <CardDescription>Control access based on IP addresses (optional)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Allowed IP Addresses</Label>
+              <Label>{t('Allowed IP Addresses')}</Label>
               <Textarea
                 value={allowedIPs}
                 onChange={(e) => setAllowedIPs(e.target.value)}
@@ -358,12 +358,12 @@ export default function SecuritySettingsPage() {
                 rows={4}
               />
               <p className="text-sm text-muted-foreground">
-                Enter one IP address or CIDR range per line. Leave empty to allow all IPs.
+                {t('Enter one IP address or CIDR range per line. Leave empty to allow all IPs.')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Blocked IP Addresses</Label>
+              <Label>{t('Blocked IP Addresses')}</Label>
               <Textarea
                 value={blockedIPs}
                 onChange={(e) => setBlockedIPs(e.target.value)}
@@ -371,7 +371,7 @@ export default function SecuritySettingsPage() {
                 rows={4}
               />
               <p className="text-sm text-muted-foreground">
-                Enter one IP address or CIDR range per line. These IPs will be denied access.
+                {t('Enter one IP address or CIDR range per line. These IPs will be denied access.')}
               </p>
             </div>
           </CardContent>
@@ -389,7 +389,7 @@ export default function SecuritySettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-yellow-800">
               <AlertTriangle className="w-5 h-5" />
-              Important Security Notice
+              {t('Important Security Notice')}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-yellow-700 space-y-2">

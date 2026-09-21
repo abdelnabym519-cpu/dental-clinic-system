@@ -39,7 +39,7 @@ export default function PatientRecords() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Medical Records</h1>
+      <h1 className="text-2xl font-bold">{t('Medical Records')}</h1>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -59,7 +59,7 @@ export default function PatientRecords() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No treatment records</p>
+                <p>{t('No treatment records')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -102,7 +102,7 @@ export default function PatientRecords() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <Grid3x3 className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No dental chart entries</p>
+                <p>{t('No dental chart entries')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -140,7 +140,7 @@ export default function PatientRecords() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No documents uploaded</p>
+                <p>{t('No documents uploaded')}</p>
               </CardContent>
             </Card>
           ) : (

@@ -284,10 +284,10 @@ export default function ChatPage() {
                   ? 'bg-primary text-primary-foreground border-primary shadow-sm'
                   : 'text-muted-foreground hover:bg-muted border-border'
               )}
-              title="Hands-free: continuous voice conversation"
+              title={t('Hands-free: continuous voice conversation')}
             >
               <HandsFreeIcon />
-              <span className="hidden sm:inline">Hands-free</span>
+              <span className="hidden sm:inline">{t('Hands-free')}</span>
             </button>
           )}
           {/* TTS toggle */}
@@ -313,7 +313,7 @@ export default function ChatPage() {
               }}
               className="rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
             >
-              New Chat
+              {t('New Chat')}
             </button>
           )}
         </div>
@@ -392,7 +392,7 @@ export default function ChatPage() {
                     </svg>
                   </div>
                 )}
-                <h2 className="text-xl font-semibold mb-2">How can I help you today?</h2>
+                <h2 className="text-xl font-semibold mb-2">{t('How can I help you today?')}</h2>
                 <p className="text-sm text-muted-foreground mb-2 text-center max-w-md">
                   I can look up patients, check appointments, show revenue, manage inventory, and
                   more.
@@ -404,7 +404,7 @@ export default function ChatPage() {
                   </p>
                 )}
                 {!voice.voiceSupported && (
-                  <p className="text-xs text-muted-foreground mb-6">Just ask in plain English.</p>
+                  <p className="text-xs text-muted-foreground mb-6">{t('Just ask in plain English.')}</p>
                 )}
               </>
             )}
@@ -414,12 +414,12 @@ export default function ChatPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-3xl w-full">
                 {SUGGESTIONS.map((s) => (
                   <button
-                    key={s.label}
+                    key={t(s.label)}
                     onClick={() => handleSuggestion(s.prompt)}
                     className="rounded-lg border p-3 text-left hover:bg-muted transition-colors group"
                   >
                     <p className="text-sm font-medium group-hover:text-primary transition-colors">
-                      {s.label}
+                      {t(s.label)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {s.prompt.endsWith(' ') ? `"${s.prompt.trim()}..."` : `"${s.prompt}"`}
@@ -558,7 +558,7 @@ export default function ChatPage() {
                   <p className="text-xs text-purple-500 font-medium mt-2">{t('ui.thinking')}</p>
                 )}
                 {orbState === 'speaking' && (
-                  <p className="text-xs text-blue-500 font-medium mt-2">Speaking...</p>
+                  <p className="text-xs text-blue-500 font-medium mt-2">{t('Speaking...')}</p>
                 )}
               </div>
             )}
@@ -634,7 +634,7 @@ export default function ChatPage() {
             onClick={handleSend}
             disabled={chatLoading || !input.trim()}
             className="rounded-xl bg-primary px-4 py-3 text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity shrink-0"
-            aria-label="Send message"
+            aria-label={t('Send message')}
           >
             <svg
               width="20"
@@ -650,7 +650,7 @@ export default function ChatPage() {
           </button>
         </div>
         <p className="text-xs text-muted-foreground text-center mt-2">
-          AI can make mistakes. Verify important information.
+          {t('AI can make mistakes. Verify important information.')}
         </p>
       </div>
     </div>

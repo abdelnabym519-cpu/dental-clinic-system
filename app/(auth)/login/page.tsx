@@ -101,7 +101,7 @@ function LoginForm() {
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder={t('Enter your password')}
               {...register('password')}
               disabled={isLoading}
             />
@@ -134,6 +134,7 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   return (
     <Suspense
       fallback={
@@ -144,8 +145,8 @@ export default function LoginPage() {
                 D
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-            <CardDescription>Loading...</CardDescription>
+            <CardTitle className="text-2xl font-bold">{t('Welcome back')}</CardTitle>
+            <CardDescription>{t('Loading...')}</CardDescription>
           </CardHeader>
         </Card>
       }

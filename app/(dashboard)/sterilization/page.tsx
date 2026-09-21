@@ -115,9 +115,9 @@ export default function SterilizationDashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Sterilization Center</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('Sterilization Center')}</h2>
           <p className="text-muted-foreground">
-            Instrument tracking, sterilization cycles, and compliance monitoring
+            {t('Instrument tracking, sterilization cycles, and compliance monitoring')}
           </p>
         </div>
       </div>
@@ -175,28 +175,28 @@ export default function SterilizationDashboardPage() {
             <CardContent className="pt-4 text-center">
               <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.available}</div>
-              <p className="text-xs text-muted-foreground">Available</p>
+              <p className="text-xs text-muted-foreground">{t('Available')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 text-center">
               <Wrench className="h-5 w-5 text-blue-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.inUse}</div>
-              <p className="text-xs text-muted-foreground">In Use</p>
+              <p className="text-xs text-muted-foreground">{t('In Use')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 text-center">
               <Shield className="h-5 w-5 text-purple-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.sterilizing}</div>
-              <p className="text-xs text-muted-foreground">Sterilizing</p>
+              <p className="text-xs text-muted-foreground">{t('Sterilizing')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 text-center">
               <AlertTriangle className="h-5 w-5 text-orange-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.contaminated}</div>
-              <p className="text-xs text-muted-foreground">Contaminated</p>
+              <p className="text-xs text-muted-foreground">{t('Contaminated')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -210,14 +210,14 @@ export default function SterilizationDashboardPage() {
             <CardContent className="pt-4 text-center">
               <XCircle className="h-5 w-5 text-red-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.retired}</div>
-              <p className="text-xs text-muted-foreground">Retired</p>
+              <p className="text-xs text-muted-foreground">{t('Retired')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4 text-center">
               <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.nearMaxCycles}</div>
-              <p className="text-xs text-muted-foreground">Near Max Cycles</p>
+              <p className="text-xs text-muted-foreground">{t('Near Max Cycles')}</p>
             </CardContent>
           </Card>
         </div>
@@ -227,8 +227,8 @@ export default function SterilizationDashboardPage() {
       {stats && stats.recentLogs.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Sterilization Cycles</CardTitle>
-            <CardDescription>Last 10 recorded cycles</CardDescription>
+            <CardTitle>{t('Recent Sterilization Cycles')}</CardTitle>
+            <CardDescription>{t('Last 10 recorded cycles')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

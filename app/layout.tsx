@@ -4,9 +4,9 @@ import { cookies } from 'next/headers'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/providers'
-import { LanguageProvider, LOCALE_COOKIE } from '@/components/providers/language-provider'
+import { LanguageProvider } from '@/components/providers/language-provider'
 import { directionFor } from '@/lib/i18n/dictionary'
-import { resolveLocale } from '@/lib/i18n/config'
+import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/config'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -84,8 +84,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <LanguageProvider initialLocale={locale}>{children}</LanguageProvider>
-          <Toaster />
+          {/* Toaster lives inside the provider so toast copy is translated
+              with the visitor's locale, not the default one. */}
+          <LanguageProvider initialLocale={locale}>
+            {children}
+            <Toaster />
+          </LanguageProvider>
         </Providers>
       </body>
     </html>

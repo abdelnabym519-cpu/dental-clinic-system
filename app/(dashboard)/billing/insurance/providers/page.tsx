@@ -159,14 +159,14 @@ export default function InsuranceProvidersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Insurance Providers</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('Insurance Providers')}</h1>
           <p className="text-muted-foreground">
-            Manage insurance companies your hospital works with
+            {t('Manage insurance companies your hospital works with')}
           </p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Provider
+          {t('Add Provider')}
         </Button>
       </div>
 
@@ -176,7 +176,7 @@ export default function InsuranceProvidersPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search providers..."
+                placeholder={t('Search providers...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -194,8 +194,8 @@ export default function InsuranceProvidersPage() {
           ) : providers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No insurance providers found</p>
-              <p className="text-sm">Add your first insurance provider to get started</p>
+              <p className="font-medium">{t('No insurance providers found')}</p>
+              <p className="text-sm">{t('Add your first insurance provider to get started')}</p>
             </div>
           ) : (
             <Table>
@@ -204,7 +204,7 @@ export default function InsuranceProvidersPage() {
                   <TableHead>{t('ui.provider')}</TableHead>
                   <TableHead>{t('ui.code')}</TableHead>
                   <TableHead>{t('ui.contact')}</TableHead>
-                  <TableHead>Policies</TableHead>
+                  <TableHead>{t('Policies')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
                   <TableHead className="w-[50px]" />
                 </TableRow>
@@ -309,7 +309,7 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div className="col-span-2">
-                <Label>Contact Email</Label>
+                <Label>{t('Contact Email')}</Label>
                 <Input
                   type="email"
                   value={form.contactEmail}
@@ -326,7 +326,7 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div className="col-span-2">
-                <Label>Claim Submission URL</Label>
+                <Label>{t('Claim Submission URL')}</Label>
                 <Input
                   value={form.claimSubmissionUrl}
                   onChange={(e) => setForm({ ...form, claimSubmissionUrl: e.target.value })}
@@ -334,15 +334,15 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div>
-                <Label>Portal Username</Label>
+                <Label>{t('Portal Username')}</Label>
                 <Input
                   value={form.portalUsername}
                   onChange={(e) => setForm({ ...form, portalUsername: e.target.value })}
-                  placeholder="Username"
+                  placeholder={t('Username')}
                 />
               </div>
               <div>
-                <Label>Portal Password</Label>
+                <Label>{t('Portal Password')}</Label>
                 <Input
                   type="password"
                   value={form.portalPassword}

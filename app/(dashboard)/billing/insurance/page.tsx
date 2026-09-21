@@ -255,26 +255,26 @@ export default function InsuranceClaimsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Insurance Claims</h1>
-          <p className="text-muted-foreground">Manage insurance claims and track settlements</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Insurance Claims')}</h1>
+          <p className="text-muted-foreground">{t('Manage insurance claims and track settlements')}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/billing/insurance/providers">
             <Button variant="outline">
               <Building2 className="h-4 w-4 mr-2" />
-              Providers
+              {t('Providers')}
             </Button>
           </Link>
           <Link href="/billing/insurance/pre-auth">
             <Button variant="outline">
               <FileCheck className="h-4 w-4 mr-2" />
-              Pre-Auth
+              {t('Pre-Auth')}
             </Button>
           </Link>
           <Link href="/billing/insurance/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Claim
+              {t('New Claim')}
             </Button>
           </Link>
         </div>
@@ -284,7 +284,7 @@ export default function InsuranceClaimsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Claimed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Claimed')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -298,7 +298,7 @@ export default function InsuranceClaimsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Approved</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Approved')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -314,7 +314,7 @@ export default function InsuranceClaimsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Settled</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Total Settled')}</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -336,7 +336,7 @@ export default function InsuranceClaimsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by claim number, patient, or provider..."
+                placeholder={t('Search by claim number, patient, or provider...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -353,9 +353,9 @@ export default function InsuranceClaimsPage() {
                   <SelectItem value="SUBMITTED">{t('ui.submitted')}</SelectItem>
                   <SelectItem value="UNDER_REVIEW">{t('ui.under_review')}</SelectItem>
                   <SelectItem value="APPROVED">{t('ui.approved')}</SelectItem>
-                  <SelectItem value="PARTIALLY_APPROVED">Partially Approved</SelectItem>
+                  <SelectItem value="PARTIALLY_APPROVED">{t('Partially Approved')}</SelectItem>
                   <SelectItem value="REJECTED">{t('ui.rejected')}</SelectItem>
-                  <SelectItem value="SETTLED">Settled</SelectItem>
+                  <SelectItem value="SETTLED">{t('Settled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -381,10 +381,10 @@ export default function InsuranceClaimsPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Claim</TableHead>
+                <TableHead>{t('Claim')}</TableHead>
                 <TableHead>{t('ui.patient')}</TableHead>
                 <TableHead>{t('ui.provider')}</TableHead>
-                <TableHead className="text-right">Claimed</TableHead>
+                <TableHead className="text-right">{t('Claimed')}</TableHead>
                 <TableHead className="text-right">{t('ui.approved')}</TableHead>
                 <TableHead>{t('ui.submitted')}</TableHead>
                 <TableHead>{t('ui.status')}</TableHead>
@@ -426,11 +426,11 @@ export default function InsuranceClaimsPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Shield className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No insurance claims found</p>
+                      <p className="text-muted-foreground">{t('No insurance claims found')}</p>
                       <Link href="/billing/insurance/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
-                          Create New Claim
+                          {t('Create New Claim')}
                         </Button>
                       </Link>
                     </div>
@@ -479,7 +479,7 @@ export default function InsuranceClaimsPage() {
                       {claim.submissionDate ? (
                         formatDate(claim.submissionDate)
                       ) : (
-                        <span className="text-muted-foreground">Not submitted</span>
+                        <span className="text-muted-foreground">{t('Not submitted')}</span>
                       )}
                     </TableCell>
                     <TableCell>{getStatusBadge(claim.status)}</TableCell>
@@ -504,7 +504,7 @@ export default function InsuranceClaimsPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleSubmitClaim(claim.id)}>
                                 <Send className="h-4 w-4 mr-2" />
-                                Submit Claim
+                                {t('Submit Claim')}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -514,11 +514,11 @@ export default function InsuranceClaimsPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => openDenialManagement(claim)}>
                                 <Gavel className="h-4 w-4 mr-2" />
-                                Denial / Appeal
+                                {t('Denial / Appeal')}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleAiAnalyze(claim)}>
                                 <Brain className="h-4 w-4 mr-2" />
-                                AI Analyze
+                                {t('AI Analyze')}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -583,7 +583,7 @@ export default function InsuranceClaimsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gavel className="h-5 w-5" />
-              Denial &amp; Appeal Management
+              {t('Denial & Appeal Management')}
             </DialogTitle>
           </DialogHeader>
           {denialClaim && (
@@ -601,7 +601,7 @@ export default function InsuranceClaimsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Denial Code</Label>
+                  <Label>{t('Denial Code')}</Label>
                   <Input
                     value={denialForm.denialCode}
                     onChange={(e) => setDenialForm({ ...denialForm, denialCode: e.target.value })}
@@ -609,7 +609,7 @@ export default function InsuranceClaimsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Appeal Deadline</Label>
+                  <Label>{t('Appeal Deadline')}</Label>
                   <Input
                     type="date"
                     value={denialForm.appealDeadline}
@@ -621,7 +621,7 @@ export default function InsuranceClaimsPage() {
               </div>
 
               <div>
-                <Label>Appeal Status</Label>
+                <Label>{t('Appeal Status')}</Label>
                 <Select
                   value={denialForm.appealStatus}
                   onValueChange={(v) => setDenialForm({ ...denialForm, appealStatus: v })}
@@ -630,29 +630,29 @@ export default function InsuranceClaimsPage() {
                     <SelectValue placeholder={t('ui.select_status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="PREPARING">Preparing Appeal</SelectItem>
-                    <SelectItem value="SUBMITTED">Appeal Submitted</SelectItem>
+                    <SelectItem value="PREPARING">{t('Preparing Appeal')}</SelectItem>
+                    <SelectItem value="SUBMITTED">{t('Appeal Submitted')}</SelectItem>
                     <SelectItem value="UNDER_REVIEW">{t('ui.under_review')}</SelectItem>
-                    <SelectItem value="WON">Appeal Won</SelectItem>
-                    <SelectItem value="LOST">Appeal Lost</SelectItem>
-                    <SelectItem value="ABANDONED">Abandoned</SelectItem>
+                    <SelectItem value="WON">{t('Appeal Won')}</SelectItem>
+                    <SelectItem value="LOST">{t('Appeal Lost')}</SelectItem>
+                    <SelectItem value="ABANDONED">{t('Abandoned')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label>Appeal Notes</Label>
+                <Label>{t('Appeal Notes')}</Label>
                 <Textarea
                   value={denialForm.appealNotes}
                   onChange={(e) => setDenialForm({ ...denialForm, appealNotes: e.target.value })}
-                  placeholder="Notes about the denial reason, appeal strategy..."
+                  placeholder={t('Notes about the denial reason, appeal strategy...')}
                   rows={3}
                 />
               </div>
 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setDenialClaim(null)}>{t('ui.cancel')}</Button>
-                <Button onClick={handleSaveDenialInfo}>Save</Button>
+                <Button onClick={handleSaveDenialInfo}>{t('Save')}</Button>
               </div>
             </div>
           )}
@@ -671,7 +671,7 @@ export default function InsuranceClaimsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-purple-600" />
-              AI Claim Analysis
+              {t('AI Claim Analysis')}
             </DialogTitle>
           </DialogHeader>
           {aiAnalysisClaim && (
@@ -695,7 +695,7 @@ export default function InsuranceClaimsPage() {
               {aiAnalyzing ? (
                 <div className="flex items-center justify-center py-8 gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-                  <span className="text-sm text-muted-foreground">Analyzing claim...</span>
+                  <span className="text-sm text-muted-foreground">{t('Analyzing claim...')}</span>
                 </div>
               ) : aiAnalysis?.error ? (
                 <p className="text-destructive text-sm">{aiAnalysis.error}</p>
@@ -703,7 +703,7 @@ export default function InsuranceClaimsPage() {
                 <>
                   {/* Analysis */}
                   <div className="space-y-2">
-                    <h4 className="text-sm font-medium">Analysis</h4>
+                    <h4 className="text-sm font-medium">{t('Analysis')}</h4>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
                       <p>
                         <span className="font-medium">Likely Cause:</span>{' '}
@@ -723,7 +723,7 @@ export default function InsuranceClaimsPage() {
                   {/* Suggestions */}
                   {aiAnalysis.suggestions?.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Suggestions</h4>
+                      <h4 className="text-sm font-medium">{t('Suggestions')}</h4>
                       <div className="space-y-1">
                         {aiAnalysis.suggestions.map((s: any, i: number) => (
                           <div key={i} className="flex items-start gap-2 text-sm">
@@ -748,7 +748,7 @@ export default function InsuranceClaimsPage() {
                   {/* Appeal Letter */}
                   {aiAnalysis.appealLetter && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Draft Appeal Letter</h4>
+                      <h4 className="text-sm font-medium">{t('Draft Appeal Letter')}</h4>
                       <Textarea
                         value={aiAnalysis.appealLetter}
                         readOnly
@@ -760,7 +760,7 @@ export default function InsuranceClaimsPage() {
                         size="sm"
                         onClick={() => navigator.clipboard.writeText(aiAnalysis.appealLetter)}
                       >
-                        Copy to Clipboard
+                        {t('Copy to Clipboard')}
                       </Button>
                     </div>
                   )}
@@ -768,7 +768,7 @@ export default function InsuranceClaimsPage() {
                   {/* Prevention Tips */}
                   {aiAnalysis.preventionTips?.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Prevention Tips</h4>
+                      <h4 className="text-sm font-medium">{t('Prevention Tips')}</h4>
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         {aiAnalysis.preventionTips.map((tip: string, i: number) => (
                           <p key={i} className="text-xs text-blue-600">

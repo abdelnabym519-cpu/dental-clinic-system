@@ -110,9 +110,9 @@ export default function AISettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8 p-6">
       <div>
-        <h1 className="text-xl font-bold">AI Settings</h1>
+        <h1 className="text-xl font-bold">{t('AI Settings')}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure AI features powered by OpenRouter
+          {t('Configure AI features powered by OpenRouter')}
         </p>
       </div>
 
@@ -120,13 +120,13 @@ export default function AISettingsPage() {
       <div className="rounded-lg border p-4 bg-muted/30">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold">OpenRouter API Key</p>
+            <p className="text-sm font-semibold">{t('OpenRouter API Key')}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Set OPENROUTER_API_KEY in your .env file. Restart the app after changes.
+              {t('Set OPENROUTER_API_KEY in your .env file. Restart the app after changes.')}
             </p>
           </div>
           <span className="text-xs rounded-full px-2.5 py-1 bg-blue-100 text-blue-800">
-            Check .env
+            {t('Check .env')}
           </span>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function AISettingsPage() {
           <div>
             <p className="text-sm font-semibold">{t('ui.ai_features_master_switch')}</p>
             <p className="text-xs text-muted-foreground">
-              Enable or disable all AI features at once
+              {t('Enable or disable all AI features at once')}
             </p>
           </div>
           <ToggleSwitch
@@ -151,7 +151,7 @@ export default function AISettingsPage() {
       {/* Feature toggles */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Features
+          {t('Features')}
         </h2>
         {[
           {
@@ -193,7 +193,7 @@ export default function AISettingsPage() {
       {/* Model preference */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          Model Preference
+          {t('Model Preference')}
         </h2>
         <div className="flex gap-3">
           {(['economy', 'balanced', 'quality'] as const).map((pref) => (
@@ -225,7 +225,7 @@ export default function AISettingsPage() {
       {/* Limits */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Limits & Guardrails
+          {t('Limits & Guardrails')}
         </h2>
         <div className="flex gap-4">
           <div className="flex-1">
@@ -242,7 +242,7 @@ export default function AISettingsPage() {
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Transactions above this amount need manual approval
+              {t('Transactions above this amount need manual approval')}
             </p>
           </div>
           <div className="flex-1">
@@ -259,7 +259,7 @@ export default function AISettingsPage() {
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Estimated OpenRouter cost cap per month
+              {t('Estimated OpenRouter cost cap per month')}
             </p>
           </div>
         </div>

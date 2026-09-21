@@ -138,8 +138,8 @@ function AcceptInviteContent() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Validating Invite</CardTitle>
-          <CardDescription>Please wait...</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('Validating Invite')}</CardTitle>
+          <CardDescription>{t('Please wait...')}</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -154,12 +154,12 @@ function AcceptInviteContent() {
               <XCircle className="h-6 w-6 text-red-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Invalid Invite</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('Invalid Invite')}</CardTitle>
           <CardDescription>{errorMessage}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline" className="w-full">
-            <Link href="/login">Go to Login</Link>
+            <Link href="/login">{t('Go to Login')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -175,7 +175,7 @@ function AcceptInviteContent() {
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Aboard!</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('Welcome Aboard!')}</CardTitle>
           <CardDescription>
             Your account has been created successfully. You can now log in to{' '}
             {inviteData?.hospitalName}.
@@ -232,7 +232,7 @@ function AcceptInviteContent() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Create Password</Label>
+            <Label htmlFor="password">{t('Create Password')}</Label>
             <Input
               id="password"
               type="password"
@@ -266,7 +266,7 @@ function AcceptInviteContent() {
         </form>
 
         <div className="mt-4 text-center text-xs text-muted-foreground">
-          By creating an account, you agree to our Terms of Service and Privacy Policy.
+          {t('By creating an account, you agree to our Terms of Service and Privacy Policy.')}
         </div>
       </CardContent>
     </Card>

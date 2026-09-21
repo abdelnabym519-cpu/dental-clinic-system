@@ -57,13 +57,34 @@ function getReverseIndex(): Map<string, string> {
   return reverseIndex
 }
 
+/**
+ * Translate UI text.
+ *
+ * Three-step resolution, most specific first:
+ *
+ *   1. Exact dictionary key (`ui.save`, `nav.patients`) — the wired convention.
+ *   2. An existing English UI label ("Save", "Patients") — resolved through the
+ *      reverse index, so a label that lives in a config array or a text node
+ *      does not need a new id threaded to it.
+ *   3. The text itself — an unknown string renders unchanged rather than as a
+ *      bare key, so nothing can ever disappear from the UI.
+ */
+export function translateText(
+  locale: string | null | undefined,
+  text: string,
+  vars?: Record<string, string | number>
+): string {
+  if (text in dictionaries[resolveLocale(locale)]) return translate(locale, text, vars)
+  const key = getReverseIndex().get(text)
+  return key ? translate(locale, key, vars) : text
+}
+
 /** Translate an existing English UI label (e.g. a nav item title). */
 export function translateLabel(
   locale: string | null | undefined,
   englishLabel: string,
   vars?: Record<string, string | number>
 ): string {
-  const key = getReverseIndex().get(englishLabel)
-  if (!key) return englishLabel
-  return translate(locale, key, vars)
+  return translateText(locale, englishLabel, vars)
 }
+

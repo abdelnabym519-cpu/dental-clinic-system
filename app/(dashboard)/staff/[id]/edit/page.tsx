@@ -262,8 +262,8 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Staff</h1>
-          <p className="text-muted-foreground">Update staff member details</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Edit Staff')}</h1>
+          <p className="text-muted-foreground">{t('Update staff member details')}</p>
         </div>
       </div>
 
@@ -273,7 +273,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
           <Card>
             <CardHeader>
               <CardTitle>{t('ui.basic_information')}</CardTitle>
-              <CardDescription>Name and role details</CardDescription>
+              <CardDescription>{t('Name and role details')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -326,7 +326,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                     type={showPassword ? 'text' : 'password'}
                     value={formData.newPassword}
                     onChange={(e) => handleChange('newPassword', e.target.value)}
-                    placeholder="Enter new password"
+                    placeholder={t('Enter new password')}
                   />
                   <Button
                     type="button"
@@ -342,7 +342,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Account Status</Label>
+                  <Label>{t('Account Status')}</Label>
                   <p className="text-sm text-muted-foreground">
                     {formData.isActive ? 'Active - Can log in' : 'Inactive - Cannot log in'}
                   </p>
@@ -487,7 +487,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyPhone">Emergency Phone</Label>
+                  <Label htmlFor="emergencyPhone">{t('Emergency Phone')}</Label>
                   <Input
                     id="emergencyPhone"
                     value={formData.emergencyPhone}
@@ -571,7 +571,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />{t('ui.work_schedule')}</CardTitle>
-              <CardDescription>Configure weekly work hours</CardDescription>
+              <CardDescription>{t('Configure weekly work hours')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -605,7 +605,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">End</Label>
+                          <Label className="text-xs">{t('End')}</Label>
                           <Input
                             type="time"
                             value={shift.endTime}

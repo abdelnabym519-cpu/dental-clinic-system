@@ -88,20 +88,20 @@ export default function SystemSettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Database className="w-8 h-8" />
-          System Settings
+          {t('System Settings')}
         </h1>
-        <p className="text-muted-foreground">Backup, audit logs, and system management</p>
+        <p className="text-muted-foreground">{t('Backup, audit logs, and system management')}</p>
       </div>
 
       <Tabs defaultValue="backup" className="w-full">
         <TabsList>
           <TabsTrigger value="backup">
             <HardDrive className="w-4 h-4 mr-2" />
-            Backup & Export
+            {t('Backup & Export')}
           </TabsTrigger>
           <TabsTrigger value="audit">
             <FileText className="w-4 h-4 mr-2" />
-            Audit Logs
+            {t('Audit Logs')}
           </TabsTrigger>
         </TabsList>
 
@@ -110,8 +110,8 @@ export default function SystemSettingsPage() {
           {/* Database Statistics */}
           <Card>
             <CardHeader>
-              <CardTitle>Database Statistics</CardTitle>
-              <CardDescription>Current data in the system</CardDescription>
+              <CardTitle>{t('Database Statistics')}</CardTitle>
+              <CardDescription>{t('Current data in the system')}</CardDescription>
             </CardHeader>
             <CardContent>
               {backupStats ? (
@@ -140,7 +140,7 @@ export default function SystemSettingsPage() {
                     <p className="text-3xl font-bold text-indigo-600">
                       {backupStats.inventoryItems}
                     </p>
-                    <p className="text-sm text-muted-foreground">Inventory Items</p>
+                    <p className="text-sm text-muted-foreground">{t('Inventory Items')}</p>
                   </div>
                   <div className="text-center p-4 bg-pink-50 rounded-lg">
                     <p className="text-3xl font-bold text-pink-600">{backupStats.staff}</p>
@@ -152,7 +152,7 @@ export default function SystemSettingsPage() {
                   </div>
                 </div>
               ) : (
-                <p>Loading statistics...</p>
+                <p>{t('Loading statistics...')}</p>
               )}
             </CardContent>
           </Card>
@@ -160,8 +160,8 @@ export default function SystemSettingsPage() {
           {/* Export Options */}
           <Card>
             <CardHeader>
-              <CardTitle>Data Export</CardTitle>
-              <CardDescription>Download data backups in JSON format</CardDescription>
+              <CardTitle>{t('Data Export')}</CardTitle>
+              <CardDescription>{t('Download data backups in JSON format')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -172,7 +172,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Full Database Backup
+                  {t('Full Database Backup')}
                 </Button>
 
                 <Button
@@ -182,7 +182,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Patients Only
+                  {t('Patients Only')}
                 </Button>
 
                 <Button
@@ -192,7 +192,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Appointments Only
+                  {t('Appointments Only')}
                 </Button>
 
                 <Button
@@ -202,7 +202,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Treatments Only
+                  {t('Treatments Only')}
                 </Button>
 
                 <Button
@@ -212,7 +212,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Billing Data
+                  {t('Billing Data')}
                 </Button>
 
                 <Button
@@ -222,7 +222,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Inventory Data
+                  {t('Inventory Data')}
                 </Button>
 
                 <Button
@@ -232,7 +232,7 @@ export default function SystemSettingsPage() {
                   className="justify-start"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Settings Only
+                  {t('Settings Only')}
                 </Button>
               </div>
 
@@ -248,13 +248,13 @@ export default function SystemSettingsPage() {
           {/* Backup Instructions */}
           <Card>
             <CardHeader>
-              <CardTitle>Backup Best Practices</CardTitle>
+              <CardTitle>{t('Backup Best Practices')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
-                  <span>Take full backups daily, preferably at night when system usage is low</span>
+                  <span>{t('Take full backups daily, preferably at night when system usage is low')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
@@ -262,15 +262,15 @@ export default function SystemSettingsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
-                  <span>Test backup restoration periodically to ensure data integrity</span>
+                  <span>{t('Test backup restoration periodically to ensure data integrity')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
-                  <span>Keep backups for at least 90 days for compliance</span>
+                  <span>{t('Keep backups for at least 90 days for compliance')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
-                  <span>Encrypt backup files before storing them externally</span>
+                  <span>{t('Encrypt backup files before storing them externally')}</span>
                 </li>
               </ul>
             </CardContent>
@@ -281,12 +281,12 @@ export default function SystemSettingsPage() {
         <TabsContent value="audit" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>System Audit Logs</CardTitle>
-              <CardDescription>Track all system activities and changes</CardDescription>
+              <CardTitle>{t('System Audit Logs')}</CardTitle>
+              <CardDescription>{t('Track all system activities and changes')}</CardDescription>
             </CardHeader>
             <CardContent>
               {auditLogs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No audit logs available</p>
+                <p className="text-sm text-muted-foreground">{t('No audit logs available')}</p>
               ) : (
                 <div className="space-y-2">
                   {auditLogs.map((log) => (

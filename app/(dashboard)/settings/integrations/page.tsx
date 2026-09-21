@@ -147,8 +147,8 @@ export default function IntegrationsPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Integrations</h1>
-        <p className="text-muted-foreground">Connect external services to enhance your workflow</p>
+        <h1 className="text-3xl font-bold">{t('Integrations')}</h1>
+        <p className="text-muted-foreground">{t('Connect external services to enhance your workflow')}</p>
       </div>
 
       {/* Google Calendar */}
@@ -160,9 +160,9 @@ export default function IntegrationsPage() {
                 <Calendar className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle>Google Calendar</CardTitle>
+                <CardTitle>{t('Google Calendar')}</CardTitle>
                 <CardDescription>
-                  Sync your appointments to Google Calendar automatically
+                  {t('Sync your appointments to Google Calendar automatically')}
                 </CardDescription>
               </div>
             </div>
@@ -181,13 +181,13 @@ export default function IntegrationsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Calendar ID</p>
+                  <p className="text-muted-foreground">{t('Calendar ID')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.calendarId || 'primary'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Connected Since</p>
+                  <p className="text-muted-foreground">{t('Connected Since')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.createdAt
                       ? format(new Date(calendarStatus.integration.createdAt), 'PPP')
@@ -195,7 +195,7 @@ export default function IntegrationsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Last Sync</p>
+                  <p className="text-muted-foreground">{t('Last Sync')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.lastSyncAt
                       ? format(new Date(calendarStatus.integration.lastSyncAt), 'PPp')
@@ -270,14 +270,14 @@ export default function IntegrationsPage() {
               <Calendar className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-muted-foreground">Microsoft Outlook Calendar</CardTitle>
-              <CardDescription>Coming soon</CardDescription>
+              <CardTitle className="text-muted-foreground">{t('Microsoft Outlook Calendar')}</CardTitle>
+              <CardDescription>{t('Coming soon')}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Outlook Calendar integration is planned for a future update.
+            {t('Outlook Calendar integration is planned for a future update.')}
           </p>
         </CardContent>
       </Card>

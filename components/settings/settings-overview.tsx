@@ -125,7 +125,7 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
                   onClick={() => setTheme(opt.value)}
                 >
                   <opt.icon className="h-4 w-4" />
-                  {opt.label}
+                  {t(opt.label)}
                 </Button>
               ))}
             </div>
@@ -146,11 +146,11 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('settings.database')}:</span>
-              <span className="font-medium">MySQL</span>
+              <span className="font-medium">{t('MySQL')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('settings.environment')}:</span>
-              <span className="font-medium">Production</span>
+              <span className="font-medium">{t('Production')}</span>
             </div>
           </CardContent>
         </Card>

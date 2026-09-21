@@ -302,7 +302,7 @@ export default function Dental3DViewer({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const toothDataMap = new Map<number, ToothData>()
-  chartData.forEach((t) => toothDataMap.set(t.toothNumber, t))
+  chartData.forEach((opt) => toothDataMap.set(opt.toothNumber, opt))
 
   const getCondition = useCallback(
     (num: number) => {
@@ -395,8 +395,8 @@ export default function Dental3DViewer({
 
   // Stats
   const conditionCounts: Record<string, number> = {}
-  chartData.forEach((t) => {
-    conditionCounts[t.condition] = (conditionCounts[t.condition] || 0) + 1
+  chartData.forEach((opt) => {
+    conditionCounts[opt.condition] = (conditionCounts[opt.condition] || 0) + 1
   })
   const presentTeeth = 32 - (conditionCounts['MISSING'] || 0) - (conditionCounts['EXTRACTION'] || 0)
 
@@ -405,7 +405,7 @@ export default function Dental3DViewer({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Interactive Dental Viewer</CardTitle>
+            <CardTitle className="text-lg">{t('Interactive Dental Viewer')}</CardTitle>
             <div className="flex items-center gap-2">
               <div className="flex items-center border rounded-lg overflow-hidden">
                 <Button
@@ -414,7 +414,7 @@ export default function Dental3DViewer({
                   onClick={() => setViewAngle('front')}
                   className="rounded-none h-8"
                 >
-                  Full
+                  {t('Full')}
                 </Button>
                 <Button
                   variant={viewAngle === 'upper' ? 'default' : 'ghost'}
@@ -422,7 +422,7 @@ export default function Dental3DViewer({
                   onClick={() => setViewAngle('upper')}
                   className="rounded-none h-8"
                 >
-                  Upper
+                  {t('Upper')}
                 </Button>
                 <Button
                   variant={viewAngle === 'lower' ? 'default' : 'ghost'}
@@ -430,7 +430,7 @@ export default function Dental3DViewer({
                   onClick={() => setViewAngle('lower')}
                   className="rounded-none h-8"
                 >
-                  Lower
+                  {t('Lower')}
                 </Button>
               </div>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={handleZoomIn}>
@@ -616,7 +616,7 @@ export default function Dental3DViewer({
                     <Eye className="h-3.5 w-3.5" />{t('ui.overview')}</p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Present Teeth</span>
+                      <span className="text-muted-foreground">{t('Present Teeth')}</span>
                       <span className="font-medium">{presentTeeth}/32</span>
                     </div>
                     {Object.entries(conditionCounts)
@@ -643,7 +643,7 @@ export default function Dental3DViewer({
               {/* Legend */}
               <Card>
                 <CardContent className="p-3">
-                  <p className="text-xs font-medium mb-2">Legend</p>
+                  <p className="text-xs font-medium mb-2">{t('Legend')}</p>
                   <div className="grid grid-cols-2 gap-1">
                     {Object.entries(CONDITION_LABELS)
                       .slice(0, 10)

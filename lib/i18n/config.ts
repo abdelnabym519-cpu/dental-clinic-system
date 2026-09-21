@@ -12,6 +12,14 @@
 
 export const locales = ['ar-EG', 'en-EG', 'en-US'] as const
 
+/**
+ * Cookie holding the currently selected locale.
+ *
+ * Canonical definition lives here (a dependency-free module) so both the client
+ * provider and server components can read it without importing each other.
+ */
+export const LOCALE_COOKIE = 'dentora-locale'
+
 export type Locale = (typeof locales)[number]
 
 export const defaultLocale: Locale = 'ar-EG'

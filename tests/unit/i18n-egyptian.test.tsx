@@ -120,7 +120,12 @@ describe('LanguageProvider switching + persistence', () => {
       </LanguageProvider>
     )
 
-    fireEvent.click(screen.getByText('English'))
+    // Language names are shown in the language currently selected, so the
+    // English option reads "الإنجليزية" while the UI is Arabic; its `lang`
+    // attribute is the stable handle.
+    const englishOption = document.querySelector('button[lang="en"]')
+    expect(englishOption?.textContent).toBe('الإنجليزية')
+    fireEvent.click(englishOption!)
 
     await waitFor(() => {
       expect(screen.getByTestId('probe-locale').textContent).toBe('en-EG')
@@ -131,8 +136,13 @@ describe('LanguageProvider switching + persistence', () => {
     expect(document.documentElement.lang).toBe('en-EG')
     expect(cookieWrite).toContain(`${LOCALE_COOKIE}=en-EG`)
 
+    // In English mode the same option reads "English".
+    const arabicOption = document.querySelector('button[lang="ar"]')
+    expect(arabicOption?.textContent).toBe('Arabic')
+    expect(document.querySelector('button[lang="en"]')?.textContent).toBe('English')
+
     // …and back to Arabic
-    fireEvent.click(screen.getByText('العربية'))
+    fireEvent.click(arabicOption!)
     await waitFor(() => {
       expect(screen.getByTestId('probe-locale').textContent).toBe('ar-EG')
     })

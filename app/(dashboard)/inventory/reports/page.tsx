@@ -54,7 +54,7 @@ export default function InventoryReportsPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Total Items</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Total Items')}</h3>
             <p className="text-3xl font-bold mt-2">{reportData.summary.totalItems}</p>
             <p className="text-sm text-muted-foreground mt-1">
               {reportData.summary.activeItems} active
@@ -62,33 +62,33 @@ export default function InventoryReportsPage() {
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Out of Stock</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Out of Stock')}</h3>
             <p className="text-3xl font-bold mt-2 text-red-600">
               {reportData.summary.outOfStockItems}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Items need restock</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('Items need restock')}</p>
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Low Stock</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Low Stock')}</h3>
             <p className="text-3xl font-bold mt-2 text-orange-600">
               {reportData.summary.lowStockItems}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Items below minimum</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('Items below minimum')}</p>
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Inventory Value</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Inventory Value')}</h3>
             <p className="text-3xl font-bold mt-2 text-green-600">
               {formatCurrency(reportData.summary.totalInventoryValue || 0)}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Total stock value</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('Total stock value')}</p>
           </div>
         </div>
 
         {/* Category Breakdown */}
         <div className="bg-background p-6 rounded-lg shadow mb-6">
-          <h3 className="text-lg font-bold mb-4">Inventory by Category</h3>
+          <h3 className="text-lg font-bold mb-4">{t('Inventory by Category')}</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
@@ -96,7 +96,7 @@ export default function InventoryReportsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.category')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_count')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Category Value
+                    {t('Category Value')}
                   </th>
                 </tr>
               </thead>
@@ -121,7 +121,7 @@ export default function InventoryReportsPage() {
 
         {/* Type Breakdown */}
         <div className="bg-background p-6 rounded-lg shadow">
-          <h3 className="text-lg font-bold mb-4">Inventory by Type</h3>
+          <h3 className="text-lg font-bold mb-4">{t('Inventory by Type')}</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
@@ -129,7 +129,7 @@ export default function InventoryReportsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.type')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_count')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Type Value
+                    {t('Type Value')}
                   </th>
                 </tr>
               </thead>
@@ -227,7 +227,7 @@ export default function InventoryReportsPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Expired Batches</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Expired Batches')}</h3>
             <p className="text-3xl font-bold mt-2 text-red-600">
               {reportData.summary.expiredBatches || 0}
             </p>
@@ -237,7 +237,7 @@ export default function InventoryReportsPage() {
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Expiring Soon</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Expiring Soon')}</h3>
             <p className="text-3xl font-bold mt-2 text-orange-600">
               {reportData.summary.expiringSoonBatches || 0}
             </p>
@@ -255,15 +255,15 @@ export default function InventoryReportsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Batch Number
+                    {t('Batch Number')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.expiry_date')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Days to Expiry
+                    {t('Days to Expiry')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.quantity')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Value at Risk
+                    {t('Value at Risk')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.status')}</th>
                 </tr>
@@ -322,19 +322,19 @@ export default function InventoryReportsPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Total Stock Value</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Total Stock Value')}</h3>
             <p className="text-3xl font-bold mt-2 text-green-600">
               {formatCurrency(reportData.totals.totalValue || 0)}
             </p>
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Items in Stock</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Items in Stock')}</h3>
             <p className="text-3xl font-bold mt-2">{reportData.totals.itemsInStock || 0}</p>
           </div>
 
           <div className="bg-background p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-muted-foreground">Average Item Value</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">{t('Average Item Value')}</h3>
             <p className="text-3xl font-bold mt-2">
               {formatCurrency(reportData.totals.averageItemValue || 0)}
             </p>
@@ -353,7 +353,7 @@ export default function InventoryReportsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.stock')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.unit_price')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Stock Value
+                    {t('Stock Value')}
                   </th>
                 </tr>
               </thead>
@@ -391,7 +391,7 @@ export default function InventoryReportsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Inventory Reports</h1>
+        <h1 className="text-3xl font-bold">{t('Inventory Reports')}</h1>
         <Link
           href="/inventory"
           className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
@@ -401,7 +401,7 @@ export default function InventoryReportsPage() {
       {/* Report Tabs */}
       <div className="bg-background rounded-lg shadow mb-6">
         <div className="border-b border-border">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex space-x-8 px-6" aria-label={t('Tabs')}>
             {[
               { id: 'summary', label: 'Summary' },
               { id: 'low_stock', label: 'Low Stock' },
@@ -417,7 +417,7 @@ export default function InventoryReportsPage() {
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 }`}
               >
-                {tab.label}
+                {t(tab.label)}
               </button>
             ))}
           </nav>
@@ -426,7 +426,7 @@ export default function InventoryReportsPage() {
         {/* Report Parameters */}
         {activeReport === 'expiring' && (
           <div className="p-6 bg-muted/50">
-            <label className="block text-sm font-medium text-foreground mb-2">Days Ahead</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t('Days Ahead')}</label>
             <select
               value={reportParams.days}
               onChange={(e) => setReportParams({ ...reportParams, days: parseInt(e.target.value) })}

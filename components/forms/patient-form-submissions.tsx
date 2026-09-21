@@ -136,13 +136,13 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Form Submissions</CardTitle>
+          <CardTitle>{t('Form Submissions')}</CardTitle>
         </CardHeader>
         <CardContent>
           {submissions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-              <p>No form submissions for this patient</p>
+              <p>{t('No form submissions for this patient')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -170,7 +170,7 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
                     </div>
                     <Badge variant={sc.variant} className="flex items-center gap-1">
                       {sc.icon}
-                      {sc.label}
+                      {t(sc.label)}
                     </Badge>
                   </div>
                 )
@@ -201,17 +201,17 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
 
           {/* Review Section */}
           <div className="space-y-4">
-            <h4 className="font-semibold">Review</h4>
+            <h4 className="font-semibold">{t('Review')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t('ui.status')}</Label>
                 <Select value={reviewStatus} onValueChange={setReviewStatus}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Set status..." />
+                    <SelectValue placeholder={t('Set status...')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="SUBMITTED">{t('ui.pending')}</SelectItem>
-                    <SelectItem value="REVIEWED">Reviewed</SelectItem>
+                    <SelectItem value="REVIEWED">{t('Reviewed')}</SelectItem>
                     <SelectItem value="APPROVED">{t('ui.approved')}</SelectItem>
                     <SelectItem value="REJECTED">{t('ui.rejected')}</SelectItem>
                   </SelectContent>
@@ -219,11 +219,11 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Review Notes</Label>
+              <Label>{t('Review Notes')}</Label>
               <Textarea
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
-                placeholder="Optional notes..."
+                placeholder={t('Optional notes...')}
                 rows={2}
               />
             </div>

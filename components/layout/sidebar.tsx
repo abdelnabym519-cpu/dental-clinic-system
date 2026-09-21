@@ -94,7 +94,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
               onClick={toggleSidebar}
             >
               <PanelLeftClose className="h-4 w-4" />
-              <span className="sr-only">Collapse sidebar</span>
+              <span className="sr-only">{t('Collapse sidebar')}</span>
             </Button>
           )}
         </div>
@@ -106,10 +106,10 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10" onClick={toggleSidebar}>
                   <PanelLeft className="h-5 w-5" />
-                  <span className="sr-only">Expand sidebar</span>
+                  <span className="sr-only">{t('Expand sidebar')}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Expand sidebar</TooltipContent>
+              <TooltipContent side="right">{t('Expand sidebar')}</TooltipContent>
             </Tooltip>
           </div>
         )}

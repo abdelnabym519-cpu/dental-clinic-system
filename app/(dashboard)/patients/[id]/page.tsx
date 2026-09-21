@@ -467,8 +467,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="flex flex-col items-center justify-center h-[400px] gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">Patient not found</p>
-        <Button onClick={() => router.push('/patients')}>Back to Patients</Button>
+        <p className="text-muted-foreground">{t('Patient not found')}</p>
+        <Button onClick={() => router.push('/patients')}>{t('Back to Patients')}</Button>
       </div>
     )
   }
@@ -523,7 +523,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-2">
             <History className="h-4 w-4" />
-            <span className="hidden sm:inline">Timeline</span>
+            <span className="hidden sm:inline">{t('Timeline')}</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2">
             <FolderOpen className="h-4 w-4" />
@@ -546,7 +546,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           </TabsTrigger>
           <TabsTrigger value="forms" className="gap-2">
             <FileCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">Forms</span>
+            <span className="hidden sm:inline">{t('Forms')}</span>
           </TabsTrigger>
           <TabsTrigger value="insurance" className="gap-2">
             <Shield className="h-4 w-4" />
@@ -647,7 +647,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No emergency contact on file</p>
+                  <p className="text-muted-foreground">{t('No emergency contact on file')}</p>
                 )}
               </CardContent>
             </Card>
@@ -657,7 +657,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="h-4 w-4" />
-                  Medical History
+                  {t('Medical History')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -679,7 +679,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     {patient.medicalHistory.chronicConditions &&
                       patient.medicalHistory.chronicConditions.length > 0 && (
                         <div>
-                          <p className="text-sm text-muted-foreground">Chronic Conditions</p>
+                          <p className="text-sm text-muted-foreground">{t('Chronic Conditions')}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {patient.medicalHistory.chronicConditions.map((condition, i) => (
                               <Badge key={i} variant="secondary">
@@ -692,7 +692,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     {patient.medicalHistory.currentMedications &&
                       patient.medicalHistory.currentMedications.length > 0 && (
                         <div>
-                          <p className="text-sm text-muted-foreground">Current Medications</p>
+                          <p className="text-sm text-muted-foreground">{t('Current Medications')}</p>
                           <p className="text-sm">
                             {patient.medicalHistory.currentMedications.join(', ')}
                           </p>
@@ -700,7 +700,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       )}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No medical history recorded</p>
+                  <p className="text-muted-foreground">{t('No medical history recorded')}</p>
                 )}
               </CardContent>
             </Card>
@@ -717,9 +717,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Patient Timeline</CardTitle>
+                <CardTitle>{t('Patient Timeline')}</CardTitle>
                 <CardDescription>
-                  Complete history of appointments, treatments, payments, and documents
+                  {t('Complete history of appointments, treatments, payments, and documents')}
                 </CardDescription>
               </div>
               <Select value={timelineFilter} onValueChange={setTimelineFilter}>
@@ -727,7 +727,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <SelectValue placeholder={t('ui.filter_by_type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Events</SelectItem>
+                  <SelectItem value="all">{t('All Events')}</SelectItem>
                   <SelectItem value="appointment">{t('ui.appointments')}</SelectItem>
                   <SelectItem value="treatment">{t('ui.treatments')}</SelectItem>
                   <SelectItem value="payment">{t('ui.payments')}</SelectItem>
@@ -753,7 +753,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               ) : timelineEvents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[200px]">
                   <History className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No events found</p>
+                  <p className="text-muted-foreground">{t('No events found')}</p>
                 </div>
               ) : (
                 <div className="relative">
@@ -813,10 +813,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           <div className="flex-1 pb-6">
                             <div className="flex items-start justify-between">
                               <div>
-                                <p className="font-medium">{event.title}</p>
+                                <p className="font-medium">{t(event.title)}</p>
                                 {event.description && (
                                   <p className="text-sm text-muted-foreground">
-                                    {event.description}
+                                    {t(event.description)}
                                   </p>
                                 )}
                               </div>
@@ -883,7 +883,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               <div>
                 <CardTitle>{t('ui.documents')}</CardTitle>
                 <CardDescription>
-                  X-rays, photos, consent forms, and other patient documents
+                  {t('X-rays, photos, consent forms, and other patient documents')}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -901,7 +901,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 )}
                 {compareMode && compareSelection.length === 2 && (
                   <Button size="sm" onClick={() => setCompareOpen(true)}>
-                    Compare Selected
+                    {t('Compare Selected')}
                   </Button>
                 )}
                 <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -912,7 +912,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>{t('ui.upload_document')}</DialogTitle>
-                      <DialogDescription>Upload a new document for this patient</DialogDescription>
+                      <DialogDescription>{t('Upload a new document for this patient')}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -928,7 +928,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="type">Document Type</Label>
+                        <Label htmlFor="type">{t('Document Type')}</Label>
                         <Select value={uploadType} onValueChange={setUploadType}>
                           <SelectTrigger>
                             <SelectValue placeholder={t('ui.select_type')} />
@@ -936,7 +936,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           <SelectContent>
                             {DOCUMENT_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
-                                {type.label}
+                                {t(type.label)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -946,7 +946,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <Label htmlFor="description">Description (optional)</Label>
                         <Textarea
                           id="description"
-                          placeholder="Enter a description..."
+                          placeholder={t('Enter a description...')}
                           value={uploadDescription}
                           onChange={(e) => setUploadDescription(e.target.value)}
                         />
@@ -967,9 +967,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               {patient.documents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[200px] text-center">
                   <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No documents uploaded yet</p>
+                  <p className="text-muted-foreground">{t('No documents uploaded yet')}</p>
                   <p className="text-sm text-muted-foreground">
-                    Upload X-rays, photos, or other documents
+                    {t('Upload X-rays, photos, or other documents')}
                   </p>
                 </div>
               ) : (
@@ -977,9 +977,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <TableHeader>
                     <TableRow>
                       {compareMode && <TableHead className="w-10" />}
-                      <TableHead>Document</TableHead>
+                      <TableHead>{t('Document')}</TableHead>
                       <TableHead>{t('ui.type')}</TableHead>
-                      <TableHead>Size</TableHead>
+                      <TableHead>{t('Size')}</TableHead>
                       <TableHead>{t('ui.date')}</TableHead>
                       <TableHead className="text-right">{t('ui.actions')}</TableHead>
                     </TableRow>
@@ -1028,7 +1028,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               <div>
                                 <p className="font-medium">{doc.originalName}</p>
                                 {doc.description && (
-                                  <p className="text-sm text-muted-foreground">{doc.description}</p>
+                                  <p className="text-sm text-muted-foreground">{t(doc.description)}</p>
                                 )}
                                 {doc.annotations &&
                                   (doc.annotations as Annotation[]).length > 0 && (
@@ -1077,7 +1077,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                 )}
                                 <DropdownMenuItem onClick={() => handleDownloadDocument(doc)}>
                                   <Download className="h-4 w-4 mr-2" />
-                                  Download
+                                  {t('Download')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -1245,13 +1245,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardHeader>
               <CardTitle>{t('ui.treatment_history')}</CardTitle>
-              <CardDescription>Past procedures and treatments</CardDescription>
+              <CardDescription>{t('Past procedures and treatments')}</CardDescription>
             </CardHeader>
             <CardContent>
               {patient.treatments.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[200px]">
                   <Stethoscope className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No treatments recorded</p>
+                  <p className="text-muted-foreground">{t('No treatments recorded')}</p>
                 </div>
               ) : (
                 <Table>
@@ -1303,8 +1303,8 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <TabsContent value="billing" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Billing History</CardTitle>
-              <CardDescription>Invoices and payment records</CardDescription>
+              <CardTitle>{t('Billing History')}</CardTitle>
+              <CardDescription>{t('Invoices and payment records')}</CardDescription>
             </CardHeader>
             <CardContent>
               {patient.invoices.length === 0 ? (

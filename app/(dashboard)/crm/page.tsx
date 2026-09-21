@@ -73,7 +73,7 @@ export default function CRMDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Memberships</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Active Memberships')}</CardTitle>
             <Crown className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
@@ -87,7 +87,7 @@ export default function CRMDashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Referral Conversion</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Referral Conversion')}</CardTitle>
             <Share2 className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -107,13 +107,13 @@ export default function CRMDashboardPage() {
             <div className="text-2xl font-bold">
               {(data?.loyalty.pointsInCirculation || 0).toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Points in circulation</p>
+            <p className="text-xs text-muted-foreground">{t('Points in circulation')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Patient Retention</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('Patient Retention')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -131,7 +131,7 @@ export default function CRMDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Crown className="h-5 w-5 text-amber-500" />
-              Memberships
+              {t('Memberships')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -151,7 +151,7 @@ export default function CRMDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-purple-500" />
-              Loyalty Program
+              {t('Loyalty Program')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -191,7 +191,7 @@ export default function CRMDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-700">
               <AlertTriangle className="h-5 w-5" />
-              At-Risk Patients
+              {t('At-Risk Patients')}
             </CardTitle>
           </CardHeader>
           <CardContent>

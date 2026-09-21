@@ -241,7 +241,7 @@ export default function NewTreatmentPlanPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_treatment_plan')}</h1>
           <p className="text-muted-foreground">
-            Create a comprehensive treatment plan for a patient
+            {t('Create a comprehensive treatment plan for a patient')}
           </p>
         </div>
       </div>
@@ -283,7 +283,7 @@ export default function NewTreatmentPlanPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search patients..."
+                    placeholder={t('Search patients...')}
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-9"
@@ -319,7 +319,7 @@ export default function NewTreatmentPlanPage() {
         {/* Plan Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Plan Details</CardTitle>
+            <CardTitle>{t('Plan Details')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -338,14 +338,14 @@ export default function NewTreatmentPlanPage() {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Additional notes about the treatment plan..."
+                placeholder={t('Additional notes about the treatment plan...')}
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Expected Start Date</Label>
+                <Label htmlFor="startDate">{t('Expected Start Date')}</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -354,7 +354,7 @@ export default function NewTreatmentPlanPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expectedEndDate">Expected End Date</Label>
+                <Label htmlFor="expectedEndDate">{t('Expected End Date')}</Label>
                 <Input
                   id="expectedEndDate"
                   type="date"
@@ -371,7 +371,7 @@ export default function NewTreatmentPlanPage() {
           <CardHeader>
             <CardTitle>{t('ui.procedures')}</CardTitle>
             <CardDescription>
-              Add procedures to the treatment plan in order of priority
+              {t('Add procedures to the treatment plan in order of priority')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -429,7 +429,7 @@ export default function NewTreatmentPlanPage() {
                   <Input
                     value={itemNotes}
                     onChange={(e) => setItemNotes(e.target.value)}
-                    placeholder="Procedure notes..."
+                    placeholder={t('Procedure notes...')}
                   />
                 </div>
               </div>

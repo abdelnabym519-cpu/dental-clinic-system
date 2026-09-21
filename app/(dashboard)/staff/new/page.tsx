@@ -145,8 +145,8 @@ export default function NewStaffPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add New Staff</h1>
-          <p className="text-muted-foreground">Create a new staff member account</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('Add New Staff')}</h1>
+          <p className="text-muted-foreground">{t('Create a new staff member account')}</p>
         </div>
       </div>
 
@@ -155,8 +155,8 @@ export default function NewStaffPage() {
           {/* Account Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>Login credentials and role assignment</CardDescription>
+              <CardTitle>{t('Account Information')}</CardTitle>
+              <CardDescription>{t('Login credentials and role assignment')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -202,7 +202,7 @@ export default function NewStaffPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => handleChange('password', e.target.value)}
-                    placeholder="Enter password"
+                    placeholder={t('Enter password')}
                     required
                   />
                   <Button
@@ -300,7 +300,7 @@ export default function NewStaffPage() {
                   <datalist id="egypt-governorates">
                     {EGYPT_GOVERNORATES.map((g) => (
                       <option key={g.value} value={g.value}>
-                        {g.label}
+                        {t(g.label)}
                       </option>
                     ))}
                   </datalist>
@@ -371,7 +371,7 @@ export default function NewStaffPage() {
                     id="panNumber"
                     value={formData.panNumber}
                     onChange={(e) => handleChange('panNumber', e.target.value)}
-                    placeholder="CR number"
+                    placeholder={t('CR number')}
                   />
                 </div>
               </div>
@@ -392,7 +392,7 @@ export default function NewStaffPage() {
                     id="qualification"
                     value={formData.qualification}
                     onChange={(e) => handleChange('qualification', e.target.value)}
-                    placeholder="BDS, MDS"
+                    placeholder={t('BDS, MDS')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -401,7 +401,7 @@ export default function NewStaffPage() {
                     id="specialization"
                     value={formData.specialization}
                     onChange={(e) => handleChange('specialization', e.target.value)}
-                    placeholder="Orthodontics, Endodontics"
+                    placeholder={t('Orthodontics, Endodontics')}
                   />
                 </div>
               </div>
@@ -413,7 +413,7 @@ export default function NewStaffPage() {
                     id="licenseNumber"
                     value={formData.licenseNumber}
                     onChange={(e) => handleChange('licenseNumber', e.target.value)}
-                    placeholder="TN/12345"
+                    placeholder={t('TN/12345')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -433,7 +433,7 @@ export default function NewStaffPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('ui.financial_details')}</CardTitle>
-              <CardDescription>Salary and bank account information</CardDescription>
+              <CardDescription>{t('Salary and bank account information')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -463,7 +463,7 @@ export default function NewStaffPage() {
                     id="bankIfsc"
                     value={formData.bankIfsc}
                     onChange={(e) => handleChange('bankIfsc', e.target.value)}
-                    placeholder="NBEGEGCX"
+                    placeholder={t('NBEGEGCX')}
                   />
                 </div>
               </div>
@@ -474,7 +474,7 @@ export default function NewStaffPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('ui.emergency_contact')}</CardTitle>
-              <CardDescription>Contact person in case of emergency</CardDescription>
+              <CardDescription>{t('Contact person in case of emergency')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -483,7 +483,7 @@ export default function NewStaffPage() {
                   id="emergencyContact"
                   value={formData.emergencyContact}
                   onChange={(e) => handleChange('emergencyContact', e.target.value)}
-                  placeholder="Full name"
+                  placeholder={t('Full name')}
                 />
               </div>
               <div className="space-y-2">

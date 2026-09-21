@@ -174,7 +174,7 @@ export default function SterilizationLogsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t('ui.sterilization_logs')}</h2>
-          <p className="text-muted-foreground">Record and view sterilization cycle history</p>
+          <p className="text-muted-foreground">{t('Record and view sterilization cycle history')}</p>
         </div>
         <Button onClick={() => setShowDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />{t('ui.record_cycle')}</Button>
@@ -200,7 +200,7 @@ export default function SterilizationLogsPage() {
             <SelectValue placeholder={t('ui.result')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Results</SelectItem>
+            <SelectItem value="all">{t('All Results')}</SelectItem>
             {RESULTS.map((r) => (
               <SelectItem key={r} value={r}>
                 {r}
@@ -218,9 +218,9 @@ export default function SterilizationLogsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No sterilization logs</h3>
+            <h3 className="text-lg font-semibold">{t('No sterilization logs')}</h3>
             <p className="text-muted-foreground text-sm mt-1 mb-4">
-              Record your first sterilization cycle
+              {t('Record your first sterilization cycle')}
             </p>
             <Button onClick={() => setShowDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />{t('ui.record_cycle')}</Button>
@@ -235,11 +235,11 @@ export default function SterilizationLogsPage() {
                   <TableHead>{t('ui.instrument')}</TableHead>
                   <TableHead>Cycle #</TableHead>
                   <TableHead>{t('ui.method')}</TableHead>
-                  <TableHead>Temp/Pressure</TableHead>
+                  <TableHead>{t('Temp/Pressure')}</TableHead>
                   <TableHead>{t('ui.duration')}</TableHead>
-                  <TableHead>Indicators</TableHead>
+                  <TableHead>{t('Indicators')}</TableHead>
                   <TableHead>{t('ui.result')}</TableHead>
-                  <TableHead>Started</TableHead>
+                  <TableHead>{t('Started')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,22 +260,22 @@ export default function SterilizationLogsPage() {
                       {log.pressure ? ` / ${log.pressure} bar` : ''}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {log.duration ? `${log.duration} min` : '—'}
+                      {log.duration ? `${log.duration} ${t('min')}` : '—'}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         {log.biologicalIndicator && (
                           <Badge variant="outline" className="text-xs">
-                            Bio
+                            {t('Bio')}
                           </Badge>
                         )}
                         {log.chemicalIndicator && (
                           <Badge variant="outline" className="text-xs">
-                            Chem
+                            {t('Chem')}
                           </Badge>
                         )}
                         {!log.biologicalIndicator && !log.chemicalIndicator && (
-                          <span className="text-xs text-muted-foreground">None</span>
+                          <span className="text-xs text-muted-foreground">{t('None')}</span>
                         )}
                       </div>
                     </TableCell>
@@ -295,8 +295,8 @@ export default function SterilizationLogsPage() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>Record Sterilization Cycle</DialogTitle>
-            <DialogDescription>Log a new sterilization process</DialogDescription>
+            <DialogTitle>{t('Record Sterilization Cycle')}</DialogTitle>
+            <DialogDescription>{t('Log a new sterilization process')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="space-y-2">
@@ -306,7 +306,7 @@ export default function SterilizationLogsPage() {
                 onValueChange={(v) => setForm({ ...form, instrumentId: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select instrument..." />
+                  <SelectValue placeholder={t('Select instrument...')} />
                 </SelectTrigger>
                 <SelectContent>
                   {instruments
@@ -336,7 +336,7 @@ export default function SterilizationLogsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Machine ID</Label>
+                <Label>{t('Machine ID')}</Label>
                 <Input
                   value={form.machineId}
                   onChange={(e) => setForm({ ...form, machineId: e.target.value })}
@@ -384,7 +384,7 @@ export default function SterilizationLogsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Completed At</Label>
+                <Label>{t('Completed At')}</Label>
                 <Input
                   type="datetime-local"
                   value={form.completedAt}
@@ -413,14 +413,14 @@ export default function SterilizationLogsPage() {
                   checked={form.biologicalIndicator}
                   onCheckedChange={(v) => setForm({ ...form, biologicalIndicator: v })}
                 />
-                <Label>Biological Indicator</Label>
+                <Label>{t('Biological Indicator')}</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={form.chemicalIndicator}
                   onCheckedChange={(v) => setForm({ ...form, chemicalIndicator: v })}
                 />
-                <Label>Chemical Indicator</Label>
+                <Label>{t('Chemical Indicator')}</Label>
               </div>
             </div>
             <div className="space-y-2">

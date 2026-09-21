@@ -796,10 +796,10 @@ function PriorityBadge({ priority }: { priority: string }) {
       variant="secondary"
     >
       {priority === 'essential'
-        ? 'Essential'
+        ? t('Essential')
         : priority === 'recommended'
-          ? 'Recommended'
-          : 'Optional'}
+          ? t('Recommended')
+          : t('Optional')}
     </Badge>
   )
 }
@@ -818,8 +818,8 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm">{guide.title}</p>
-          <p className="text-xs text-muted-foreground truncate">{guide.description}</p>
+          <p className="font-medium text-sm">{t(guide.title)}</p>
+          <p className="text-xs text-muted-foreground truncate">{t(guide.description)}</p>
         </div>
         {open ? (
           <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
@@ -870,7 +870,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
               {guide.link && (
                 <Link href={guide.link.href}>
                   <Button size="sm" variant="default">
-                    {guide.link.label}
+                    {t(guide.link.label)}
                     <ArrowLeft className="w-3 h-3 ml-1 rotate-180" />
                   </Button>
                 </Link>
@@ -878,7 +878,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
               {guide.externalLinks?.map((extLink, i) => (
                 <a key={i} href={extLink.url} target="_blank" rel="noopener noreferrer">
                   <Button size="sm" variant="outline">
-                    {extLink.label}
+                    {t(extLink.label)}
                     <ExternalLink className="w-3 h-3 ml-1" />
                   </Button>
                 </a>
@@ -930,7 +930,7 @@ export default function SetupGuidePage() {
         </div>
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
           <BookOpen className="w-7 h-7" />
-          Setup Guide
+          {t('Setup Guide')}
         </h1>
         <p className="text-muted-foreground mt-1">
           Step-by-step instructions to set up your clinic. Follow the essential steps first, then
@@ -951,7 +951,7 @@ export default function SetupGuidePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{essentialCount}</p>
-                <p className="text-xs text-muted-foreground">Essential Steps</p>
+                <p className="text-xs text-muted-foreground">{t('Essential Steps')}</p>
               </div>
             </div>
           </CardContent>
@@ -967,7 +967,7 @@ export default function SetupGuidePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{recommendedCount}</p>
-                <p className="text-xs text-muted-foreground">Recommended</p>
+                <p className="text-xs text-muted-foreground">{t('Recommended')}</p>
               </div>
             </div>
           </CardContent>
@@ -993,14 +993,14 @@ export default function SetupGuidePage() {
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={expandAll}>
-          Expand All
+          {t('Expand All')}
         </Button>
         <Button variant="outline" size="sm" onClick={collapseAll}>
-          Collapse All
+          {t('Collapse All')}
         </Button>
         {filter !== 'all' && (
           <Button variant="ghost" size="sm" onClick={() => setFilter('all')}>
-            Clear Filter
+            {t('Clear Filter')}
           </Button>
         )}
       </div>
@@ -1023,13 +1023,13 @@ export default function SetupGuidePage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                        <CardTitle className="text-base">{section.title}</CardTitle>
+                        <CardTitle className="text-base">{t(section.title)}</CardTitle>
                         <PriorityBadge priority={section.priority} />
                         <span className="text-xs text-muted-foreground">
                           ~{section.estimatedTime}
                         </span>
                       </div>
-                      <CardDescription className="text-sm">{section.description}</CardDescription>
+                      <CardDescription className="text-sm">{t(section.description)}</CardDescription>
                     </div>
                     <div className="shrink-0 mt-1">
                       {isExpanded ? (
@@ -1060,7 +1060,7 @@ export default function SetupGuidePage() {
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-6">
           <div className="text-center">
-            <h3 className="font-semibold mb-1">Need More Help?</h3>
+            <h3 className="font-semibold mb-1">{t('Need More Help?')}</h3>
             <p className="text-sm text-muted-foreground mb-3">
               If you&apos;re stuck on any step, feel free to use the AI Chat Assistant (bottom-right
               corner) for instant help, or contact our support team.
@@ -1069,7 +1069,7 @@ export default function SetupGuidePage() {
               <Link href="/chat">
                 <Button variant="default" size="sm">
                   <MessageSquare className="w-4 h-4 mr-1" />
-                  Ask AI Assistant
+                  {t('Ask AI Assistant')}
                 </Button>
               </Link>
             </div>

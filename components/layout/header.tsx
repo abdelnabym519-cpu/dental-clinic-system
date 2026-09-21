@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import dynamic from 'next/dynamic'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const { t } = useLanguage()
   const { setMobileOpen } = useSidebar()
 
   return (
@@ -36,7 +38,7 @@ export function Header({ user }: HeaderProps) {
       {/* Mobile menu button */}
       <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
         <Menu className="h-5 w-5" />
-        <span className="sr-only">Toggle menu</span>
+        <span className="sr-only">{t('Toggle menu')}</span>
       </Button>
 
       {/* Global Search */}

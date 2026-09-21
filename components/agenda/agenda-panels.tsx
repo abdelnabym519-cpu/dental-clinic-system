@@ -90,9 +90,9 @@ export function AgendaOperationsPanel({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Clinic operations</CardTitle>
+        <CardTitle className="text-base">{t('Clinic operations')}</CardTitle>
         <CardDescription>
-          Today&apos;s queue, the waiting list and this month&apos;s scheduling analytics
+          {t("Today's queue, the waiting list and this month's scheduling analytics")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -217,7 +217,7 @@ function TodayQueue({
         </div>
       ) : items.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
-          No active appointments for today. Booked patients appear here in arrival order.
+          {t('No active appointments for today. Booked patients appear here in arrival order.')}
         </p>
       ) : (
         <ul className="divide-y rounded-md border">
@@ -346,7 +346,7 @@ function WaitingListPanel({
         </div>
       ) : entries.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
-          The waiting list is empty. Patients requesting the next available slot appear here.
+          {t('The waiting list is empty. Patients requesting the next available slot appear here.')}
         </p>
       ) : (
         <ul className="divide-y rounded-md border">
@@ -457,8 +457,8 @@ function AnalyticsSummary() {
     <div data-testid="analytics-summary">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-md border p-3">
-            <p className="text-xs text-muted-foreground">{s.label}</p>
+          <div key={t(s.label)} className="rounded-md border p-3">
+            <p className="text-xs text-muted-foreground">{t(s.label)}</p>
             <p className="text-xl font-semibold">{s.value}</p>
             {s.hint && <p className="text-[10px] text-muted-foreground">{s.hint}</p>}
           </div>

@@ -107,7 +107,7 @@ export function TreatmentAssist({
       {/* header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 border-b">
         <span>🤖</span>
-        <span className="text-xs font-semibold">AI Treatment Assistant</span>
+        <span className="text-xs font-semibold">{t('AI Treatment Assistant')}</span>
       </div>
 
       {/* tab bar */}
@@ -124,7 +124,7 @@ export function TreatmentAssist({
             )}
           >
             <span>{tab.icon}</span>
-            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="hidden sm:inline">{t(tab.label)}</span>
           </button>
         ))}
       </div>
@@ -215,7 +215,7 @@ function DrugCheck({
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Enter a medication to check against the patient&apos;s history.
+        {t("Enter a medication to check against the patient's history.")}
       </p>
       <div className="flex gap-2">
         <input
@@ -233,7 +233,7 @@ function DrugCheck({
           disabled={loading || !drugInput.trim()}
           className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium disabled:opacity-40"
         >
-          Check
+          {t('Check')}
         </button>
       </div>
 
@@ -264,7 +264,7 @@ function DrugCheck({
               )}
             >
               <p className="font-semibold">{interaction.drugs}</p>
-              <p className="opacity-80">{interaction.description}</p>
+              <p className="opacity-80">{t(interaction.description)}</p>
             </div>
           ))}
 
@@ -306,7 +306,7 @@ function CostEstimate({
     <div className="space-y-3">
       {!result.lineItems && !loading && (
         <button onClick={onRetry} className="text-xs text-primary hover:underline">
-          Generate cost estimate
+          {t('Generate cost estimate')}
         </button>
       )}
       {loading && <Spinner />}
@@ -317,7 +317,7 @@ function CostEstimate({
           {(result.lineItems as any[]).map((item, i) => (
             <div key={i} className="flex justify-between text-xs border-b pb-1">
               <span>
-                {item.description}
+                {t(item.description)}
                 {item.quantity > 1 && (
                   <span className="text-muted-foreground ml-1">×{item.quantity}</span>
                 )}
@@ -405,8 +405,9 @@ function ConsentForm({
           onChange={(e) => setLanguage(e.target.value)}
           className="text-xs border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
         >
-          <option value="English">English</option>
-          <option value="Arabic">العربية</option>
+          {/* Values stay ASCII: the API expects the prompt language. */}
+          <option value="English">{t('language.english')}</option>
+          <option value="Arabic">{t('language.arabic')}</option>
         </select>
         <button
           onClick={onGenerate}
@@ -423,7 +424,7 @@ function ConsentForm({
       {!loading && !result.error && result.title && (
         <>
           <div className="rounded border bg-muted/30 p-3 max-h-48 overflow-auto text-xs space-y-2">
-            <p className="font-bold text-center text-sm">{result.title}</p>
+            <p className="font-bold text-center text-sm">{t(result.title)}</p>
             <p>
               <strong>Patient:</strong> {String(result.patientName)}
             </p>
@@ -492,7 +493,7 @@ function ClinicalNotes({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          Expand brief notes into structured clinical documentation.
+          {t('Expand brief notes into structured clinical documentation.')}
         </p>
         <button
           onClick={onExpand}
@@ -516,7 +517,7 @@ function ClinicalNotes({
           )}
           {result.findings && (
             <div>
-              <p className="font-semibold text-muted-foreground">Findings</p>
+              <p className="font-semibold text-muted-foreground">{t('Findings')}</p>
               <p className="bg-muted rounded p-2">{String(result.findings)}</p>
             </div>
           )}
@@ -528,7 +529,7 @@ function ClinicalNotes({
           )}
           {result.recommendations && (
             <div>
-              <p className="font-semibold text-muted-foreground">Recommendations</p>
+              <p className="font-semibold text-muted-foreground">{t('Recommendations')}</p>
               <p className="bg-muted rounded p-2">{String(result.recommendations)}</p>
             </div>
           )}

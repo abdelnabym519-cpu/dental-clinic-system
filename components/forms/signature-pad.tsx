@@ -213,7 +213,7 @@ export function SignaturePad({
           disabled={history.length === 0}
         >
           <Undo2 className="h-4 w-4 mr-1" />
-          Undo
+          {t('Undo')}
         </Button>
         <Button
           type="button"

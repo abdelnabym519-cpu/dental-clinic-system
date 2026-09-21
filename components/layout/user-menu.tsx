@@ -81,7 +81,7 @@ export function UserMenu({ user }: UserMenuProps) {
           onClick={() => signOut({ callbackUrl: '/login' })}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <span>{t('Log out')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

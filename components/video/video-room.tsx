@@ -134,7 +134,7 @@ export default function VideoRoom({
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center space-y-2">
           <Phone className="h-12 w-12 text-muted-foreground mx-auto" />
-          <h2 className="text-xl font-semibold">Call Ended</h2>
+          <h2 className="text-xl font-semibold">{t('Call Ended')}</h2>
           <p className="text-muted-foreground">Duration: {formatDuration(elapsed)}</p>
         </div>
         {isDoctor && (
@@ -143,11 +143,11 @@ export default function VideoRoom({
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add consultation notes..."
+              placeholder={t('Add consultation notes...')}
               rows={6}
             />
             <Button onClick={() => onEnd?.(notes)} className="w-full">
-              Save Notes & Close
+              {t('Save Notes & Close')}
             </Button>
           </div>
         )}
@@ -163,7 +163,7 @@ export default function VideoRoom({
         <div className="flex items-center justify-between px-4 py-2 bg-gray-900 text-white rounded-t-lg">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="bg-red-600 text-white border-red-600 animate-pulse">
-              LIVE
+              {t('LIVE')}
             </Badge>
             <div className="flex items-center gap-1 text-sm">
               <Clock className="h-3 w-3" />
@@ -213,7 +213,7 @@ export default function VideoRoom({
             className="rounded-full px-6"
           >
             <Phone className="h-5 w-5 mr-2 rotate-[135deg]" />
-            End Call
+            {t('End Call')}
           </Button>
         </div>
       </div>
@@ -227,7 +227,7 @@ export default function VideoRoom({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Patient Info
+                  {t('Patient Info')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
@@ -298,7 +298,7 @@ export default function VideoRoom({
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Type notes during the consultation..."
+                placeholder={t('Type notes during the consultation...')}
                 rows={8}
                 className="text-sm"
               />

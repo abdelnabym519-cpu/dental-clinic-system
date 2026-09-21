@@ -167,8 +167,8 @@ export default function NewPreAuthPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">New Pre-Authorization</h1>
-          <p className="text-muted-foreground">Request insurance pre-approval for treatment</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('New Pre-Authorization')}</h1>
+          <p className="text-muted-foreground">{t('Request insurance pre-approval for treatment')}</p>
         </div>
       </div>
 
@@ -237,13 +237,13 @@ export default function NewPreAuthPage() {
           <CardContent>
             {policies.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No active insurance policies found for this patient.
+                {t('No active insurance policies found for this patient.')}
               </p>
             ) : (
               <div className="space-y-3">
                 <Select value={selectedPolicyId} onValueChange={setSelectedPolicyId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select policy" />
+                    <SelectValue placeholder={t('Select policy')} />
                   </SelectTrigger>
                   <SelectContent>
                     {policies.map((p) => (
@@ -356,7 +356,7 @@ export default function NewPreAuthPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
-              placeholder="Any additional notes for the pre-authorization request..."
+              placeholder={t('Any additional notes for the pre-authorization request...')}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}

@@ -97,16 +97,16 @@ export default function SignupPage() {
             <Building2 className="h-6 w-6" />
           </div>
         </div>
-        <CardTitle className="text-2xl font-bold">Create your clinic</CardTitle>
-        <CardDescription>Start your free trial with up to 100 patients</CardDescription>
+        <CardTitle className="text-2xl font-bold">{t('Create your clinic')}</CardTitle>
+        <CardDescription>{t('Start your free trial with up to 100 patients')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="hospitalName">Hospital/Clinic Name</Label>
+            <Label htmlFor="hospitalName">{t('Hospital/Clinic Name')}</Label>
             <Input
               id="hospitalName"
-              placeholder="Dr. Smith's Dental Clinic"
+              placeholder={t("Dr. Smith's Dental Clinic")}
               {...register('hospitalName')}
               disabled={isLoading}
             />
@@ -116,10 +116,10 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="adminName">Your Name</Label>
+            <Label htmlFor="adminName">{t('Your Name')}</Label>
             <Input
               id="adminName"
-              placeholder="Dr. John Smith"
+              placeholder={t('Dr. John Smith')}
               {...register('adminName')}
               disabled={isLoading}
             />
@@ -153,7 +153,7 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('Password')}</Label>
             <Input
               id="password"
               type="password"
@@ -192,12 +192,12 @@ export default function SignupPage() {
             className="text-primary hover:underline inline-flex items-center gap-1"
           >
             <ArrowLeft className="h-3 w-3" />
-            Already have an account? Sign in
+            {t('Already have an account? Sign in')}
           </Link>
         </div>
 
         <div className="mt-4 text-center text-xs text-muted-foreground">
-          By signing up, you agree to our Terms of Service and Privacy Policy.
+          {t('By signing up, you agree to our Terms of Service and Privacy Policy.')}
         </div>
       </CardContent>
     </Card>

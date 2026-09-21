@@ -242,10 +242,10 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Insurance Policies</h3>
+        <h3 className="text-lg font-semibold">{t('Insurance Policies')}</h3>
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Policy
+          {t('Add Policy')}
         </Button>
       </div>
 
@@ -253,9 +253,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Shield className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No insurance policies on file</p>
+            <p className="font-medium">{t('No insurance policies on file')}</p>
             <p className="text-sm">
-              Add the patient&apos;s insurance information to enable claims and pre-authorizations
+              {t("Add the patient's insurance information to enable claims and pre-authorizations")}
             </p>
           </CardContent>
         </Card>
@@ -296,7 +296,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Effective</p>
+                    <p className="text-muted-foreground">{t('Effective')}</p>
                     <p className="font-medium">{formatDate(p.effectiveDate)}</p>
                   </div>
                   <div>
@@ -331,7 +331,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     )}
                     {p.copayPercentage != null && (
                       <div>
-                        <p className="text-muted-foreground">Co-pay</p>
+                        <p className="text-muted-foreground">{t('Co-pay')}</p>
                         <p className="font-medium">{Number(p.copayPercentage)}%</p>
                       </div>
                     )}
@@ -340,7 +340,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t">
                   <Button variant="outline" size="sm" onClick={() => handleVerify(p.id)}>
                     <BadgeCheck className="h-4 w-4 mr-1" />
-                    Verify
+                    {t('Verify')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -379,7 +379,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 onValueChange={(v) => setForm({ ...form, providerId: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select provider" />
+                  <SelectValue placeholder={t('Select provider')} />
                 </SelectTrigger>
                 <SelectContent>
                   {providers.map((p) => (
@@ -400,7 +400,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Group Number</Label>
+                <Label>{t('Group Number')}</Label>
                 <Input
                   value={form.groupNumber}
                   onChange={(e) => setForm({ ...form, groupNumber: e.target.value })}
@@ -416,7 +416,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Subscriber Relation</Label>
+                <Label>{t('Subscriber Relation')}</Label>
                 <Select
                   value={form.subscriberRelation}
                   onValueChange={(v) => setForm({ ...form, subscriberRelation: v })}
@@ -438,7 +438,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 <Input
                   value={form.subscriberName}
                   onChange={(e) => setForm({ ...form, subscriberName: e.target.value })}
-                  placeholder="Name of the policy holder"
+                  placeholder={t('Name of the policy holder')}
                 />
               </div>
               <div>
@@ -458,7 +458,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Coverage Type</Label>
+                <Label>{t('Coverage Type')}</Label>
                 <Select
                   value={form.coverageType}
                   onValueChange={(v) => setForm({ ...form, coverageType: v })}
@@ -467,9 +467,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     <SelectValue placeholder={t('ui.select_type')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Individual">Individual</SelectItem>
-                    <SelectItem value="Family">Family</SelectItem>
-                    <SelectItem value="Group">Group</SelectItem>
+                    <SelectItem value="Individual">{t('Individual')}</SelectItem>
+                    <SelectItem value="Family">{t('Family')}</SelectItem>
+                    <SelectItem value="Group">{t('Group')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -479,7 +479,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   type="number"
                   value={form.annualMaximum}
                   onChange={(e) => setForm({ ...form, annualMaximum: e.target.value })}
-                  placeholder="EGP "
+                  placeholder={t('EGP ')}
                 />
               </div>
               <div>
@@ -488,7 +488,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   type="number"
                   value={form.deductible}
                   onChange={(e) => setForm({ ...form, deductible: e.target.value })}
-                  placeholder="EGP "
+                  placeholder={t('EGP ')}
                 />
               </div>
               <div>

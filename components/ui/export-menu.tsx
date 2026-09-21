@@ -11,6 +11,7 @@ import {
 import { Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react'
 import { downloadCSV, downloadExcel } from '@/lib/export-utils'
 import { useToast } from '@/hooks/use-toast'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ExportMenuProps {
   /** Function that returns the data to export */
@@ -34,6 +35,7 @@ export function ExportMenu({
 }: ExportMenuProps) {
   const [exporting, setExporting] = useState(false)
   const { toast } = useToast()
+  const { t } = useLanguage()
 
   const handleExport = async (format: 'csv' | 'xlsx') => {
     setExporting(true)
@@ -72,17 +74,17 @@ export function ExportMenu({
           ) : (
             <Download className="h-4 w-4 mr-2" />
           )}
-          Export
+          {t('Export')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => handleExport('csv')}>
           <FileText className="h-4 w-4 mr-2" />
-          Export as CSV
+          {t('Export as CSV')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleExport('xlsx')}>
           <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Export as Excel
+          {t('Export as Excel')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
