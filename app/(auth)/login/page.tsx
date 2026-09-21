@@ -52,7 +52,7 @@ function LoginForm() {
         toast({
           variant: 'destructive',
           title: 'Login failed',
-          description: 'Invalid email or password. Please try again.',
+          description: t('auth.invalidCredentials'),
         })
       } else {
         router.push(callbackUrl)
@@ -62,7 +62,7 @@ function LoginForm() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        description: t('auth.genericError'),
       })
     } finally {
       setIsLoading(false)
@@ -117,15 +117,15 @@ function LoginForm() {
 
         <div className="mt-6 text-center text-sm">
           <p className="text-muted-foreground">
-            Don&apos;t have an account?{' '}
+            {t('auth.noAccount')}{' '}
             <a href="/signup" className="text-primary hover:underline">
-              Sign up for free
+              {t('auth.signUpFree')}
             </a>
           </p>
         </div>
 
         <div className="mt-4 text-center text-xs text-muted-foreground border-t pt-4">
-          <p>Demo credentials:</p>
+          <p>{t('auth.demoCredentials')}</p>
           <p className="font-mono mt-1">admin@dentora-dental.com / Admin@123</p>
         </div>
       </CardContent>

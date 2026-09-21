@@ -25,7 +25,11 @@ export function translate(
   vars?: Record<string, string | number>
 ): string {
   const dict = dictionaries[resolveLocale(locale)]
-  const template = dict[key] ?? dictionaries[resolveLocale(key as string)] ?? key
+  // NOTE: the fallback is the key itself — never another dictionary object.
+  // (A previous `dictionaries[resolveLocale(key)]` term resolved the unknown
+  // key as a locale, handed back the WHOLE default dictionary, and made any
+  // missing key render an object instead of a readable fallback.)
+  const template = dict[key] ?? key
   if (!vars) return template
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
     name in vars ? String(vars[name]) : match

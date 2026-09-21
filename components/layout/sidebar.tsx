@@ -23,7 +23,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
   const pathname = usePathname()
   const navigation = getNavigationForRole(role)
   const { isCollapsed, toggleSidebar } = useSidebar()
-  const { locale } = useLanguage()
+  const { locale, t: tc } = useLanguage()
   const t = (label: string) => translateLabel(locale, label)
 
   return (
@@ -73,12 +73,12 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
                     )}
                   >
                     {plan === 'FREE'
-                      ? 'Free Plan'
+                      ? tc('plan.FREE')
                       : plan === 'PROFESSIONAL'
-                        ? 'Professional'
+                        ? tc('plan.PROFESSIONAL')
                         : plan === 'ENTERPRISE'
-                          ? 'Enterprise'
-                          : 'Self-Hosted'}
+                          ? tc('plan.ENTERPRISE')
+                          : tc('plan.SELF_HOSTED')}
                   </span>
                 )}
               </div>

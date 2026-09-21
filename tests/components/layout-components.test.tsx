@@ -7,6 +7,23 @@ import React from 'react'
 // Mocks — shared across all describe blocks
 // ---------------------------------------------------------------------------
 
+// Real-dictionary language provider mock so sidebar plan labels resolve
+// through locales/en.json exactly as in the browser.
+vi.mock('@/components/providers/language-provider', async () => {
+  const en = (await import('../../locales/en.json')).default
+  return {
+    useLanguage: () => ({
+      locale: 'en-EG',
+      dir: 'ltr',
+      t: (key: string) => en[key] ?? key,
+      setLocale: vi.fn(),
+    }),
+    LOCALE_COOKIE: 'dentora-locale',
+    // passthrough wrapper for tests that compose with the real provider name
+    LanguageProvider: ({ children }: { children: React.ReactNode }) => children,
+  }
+})
+
 vi.mock('@/lib/utils', () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(' '),
 }))

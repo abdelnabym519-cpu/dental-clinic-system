@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
+
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -76,6 +78,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+  const { t } = useLanguage()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -127,7 +130,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
           <p className="text-muted-foreground">Loading your practice data...</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -151,8 +154,8 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-red-600">Failed to load dashboard data</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
+          <p className="text-muted-foreground text-red-600">{t('dashboard.loadError')}</p>
         </div>
         <Card className="border-red-200">
           <CardContent className="pt-6">
@@ -187,7 +190,7 @@ export default function DashboardPage() {
         {/* Total Patients */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.totalPatients')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -200,7 +203,7 @@ export default function DashboardPage() {
                 {stats.overview.patientGrowth > 0 ? '+' : ''}
                 {stats.overview.patientGrowth.toFixed(1)}%
               </span>
-              <span className="text-muted-foreground">from last month</span>
+              <span className="text-muted-foreground">{t('dashboard.fromLastMonth')}</span>
             </div>
           </CardContent>
         </Card>
@@ -223,7 +226,7 @@ export default function DashboardPage() {
         {/* This Month Revenue */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.monthRevenue')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -236,7 +239,7 @@ export default function DashboardPage() {
                 {stats.overview.revenueGrowth > 0 ? '+' : ''}
                 {stats.overview.revenueGrowth.toFixed(1)}%
               </span>
-              <span className="text-muted-foreground">from last month</span>
+              <span className="text-muted-foreground">{t('dashboard.fromLastMonth')}</span>
             </div>
           </CardContent>
         </Card>
@@ -244,14 +247,14 @@ export default function DashboardPage() {
         {/* Pending Payments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.pendingPayments')}</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(stats.overview.pendingPayments)}
             </div>
-            <p className="text-xs text-muted-foreground">Outstanding receivables</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.outstanding')}</p>
           </CardContent>
         </Card>
       </div>
@@ -261,7 +264,7 @@ export default function DashboardPage() {
         {/* Revenue Chart */}
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
+            <CardTitle>{t('dashboard.revenueOverview')}</CardTitle>
             <CardDescription>Last 7 days revenue trend</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
@@ -293,7 +296,7 @@ export default function DashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No revenue data available</p>
+              <p className="text-muted-foreground text-center py-8">{t('dashboard.noRevenue')}</p>
             )}
           </CardContent>
         </Card>
@@ -301,7 +304,7 @@ export default function DashboardPage() {
         {/* Upcoming Appointments */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Upcoming Appointments</CardTitle>
+            <CardTitle>{t('dashboard.upcomingAppointments')}</CardTitle>
             <CardDescription>Next 5 scheduled appointments</CardDescription>
           </CardHeader>
           <CardContent>
@@ -320,12 +323,12 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-8">No upcoming appointments</p>
+                <p className="text-muted-foreground text-center py-8">{t('dashboard.noUpcoming')}</p>
               )}
             </div>
             <div className="mt-4 flex gap-2">
               <Button asChild>
-                <Link href="/agenda">Open Agenda</Link>
+                <Link href="/agenda">{t('dashboard.openAgenda')}</Link>
               </Button>
               <Link href="/appointments" className="flex-1">
                 <Button variant="outline" className="w-full">
@@ -341,7 +344,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Appointments by Status</CardTitle>
+            <CardTitle>{t('dashboard.appointmentsByStatus')}</CardTitle>
             <CardDescription>This month's appointment distribution</CardDescription>
           </CardHeader>
           <CardContent>
@@ -385,7 +388,7 @@ export default function DashboardPage() {
         {/* Monthly Revenue Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Revenue Trend</CardTitle>
+            <CardTitle>{t('dashboard.revenueTrend')}</CardTitle>
             <CardDescription>Last 6 months revenue comparison</CardDescription>
           </CardHeader>
           <CardContent>
@@ -409,7 +412,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No revenue data available</p>
+              <p className="text-muted-foreground text-center py-8">{t('dashboard.noRevenue')}</p>
             )}
           </CardContent>
         </Card>
@@ -420,8 +423,8 @@ export default function DashboardPage() {
         {/* Top Procedures */}
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Top Procedures</CardTitle>
-            <CardDescription>Most common procedures this month</CardDescription>
+            <CardTitle>{t('dashboard.topProcedures')}</CardTitle>
+            <CardDescription>{t('dashboard.topProceduresDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             {stats.charts.topProcedures && stats.charts.topProcedures.length > 0 ? (
@@ -454,7 +457,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No procedure data available</p>
+              <p className="text-muted-foreground text-center py-8">{t('dashboard.noProcedures')}</p>
             )}
           </CardContent>
         </Card>
@@ -466,7 +469,7 @@ export default function DashboardPage() {
               <Package className="h-5 w-5" />
               Low Stock Alerts
             </CardTitle>
-            <CardDescription>Items below minimum stock level</CardDescription>
+            <CardDescription>{t('dashboard.lowStockDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -486,7 +489,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-8">All items in stock</p>
+                <p className="text-muted-foreground text-center py-8">{t('dashboard.allInStock')}</p>
               )}
             </div>
             <Link href="/inventory">
@@ -501,8 +504,8 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks you can do right now</CardDescription>
+          <CardTitle>{t('dashboard.quickActions')}</CardTitle>
+          <CardDescription>{t('dashboard.quickActionsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4">
           <Link
@@ -513,8 +516,8 @@ export default function DashboardPage() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Add Patient</p>
-              <p className="text-sm text-muted-foreground">Register new</p>
+              <p className="font-medium">{t('dashboard.addPatient')}</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.registerNew')}</p>
             </div>
           </Link>
           <Link
@@ -525,8 +528,8 @@ export default function DashboardPage() {
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Book Appointment</p>
-              <p className="text-sm text-muted-foreground">Schedule visit</p>
+              <p className="font-medium">{t('dashboard.bookAppointment')}</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.scheduleVisit')}</p>
             </div>
           </Link>
           <Link
@@ -537,8 +540,8 @@ export default function DashboardPage() {
               <Receipt className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">Create Invoice</p>
-              <p className="text-sm text-muted-foreground">Bill patient</p>
+              <p className="font-medium">{t('dashboard.createInvoice')}</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.billPatient')}</p>
             </div>
           </Link>
           <Link
@@ -549,8 +552,8 @@ export default function DashboardPage() {
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="font-medium">View Reports</p>
-              <p className="text-sm text-muted-foreground">Analytics</p>
+              <p className="font-medium">{t('dashboard.viewReports')}</p>
+              <p className="text-sm text-muted-foreground">{t('common.analytics')}</p>
             </div>
           </Link>
         </CardContent>

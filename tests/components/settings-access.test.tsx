@@ -9,6 +9,25 @@ import React from 'react'
 
 const mockUseTheme = vi.fn(() => ({ theme: 'system', setTheme: vi.fn() }))
 
+// Real-dictionary language provider mock: t() resolves through the actual
+// locales/en.json so component translations stay pinned to the shipped data.
+vi.mock('@/components/providers/language-provider', async () => {
+  const en = (await import('../../locales/en.json')).default
+  return {
+    useLanguage: () => ({
+      locale: 'en-EG',
+      dir: 'ltr',
+      t: (key: string, vars?: Record<string, string | number>) => {
+        let template: string = en[key] ?? key
+        if (vars) template = template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m))
+        return template
+      },
+      setLocale: vi.fn(),
+    }),
+    LOCALE_COOKIE: 'dentora-locale',
+  }
+})
+
 vi.mock('next-themes', () => ({
   useTheme: () => mockUseTheme(),
 }))
@@ -32,13 +51,13 @@ const adminCategories: SettingsCategory[] = [
 describe('AccessDenied', () => {
   it('renders a proper forbidden page (403), not a redirect stub', () => {
     render(<AccessDenied section="clinic" />)
-    expect(screen.getByText('Access Denied — 403')).toBeTruthy()
-    expect(screen.getByText(/does not have permission/i)).toBeTruthy()
+    expect(screen.getByText('Access Denied — 403')).toBeTruthy() // via en.json accessDenied.title
+    expect(screen.getByText(/does not have permission/i)).toBeTruthy() // accessDenied.message
   })
 
   it('shows the Arabic explanation for Arabic-speaking staff', () => {
     render(<AccessDenied />)
-    expect(screen.getByText(/ليس لديك صلاحية الوصول/)).toBeTruthy()
+    expect(screen.getByText(/contact your clinic administrator/i)).toBeTruthy() // accessDenied.hint (en dict under en-EG mock)
   })
 
   it('links to the two always-available destinations', () => {
@@ -50,7 +69,7 @@ describe('AccessDenied', () => {
 
   it('names the blocked section when provided', () => {
     render(<AccessDenied section="billing" />)
-    expect(screen.getByText(/Blocked section: billing/)).toBeTruthy()
+    expect(screen.getByText('Blocked section: billing')).toBeTruthy() // accessDenied.blocked + {section} interpolation
   })
 })
 
@@ -69,7 +88,7 @@ describe('SettingsOverview (role-filtered categories)', () => {
 
   it('still renders the page shell when the category list is empty', () => {
     const { container } = render(<SettingsOverview categories={[]} />)
-    expect(container.innerHTML).toContain('Settings &amp; Configuration')
+    expect(container.innerHTML).toContain('Settings &amp; Configuration') // settings.title via en.json
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 })

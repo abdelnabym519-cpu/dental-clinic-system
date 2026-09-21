@@ -8,6 +8,25 @@ import React from 'react'
 // ---------------------------------------------------------------------------
 
 const mockPush = vi.fn()
+// Real-dictionary language provider mock: t() resolves through the actual
+// locales/en.json so component translations stay pinned to the shipped data.
+vi.mock('@/components/providers/language-provider', async () => {
+  const en = (await import('../../locales/en.json')).default
+  return {
+    useLanguage: () => ({
+      locale: 'en-EG',
+      dir: 'ltr',
+      t: (key: string, vars?: Record<string, string | number>) => {
+        let template: string = en[key] ?? key
+        if (vars) template = template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m))
+        return template
+      },
+      setLocale: vi.fn(),
+    }),
+    LOCALE_COOKIE: 'dentora-locale',
+  }
+})
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
   usePathname: () => '/agenda',
@@ -142,7 +161,7 @@ describe('Agenda workspace page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Agenda' })).toBeInTheDocument()
     expect(screen.getByText('New appointment')).toBeInTheDocument()
     expect(screen.getByText('Waitlist')).toBeInTheDocument()
-    expect(screen.getByText("Today's queue")).toBeInTheDocument()
+    expect(screen.getByText("Queue")).toBeInTheDocument()
   })
 
   it('passes fetched providers into the calendar for filtering', async () => {

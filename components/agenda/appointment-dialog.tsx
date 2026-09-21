@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
+import { useLanguage } from '@/components/providers/language-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -73,6 +75,7 @@ export function AppointmentDialog({
   defaults,
   appointment,
 }: AppointmentDialogProps) {
+  const { t } = useLanguage()
   const editing = Boolean(appointment?.id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -210,10 +213,10 @@ export function AppointmentDialog({
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="apt-patient">Patient</Label>
+            <Label htmlFor="apt-patient">{t('agenda.patient')}</Label>
             <Select value={form.patientId} onValueChange={set('patientId')}>
               <SelectTrigger id="apt-patient" aria-label="Patient">
-                <SelectValue placeholder="Select patient" />
+                <SelectValue placeholder={t('agenda.selectPatient')} />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {patients.map((p) => (
@@ -226,10 +229,10 @@ export function AppointmentDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="apt-doctor">Provider</Label>
+            <Label htmlFor="apt-doctor">{t('agenda.provider')}</Label>
             <Select value={form.doctorId} onValueChange={set('doctorId')}>
               <SelectTrigger id="apt-doctor" aria-label="Provider">
-                <SelectValue placeholder="Select provider" />
+                <SelectValue placeholder={t('agenda.selectProvider')} />
               </SelectTrigger>
               <SelectContent className="max-h-60">
                 {doctors.map((d) => (
@@ -244,7 +247,7 @@ export function AppointmentDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="apt-date">Date</Label>
+              <Label htmlFor="apt-date">{t('common.date')}</Label>
               <Input
                 id="apt-date"
                 type="date"
@@ -253,7 +256,7 @@ export function AppointmentDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="apt-time">Start time</Label>
+              <Label htmlFor="apt-time">{t('agenda.startTime')}</Label>
               <Input
                 id="apt-time"
                 type="time"
@@ -265,7 +268,7 @@ export function AppointmentDialog({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="apt-duration">Duration</Label>
+              <Label htmlFor="apt-duration">{t('common.duration')}</Label>
               <Select value={form.duration} onValueChange={set('duration')}>
                 <SelectTrigger id="apt-duration" aria-label="Duration">
                   <SelectValue />
@@ -280,22 +283,22 @@ export function AppointmentDialog({
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="apt-type">Type</Label>
+              <Label htmlFor="apt-type">{t('agenda.type')}</Label>
               <Select value={form.appointmentType} onValueChange={set('appointmentType')}>
                 <SelectTrigger id="apt-type" aria-label="Appointment type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t.replace('_', ' ')}
+                  {TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {t(`type.${type}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="apt-priority">Priority</Label>
+              <Label htmlFor="apt-priority">{t('agenda.priority')}</Label>
               <Select value={form.priority} onValueChange={set('priority')}>
                 <SelectTrigger id="apt-priority" aria-label="Priority">
                   <SelectValue />
@@ -303,7 +306,7 @@ export function AppointmentDialog({
                 <SelectContent>
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p} value={p}>
-                      {p}
+                      {t(`priority.${p}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -313,13 +316,13 @@ export function AppointmentDialog({
 
           {rooms && rooms.length > 0 && (
             <div className="grid gap-2">
-              <Label htmlFor="apt-room">Room / chair</Label>
+              <Label htmlFor="apt-room">{t('common.room')}</Label>
               <Select value={form.roomId} onValueChange={set('roomId')}>
                 <SelectTrigger id="apt-room" aria-label="Room or chair">
-                  <SelectValue placeholder="No room" />
+                  <SelectValue placeholder={t('agenda.noRoom')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No room</SelectItem>
+                  <SelectItem value="none">{t('agenda.noRoom')}</SelectItem>
                   {rooms.map((r) => (
                     <SelectItem key={r.id} value={r.id}>
                       {r.name}
@@ -335,7 +338,7 @@ export function AppointmentDialog({
 
           {!editing && (
             <fieldset className="rounded-md border p-3">
-              <legend className="px-1 text-sm font-medium">Repeat</legend>
+              <legend className="px-1 text-sm font-medium">{t('agenda.repeat')}</legend>
               <label className="mb-3 flex items-center gap-2 text-sm" htmlFor="apt-recurrence">
                 <input
                   id="apt-recurrence"

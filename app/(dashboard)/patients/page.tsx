@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -66,6 +68,7 @@ interface PaginationInfo {
 }
 
 export default function PatientsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -131,7 +134,7 @@ export default function PatientsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Patients</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('patients.title')}</h1>
           <p className="text-muted-foreground">Manage patient records and information</p>
         </div>
         <div className="flex gap-2">
@@ -167,7 +170,7 @@ export default function PatientsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, patient ID, phone, or email..."
+                placeholder={t('patients.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -212,14 +215,14 @@ export default function PatientsPage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Patient ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Age</TableHead>
-                <TableHead>Blood Group</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('patients.patientId')}</TableHead>
+                <TableHead>{t('patients.col.name')}</TableHead>
+                <TableHead>{t('patients.contact')}</TableHead>
+                <TableHead>{t('patients.gender')}</TableHead>
+                <TableHead>{t('patients.age')}</TableHead>
+                <TableHead>{t('patients.bloodGroup')}</TableHead>
+                <TableHead>{t('patients.location')}</TableHead>
+                <TableHead className="text-right">{t('patients.col.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -257,11 +260,11 @@ export default function PatientsPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <User className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No patients found</p>
+                      <p className="text-muted-foreground">{t('patients.noResults')}</p>
                       <Link href="/patients/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
-                          Add Patient
+{t('patients.addPatient')}Add Patient
                         </Button>
                       </Link>
                     </div>

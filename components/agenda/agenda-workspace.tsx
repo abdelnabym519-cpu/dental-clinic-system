@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
+
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -44,6 +46,7 @@ const has = (role: string | null | undefined, ...roles: string[]) =>
  * reachable from here; this page does not duplicate them.
  */
 export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
+  const { t } = useLanguage()
   const [providers, setProviders] = useState<AgendaProvider[]>([])
   const [patients, setPatients] = useState<PatientOption[]>([])
   const [rooms, setRooms] = useState<RoomOption[]>([])
@@ -117,9 +120,9 @@ export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Agenda</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('agenda.title')}</h1>
           <p className="text-muted-foreground">
-            The clinic schedule — view, book, reschedule and manage appointments
+            {t('agenda.subtitle')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -133,22 +136,22 @@ export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
               ) : (
                 <Plus className="h-4 w-4 mr-2" />
               )}
-              New appointment
+              {t('common.newAppointment')}
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
             <Link href="/appointments/waitlist">
-              <Clock className="h-4 w-4 mr-2" /> Waitlist
+              <Clock className="h-4 w-4 mr-2" /> {t('common.waitlist')}
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href="/appointments">
-              <List className="h-4 w-4 mr-2" /> Full list
+              <List className="h-4 w-4 mr-2" /> {t('agenda.fullList')}
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href="/appointments/queue">
-              <CalendarDays className="h-4 w-4 mr-2" /> Today&apos;s queue
+              <CalendarDays className="h-4 w-4 mr-2" /> {t('common.queue')}
             </Link>
           </Button>
         </div>

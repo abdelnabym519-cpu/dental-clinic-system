@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -81,6 +83,7 @@ interface PlanSummary {
 }
 
 export default function BillingPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<SummaryData | null>(null)
   const [datePreset, setDatePreset] = useState('this_month')
@@ -163,13 +166,13 @@ export default function BillingPage() {
   }
 
   const invoiceStatusLabels: Record<string, { label: string; color: string }> = {
-    DRAFT: { label: 'Draft', color: 'text-muted-foreground' },
-    PENDING: { label: 'Pending', color: 'text-yellow-600' },
-    PARTIALLY_PAID: { label: 'Partially Paid', color: 'text-blue-600' },
-    PAID: { label: 'Paid', color: 'text-green-600' },
-    OVERDUE: { label: 'Overdue', color: 'text-red-600' },
-    CANCELLED: { label: 'Cancelled', color: 'text-muted-foreground' },
-    REFUNDED: { label: 'Refunded', color: 'text-purple-600' },
+    DRAFT: { label: 'billing.draft', color: 'text-muted-foreground' },
+    PENDING: { label: 'billing.PENDING', color: 'text-yellow-600' },
+    PARTIALLY_PAID: { label: 'billing.PARTIALLY_PAID', color: 'text-blue-600' },
+    PAID: { label: 'billing.paid', color: 'text-green-600' },
+    OVERDUE: { label: 'billing.overdue', color: 'text-red-600' },
+    CANCELLED: { label: 'billing.CANCELLED', color: 'text-muted-foreground' },
+    REFUNDED: { label: 'billing.REFUNDED', color: 'text-purple-600' },
   }
 
   return (
@@ -177,7 +180,7 @@ export default function BillingPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing & Finance</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('billing.title')}</h1>
           <p className="text-muted-foreground">Manage invoices, payments, and financial reports</p>
         </div>
         <div className="flex gap-2">
@@ -251,7 +254,7 @@ export default function BillingPage() {
           <Link href="/billing/invoices/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              New Invoice
+              {t('billing.newInvoice')}
             </Button>
           </Link>
         </div>
@@ -304,7 +307,7 @@ export default function BillingPage() {
         {/* Total Collected */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('billing.collected')}</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -326,7 +329,7 @@ export default function BillingPage() {
         {/* Outstanding */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('billing.outstanding')}</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -338,7 +341,7 @@ export default function BillingPage() {
                   {formatCurrency(data?.summary.totalOutstanding || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {data?.summary.outstandingInvoices || 0} pending invoices
+                  {data?.summary.outstandingInvoices || 0} {t('billing.pendingInvoices')}
                 </p>
               </>
             )}
@@ -380,7 +383,7 @@ export default function BillingPage() {
             <Link href="/billing/invoices" className="block">
               <Button variant="outline" className="w-full justify-start">
                 <FileText className="h-4 w-4 mr-2" />
-                View All Invoices
+                {t('billing.viewAll')}
               </Button>
             </Link>
             <Link href="/billing/payments" className="block">
@@ -505,7 +508,7 @@ export default function BillingPage() {
                           {!['PAID', 'PENDING', 'OVERDUE', 'CANCELLED'].includes(status.status) && (
                             <FileText className="h-4 w-4 text-muted-foreground" />
                           )}
-                          <span className={`text-sm ${config.color}`}>{config.label}</span>
+                          <span className={`text-sm ${config.color}`}>{t(config.label)}</span>
                         </div>
                         <div className="text-right">
                           <div className="font-medium">{formatCurrency(status.amount)}</div>
@@ -731,7 +734,7 @@ export default function BillingPage() {
                   )
                 })}
                 <div className="pt-2 border-t flex justify-between text-sm font-medium">
-                  <span>Total Outstanding</span>
+                  <span>{t('billing.totalOutstanding')}</span>
                   <span className="text-red-600">
                     {formatCurrency(agingData.totals.totalOutstanding)}
                   </span>

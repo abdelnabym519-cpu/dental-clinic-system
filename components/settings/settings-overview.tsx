@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/components/providers/language-provider'
 import {
   BookOpen,
   Building2,
@@ -58,6 +59,7 @@ export interface SettingsCategory {
  */
 export function SettingsOverview({ categories }: { categories: SettingsCategory[] }) {
   const { theme, setTheme } = useTheme()
+  const { t } = useLanguage()
 
   // Hydration-safety: next-themes' useTheme() returns `undefined` for `theme`
   // during SSR but a concrete value (localStorage entry or defaultTheme) on
@@ -74,9 +76,9 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <SettingsIcon className="w-8 h-8" />
-          Settings & Configuration
+          {t('settings.title')}
         </h1>
-        <p className="text-muted-foreground mt-2">Manage all system settings and configurations</p>
+        <p className="text-muted-foreground mt-2">{t('settings.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -89,8 +91,8 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
                 >
                   {React.createElement(ICONS[category.icon] ?? SettingsIcon, { className: 'w-6 h-6' })}
                 </div>
-                <CardTitle className="text-xl">{category.title}</CardTitle>
-                <CardDescription className="text-sm">{category.description}</CardDescription>
+                <CardTitle className="text-xl">{t(category.title)}</CardTitle>
+                <CardDescription className="text-sm">{t(category.description)}</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -103,9 +105,9 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sun className="w-5 h-5" />
-              Appearance
+              {t('settings.appearance')}
             </CardTitle>
-            <CardDescription>Choose how the application looks for you</CardDescription>
+            <CardDescription>{t('settings.appearanceDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3">
@@ -135,19 +137,19 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>System Information</CardTitle>
+            <CardTitle>{t('settings.systemInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Version:</span>
+              <span className="text-muted-foreground">{t('settings.version')}:</span>
               <span className="font-medium">1.0.0</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Database:</span>
+              <span className="text-muted-foreground">{t('settings.database')}:</span>
               <span className="font-medium">MySQL</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Environment:</span>
+              <span className="text-muted-foreground">{t('settings.environment')}:</span>
               <span className="font-medium">Production</span>
             </div>
           </CardContent>
@@ -155,7 +157,7 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick Tips</CardTitle>
+            <CardTitle>{t('settings.quickTips')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>• Regular backups are crucial for data safety</p>
