@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -138,6 +139,7 @@ export function CalendarView({
   canNoShow = false,
   onOpenAppointment,
 }: CalendarViewProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(initialDate)
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week')
@@ -574,8 +576,7 @@ export function CalendarView({
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'CHECKED_IN')}
                     >
-                      <LogIn className="h-3.5 w-3.5" /> Check in
-                    </button>
+                      <LogIn className="h-3.5 w-3.5" />{t('ui.check_in_2')}</button>
                   )}
                   {canAdvance && apt.status === 'CHECKED_IN' && (
                     <button
@@ -585,8 +586,7 @@ export function CalendarView({
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'IN_PROGRESS')}
                     >
-                      <Play className="h-3.5 w-3.5" /> Start visit
-                    </button>
+                      <Play className="h-3.5 w-3.5" />{t('ui.start_visit')}</button>
                   )}
                   {canAdvance && apt.status === 'IN_PROGRESS' && (
                     <button
@@ -596,8 +596,7 @@ export function CalendarView({
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'COMPLETED')}
                     >
-                      <CheckCheck className="h-3.5 w-3.5" /> Complete
-                    </button>
+                      <CheckCheck className="h-3.5 w-3.5" />{t('ui.complete')}</button>
                   )}
                   {canNoShow &&
                     ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(apt.status) && (
@@ -608,8 +607,7 @@ export function CalendarView({
                         disabled={cancellingId === apt.id}
                         onClick={() => quickStatus(apt, 'NO_SHOW')}
                       >
-                        <UserX className="h-3.5 w-3.5" /> No-show
-                      </button>
+                        <UserX className="h-3.5 w-3.5" />{t('ui.no_show_2')}</button>
                     )}
                 </div>
               )}
@@ -893,10 +891,10 @@ export function CalendarView({
             {providers && providers.length > 0 && (
               <Select value={doctorId} onValueChange={setDoctorId}>
                 <SelectTrigger className="w-[190px]" aria-label="Filter by provider">
-                  <SelectValue placeholder="All providers" />
+                  <SelectValue placeholder={t('ui.all_providers')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All providers</SelectItem>
+                  <SelectItem value="all">{t('ui.all_providers')}</SelectItem>
                   {providers.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       Dr. {p.firstName} {p.lastName}
@@ -922,10 +920,10 @@ export function CalendarView({
             {rooms && rooms.length > 0 && (
               <Select value={roomId} onValueChange={setRoomId}>
                 <SelectTrigger className="w-[150px]" aria-label="Filter by room">
-                  <SelectValue placeholder="All rooms" />
+                  <SelectValue placeholder={t('ui.all_rooms')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All rooms</SelectItem>
+                  <SelectItem value="all">{t('ui.all_rooms')}</SelectItem>
                   {rooms.map((r) => (
                     <SelectItem key={r.id} value={r.id}>
                       {r.name}
@@ -939,7 +937,7 @@ export function CalendarView({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="day">Day</SelectItem>
+                <SelectItem value="day">{t('ui.day')}</SelectItem>
                 <SelectItem value="week">Week</SelectItem>
                 <SelectItem value="month">Month</SelectItem>
               </SelectContent>
@@ -963,8 +961,7 @@ export function CalendarView({
               The schedule could not be loaded. Check your connection and try again.
             </p>
             <Button variant="outline" size="sm" onClick={fetchAppointments}>
-              <RefreshCw className="h-4 w-4 mr-2" /> Retry
-            </Button>
+              <RefreshCw className="h-4 w-4 mr-2" />{t('ui.retry')}</Button>
           </CardContent>
         </Card>
       ) : (

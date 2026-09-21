@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,7 @@ export function PayPage({
   isUsed,
   isPaid,
 }: PayPageProps) {
+  const { t } = useLanguage()
   const [state, setState] = useState<PayState>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -191,21 +193,21 @@ export function PayPage({
           {/* Invoice details */}
           <div className="rounded-lg border p-4 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Invoice</span>
+              <span className="text-muted-foreground">{t('ui.invoice')}</span>
               <span className="font-medium">{invoice.invoiceNo}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Patient</span>
+              <span className="text-muted-foreground">{t('ui.patient')}</span>
               <span>{patient.name}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Amount</span>
+              <span className="text-muted-foreground">{t('ui.total_amount')}</span>
               <span>{formatCurrency(invoice.totalAmount)}</span>
             </div>
             {invoice.paidAmount > 0 && (
               <div className="flex justify-between text-sm text-green-600">
-                <span>Paid</span>
+                <span>{t('ui.paid')}</span>
                 <span>{formatCurrency(invoice.paidAmount)}</span>
               </div>
             )}
@@ -236,7 +238,7 @@ export function PayPage({
           {state === 'verifying' && (
             <div className="flex flex-col items-center py-4 gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Verifying payment...</p>
+              <p className="text-sm text-muted-foreground">{t('ui.verifying_payment')}</p>
             </div>
           )}
 
@@ -254,12 +256,10 @@ export function PayPage({
           {state === 'error' && (
             <div className="flex flex-col items-center py-4 gap-3">
               <AlertCircle className="h-10 w-10 text-red-500" />
-              <p className="font-medium text-red-600">Payment Failed</p>
+              <p className="font-medium text-red-600">{t('ui.payment_failed')}</p>
               <p className="text-sm text-muted-foreground text-center">{errorMsg}</p>
               {canPay && (
-                <Button onClick={initiatePayment} variant="outline">
-                  Try Again
-                </Button>
+                <Button onClick={initiatePayment} variant="outline">{t('ui.try_again')}</Button>
               )}
             </div>
           )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -97,6 +98,7 @@ interface TreatmentPlan {
 }
 
 export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
   const [plan, setPlan] = useState<TreatmentPlan | null>(null)
@@ -241,9 +243,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               {getStatusBadge(plan.status)}
               {plan.consentGiven && (
                 <Badge variant="outline" className="bg-green-50 text-green-700">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Consent Given
-                </Badge>
+                  <CheckCircle className="h-3 w-3 mr-1" />{t('ui.consent_given')}</Badge>
               )}
             </div>
             <p className="text-muted-foreground">{plan.title}</p>
@@ -264,32 +264,24 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           )}
           {plan.status === 'ACCEPTED' && (
             <Button onClick={() => handleStatusChange('IN_PROGRESS')} disabled={actionLoading}>
-              <Play className="h-4 w-4 mr-2" />
-              Start Treatment
-            </Button>
+              <Play className="h-4 w-4 mr-2" />{t('ui.start_treatment')}</Button>
           )}
           {!['COMPLETED', 'CANCELLED'].includes(plan.status) && (
             <>
               <Link href={`/treatments/plans/${id}/edit`}>
                 <Button variant="outline">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
+                  <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
               </Link>
               <Button
                 variant="outline"
                 className="text-red-600"
                 onClick={() => setCancelDialogOpen(true)}
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Cancel Plan
-              </Button>
+                <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel_plan')}</Button>
             </>
           )}
           <Button variant="outline">
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
+            <Printer className="h-4 w-4 mr-2" />{t('ui.print')}</Button>
         </div>
       </div>
 
@@ -328,10 +320,10 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
-                    <TableHead>Procedure</TableHead>
-                    <TableHead>Teeth</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('ui.procedure')}</TableHead>
+                    <TableHead>{t('ui.teeth')}</TableHead>
+                    <TableHead>{t('ui.cost')}</TableHead>
+                    <TableHead>{t('ui.status')}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -360,9 +352,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                           <Link
                             href={`/treatments/new?patientId=${plan.patient.id}&procedureId=${item.procedure.id}`}
                           >
-                            <Button size="sm" variant="outline">
-                              Start
-                            </Button>
+                            <Button size="sm" variant="outline">{t('ui.start')}</Button>
                           </Link>
                         )}
                       </TableCell>
@@ -386,7 +376,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           {plan.notes && (
             <Card>
               <CardHeader>
-                <CardTitle>Notes</CardTitle>
+                <CardTitle>{t('ui.notes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">{plan.notes}</p>
@@ -401,9 +391,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Patient
-              </CardTitle>
+                <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -434,9 +422,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               </div>
 
               <Link href={`/patients/${plan.patient.id}`}>
-                <Button variant="outline" className="w-full">
-                  View Patient Profile
-                </Button>
+                <Button variant="outline" className="w-full">{t('ui.view_patient_profile')}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -444,16 +430,16 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           {/* Plan Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Plan Summary</CardTitle>
+              <CardTitle>{t('ui.plan_summary')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-muted-foreground">Total Cost</div>
+                  <div className="text-sm text-muted-foreground">{t('ui.total_cost')}</div>
                   <div className="font-bold text-lg">{formatCurrency(plan.estimatedCost)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Procedures</div>
+                  <div className="text-sm text-muted-foreground">{t('ui.procedures')}</div>
                   <div className="font-bold text-lg">{plan.items.length}</div>
                 </div>
               </div>
@@ -469,12 +455,12 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
+                  <span className="text-muted-foreground">{t('ui.created')}</span>
                   <span>{formatDate(plan.createdAt)}</span>
                 </div>
                 {plan.startDate && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Start Date</span>
+                    <span className="text-muted-foreground">{t('ui.start_date')}</span>
                     <span>{formatDate(plan.startDate)}</span>
                   </div>
                 )}
@@ -486,7 +472,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                 )}
                 {plan.completedDate && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Completed</span>
+                    <span className="text-muted-foreground">{t('ui.completed')}</span>
                     <span>{formatDate(plan.completedDate)}</span>
                   </div>
                 )}
@@ -515,9 +501,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
             </ul>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setConsentDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleConsentGiven} disabled={actionLoading}>
               {actionLoading ? 'Recording...' : 'Confirm Consent'}
             </Button>
@@ -535,9 +519,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
-              Keep Plan
-            </Button>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>{t('ui.keep_plan')}</Button>
             <Button variant="destructive" onClick={handleCancelPlan} disabled={actionLoading}>
               {actionLoading ? 'Cancelling...' : 'Cancel Plan'}
             </Button>

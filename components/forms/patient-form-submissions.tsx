@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -58,6 +59,7 @@ interface PatientFormSubmissionsProps {
 }
 
 export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProps) {
+  const { t } = useLanguage()
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [viewSubmission, setViewSubmission] = useState<FormSubmission | null>(null)
@@ -202,16 +204,16 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
             <h4 className="font-semibold">Review</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t('ui.status')}</Label>
                 <Select value={reviewStatus} onValueChange={setReviewStatus}>
                   <SelectTrigger>
                     <SelectValue placeholder="Set status..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SUBMITTED">Pending</SelectItem>
+                    <SelectItem value="SUBMITTED">{t('ui.pending')}</SelectItem>
                     <SelectItem value="REVIEWED">Reviewed</SelectItem>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                    <SelectItem value="APPROVED">{t('ui.approved')}</SelectItem>
+                    <SelectItem value="REJECTED">{t('ui.rejected')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -226,9 +228,7 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setViewSubmission(null)}>
-                Close
-              </Button>
+              <Button variant="outline" onClick={() => setViewSubmission(null)}>{t('ui.close')}</Button>
               <Button onClick={handleReview} disabled={reviewing}>
                 {reviewing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Save Review

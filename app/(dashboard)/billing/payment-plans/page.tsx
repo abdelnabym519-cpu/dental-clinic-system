@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -66,6 +67,7 @@ interface Summary {
 }
 
 export default function PaymentPlansPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [plans, setPlans] = useState<PaymentPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -105,13 +107,13 @@ export default function PaymentPlansPage() {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Active</Badge>
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Completed</Badge>
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.completed')}</Badge>
       case 'DEFAULTED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Defaulted</Badge>
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
       case 'CANCELLED':
-        return <Badge variant="secondary">Cancelled</Badge>
+        return <Badge variant="secondary">{t('ui.cancelled')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -167,7 +169,7 @@ export default function PaymentPlansPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.completed')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -180,7 +182,7 @@ export default function PaymentPlansPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Defaulted</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.defaulted')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -193,7 +195,7 @@ export default function PaymentPlansPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.outstanding')}</CardTitle>
             <Banknote className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -237,15 +239,15 @@ export default function PaymentPlansPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Patient</TableHead>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Installments</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Next Due</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[80px]">Actions</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.invoice')}</TableHead>
+                <TableHead>{t('ui.total_amount')}</TableHead>
+                <TableHead>{t('ui.installments')}</TableHead>
+                <TableHead>{t('ui.frequency')}</TableHead>
+                <TableHead>{t('ui.progress')}</TableHead>
+                <TableHead>{t('ui.next_due')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="w-[80px]">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -78,6 +79,7 @@ interface AnalyticsData {
 }
 
 export default function CampaignAnalyticsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('30d')
@@ -121,10 +123,10 @@ export default function CampaignAnalyticsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="all">All time</SelectItem>
+              <SelectItem value="7d">{t('ui.last_7_days')}</SelectItem>
+              <SelectItem value="30d">{t('ui.last_30_days')}</SelectItem>
+              <SelectItem value="90d">{t('ui.last_90_days')}</SelectItem>
+              <SelectItem value="all">{t('ui.all_time')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={() => fetchAnalytics(period)}>
@@ -148,7 +150,7 @@ export default function CampaignAnalyticsPage() {
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sent</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('ui.total_sent')}</CardTitle>
                   <Send className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -174,7 +176,7 @@ export default function CampaignAnalyticsPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Failed</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('ui.failed')}</CardTitle>
                   <XCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
@@ -188,7 +190,7 @@ export default function CampaignAnalyticsPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('ui.total_cost')}</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -212,7 +214,7 @@ export default function CampaignAnalyticsPage() {
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sent</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('ui.total_sent')}</CardTitle>
                   <Send className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -248,7 +250,7 @@ export default function CampaignAnalyticsPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Failed</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('ui.failed')}</CardTitle>
                   <XCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
@@ -316,11 +318,9 @@ export default function CampaignAnalyticsPage() {
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-blue-500" /> SMS
-                  </span>
+                    <span className="w-3 h-3 rounded-sm bg-blue-500" />{t('ui.sms')}</span>
                   <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-purple-500" /> Email
-                  </span>
+                    <span className="w-3 h-3 rounded-sm bg-purple-500" />{t('ui.email')}</span>
                 </div>
               </CardContent>
             </Card>
@@ -338,13 +338,13 @@ export default function CampaignAnalyticsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Campaign</TableHead>
-                      <TableHead>Channel</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t('ui.channel')}</TableHead>
+                      <TableHead>{t('ui.status')}</TableHead>
                       <TableHead className="text-right">Recipients</TableHead>
-                      <TableHead className="text-right">Sent</TableHead>
-                      <TableHead className="text-right">Failed</TableHead>
-                      <TableHead className="text-right">Cost</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">{t('ui.sent')}</TableHead>
+                      <TableHead className="text-right">{t('ui.failed')}</TableHead>
+                      <TableHead className="text-right">{t('ui.cost')}</TableHead>
+                      <TableHead>{t('ui.date')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,6 +35,7 @@ export function PaymentCheckout({
   open: controlledOpen,
   trigger,
 }: PaymentCheckoutProps) {
+  const { t } = useLanguage()
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
   const setOpen = (val: boolean) => {
@@ -164,7 +166,7 @@ export function PaymentCheckout({
               <div className="space-y-4">
                 <div className="rounded-lg border p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Amount</span>
+                    <span className="text-muted-foreground">{t('ui.amount')}</span>
                     <span className="font-semibold text-lg">{formatCurrency(amount)}</span>
                   </div>
                 </div>
@@ -190,7 +192,7 @@ export function PaymentCheckout({
             {state === 'verifying' && (
               <div className="flex flex-col items-center py-8 gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Verifying payment...</p>
+                <p className="text-sm text-muted-foreground">{t('ui.verifying_payment')}</p>
               </div>
             )}
 
@@ -205,11 +207,9 @@ export function PaymentCheckout({
             {state === 'error' && (
               <div className="flex flex-col items-center py-8 gap-3">
                 <AlertCircle className="h-12 w-12 text-red-500" />
-                <p className="font-medium text-red-600">Payment Failed</p>
+                <p className="font-medium text-red-600">{t('ui.payment_failed')}</p>
                 <p className="text-sm text-muted-foreground text-center">{errorMsg}</p>
-                <Button onClick={initiatePayment} variant="outline">
-                  Try Again
-                </Button>
+                <Button onClick={initiatePayment} variant="outline">{t('ui.try_again')}</Button>
               </div>
             )}
           </div>

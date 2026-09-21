@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -106,6 +107,7 @@ interface Summary {
 }
 
 export default function InsuranceClaimsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [claims, setClaims] = useState<InsuranceClaim[]>([])
   const [loading, setLoading] = useState(true)
@@ -343,16 +345,16 @@ export default function InsuranceClaimsPage() {
             <div className="flex gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="SUBMITTED">Submitted</SelectItem>
-                  <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="DRAFT">{t('ui.draft')}</SelectItem>
+                  <SelectItem value="SUBMITTED">{t('ui.submitted')}</SelectItem>
+                  <SelectItem value="UNDER_REVIEW">{t('ui.under_review')}</SelectItem>
+                  <SelectItem value="APPROVED">{t('ui.approved')}</SelectItem>
                   <SelectItem value="PARTIALLY_APPROVED">Partially Approved</SelectItem>
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="REJECTED">{t('ui.rejected')}</SelectItem>
                   <SelectItem value="SETTLED">Settled</SelectItem>
                 </SelectContent>
               </Select>
@@ -380,13 +382,13 @@ export default function InsuranceClaimsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Claim</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Provider</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.provider')}</TableHead>
                 <TableHead className="text-right">Claimed</TableHead>
-                <TableHead className="text-right">Approved</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">{t('ui.approved')}</TableHead>
+                <TableHead>{t('ui.submitted')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -492,17 +494,13 @@ export default function InsuranceClaimsPage() {
                           <DropdownMenuItem
                             onClick={() => router.push(`/billing/insurance/${claim.id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                           {claim.status === 'DRAFT' && (
                             <>
                               <DropdownMenuItem
                                 onClick={() => router.push(`/billing/insurance/${claim.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleSubmitClaim(claim.id)}>
                                 <Send className="h-4 w-4 mr-2" />
@@ -562,9 +560,7 @@ export default function InsuranceClaimsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -573,9 +569,7 @@ export default function InsuranceClaimsPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -633,12 +627,12 @@ export default function InsuranceClaimsPage() {
                   onValueChange={(v) => setDenialForm({ ...denialForm, appealStatus: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t('ui.select_status')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PREPARING">Preparing Appeal</SelectItem>
                     <SelectItem value="SUBMITTED">Appeal Submitted</SelectItem>
-                    <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                    <SelectItem value="UNDER_REVIEW">{t('ui.under_review')}</SelectItem>
                     <SelectItem value="WON">Appeal Won</SelectItem>
                     <SelectItem value="LOST">Appeal Lost</SelectItem>
                     <SelectItem value="ABANDONED">Abandoned</SelectItem>
@@ -657,9 +651,7 @@ export default function InsuranceClaimsPage() {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setDenialClaim(null)}>
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setDenialClaim(null)}>{t('ui.cancel')}</Button>
                 <Button onClick={handleSaveDenialInfo}>Save</Button>
               </div>
             </div>
@@ -796,9 +788,7 @@ export default function InsuranceClaimsPage() {
                     setAiAnalysisClaim(null)
                     setAiAnalysis(null)
                   }}
-                >
-                  Close
-                </Button>
+                >{t('ui.close')}</Button>
               </div>
             </div>
           )}

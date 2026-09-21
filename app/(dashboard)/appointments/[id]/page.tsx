@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -112,6 +113,7 @@ interface Appointment {
 }
 
 export default function AppointmentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
   const [appointment, setAppointment] = useState<Appointment | null>(null)
@@ -260,12 +262,12 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
     return (
       <div className="flex flex-col items-center justify-center h-96">
         <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold">Appointment not found</h2>
+        <h2 className="text-xl font-semibold">{t('ui.appointment_not_found')}</h2>
         <p className="text-muted-foreground mb-4">
           The appointment you&apos;re looking for doesn&apos;t exist.
         </p>
         <Link href="/appointments">
-          <Button>Back to Appointments</Button>
+          <Button>{t('ui.back_to_appointments')}</Button>
         </Link>
       </div>
     )
@@ -308,15 +310,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
             )}
           {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
             <Button onClick={handleCheckIn} disabled={actionLoading}>
-              <LogIn className="h-4 w-4 mr-2" />
-              Check In
-            </Button>
+              <LogIn className="h-4 w-4 mr-2" />{t('ui.check_in')}</Button>
           )}
           {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
             <Button onClick={handleCheckOut} disabled={actionLoading}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Check Out
-            </Button>
+              <LogOut className="h-4 w-4 mr-2" />{t('ui.check_out')}</Button>
           )}
           {appointment.status === 'SCHEDULED' && (
             <Button
@@ -324,15 +322,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               onClick={() => handleStatusChange('CONFIRMED')}
               disabled={actionLoading}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Confirm
-            </Button>
+              <CheckCircle className="h-4 w-4 mr-2" />{t('ui.confirm')}</Button>
           )}
           <Link href={`/appointments/${id}/edit`}>
             <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
+              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
           </Link>
           {!['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(appointment.status) && (
             <Button
@@ -340,9 +334,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               onClick={() => setShowCancelDialog(true)}
               disabled={actionLoading}
             >
-              <XCircle className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
+              <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel')}</Button>
           )}
         </div>
       </div>
@@ -352,22 +344,20 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Appointment Details
-            </CardTitle>
+              <Calendar className="h-5 w-5" />{t('ui.appointment_details')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Date</p>
+                <p className="text-sm text-muted-foreground">{t('ui.date')}</p>
                 <p className="font-medium">{formatDate(appointment.scheduledDate)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Time</p>
+                <p className="text-sm text-muted-foreground">{t('ui.time')}</p>
                 <p className="font-medium">{formatTime(appointment.scheduledTime)}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Duration</p>
+                <p className="text-sm text-muted-foreground">{t('ui.duration')}</p>
                 <p className="font-medium">{appointment.duration} minutes</p>
               </div>
               <div>
@@ -377,11 +367,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Type</p>
+                <p className="text-sm text-muted-foreground">{t('ui.type')}</p>
                 {getTypeBadge(appointment.appointmentType)}
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Priority</p>
+                <p className="text-sm text-muted-foreground">{t('ui.priority')}</p>
                 {getPriorityBadge(appointment.priority)}
               </div>
             </div>
@@ -392,7 +382,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 <div className="grid grid-cols-2 gap-4">
                   {appointment.checkedInAt && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Checked In</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.checked_in')}</p>
                       <p className="font-medium">
                         {new Date(appointment.checkedInAt).toLocaleTimeString()}
                       </p>
@@ -420,7 +410,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               <>
                 <Separator />
                 <div>
-                  <p className="text-sm text-muted-foreground">Chief Complaint</p>
+                  <p className="text-sm text-muted-foreground">{t('ui.chief_complaint')}</p>
                   <p className="font-medium">{appointment.chiefComplaint}</p>
                 </div>
               </>
@@ -428,7 +418,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
 
             {appointment.notes && (
               <div>
-                <p className="text-sm text-muted-foreground">Notes</p>
+                <p className="text-sm text-muted-foreground">{t('ui.notes')}</p>
                 <p className="font-medium">{appointment.notes}</p>
               </div>
             )}
@@ -455,9 +445,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Patient Information
-            </CardTitle>
+              <User className="h-5 w-5" />{t('ui.patient_information')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
@@ -497,19 +485,19 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               <>
                 <Separator />
                 <div>
-                  <h4 className="font-medium mb-2">Medical Alerts</h4>
+                  <h4 className="font-medium mb-2">{t('ui.medical_alerts')}</h4>
                   <div className="flex flex-wrap gap-2">
                     {appointment.patient.medicalHistory.hasAllergies && (
-                      <Badge variant="destructive">Allergies</Badge>
+                      <Badge variant="destructive">{t('ui.allergies')}</Badge>
                     )}
                     {appointment.patient.medicalHistory.hasDiabetes && (
-                      <Badge variant="secondary">Diabetes</Badge>
+                      <Badge variant="secondary">{t('ui.diabetes')}</Badge>
                     )}
                     {appointment.patient.medicalHistory.hasHypertension && (
-                      <Badge variant="secondary">Hypertension</Badge>
+                      <Badge variant="secondary">{t('ui.hypertension')}</Badge>
                     )}
                     {appointment.patient.medicalHistory.hasHeartDisease && (
-                      <Badge variant="destructive">Heart Disease</Badge>
+                      <Badge variant="destructive">{t('ui.heart_disease')}</Badge>
                     )}
                   </div>
                   {appointment.patient.medicalHistory.drugAllergies && (
@@ -540,9 +528,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5" />
-              Doctor
-            </CardTitle>
+              <Stethoscope className="h-5 w-5" />{t('ui.doctor')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -568,9 +554,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Treatments
-            </CardTitle>
+              <FileText className="h-5 w-5" />{t('ui.treatments')}</CardTitle>
           </CardHeader>
           <CardContent>
             {appointment.treatments.length === 0 ? (
@@ -599,7 +583,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Appointment</DialogTitle>
+            <DialogTitle>{t('ui.cancel_appointment')}</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel this appointment? This action cannot be undone.
             </DialogDescription>
@@ -622,9 +606,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               variant="destructive"
               onClick={() => handleStatusChange('CANCELLED')}
               disabled={actionLoading}
-            >
-              Cancel Appointment
-            </Button>
+            >{t('ui.cancel_appointment')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

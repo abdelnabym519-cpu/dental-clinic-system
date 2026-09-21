@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useRouter } from 'next/navigation'
@@ -94,6 +95,7 @@ const emptyForm = {
 }
 
 export default function MedicationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [medications, setMedications] = useState<Medication[]>([])
@@ -273,10 +275,10 @@ export default function MedicationsPage() {
               }}
             >
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="All Categories" />
+                <SelectValue placeholder={t('ui.all_categories')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('ui.all_categories')}</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -305,12 +307,12 @@ export default function MedicationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Generic Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead>{t('ui.name')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('ui.generic_name')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('ui.category')}</TableHead>
                   <TableHead className="hidden lg:table-cell">Form / Strength</TableHead>
                   <TableHead className="hidden lg:table-cell">Default Dosage</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -367,9 +369,7 @@ export default function MedicationsPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-          >
-            Previous
-          </Button>
+          >{t('ui.previous')}</Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
             Page {pagination.page} of {pagination.pages}
           </span>
@@ -378,9 +378,7 @@ export default function MedicationsPage() {
             size="sm"
             disabled={pagination.page >= pagination.pages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-          >
-            Next
-          </Button>
+          >{t('ui.next')}</Button>
         </div>
       )}
 
@@ -405,7 +403,7 @@ export default function MedicationsPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <Label>Generic Name</Label>
+                <Label>{t('ui.generic_name')}</Label>
                 <Input
                   value={formData.genericName}
                   onChange={(e) => setFormData((f) => ({ ...f, genericName: e.target.value }))}
@@ -413,13 +411,13 @@ export default function MedicationsPage() {
                 />
               </div>
               <div>
-                <Label>Category</Label>
+                <Label>{t('ui.category')}</Label>
                 <Select
                   value={formData.category || undefined}
                   onValueChange={(v) => setFormData((f) => ({ ...f, category: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t('ui.select_category')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -470,7 +468,7 @@ export default function MedicationsPage() {
               <h4 className="text-sm font-medium mb-3">Default Prescription Values</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Dosage</Label>
+                  <Label>{t('ui.dosage')}</Label>
                   <Input
                     value={formData.defaultDosage}
                     onChange={(e) => setFormData((f) => ({ ...f, defaultDosage: e.target.value }))}
@@ -478,7 +476,7 @@ export default function MedicationsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Frequency</Label>
+                  <Label>{t('ui.frequency')}</Label>
                   <Input
                     value={formData.defaultFrequency}
                     onChange={(e) =>
@@ -488,7 +486,7 @@ export default function MedicationsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Duration</Label>
+                  <Label>{t('ui.duration')}</Label>
                   <Input
                     value={formData.defaultDuration}
                     onChange={(e) =>
@@ -527,9 +525,7 @@ export default function MedicationsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editing ? 'Update' : 'Add Medication'}

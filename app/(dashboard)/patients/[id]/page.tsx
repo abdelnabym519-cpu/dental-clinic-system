@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -181,6 +182,7 @@ function getDocumentTypeLabel(type: string) {
 }
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const resolvedParams = use(params)
   const router = useRouter()
   const { toast } = useToast()
@@ -499,15 +501,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-wrap gap-2">
           <Link href={`/patients/${patient.id}/edit`}>
             <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
+              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
           </Link>
           <Link href={`/appointments/new?patientId=${patient.id}`}>
             <Button>
-              <Calendar className="h-4 w-4 mr-2" />
-              Book Appointment
-            </Button>
+              <Calendar className="h-4 w-4 mr-2" />{t('ui.book_appointment')}</Button>
           </Link>
         </div>
       </div>
@@ -517,11 +515,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview" className="gap-2">
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
+            <span className="hidden sm:inline">{t('ui.overview')}</span>
           </TabsTrigger>
           <TabsTrigger value="dental-chart" className="gap-2">
             <Smile className="h-4 w-4" />
-            <span className="hidden sm:inline">Dental Chart</span>
+            <span className="hidden sm:inline">{t('ui.dental_chart')}</span>
           </TabsTrigger>
           <TabsTrigger value="timeline" className="gap-2">
             <History className="h-4 w-4" />
@@ -529,22 +527,22 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2">
             <FolderOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Documents</span>
+            <span className="hidden sm:inline">{t('ui.documents')}</span>
             <Badge variant="secondary" className="ml-1">
               {patient._count.documents}
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="appointments" className="gap-2">
             <Calendar className="h-4 w-4" />
-            <span className="hidden sm:inline">Appointments</span>
+            <span className="hidden sm:inline">{t('ui.appointments')}</span>
           </TabsTrigger>
           <TabsTrigger value="treatments" className="gap-2">
             <Stethoscope className="h-4 w-4" />
-            <span className="hidden sm:inline">Treatments</span>
+            <span className="hidden sm:inline">{t('ui.treatments')}</span>
           </TabsTrigger>
           <TabsTrigger value="billing" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline">Billing</span>
+            <span className="hidden sm:inline">{t('ui.billing')}</span>
           </TabsTrigger>
           <TabsTrigger value="forms" className="gap-2">
             <FileCheck className="h-4 w-4" />
@@ -552,7 +550,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           </TabsTrigger>
           <TabsTrigger value="insurance" className="gap-2">
             <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">Insurance</span>
+            <span className="hidden sm:inline">{t('ui.insurance')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -563,13 +561,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             {/* Contact Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+                <CardTitle>{t('ui.contact_information')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.phone')}</p>
                     <p>{patient.phone}</p>
                     {patient.alternatePhone && (
                       <p className="text-sm text-muted-foreground">{patient.alternatePhone}</p>
@@ -580,7 +578,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <div className="flex items-center gap-3">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.email')}</p>
                       <p>{patient.email}</p>
                     </div>
                   </div>
@@ -589,7 +587,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <div className="flex items-center gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Address</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.address')}</p>
                       <p>{patient.address}</p>
                       <p className="text-sm text-muted-foreground">
                         {[patient.city, patient.state, patient.pincode].filter(Boolean).join(', ')}
@@ -603,24 +601,24 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             {/* Personal Details */}
             <Card>
               <CardHeader>
-                <CardTitle>Personal Details</CardTitle>
+                <CardTitle>{t('ui.personal_details')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.date_of_birth')}</p>
                     <p>{format(new Date(patient.dateOfBirth), 'PPP')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Gender</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.gender')}</p>
                     <p>{patient.gender}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Blood Group</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.blood_group')}</p>
                     <p>{patient.bloodGroup || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Occupation</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.occupation')}</p>
                     <p>{patient.occupation || 'N/A'}</p>
                   </div>
                 </div>
@@ -630,21 +628,21 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             {/* Emergency Contact */}
             <Card>
               <CardHeader>
-                <CardTitle>Emergency Contact</CardTitle>
+                <CardTitle>{t('ui.emergency_contact')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {patient.emergencyContactName ? (
                   <div className="space-y-2">
                     <div>
-                      <p className="text-sm text-muted-foreground">Name</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.name')}</p>
                       <p>{patient.emergencyContactName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.phone')}</p>
                       <p>{patient.emergencyContactPhone}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Relation</p>
+                      <p className="text-sm text-muted-foreground">{t('ui.relation')}</p>
                       <p>{patient.emergencyContactRelation}</p>
                     </div>
                   </div>
@@ -668,7 +666,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     {patient.medicalHistory.allergies &&
                       patient.medicalHistory.allergies.length > 0 && (
                         <div>
-                          <p className="text-sm text-muted-foreground">Allergies</p>
+                          <p className="text-sm text-muted-foreground">{t('ui.allergies')}</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {patient.medicalHistory.allergies.map((allergy, i) => (
                               <Badge key={i} variant="destructive">
@@ -726,16 +724,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <Select value={timelineFilter} onValueChange={setTimelineFilter}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
+                  <SelectValue placeholder={t('ui.filter_by_type')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Events</SelectItem>
-                  <SelectItem value="appointment">Appointments</SelectItem>
-                  <SelectItem value="treatment">Treatments</SelectItem>
-                  <SelectItem value="payment">Payments</SelectItem>
-                  <SelectItem value="document">Documents</SelectItem>
-                  <SelectItem value="prescription">Prescriptions</SelectItem>
-                  <SelectItem value="lab_order">Lab Orders</SelectItem>
+                  <SelectItem value="appointment">{t('ui.appointments')}</SelectItem>
+                  <SelectItem value="treatment">{t('ui.treatments')}</SelectItem>
+                  <SelectItem value="payment">{t('ui.payments')}</SelectItem>
+                  <SelectItem value="document">{t('ui.documents')}</SelectItem>
+                  <SelectItem value="prescription">{t('ui.prescriptions')}</SelectItem>
+                  <SelectItem value="lab_order">{t('ui.lab_orders')}</SelectItem>
                 </SelectContent>
               </Select>
             </CardHeader>
@@ -883,7 +881,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Documents</CardTitle>
+                <CardTitle>{t('ui.documents')}</CardTitle>
                 <CardDescription>
                   X-rays, photos, consent forms, and other patient documents
                 </CardDescription>
@@ -909,18 +907,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Document
-                    </Button>
+                      <Upload className="h-4 w-4 mr-2" />{t('ui.upload_document')}</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Upload Document</DialogTitle>
+                      <DialogTitle>{t('ui.upload_document')}</DialogTitle>
                       <DialogDescription>Upload a new document for this patient</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="file">File</Label>
+                        <Label htmlFor="file">{t('ui.file')}</Label>
                         <Input
                           id="file"
                           type="file"
@@ -935,7 +931,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <Label htmlFor="type">Document Type</Label>
                         <Select value={uploadType} onValueChange={setUploadType}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder={t('ui.select_type')} />
                           </SelectTrigger>
                           <SelectContent>
                             {DOCUMENT_TYPES.map((type) => (
@@ -957,9 +953,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
-                        Cancel
-                      </Button>
+                      <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>{t('ui.cancel')}</Button>
                       <Button onClick={handleUploadDocument} disabled={uploading}>
                         {uploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         Upload
@@ -984,10 +978,10 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     <TableRow>
                       {compareMode && <TableHead className="w-10" />}
                       <TableHead>Document</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead>{t('ui.type')}</TableHead>
                       <TableHead>Size</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t('ui.date')}</TableHead>
+                      <TableHead className="text-right">{t('ui.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1070,13 +1064,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                         setViewDocument(doc)
                                       }}
                                     >
-                                      <Eye className="h-4 w-4 mr-2" />
-                                      View
-                                    </DropdownMenuItem>
+                                      <Eye className="h-4 w-4 mr-2" />{t('ui.view')}</DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setAnnotateDocument(doc)}>
-                                      <Pen className="h-4 w-4 mr-2" />
-                                      Annotate
-                                    </DropdownMenuItem>
+                                      <Pen className="h-4 w-4 mr-2" />{t('ui.annotate')}</DropdownMenuItem>
                                   </>
                                 )}
                                 {isImage && (
@@ -1094,9 +1084,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                   className="text-destructive"
                                   onClick={() => handleDeleteDocument(doc.id)}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                  <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -1179,7 +1167,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Appointments</CardTitle>
+                <CardTitle>{t('ui.appointments')}</CardTitle>
                 <CardDescription>
                   Recent and upcoming appointments
                   {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length > 0 && (
@@ -1192,25 +1180,23 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <Link href={`/appointments/new?patientId=${patient.id}`}>
                 <Button>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  New Appointment
-                </Button>
+                  <Calendar className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
               </Link>
             </CardHeader>
             <CardContent>
               {patient.appointments.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[200px]">
                   <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No appointments found</p>
+                  <p className="text-muted-foreground">{t('ui.no_appointments_found')}</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t('ui.date_time')}</TableHead>
+                      <TableHead>{t('ui.type')}</TableHead>
+                      <TableHead>{t('ui.doctor')}</TableHead>
+                      <TableHead>{t('ui.status')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1258,7 +1244,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <TabsContent value="treatments" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Treatment History</CardTitle>
+              <CardTitle>{t('ui.treatment_history')}</CardTitle>
               <CardDescription>Past procedures and treatments</CardDescription>
             </CardHeader>
             <CardContent>
@@ -1271,11 +1257,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Procedure</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t('ui.date')}</TableHead>
+                      <TableHead>{t('ui.procedure')}</TableHead>
+                      <TableHead>{t('ui.category')}</TableHead>
+                      <TableHead>{t('ui.doctor')}</TableHead>
+                      <TableHead>{t('ui.status')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1324,17 +1310,17 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               {patient.invoices.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[200px]">
                   <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No invoices found</p>
+                  <p className="text-muted-foreground">{t('ui.no_invoices_found')}</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Paid</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t('ui.date')}</TableHead>
+                      <TableHead>{t('ui.amount')}</TableHead>
+                      <TableHead>{t('ui.paid')}</TableHead>
+                      <TableHead>{t('ui.status')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -105,6 +106,7 @@ interface PlanDetail {
 }
 
 export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
   const { toast } = useToast()
@@ -220,13 +222,13 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   const statusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Active</Badge>
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Completed</Badge>
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.completed')}</Badge>
       case 'DEFAULTED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Defaulted</Badge>
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
       case 'CANCELLED':
-        return <Badge variant="secondary">Cancelled</Badge>
+        return <Badge variant="secondary">{t('ui.cancelled')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -250,11 +252,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   const installmentBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Paid</Badge>
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.paid')}</Badge>
       case 'PENDING':
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">Pending</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">{t('ui.pending')}</Badge>
       case 'OVERDUE':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Overdue</Badge>
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.overdue')}</Badge>
       case 'WAIVED':
         return <Badge variant="secondary">Waived</Badge>
       default:
@@ -339,9 +341,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             className="text-destructive"
             onClick={() => setCancelDialog(true)}
           >
-            <Ban className="h-4 w-4 mr-2" />
-            Cancel Plan
-          </Button>
+            <Ban className="h-4 w-4 mr-2" />{t('ui.cancel_plan')}</Button>
         )}
       </div>
 
@@ -349,7 +349,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.total_amount')}</CardTitle>
             <Banknote className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -363,7 +363,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.total_paid')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -377,7 +377,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Remaining</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.remaining')}</CardTitle>
             <CalendarClock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -394,7 +394,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Next Due</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.next_due')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -440,26 +440,26 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
         {/* Patient Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Patient Details</CardTitle>
+            <CardTitle className="text-base">{t('ui.patient_details')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Name</span>
+              <span className="text-muted-foreground">{t('ui.name')}</span>
               <span className="font-medium">
                 {plan.patient.firstName} {plan.patient.lastName}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Patient ID</span>
+              <span className="text-muted-foreground">{t('ui.patient_id')}</span>
               <span>{plan.patient.patientId}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Phone</span>
+              <span className="text-muted-foreground">{t('ui.phone')}</span>
               <span>{plan.patient.phone}</span>
             </div>
             {plan.patient.email && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Email</span>
+                <span className="text-muted-foreground">{t('ui.email')}</span>
                 <span>{plan.patient.email}</span>
               </div>
             )}
@@ -486,11 +486,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               <span className="font-medium">{formatCurrency(plan.invoice.totalAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Paid</span>
+              <span className="text-muted-foreground">{t('ui.total_paid')}</span>
               <span className="text-green-600">{formatCurrency(plan.invoice.paidAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Balance</span>
+              <span className="text-muted-foreground">{t('ui.balance')}</span>
               <span className="text-red-600">{formatCurrency(plan.invoice.balanceAmount)}</span>
             </div>
           </CardContent>
@@ -503,11 +503,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Frequency</span>
+              <span className="text-muted-foreground">{t('ui.frequency')}</span>
               <span>{frequencyLabel(plan.frequency)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Installments</span>
+              <span className="text-muted-foreground">{t('ui.installments')}</span>
               <span>{plan.installments}</span>
             </div>
             <div className="flex justify-between">
@@ -515,11 +515,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               <span>{Number(plan.interestRate)}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Down Payment</span>
+              <span className="text-muted-foreground">{t('ui.down_payment')}</span>
               <span>{formatCurrency(plan.downPayment)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Created</span>
+              <span className="text-muted-foreground">{t('ui.created')}</span>
               <span>{format(new Date(plan.createdAt), 'dd MMM yyyy')}</span>
             </div>
           </CardContent>
@@ -530,7 +530,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       {plan.notes && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
+            <CardTitle className="text-base">{t('ui.notes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{plan.notes}</p>
@@ -541,7 +541,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
       {/* Installment Schedule */}
       <Card>
         <CardHeader>
-          <CardTitle>Installment Schedule</CardTitle>
+          <CardTitle>{t('ui.installment_schedule')}</CardTitle>
           <CardDescription>Track and manage each installment payment</CardDescription>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
@@ -549,13 +549,13 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[60px]">#</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t('ui.due_date')}</TableHead>
+                <TableHead>{t('ui.amount')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
                 <TableHead>Paid Date</TableHead>
                 <TableHead>Paid Amount</TableHead>
-                <TableHead>Payment Method</TableHead>
-                <TableHead className="w-[140px]">Actions</TableHead>
+                <TableHead>{t('ui.payment_method')}</TableHead>
+                <TableHead className="w-[140px]">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -629,19 +629,19 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               />
             </div>
             <div className="space-y-2">
-              <Label>Payment Method</Label>
+              <Label>{t('ui.payment_method')}</Label>
               <Select value={payMethod} onValueChange={setPayMethod}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CASH">Cash</SelectItem>
-                  <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="INSTAPAY">InstaPay</SelectItem>
-                  <SelectItem value="FAWRY">Fawry</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                  <SelectItem value="CHEQUE">Cheque</SelectItem>
-                  <SelectItem value="ONLINE">Online</SelectItem>
+                  <SelectItem value="CASH">{t('ui.cash')}</SelectItem>
+                  <SelectItem value="CARD">{t('ui.card')}</SelectItem>
+                  <SelectItem value="INSTAPAY">{t('ui.instapay')}</SelectItem>
+                  <SelectItem value="FAWRY">{t('ui.fawry')}</SelectItem>
+                  <SelectItem value="BANK_TRANSFER">{t('ui.bank_transfer')}</SelectItem>
+                  <SelectItem value="CHEQUE">{t('ui.cheque')}</SelectItem>
+                  <SelectItem value="ONLINE">{t('ui.online')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -655,9 +655,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setPayDialog(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handlePay} disabled={paying || payAmount <= 0}>
               {paying ? (
                 <>
@@ -683,9 +681,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialog(false)}>
-              Keep Plan
-            </Button>
+            <Button variant="outline" onClick={() => setCancelDialog(false)}>{t('ui.keep_plan')}</Button>
             <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
               {cancelling ? (
                 <>

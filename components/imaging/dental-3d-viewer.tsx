@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -146,6 +147,7 @@ function ToothShape({
   onClick: () => void
   zoom: number
 }) {
+  const { t } = useLanguage()
   const type = getToothType(toothNum)
   const { w, h } = getToothDimensions(type)
   const fill = CONDITION_COLORS[condition] || CONDITION_COLORS.HEALTHY
@@ -292,6 +294,7 @@ export default function Dental3DViewer({
   readOnly = false,
   onToothClick,
 }: Dental3DViewerProps) {
+  const { t } = useLanguage()
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
   const [viewAngle, setViewAngle] = useState<'front' | 'upper' | 'lower'>('front')
@@ -593,7 +596,7 @@ export default function Dental3DViewer({
                       )}
                       {selectedData?.treatments && selectedData.treatments.length > 0 && (
                         <div className="mt-2 border-t pt-2">
-                          <p className="text-xs font-medium mb-1">Treatment History</p>
+                          <p className="text-xs font-medium mb-1">{t('ui.treatment_history')}</p>
                           {selectedData.treatments.map((tx, i) => (
                             <div key={i} className="text-xs text-muted-foreground">
                               {tx.name} — {tx.date}
@@ -610,8 +613,7 @@ export default function Dental3DViewer({
               <Card>
                 <CardContent className="p-3">
                   <p className="text-sm font-medium mb-2 flex items-center gap-1">
-                    <Eye className="h-3.5 w-3.5" /> Overview
-                  </p>
+                    <Eye className="h-3.5 w-3.5" />{t('ui.overview')}</p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Present Teeth</span>

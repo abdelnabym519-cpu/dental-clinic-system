@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -49,6 +50,7 @@ interface ReportData {
 }
 
 export default function ComplianceReportsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [report, setReport] = useState<ReportData | null>(null)
@@ -166,7 +168,7 @@ export default function ComplianceReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Compliance Reports</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t('ui.compliance_reports')}</h2>
         <p className="text-muted-foreground">
           Sterilization compliance rates, indicator pass rates, and maintenance alerts
         </p>
@@ -235,7 +237,7 @@ export default function ComplianceReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Method</TableHead>
+                  <TableHead>{t('ui.method')}</TableHead>
                   <TableHead className="text-right">Total Cycles</TableHead>
                   <TableHead className="text-right">Pass Rate</TableHead>
                 </TableRow>
@@ -282,10 +284,10 @@ export default function ComplianceReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Instrument</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Cycles Used</TableHead>
-                  <TableHead className="text-right">Max Cycles</TableHead>
+                  <TableHead>{t('ui.instrument')}</TableHead>
+                  <TableHead>{t('ui.category')}</TableHead>
+                  <TableHead className="text-right">{t('ui.cycles_used')}</TableHead>
+                  <TableHead className="text-right">{t('ui.max_cycles')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -321,11 +323,11 @@ export default function ComplianceReportsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Instrument</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Cycles Used</TableHead>
-                  <TableHead className="text-right">Max Cycles</TableHead>
-                  <TableHead className="text-right">Usage</TableHead>
+                  <TableHead>{t('ui.instrument')}</TableHead>
+                  <TableHead>{t('ui.category')}</TableHead>
+                  <TableHead className="text-right">{t('ui.cycles_used')}</TableHead>
+                  <TableHead className="text-right">{t('ui.max_cycles')}</TableHead>
+                  <TableHead className="text-right">{t('ui.usage')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

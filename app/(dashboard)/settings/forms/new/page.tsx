@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -56,6 +57,7 @@ function generateId() {
 }
 
 export default function NewFormTemplatePage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -164,12 +166,10 @@ export default function NewFormTemplatePage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Preview: {name || 'Untitled'}</h1>
-              <p className="text-muted-foreground">This is how the form will appear to patients</p>
+              <p className="text-muted-foreground">{t('ui.this_is_how_the_form_will_appear_to_patients')}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => setShowPreview(false)}>
-            Back to Editor
-          </Button>
+          <Button variant="outline" onClick={() => setShowPreview(false)}>{t('ui.back_to_editor')}</Button>
         </div>
         <Card>
           <CardHeader>
@@ -206,9 +206,7 @@ export default function NewFormTemplatePage() {
             onClick={() => setShowPreview(true)}
             disabled={fields.length === 0}
           >
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
+            <Eye className="h-4 w-4 mr-2" />{t('ui.preview')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -225,7 +223,7 @@ export default function NewFormTemplatePage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Form Details</CardTitle>
+              <CardTitle>{t('ui.form_details')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -239,7 +237,7 @@ export default function NewFormTemplatePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Form Type</Label>
+                  <Label>{t('ui.form_type')}</Label>
                   <Select value={type} onValueChange={setType}>
                     <SelectTrigger>
                       <SelectValue />
@@ -255,7 +253,7 @@ export default function NewFormTemplatePage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="desc">Description</Label>
+                <Label htmlFor="desc">{t('ui.description')}</Label>
                 <Textarea
                   id="desc"
                   value={description}
@@ -275,7 +273,7 @@ export default function NewFormTemplatePage() {
             <CardContent className="space-y-3">
               {fields.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p className="mb-2">No fields yet. Add fields from the panel on the right.</p>
+                  <p className="mb-2">{t('ui.no_fields_yet_add_fields_from_the_panel_on_the_r')}</p>
                 </div>
               )}
 
@@ -293,9 +291,7 @@ export default function NewFormTemplatePage() {
                       {field.label || '(no label)'}
                     </span>
                     {field.required && (
-                      <Badge variant="destructive" className="text-xs">
-                        Required
-                      </Badge>
+                      <Badge variant="destructive" className="text-xs">{t('ui.required')}</Badge>
                     )}
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
@@ -339,7 +335,7 @@ export default function NewFormTemplatePage() {
                     <div className="mt-3 pt-3 border-t space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label className="text-xs">Label</Label>
+                          <Label className="text-xs">{t('ui.label')}</Label>
                           <Input
                             value={field.label}
                             onChange={(e) => updateField(field.id, { label: e.target.value })}
@@ -350,7 +346,7 @@ export default function NewFormTemplatePage() {
                           field.type
                         ) && (
                           <div className="space-y-1">
-                            <Label className="text-xs">Placeholder</Label>
+                            <Label className="text-xs">{t('ui.placeholder')}</Label>
                             <Input
                               value={field.placeholder || ''}
                               onChange={(e) =>
@@ -379,7 +375,7 @@ export default function NewFormTemplatePage() {
                       {/* Options for select/radio/checkbox */}
                       {field.options && (
                         <div className="space-y-2">
-                          <Label className="text-xs">Options</Label>
+                          <Label className="text-xs">{t('ui.options')}</Label>
                           {field.options.map((opt, oi) => (
                             <div key={oi} className="flex items-center gap-2">
                               <Input
@@ -399,8 +395,7 @@ export default function NewFormTemplatePage() {
                             </div>
                           ))}
                           <Button variant="outline" size="sm" onClick={() => addOption(field.id)}>
-                            <Plus className="h-3 w-3 mr-1" /> Add Option
-                          </Button>
+                            <Plus className="h-3 w-3 mr-1" />{t('ui.add_option')}</Button>
                         </div>
                       )}
 
@@ -412,7 +407,7 @@ export default function NewFormTemplatePage() {
                               updateField(field.id, { required: checked })
                             }
                           />
-                          <Label className="text-xs">Required</Label>
+                          <Label className="text-xs">{t('ui.required')}</Label>
                         </div>
                       )}
                     </div>
@@ -427,7 +422,7 @@ export default function NewFormTemplatePage() {
         <div>
           <Card className="sticky top-6">
             <CardHeader>
-              <CardTitle className="text-base">Add Field</CardTitle>
+              <CardTitle className="text-base">{t('ui.add_field')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {FIELD_TYPES.map((ft) => (

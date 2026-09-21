@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -85,6 +86,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 }
 
 export default function DevicesPage() {
+  const { t } = useLanguage()
   const [devices, setDevices] = useState<Device[]>([])
   const [summary, setSummary] = useState<DeviceSummary>({
     total: 0,
@@ -224,13 +226,11 @@ export default function DevicesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchDevices}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-          </Button>
+            <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Register Device
-              </Button>
+                <Plus className="h-4 w-4 mr-1" />{t('ui.register_device')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -249,7 +249,7 @@ export default function DevicesPage() {
                   <Label>Device Type *</Label>
                   <Select value={formType} onValueChange={setFormType}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder={t('ui.select_type')} />
                     </SelectTrigger>
                     <SelectContent>
                       {DEVICE_TYPES.map((t) => (
@@ -261,15 +261,15 @@ export default function DevicesPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Serial Number</Label>
+                  <Label>{t('ui.serial_number')}</Label>
                   <Input
                     value={formSerial}
                     onChange={(e) => setFormSerial(e.target.value)}
-                    placeholder="Optional"
+                    placeholder={t('ui.optional')}
                   />
                 </div>
                 <div>
-                  <Label>Location</Label>
+                  <Label>{t('ui.location')}</Label>
                   <Input
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
@@ -284,9 +284,7 @@ export default function DevicesPage() {
                     placeholder="e.g. 192.168.1.100"
                   />
                 </div>
-                <Button className="w-full" onClick={handleRegister}>
-                  Register Device
-                </Button>
+                <Button className="w-full" onClick={handleRegister}>{t('ui.register_device')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -312,7 +310,7 @@ export default function DevicesPage() {
               <Wifi className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{summary.online}</p>
-                <p className="text-xs text-muted-foreground">Online</p>
+                <p className="text-xs text-muted-foreground">{t('ui.online')}</p>
               </div>
             </div>
           </CardContent>
@@ -323,7 +321,7 @@ export default function DevicesPage() {
               <WifiOff className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-2xl font-bold">{summary.offline}</p>
-                <p className="text-xs text-muted-foreground">Offline</p>
+                <p className="text-xs text-muted-foreground">{t('ui.offline')}</p>
               </div>
             </div>
           </CardContent>
@@ -334,7 +332,7 @@ export default function DevicesPage() {
               <AlertTriangle className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-2xl font-bold">{summary.error}</p>
-                <p className="text-xs text-muted-foreground">Errors</p>
+                <p className="text-xs text-muted-foreground">{t('ui.errors')}</p>
               </div>
             </div>
           </CardContent>
@@ -345,7 +343,7 @@ export default function DevicesPage() {
               <Wrench className="h-5 w-5 text-amber-500" />
               <div>
                 <p className="text-2xl font-bold">{summary.maintenance}</p>
-                <p className="text-xs text-muted-foreground">Maintenance</p>
+                <p className="text-xs text-muted-foreground">{t('ui.maintenance')}</p>
               </div>
             </div>
           </CardContent>
@@ -356,10 +354,10 @@ export default function DevicesPage() {
       <div className="flex items-center gap-4">
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder={t('ui.filter_by_type')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">{t('ui.all_types')}</SelectItem>
             {DEVICE_TYPES.map((t) => (
               <SelectItem key={t.value} value={t.value}>
                 {t.label}
@@ -369,14 +367,14 @@ export default function DevicesPage() {
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t('ui.filter_by_status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="ONLINE">Online</SelectItem>
-            <SelectItem value="OFFLINE">Offline</SelectItem>
-            <SelectItem value="ERROR">Error</SelectItem>
-            <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+            <SelectItem value="all">{t('ui.all_statuses')}</SelectItem>
+            <SelectItem value="ONLINE">{t('ui.online')}</SelectItem>
+            <SelectItem value="OFFLINE">{t('ui.offline')}</SelectItem>
+            <SelectItem value="ERROR">{t('ui.error')}</SelectItem>
+            <SelectItem value="MAINTENANCE">{t('ui.maintenance')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -399,13 +397,13 @@ export default function DevicesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('ui.name')}</TableHead>
+                  <TableHead>{t('ui.type')}</TableHead>
+                  <TableHead>{t('ui.location')}</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>Last Ping</TableHead>
                   <TableHead>Latest Data</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -443,10 +441,10 @@ export default function DevicesPage() {
                             </div>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="ONLINE">Online</SelectItem>
-                            <SelectItem value="OFFLINE">Offline</SelectItem>
-                            <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                            <SelectItem value="ERROR">Error</SelectItem>
+                            <SelectItem value="ONLINE">{t('ui.online')}</SelectItem>
+                            <SelectItem value="OFFLINE">{t('ui.offline')}</SelectItem>
+                            <SelectItem value="MAINTENANCE">{t('ui.maintenance')}</SelectItem>
+                            <SelectItem value="ERROR">{t('ui.error')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

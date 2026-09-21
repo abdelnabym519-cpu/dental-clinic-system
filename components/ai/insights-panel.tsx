@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useEffect } from 'react'
 import { useAI, type Insight } from './ai-provider'
 import { cn } from '@/lib/utils'
@@ -77,6 +78,7 @@ function InsightCard({ insight, onDismiss }: { insight: Insight; onDismiss: () =
  * Pass `maxItems` to limit how many are shown.
  */
 export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
+  const { t } = useLanguage()
   const { insights, insightsLoading, loadInsights, dismissInsight, generateInsights } = useAI()
 
   useEffect(() => {
@@ -93,9 +95,7 @@ export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
         <button
           onClick={generateInsights}
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
-        >
-          Refresh
-        </button>
+        >{t('ui.refresh')}</button>
       </div>
 
       {/* Loading */}

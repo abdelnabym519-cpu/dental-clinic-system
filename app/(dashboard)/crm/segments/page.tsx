@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -103,6 +104,7 @@ const SEGMENT_CONFIG: Record<
 }
 
 export default function SegmentsPage() {
+  const { t } = useLanguage()
   const [data, setData] = useState<SegmentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('new')
@@ -143,7 +145,7 @@ export default function SegmentsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Patient Segments</h1>
+        <h1 className="text-3xl font-bold">{t('ui.patient_segments')}</h1>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
@@ -163,7 +165,7 @@ export default function SegmentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Patient Segments</h1>
+          <h1 className="text-3xl font-bold">{t('ui.patient_segments')}</h1>
           <p className="text-muted-foreground mt-1">
             {data?.totalPatients || 0} total active patients
           </p>
@@ -233,9 +235,9 @@ export default function SegmentsPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Patient ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Phone</TableHead>
+                          <TableHead>{t('ui.patient_id')}</TableHead>
+                          <TableHead>{t('ui.name')}</TableHead>
+                          <TableHead>{t('ui.phone')}</TableHead>
                           <TableHead>Last Visit</TableHead>
                           <TableHead className="text-right">Total Spend</TableHead>
                         </TableRow>
@@ -335,10 +337,10 @@ export default function SegmentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Patient</TableHead>
+                    <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>Segment</TableHead>
                     <TableHead>Recency (days)</TableHead>
-                    <TableHead>Frequency</TableHead>
+                    <TableHead>{t('ui.frequency')}</TableHead>
                     <TableHead>Spend</TableHead>
                     <TableHead>Churn Risk</TableHead>
                     <TableHead>Recommendation</TableHead>

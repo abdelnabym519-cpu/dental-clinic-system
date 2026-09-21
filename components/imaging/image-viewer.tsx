@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -48,6 +49,7 @@ export function ImageViewer({
   onAnnotate,
   onCompare,
 }: ImageViewerProps) {
+  const { t } = useLanguage()
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
 
@@ -226,9 +228,7 @@ export function ImageViewer({
                     size="sm"
                     className="text-white hover:bg-white/20 text-xs"
                     onClick={onAnnotate}
-                  >
-                    Annotate
-                  </Button>
+                  >{t('ui.annotate')}</Button>
                 )}
                 {onCompare && (
                   <Button

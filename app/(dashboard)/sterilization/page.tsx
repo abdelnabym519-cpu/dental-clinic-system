@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,7 @@ interface DashboardStats {
 }
 
 export default function SterilizationDashboardPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -125,7 +127,7 @@ export default function SterilizationDashboardPage() {
         <Link href="/sterilization/instruments">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Instruments</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('ui.instruments')}</CardTitle>
               <Package className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -139,7 +141,7 @@ export default function SterilizationDashboardPage() {
         <Link href="/sterilization/logs">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sterilization Logs</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('ui.sterilization_logs')}</CardTitle>
               <ClipboardList className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -153,11 +155,11 @@ export default function SterilizationDashboardPage() {
         <Link href="/sterilization/reports">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Compliance Reports</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('ui.compliance_reports')}</CardTitle>
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Reports</div>
+              <div className="text-2xl font-bold">{t('ui.reports')}</div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 View compliance data <ArrowRight className="h-3 w-3" />
               </p>
@@ -201,7 +203,7 @@ export default function SterilizationDashboardPage() {
             <CardContent className="pt-4 text-center">
               <Wrench className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
               <div className="text-xl font-bold">{stats.maintenance}</div>
-              <p className="text-xs text-muted-foreground">Maintenance</p>
+              <p className="text-xs text-muted-foreground">{t('ui.maintenance')}</p>
             </CardContent>
           </Card>
           <Card>

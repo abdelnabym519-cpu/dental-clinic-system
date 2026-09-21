@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import Link from 'next/link'
@@ -61,6 +62,7 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function FormsSettingsPage() {
+  const { t } = useLanguage()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [templates, setTemplates] = useState<FormTemplate[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,7 +143,7 @@ export default function FormsSettingsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('ui.loading')}</div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
@@ -152,9 +154,7 @@ export default function FormsSettingsPage() {
               <div className="flex items-center gap-3 justify-center">
                 <Button asChild>
                   <Link href="/settings/forms/new">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Template
-                  </Link>
+                    <Plus className="h-4 w-4 mr-2" />{t('ui.create_template')}</Link>
                 </Button>
                 <Button variant="outline" onClick={handleSeedDefaults}>
                   Load Default Templates
@@ -165,29 +165,29 @@ export default function FormsSettingsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('ui.name')}</TableHead>
+                  <TableHead>{t('ui.type')}</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
                   <TableHead className="text-right">Submissions</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{t('ui.created')}</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {templates.map((t) => (
-                  <TableRow key={t.id}>
+                {templates.map((tf) => (
+                  <TableRow key={tf.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {typeIcons[t.type]}
+                        {typeIcons[tf.type]}
                         <div>
-                          <div className="font-medium">{t.name}</div>
-                          {t.description && (
+                          <div className="font-medium">{tf.name}</div>
+                          {tf.description && (
                             <div className="text-xs text-muted-foreground line-clamp-1">
-                              {t.description}
+                              {tf.description}
                             </div>
                           )}
                         </div>
-                        {t.isDefault && (
+                        {tf.isDefault && (
                           <Badge variant="secondary" className="text-xs">
                             Default
                           </Badge>
@@ -195,16 +195,16 @@ export default function FormsSettingsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{typeLabels[t.type] || t.type}</Badge>
+                      <Badge variant="outline">{typeLabels[tf.type] || tf.type}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={t.isActive ? 'default' : 'secondary'}>
-                        {t.isActive ? 'Active' : 'Inactive'}
+                      <Badge variant={tf.isActive ? 'default' : 'secondary'}>
+                        {tf.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{t._count.submissions}</TableCell>
+                    <TableCell className="text-right">{tf._count.submissions}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {new Date(t.createdAt).toLocaleDateString('en-EG')}
+                      {new Date(tf.createdAt).toLocaleDateString('en-EG')}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -215,18 +215,16 @@ export default function FormsSettingsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/settings/forms/${t.id}`}>
+                            <Link href={`/settings/forms/${tf.id}`}>
                               <Eye className="h-4 w-4 mr-2" />
                               View / Edit
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => handleDelete(t.id, t.name)}
+                            onClick={() => handleDelete(tf.id, tf.name)}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
+                            <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
@@ -19,6 +20,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const { t } = useLanguage()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -192,9 +194,7 @@ export default function TransactionsPage() {
           <Link
             href="/inventory"
             className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
-          >
-            Back to Inventory
-          </Link>
+          >{t('ui.back_to_inventory')}</Link>
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -212,13 +212,13 @@ export default function TransactionsPage() {
             onChange={(e) => setTransactionType(e.target.value)}
             className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Types</option>
-            <option value="purchase">Purchase</option>
+            <option value="">{t('ui.all_types')}</option>
+            <option value="purchase">{t('ui.purchase')}</option>
             <option value="sale">Sale</option>
-            <option value="adjustment">Adjustment</option>
-            <option value="return">Return</option>
-            <option value="usage">Usage</option>
-            <option value="wastage">Wastage</option>
+            <option value="adjustment">{t('ui.adjustment')}</option>
+            <option value="return">{t('ui.return')}</option>
+            <option value="usage">{t('ui.usage')}</option>
+            <option value="wastage">{t('ui.wastage')}</option>
           </select>
 
           <input
@@ -226,7 +226,7 @@ export default function TransactionsPage() {
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
             className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Start Date"
+            placeholder={t('ui.start_date')}
           />
 
           <input
@@ -234,7 +234,7 @@ export default function TransactionsPage() {
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="End Date"
+            placeholder={t('ui.end_date')}
           />
         </div>
       </div>
@@ -242,36 +242,22 @@ export default function TransactionsPage() {
       {/* Transactions Table */}
       <div className="bg-background rounded-lg shadow overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">Loading...</div>
+          <div className="p-8 text-center">{t('ui.loading')}</div>
         ) : transactions.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No transactions found</div>
+          <div className="p-8 text-center text-muted-foreground">{t('ui.no_transactions_found')}</div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-border">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Item
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Quantity
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Unit Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Total Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Supplier
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.date')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.type')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.item')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.quantity')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.unit_price')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.total_amount')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.supplier')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Performed By
                     </th>
@@ -316,8 +302,7 @@ export default function TransactionsPage() {
             <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-foreground">
-                    Showing page <span className="font-medium">{pagination.page}</span> of{' '}
+                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> of{' '}
                     <span className="font-medium">{pagination.pages}</span> ({pagination.total}{' '}
                     total transactions)
                   </p>
@@ -328,16 +313,12 @@ export default function TransactionsPage() {
                       onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                       disabled={pagination.page === 1}
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
+                    >{t('ui.previous')}</button>
                     <button
                       onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                       disabled={pagination.page === pagination.pages}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
+                    >{t('ui.next')}</button>
                   </nav>
                 </div>
               </div>
@@ -364,17 +345,16 @@ export default function TransactionsPage() {
                     required
                     className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="purchase">Purchase</option>
-                    <option value="adjustment">Adjustment</option>
-                    <option value="usage">Usage</option>
-                    <option value="wastage">Wastage</option>
-                    <option value="return">Return</option>
+                    <option value="purchase">{t('ui.purchase')}</option>
+                    <option value="adjustment">{t('ui.adjustment')}</option>
+                    <option value="usage">{t('ui.usage')}</option>
+                    <option value="wastage">{t('ui.wastage')}</option>
+                    <option value="return">{t('ui.return')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Item <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t('ui.item')}<span className="text-red-500">*</span>
                   </label>
                   <select
                     name="itemId"
@@ -393,8 +373,7 @@ export default function TransactionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Quantity <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-foreground mb-2">{t('ui.quantity')}<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -437,16 +416,14 @@ export default function TransactionsPage() {
 
                 {formData.type === 'purchase' && (
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Supplier
-                    </label>
+                    <label className="block text-sm font-medium text-foreground mb-2">{t('ui.supplier')}</label>
                     <select
                       name="supplierId"
                       value={formData.supplierId}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">Select Supplier</option>
+                      <option value="">{t('ui.select_supplier')}</option>
                       {suppliers.map((supplier) => (
                         <option key={supplier.id} value={supplier.id}>
                           {supplier.name}
@@ -458,7 +435,7 @@ export default function TransactionsPage() {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-foreground mb-2">Notes</label>
+                <label className="block text-sm font-medium text-foreground mb-2">{t('ui.notes')}</label>
                 <textarea
                   name="notes"
                   value={formData.notes}
@@ -473,9 +450,7 @@ export default function TransactionsPage() {
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   className="px-6 py-2 border border-border rounded-lg hover:bg-muted/50"
-                >
-                  Cancel
-                </button>
+                >{t('ui.cancel')}</button>
                 <button
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

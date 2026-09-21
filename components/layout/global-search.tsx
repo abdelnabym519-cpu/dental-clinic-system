@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -40,6 +41,7 @@ const CATEGORIES = [
 ]
 
 export function GlobalSearch() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -201,7 +203,7 @@ export function GlobalSearch() {
 
             {/* Loading */}
             {query.length >= 2 && loading && !results && (
-              <div className="p-6 text-center text-sm text-muted-foreground">Searching...</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">{t('ui.searching')}</div>
             )}
 
             {/* No results */}

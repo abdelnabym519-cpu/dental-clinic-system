@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -102,6 +103,7 @@ interface PaginationInfo {
 }
 
 export default function AppointmentsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
@@ -283,7 +285,7 @@ export default function AppointmentsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('ui.appointments')}</h1>
             <p className="text-muted-foreground">Manage and schedule patient appointments</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -327,9 +329,7 @@ export default function AppointmentsPage() {
             </Button>
             <Link href="/appointments/new">
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Appointment
-              </Button>
+                <Plus className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
             </Link>
           </div>
         </div>
@@ -350,30 +350,30 @@ export default function AppointmentsPage() {
               <div className="flex flex-wrap gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={t('ui.status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                    <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                    <SelectItem value="SCHEDULED">{t('ui.scheduled')}</SelectItem>
                     <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                    <SelectItem value="CHECKED_IN">Checked In</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                    <SelectItem value="NO_SHOW">No Show</SelectItem>
+                    <SelectItem value="CHECKED_IN">{t('ui.checked_in')}</SelectItem>
+                    <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
+                    <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
+                    <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
+                    <SelectItem value="NO_SHOW">{t('ui.no_show')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder={t('ui.type')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="CONSULTATION">Consultation</SelectItem>
-                    <SelectItem value="PROCEDURE">Procedure</SelectItem>
-                    <SelectItem value="FOLLOW_UP">Follow Up</SelectItem>
-                    <SelectItem value="EMERGENCY">Emergency</SelectItem>
-                    <SelectItem value="CHECK_UP">Check Up</SelectItem>
+                    <SelectItem value="all">{t('ui.all_types')}</SelectItem>
+                    <SelectItem value="CONSULTATION">{t('ui.consultation')}</SelectItem>
+                    <SelectItem value="PROCEDURE">{t('ui.procedure')}</SelectItem>
+                    <SelectItem value="FOLLOW_UP">{t('ui.follow_up')}</SelectItem>
+                    <SelectItem value="EMERGENCY">{t('ui.emergency')}</SelectItem>
+                    <SelectItem value="CHECK_UP">{t('ui.check_up')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input
@@ -393,14 +393,14 @@ export default function AppointmentsPage() {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Appointment</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('ui.appointment')}</TableHead>
+                  <TableHead>{t('ui.patient')}</TableHead>
+                  <TableHead>{t('ui.doctor')}</TableHead>
+                  <TableHead>{t('ui.date_time')}</TableHead>
+                  <TableHead>{t('ui.type')}</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
                   {showRisk && <TableHead>Risk</TableHead>}
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -435,7 +435,7 @@ export default function AppointmentsPage() {
                     <TableCell colSpan={7} className="h-24 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <Calendar className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-muted-foreground">No appointments found</p>
+                        <p className="text-muted-foreground">{t('ui.no_appointments_found')}</p>
                         <Link href="/appointments/new">
                           <Button variant="outline" size="sm">
                             <Plus className="h-4 w-4 mr-2" />
@@ -515,35 +515,25 @@ export default function AppointmentsPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/appointments/${appointment.id}`)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => router.push(`/appointments/${appointment.id}/edit`)}
                             >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
                               <DropdownMenuItem onClick={() => handleCheckIn(appointment.id)}>
-                                <LogIn className="h-4 w-4 mr-2" />
-                                Check In
-                              </DropdownMenuItem>
+                                <LogIn className="h-4 w-4 mr-2" />{t('ui.check_in')}</DropdownMenuItem>
                             )}
                             {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
                               <DropdownMenuItem onClick={() => handleCheckOut(appointment.id)}>
-                                <LogOut className="h-4 w-4 mr-2" />
-                                Check Out
-                              </DropdownMenuItem>
+                                <LogOut className="h-4 w-4 mr-2" />{t('ui.check_out')}</DropdownMenuItem>
                             )}
                             {appointment.status === 'SCHEDULED' && (
                               <DropdownMenuItem
                                 onClick={() => handleStatusChange(appointment.id, 'CONFIRMED')}
                               >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Confirm
-                              </DropdownMenuItem>
+                                <CheckCircle className="h-4 w-4 mr-2" />{t('ui.confirm')}</DropdownMenuItem>
                             )}
                             {!['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(
                               appointment.status
@@ -561,9 +551,7 @@ export default function AppointmentsPage() {
                                   onClick={() => handleStatusChange(appointment.id, 'CANCELLED')}
                                   className="text-red-600"
                                 >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Cancel
-                                </DropdownMenuItem>
+                                  <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel')}</DropdownMenuItem>
                               </>
                             )}
                           </DropdownMenuContent>
@@ -590,9 +578,7 @@ export default function AppointmentsPage() {
                     onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                     disabled={pagination.page <= 1}
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
+                    <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                   <div className="text-sm">
                     Page {pagination.page} of {pagination.totalPages}
                   </div>
@@ -601,9 +587,7 @@ export default function AppointmentsPage() {
                     size="sm"
                     onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
+                  >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

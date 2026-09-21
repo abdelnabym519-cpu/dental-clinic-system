@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ClipboardList, FileText, Grid3x3, User, Calendar } from 'lucide-react'
 
 export default function PatientRecords() {
+  const { t } = useLanguage()
   const [tab, setTab] = useState('treatments')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -41,9 +43,9 @@ export default function PatientRecords() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="treatments">Treatments</TabsTrigger>
-          <TabsTrigger value="chart">Dental Chart</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="treatments">{t('ui.treatments')}</TabsTrigger>
+          <TabsTrigger value="chart">{t('ui.dental_chart')}</TabsTrigger>
+          <TabsTrigger value="documents">{t('ui.documents')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="treatments" className="mt-4">

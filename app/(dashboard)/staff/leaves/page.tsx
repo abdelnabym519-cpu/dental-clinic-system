@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -95,6 +96,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function LeavesPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [leaves, setLeaves] = useState<LeaveRequest[]>([])
   const [staffList, setStaffList] = useState<StaffMember[]>([])
@@ -291,9 +293,7 @@ export default function LeavesPage() {
           </div>
         </div>
         <Button onClick={() => setNewDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Leave Request
-        </Button>
+          <Plus className="h-4 w-4 mr-2" />{t('ui.new_leave_request')}</Button>
       </div>
 
       {/* Filters */}
@@ -303,28 +303,28 @@ export default function LeavesPage() {
             <div className="flex gap-2 flex-1">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
+                  <SelectItem value="APPROVED">{t('ui.approved')}</SelectItem>
+                  <SelectItem value="REJECTED">{t('ui.rejected')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={leaveTypeFilter} onValueChange={setLeaveTypeFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Leave Type" />
+                  <SelectValue placeholder={t('ui.leave_type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="CASUAL">Casual Leave</SelectItem>
-                  <SelectItem value="SICK">Sick Leave</SelectItem>
-                  <SelectItem value="EARNED">Earned Leave</SelectItem>
-                  <SelectItem value="UNPAID">Unpaid Leave</SelectItem>
-                  <SelectItem value="MATERNITY">Maternity Leave</SelectItem>
-                  <SelectItem value="PATERNITY">Paternity Leave</SelectItem>
+                  <SelectItem value="all">{t('ui.all_types')}</SelectItem>
+                  <SelectItem value="CASUAL">{t('ui.casual_leave')}</SelectItem>
+                  <SelectItem value="SICK">{t('ui.sick_leave')}</SelectItem>
+                  <SelectItem value="EARNED">{t('ui.earned_leave')}</SelectItem>
+                  <SelectItem value="UNPAID">{t('ui.unpaid_leave')}</SelectItem>
+                  <SelectItem value="MATERNITY">{t('ui.maternity_leave')}</SelectItem>
+                  <SelectItem value="PATERNITY">{t('ui.paternity_leave')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,13 +338,13 @@ export default function LeavesPage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Leave Type</TableHead>
-                <TableHead>Duration</TableHead>
+                <TableHead>{t('ui.employee')}</TableHead>
+                <TableHead>{t('ui.leave_type')}</TableHead>
+                <TableHead>{t('ui.duration')}</TableHead>
                 <TableHead>Days</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.reason')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -474,9 +474,7 @@ export default function LeavesPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -485,9 +483,7 @@ export default function LeavesPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -499,7 +495,7 @@ export default function LeavesPage() {
       <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Leave Request</DialogTitle>
+            <DialogTitle>{t('ui.new_leave_request')}</DialogTitle>
             <DialogDescription>Create a leave request for a staff member</DialogDescription>
           </DialogHeader>
 
@@ -535,12 +531,12 @@ export default function LeavesPage() {
                   <SelectValue placeholder="Select leave type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CASUAL">Casual Leave</SelectItem>
-                  <SelectItem value="SICK">Sick Leave</SelectItem>
-                  <SelectItem value="EARNED">Earned Leave</SelectItem>
-                  <SelectItem value="UNPAID">Unpaid Leave</SelectItem>
-                  <SelectItem value="MATERNITY">Maternity Leave</SelectItem>
-                  <SelectItem value="PATERNITY">Paternity Leave</SelectItem>
+                  <SelectItem value="CASUAL">{t('ui.casual_leave')}</SelectItem>
+                  <SelectItem value="SICK">{t('ui.sick_leave')}</SelectItem>
+                  <SelectItem value="EARNED">{t('ui.earned_leave')}</SelectItem>
+                  <SelectItem value="UNPAID">{t('ui.unpaid_leave')}</SelectItem>
+                  <SelectItem value="MATERNITY">{t('ui.maternity_leave')}</SelectItem>
+                  <SelectItem value="PATERNITY">{t('ui.paternity_leave')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -569,7 +565,7 @@ export default function LeavesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Reason</Label>
+              <Label>{t('ui.reason')}</Label>
               <Textarea
                 value={newLeaveForm.reason}
                 onChange={(e) => setNewLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
@@ -580,9 +576,7 @@ export default function LeavesPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNewDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setNewDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleCreateLeave} disabled={creating}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Request

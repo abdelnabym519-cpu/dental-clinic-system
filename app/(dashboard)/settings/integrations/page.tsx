@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +32,7 @@ interface CalendarStatus {
 }
 
 export default function IntegrationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const searchParams = useSearchParams()
@@ -174,9 +176,7 @@ export default function IntegrationsPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading...
-            </div>
+              <Loader2 className="h-4 w-4 animate-spin" />{t('ui.loading')}</div>
           ) : calendarStatus?.connected ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -203,7 +203,7 @@ export default function IntegrationsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Status</p>
+                  <p className="text-muted-foreground">{t('ui.status')}</p>
                   <p className="font-medium flex items-center gap-1">
                     <Check className="h-4 w-4 text-green-600" />
                     {calendarStatus.integration?.syncEnabled ? 'Sync Enabled' : 'Sync Disabled'}

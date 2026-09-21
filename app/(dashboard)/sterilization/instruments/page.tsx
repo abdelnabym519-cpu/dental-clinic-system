@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -67,6 +68,7 @@ interface Instrument {
 }
 
 export default function InstrumentsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
@@ -216,12 +218,11 @@ export default function InstrumentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Instruments</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('ui.instruments')}</h2>
           <p className="text-muted-foreground">Manage dental instruments and equipment</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" /> Add Instrument
-        </Button>
+          <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
       </div>
 
       {/* Filters */}
@@ -238,10 +239,10 @@ export default function InstrumentsPage() {
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('ui.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="all">{t('ui.all_status')}</SelectItem>
             {STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -251,10 +252,10 @@ export default function InstrumentsPage() {
         </Select>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t('ui.category')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="all">{t('ui.all_categories')}</SelectItem>
             {CATEGORIES.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
@@ -278,8 +279,7 @@ export default function InstrumentsPage() {
               Add your first instrument to start tracking
             </p>
             <Button onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-2" /> Add Instrument
-            </Button>
+              <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -288,14 +288,14 @@ export default function InstrumentsPage() {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>{t('ui.name')}</TableHead>
+                  <TableHead>{t('ui.category')}</TableHead>
                   <TableHead>Serial #</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
+                  <TableHead>{t('ui.location')}</TableHead>
                   <TableHead className="text-right">Cycles</TableHead>
                   <TableHead>Last Sterilized</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -391,7 +391,7 @@ export default function InstrumentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Serial Number</Label>
+                <Label>{t('ui.serial_number')}</Label>
                 <Input
                   value={form.serialNumber}
                   onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
@@ -407,7 +407,7 @@ export default function InstrumentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Location</Label>
+                <Label>{t('ui.location')}</Label>
                 <Input
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
@@ -442,7 +442,7 @@ export default function InstrumentsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Notes</Label>
+              <Label>{t('ui.notes')}</Label>
               <Input
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -450,9 +450,7 @@ export default function InstrumentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Create'}

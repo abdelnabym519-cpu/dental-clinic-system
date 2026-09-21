@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -55,6 +56,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export function MessageLogPanel() {
+  const { t } = useLanguage()
   const [rows, setRows] = useState<LogRow[]>([])
   const [total, setTotal] = useState(0)
   const [status, setStatus] = useState('all')
@@ -108,15 +110,15 @@ export function MessageLogPanel() {
     <div data-testid="message-log-panel" className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[150px]" aria-label="Filter by status">
+          <SelectTrigger className="w-[150px]" aria-label={t('ui.filter_by_status')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="SENT">Sent</SelectItem>
-            <SelectItem value="FAILED">Failed</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
+            <SelectItem value="SENT">{t('ui.sent')}</SelectItem>
+            <SelectItem value="FAILED">{t('ui.failed')}</SelectItem>
+            <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={channel} onValueChange={setChannel}>
@@ -125,13 +127,12 @@ export function MessageLogPanel() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All channels</SelectItem>
-            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-            <SelectItem value="SMS">SMS</SelectItem>
+            <SelectItem value="WHATSAPP">{t('ui.whatsapp')}</SelectItem>
+            <SelectItem value="SMS">{t('ui.sms')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={load} aria-label="Refresh message log">
-          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-        </Button>
+          <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
         <span className="ml-auto text-xs text-muted-foreground">{total} messages</span>
       </div>
 
@@ -156,11 +157,11 @@ export function MessageLogPanel() {
             <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-3 py-2">Recipient</th>
-                <th className="px-3 py-2">Channel</th>
-                <th className="px-3 py-2">Type</th>
-                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">{t('ui.channel')}</th>
+                <th className="px-3 py-2">{t('ui.type')}</th>
+                <th className="px-3 py-2">{t('ui.status')}</th>
                 <th className="px-3 py-2">Scheduled / Sent</th>
-                <th className="px-3 py-2">Message</th>
+                <th className="px-3 py-2">{t('ui.message')}</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
@@ -221,9 +222,7 @@ export function MessageLogPanel() {
                         className="h-7 text-xs"
                         disabled={busyId === row.id}
                         onClick={() => act(row.id, 'cancel')}
-                      >
-                        Cancel
-                      </Button>
+                      >{t('ui.cancel')}</Button>
                     )}
                     {row.status === 'FAILED' && (
                       <Button
@@ -232,9 +231,7 @@ export function MessageLogPanel() {
                         className="h-7 text-xs"
                         disabled={busyId === row.id}
                         onClick={() => act(row.id, 'retry')}
-                      >
-                        Retry
-                      </Button>
+                      >{t('ui.retry')}</Button>
                     )}
                   </td>
                 </tr>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
@@ -19,6 +20,7 @@ interface ImageCompareProps {
 }
 
 export function ImageCompare({ open, onOpenChange, before, after }: ImageCompareProps) {
+  const { t } = useLanguage()
   const [mode, setMode] = useState<'side-by-side' | 'slider'>('side-by-side')
   const [sliderPos, setSliderPos] = useState(50) // percentage
   const [isDragging, setIsDragging] = useState(false)
@@ -162,7 +164,7 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                 {/* Before */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="px-3 py-1 bg-zinc-900 text-center">
-                    <span className="text-xs text-zinc-400">Before</span>
+                    <span className="text-xs text-zinc-400">{t('ui.before')}</span>
                     <span className="text-xs text-zinc-500 ml-2">{before.title}</span>
                     {before.date && (
                       <span className="text-xs text-zinc-600 ml-1">({before.date})</span>
@@ -176,7 +178,7 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                 {/* After */}
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="px-3 py-1 bg-zinc-900 text-center">
-                    <span className="text-xs text-zinc-400">After</span>
+                    <span className="text-xs text-zinc-400">{t('ui.after')}</span>
                     <span className="text-xs text-zinc-500 ml-2">{after.title}</span>
                     {after.date && (
                       <span className="text-xs text-zinc-600 ml-1">({after.date})</span>
@@ -229,12 +231,8 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                 </div>
 
                 {/* Labels */}
-                <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">
-                  Before
-                </div>
-                <div className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">
-                  After
-                </div>
+                <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">{t('ui.before')}</div>
+                <div className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">{t('ui.after')}</div>
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useRouter } from 'next/navigation'
@@ -84,6 +85,7 @@ interface PaginationInfo {
 }
 
 export default function InvoicesPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -166,14 +168,12 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.invoices')}</h1>
           <p className="text-muted-foreground">Manage patient invoices and billing</p>
         </div>
         <Link href="/billing/invoices/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Invoice
-          </Button>
+            <Plus className="h-4 w-4 mr-2" />{t('ui.new_invoice')}</Button>
         </Link>
       </div>
 
@@ -193,17 +193,17 @@ export default function InvoicesPage() {
             <div className="flex gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="DRAFT">{t('ui.draft')}</SelectItem>
+                  <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
                   <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
-                  <SelectItem value="PAID">Paid</SelectItem>
-                  <SelectItem value="OVERDUE">Overdue</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  <SelectItem value="REFUNDED">Refunded</SelectItem>
+                  <SelectItem value="PAID">{t('ui.paid')}</SelectItem>
+                  <SelectItem value="OVERDUE">{t('ui.overdue')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
+                  <SelectItem value="REFUNDED">{t('ui.refunded')}</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -211,14 +211,14 @@ export default function InvoicesPage() {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="w-[140px]"
-                placeholder="From Date"
+                placeholder={t('ui.from_date')}
               />
               <Input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="w-[140px]"
-                placeholder="To Date"
+                placeholder={t('ui.to_date')}
               />
               <Button
                 variant={overdueOnly ? 'default' : 'outline'}
@@ -239,14 +239,14 @@ export default function InvoicesPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Paid</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.invoice')}</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead className="text-right">{t('ui.amount')}</TableHead>
+                <TableHead className="text-right">{t('ui.paid')}</TableHead>
+                <TableHead className="text-right">{t('ui.balance')}</TableHead>
+                <TableHead>{t('ui.due_date')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -284,7 +284,7 @@ export default function InvoicesPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <FileText className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No invoices found</p>
+                      <p className="text-muted-foreground">{t('ui.no_invoices_found')}</p>
                       <Link href="/billing/invoices/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
@@ -363,16 +363,12 @@ export default function InvoicesPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/billing/invoices/${invoice.id}`)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                             {invoice.status === 'DRAFT' && (
                               <DropdownMenuItem
                                 onClick={() => router.push(`/billing/invoices/${invoice.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             {['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(invoice.status) && (
@@ -381,19 +377,13 @@ export default function InvoicesPage() {
                                   router.push(`/billing/invoices/${invoice.id}?action=payment`)
                                 }
                               >
-                                <CreditCard className="h-4 w-4 mr-2" />
-                                Record Payment
-                              </DropdownMenuItem>
+                                <CreditCard className="h-4 w-4 mr-2" />{t('ui.record_payment')}</DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => window.print()}>
-                              <Printer className="h-4 w-4 mr-2" />
-                              Print Invoice
-                            </DropdownMenuItem>
+                              <Printer className="h-4 w-4 mr-2" />{t('ui.print_invoice')}</DropdownMenuItem>
                             {invoice.patient.email && (
                               <DropdownMenuItem>
-                                <Mail className="h-4 w-4 mr-2" />
-                                Send via Email
-                              </DropdownMenuItem>
+                                <Mail className="h-4 w-4 mr-2" />{t('ui.send_via_email')}</DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
@@ -430,9 +420,7 @@ export default function InvoicesPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -441,9 +429,7 @@ export default function InvoicesPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

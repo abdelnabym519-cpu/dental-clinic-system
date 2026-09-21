@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,7 @@ interface InstrumentOption {
 }
 
 export default function SterilizationLogsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -171,22 +173,21 @@ export default function SterilizationLogsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Sterilization Logs</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('ui.sterilization_logs')}</h2>
           <p className="text-muted-foreground">Record and view sterilization cycle history</p>
         </div>
         <Button onClick={() => setShowDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Record Cycle
-        </Button>
+          <Plus className="h-4 w-4 mr-2" />{t('ui.record_cycle')}</Button>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3">
         <Select value={filterMethod} onValueChange={setFilterMethod}>
           <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Method" />
+            <SelectValue placeholder={t('ui.method')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Methods</SelectItem>
+            <SelectItem value="all">{t('ui.all_methods')}</SelectItem>
             {METHODS.map((m) => (
               <SelectItem key={m} value={m}>
                 {m}
@@ -196,7 +197,7 @@ export default function SterilizationLogsPage() {
         </Select>
         <Select value={filterResult} onValueChange={setFilterResult}>
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Result" />
+            <SelectValue placeholder={t('ui.result')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Results</SelectItem>
@@ -222,8 +223,7 @@ export default function SterilizationLogsPage() {
               Record your first sterilization cycle
             </p>
             <Button onClick={() => setShowDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Record Cycle
-            </Button>
+              <Plus className="h-4 w-4 mr-2" />{t('ui.record_cycle')}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -232,13 +232,13 @@ export default function SterilizationLogsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Instrument</TableHead>
+                  <TableHead>{t('ui.instrument')}</TableHead>
                   <TableHead>Cycle #</TableHead>
-                  <TableHead>Method</TableHead>
+                  <TableHead>{t('ui.method')}</TableHead>
                   <TableHead>Temp/Pressure</TableHead>
-                  <TableHead>Duration</TableHead>
+                  <TableHead>{t('ui.duration')}</TableHead>
                   <TableHead>Indicators</TableHead>
-                  <TableHead>Result</TableHead>
+                  <TableHead>{t('ui.result')}</TableHead>
                   <TableHead>Started</TableHead>
                 </TableRow>
               </TableHeader>
@@ -393,7 +393,7 @@ export default function SterilizationLogsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Result</Label>
+              <Label>{t('ui.result')}</Label>
               <Select value={form.result} onValueChange={(v) => setForm({ ...form, result: v })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -424,7 +424,7 @@ export default function SterilizationLogsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Notes</Label>
+              <Label>{t('ui.notes')}</Label>
               <Input
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -432,9 +432,7 @@ export default function SterilizationLogsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleRecord} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Record Cycle

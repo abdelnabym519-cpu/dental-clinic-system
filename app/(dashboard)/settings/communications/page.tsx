@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import { Separator } from '@/components/ui/separator'
 import { MessageLogPanel } from '@/components/communications/message-log-panel'
 
 export default function CommunicationSettingsPage() {
+  const { t } = useLanguage()
   // (WhatsApp/SMS platform: the Message Log tab below renders the live
   // MessageQueue audit — provider configuration itself is env-based.)
   const { toast } = useToast()
@@ -323,11 +325,11 @@ export default function CommunicationSettingsPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Communication Settings</h1>
-          <p className="text-muted-foreground">Configure SMS and Email gateways</p>
+          <h1 className="text-3xl font-bold">{t('ui.communication_settings')}</h1>
+          <p className="text-muted-foreground">{t('ui.configure_sms_and_email_gateways')}</p>
         </div>
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading settings...</p>
+          <p className="text-muted-foreground">{t('ui.loading_settings')}</p>
         </div>
       </div>
     )
@@ -336,8 +338,8 @@ export default function CommunicationSettingsPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Communication Settings</h1>
-        <p className="text-muted-foreground">Configure SMS and Email gateways</p>
+        <h1 className="text-3xl font-bold">{t('ui.communication_settings')}</h1>
+        <p className="text-muted-foreground">{t('ui.configure_sms_and_email_gateways')}</p>
       </div>
 
       <Tabs defaultValue="sms" className="w-full">
@@ -539,7 +541,7 @@ export default function CommunicationSettingsPage() {
                     <Label htmlFor="email-from-name">From Name</Label>
                     <Input
                       id="email-from-name"
-                      placeholder="Your Dental Clinic"
+                      placeholder={t('ui.your_dental_clinic')}
                       value={emailFromName}
                       onChange={(e) => setEmailFromName(e.target.value)}
                     />

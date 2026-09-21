@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 
 function VerifyEmailContent() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -104,7 +106,7 @@ function VerifyEmailContent() {
       <CardContent className="space-y-4">
         {status === 'success' && (
           <Button asChild className="w-full">
-            <Link href="/login">Continue to Login</Link>
+            <Link href="/login">{t('ui.continue_to_login')}</Link>
           </Button>
         )}
 
@@ -114,7 +116,7 @@ function VerifyEmailContent() {
               <Link href="/signup">Try signing up again</Link>
             </Button>
             <Button asChild variant="ghost" className="w-full">
-              <Link href="/login">Back to Login</Link>
+              <Link href="/login">{t('ui.back_to_login')}</Link>
             </Button>
           </div>
         )}
@@ -129,7 +131,7 @@ function VerifyEmailContent() {
               Resend Verification Email
             </Button>
             <Button asChild variant="ghost" className="w-full">
-              <Link href="/login">Back to Login</Link>
+              <Link href="/login">{t('ui.back_to_login')}</Link>
             </Button>
           </div>
         )}
@@ -139,6 +141,7 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
+  const { t } = useLanguage()
   return (
     <Suspense
       fallback={
@@ -149,7 +152,7 @@ export default function VerifyEmailPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('ui.loading')}</CardTitle>
           </CardHeader>
         </Card>
       }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -67,6 +68,7 @@ interface Consultation {
 }
 
 export default function DoctorVideoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
   const { toast } = useToast()
@@ -163,19 +165,17 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
   const statusBadge = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Scheduled</Badge>
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.scheduled')}</Badge>
       case 'IN_PROGRESS':
         return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">
-            In Progress
-          </Badge>
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">{t('ui.in_progress')}</Badge>
         )
       case 'COMPLETED':
-        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">Completed</Badge>
+        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">{t('ui.completed')}</Badge>
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Cancelled</Badge>
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.cancelled')}</Badge>
       case 'NO_SHOW':
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">No Show</Badge>
+        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">{t('ui.no_show')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -195,9 +195,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
       <div className="text-center py-12">
         <p className="text-muted-foreground">Consultation not found</p>
         <Link href="/appointments">
-          <Button variant="outline" className="mt-4">
-            Back to Appointments
-          </Button>
+          <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
         </Link>
       </div>
     )
@@ -236,12 +234,10 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
+          <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Video Consultation</h1>
+            <h1 className="text-2xl font-bold">{t('ui.video_consultation')}</h1>
             {statusBadge(consultation.status)}
           </div>
           <p className="text-sm text-muted-foreground">
@@ -265,17 +261,13 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
                 variant="outline"
                 onClick={() => handleAction('no_show')}
                 disabled={actionLoading}
-              >
-                No Show
-              </Button>
+              >{t('ui.no_show')}</Button>
               <Button
                 variant="destructive"
                 onClick={() => handleAction('cancel')}
                 disabled={actionLoading}
               >
-                <XCircle className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
+                <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel')}</Button>
             </>
           )}
         </div>
@@ -286,9 +278,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <User className="h-4 w-4" />
-              Patient Information
-            </CardTitle>
+              <User className="h-4 w-4" />{t('ui.patient_information')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
@@ -310,22 +300,20 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
             )}
             {consultation.patient.medicalHistory && (
               <div className="pt-2 border-t space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase">
-                  Medical Alerts
-                </p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">{t('ui.medical_alerts')}</p>
                 {consultation.patient.medicalHistory.hasAllergies && (
                   <p className="text-xs text-red-600">
                     Allergies: {consultation.patient.medicalHistory.drugAllergies || 'Yes'}
                   </p>
                 )}
                 {consultation.patient.medicalHistory.hasDiabetes && (
-                  <p className="text-xs text-orange-600">Diabetes</p>
+                  <p className="text-xs text-orange-600">{t('ui.diabetes')}</p>
                 )}
                 {consultation.patient.medicalHistory.hasHypertension && (
-                  <p className="text-xs text-orange-600">Hypertension</p>
+                  <p className="text-xs text-orange-600">{t('ui.hypertension')}</p>
                 )}
                 {consultation.patient.medicalHistory.hasHeartDisease && (
-                  <p className="text-xs text-red-600">Heart Disease</p>
+                  <p className="text-xs text-red-600">{t('ui.heart_disease')}</p>
                 )}
               </div>
             )}
@@ -348,13 +336,13 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
           <CardContent className="space-y-3 text-sm">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-muted-foreground">Scheduled</p>
+                <p className="text-muted-foreground">{t('ui.scheduled')}</p>
                 <p className="font-medium">
                   {format(new Date(consultation.scheduledAt), 'dd MMM yyyy, hh:mm a')}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Doctor</p>
+                <p className="text-muted-foreground">{t('ui.doctor')}</p>
                 <p className="font-medium">
                   Dr. {consultation.doctor.firstName} {consultation.doctor.lastName}
                 </p>
@@ -375,7 +363,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
               )}
               {consultation.duration != null && (
                 <div>
-                  <p className="text-muted-foreground">Duration</p>
+                  <p className="text-muted-foreground">{t('ui.duration')}</p>
                   <p className="font-medium">{consultation.duration} min</p>
                 </div>
               )}
@@ -402,7 +390,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
       {consultation.notes && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Consultation Notes</CardTitle>
+            <CardTitle className="text-base">{t('ui.consultation_notes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm whitespace-pre-wrap">{consultation.notes}</p>

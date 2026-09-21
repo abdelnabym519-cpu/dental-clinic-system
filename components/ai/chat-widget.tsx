@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { useAI } from './ai-provider'
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils'
 // Icons
 // ---------------------------------------------------------------------------
 function MicIcon({ listening }: { listening: boolean }) {
+  const { t } = useLanguage()
   return (
     <span className="relative flex items-center justify-center">
       {listening && <span className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />}
@@ -33,6 +35,7 @@ function MicIcon({ listening }: { listening: boolean }) {
 }
 
 function SpeakerIcon({ active }: { active: boolean }) {
+  const { t } = useLanguage()
   return (
     <svg
       width="16"
@@ -62,6 +65,7 @@ function SpeakerIcon({ active }: { active: boolean }) {
 }
 
 function TypingDots() {
+  const { t } = useLanguage()
   return (
     <span className="inline-flex items-center gap-[3px] py-1">
       {[0, 1, 2].map((i) => (
@@ -79,6 +83,7 @@ function TypingDots() {
 }
 
 function BlinkingCursor() {
+  const { t } = useLanguage()
   return (
     <span
       className="inline-block w-[2px] h-[1em] bg-current align-text-bottom ml-[1px]"
@@ -91,6 +96,7 @@ function BlinkingCursor() {
 // ChatWidget
 // ---------------------------------------------------------------------------
 export function ChatWidget() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -214,7 +220,7 @@ export function ChatWidget() {
           {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3 bg-primary text-primary-foreground rounded-tl-lg">
             <div>
-              <p className="font-semibold text-sm">AI Assistant</p>
+              <p className="font-semibold text-sm">{t('ui.ai_assistant')}</p>
               <p className="text-xs opacity-70">
                 {voice.handsFreeMode ? 'Hands-free mode active' : 'Ask anything about your clinic'}
               </p>
@@ -264,7 +270,7 @@ export function ChatWidget() {
               <button
                 onClick={() => setOpen(false)}
                 className="p-2 -m-1 opacity-60 hover:opacity-100 transition-opacity"
-                aria-label="Close"
+                aria-label={t('ui.close')}
               >
                 <svg
                   width="16"

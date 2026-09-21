@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -62,6 +63,7 @@ const steps = [
 ]
 
 export default function OnboardingPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
@@ -271,7 +273,7 @@ export default function OnboardingPage() {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                      <Label htmlFor="alternatePhone">{t('ui.alternate_phone')}</Label>
                       <Input
                         id="alternatePhone"
                         placeholder="01012345678"
@@ -282,7 +284,7 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="website">Website</Label>
+                      <Label htmlFor="website">{t('ui.website')}</Label>
                       <Input id="website" placeholder="www.myclinic.com" {...register('website')} />
                     </div>
                     <div className="space-y-2">
@@ -296,7 +298,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="registrationNo">Registration Number</Label>
+                    <Label htmlFor="registrationNo">{t('ui.registration_number')}</Label>
                     <Input
                       id="registrationNo"
                       placeholder="MED-2024-12345"
@@ -319,7 +321,7 @@ export default function OnboardingPage() {
                             handleWorkingHoursChange(day, 'closed', !checked)
                           }
                         />
-                        <span className="text-sm text-muted-foreground">Open</span>
+                        <span className="text-sm text-muted-foreground">{t('ui.open')}</span>
                       </div>
                       {!hours.closed && (
                         <>
@@ -354,7 +356,7 @@ export default function OnboardingPage() {
                   </p>
 
                   <div className="space-y-2">
-                    <Label htmlFor="upiId">InstaPay Handle</Label>
+                    <Label htmlFor="upiId">{t('ui.instapay_handle')}</Label>
                     <Input id="upiId" placeholder="clinic@instapay" {...register('upiId')} />
                   </div>
 
@@ -362,7 +364,7 @@ export default function OnboardingPage() {
                     <h4 className="font-medium mb-4">Bank Details</h4>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="bankName">Bank Name</Label>
+                        <Label htmlFor="bankName">{t('ui.bank_name')}</Label>
                         <Input
                           id="bankName"
                           placeholder="البنك الأهلي المصري"
@@ -371,7 +373,7 @@ export default function OnboardingPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="bankAccountNo">Account Number</Label>
+                          <Label htmlFor="bankAccountNo">{t('ui.account_number')}</Label>
                           <Input
                             id="bankAccountNo"
                             placeholder="1234567890"
@@ -379,7 +381,7 @@ export default function OnboardingPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
+                          <Label htmlFor="bankIfsc">{t('ui.swift_bic_code')}</Label>
                           <Input
                             id="bankIfsc"
                             placeholder="NBEGEGCX"
@@ -428,14 +430,10 @@ export default function OnboardingPage() {
                     onClick={prevStep}
                     disabled={currentStep === 1}
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Back
-                  </Button>
+                    <ChevronLeft className="h-4 w-4 mr-1" />{t('ui.back')}</Button>
 
                   {currentStep < 3 ? (
-                    <Button type="button" onClick={nextStep}>
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                    <Button type="button" onClick={nextStep}>{t('ui.next')}<ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
                   ) : (
                     <Button type="submit" disabled={isLoading}>

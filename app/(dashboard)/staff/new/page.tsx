@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -21,6 +22,7 @@ import { useToast } from '@/hooks/use-toast'
 import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 
 export default function NewStaffPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -164,7 +166,7 @@ export default function NewStaffPage() {
                     id="firstName"
                     value={formData.firstName}
                     onChange={(e) => handleChange('firstName', e.target.value)}
-                    placeholder="Enter first name"
+                    placeholder={t('ui.enter_first_name')}
                     required
                   />
                 </div>
@@ -174,7 +176,7 @@ export default function NewStaffPage() {
                     id="lastName"
                     value={formData.lastName}
                     onChange={(e) => handleChange('lastName', e.target.value)}
-                    placeholder="Enter last name"
+                    placeholder={t('ui.enter_last_name')}
                     required
                   />
                 </div>
@@ -222,14 +224,14 @@ export default function NewStaffPage() {
                   onValueChange={(value) => handleChange('role', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder={t('ui.select_role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="DOCTOR">Doctor</SelectItem>
-                    <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
-                    <SelectItem value="LAB_TECH">Lab Technician</SelectItem>
-                    <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                    <SelectItem value="ADMIN">{t('ui.admin')}</SelectItem>
+                    <SelectItem value="DOCTOR">{t('ui.doctor')}</SelectItem>
+                    <SelectItem value="RECEPTIONIST">{t('ui.receptionist')}</SelectItem>
+                    <SelectItem value="LAB_TECH">{t('ui.lab_technician')}</SelectItem>
+                    <SelectItem value="ACCOUNTANT">{t('ui.accountant')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -239,8 +241,8 @@ export default function NewStaffPage() {
           {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-              <CardDescription>Phone and address details</CardDescription>
+              <CardTitle>{t('ui.contact_information')}</CardTitle>
+              <CardDescription>{t('ui.phone_and_address_details')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -255,7 +257,7 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                  <Label htmlFor="alternatePhone">{t('ui.alternate_phone')}</Label>
                   <Input
                     id="alternatePhone"
                     value={formData.alternatePhone}
@@ -266,19 +268,19 @@ export default function NewStaffPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t('ui.address')}</Label>
                 <Textarea
                   id="address"
                   value={formData.address}
                   onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="Enter full address"
+                  placeholder={t('ui.enter_full_address')}
                   rows={2}
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t('ui.city')}</Label>
                   <Input
                     id="city"
                     value={formData.city}
@@ -304,7 +306,7 @@ export default function NewStaffPage() {
                   </datalist>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pincode">Postal Code</Label>
+                  <Label htmlFor="pincode">{t('ui.postal_code')}</Label>
                   <Input
                     id="pincode"
                     value={formData.pincode}
@@ -319,13 +321,13 @@ export default function NewStaffPage() {
           {/* Personal Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Personal Details</CardTitle>
-              <CardDescription>Personal and identification information</CardDescription>
+              <CardTitle>{t('ui.personal_details')}</CardTitle>
+              <CardDescription>{t('ui.personal_and_identification_information')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Label htmlFor="dateOfBirth">{t('ui.date_of_birth')}</Label>
                   <Input
                     id="dateOfBirth"
                     type="date"
@@ -334,18 +336,18 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">{t('ui.gender')}</Label>
                   <Select
                     value={formData.gender}
                     onValueChange={(value) => handleChange('gender', value)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
+                      <SelectValue placeholder={t('ui.select_gender')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MALE">Male</SelectItem>
-                      <SelectItem value="FEMALE">Female</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
+                      <SelectItem value="MALE">{t('ui.male')}</SelectItem>
+                      <SelectItem value="FEMALE">{t('ui.female')}</SelectItem>
+                      <SelectItem value="OTHER">{t('ui.other')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -379,13 +381,13 @@ export default function NewStaffPage() {
           {/* Professional Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Professional Details</CardTitle>
-              <CardDescription>Qualifications and employment information</CardDescription>
+              <CardTitle>{t('ui.professional_details')}</CardTitle>
+              <CardDescription>{t('ui.qualifications_and_employment_information')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="qualification">Qualification</Label>
+                  <Label htmlFor="qualification">{t('ui.qualification')}</Label>
                   <Input
                     id="qualification"
                     value={formData.qualification}
@@ -394,7 +396,7 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
+                  <Label htmlFor="specialization">{t('ui.specialization')}</Label>
                   <Input
                     id="specialization"
                     value={formData.specialization}
@@ -406,7 +408,7 @@ export default function NewStaffPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">License Number</Label>
+                  <Label htmlFor="licenseNumber">{t('ui.license_number')}</Label>
                   <Input
                     id="licenseNumber"
                     value={formData.licenseNumber}
@@ -415,7 +417,7 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="joiningDate">Joining Date</Label>
+                  <Label htmlFor="joiningDate">{t('ui.joining_date')}</Label>
                   <Input
                     id="joiningDate"
                     type="date"
@@ -430,7 +432,7 @@ export default function NewStaffPage() {
           {/* Financial Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Financial Details</CardTitle>
+              <CardTitle>{t('ui.financial_details')}</CardTitle>
               <CardDescription>Salary and bank account information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -447,7 +449,7 @@ export default function NewStaffPage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="bankAccountNo">Bank Account No.</Label>
+                  <Label htmlFor="bankAccountNo">{t('ui.bank_account_no')}</Label>
                   <Input
                     id="bankAccountNo"
                     value={formData.bankAccountNo}
@@ -456,7 +458,7 @@ export default function NewStaffPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
+                  <Label htmlFor="bankIfsc">{t('ui.swift_bic_code')}</Label>
                   <Input
                     id="bankIfsc"
                     value={formData.bankIfsc}
@@ -471,12 +473,12 @@ export default function NewStaffPage() {
           {/* Emergency Contact */}
           <Card>
             <CardHeader>
-              <CardTitle>Emergency Contact</CardTitle>
+              <CardTitle>{t('ui.emergency_contact')}</CardTitle>
               <CardDescription>Contact person in case of emergency</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="emergencyContact">Contact Name</Label>
+                <Label htmlFor="emergencyContact">{t('ui.contact_name')}</Label>
                 <Input
                   id="emergencyContact"
                   value={formData.emergencyContact}
@@ -485,7 +487,7 @@ export default function NewStaffPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                <Label htmlFor="emergencyPhone">{t('ui.contact_phone')}</Label>
                 <Input
                   id="emergencyPhone"
                   value={formData.emergencyPhone}
@@ -500,9 +502,7 @@ export default function NewStaffPage() {
         {/* Actions */}
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/staff">
-            <Button variant="outline" type="button">
-              Cancel
-            </Button>
+            <Button variant="outline" type="button">{t('ui.cancel')}</Button>
           </Link>
           <Button type="submit" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

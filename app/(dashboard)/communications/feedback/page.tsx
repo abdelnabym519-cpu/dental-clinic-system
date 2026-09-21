@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -60,6 +61,7 @@ interface FeedbackData {
 }
 
 function StarRating({ rating }: { rating: number }) {
+  const { t } = useLanguage()
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
@@ -76,6 +78,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function FeedbackAnalyticsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState('30d')
@@ -123,10 +126,10 @@ export default function FeedbackAnalyticsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="all">All time</SelectItem>
+              <SelectItem value="7d">{t('ui.last_7_days')}</SelectItem>
+              <SelectItem value="30d">{t('ui.last_30_days')}</SelectItem>
+              <SelectItem value="90d">{t('ui.last_90_days')}</SelectItem>
+              <SelectItem value="all">{t('ui.all_time')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={() => fetchData(period)}>
@@ -369,9 +372,9 @@ export default function FeedbackAnalyticsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Rating</TableHead>
-                        <TableHead className="text-right">Responses</TableHead>
+                        <TableHead>{t('ui.doctor')}</TableHead>
+                        <TableHead>{t('ui.rating')}</TableHead>
+                        <TableHead className="text-right">{t('ui.responses')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -400,9 +403,9 @@ export default function FeedbackAnalyticsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Procedure</TableHead>
-                        <TableHead>Rating</TableHead>
-                        <TableHead className="text-right">Responses</TableHead>
+                        <TableHead>{t('ui.procedure')}</TableHead>
+                        <TableHead>{t('ui.rating')}</TableHead>
+                        <TableHead className="text-right">{t('ui.responses')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

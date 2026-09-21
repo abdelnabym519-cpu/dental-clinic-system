@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -30,6 +31,7 @@ const BLOOD_GROUPS = [
 ]
 
 export default function EditPatientPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const params = useParams()
   const patientId = params.id as string
@@ -195,8 +197,8 @@ export default function EditPatientPage() {
         {/* Personal Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Basic details of the patient</CardDescription>
+            <CardTitle>{t('ui.personal_information')}</CardTitle>
+            <CardDescription>{t('ui.basic_details_of_the_patient')}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -205,7 +207,7 @@ export default function EditPatientPage() {
                 id="firstName"
                 value={form.firstName}
                 onChange={(e) => updateField('firstName', e.target.value)}
-                placeholder="Enter first name"
+                placeholder={t('ui.enter_first_name')}
                 required
               />
             </div>
@@ -215,12 +217,12 @@ export default function EditPatientPage() {
                 id="lastName"
                 value={form.lastName}
                 onChange={(e) => updateField('lastName', e.target.value)}
-                placeholder="Enter last name"
+                placeholder={t('ui.enter_last_name')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Label htmlFor="dateOfBirth">{t('ui.date_of_birth')}</Label>
               <Input
                 id="dateOfBirth"
                 type="date"
@@ -229,35 +231,35 @@ export default function EditPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
+              <Label htmlFor="age">{t('ui.age')}</Label>
               <Input
                 id="age"
                 type="number"
                 value={form.age}
                 onChange={(e) => updateField('age', e.target.value)}
-                placeholder="Age"
+                placeholder={t('ui.age')}
                 min="0"
                 max="150"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender">{t('ui.gender')}</Label>
               <Select value={form.gender} onValueChange={(v) => updateField('gender', v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
+                  <SelectValue placeholder={t('ui.select_gender')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="MALE">{t('ui.male')}</SelectItem>
+                  <SelectItem value="FEMALE">{t('ui.female')}</SelectItem>
+                  <SelectItem value="OTHER">{t('ui.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bloodGroup">Blood Group</Label>
+              <Label htmlFor="bloodGroup">{t('ui.blood_group')}</Label>
               <Select value={form.bloodGroup} onValueChange={(v) => updateField('bloodGroup', v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select blood group" />
+                  <SelectValue placeholder={t('ui.select_blood_group')} />
                 </SelectTrigger>
                 <SelectContent>
                   {BLOOD_GROUPS.map((bg) => (
@@ -274,8 +276,8 @@ export default function EditPatientPage() {
         {/* Contact Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
-            <CardDescription>Phone, email, and address details</CardDescription>
+            <CardTitle>{t('ui.contact_information')}</CardTitle>
+            <CardDescription>{t('ui.phone_email_and_address_details')}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -284,64 +286,64 @@ export default function EditPatientPage() {
                 id="phone"
                 value={form.phone}
                 onChange={(e) => updateField('phone', e.target.value)}
-                placeholder="Enter phone number"
+                placeholder={t('ui.enter_phone_number')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="alternatePhone">Alternate Phone</Label>
+              <Label htmlFor="alternatePhone">{t('ui.alternate_phone')}</Label>
               <Input
                 id="alternatePhone"
                 value={form.alternatePhone}
                 onChange={(e) => updateField('alternatePhone', e.target.value)}
-                placeholder="Alternate phone number"
+                placeholder={t('ui.alternate_phone_number')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('ui.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={form.email}
                 onChange={(e) => updateField('email', e.target.value)}
-                placeholder="Enter email address"
+                placeholder={t('ui.enter_email_address')}
               />
             </div>
             <div className="space-y-2 md:col-span-2 lg:col-span-3">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{t('ui.address')}</Label>
               <Textarea
                 id="address"
                 value={form.address}
                 onChange={(e) => updateField('address', e.target.value)}
-                placeholder="Enter full address"
+                placeholder={t('ui.enter_full_address')}
                 rows={2}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">{t('ui.city')}</Label>
               <Input
                 id="city"
                 value={form.city}
                 onChange={(e) => updateField('city', e.target.value)}
-                placeholder="City"
+                placeholder={t('ui.city')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+              <Label htmlFor="state">{t('ui.state')}</Label>
               <Input
                 id="state"
                 value={form.state}
                 onChange={(e) => updateField('state', e.target.value)}
-                placeholder="State"
+                placeholder={t('ui.state')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pincode">Postal Code</Label>
+              <Label htmlFor="pincode">{t('ui.postal_code')}</Label>
               <Input
                 id="pincode"
                 value={form.pincode}
                 onChange={(e) => updateField('pincode', e.target.value)}
-                placeholder="Postal code"
+                placeholder={t('ui.postal_code_2')}
               />
             </div>
           </CardContent>
@@ -350,8 +352,8 @@ export default function EditPatientPage() {
         {/* Additional Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Details</CardTitle>
-            <CardDescription>ID, occupation, and referral information</CardDescription>
+            <CardTitle>{t('ui.additional_details')}</CardTitle>
+            <CardDescription>{t('ui.id_occupation_and_referral_information')}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -364,21 +366,21 @@ export default function EditPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="occupation">Occupation</Label>
+              <Label htmlFor="occupation">{t('ui.occupation')}</Label>
               <Input
                 id="occupation"
                 value={form.occupation}
                 onChange={(e) => updateField('occupation', e.target.value)}
-                placeholder="Enter occupation"
+                placeholder={t('ui.enter_occupation')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referredBy">Referred By</Label>
+              <Label htmlFor="referredBy">{t('ui.referred_by')}</Label>
               <Input
                 id="referredBy"
                 value={form.referredBy}
                 onChange={(e) => updateField('referredBy', e.target.value)}
-                placeholder="Referral source"
+                placeholder={t('ui.referral_source')}
                 disabled
               />
             </div>
@@ -388,30 +390,30 @@ export default function EditPatientPage() {
         {/* Emergency Contact */}
         <Card>
           <CardHeader>
-            <CardTitle>Emergency Contact</CardTitle>
-            <CardDescription>Emergency contact information</CardDescription>
+            <CardTitle>{t('ui.emergency_contact')}</CardTitle>
+            <CardDescription>{t('ui.emergency_contact_information')}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="emergencyContactName">Contact Name</Label>
+              <Label htmlFor="emergencyContactName">{t('ui.contact_name')}</Label>
               <Input
                 id="emergencyContactName"
                 value={form.emergencyContactName}
                 onChange={(e) => updateField('emergencyContactName', e.target.value)}
-                placeholder="Emergency contact name"
+                placeholder={t('ui.emergency_contact_name')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="emergencyContactPhone">Contact Phone</Label>
+              <Label htmlFor="emergencyContactPhone">{t('ui.contact_phone')}</Label>
               <Input
                 id="emergencyContactPhone"
                 value={form.emergencyContactPhone}
                 onChange={(e) => updateField('emergencyContactPhone', e.target.value)}
-                placeholder="Emergency contact phone"
+                placeholder={t('ui.emergency_contact_phone')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="emergencyContactRelation">Relation</Label>
+              <Label htmlFor="emergencyContactRelation">{t('ui.relation')}</Label>
               <Input
                 id="emergencyContactRelation"
                 value={form.emergencyContactRelation}
@@ -425,21 +427,15 @@ export default function EditPatientPage() {
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <Link href={`/patients/${patientId}`}>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.saving')}</>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </>
+                <Save className="mr-2 h-4 w-4" />{t('ui.save_changes')}</>
             )}
           </Button>
         </div>

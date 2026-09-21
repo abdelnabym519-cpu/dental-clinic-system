@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Languages, Loader2 } from 'lucide-react'
@@ -56,6 +57,7 @@ export function LanguagePreferenceCard({
   endpoint,
   description = 'Choose how dates, numbers and amounts are formatted for you. Everyone else at this clinic is unaffected.',
 }: LanguagePreferenceCardProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -142,16 +144,16 @@ export function LanguagePreferenceCard({
         </div>
 
         <div className="rounded-md border p-4">
-          <p className="text-sm font-medium">Preview</p>
+          <p className="text-sm font-medium">{t('ui.preview')}</p>
           <dl className="mt-2 grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
             <div className="flex gap-2">
-              <dt>Amount</dt>
+              <dt>{t('ui.amount')}</dt>
               <dd className="font-medium text-foreground">
                 {formatCurrency(125000.5, { locale: effective, currency })}
               </dd>
             </div>
             <div className="flex gap-2">
-              <dt>Date</dt>
+              <dt>{t('ui.date')}</dt>
               <dd className="font-medium text-foreground">
                 {formatDate(new Date(2026, 0, 31), { locale: effective })}
               </dd>

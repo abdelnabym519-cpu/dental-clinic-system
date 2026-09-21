@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,7 @@ const ENTITY_ICONS: Record<string, typeof Activity> = {
 }
 
 export default function AuditLogPage() {
+  const { t } = useLanguage()
   const [logs, setLogs] = useState<AuditEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -147,13 +149,13 @@ export default function AuditLogPage() {
           }}
         >
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Action" />
+            <SelectValue placeholder={t('ui.action')} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Actions</SelectItem>
             <SelectItem value="CREATE">Create</SelectItem>
             <SelectItem value="UPDATE">Update</SelectItem>
-            <SelectItem value="DELETE">Delete</SelectItem>
+            <SelectItem value="DELETE">{t('ui.delete')}</SelectItem>
             <SelectItem value="LOGIN">Login</SelectItem>
           </SelectContent>
         </Select>
@@ -169,11 +171,11 @@ export default function AuditLogPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Entities</SelectItem>
-            <SelectItem value="Patient">Patient</SelectItem>
-            <SelectItem value="Appointment">Appointment</SelectItem>
-            <SelectItem value="Invoice">Invoice</SelectItem>
+            <SelectItem value="Patient">{t('ui.patient')}</SelectItem>
+            <SelectItem value="Appointment">{t('ui.appointment')}</SelectItem>
+            <SelectItem value="Invoice">{t('ui.invoice')}</SelectItem>
             <SelectItem value="User">User</SelectItem>
-            <SelectItem value="Treatment">Treatment</SelectItem>
+            <SelectItem value="Treatment">{t('ui.treatment')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -240,15 +242,13 @@ export default function AuditLogPage() {
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-            </Button>
+              <ChevronLeft className="h-4 w-4 mr-1" />{t('ui.previous')}</Button>
             <Button
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
-            >
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+            >{t('ui.next')}<ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>

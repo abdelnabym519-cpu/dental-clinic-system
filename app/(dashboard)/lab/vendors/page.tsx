@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useRouter } from 'next/navigation'
@@ -94,6 +95,7 @@ interface PaginationInfo {
 }
 
 export default function LabVendorsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -336,9 +338,7 @@ export default function LabVendorsPage() {
             Back to Lab Orders
           </Button>
           <Button onClick={() => handleOpenDialog()}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Vendor
-          </Button>
+            <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
         </div>
       </div>
 
@@ -394,13 +394,13 @@ export default function LabVendorsPage() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="All Statuses" />
+                <SelectValue placeholder={t('ui.all_statuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="blocked">Blocked</SelectItem>
+                <SelectItem value="all">{t('ui.all_statuses')}</SelectItem>
+                <SelectItem value="active">{t('ui.active')}</SelectItem>
+                <SelectItem value="inactive">{t('ui.inactive')}</SelectItem>
+                <SelectItem value="blocked">{t('ui.blocked')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -422,9 +422,7 @@ export default function LabVendorsPage() {
               <h3 className="mt-4 text-lg font-semibold">No vendors found</h3>
               <p className="text-muted-foreground">Get started by adding your first lab vendor</p>
               <Button className="mt-4" onClick={() => handleOpenDialog()}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Vendor
-              </Button>
+                <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
             </div>
           ) : (
             <>
@@ -432,13 +430,13 @@ export default function LabVendorsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Vendor Code</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Specializations</TableHead>
+                    <TableHead>{t('ui.name')}</TableHead>
+                    <TableHead>{t('ui.contact')}</TableHead>
+                    <TableHead>{t('ui.specializations')}</TableHead>
                     <TableHead>Turnaround</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('ui.rating')}</TableHead>
+                    <TableHead>{t('ui.status')}</TableHead>
+                    <TableHead className="text-right">{t('ui.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -496,17 +494,13 @@ export default function LabVendorsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleOpenDialog(vendor)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />{t('ui.edit')}</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDelete(vendor.id)}
                               className="text-red-600"
                             >
-                              <Trash className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
+                              <Trash className="mr-2 h-4 w-4" />{t('ui.delete')}</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -529,17 +523,13 @@ export default function LabVendorsPage() {
                     disabled={pagination.page === 1}
                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
+                    <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={pagination.page === pagination.pages}
                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
+                  >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -579,7 +569,7 @@ export default function LabVendorsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contactPerson">Contact Person</Label>
+                <Label htmlFor="contactPerson">{t('ui.contact_person')}</Label>
                 <Input
                   id="contactPerson"
                   value={formData.contactPerson}
@@ -599,7 +589,7 @@ export default function LabVendorsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('ui.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -608,7 +598,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                <Label htmlFor="alternatePhone">{t('ui.alternate_phone')}</Label>
                 <Input
                   id="alternatePhone"
                   value={formData.alternatePhone}
@@ -618,7 +608,7 @@ export default function LabVendorsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{t('ui.address')}</Label>
               <Textarea
                 id="address"
                 value={formData.address}
@@ -629,7 +619,7 @@ export default function LabVendorsPage() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">{t('ui.city')}</Label>
                 <Input
                   id="city"
                   value={formData.city}
@@ -652,7 +642,7 @@ export default function LabVendorsPage() {
                 </datalist>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pincode">Postal Code</Label>
+                <Label htmlFor="pincode">{t('ui.postal_code')}</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}
@@ -662,7 +652,7 @@ export default function LabVendorsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="specializations">Specializations</Label>
+              <Label htmlFor="specializations">{t('ui.specializations')}</Label>
               <Input
                 id="specializations"
                 value={formData.specializations}
@@ -704,7 +694,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{t('ui.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
@@ -718,16 +708,16 @@ export default function LabVendorsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
+                    <SelectItem value="active">{t('ui.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('ui.inactive')}</SelectItem>
+                    <SelectItem value="blocked">{t('ui.blocked')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t('ui.notes')}</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
@@ -737,9 +727,7 @@ export default function LabVendorsPage() {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving...' : editingVendor ? 'Update' : 'Create'}
               </Button>

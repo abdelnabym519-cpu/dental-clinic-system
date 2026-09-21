@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 import { MessageSquare, Mail, FileText, MessageCircle, Send } from 'lucide-react'
 
 export default function CommunicationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
@@ -130,13 +132,9 @@ export default function CommunicationsPage() {
       <Tabs defaultValue="sms" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="sms">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            SMS
-          </TabsTrigger>
+            <MessageSquare className="w-4 h-4 mr-2" />{t('ui.sms')}</TabsTrigger>
           <TabsTrigger value="email">
-            <Mail className="w-4 h-4 mr-2" />
-            Email
-          </TabsTrigger>
+            <Mail className="w-4 h-4 mr-2" />{t('ui.email')}</TabsTrigger>
           <TabsTrigger value="templates">
             <FileText className="w-4 h-4 mr-2" />
             Templates
@@ -152,12 +150,12 @@ export default function CommunicationsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Send SMS</CardTitle>
+                <CardTitle>{t('ui.send_sms')}</CardTitle>
                 <CardDescription>Send individual or bulk SMS messages</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="sms-phone">Phone Number</Label>
+                  <Label htmlFor="sms-phone">{t('ui.phone_number')}</Label>
                   <Input
                     id="sms-phone"
                     placeholder="10-digit mobile number"
@@ -167,7 +165,7 @@ export default function CommunicationsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="sms-message">Message</Label>
+                  <Label htmlFor="sms-message">{t('ui.message')}</Label>
                   <Textarea
                     id="sms-message"
                     placeholder="Type your message here (max 500 characters)"
@@ -182,9 +180,7 @@ export default function CommunicationsPage() {
                 </div>
 
                 <Button onClick={handleSendSMS} disabled={loading} className="w-full">
-                  <Send className="w-4 h-4 mr-2" />
-                  Send SMS
-                </Button>
+                  <Send className="w-4 h-4 mr-2" />{t('ui.send_sms')}</Button>
               </CardContent>
             </Card>
 
@@ -206,7 +202,7 @@ export default function CommunicationsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Send Email</CardTitle>
+                <CardTitle>{t('ui.send_email')}</CardTitle>
                 <CardDescription>Compose and send emails to patients</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -232,7 +228,7 @@ export default function CommunicationsPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email-body">Message</Label>
+                  <Label htmlFor="email-body">{t('ui.message')}</Label>
                   <Textarea
                     id="email-body"
                     placeholder="Type your email message here"
@@ -243,9 +239,7 @@ export default function CommunicationsPage() {
                 </div>
 
                 <Button onClick={handleSendEmail} disabled={loading} className="w-full">
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Email
-                </Button>
+                  <Send className="w-4 h-4 mr-2" />{t('ui.send_email')}</Button>
               </CardContent>
             </Card>
 
@@ -282,7 +276,7 @@ export default function CommunicationsPage() {
                       Create and manage reusable message templates
                     </p>
                   </div>
-                  <Button>Create Template</Button>
+                  <Button>{t('ui.create_template')}</Button>
                 </div>
 
                 <div className="border rounded-lg p-4">

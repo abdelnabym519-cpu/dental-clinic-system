@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 
 export default function SecuritySettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -136,11 +138,11 @@ export default function SecuritySettingsPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Security Settings</h1>
-          <p className="text-muted-foreground">Configure security policies and access controls</p>
+          <h1 className="text-3xl font-bold">{t('ui.security_settings')}</h1>
+          <p className="text-muted-foreground">{t('ui.configure_security_policies_and_access_controls')}</p>
         </div>
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading settings...</p>
+          <p className="text-muted-foreground">{t('ui.loading_settings')}</p>
         </div>
       </div>
     )
@@ -150,10 +152,8 @@ export default function SecuritySettingsPage() {
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Security Settings
-        </h1>
-        <p className="text-muted-foreground">Configure security policies and access controls</p>
+          <Shield className="w-8 h-8" />{t('ui.security_settings')}</h1>
+        <p className="text-muted-foreground">{t('ui.configure_security_policies_and_access_controls')}</p>
       </div>
 
       <div className="space-y-6">

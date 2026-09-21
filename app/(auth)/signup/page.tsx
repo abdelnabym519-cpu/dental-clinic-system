@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -30,6 +31,7 @@ const signupSchema = z
 type SignupFormData = z.infer<typeof signupSchema>
 
 export default function SignupPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -127,7 +129,7 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('ui.email')}</Label>
             <Input
               id="email"
               type="email"
@@ -139,7 +141,7 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{t('ui.phone_number')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -155,7 +157,7 @@ export default function SignupPage() {
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t('ui.at_least_8_characters')}
               {...register('password')}
               disabled={isLoading}
             />
@@ -165,11 +167,11 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t('ui.confirm_password')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('ui.confirm_your_password')}
               {...register('confirmPassword')}
               disabled={isLoading}
             />

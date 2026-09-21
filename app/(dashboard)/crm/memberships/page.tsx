@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -98,6 +99,7 @@ const emptyPlanForm = {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function MembershipPlansPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
 
@@ -414,8 +416,8 @@ export default function MembershipPlansPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Membership Plans</h1>
-            <p className="text-muted-foreground">Create and manage membership plans for patients</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('ui.membership_plans')}</h1>
+            <p className="text-muted-foreground">{t('ui.create_and_manage_membership_plans_for_patients')}</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -452,9 +454,7 @@ export default function MembershipPlansPage() {
             </p>
           </div>
           <Button onClick={() => openEnrollDialog(detailPlan)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Enroll Patient
-          </Button>
+            <UserPlus className="h-4 w-4 mr-2" />{t('ui.enroll_patient')}</Button>
         </div>
 
         {/* Benefits */}
@@ -507,12 +507,12 @@ export default function MembershipPlansPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Auto-Renew</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('ui.patient')}</TableHead>
+                    <TableHead>{t('ui.contact')}</TableHead>
+                    <TableHead>{t('ui.start_date')}</TableHead>
+                    <TableHead>{t('ui.end_date')}</TableHead>
+                    <TableHead>{t('ui.auto_renew')}</TableHead>
+                    <TableHead>{t('ui.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -562,8 +562,8 @@ export default function MembershipPlansPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Membership Plans</h1>
-          <p className="text-muted-foreground">Create and manage membership plans for patients</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t('ui.membership_plans')}</h1>
+          <p className="text-muted-foreground">{t('ui.create_and_manage_membership_plans_for_patients')}</p>
         </div>
         <Button onClick={openCreatePlan}>
           <Plus className="h-4 w-4 mr-2" />
@@ -619,14 +619,12 @@ export default function MembershipPlansPage() {
                           <Edit className="h-4 w-4 mr-2" /> Edit Plan
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEnrollDialog(plan)}>
-                          <UserPlus className="h-4 w-4 mr-2" /> Enroll Patient
-                        </DropdownMenuItem>
+                          <UserPlus className="h-4 w-4 mr-2" />{t('ui.enroll_patient')}</DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeletePlan(plan.id)}
                           className="text-destructive"
                         >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </DropdownMenuItem>
+                          <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -703,7 +701,7 @@ export default function MembershipPlansPage() {
 
             {/* Description */}
             <div>
-              <Label>Description</Label>
+              <Label>{t('ui.description')}</Label>
               <Textarea
                 value={planForm.description}
                 onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
@@ -798,7 +796,7 @@ export default function MembershipPlansPage() {
             {/* Active Toggle */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <Label className="text-sm font-medium">Active</Label>
+                <Label className="text-sm font-medium">{t('ui.active')}</Label>
                 <p className="text-xs text-muted-foreground">
                   Inactive plans cannot accept new enrollments
                 </p>
@@ -811,9 +809,7 @@ export default function MembershipPlansPage() {
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleSavePlan} disabled={savingPlan}>
                 {savingPlan ? 'Saving...' : editingPlanId ? 'Update Plan' : 'Create Plan'}
               </Button>
@@ -846,9 +842,7 @@ export default function MembershipPlansPage() {
               {(patientResults.length > 0 || searchingPatients) && !selectedPatient && (
                 <div className="border rounded-md mt-1 bg-background shadow-sm max-h-48 overflow-y-auto">
                   {searchingPatients ? (
-                    <div className="p-3 text-sm text-muted-foreground text-center">
-                      Searching...
-                    </div>
+                    <div className="p-3 text-sm text-muted-foreground text-center">{t('ui.searching')}</div>
                   ) : (
                     patientResults.map((p) => (
                       <button
@@ -869,9 +863,7 @@ export default function MembershipPlansPage() {
                   {!searchingPatients &&
                     patientResults.length === 0 &&
                     patientSearch.length >= 2 && (
-                      <div className="p-3 text-sm text-muted-foreground text-center">
-                        No patients found
-                      </div>
+                      <div className="p-3 text-sm text-muted-foreground text-center">{t('ui.no_patients_found')}</div>
                     )}
                 </div>
               )}
@@ -902,7 +894,7 @@ export default function MembershipPlansPage() {
             {/* Auto-Renew Toggle */}
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <Label className="text-sm font-medium">Auto-Renew</Label>
+                <Label className="text-sm font-medium">{t('ui.auto_renew')}</Label>
                 <p className="text-xs text-muted-foreground">
                   Automatically renew when membership expires
                 </p>
@@ -912,9 +904,7 @@ export default function MembershipPlansPage() {
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setEnrollDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setEnrollDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleEnroll} disabled={enrolling || !selectedPatient}>
                 {enrolling ? 'Enrolling...' : 'Enroll Patient'}
               </Button>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,6 +21,7 @@ export function SignaturePad({
   height = 200,
   label = 'I agree to the terms and conditions above',
 }: SignaturePadProps) {
+  const { t } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
@@ -220,9 +222,7 @@ export function SignaturePad({
           onClick={clearCanvas}
           disabled={!hasSignature}
         >
-          <Eraser className="h-4 w-4 mr-1" />
-          Clear
-        </Button>
+          <Eraser className="h-4 w-4 mr-1" />{t('ui.clear')}</Button>
       </div>
       <div className="flex items-start gap-2">
         <Checkbox

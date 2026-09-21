@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 
 interface Summary {
@@ -16,6 +17,7 @@ interface Summary {
  * no cache exists or user clicks Regenerate.
  */
 export function Patient360({ patientId }: { patientId: string }) {
+  const { t } = useLanguage()
   const [data, setData] = useState<Summary | null>(null)
   const [cached, setCached] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -57,7 +59,7 @@ export function Patient360({ patientId }: { patientId: string }) {
       <div className="rounded-lg border p-4 bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-lg">🤖</span>
-          <span className="text-sm font-semibold">AI Patient Summary</span>
+          <span className="text-sm font-semibold">{t('ui.ai_patient_summary')}</span>
         </div>
         <div className="space-y-2">
           <div className="h-3 w-full bg-muted rounded animate-pulse" />
@@ -76,7 +78,7 @@ export function Patient360({ patientId }: { patientId: string }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">🤖</span>
-          <h3 className="text-sm font-semibold">AI Patient Summary</h3>
+          <h3 className="text-sm font-semibold">{t('ui.ai_patient_summary')}</h3>
           {cached && (
             <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
               cached

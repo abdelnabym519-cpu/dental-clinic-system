@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -157,6 +158,7 @@ interface OperationalAnalytics {
 }
 
 export default function ReportsPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [datePreset, setDatePreset] = useState('this_month')
   const [dateFrom, setDateFrom] = useState('')
@@ -278,7 +280,7 @@ export default function ReportsPage() {
             }}
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Select period" />
+              <SelectValue placeholder={t('ui.select_period')} />
             </SelectTrigger>
             <SelectContent>
               {dateRangePresets.map((preset) => (
@@ -309,7 +311,7 @@ export default function ReportsPage() {
           <Select onValueChange={(value) => handleExport(value as 'pdf' | 'excel')}>
             <SelectTrigger className="w-[140px]">
               <Download className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Export" />
+              <SelectValue placeholder={t('ui.export')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="pdf">Export as PDF</SelectItem>
@@ -452,7 +454,7 @@ export default function ReportsPage() {
                 ) : (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Male</span>
+                      <span className="text-sm font-medium">{t('ui.male')}</span>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-32 bg-blue-100 rounded-full overflow-hidden">
                           <div
@@ -468,7 +470,7 @@ export default function ReportsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Female</span>
+                      <span className="text-sm font-medium">{t('ui.female')}</span>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-32 bg-pink-100 rounded-full overflow-hidden">
                           <div
@@ -484,7 +486,7 @@ export default function ReportsPage() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Other</span>
+                      <span className="text-sm font-medium">{t('ui.other')}</span>
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
                           <div
@@ -582,7 +584,7 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Treatments</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_treatments')}</CardTitle>
                 <Stethoscope className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -598,7 +600,7 @@ export default function ReportsPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.completed')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -619,7 +621,7 @@ export default function ReportsPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.in_progress')}</CardTitle>
                 <Activity className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
@@ -668,9 +670,7 @@ export default function ReportsPage() {
                     ))}
                   </>
                 ) : clinicalAnalytics?.commonProcedures.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No procedure data available
-                  </p>
+                  <p className="text-sm text-muted-foreground text-center py-8">{t('ui.no_procedure_data_available')}</p>
                 ) : (
                   clinicalAnalytics?.commonProcedures.map((proc, index) => (
                     <div key={proc.code} className="flex items-center justify-between">
@@ -748,7 +748,7 @@ export default function ReportsPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_revenue')}</CardTitle>
                 <DollarSign className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -971,7 +971,7 @@ export default function ReportsPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.completed')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -1058,11 +1058,11 @@ export default function ReportsPage() {
                       </div>
                       <div className="flex gap-8 text-center">
                         <div>
-                          <div className="text-sm text-muted-foreground">Appointments</div>
+                          <div className="text-sm text-muted-foreground">{t('ui.appointments')}</div>
                           <div className="text-xl font-bold">{staff.appointmentsHandled}</div>
                         </div>
                         <div>
-                          <div className="text-sm text-muted-foreground">Treatments</div>
+                          <div className="text-sm text-muted-foreground">{t('ui.treatments')}</div>
                           <div className="text-xl font-bold">{staff.treatmentsCompleted}</div>
                         </div>
                         <div>

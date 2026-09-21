@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -49,6 +50,7 @@ interface SchedulePreview {
 }
 
 export default function NewPaymentPlanPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -274,9 +276,7 @@ export default function NewPaymentPlanPage() {
                   </div>
                   {searchLoading && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Searching...
-                    </div>
+                      <Loader2 className="h-4 w-4 animate-spin" />{t('ui.searching')}</div>
                   )}
                   {invoices.length > 0 && (
                     <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
@@ -321,25 +321,23 @@ export default function NewPaymentPlanPage() {
                         {selectedInvoice.patient.firstName} {selectedInvoice.patient.lastName}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(null)}>
-                      Change
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(null)}>{t('ui.change')}</Button>
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
                     <div>
-                      <div className="text-muted-foreground">Total</div>
+                      <div className="text-muted-foreground">{t('ui.total')}</div>
                       <div className="font-medium">
                         {formatCurrency(selectedInvoice.totalAmount)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Paid</div>
+                      <div className="text-muted-foreground">{t('ui.paid')}</div>
                       <div className="font-medium text-green-600">
                         {formatCurrency(selectedInvoice.paidAmount)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Balance</div>
+                      <div className="text-muted-foreground">{t('ui.balance')}</div>
                       <div className="font-medium text-red-600">
                         {formatCurrency(selectedInvoice.balanceAmount)}
                       </div>
@@ -369,7 +367,7 @@ export default function NewPaymentPlanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Frequency</Label>
+                  <Label>{t('ui.frequency')}</Label>
                   <Select value={frequency} onValueChange={setFrequency}>
                     <SelectTrigger>
                       <SelectValue />
@@ -407,7 +405,7 @@ export default function NewPaymentPlanPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>{t('ui.start_date')}</Label>
                 <Input
                   type="date"
                   value={startDate}
@@ -435,9 +433,7 @@ export default function NewPaymentPlanPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />
-                  Plan Summary
-                </CardTitle>
+                  <Calculator className="h-5 w-5" />{t('ui.plan_summary')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -448,7 +444,7 @@ export default function NewPaymentPlanPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Down Payment</div>
+                    <div className="text-muted-foreground">{t('ui.down_payment')}</div>
                     <div className="font-medium text-lg">
                       {formatCurrency(Math.min(downPayment, selectedInvoice.balanceAmount))}
                     </div>
@@ -486,7 +482,7 @@ export default function NewPaymentPlanPage() {
           {schedule.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Installment Schedule</CardTitle>
+                <CardTitle>{t('ui.installment_schedule')}</CardTitle>
                 <CardDescription>Preview of {installments} installments</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -495,8 +491,8 @@ export default function NewPaymentPlanPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[60px]">#</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>{t('ui.due_date')}</TableHead>
+                        <TableHead className="text-right">{t('ui.amount')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

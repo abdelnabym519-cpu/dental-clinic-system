@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -92,23 +93,20 @@ interface PatientSearchResult {
 // ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: Referral['status'] }) {
+  const { t } = useLanguage()
   switch (status) {
     case 'PENDING':
-      return <Badge variant="outline">Pending</Badge>
+      return <Badge variant="outline">{t('ui.pending')}</Badge>
     case 'CONVERTED':
       return (
-        <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-100/80">
-          Converted
-        </Badge>
+        <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-100/80">{t('ui.converted')}</Badge>
       )
     case 'REWARDED':
       return (
-        <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100/80">
-          Rewarded
-        </Badge>
+        <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100/80">{t('ui.rewarded')}</Badge>
       )
     case 'EXPIRED':
-      return <Badge variant="destructive">Expired</Badge>
+      return <Badge variant="destructive">{t('ui.expired')}</Badge>
     default:
       return <Badge variant="outline">{status}</Badge>
   }
@@ -119,6 +117,7 @@ function StatusBadge({ status }: { status: Referral['status'] }) {
 // ---------------------------------------------------------------------------
 
 export default function ReferralsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
 
   // Data state
@@ -335,7 +334,7 @@ export default function ReferralsPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Referral Program</h1>
+          <h1 className="text-3xl font-bold">{t('ui.referral_program')}</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -359,10 +358,9 @@ export default function ReferralsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Referral Program</h1>
+        <h1 className="text-3xl font-bold">{t('ui.referral_program')}</h1>
         <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Create Referral
-        </Button>
+          <Plus className="mr-2 h-4 w-4" />{t('ui.create_referral')}</Button>
       </div>
 
       {/* Summary Cards */}
@@ -380,7 +378,7 @@ export default function ReferralsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Converted</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.converted')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -391,7 +389,7 @@ export default function ReferralsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rewarded</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.rewarded')}</CardTitle>
             <Gift className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -416,9 +414,7 @@ export default function ReferralsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-blue-500" />
-            Referrals
-          </CardTitle>
+            <Share2 className="h-5 w-5 text-blue-500" />{t('ui.referrals')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -442,14 +438,14 @@ export default function ReferralsPage() {
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('ui.filter_by_status')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="CONVERTED">Converted</SelectItem>
-                <SelectItem value="REWARDED">Rewarded</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
+                <SelectItem value="ALL">{t('ui.all_statuses')}</SelectItem>
+                <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
+                <SelectItem value="CONVERTED">{t('ui.converted')}</SelectItem>
+                <SelectItem value="REWARDED">{t('ui.rewarded')}</SelectItem>
+                <SelectItem value="EXPIRED">{t('ui.expired')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -459,13 +455,13 @@ export default function ReferralsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Referral Code</TableHead>
+                  <TableHead>{t('ui.referral_code')}</TableHead>
                   <TableHead>Referrer</TableHead>
                   <TableHead>Referred Name</TableHead>
                   <TableHead>Referred Phone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[60px]">Actions</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
+                  <TableHead>{t('ui.created')}</TableHead>
+                  <TableHead className="w-[60px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -511,7 +507,7 @@ export default function ReferralsPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
+                              <span className="sr-only">{t('ui.actions')}</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -566,17 +562,13 @@ export default function ReferralsPage() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Previous
-                </Button>
+                >{t('ui.previous')}</Button>
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={page >= pagination.totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
+                >{t('ui.next')}</Button>
               </div>
             </div>
           )}
@@ -593,7 +585,7 @@ export default function ReferralsPage() {
       >
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>Create Referral</DialogTitle>
+            <DialogTitle>{t('ui.create_referral')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             {/* Referrer Patient Search */}
@@ -602,7 +594,7 @@ export default function ReferralsPage() {
               <div className="relative" ref={dropdownRef}>
                 <Input
                   id="referrer"
-                  placeholder="Search patient by name or ID..."
+                  placeholder={t('ui.search_patient_by_name_or_id')}
                   value={referrerPatientId ? referrerDisplay : patientSearch}
                   onChange={(e) => {
                     setPatientSearch(e.target.value)
@@ -663,7 +655,7 @@ export default function ReferralsPage() {
               <Label htmlFor="referredPhone">Referred Person Phone</Label>
               <Input
                 id="referredPhone"
-                placeholder="Phone number"
+                placeholder={t('ui.phone_number_2')}
                 value={referredPhone}
                 onChange={(e) => setReferredPhone(e.target.value)}
               />
@@ -680,8 +672,8 @@ export default function ReferralsPage() {
                   <SelectValue placeholder="Select reward type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="POINTS">Points</SelectItem>
-                  <SelectItem value="DISCOUNT">Discount</SelectItem>
+                  <SelectItem value="POINTS">{t('ui.points')}</SelectItem>
+                  <SelectItem value="DISCOUNT">{t('ui.discount')}</SelectItem>
                   <SelectItem value="CREDIT">Credit</SelectItem>
                 </SelectContent>
               </Select>
@@ -704,14 +696,10 @@ export default function ReferralsPage() {
             <Button className="w-full" onClick={handleCreateReferral} disabled={submitting}>
               {submitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Creating...
-                </>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{t('ui.creating')}</>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Referral
-                </>
+                  <Plus className="mr-2 h-4 w-4" />{t('ui.create_referral')}</>
               )}
             </Button>
           </div>

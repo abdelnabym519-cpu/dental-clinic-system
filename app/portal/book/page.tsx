@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -44,6 +45,7 @@ interface Slot {
 type Step = 1 | 2 | 3 | 4
 
 export default function BookAppointment() {
+  const { t } = useLanguage()
   const router = useRouter()
 
   const [step, setStep] = useState<Step>(1)
@@ -164,7 +166,7 @@ export default function BookAppointment() {
         <Button variant="ghost" size="sm" onClick={() => router.push('/portal/appointments')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Book Appointment</h1>
+        <h1 className="text-2xl font-bold">{t('ui.book_appointment')}</h1>
       </div>
 
       {/* Step indicator */}
@@ -224,8 +226,7 @@ export default function BookAppointment() {
               </div>
             )}
 
-            <Button className="w-full mt-4" disabled={!selectedDoctor} onClick={() => setStep(2)}>
-              Continue <ArrowRight className="h-4 w-4 ml-2" />
+            <Button className="w-full mt-4" disabled={!selectedDoctor} onClick={() => setStep(2)}>{t('ui.continue')}<ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
         </Card>
@@ -248,7 +249,7 @@ export default function BookAppointment() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label>{t('ui.date')}</Label>
               <Input
                 type="date"
                 min={today}
@@ -287,10 +288,8 @@ export default function BookAppointment() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
-              </Button>
-              <Button className="flex-1" disabled={!selectedTime} onClick={() => setStep(3)}>
-                Continue <ArrowRight className="h-4 w-4 ml-2" />
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
+              <Button className="flex-1" disabled={!selectedTime} onClick={() => setStep(3)}>{t('ui.continue')}<ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </CardContent>
@@ -310,13 +309,13 @@ export default function BookAppointment() {
 
             <div className="p-4 rounded-lg bg-muted/50 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Doctor</span>
+                <span className="text-muted-foreground">{t('ui.doctor')}</span>
                 <span className="font-medium">
                   Dr. {selectedDoctorObj?.firstName} {selectedDoctorObj?.lastName}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Date</span>
+                <span className="text-muted-foreground">{t('ui.date')}</span>
                 <span className="font-medium">
                   {new Date(selectedDate).toLocaleDateString('en-EG', {
                     weekday: 'long',
@@ -327,7 +326,7 @@ export default function BookAppointment() {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Time</span>
+                <span className="text-muted-foreground">{t('ui.time')}</span>
                 <span className="font-medium">{selectedTime}</span>
               </div>
             </div>
@@ -344,8 +343,7 @@ export default function BookAppointment() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back
-              </Button>
+                <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
               <Button className="flex-1" onClick={handleBook} disabled={booking}>
                 {booking && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Confirm Booking

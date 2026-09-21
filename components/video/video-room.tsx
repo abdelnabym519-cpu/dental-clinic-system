@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -68,6 +69,7 @@ export default function VideoRoom({
   onEnd,
   onStatusChange,
 }: VideoRoomProps) {
+  const { t } = useLanguage()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -137,7 +139,7 @@ export default function VideoRoom({
         </div>
         {isDoctor && (
           <div className="w-full max-w-lg space-y-3">
-            <label className="text-sm font-medium">Consultation Notes</label>
+            <label className="text-sm font-medium">{t('ui.consultation_notes')}</label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -243,9 +245,7 @@ export default function VideoRoom({
                 )}
                 {patient.medicalHistory && (
                   <div className="space-y-1 pt-2 border-t">
-                    <div className="font-medium text-xs text-muted-foreground uppercase">
-                      Medical Alerts
-                    </div>
+                    <div className="font-medium text-xs text-muted-foreground uppercase">{t('ui.medical_alerts')}</div>
                     {patient.medicalHistory.hasAllergies && (
                       <div className="flex items-center gap-1 text-red-600 text-xs">
                         <AlertTriangle className="h-3 w-3" />
@@ -254,21 +254,15 @@ export default function VideoRoom({
                     )}
                     {patient.medicalHistory.hasDiabetes && (
                       <div className="flex items-center gap-1 text-orange-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />
-                        Diabetes
-                      </div>
+                        <AlertTriangle className="h-3 w-3" />{t('ui.diabetes')}</div>
                     )}
                     {patient.medicalHistory.hasHypertension && (
                       <div className="flex items-center gap-1 text-orange-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />
-                        Hypertension
-                      </div>
+                        <AlertTriangle className="h-3 w-3" />{t('ui.hypertension')}</div>
                     )}
                     {patient.medicalHistory.hasHeartDisease && (
                       <div className="flex items-center gap-1 text-red-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />
-                        Heart Disease
-                      </div>
+                        <AlertTriangle className="h-3 w-3" />{t('ui.heart_disease')}</div>
                     )}
                   </div>
                 )}
@@ -280,7 +274,7 @@ export default function VideoRoom({
           {appointment && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Appointment</CardTitle>
+                <CardTitle className="text-sm">{t('ui.appointment')}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-1">
                 <div className="text-muted-foreground">{appointment.appointmentNo}</div>
@@ -298,9 +292,7 @@ export default function VideoRoom({
           <Card className="flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Consultation Notes
-              </CardTitle>
+                <MessageSquare className="h-4 w-4" />{t('ui.consultation_notes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea

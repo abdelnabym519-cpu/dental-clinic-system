@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -109,6 +110,7 @@ interface Template {
 }
 
 export default function AutomationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
@@ -365,13 +367,13 @@ export default function AutomationsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>{t('ui.name')}</TableHead>
                   <TableHead>Trigger</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead className="text-center">Active</TableHead>
+                  <TableHead>{t('ui.action')}</TableHead>
+                  <TableHead className="text-center">{t('ui.active')}</TableHead>
                   <TableHead className="text-right">Runs</TableHead>
                   <TableHead>Last Run</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -553,9 +555,7 @@ export default function AutomationsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Create'}

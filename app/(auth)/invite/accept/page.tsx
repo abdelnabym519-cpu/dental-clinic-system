@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -36,6 +37,7 @@ type InviteData = {
 }
 
 function AcceptInviteContent() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -181,7 +183,7 @@ function AcceptInviteContent() {
         </CardHeader>
         <CardContent>
           <Button asChild className="w-full">
-            <Link href="/login">Continue to Login</Link>
+            <Link href="/login">{t('ui.continue_to_login')}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -218,7 +220,7 @@ function AcceptInviteContent() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{t('ui.phone_number')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -234,7 +236,7 @@ function AcceptInviteContent() {
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t('ui.at_least_8_characters')}
               {...register('password')}
               disabled={isSubmitting}
             />
@@ -244,11 +246,11 @@ function AcceptInviteContent() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t('ui.confirm_password')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('ui.confirm_your_password')}
               {...register('confirmPassword')}
               disabled={isSubmitting}
             />
@@ -272,6 +274,7 @@ function AcceptInviteContent() {
 }
 
 export default function AcceptInvitePage() {
+  const { t } = useLanguage()
   return (
     <Suspense
       fallback={
@@ -282,7 +285,7 @@ export default function AcceptInvitePage() {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
+            <CardTitle className="text-2xl font-bold">{t('ui.loading')}</CardTitle>
           </CardHeader>
         </Card>
       }

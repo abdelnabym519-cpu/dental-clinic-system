@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +37,7 @@ interface Prescription {
 }
 
 export default function PatientPrescriptions() {
+  const { t } = useLanguage()
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -58,7 +60,7 @@ export default function PatientPrescriptions() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Prescriptions</h1>
+        <h1 className="text-2xl font-bold">{t('ui.prescriptions')}</h1>
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-24" />
         ))}
@@ -68,7 +70,7 @@ export default function PatientPrescriptions() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Prescriptions</h1>
+      <h1 className="text-2xl font-bold">{t('ui.prescriptions')}</h1>
 
       {prescriptions.length === 0 ? (
         <Card>

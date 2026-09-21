@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +26,7 @@ interface DashboardData {
 }
 
 export default function CRMDashboardPage() {
+  const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
@@ -47,7 +49,7 @@ export default function CRMDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">CRM Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('ui.crm_dashboard')}</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -64,7 +66,7 @@ export default function CRMDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">CRM Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('ui.crm_dashboard')}</h1>
       </div>
 
       {/* Stats Cards */}
@@ -98,7 +100,7 @@ export default function CRMDashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Loyalty Points</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.loyalty_points')}</CardTitle>
             <Gift className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
@@ -167,9 +169,7 @@ export default function CRMDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-blue-500" />
-              Referrals
-            </CardTitle>
+              <Share2 className="h-5 w-5 text-blue-500" />{t('ui.referrals')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">

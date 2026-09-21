@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -78,6 +79,7 @@ interface InvoiceItem {
 }
 
 export default function NewInvoicePage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preSelectedPatientId = searchParams.get('patientId')
@@ -316,7 +318,7 @@ export default function NewInvoicePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Invoice</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_invoice')}</h1>
           <p className="text-muted-foreground">Create a new invoice for a patient</p>
         </div>
       </div>
@@ -334,7 +336,7 @@ export default function NewInvoicePage() {
           {/* Patient Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Patient Details</CardTitle>
+              <CardTitle>{t('ui.patient_details')}</CardTitle>
               <CardDescription>Search and select a patient</CardDescription>
             </CardHeader>
             <CardContent>
@@ -363,9 +365,7 @@ export default function NewInvoicePage() {
                       setSelectedPatient(null)
                       setItems([])
                     }}
-                  >
-                    Change
-                  </Button>
+                  >{t('ui.change')}</Button>
                 </div>
               ) : (
                 <div className="relative">
@@ -462,7 +462,7 @@ export default function NewInvoicePage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Invoice Items</CardTitle>
+                  <CardTitle>{t('ui.invoice_items')}</CardTitle>
                   <CardDescription>Items to be included in the invoice</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" onClick={addCustomItem}>
@@ -482,10 +482,10 @@ export default function NewInvoicePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[40%]">Description</TableHead>
-                      <TableHead className="text-center">Qty</TableHead>
-                      <TableHead className="text-right">Unit Price</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="w-[40%]">{t('ui.description')}</TableHead>
+                      <TableHead className="text-center">{t('ui.qty')}</TableHead>
+                      <TableHead className="text-right">{t('ui.unit_price')}</TableHead>
+                      <TableHead className="text-right">{t('ui.amount')}</TableHead>
                       <TableHead className="text-center">Taxable</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
@@ -561,7 +561,7 @@ export default function NewInvoicePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Terms & Conditions</Label>
+                <Label>{t('ui.terms_conditions')}</Label>
                 <Textarea
                   value={termsAndConditions}
                   onChange={(e) => setTermsAndConditions(e.target.value)}
@@ -584,7 +584,7 @@ export default function NewInvoicePage() {
             <CardContent className="space-y-4">
               {/* Discount */}
               <div className="space-y-2">
-                <Label>Discount</Label>
+                <Label>{t('ui.discount')}</Label>
                 <div className="flex gap-2">
                   <Select
                     value={discountType}
@@ -609,7 +609,7 @@ export default function NewInvoicePage() {
 
               {/* Payment Terms */}
               <div className="space-y-2">
-                <Label>Payment Terms</Label>
+                <Label>{t('ui.payment_terms')}</Label>
                 <Select
                   value={paymentTermDays.toString()}
                   onValueChange={(value) => setPaymentTermDays(parseInt(value))}
@@ -630,12 +630,12 @@ export default function NewInvoicePage() {
               {/* Totals */}
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
+                  <span>{t('ui.subtotal')}</span>
                   <span>{formatCurrency(totals.subtotal)}</span>
                 </div>
                 {totals.discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Discount</span>
+                    <span>{t('ui.discount')}</span>
                     <span>-{formatCurrency(totals.discountAmount)}</span>
                   </div>
                 )}
@@ -644,7 +644,7 @@ export default function NewInvoicePage() {
                   <span>{formatCurrency(totals.cgstAmount)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
-                  <span>Total</span>
+                  <span>{t('ui.total')}</span>
                   <span className="text-primary">{formatCurrency(totals.totalAmount)}</span>
                 </div>
               </div>

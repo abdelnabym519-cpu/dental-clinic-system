@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { Calendar, Clock, Plus, Trash2, Save } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function AppointmentSettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [holidays, setHolidays] = useState<any[]>([])
@@ -206,7 +208,7 @@ export default function AppointmentSettingsPage() {
         {/* Working Hours */}
         <Card>
           <CardHeader>
-            <CardTitle>Working Hours</CardTitle>
+            <CardTitle>{t('ui.working_hours')}</CardTitle>
             <CardDescription>Set clinic operating hours</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

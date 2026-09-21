@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -42,6 +43,7 @@ interface Procedure {
 }
 
 export default function NewPreAuthPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const [patients, setPatients] = useState<Patient[]>([])
@@ -191,14 +193,12 @@ export default function NewPreAuthPage() {
                   setSelectedPatient(null)
                   setPatientSearch('')
                 }}
-              >
-                Change
-              </Button>
+              >{t('ui.change')}</Button>
             </div>
           ) : (
             <div className="relative">
               <Input
-                placeholder="Search patient by name, ID, or phone..."
+                placeholder={t('ui.search_patient_by_name_id_or_phone')}
                 value={patientSearch}
                 onChange={(e) => setPatientSearch(e.target.value)}
               />
@@ -256,16 +256,16 @@ export default function NewPreAuthPage() {
                 {selectedPolicy && (
                   <div className="grid grid-cols-2 gap-3 text-sm bg-muted/50 rounded-lg p-3">
                     <div>
-                      <p className="text-muted-foreground">Member ID</p>
+                      <p className="text-muted-foreground">{t('ui.member_id')}</p>
                       <p className="font-medium">{selectedPolicy.memberId}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Subscriber</p>
+                      <p className="text-muted-foreground">{t('ui.subscriber')}</p>
                       <p className="font-medium">{selectedPolicy.subscriberName}</p>
                     </div>
                     {selectedPolicy.annualMaximum && (
                       <div>
-                        <p className="text-muted-foreground">Annual Maximum</p>
+                        <p className="text-muted-foreground">{t('ui.annual_maximum')}</p>
                         <p className="font-medium">
                           {formatCurrency(Number(selectedPolicy.annualMaximum))}
                         </p>
@@ -273,7 +273,7 @@ export default function NewPreAuthPage() {
                     )}
                     {selectedPolicy.remainingAmount != null && (
                       <div>
-                        <p className="text-muted-foreground">Remaining</p>
+                        <p className="text-muted-foreground">{t('ui.remaining')}</p>
                         <p className="font-medium text-green-600">
                           {formatCurrency(Number(selectedPolicy.remainingAmount))}
                         </p>
@@ -294,8 +294,7 @@ export default function NewPreAuthPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">3. Procedures</CardTitle>
               <Button variant="outline" size="sm" onClick={addProcedure}>
-                <Plus className="h-4 w-4 mr-1" /> Add Procedure
-              </Button>
+                <Plus className="h-4 w-4 mr-1" />{t('ui.add_procedure')}</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -311,7 +310,7 @@ export default function NewPreAuthPage() {
                     />
                   </div>
                   <div className="col-span-3">
-                    {i === 0 && <Label className="text-xs">Code</Label>}
+                    {i === 0 && <Label className="text-xs">{t('ui.code')}</Label>}
                     <Input
                       placeholder="e.g., D3310"
                       value={proc.code}
@@ -363,9 +362,7 @@ export default function NewPreAuthPage() {
               rows={3}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => router.back()}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => router.back()}>{t('ui.cancel')}</Button>
               <Button onClick={handleSubmit} disabled={saving}>
                 <FileCheck className="h-4 w-4 mr-2" />
                 {saving ? 'Creating...' : 'Create Pre-Authorization'}

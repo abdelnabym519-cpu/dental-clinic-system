@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { Database, Download, FileText, Shield, HardDrive } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function SystemSettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [backupStats, setBackupStats] = useState<any>(null)
@@ -116,23 +118,23 @@ export default function SystemSettingsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <p className="text-3xl font-bold text-blue-600">{backupStats.patients}</p>
-                    <p className="text-sm text-muted-foreground">Patients</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.patients')}</p>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
                     <p className="text-3xl font-bold text-green-600">{backupStats.appointments}</p>
-                    <p className="text-sm text-muted-foreground">Appointments</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.appointments')}</p>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <p className="text-3xl font-bold text-purple-600">{backupStats.treatments}</p>
-                    <p className="text-sm text-muted-foreground">Treatments</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.treatments')}</p>
                   </div>
                   <div className="text-center p-4 bg-yellow-50 rounded-lg">
                     <p className="text-3xl font-bold text-yellow-600">{backupStats.invoices}</p>
-                    <p className="text-sm text-muted-foreground">Invoices</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.invoices')}</p>
                   </div>
                   <div className="text-center p-4 bg-red-50 rounded-lg">
                     <p className="text-3xl font-bold text-red-600">{backupStats.payments}</p>
-                    <p className="text-sm text-muted-foreground">Payments</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.payments')}</p>
                   </div>
                   <div className="text-center p-4 bg-indigo-50 rounded-lg">
                     <p className="text-3xl font-bold text-indigo-600">
@@ -142,11 +144,11 @@ export default function SystemSettingsPage() {
                   </div>
                   <div className="text-center p-4 bg-pink-50 rounded-lg">
                     <p className="text-3xl font-bold text-pink-600">{backupStats.staff}</p>
-                    <p className="text-sm text-muted-foreground">Staff Members</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.staff_members')}</p>
                   </div>
                   <div className="text-center p-4 bg-teal-50 rounded-lg">
                     <p className="text-3xl font-bold text-teal-600">{backupStats.labOrders}</p>
-                    <p className="text-sm text-muted-foreground">Lab Orders</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.lab_orders')}</p>
                   </div>
                 </div>
               ) : (

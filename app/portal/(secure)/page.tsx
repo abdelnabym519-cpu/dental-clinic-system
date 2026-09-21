@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,6 +53,7 @@ interface DashboardData {
 }
 
 export default function PatientDashboard() {
+  const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -99,9 +101,7 @@ export default function PatientDashboard() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <Link href="/portal/book">
           <Button>
-            <CalendarPlus className="h-4 w-4 mr-2" />
-            Book Appointment
-          </Button>
+            <CalendarPlus className="h-4 w-4 mr-2" />{t('ui.book_appointment')}</Button>
         </Link>
       </div>
 
@@ -115,7 +115,7 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.stats.upcomingCount}</p>
-                <p className="text-xs text-muted-foreground">Upcoming</p>
+                <p className="text-xs text-muted-foreground">{t('ui.upcoming')}</p>
               </div>
             </div>
           </CardContent>
@@ -154,7 +154,7 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{formatCurrency(data.stats.totalOutstanding)}</p>
-                <p className="text-xs text-muted-foreground">Balance Due</p>
+                <p className="text-xs text-muted-foreground">{t('ui.balance_due')}</p>
               </div>
             </div>
           </CardContent>
@@ -169,8 +169,7 @@ export default function PatientDashboard() {
             <Link
               href="/portal/appointments"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >
-              View All <ArrowRight className="h-3 w-3" />
+            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -216,8 +215,7 @@ export default function PatientDashboard() {
             <Link
               href="/portal/bills"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >
-              View All <ArrowRight className="h-3 w-3" />
+            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -261,8 +259,7 @@ export default function PatientDashboard() {
             <Link
               href="/portal/records"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >
-              View All <ArrowRight className="h-3 w-3" />
+            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>

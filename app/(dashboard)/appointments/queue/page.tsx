@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -83,6 +84,7 @@ interface Doctor {
 }
 
 export default function QueueManagementPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -301,36 +303,26 @@ export default function QueueManagementPage() {
             {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
               <>
                 <Button size="sm" onClick={() => handleCheckIn(appointment.id)}>
-                  <LogIn className="h-4 w-4 mr-1" />
-                  Check In
-                </Button>
+                  <LogIn className="h-4 w-4 mr-1" />{t('ui.check_in')}</Button>
                 <Button size="sm" variant="outline" onClick={() => handleNoShow(appointment.id)}>
-                  <XCircle className="h-4 w-4 mr-1" />
-                  No Show
-                </Button>
+                  <XCircle className="h-4 w-4 mr-1" />{t('ui.no_show')}</Button>
               </>
             )}
             {appointment.status === 'CHECKED_IN' && (
               <>
                 <Button size="sm" onClick={() => handleStartProgress(appointment.id)}>
-                  <Play className="h-4 w-4 mr-1" />
-                  Start
-                </Button>
+                  <Play className="h-4 w-4 mr-1" />{t('ui.start')}</Button>
               </>
             )}
             {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
               <Button size="sm" variant="outline" onClick={() => handleCheckOut(appointment.id)}>
-                <LogOut className="h-4 w-4 mr-1" />
-                Complete
-              </Button>
+                <LogOut className="h-4 w-4 mr-1" />{t('ui.complete')}</Button>
             )}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => router.push(`/appointments/${appointment.id}`)}
-            >
-              View
-            </Button>
+            >{t('ui.view')}</Button>
           </div>
         )}
       </CardContent>
@@ -355,10 +347,10 @@ export default function QueueManagementPage() {
         <div className="flex gap-2">
           <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Doctors" />
+              <SelectValue placeholder={t('ui.all_doctors')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Doctors</SelectItem>
+              <SelectItem value="all">{t('ui.all_doctors')}</SelectItem>
               {doctors.map((doctor) => (
                 <SelectItem key={doctor.id} value={doctor.id}>
                   Dr. {doctor.firstName} {doctor.lastName}
@@ -367,14 +359,10 @@ export default function QueueManagementPage() {
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />{t('ui.refresh')}</Button>
           <Link href="/appointments/new">
             <Button>
-              <Calendar className="h-4 w-4 mr-2" />
-              New Appointment
-            </Button>
+              <Calendar className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
           </Link>
         </div>
       </div>
@@ -385,7 +373,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-sm text-muted-foreground">{t('ui.total')}</span>
             </div>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
@@ -394,7 +382,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-amber-700">Waiting</span>
+              <span className="text-sm text-amber-700">{t('ui.waiting')}</span>
             </div>
             <p className="text-2xl font-bold text-amber-700">{stats.waiting}</p>
           </CardContent>
@@ -403,7 +391,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Play className="h-4 w-4 text-purple-600" />
-              <span className="text-sm text-purple-700">In Progress</span>
+              <span className="text-sm text-purple-700">{t('ui.in_progress')}</span>
             </div>
             <p className="text-2xl font-bold text-purple-700">{stats.inProgress}</p>
           </CardContent>
@@ -412,7 +400,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-700">Upcoming</span>
+              <span className="text-sm text-blue-700">{t('ui.upcoming')}</span>
             </div>
             <p className="text-2xl font-bold text-blue-700">{stats.upcoming}</p>
           </CardContent>
@@ -421,7 +409,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-green-700">Completed</span>
+              <span className="text-sm text-green-700">{t('ui.completed')}</span>
             </div>
             <p className="text-2xl font-bold text-green-700">{stats.completed}</p>
           </CardContent>
@@ -430,7 +418,7 @@ export default function QueueManagementPage() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-red-600" />
-              <span className="text-sm text-red-700">No Show</span>
+              <span className="text-sm text-red-700">{t('ui.no_show')}</span>
             </div>
             <p className="text-2xl font-bold text-red-700">{stats.noShow}</p>
           </CardContent>

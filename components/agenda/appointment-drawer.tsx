@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -84,6 +85,7 @@ export function AppointmentDrawer({
   onClose: () => void
   onChanged: () => void
 }) {
+  const { t } = useLanguage()
   const [appointment, setAppointment] = useState<DrawerAppointment | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -244,7 +246,7 @@ export function AppointmentDrawer({
               {appointment.duration} min
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t('ui.close')}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -269,29 +271,23 @@ export function AppointmentDrawer({
           <h3 className="mb-2 text-sm font-semibold">Visit status</h3>
           <div className="flex flex-wrap gap-2">
             {capabilities.canAdvance && status === 'SCHEDULED' && (
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus('CONFIRMED')}>
-                Confirm
-              </Button>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus('CONFIRMED')}>{t('ui.confirm')}</Button>
             )}
             {capabilities.canCheckIn && (status === 'SCHEDULED' || status === 'CONFIRMED') && (
               <Button size="sm" disabled={busy} aria-label="Check in patient" onClick={() => setStatus('CHECKED_IN')}>
-                <LogIn className="h-3.5 w-3.5 mr-1" /> Check in
-              </Button>
+                <LogIn className="h-3.5 w-3.5 mr-1" />{t('ui.check_in_2')}</Button>
             )}
             {capabilities.canAdvance && status === 'CHECKED_IN' && (
               <Button size="sm" disabled={busy} onClick={() => setStatus('IN_PROGRESS')}>
-                <Play className="h-3.5 w-3.5 mr-1" /> Start visit
-              </Button>
+                <Play className="h-3.5 w-3.5 mr-1" />{t('ui.start_visit')}</Button>
             )}
             {capabilities.canAdvance && status === 'IN_PROGRESS' && (
               <Button size="sm" disabled={busy} onClick={() => setStatus('COMPLETED')}>
-                <CheckCheck className="h-3.5 w-3.5 mr-1" /> Complete
-              </Button>
+                <CheckCheck className="h-3.5 w-3.5 mr-1" />{t('ui.complete')}</Button>
             )}
             {capabilities.canNoShow && ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(status) && (
               <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus('NO_SHOW')}>
-                <UserX className="h-3.5 w-3.5 mr-1" /> No-show
-              </Button>
+                <UserX className="h-3.5 w-3.5 mr-1" />{t('ui.no_show_2')}</Button>
             )}
             {capabilities.canSchedule && !['CANCELLED', 'COMPLETED'].includes(status) && (
               <Button size="sm" variant="outline" disabled={busy} onClick={cancelWithReason}>
@@ -369,17 +365,15 @@ export function AppointmentDrawer({
             )}
             <div className="flex items-end gap-2">
               <div className="grid gap-1">
-                <Label htmlFor="drawer-remind-channel" className="text-xs">
-                  Channel
-                </Label>
+                <Label htmlFor="drawer-remind-channel" className="text-xs">{t('ui.channel')}</Label>
                 <Select value={remindChannel} onValueChange={setRemindChannel}>
                   <SelectTrigger id="drawer-remind-channel" className="w-[130px]" aria-label="Reminder channel">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-                    <SelectItem value="SMS">SMS</SelectItem>
-                    <SelectItem value="EMAIL">Email</SelectItem>
+                    <SelectItem value="WHATSAPP">{t('ui.whatsapp')}</SelectItem>
+                    <SelectItem value="SMS">{t('ui.sms')}</SelectItem>
+                    <SelectItem value="EMAIL">{t('ui.email')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

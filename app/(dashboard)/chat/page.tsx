@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAI } from '@/components/ai/ai-provider'
 import { useWebVoice } from '@/hooks/use-web-voice'
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils'
 // ---------------------------------------------------------------------------
 
 function TypingDots() {
+  const { t } = useLanguage()
   return (
     <span className="inline-flex items-center gap-1 py-1">
       {[0, 1, 2].map((i) => (
@@ -29,6 +31,7 @@ function TypingDots() {
 }
 
 function BlinkingCursor() {
+  const { t } = useLanguage()
   return (
     <span
       className="inline-block w-[2px] h-[1em] bg-current align-text-bottom ml-[1px]"
@@ -39,6 +42,7 @@ function BlinkingCursor() {
 
 // Icons
 function MicIcon({ size = 20 }: { size?: number }) {
+  const { t } = useLanguage()
   return (
     <svg
       width={size}
@@ -58,6 +62,7 @@ function MicIcon({ size = 20 }: { size?: number }) {
 }
 
 function SpeakerIcon({ active }: { active: boolean }) {
+  const { t } = useLanguage()
   return (
     <svg
       width="18"
@@ -86,6 +91,7 @@ function SpeakerIcon({ active }: { active: boolean }) {
 }
 
 function HandsFreeIcon() {
+  const { t } = useLanguage()
   return (
     <svg
       width="18"
@@ -127,6 +133,7 @@ const SUGGESTIONS = [
 // Main page
 // ---------------------------------------------------------------------------
 export default function ChatPage() {
+  const { t } = useLanguage()
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -259,7 +266,7 @@ export default function ChatPage() {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-6 py-3 shrink-0">
         <div>
-          <h1 className="text-lg font-semibold">AI Assistant</h1>
+          <h1 className="text-lg font-semibold">{t('ui.ai_assistant')}</h1>
           <p className="text-xs text-muted-foreground">
             {voice.handsFreeMode
               ? "Hands-free mode — speak naturally, I'll respond and keep listening"
@@ -354,7 +361,7 @@ export default function ChatPage() {
               </div>
             )}
             {orbState === 'processing' && (
-              <p className="text-sm text-purple-500 font-medium mb-4">Thinking...</p>
+              <p className="text-sm text-purple-500 font-medium mb-4">{t('ui.thinking')}</p>
             )}
             {orbState === 'speaking' && (
               <p className="text-sm text-blue-500 font-medium mb-4">
@@ -548,7 +555,7 @@ export default function ChatPage() {
                   </p>
                 )}
                 {orbState === 'processing' && (
-                  <p className="text-xs text-purple-500 font-medium mt-2">Thinking...</p>
+                  <p className="text-xs text-purple-500 font-medium mt-2">{t('ui.thinking')}</p>
                 )}
                 {orbState === 'speaking' && (
                   <p className="text-xs text-blue-500 font-medium mt-2">Speaking...</p>

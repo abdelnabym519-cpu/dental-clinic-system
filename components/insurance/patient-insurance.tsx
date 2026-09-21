@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,6 +78,7 @@ const emptyForm = {
 }
 
 export function PatientInsurance({ patientId }: { patientId: string }) {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [policies, setPolicies] = useState<InsurancePolicy[]>([])
   const [providers, setProviders] = useState<Provider[]>([])
@@ -217,8 +219,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
     if (p.verificationStatus === 'EXPIRED') {
       return (
         <Badge variant="destructive" className="text-xs">
-          <AlertTriangle className="h-3 w-3 mr-1" /> Expired
-        </Badge>
+          <AlertTriangle className="h-3 w-3 mr-1" />{t('ui.expired')}</Badge>
       )
     }
     return (
@@ -268,7 +269,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     <CardTitle className="text-base flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-500" />
                       {p.provider.name}
-                      {!p.isActive && <Badge variant="secondary">Inactive</Badge>}
+                      {!p.isActive && <Badge variant="secondary">{t('ui.inactive')}</Badge>}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
                       Policy: {p.policyNumber} {p.groupNumber && `· Group: ${p.groupNumber}`}
@@ -285,11 +286,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Member ID</p>
+                    <p className="text-muted-foreground">{t('ui.member_id')}</p>
                     <p className="font-medium">{p.memberId}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Subscriber</p>
+                    <p className="text-muted-foreground">{t('ui.subscriber')}</p>
                     <p className="font-medium">
                       {p.subscriberName} ({p.subscriberRelation})
                     </p>
@@ -299,7 +300,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     <p className="font-medium">{formatDate(p.effectiveDate)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Expires</p>
+                    <p className="text-muted-foreground">{t('ui.expires')}</p>
                     <p className="font-medium">{p.expiryDate ? formatDate(p.expiryDate) : 'N/A'}</p>
                   </div>
                 </div>
@@ -307,13 +308,13 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-4 pt-4 border-t">
                     {p.annualMaximum && (
                       <div>
-                        <p className="text-muted-foreground">Annual Maximum</p>
+                        <p className="text-muted-foreground">{t('ui.annual_maximum')}</p>
                         <p className="font-medium">{formatCurrency(Number(p.annualMaximum))}</p>
                       </div>
                     )}
                     {p.remainingAmount != null && (
                       <div>
-                        <p className="text-muted-foreground">Remaining</p>
+                        <p className="text-muted-foreground">{t('ui.remaining')}</p>
                         <p className="font-medium text-green-600">
                           {formatCurrency(Number(p.remainingAmount))}
                         </p>
@@ -321,7 +322,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     )}
                     {p.deductible != null && (
                       <div>
-                        <p className="text-muted-foreground">Deductible</p>
+                        <p className="text-muted-foreground">{t('ui.deductible')}</p>
                         <p className="font-medium">
                           {formatCurrency(Number(p.deductible))}
                           {p.deductibleMet && <span className="text-green-600 ml-1">(Met)</span>}
@@ -348,8 +349,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   >
                     {p.isActive ? (
                       <>
-                        <XCircle className="h-4 w-4 mr-1" /> Deactivate
-                      </>
+                        <XCircle className="h-4 w-4 mr-1" />{t('ui.deactivate')}</>
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4 mr-1" /> Activate
@@ -404,7 +404,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 <Input
                   value={form.groupNumber}
                   onChange={(e) => setForm({ ...form, groupNumber: e.target.value })}
-                  placeholder="Optional"
+                  placeholder={t('ui.optional')}
                 />
               </div>
               <div>
@@ -450,7 +450,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Expiry Date</Label>
+                <Label>{t('ui.expiry_date')}</Label>
                 <Input
                   type="date"
                   value={form.expiryDate}
@@ -464,7 +464,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   onValueChange={(v) => setForm({ ...form, coverageType: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder={t('ui.select_type')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Individual">Individual</SelectItem>
@@ -474,7 +474,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 </Select>
               </div>
               <div>
-                <Label>Annual Maximum</Label>
+                <Label>{t('ui.annual_maximum')}</Label>
                 <Input
                   type="number"
                   value={form.annualMaximum}
@@ -483,7 +483,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Deductible</Label>
+                <Label>{t('ui.deductible')}</Label>
                 <Input
                   type="number"
                   value={form.deductible}
@@ -502,9 +502,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update' : 'Add Policy'}
               </Button>

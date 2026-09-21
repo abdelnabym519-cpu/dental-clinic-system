@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -98,6 +99,7 @@ const roleColors: Record<string, string> = {
 }
 
 export default function AttendancePage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [todayData, setTodayData] = useState<TodayAttendance | null>(null)
@@ -226,7 +228,7 @@ export default function AttendancePage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Attendance</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('ui.attendance')}</h1>
             <p className="text-muted-foreground">Track and manage staff attendance</p>
           </div>
         </div>
@@ -259,7 +261,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-muted-foreground">Present</span>
+                <span className="text-sm text-muted-foreground">{t('ui.present')}</span>
               </div>
               <p className="text-2xl font-bold mt-1 text-green-600">{todayData.summary.present}</p>
             </CardContent>
@@ -268,7 +270,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <UserX className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-muted-foreground">Absent</span>
+                <span className="text-sm text-muted-foreground">{t('ui.absent')}</span>
               </div>
               <p className="text-2xl font-bold mt-1 text-red-600">{todayData.summary.absent}</p>
             </CardContent>
@@ -277,7 +279,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm text-muted-foreground">Late</span>
+                <span className="text-sm text-muted-foreground">{t('ui.late')}</span>
               </div>
               <p className="text-2xl font-bold mt-1 text-yellow-600">{todayData.summary.late}</p>
             </CardContent>
@@ -286,7 +288,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-muted-foreground">On Leave</span>
+                <span className="text-sm text-muted-foreground">{t('ui.on_leave')}</span>
               </div>
               <p className="text-2xl font-bold mt-1 text-blue-600">{todayData.summary.onLeave}</p>
             </CardContent>
@@ -295,7 +297,7 @@ export default function AttendancePage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Not Marked</span>
+                <span className="text-sm text-muted-foreground">{t('ui.not_marked')}</span>
               </div>
               <p className="text-2xl font-bold mt-1 text-muted-foreground">
                 {todayData.summary.notMarked}
@@ -317,12 +319,12 @@ export default function AttendancePage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Clock In</TableHead>
-                <TableHead>Clock Out</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.employee')}</TableHead>
+                <TableHead>{t('ui.role')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead>{t('ui.clock_in')}</TableHead>
+                <TableHead>{t('ui.clock_out')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -354,7 +356,7 @@ export default function AttendancePage() {
                   <TableCell colSpan={6} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No staff members found</p>
+                      <p className="text-muted-foreground">{t('ui.no_staff_members_found')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -384,9 +386,7 @@ export default function AttendancePage() {
                           {statusLabels[member.todayStatus]}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Not Marked
-                        </Badge>
+                        <Badge variant="outline" className="text-muted-foreground">{t('ui.not_marked')}</Badge>
                       )}
                     </TableCell>
                     <TableCell>{formatTime(member.clockIn)}</TableCell>
@@ -429,21 +429,21 @@ export default function AttendancePage() {
                 onValueChange={(value) => setAttendanceForm((prev) => ({ ...prev, status: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder={t('ui.select_status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PRESENT">Present</SelectItem>
-                  <SelectItem value="ABSENT">Absent</SelectItem>
-                  <SelectItem value="LATE">Late</SelectItem>
-                  <SelectItem value="HALF_DAY">Half Day</SelectItem>
-                  <SelectItem value="ON_LEAVE">On Leave</SelectItem>
+                  <SelectItem value="PRESENT">{t('ui.present')}</SelectItem>
+                  <SelectItem value="ABSENT">{t('ui.absent')}</SelectItem>
+                  <SelectItem value="LATE">{t('ui.late')}</SelectItem>
+                  <SelectItem value="HALF_DAY">{t('ui.half_day')}</SelectItem>
+                  <SelectItem value="ON_LEAVE">{t('ui.on_leave')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Clock In</Label>
+                <Label>{t('ui.clock_in')}</Label>
                 <Input
                   type="time"
                   value={attendanceForm.clockIn}
@@ -453,7 +453,7 @@ export default function AttendancePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Clock Out</Label>
+                <Label>{t('ui.clock_out')}</Label>
                 <Input
                   type="time"
                   value={attendanceForm.clockOut}
@@ -465,7 +465,7 @@ export default function AttendancePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Notes</Label>
+              <Label>{t('ui.notes')}</Label>
               <Input
                 value={attendanceForm.notes}
                 onChange={(e) => setAttendanceForm((prev) => ({ ...prev, notes: e.target.value }))}
@@ -475,9 +475,7 @@ export default function AttendancePage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleMarkAttendance} disabled={marking}>
               {marking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save

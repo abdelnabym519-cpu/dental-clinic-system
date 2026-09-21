@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -101,6 +102,7 @@ const roleLabels: Record<string, string> = {
 }
 
 export default function StaffPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const [staff, setStaff] = useState<Staff[]>([])
@@ -219,9 +221,7 @@ export default function StaffPage() {
           />
           <Link href="/staff/attendance">
             <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              Attendance
-            </Button>
+              <Calendar className="h-4 w-4 mr-2" />{t('ui.attendance')}</Button>
           </Link>
           <Link href="/staff/leaves">
             <Button variant="outline">
@@ -231,9 +231,7 @@ export default function StaffPage() {
           </Link>
           <Link href="/staff/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Staff
-            </Button>
+              <Plus className="h-4 w-4 mr-2" />{t('ui.add_staff')}</Button>
           </Link>
         </div>
       </div>
@@ -254,25 +252,25 @@ export default function StaffPage() {
             <div className="flex gap-2">
               <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Role" />
+                  <SelectValue placeholder={t('ui.role')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="DOCTOR">Doctor</SelectItem>
-                  <SelectItem value="RECEPTIONIST">Receptionist</SelectItem>
+                  <SelectItem value="ADMIN">{t('ui.admin')}</SelectItem>
+                  <SelectItem value="DOCTOR">{t('ui.doctor')}</SelectItem>
+                  <SelectItem value="RECEPTIONIST">{t('ui.receptionist')}</SelectItem>
                   <SelectItem value="LAB_TECH">Lab Tech</SelectItem>
-                  <SelectItem value="ACCOUNTANT">Accountant</SelectItem>
+                  <SelectItem value="ACCOUNTANT">{t('ui.accountant')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="active">{t('ui.active')}</SelectItem>
+                  <SelectItem value="inactive">{t('ui.inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -287,13 +285,13 @@ export default function StaffPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Employee ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Specialization</TableHead>
+                <TableHead>{t('ui.name')}</TableHead>
+                <TableHead>{t('ui.contact')}</TableHead>
+                <TableHead>{t('ui.role')}</TableHead>
+                <TableHead>{t('ui.specialization')}</TableHead>
                 <TableHead>Joined</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,12 +329,10 @@ export default function StaffPage() {
                   <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <UserCog className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No staff members found</p>
+                      <p className="text-muted-foreground">{t('ui.no_staff_members_found')}</p>
                       <Link href="/staff/new">
                         <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Staff
-                        </Button>
+                          <Plus className="h-4 w-4 mr-2" />{t('ui.add_staff')}</Button>
                       </Link>
                     </div>
                   </TableCell>
@@ -398,13 +394,9 @@ export default function StaffPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/staff/${member.id}`)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/staff/${member.id}/edit`)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                           {member.user.role === 'DOCTOR' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/staff/${member.id}/performance`)}
@@ -422,9 +414,7 @@ export default function StaffPage() {
                                 setDeleteDialogOpen(true)
                               }}
                             >
-                              <UserX className="h-4 w-4 mr-2" />
-                              Deactivate
-                            </DropdownMenuItem>
+                              <UserX className="h-4 w-4 mr-2" />{t('ui.deactivate')}</DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -450,9 +440,7 @@ export default function StaffPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -461,9 +449,7 @@ export default function StaffPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -485,10 +471,8 @@ export default function StaffPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700">
-              Deactivate
-            </AlertDialogAction>
+            <AlertDialogCancel>{t('ui.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700">{t('ui.deactivate')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

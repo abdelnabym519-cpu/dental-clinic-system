@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -49,6 +50,7 @@ interface Procedure {
 }
 
 export default function NewTreatmentPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedPatientId = searchParams.get('patientId')
@@ -212,7 +214,7 @@ export default function NewTreatmentPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Treatment</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_treatment')}</h1>
           <p className="text-muted-foreground">Record a new treatment for a patient</p>
         </div>
       </div>
@@ -229,9 +231,7 @@ export default function NewTreatmentPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Patient Information
-            </CardTitle>
+              <User className="h-5 w-5" />{t('ui.patient_information')}</CardTitle>
             <CardDescription>Select the patient for this treatment</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -257,16 +257,14 @@ export default function NewTreatmentPage() {
                     setSelectedPatient(null)
                     setFormData({ ...formData, patientId: '' })
                   }}
-                >
-                  Change
-                </Button>
+                >{t('ui.change')}</Button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search patients by name, phone, or ID..."
+                    placeholder={t('ui.search_patients_by_name_phone_or_id')}
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-9"
@@ -274,7 +272,7 @@ export default function NewTreatmentPage() {
                 </div>
                 <div className="max-h-60 overflow-y-auto border rounded-lg">
                   {filteredPatients.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">No patients found</div>
+                    <div className="p-4 text-center text-muted-foreground">{t('ui.no_patients_found')}</div>
                   ) : (
                     filteredPatients.slice(0, 10).map((patient) => (
                       <button
@@ -338,7 +336,7 @@ export default function NewTreatmentPage() {
                 <Label htmlFor="procedure">Procedure *</Label>
                 <Select value={formData.procedureId} onValueChange={handleProcedureSelect}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select procedure" />
+                    <SelectValue placeholder={t('ui.select_procedure')} />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(groupedProcedures).map(([category, procs]) => (
@@ -374,7 +372,7 @@ export default function NewTreatmentPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="cost">Treatment Cost</Label>
+              <Label htmlFor="cost">{t('ui.treatment_cost')}</Label>
               <Input
                 id="cost"
                 type="number"
@@ -399,12 +397,12 @@ export default function NewTreatmentPage() {
         {/* Clinical Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Clinical Notes</CardTitle>
+            <CardTitle>{t('ui.clinical_notes')}</CardTitle>
             <CardDescription>Document the clinical findings and treatment notes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="chiefComplaint">Chief Complaint</Label>
+              <Label htmlFor="chiefComplaint">{t('ui.chief_complaint')}</Label>
               <Textarea
                 id="chiefComplaint"
                 value={formData.chiefComplaint}
@@ -415,7 +413,7 @@ export default function NewTreatmentPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="diagnosis">Diagnosis</Label>
+              <Label htmlFor="diagnosis">{t('ui.diagnosis')}</Label>
               <Textarea
                 id="diagnosis"
                 value={formData.diagnosis}
@@ -426,7 +424,7 @@ export default function NewTreatmentPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="findings">Clinical Findings</Label>
+              <Label htmlFor="findings">{t('ui.clinical_findings')}</Label>
               <Textarea
                 id="findings"
                 value={formData.findings}
@@ -438,7 +436,7 @@ export default function NewTreatmentPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Label htmlFor="procedureNotes">Procedure Notes</Label>
+                <Label htmlFor="procedureNotes">{t('ui.procedure_notes')}</Label>
                 <VoiceInput
                   onTranscript={(text) =>
                     setFormData((prev) => ({
@@ -458,7 +456,7 @@ export default function NewTreatmentPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="materialsUsed">Materials Used</Label>
+              <Label htmlFor="materialsUsed">{t('ui.materials_used')}</Label>
               <Textarea
                 id="materialsUsed"
                 value={formData.materialsUsed}
@@ -485,7 +483,7 @@ export default function NewTreatmentPage() {
         {/* Follow-up */}
         <Card>
           <CardHeader>
-            <CardTitle>Follow-up</CardTitle>
+            <CardTitle>{t('ui.follow_up_2')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -496,12 +494,12 @@ export default function NewTreatmentPage() {
                   setFormData({ ...formData, followUpRequired: checked as boolean })
                 }
               />
-              <Label htmlFor="followUpRequired">Follow-up required</Label>
+              <Label htmlFor="followUpRequired">{t('ui.follow_up_required_2')}</Label>
             </div>
 
             {formData.followUpRequired && (
               <div className="space-y-2">
-                <Label htmlFor="followUpDate">Follow-up Date</Label>
+                <Label htmlFor="followUpDate">{t('ui.follow_up_date')}</Label>
                 <Input
                   id="followUpDate"
                   type="date"
@@ -516,9 +514,7 @@ export default function NewTreatmentPage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/treatments">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
           </Link>
           <Button type="submit" disabled={loading}>
             {loading ? (

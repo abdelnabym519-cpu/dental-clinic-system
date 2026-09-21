@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,7 @@ interface Summary {
 }
 
 export default function VideoConsultationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [consultations, setConsultations] = useState<Consultation[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,19 +103,17 @@ export default function VideoConsultationsPage() {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Scheduled</Badge>
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.scheduled')}</Badge>
       case 'IN_PROGRESS':
         return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">
-            Live
-          </Badge>
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">{t('ui.live')}</Badge>
         )
       case 'COMPLETED':
-        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">Completed</Badge>
+        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">{t('ui.completed')}</Badge>
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Cancelled</Badge>
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.cancelled')}</Badge>
       case 'NO_SHOW':
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">No Show</Badge>
+        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">{t('ui.no_show')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -133,7 +133,7 @@ export default function VideoConsultationsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.scheduled')}</CardTitle>
             <CalendarClock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -146,7 +146,7 @@ export default function VideoConsultationsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.in_progress')}</CardTitle>
             <Play className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -159,7 +159,7 @@ export default function VideoConsultationsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.completed')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -172,7 +172,7 @@ export default function VideoConsultationsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ui.cancelled')}</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -215,13 +215,13 @@ export default function VideoConsultationsPage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Patient</TableHead>
-                <TableHead>Doctor</TableHead>
-                <TableHead>Appointment</TableHead>
-                <TableHead>Scheduled</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.doctor')}</TableHead>
+                <TableHead>{t('ui.appointment')}</TableHead>
+                <TableHead>{t('ui.scheduled')}</TableHead>
+                <TableHead>{t('ui.duration')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { LogOut, User, Settings } from 'lucide-react'
@@ -32,6 +33,7 @@ const roleColors: Record<string, string> = {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const { t } = useLanguage()
   const router = useRouter()
   const initials = user.name
     .split(' ')
@@ -67,11 +69,11 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push('/settings')}>
           <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <span>{t('ui.profile')}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => router.push('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+          <span>{t('ui.settings')}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

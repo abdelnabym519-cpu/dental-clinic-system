@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -88,6 +89,7 @@ interface PaginationInfo {
 }
 
 export default function InventoryPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [items, setItems] = useState<InventoryItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -250,9 +252,7 @@ export default function InventoryPage() {
           </Link>
           <Link href="/inventory/reports">
             <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Reports
-            </Button>
+              <FileText className="h-4 w-4 mr-2" />{t('ui.reports')}</Button>
           </Link>
           <ExportMenu
             filename="inventory"
@@ -353,14 +353,14 @@ export default function InventoryPage() {
               <Table className="min-w-[850px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Current Stock</TableHead>
+                    <TableHead>{t('ui.item')}</TableHead>
+                    <TableHead>{t('ui.current_stock')}</TableHead>
                     <TableHead>Daily Usage</TableHead>
                     <TableHead>Trend</TableHead>
                     <TableHead>30d / 60d / 90d</TableHead>
                     <TableHead>Stockout In</TableHead>
-                    <TableHead>Suggested Order</TableHead>
-                    <TableHead>Urgency</TableHead>
+                    <TableHead>{t('ui.suggested_order')}</TableHead>
+                    <TableHead>{t('ui.urgency')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -456,10 +456,10 @@ export default function InventoryPage() {
               <div className="flex gap-2">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Category" />
+                    <SelectValue placeholder={t('ui.category')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">{t('ui.all_categories')}</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name} ({cat.item_count})
@@ -469,26 +469,26 @@ export default function InventoryPage() {
                 </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder={t('ui.type')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="DENTAL_MATERIAL">Dental Material</SelectItem>
-                    <SelectItem value="INSTRUMENT">Instrument</SelectItem>
-                    <SelectItem value="CONSUMABLE">Consumable</SelectItem>
-                    <SelectItem value="MEDICINE">Medicine</SelectItem>
-                    <SelectItem value="OFFICE_SUPPLY">Office Supply</SelectItem>
-                    <SelectItem value="EQUIPMENT">Equipment</SelectItem>
+                    <SelectItem value="all">{t('ui.all_types')}</SelectItem>
+                    <SelectItem value="DENTAL_MATERIAL">{t('ui.dental_material')}</SelectItem>
+                    <SelectItem value="INSTRUMENT">{t('ui.instrument')}</SelectItem>
+                    <SelectItem value="CONSUMABLE">{t('ui.consumable')}</SelectItem>
+                    <SelectItem value="MEDICINE">{t('ui.medicine')}</SelectItem>
+                    <SelectItem value="OFFICE_SUPPLY">{t('ui.office_supply')}</SelectItem>
+                    <SelectItem value="EQUIPMENT">{t('ui.equipment')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder={t('ui.status')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                    <SelectItem value="active">{t('ui.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('ui.inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -516,14 +516,14 @@ export default function InventoryPage() {
           <Table className="min-w-[850px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Item Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Unit Price</TableHead>
+                <TableHead>{t('ui.item_code')}</TableHead>
+                <TableHead>{t('ui.name')}</TableHead>
+                <TableHead>{t('ui.category')}</TableHead>
+                <TableHead>{t('ui.type')}</TableHead>
+                <TableHead>{t('ui.stock')}</TableHead>
+                <TableHead>{t('ui.unit_price')}</TableHead>
                 <TableHead>Stock Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -620,9 +620,7 @@ export default function InventoryPage() {
                       <div className="flex flex-col gap-1">
                         {getStockStatusBadge(item.stockStatus)}
                         {!item.isActive && (
-                          <Badge className="bg-muted text-muted-foreground border-0">
-                            Inactive
-                          </Badge>
+                          <Badge className="bg-muted text-muted-foreground border-0">{t('ui.inactive')}</Badge>
                         )}
                       </div>
                     </TableCell>
@@ -635,15 +633,11 @@ export default function InventoryPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/inventory/${item.id}`)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => router.push(`/inventory/${item.id}/edit`)}
                           >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => router.push(`/inventory/transactions?item=${item.id}`)}
@@ -675,9 +669,7 @@ export default function InventoryPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.pages}
                 </div>
@@ -686,9 +678,7 @@ export default function InventoryPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.pages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -783,6 +784,7 @@ const setupSections: SetupSection[] = [
 ]
 
 function PriorityBadge({ priority }: { priority: string }) {
+  const { t } = useLanguage()
   const styles = {
     essential: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
     recommended: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
@@ -803,6 +805,7 @@ function PriorityBadge({ priority }: { priority: string }) {
 }
 
 function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
 
   return (
@@ -889,6 +892,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
 }
 
 export default function SetupGuidePage() {
+  const { t } = useLanguage()
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['clinic']))
   const [filter, setFilter] = useState<'all' | 'essential' | 'recommended' | 'optional'>('all')
 
@@ -921,9 +925,7 @@ export default function SetupGuidePage() {
         <div className="flex items-center gap-2 mb-1">
           <Link href="/settings">
             <Button variant="ghost" size="sm" className="gap-1">
-              <ArrowLeft className="w-4 h-4" />
-              Settings
-            </Button>
+              <ArrowLeft className="w-4 h-4" />{t('ui.settings')}</Button>
           </Link>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
@@ -981,7 +983,7 @@ export default function SetupGuidePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{optionalCount}</p>
-                <p className="text-xs text-muted-foreground">Optional</p>
+                <p className="text-xs text-muted-foreground">{t('ui.optional')}</p>
               </div>
             </div>
           </CardContent>

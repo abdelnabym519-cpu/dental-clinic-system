@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -51,6 +52,7 @@ const WORK_TYPES = [
 ]
 
 export default function NewLabOrderPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedPatientId = searchParams.get('patientId')
@@ -201,7 +203,7 @@ export default function NewLabOrderPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">New Lab Order</h1>
+          <h1 className="text-2xl font-bold">{t('ui.new_lab_order')}</h1>
           <p className="text-muted-foreground">Create a new lab work order</p>
         </div>
       </div>
@@ -211,9 +213,7 @@ export default function NewLabOrderPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Patient
-            </CardTitle>
+              <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
             <CardDescription>Select the patient for this lab order</CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,16 +239,14 @@ export default function NewLabOrderPage() {
                     setSelectedPatient(null)
                     setForm((prev) => ({ ...prev, patientId: '' }))
                   }}
-                >
-                  Change
-                </Button>
+                >{t('ui.change')}</Button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search patients by name, phone, or ID..."
+                    placeholder={t('ui.search_patients_by_name_phone_or_id')}
                     value={patientSearch}
                     onChange={(e) => setPatientSearch(e.target.value)}
                     className="pl-9"
@@ -256,7 +254,7 @@ export default function NewLabOrderPage() {
                 </div>
                 <div className="max-h-60 overflow-y-auto border rounded-lg">
                   {filteredPatients.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">No patients found</div>
+                    <div className="p-4 text-center text-muted-foreground">{t('ui.no_patients_found')}</div>
                   ) : (
                     filteredPatients.slice(0, 10).map((patient) => (
                       <button
@@ -338,7 +336,7 @@ export default function NewLabOrderPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tooth Numbers</Label>
+                <Label>{t('ui.tooth_numbers')}</Label>
                 <Input
                   value={form.toothNumbers}
                   onChange={(e) => setForm((prev) => ({ ...prev, toothNumbers: e.target.value }))}
@@ -357,7 +355,7 @@ export default function NewLabOrderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t('ui.description')}</Label>
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
@@ -414,7 +412,7 @@ export default function NewLabOrderPage() {
         {/* Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Notes</CardTitle>
+            <CardTitle>{t('ui.additional_notes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -429,21 +427,15 @@ export default function NewLabOrderPage() {
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <Link href="/lab">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.creating')}</>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                Create Lab Order
-              </>
+                <Save className="mr-2 h-4 w-4" />{t('ui.create_lab_order')}</>
             )}
           </Button>
         </div>

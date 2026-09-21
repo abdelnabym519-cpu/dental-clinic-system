@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -92,6 +93,7 @@ const categories = [
 ]
 
 export default function ProceduresSettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [procedures, setProcedures] = useState<Procedure[]>([])
   const [loading, setLoading] = useState(true)
@@ -333,13 +335,11 @@ export default function ProceduresSettingsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Procedures</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.procedures')}</h1>
           <p className="text-muted-foreground">Manage dental procedures catalog</p>
         </div>
         <Button onClick={openCreateDialog}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Procedure
-        </Button>
+          <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
       </div>
 
       {/* Filters */}
@@ -358,10 +358,10 @@ export default function ProceduresSettingsPage() {
             <div className="flex gap-2">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Category" />
+                  <SelectValue placeholder={t('ui.category')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">{t('ui.all_categories')}</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {procedureCategoryConfig[cat]?.label || cat}
@@ -371,12 +371,12 @@ export default function ProceduresSettingsPage() {
               </Select>
               <Select value={activeFilter} onValueChange={setActiveFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="true">{t('ui.active')}</SelectItem>
+                  <SelectItem value="false">{t('ui.inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -390,13 +390,13 @@ export default function ProceduresSettingsPage() {
           <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Duration</TableHead>
+                <TableHead>{t('ui.code')}</TableHead>
+                <TableHead>{t('ui.name')}</TableHead>
+                <TableHead>{t('ui.category')}</TableHead>
+                <TableHead>{t('ui.duration')}</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -433,9 +433,7 @@ export default function ProceduresSettingsPage() {
                       <Stethoscope className="h-8 w-8 text-muted-foreground" />
                       <p className="text-muted-foreground">No procedures found</p>
                       <Button variant="outline" size="sm" onClick={openCreateDialog}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Procedure
-                      </Button>
+                        <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -477,9 +475,7 @@ export default function ProceduresSettingsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEditDialog(procedure)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
@@ -488,9 +484,7 @@ export default function ProceduresSettingsPage() {
                               setDeleteDialogOpen(true)
                             }}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
+                            <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -515,9 +509,7 @@ export default function ProceduresSettingsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -526,9 +518,7 @@ export default function ProceduresSettingsPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -581,7 +571,7 @@ export default function ProceduresSettingsPage() {
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t('ui.select_category')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -605,7 +595,7 @@ export default function ProceduresSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t('ui.description')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -650,7 +640,7 @@ export default function ProceduresSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="preInstructions">Pre-procedure Instructions</Label>
+              <Label htmlFor="preInstructions">{t('ui.pre_procedure_instructions')}</Label>
               <Textarea
                 id="preInstructions"
                 value={formData.preInstructions}
@@ -661,7 +651,7 @@ export default function ProceduresSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="postInstructions">Post-procedure Instructions</Label>
+              <Label htmlFor="postInstructions">{t('ui.post_procedure_instructions')}</Label>
               <Textarea
                 id="postInstructions"
                 value={formData.postInstructions}
@@ -677,14 +667,12 @@ export default function ProceduresSettingsPage() {
                 checked={formData.isActive}
                 onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
               />
-              <Label htmlFor="isActive">Active</Label>
+              <Label htmlFor="isActive">{t('ui.active')}</Label>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleSubmit} disabled={actionLoading}>
               {actionLoading
                 ? 'Saving...'
@@ -707,9 +695,7 @@ export default function ProceduresSettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={actionLoading}>
               {actionLoading ? 'Deleting...' : 'Delete'}
             </Button>

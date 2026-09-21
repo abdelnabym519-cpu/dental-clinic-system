@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -81,6 +82,7 @@ const TIMINGS = [
 let rowKey = 0
 
 export default function NewPrescriptionPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -289,9 +291,7 @@ export default function NewPrescriptionPage() {
 
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <ClipboardList className="h-8 w-8" />
-          New Prescription
-        </h1>
+          <ClipboardList className="h-8 w-8" />{t('ui.new_prescription')}</h1>
         <p className="text-muted-foreground">Create a new e-prescription for a patient</p>
       </div>
 
@@ -299,7 +299,7 @@ export default function NewPrescriptionPage() {
         {/* Patient Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Patient</CardTitle>
+            <CardTitle>{t('ui.patient')}</CardTitle>
             <CardDescription>Select the patient for this prescription</CardDescription>
           </CardHeader>
           <CardContent>
@@ -318,15 +318,13 @@ export default function NewPrescriptionPage() {
                     )}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setSelectedPatient(null)}>
-                  Change
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedPatient(null)}>{t('ui.change')}</Button>
               </div>
             ) : (
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search patient by name, ID, or phone..."
+                  placeholder={t('ui.search_patient_by_name_id_or_phone')}
                   value={patientSearch}
                   onChange={(e) => setPatientSearch(e.target.value)}
                   className="pl-9"
@@ -334,9 +332,7 @@ export default function NewPrescriptionPage() {
                 {(patients.length > 0 || searchingPatients) && (
                   <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
                     {searchingPatients ? (
-                      <div className="p-3 text-center text-sm text-muted-foreground">
-                        Searching...
-                      </div>
+                      <div className="p-3 text-center text-sm text-muted-foreground">{t('ui.searching')}</div>
                     ) : (
                       patients.map((p) => (
                         <button
@@ -367,7 +363,7 @@ export default function NewPrescriptionPage() {
         {/* Diagnosis */}
         <Card>
           <CardHeader>
-            <CardTitle>Diagnosis</CardTitle>
+            <CardTitle>{t('ui.diagnosis')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -394,7 +390,7 @@ export default function NewPrescriptionPage() {
         {/* Medications */}
         <Card>
           <CardHeader>
-            <CardTitle>Medications</CardTitle>
+            <CardTitle>{t('ui.medications')}</CardTitle>
             <CardDescription>
               Add medications from your drug catalog or type manually
             </CardDescription>
@@ -516,7 +512,7 @@ export default function NewPrescriptionPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Quantity</Label>
+                    <Label>{t('ui.quantity')}</Label>
                     <Input
                       type="number"
                       value={med.quantity}
@@ -547,7 +543,7 @@ export default function NewPrescriptionPage() {
         {/* Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Notes</CardTitle>
+            <CardTitle>{t('ui.additional_notes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -561,9 +557,7 @@ export default function NewPrescriptionPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => router.push('/prescriptions')}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => router.push('/prescriptions')}>{t('ui.cancel')}</Button>
           <Button onClick={handleSubmit} disabled={saving} size="lg">
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Create Prescription

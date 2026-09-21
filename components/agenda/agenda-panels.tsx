@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -81,6 +82,7 @@ export function AgendaOperationsPanel({
   onChanged: () => void
   onOpenAppointment: (id: string) => void
 }) {
+  const { t } = useLanguage()
   const showAny =
     capabilities.canCheckIn || capabilities.canWaitlist || capabilities.canViewAnalytics
   if (!showAny) return null
@@ -150,6 +152,7 @@ function TodayQueue({
   onChanged: () => void
   onOpenAppointment: (id: string) => void
 }) {
+  const { t } = useLanguage()
   const [items, setItems] = useState<QueueAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -244,9 +247,7 @@ function TodayQueue({
                       disabled={busyId === apt.id}
                       aria-label={`Check in ${getPatientName(apt.patient)}`}
                       onClick={() => setStatus(apt, 'CHECKED_IN')}
-                    >
-                      Check in
-                    </Button>
+                    >{t('ui.check_in_2')}</Button>
                   )}
                 {capabilities.canAdvance && apt.status === 'CHECKED_IN' && (
                   <Button
@@ -256,9 +257,7 @@ function TodayQueue({
                     disabled={busyId === apt.id}
                     aria-label={`Start visit for ${getPatientName(apt.patient)}`}
                     onClick={() => setStatus(apt, 'IN_PROGRESS')}
-                  >
-                    Start
-                  </Button>
+                  >{t('ui.start')}</Button>
                 )}
                 {capabilities.canAdvance && apt.status === 'IN_PROGRESS' && (
                   <Button
@@ -268,9 +267,7 @@ function TodayQueue({
                     disabled={busyId === apt.id}
                     aria-label={`Complete visit for ${getPatientName(apt.patient)}`}
                     onClick={() => setStatus(apt, 'COMPLETED')}
-                  >
-                    Complete
-                  </Button>
+                  >{t('ui.complete')}</Button>
                 )}
               </span>
             </li>
@@ -289,6 +286,7 @@ function WaitingListPanel({
   refreshKey: number
   onChanged: () => void
 }) {
+  const { t } = useLanguage()
   const [entries, setEntries] = useState<WaitlistEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -372,8 +370,7 @@ function WaitingListPanel({
               <div className="ml-auto flex items-center gap-1">
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" asChild>
                   <Link href={`/patients/${entry.patient.id}`}>
-                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Patient
-                  </Link>
+                    <UserPlus className="h-3.5 w-3.5 mr-1" />{t('ui.patient')}</Link>
                 </Button>
                 <Button
                   size="sm"
@@ -399,6 +396,7 @@ function WaitingListPanel({
 
 /** Month-to-date scheduling analytics, computed from real appointment records. */
 function AnalyticsSummary() {
+  const { t } = useLanguage()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

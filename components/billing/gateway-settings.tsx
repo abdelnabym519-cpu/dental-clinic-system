@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ interface GatewayConfig {
 }
 
 export function GatewaySettings() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -172,14 +174,10 @@ export function GatewaySettings() {
           </div>
           <div className="flex items-center gap-2">
             {isEnabled && (
-              <Badge variant="default" className="bg-green-100 text-green-700 border-0">
-                Active
-              </Badge>
+              <Badge variant="default" className="bg-green-100 text-green-700 border-0">{t('ui.active')}</Badge>
             )}
             {isLiveMode && (
-              <Badge variant="default" className="bg-blue-100 text-blue-700 border-0">
-                Live
-              </Badge>
+              <Badge variant="default" className="bg-blue-100 text-blue-700 border-0">{t('ui.live')}</Badge>
             )}
             {!isLiveMode && provider && <Badge variant="secondary">Test Mode</Badge>}
           </div>
@@ -195,9 +193,9 @@ export function GatewaySettings() {
                 <SelectValue placeholder="Select a provider" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="FAWRY">Fawry</SelectItem>
+                <SelectItem value="FAWRY">{t('ui.fawry')}</SelectItem>
                 <SelectItem value="PAYMOB">Paymob</SelectItem>
-                <SelectItem value="INSTAPAY">InstaPay</SelectItem>
+                <SelectItem value="INSTAPAY">{t('ui.instapay')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
@@ -320,13 +318,13 @@ export function GatewaySettings() {
         {/* InstaPay Credentials */}
         {provider === 'INSTAPAY' && (
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-sm">InstaPay Handle</h4>
+            <h4 className="font-medium text-sm">{t('ui.instapay_handle')}</h4>
             <p className="text-xs text-muted-foreground">
               The clinic&apos;s InstaPay address (IPA) patients transfer to — e.g. dentora@instapay
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="instapay-handle">InstaPay Handle</Label>
+                <Label htmlFor="instapay-handle">{t('ui.instapay_handle')}</Label>
                 <Input
                   id="instapay-handle"
                   value={instapayHandle}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -64,6 +65,7 @@ interface PlanItem {
 }
 
 export default function NewTreatmentPlanPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedPatientId = searchParams.get('patientId')
@@ -237,7 +239,7 @@ export default function NewTreatmentPlanPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">New Treatment Plan</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.new_treatment_plan')}</h1>
           <p className="text-muted-foreground">
             Create a comprehensive treatment plan for a patient
           </p>
@@ -256,9 +258,7 @@ export default function NewTreatmentPlanPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Patient
-            </CardTitle>
+              <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
           </CardHeader>
           <CardContent>
             {selectedPatient ? (
@@ -276,9 +276,7 @@ export default function NewTreatmentPlanPage() {
                     </div>
                   </div>
                 </div>
-                <Button type="button" variant="outline" onClick={() => setSelectedPatient(null)}>
-                  Change
-                </Button>
+                <Button type="button" variant="outline" onClick={() => setSelectedPatient(null)}>{t('ui.change')}</Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -335,7 +333,7 @@ export default function NewTreatmentPlanPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{t('ui.notes')}</Label>
               <Textarea
                 id="notes"
                 value={notes}
@@ -371,7 +369,7 @@ export default function NewTreatmentPlanPage() {
         {/* Procedures */}
         <Card>
           <CardHeader>
-            <CardTitle>Procedures</CardTitle>
+            <CardTitle>{t('ui.procedures')}</CardTitle>
             <CardDescription>
               Add procedures to the treatment plan in order of priority
             </CardDescription>
@@ -381,10 +379,10 @@ export default function NewTreatmentPlanPage() {
             <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Procedure</Label>
+                  <Label>{t('ui.procedure')}</Label>
                   <Select value={selectedProcedureId} onValueChange={setSelectedProcedureId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select procedure" />
+                      <SelectValue placeholder={t('ui.select_procedure')} />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(groupedProcedures).map(([category, procs]) => (
@@ -403,7 +401,7 @@ export default function NewTreatmentPlanPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Tooth Numbers</Label>
+                  <Label>{t('ui.tooth_numbers')}</Label>
                   <Input
                     value={itemToothNumbers}
                     onChange={(e) => setItemToothNumbers(e.target.value)}
@@ -413,7 +411,7 @@ export default function NewTreatmentPlanPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Estimated Cost</Label>
+                  <Label>{t('ui.estimated_cost')}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -427,7 +425,7 @@ export default function NewTreatmentPlanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Notes</Label>
+                  <Label>{t('ui.notes')}</Label>
                   <Input
                     value={itemNotes}
                     onChange={(e) => setItemNotes(e.target.value)}
@@ -441,9 +439,7 @@ export default function NewTreatmentPlanPage() {
                 onClick={handleAddProcedure}
                 disabled={!selectedProcedureId}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Procedure
-              </Button>
+                <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
             </div>
 
             {/* Procedures List */}
@@ -453,9 +449,9 @@ export default function NewTreatmentPlanPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">#</TableHead>
-                      <TableHead>Procedure</TableHead>
-                      <TableHead>Teeth</TableHead>
-                      <TableHead>Cost</TableHead>
+                      <TableHead>{t('ui.procedure')}</TableHead>
+                      <TableHead>{t('ui.teeth')}</TableHead>
+                      <TableHead>{t('ui.cost')}</TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -511,18 +507,14 @@ export default function NewTreatmentPlanPage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/treatments/plans">
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
           </Link>
           <Button type="submit" disabled={loading}>
             {loading ? (
               'Creating...'
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
-                Create Treatment Plan
-              </>
+                <Save className="h-4 w-4 mr-2" />{t('ui.create_treatment_plan')}</>
             )}
           </Button>
         </div>

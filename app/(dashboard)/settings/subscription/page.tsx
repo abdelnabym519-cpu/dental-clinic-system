@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Check, Crown, Building2, Zap, Server } from 'lucide-react'
 import {
@@ -115,6 +116,7 @@ const plans = [
 ]
 
 export default function SubscriptionPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [hospitalData, setHospitalData] = useState<HospitalData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -196,7 +198,7 @@ export default function SubscriptionPage() {
             {/* Patients Usage */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Patients</span>
+                <span>{t('ui.patients')}</span>
                 <span className="text-muted-foreground">
                   {hospitalData.currentPatients} /{' '}
                   {hospitalData.maxPatients === -1 ? 'Unlimited' : hospitalData.maxPatients}
@@ -217,7 +219,7 @@ export default function SubscriptionPage() {
             {/* Staff Usage */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Staff Members</span>
+                <span>{t('ui.staff_members')}</span>
                 <span className="text-muted-foreground">
                   {hospitalData.currentStaff} /{' '}
                   {hospitalData.maxStaff === -1 ? 'Unlimited' : hospitalData.maxStaff}
@@ -284,7 +286,7 @@ export default function SubscriptionPage() {
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary">Most Popular</Badge>
+                    <Badge className="bg-primary">{t('ui.most_popular')}</Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -300,9 +302,7 @@ export default function SubscriptionPage() {
                     <div>
                       <CardTitle className="text-lg">{plan.name}</CardTitle>
                       {isCurrent && (
-                        <Badge variant="outline" className="text-xs">
-                          Current
-                        </Badge>
+                        <Badge variant="outline" className="text-xs">{t('ui.current')}</Badge>
                       )}
                     </div>
                   </div>

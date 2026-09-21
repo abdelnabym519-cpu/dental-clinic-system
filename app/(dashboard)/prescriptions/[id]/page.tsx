@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useRef } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useRouter, useParams } from 'next/navigation'
@@ -58,6 +59,7 @@ interface Hospital {
 }
 
 export default function PrescriptionDetailPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
@@ -139,15 +141,12 @@ export default function PrescriptionDetailPage() {
       <div className="container mx-auto p-6 max-w-4xl print:hidden">
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={() => router.push('/prescriptions')}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back
-          </Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleDelete} className="text-destructive">
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </Button>
+              <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</Button>
             <Button onClick={handlePrint}>
-              <Printer className="h-4 w-4 mr-2" /> Print
-            </Button>
+              <Printer className="h-4 w-4 mr-2" />{t('ui.print')}</Button>
           </div>
         </div>
       </div>
@@ -252,10 +251,10 @@ export default function PrescriptionDetailPage() {
                 <tr className="border-b text-left">
                   <th className="pb-2 font-medium w-8">#</th>
                   <th className="pb-2 font-medium">Medication</th>
-                  <th className="pb-2 font-medium">Dosage</th>
-                  <th className="pb-2 font-medium">Frequency</th>
-                  <th className="pb-2 font-medium">Duration</th>
-                  <th className="pb-2 font-medium hidden print:table-cell">Qty</th>
+                  <th className="pb-2 font-medium">{t('ui.dosage')}</th>
+                  <th className="pb-2 font-medium">{t('ui.frequency')}</th>
+                  <th className="pb-2 font-medium">{t('ui.duration')}</th>
+                  <th className="pb-2 font-medium hidden print:table-cell">{t('ui.qty')}</th>
                 </tr>
               </thead>
               <tbody>

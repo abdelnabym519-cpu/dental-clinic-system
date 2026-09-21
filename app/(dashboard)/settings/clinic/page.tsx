@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -65,6 +66,7 @@ function serializeSchedule(schedule: WeekSchedule): string {
 }
 
 export default function ClinicSettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -244,7 +246,7 @@ export default function ClinicSettingsPage() {
   }
 
   if (loading) {
-    return <div className="p-6">Loading...</div>
+    return <div className="p-6">{t('ui.loading')}</div>
   }
 
   return (
@@ -327,7 +329,7 @@ export default function ClinicSettingsPage() {
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>{t('ui.basic_information')}</CardTitle>
             <CardDescription>Primary clinic details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -338,7 +340,7 @@ export default function ClinicSettingsPage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="Your Dental Clinic"
+                  placeholder={t('ui.your_dental_clinic')}
                   required
                 />
               </div>
@@ -359,7 +361,7 @@ export default function ClinicSettingsPage() {
         {/* Contact Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
+            <CardTitle>{t('ui.contact_information')}</CardTitle>
             <CardDescription>How patients can reach you</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -376,7 +378,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="alternatePhone">Alternate Phone</Label>
+                <Label htmlFor="alternatePhone">{t('ui.alternate_phone')}</Label>
                 <Input
                   id="alternatePhone"
                   value={formData.alternatePhone}
@@ -386,7 +388,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('ui.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -397,7 +399,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="website">Website</Label>
+                <Label htmlFor="website">{t('ui.website')}</Label>
                 <Input
                   id="website"
                   value={formData.website}
@@ -412,7 +414,7 @@ export default function ClinicSettingsPage() {
         {/* Address */}
         <Card>
           <CardHeader>
-            <CardTitle>Address</CardTitle>
+            <CardTitle>{t('ui.address')}</CardTitle>
             <CardDescription>Clinic location details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -481,7 +483,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="registrationNo">Registration Number</Label>
+                <Label htmlFor="registrationNo">{t('ui.registration_number')}</Label>
                 <Input
                   id="registrationNo"
                   value={formData.registrationNo}
@@ -516,16 +518,16 @@ export default function ClinicSettingsPage() {
         {/* Working Hours */}
         <Card>
           <CardHeader>
-            <CardTitle>Working Hours</CardTitle>
+            <CardTitle>{t('ui.working_hours')}</CardTitle>
             <CardDescription>Clinic operating schedule</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Header row */}
             <div className="hidden md:grid md:grid-cols-[140px_1fr_1fr_80px_40px] gap-3 items-center text-xs font-medium text-muted-foreground px-1">
-              <span>Day</span>
+              <span>{t('ui.day')}</span>
               <span>Opens at</span>
               <span>Closes at</span>
-              <span className="text-center">Open</span>
+              <span className="text-center">{t('ui.open')}</span>
               <span />
             </div>
             <Separator />
@@ -582,7 +584,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="bankName">Bank Name</Label>
+                <Label htmlFor="bankName">{t('ui.bank_name')}</Label>
                 <Input
                   id="bankName"
                   value={formData.bankName}
@@ -592,7 +594,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="bankAccountNo">Account Number</Label>
+                <Label htmlFor="bankAccountNo">{t('ui.account_number')}</Label>
                 <Input
                   id="bankAccountNo"
                   value={formData.bankAccountNo}
@@ -602,7 +604,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="bankIfsc">SWIFT / BIC Code</Label>
+                <Label htmlFor="bankIfsc">{t('ui.swift_bic_code')}</Label>
                 <Input
                   id="bankIfsc"
                   value={formData.bankIfsc}
@@ -612,7 +614,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="upiId">InstaPay Handle</Label>
+                <Label htmlFor="upiId">{t('ui.instapay_handle')}</Label>
                 <Input
                   id="upiId"
                   value={formData.upiId}
@@ -627,7 +629,7 @@ export default function ClinicSettingsPage() {
         {/* Patient Portal */}
         <Card>
           <CardHeader>
-            <CardTitle>Patient Portal</CardTitle>
+            <CardTitle>{t('ui.patient_portal')}</CardTitle>
             <CardDescription>
               Allow patients to log in, view records, book appointments, and pay bills online
             </CardDescription>

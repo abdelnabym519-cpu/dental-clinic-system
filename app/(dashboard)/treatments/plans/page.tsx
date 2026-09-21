@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -97,6 +98,7 @@ interface PaginationInfo {
 }
 
 export default function TreatmentPlansPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [plans, setPlans] = useState<TreatmentPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -161,15 +163,13 @@ export default function TreatmentPlansPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Treatment Plans</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('ui.treatment_plans')}</h1>
             <p className="text-muted-foreground">Create and manage comprehensive treatment plans</p>
           </div>
         </div>
         <Link href="/treatments/plans/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Treatment Plan
-          </Button>
+            <Plus className="h-4 w-4 mr-2" />{t('ui.new_treatment_plan')}</Button>
         </Link>
       </div>
 
@@ -189,25 +189,25 @@ export default function TreatmentPlansPage() {
             <div className="flex gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="DRAFT">{t('ui.draft')}</SelectItem>
                   <SelectItem value="PROPOSED">Proposed</SelectItem>
                   <SelectItem value="ACCEPTED">Accepted</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
+                  <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={consentFilter} onValueChange={setConsentFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Consent" />
+                  <SelectValue placeholder={t('ui.consent')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="true">Consent Given</SelectItem>
+                  <SelectItem value="true">{t('ui.consent_given')}</SelectItem>
                   <SelectItem value="false">Pending Consent</SelectItem>
                 </SelectContent>
               </Select>
@@ -223,12 +223,12 @@ export default function TreatmentPlansPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Plan</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Procedures</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Estimated Cost</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.procedures')}</TableHead>
+                <TableHead>{t('ui.progress')}</TableHead>
+                <TableHead>{t('ui.estimated_cost')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,9 +266,7 @@ export default function TreatmentPlansPage() {
                       <p className="text-muted-foreground">No treatment plans found</p>
                       <Link href="/treatments/plans/new">
                         <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Treatment Plan
-                        </Button>
+                          <Plus className="h-4 w-4 mr-2" />{t('ui.create_treatment_plan')}</Button>
                       </Link>
                     </div>
                   </TableCell>
@@ -316,9 +314,7 @@ export default function TreatmentPlansPage() {
                           {getStatusBadge(plan.status)}
                           {plan.consentGiven && (
                             <div className="flex items-center gap-1 text-xs text-green-600">
-                              <CheckCircle className="h-3 w-3" />
-                              Consent
-                            </div>
+                              <CheckCircle className="h-3 w-3" />{t('ui.consent')}</div>
                           )}
                         </div>
                       </TableCell>
@@ -333,16 +329,12 @@ export default function TreatmentPlansPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/treatments/plans/${plan.id}`)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                             {plan.status !== 'COMPLETED' && plan.status !== 'CANCELLED' && (
                               <DropdownMenuItem
                                 onClick={() => router.push(`/treatments/plans/${plan.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -369,9 +361,7 @@ export default function TreatmentPlansPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -380,9 +370,7 @@ export default function TreatmentPlansPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

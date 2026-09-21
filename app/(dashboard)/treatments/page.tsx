@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -103,6 +104,7 @@ interface PaginationInfo {
 }
 
 export default function TreatmentsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [loading, setLoading] = useState(true)
@@ -204,7 +206,7 @@ export default function TreatmentsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Treatments</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.treatments')}</h1>
           <p className="text-muted-foreground">Manage patient treatments and clinical records</p>
         </div>
         <div className="flex gap-2">
@@ -234,15 +236,11 @@ export default function TreatmentsPage() {
           />
           <Link href="/treatments/plans">
             <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Treatment Plans
-            </Button>
+              <FileText className="h-4 w-4 mr-2" />{t('ui.treatment_plans')}</Button>
           </Link>
           <Link href="/treatments/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Treatment
-            </Button>
+              <Plus className="h-4 w-4 mr-2" />{t('ui.new_treatment')}</Button>
           </Link>
         </div>
       </div>
@@ -263,23 +261,23 @@ export default function TreatmentsPage() {
             <div className="flex gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
                   <SelectItem value="PLANNED">Planned</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  <SelectItem value="IN_PROGRESS">{t('ui.in_progress')}</SelectItem>
+                  <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={followUpFilter} onValueChange={setFollowUpFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Follow-up" />
+                  <SelectValue placeholder={t('ui.follow_up_2')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Treatments</SelectItem>
-                  <SelectItem value="required">Follow-up Required</SelectItem>
+                  <SelectItem value="required">{t('ui.follow_up_required')}</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -287,14 +285,14 @@ export default function TreatmentsPage() {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="w-[140px]"
-                placeholder="From Date"
+                placeholder={t('ui.from_date')}
               />
               <Input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="w-[140px]"
-                placeholder="To Date"
+                placeholder={t('ui.to_date')}
               />
             </div>
           </div>
@@ -307,14 +305,14 @@ export default function TreatmentsPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Treatment</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Procedure</TableHead>
-                <TableHead>Doctor</TableHead>
-                <TableHead>Teeth</TableHead>
-                <TableHead>Cost</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.treatment')}</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.procedure')}</TableHead>
+                <TableHead>{t('ui.doctor')}</TableHead>
+                <TableHead>{t('ui.teeth')}</TableHead>
+                <TableHead>{t('ui.cost')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -418,9 +416,7 @@ export default function TreatmentsPage() {
                         {getStatusBadge(treatment.status)}
                         {treatment.followUpRequired && (
                           <div className="flex items-center gap-1 text-xs text-amber-600">
-                            <AlertCircle className="h-3 w-3" />
-                            Follow-up
-                          </div>
+                            <AlertCircle className="h-3 w-3" />{t('ui.follow_up_2')}</div>
                         )}
                       </div>
                     </TableCell>
@@ -435,29 +431,21 @@ export default function TreatmentsPage() {
                           <DropdownMenuItem
                             onClick={() => router.push(`/treatments/${treatment.id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
                           {treatment.status !== 'COMPLETED' && treatment.status !== 'CANCELLED' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/treatments/${treatment.id}/edit`)}
                             >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
                           {treatment.status === 'PLANNED' && (
                             <DropdownMenuItem onClick={() => handleStartTreatment(treatment.id)}>
-                              <Play className="h-4 w-4 mr-2" />
-                              Start Treatment
-                            </DropdownMenuItem>
+                              <Play className="h-4 w-4 mr-2" />{t('ui.start_treatment')}</DropdownMenuItem>
                           )}
                           {treatment.status === 'IN_PROGRESS' && (
                             <DropdownMenuItem onClick={() => handleCompleteTreatment(treatment.id)}>
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Complete Treatment
-                            </DropdownMenuItem>
+                              <CheckCircle className="h-4 w-4 mr-2" />{t('ui.complete_treatment')}</DropdownMenuItem>
                           )}
                           {treatment.appointment && (
                             <DropdownMenuItem
@@ -465,9 +453,7 @@ export default function TreatmentsPage() {
                                 router.push(`/appointments/${treatment.appointment!.id}`)
                               }
                             >
-                              <Calendar className="h-4 w-4 mr-2" />
-                              View Appointment
-                            </DropdownMenuItem>
+                              <Calendar className="h-4 w-4 mr-2" />{t('ui.view_appointment')}</DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -493,9 +479,7 @@ export default function TreatmentsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -504,9 +488,7 @@ export default function TreatmentsPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

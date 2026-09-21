@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -13,6 +14,7 @@ type Step = 'phone' | 'otp'
 // useSearchParams() needs a Suspense boundary, otherwise this page cannot be
 // prerendered. It used to inherit a dynamic parent layout, which masked this.
 export default function PatientLoginPage() {
+  const { t } = useLanguage()
   return (
     <Suspense fallback={null}>
       <PatientLoginForm />
@@ -21,6 +23,7 @@ export default function PatientLoginPage() {
 }
 
 function PatientLoginForm() {
+  const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
   const clinic = searchParams.get('clinic') || ''
@@ -106,7 +109,7 @@ function PatientLoginForm() {
           <div className="h-14 w-14 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
             <Building2 className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-xl">Patient Portal</CardTitle>
+          <CardTitle className="text-xl">{t('ui.patient_portal')}</CardTitle>
           <CardDescription>
             {step === 'phone'
               ? 'Enter your phone number to receive a login code'
@@ -134,7 +137,7 @@ function PatientLoginForm() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">{t('ui.phone_number')}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input

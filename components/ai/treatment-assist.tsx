@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +45,7 @@ export function TreatmentAssist({
   procedureNotes,
   medications,
 }: TreatmentAssistProps) {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<Tab>('drug_check')
   const [loading, setLoading] = useState<Tab | null>(null)
   const [results, setResults] = useState<Record<string, Record<string, any>>>({})
@@ -184,6 +186,7 @@ export function TreatmentAssist({
 // Shared micro-components
 // ---------------------------------------------------------------------------
 function Spinner() {
+  const { t } = useLanguage()
   return (
     <div className="flex items-center gap-2 py-3 text-xs text-muted-foreground">
       <div className="h-3 w-3 animate-spin rounded-full border border-muted border-t-primary" />
@@ -208,6 +211,7 @@ function DrugCheck({
   setDrugInput: (v: string) => void
   onCheck: () => void
 }) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
@@ -297,6 +301,7 @@ function CostEstimate({
   result: Record<string, any>
   onRetry: () => void
 }) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-3">
       {!result.lineItems && !loading && (
@@ -321,7 +326,7 @@ function CostEstimate({
             </div>
           ))}
           <div className="flex justify-between text-xs text-muted-foreground pt-1">
-            <span>Subtotal</span>
+            <span>{t('ui.subtotal')}</span>
             <span>EGP {Number(result.subtotal || 0).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -329,7 +334,7 @@ function CostEstimate({
             <span>EGP {Number(result.vat || 0).toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm font-semibold border-t pt-1.5 mt-1">
-            <span>Total</span>
+            <span>{t('ui.total')}</span>
             <span>EGP {Number(result.grandTotal || 0).toLocaleString()}</span>
           </div>
           {result.notes && (
@@ -360,6 +365,7 @@ function ConsentForm({
   setLanguage: (l: string) => void
   onGenerate: () => void
 }) {
+  const { t } = useLanguage()
   const downloadText = () => {
     const lines = [
       String(result.title || 'Consent Form'),
@@ -481,6 +487,7 @@ function ClinicalNotes({
   result: Record<string, any>
   onExpand: () => void
 }) {
+  const { t } = useLanguage()
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -503,7 +510,7 @@ function ClinicalNotes({
         <div className="space-y-2 text-xs">
           {result.diagnosis && (
             <div>
-              <p className="font-semibold text-muted-foreground">Diagnosis</p>
+              <p className="font-semibold text-muted-foreground">{t('ui.diagnosis')}</p>
               <p className="bg-muted rounded p-2">{String(result.diagnosis)}</p>
             </div>
           )}
@@ -515,7 +522,7 @@ function ClinicalNotes({
           )}
           {result.procedureNotes && (
             <div>
-              <p className="font-semibold text-muted-foreground">Procedure Notes</p>
+              <p className="font-semibold text-muted-foreground">{t('ui.procedure_notes')}</p>
               <p className="bg-muted rounded p-2">{String(result.procedureNotes)}</p>
             </div>
           )}

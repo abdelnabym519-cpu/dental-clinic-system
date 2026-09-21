@@ -1,9 +1,11 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 export default function InventoryReportsPage() {
+  const { t } = useLanguage()
   const [activeReport, setActiveReport] = useState('summary')
   const [loading, setLoading] = useState(false)
   const [reportData, setReportData] = useState<any>(null)
@@ -91,12 +93,8 @@ export default function InventoryReportsPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Item Count
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_count')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Category Value
                   </th>
@@ -128,12 +126,8 @@ export default function InventoryReportsPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Item Count
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.type')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_count')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Type Value
                   </th>
@@ -170,27 +164,13 @@ export default function InventoryReportsPage() {
           <table className="min-w-full divide-y divide-border">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Item Code
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Item Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Current Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Minimum Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Urgency
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Suggested Order
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Supplier
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_code')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_name')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.current_stock')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.minimum_stock')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.urgency')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.suggested_order')}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.supplier')}</th>
               </tr>
             </thead>
             <tbody className="bg-background divide-y divide-border">
@@ -273,27 +253,19 @@ export default function InventoryReportsPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Item
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Batch Number
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Expiry Date
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.expiry_date')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Days to Expiry
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Quantity
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.quantity')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Value at Risk
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Status
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.status')}</th>
                 </tr>
               </thead>
               <tbody className="bg-background divide-y divide-border">
@@ -375,21 +347,11 @@ export default function InventoryReportsPage() {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Item Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Item Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
-                    Unit Price
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_code')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.item_name')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.category')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.stock')}</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">{t('ui.unit_price')}</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                     Stock Value
                   </th>
@@ -433,9 +395,7 @@ export default function InventoryReportsPage() {
         <Link
           href="/inventory"
           className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
-        >
-          Back to Inventory
-        </Link>
+        >{t('ui.back_to_inventory')}</Link>
       </div>
 
       {/* Report Tabs */}
@@ -485,7 +445,7 @@ export default function InventoryReportsPage() {
       {/* Report Content */}
       <div className="mt-6">
         {loading ? (
-          <div className="bg-background rounded-lg shadow p-8 text-center">Loading...</div>
+          <div className="bg-background rounded-lg shadow p-8 text-center">{t('ui.loading')}</div>
         ) : (
           <>
             {activeReport === 'summary' && renderSummaryReport()}

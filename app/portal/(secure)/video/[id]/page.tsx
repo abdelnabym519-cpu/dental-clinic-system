@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,6 +39,7 @@ interface ConsultationData {
 }
 
 export default function PatientVideoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const { id } = use(params)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [data, setData] = useState<ConsultationData | null>(null)
@@ -117,13 +119,13 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
   const statusBadge = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return <Badge className="bg-blue-100 text-blue-700">Scheduled</Badge>
+        return <Badge className="bg-blue-100 text-blue-700">{t('ui.scheduled')}</Badge>
       case 'IN_PROGRESS':
-        return <Badge className="bg-green-100 text-green-700 animate-pulse">In Progress</Badge>
+        return <Badge className="bg-green-100 text-green-700 animate-pulse">{t('ui.in_progress')}</Badge>
       case 'COMPLETED':
-        return <Badge className="bg-gray-100 text-gray-700">Completed</Badge>
+        return <Badge className="bg-gray-100 text-gray-700">{t('ui.completed')}</Badge>
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-700">Cancelled</Badge>
+        return <Badge className="bg-red-100 text-red-700">{t('ui.cancelled')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -143,9 +145,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
       <div className="text-center py-12">
         <p className="text-red-600">{error || 'Consultation not found'}</p>
         <Link href="/portal/appointments">
-          <Button variant="outline" className="mt-4">
-            Back to Appointments
-          </Button>
+          <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
         </Link>
       </div>
     )
@@ -212,13 +212,11 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
       <div className="flex items-center gap-4">
         <Link href="/portal/appointments">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
         </Link>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Video Consultation</h1>
+            <h1 className="text-2xl font-bold">{t('ui.video_consultation')}</h1>
             {statusBadge(consultation.status)}
           </div>
         </div>

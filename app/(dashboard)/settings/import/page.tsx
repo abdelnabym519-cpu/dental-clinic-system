@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef, useCallback } from 'react'
 import {
   Upload,
@@ -129,6 +130,7 @@ const ENTITY_OPTIONS = [
 // Page
 // ---------------------------------------------------------------------------
 export default function DataImportPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -680,8 +682,7 @@ export default function DataImportPage() {
                 onClick={() => setStep(1)}
                 className="rounded-lg border px-4 py-2 text-sm flex items-center gap-1 hover:bg-muted"
               >
-                <ChevronLeft className="h-4 w-4" /> Back
-              </button>
+                <ChevronLeft className="h-4 w-4" />{t('ui.back')}</button>
               <button
                 onClick={() => {
                   loadPreview()
@@ -798,7 +799,7 @@ export default function DataImportPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="border rounded-lg p-3">
                     <p className="text-2xl font-bold">{validation.totalRows}</p>
-                    <p className="text-xs text-muted-foreground">Total Rows</p>
+                    <p className="text-xs text-muted-foreground">{t('ui.total_rows')}</p>
                   </div>
                   <div className="border rounded-lg p-3 border-green-200 bg-green-50/50 dark:bg-green-950/20">
                     <p className="text-2xl font-bold text-green-600">{validation.validRows}</p>
@@ -806,7 +807,7 @@ export default function DataImportPage() {
                   </div>
                   <div className="border rounded-lg p-3 border-red-200 bg-red-50/50 dark:bg-red-950/20">
                     <p className="text-2xl font-bold text-red-600">{validation.errorCount}</p>
-                    <p className="text-xs text-muted-foreground">Errors</p>
+                    <p className="text-xs text-muted-foreground">{t('ui.errors')}</p>
                   </div>
                   <div className="border rounded-lg p-3 border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20">
                     <p className="text-2xl font-bold text-yellow-600">{validation.warningCount}</p>
@@ -918,11 +919,11 @@ export default function DataImportPage() {
                       <p className="font-medium">{schema?.label}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">File</p>
+                      <p className="text-muted-foreground">{t('ui.file')}</p>
                       <p className="font-medium truncate">{selectedFile?.name}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Total Rows</p>
+                      <p className="text-muted-foreground">{t('ui.total_rows')}</p>
                       <p className="font-medium">{totalRows}</p>
                     </div>
                     <div>
@@ -968,8 +969,7 @@ export default function DataImportPage() {
                     onClick={() => setStep(4)}
                     className="rounded-lg border px-4 py-2 text-sm flex items-center gap-1 hover:bg-muted"
                   >
-                    <ChevronLeft className="h-4 w-4" /> Back
-                  </button>
+                    <ChevronLeft className="h-4 w-4" />{t('ui.back')}</button>
                 </div>
               </>
             ) : (
@@ -1006,7 +1006,7 @@ export default function DataImportPage() {
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="border rounded-lg p-3">
                     <p className="text-lg font-bold">{importResult.totalRows}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xs text-muted-foreground">{t('ui.total')}</p>
                   </div>
                   <div className="border rounded-lg p-3 border-green-200">
                     <p className="text-lg font-bold text-green-600">{importResult.imported}</p>

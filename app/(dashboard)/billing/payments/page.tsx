@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -89,6 +90,7 @@ interface Summary {
 }
 
 export default function PaymentsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
@@ -168,7 +170,7 @@ export default function PaymentsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.payments')}</h1>
           <p className="text-muted-foreground">View and manage all payment transactions</p>
         </div>
         <ExportMenu
@@ -258,30 +260,30 @@ export default function PaymentsPage() {
             <div className="flex gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                  <SelectValue placeholder={t('ui.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="FAILED">Failed</SelectItem>
-                  <SelectItem value="REFUNDED">Refunded</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  <SelectItem value="all">{t('ui.all_status')}</SelectItem>
+                  <SelectItem value="PENDING">{t('ui.pending')}</SelectItem>
+                  <SelectItem value="COMPLETED">{t('ui.completed')}</SelectItem>
+                  <SelectItem value="FAILED">{t('ui.failed')}</SelectItem>
+                  <SelectItem value="REFUNDED">{t('ui.refunded')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('ui.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={methodFilter} onValueChange={setMethodFilter}>
                 <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Method" />
+                  <SelectValue placeholder={t('ui.method')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Methods</SelectItem>
-                  <SelectItem value="CASH">Cash</SelectItem>
-                  <SelectItem value="CARD">Card</SelectItem>
-                  <SelectItem value="INSTAPAY">InstaPay</SelectItem>
-                  <SelectItem value="FAWRY">Fawry</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                  <SelectItem value="CHEQUE">Cheque</SelectItem>
-                  <SelectItem value="INSURANCE">Insurance</SelectItem>
+                  <SelectItem value="all">{t('ui.all_methods')}</SelectItem>
+                  <SelectItem value="CASH">{t('ui.cash')}</SelectItem>
+                  <SelectItem value="CARD">{t('ui.card')}</SelectItem>
+                  <SelectItem value="INSTAPAY">{t('ui.instapay')}</SelectItem>
+                  <SelectItem value="FAWRY">{t('ui.fawry')}</SelectItem>
+                  <SelectItem value="BANK_TRANSFER">{t('ui.bank_transfer')}</SelectItem>
+                  <SelectItem value="CHEQUE">{t('ui.cheque')}</SelectItem>
+                  <SelectItem value="INSURANCE">{t('ui.insurance')}</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -307,14 +309,14 @@ export default function PaymentsPage() {
           <Table className="min-w-[900px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Payment</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('ui.payment')}</TableHead>
+                <TableHead>{t('ui.patient')}</TableHead>
+                <TableHead>{t('ui.invoice')}</TableHead>
+                <TableHead>{t('ui.date')}</TableHead>
+                <TableHead>{t('ui.method')}</TableHead>
+                <TableHead className="text-right">{t('ui.amount')}</TableHead>
+                <TableHead>{t('ui.status')}</TableHead>
+                <TableHead className="text-right">{t('ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -456,9 +458,7 @@ export default function PaymentsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
+                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
                   Page {pagination.page} of {pagination.totalPages}
                 </div>
@@ -467,9 +467,7 @@ export default function PaymentsPage() {
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
+                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

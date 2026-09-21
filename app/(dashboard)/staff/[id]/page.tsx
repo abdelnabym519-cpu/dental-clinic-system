@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -93,6 +94,7 @@ const roleLabels: Record<string, string> = {
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export default function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const resolvedParams = use(params)
   const router = useRouter()
   const { toast } = useToast()
@@ -184,7 +186,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">Staff member not found</p>
         <Link href="/staff">
-          <Button>Back to Staff List</Button>
+          <Button>{t('ui.back_to_staff_list')}</Button>
         </Link>
       </div>
     )
@@ -234,9 +236,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="schedule">Work Schedule</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="profile">{t('ui.profile')}</TabsTrigger>
+          <TabsTrigger value="schedule">{t('ui.work_schedule')}</TabsTrigger>
+          <TabsTrigger value="documents">{t('ui.documents')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -245,9 +247,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Contact Information
-                </CardTitle>
+                  <Phone className="h-4 w-4" />{t('ui.contact_information')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -256,20 +256,18 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="font-medium">{staff.phone}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Alternate Phone</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.alternate_phone')}</p>
                     <p className="font-medium">{staff.alternatePhone || '-'}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="text-sm text-muted-foreground">{t('ui.email')}</p>
                   <p className="font-medium">{staff.email}</p>
                 </div>
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    Address
-                  </p>
+                    <MapPin className="h-3 w-3" />{t('ui.address')}</p>
                   <p className="font-medium">
                     {staff.address ? (
                       <>
@@ -290,18 +288,16 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Personal Details
-                </CardTitle>
+                  <User className="h-4 w-4" />{t('ui.personal_details')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.date_of_birth')}</p>
                     <p className="font-medium">{formatDate(staff.dateOfBirth)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Gender</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.gender')}</p>
                     <p className="font-medium">{staff.gender || '-'}</p>
                   </div>
                 </div>
@@ -318,7 +314,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <Separator />
                 <div>
-                  <p className="text-sm text-muted-foreground">Emergency Contact</p>
+                  <p className="text-sm text-muted-foreground">{t('ui.emergency_contact')}</p>
                   <p className="font-medium">
                     {staff.emergencyContact
                       ? `${staff.emergencyContact} (${staff.emergencyPhone || 'No phone'})`
@@ -332,28 +328,26 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Professional Details
-                </CardTitle>
+                  <Briefcase className="h-4 w-4" />{t('ui.professional_details')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Qualification</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.qualification')}</p>
                     <p className="font-medium">{staff.qualification || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Specialization</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.specialization')}</p>
                     <p className="font-medium">{staff.specialization || '-'}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">License Number</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.license_number')}</p>
                     <p className="font-medium">{staff.licenseNumber || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Joining Date</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.joining_date')}</p>
                     <p className="font-medium">{formatDate(staff.joiningDate)}</p>
                   </div>
                 </div>
@@ -365,19 +359,19 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                         <p className="text-2xl font-bold text-blue-700">
                           {staff._count.appointments}
                         </p>
-                        <p className="text-sm text-blue-600">Appointments</p>
+                        <p className="text-sm text-blue-600">{t('ui.appointments')}</p>
                       </div>
                       <div className="text-center p-3 bg-green-50 rounded-lg">
                         <p className="text-2xl font-bold text-green-700">
                           {staff._count.treatments}
                         </p>
-                        <p className="text-sm text-green-600">Treatments</p>
+                        <p className="text-sm text-green-600">{t('ui.treatments')}</p>
                       </div>
                       <div className="text-center p-3 bg-purple-50 rounded-lg">
                         <p className="text-2xl font-bold text-purple-700">
                           {staff._count.prescriptions}
                         </p>
-                        <p className="text-sm text-purple-600">Prescriptions</p>
+                        <p className="text-sm text-purple-600">{t('ui.prescriptions')}</p>
                       </div>
                     </div>
                   </>
@@ -389,9 +383,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Financial Details
-                </CardTitle>
+                  <CreditCard className="h-4 w-4" />{t('ui.financial_details')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -403,11 +395,11 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Bank Account No.</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.bank_account_no')}</p>
                     <p className="font-medium">{staff.bankAccountNo || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">SWIFT / BIC Code</p>
+                    <p className="text-sm text-muted-foreground">{t('ui.swift_bic_code')}</p>
                     <p className="font-medium">{staff.bankIfsc || '-'}</p>
                   </div>
                 </div>
@@ -420,9 +412,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Work Schedule
-              </CardTitle>
+                <Clock className="h-4 w-4" />{t('ui.work_schedule')}</CardTitle>
               <CardDescription>Weekly work schedule for {staff.firstName}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -470,9 +460,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Documents
-              </CardTitle>
+                <FileText className="h-4 w-4" />{t('ui.documents')}</CardTitle>
               <CardDescription>Staff documents and certifications</CardDescription>
             </CardHeader>
             <CardContent>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { AIUsageStats } from '@/components/ai/ai-usage-stats'
 
@@ -34,6 +35,7 @@ const DEFAULTS: AISettings = {
 }
 
 export default function AISettingsPage() {
+  const { t } = useLanguage()
   const [settings, setSettings] = useState<AISettings>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -133,7 +135,7 @@ export default function AISettingsPage() {
       <section>
         <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
           <div>
-            <p className="text-sm font-semibold">AI Features Master Switch</p>
+            <p className="text-sm font-semibold">{t('ui.ai_features_master_switch')}</p>
             <p className="text-xs text-muted-foreground">
               Enable or disable all AI features at once
             </p>
@@ -141,7 +143,7 @@ export default function AISettingsPage() {
           <ToggleSwitch
             checked={settings.ai_enabled}
             onChange={() => toggle('ai_enabled')}
-            label="AI Features Master Switch"
+            label={t('ui.ai_features_master_switch')}
           />
         </div>
       </section>
@@ -296,6 +298,7 @@ function ToggleSwitch({
   onChange: () => void
   label: string
 }) {
+  const { t } = useLanguage()
   return (
     <button
       type="button"

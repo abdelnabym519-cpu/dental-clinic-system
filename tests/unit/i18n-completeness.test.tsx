@@ -44,6 +44,57 @@ describe('dictionary parity', () => {
   })
 })
 
+describe('pass-2 coverage (ui.* namespace, 465 curated strings)', () => {
+  const uiKeys = arKeys.filter((k) => k.startsWith('ui.'))
+  it('has 400+ curated ui.* keys in perfect parity', () => {
+    expect(uiKeys.length).toBeGreaterThanOrEqual(400)
+  })
+
+  it('covers the pass-2 module vocabularies with the mandated Arabic terms', () => {
+    const expectAr = (key: string, arValue: string) => {
+      expect(ar[key], `ar:${key}`).toBe(arValue)
+      expect(en[key], `en:${key}`).toBeTruthy()
+    }
+    // prescriptions / treatments
+    expectAr('ui.new_prescription', 'وصفة طبية جديدة')
+    expectAr('ui.dosage', 'الجرعة')
+    expectAr('ui.frequency', 'التكرار')
+    expectAr('ui.diagnosis', 'التشخيص')
+    // staff / HR
+    expectAr('ui.admin', 'مدير')
+    expectAr('ui.doctor', 'الطبيب')
+    expectAr('ui.receptionist', 'موظف استقبال')
+    expectAr('ui.accountant', 'محاسب')
+    expectAr('ui.lab_technician', 'فني مختبر')
+    expectAr('ui.attendance', 'الحضور')
+    expectAr('ui.sick_leave', 'إجازة مرضية')
+    // inventory / lab
+    expectAr('ui.supplier', 'المورد')
+    expectAr('ui.quantity', 'الكمية')
+    expectAr('ui.minimum_stock', 'الحد الأدنى للمخزون')
+    expectAr('ui.lab_orders', 'طلبات المختبر')
+    expectAr('ui.sent_to_lab', 'أُرسل إلى المختبر')
+    // CRM / communications / reports
+    expectAr('ui.loyalty_points', 'نقاط الولاء')
+    expectAr('ui.referrals', 'الإحالات')
+    expectAr('ui.notifications', 'الإشعارات')
+    expectAr('ui.reports', 'التقارير')
+    expectAr('ui.export', 'تصدير')
+    // portal / onboarding / settings sub-pages
+    expectAr('ui.patient_portal', 'بوابة المريض')
+    expectAr('ui.security_settings', 'إعدادات الأمان')
+    expectAr('ui.working_hours', 'ساعات العمل')
+    // AI
+    expectAr('ui.ai_assistant', 'مساعد الذكاء الاصطناعي')
+  })
+
+  it('renders key pass-2 strings in Arabic through the real dictionary', () => {
+    expect(translate('ar-EG', 'ui.new_prescription')).toBe('وصفة طبية جديدة')
+    expect(translate('ar-EG', 'ui.lab_orders')).toBe('طلبات المختبر')
+    expect(translate('en-EG', 'ui.new_prescription')).toBe('New Prescription')
+  })
+})
+
 describe('mandated Arabic terminology (exact terms)', () => {
   const terms = {
     'role.ADMIN': 'مدير',

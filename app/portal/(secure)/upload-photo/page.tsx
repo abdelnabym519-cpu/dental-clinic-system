@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import {
 import { Camera, Upload, ArrowLeft, CheckCircle, Loader2, ImageIcon, X } from 'lucide-react'
 
 export default function UploadPhotoPage() {
+  const { t } = useLanguage()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -126,12 +128,10 @@ export default function UploadPhotoPage() {
       <div className="flex items-center gap-4">
         <Link href="/portal">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Upload Photo</h1>
+          <h1 className="text-2xl font-bold">{t('ui.upload_photo')}</h1>
           <p className="text-sm text-muted-foreground">
             Send a dental photo to your doctor for triage
           </p>
@@ -193,7 +193,7 @@ export default function UploadPhotoPage() {
             <Label>What is the concern?</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t('ui.select_category')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pain">Pain / Toothache</SelectItem>
@@ -202,7 +202,7 @@ export default function UploadPhotoPage() {
                 <SelectItem value="broken">Broken / Chipped Tooth</SelectItem>
                 <SelectItem value="discoloration">Discoloration</SelectItem>
                 <SelectItem value="sensitivity">Sensitivity</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="other">{t('ui.other')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,9 +232,7 @@ export default function UploadPhotoPage() {
               </>
             ) : (
               <>
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Photo
-              </>
+                <Upload className="h-4 w-4 mr-2" />{t('ui.upload_photo')}</>
             )}
           </Button>
         </CardContent>

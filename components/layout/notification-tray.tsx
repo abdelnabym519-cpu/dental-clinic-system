@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import {
   Bell,
@@ -60,6 +61,7 @@ function timeAgo(dateStr: string) {
 }
 
 export function NotificationTray() {
+  const { t } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -140,12 +142,12 @@ export function NotificationTray() {
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
-          <span className="sr-only">Notifications</span>
+          <span className="sr-only">{t('ui.notifications')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(320px,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between px-4 py-3">
-          <DropdownMenuLabel className="p-0 text-base">Notifications</DropdownMenuLabel>
+          <DropdownMenuLabel className="p-0 text-base">{t('ui.notifications')}</DropdownMenuLabel>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -161,9 +163,7 @@ export function NotificationTray() {
         <DropdownMenuSeparator className="m-0" />
         <ScrollArea className="h-[340px]">
           {loading && notifications.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-              Loading...
-            </div>
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">{t('ui.loading')}</div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-sm text-muted-foreground">
               <Bell className="mb-2 h-8 w-8 opacity-30" />

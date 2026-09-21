@@ -26,7 +26,10 @@ export const LOCALE_COOKIE = 'dentora-locale'
 const LanguageContext = createContext<LanguageContextValue>({
   locale: defaultLocale,
   dir: directionFor(defaultLocale),
-  t: (key) => key,
+  // Default resolution goes through the ENGLISH dictionary, not the raw key:
+  // components rendered outside a LanguageProvider (legacy tests, partial
+  // mounts) keep showing the exact English strings they always showed.
+  t: (key, vars) => translate('en-EG', key, vars),
   setLocale: () => {},
 })
 

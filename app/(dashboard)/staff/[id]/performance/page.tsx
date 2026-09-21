@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -84,6 +85,7 @@ const categoryLabels: Record<string, string> = {
 }
 
 export default function PerformancePage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useLanguage()
   const resolvedParams = use(params)
   const router = useRouter()
   const { toast } = useToast()
@@ -185,7 +187,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">Performance data not available</p>
         <Link href="/staff">
-          <Button>Back to Staff List</Button>
+          <Button>{t('ui.back_to_staff_list')}</Button>
         </Link>
       </div>
     )
@@ -232,7 +234,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">{t('ui.total_revenue')}</p>
                 <p className="text-2xl font-bold">{formatCurrency(data.revenue.total)}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -281,7 +283,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Prescriptions</p>
+                <p className="text-sm text-muted-foreground">{t('ui.prescriptions')}</p>
                 <p className="text-2xl font-bold">{data.prescriptionsWritten}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
@@ -298,9 +300,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Appointments
-            </CardTitle>
+              <Calendar className="h-4 w-4" />{t('ui.appointments')}</CardTitle>
             <CardDescription>Appointment statistics for the selected period</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -312,19 +312,19 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-sm text-muted-foreground">{t('ui.total')}</p>
                 <p className="text-xl font-bold">{data.appointments.total}</p>
               </div>
               <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-600">Completed</p>
+                <p className="text-sm text-green-600">{t('ui.completed')}</p>
                 <p className="text-xl font-bold text-green-700">{data.appointments.completed}</p>
               </div>
               <div className="p-3 bg-red-50 rounded-lg">
-                <p className="text-sm text-red-600">Cancelled</p>
+                <p className="text-sm text-red-600">{t('ui.cancelled')}</p>
                 <p className="text-xl font-bold text-red-700">{data.appointments.cancelled}</p>
               </div>
               <div className="p-3 bg-yellow-50 rounded-lg">
-                <p className="text-sm text-yellow-600">No Show</p>
+                <p className="text-sm text-yellow-600">{t('ui.no_show')}</p>
                 <p className="text-xl font-bold text-yellow-700">{data.appointments.noShow}</p>
               </div>
             </div>
@@ -344,9 +344,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4" />
-              Attendance
-            </CardTitle>
+              <UserCheck className="h-4 w-4" />{t('ui.attendance')}</CardTitle>
             <CardDescription>Attendance statistics for the selected period</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -358,26 +356,26 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
 
             <div className="grid grid-cols-3 gap-4 mt-4">
               <div className="p-3 bg-green-50 rounded-lg text-center">
-                <p className="text-sm text-green-600">Present</p>
+                <p className="text-sm text-green-600">{t('ui.present')}</p>
                 <p className="text-xl font-bold text-green-700">{data.attendance.present}</p>
               </div>
               <div className="p-3 bg-red-50 rounded-lg text-center">
-                <p className="text-sm text-red-600">Absent</p>
+                <p className="text-sm text-red-600">{t('ui.absent')}</p>
                 <p className="text-xl font-bold text-red-700">{data.attendance.absent}</p>
               </div>
               <div className="p-3 bg-yellow-50 rounded-lg text-center">
-                <p className="text-sm text-yellow-600">Late</p>
+                <p className="text-sm text-yellow-600">{t('ui.late')}</p>
                 <p className="text-xl font-bold text-yellow-700">{data.attendance.late}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-orange-50 rounded-lg text-center">
-                <p className="text-sm text-orange-600">Half Day</p>
+                <p className="text-sm text-orange-600">{t('ui.half_day')}</p>
                 <p className="text-xl font-bold text-orange-700">{data.attendance.halfDay}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-lg text-center">
-                <p className="text-sm text-blue-600">On Leave</p>
+                <p className="text-sm text-blue-600">{t('ui.on_leave')}</p>
                 <p className="text-xl font-bold text-blue-700">{data.attendance.onLeave}</p>
               </div>
             </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -83,6 +84,7 @@ interface DoctorRevenue {
 }
 
 export default function FinancialReportsPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [datePreset, setDatePreset] = useState('this_month')
   const [dateFrom, setDateFrom] = useState('')
@@ -183,7 +185,7 @@ export default function FinancialReportsPage() {
             }}
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Select period" />
+              <SelectValue placeholder={t('ui.select_period')} />
             </SelectTrigger>
             <SelectContent>
               {dateRangePresets.map((preset) => (
@@ -210,9 +212,7 @@ export default function FinancialReportsPage() {
             </>
           )}
           <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+            <Download className="h-4 w-4 mr-2" />{t('ui.export')}</Button>
         </div>
       </div>
 
@@ -220,9 +220,7 @@ export default function FinancialReportsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="outstanding" className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            Outstanding
-          </TabsTrigger>
+            <AlertCircle className="h-4 w-4" />{t('ui.outstanding')}</TabsTrigger>
           <TabsTrigger value="procedure_revenue" className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4" />
             By Procedure
@@ -253,7 +251,7 @@ export default function FinancialReportsPage() {
               <>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-green-600">Current</CardTitle>
+                    <CardTitle className="text-sm font-medium text-green-600">{t('ui.current')}</CardTitle>
                     <CardDescription>Not yet due</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -268,7 +266,7 @@ export default function FinancialReportsPage() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-yellow-600">1-30 Days</CardTitle>
-                    <CardDescription>Overdue</CardDescription>
+                    <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -284,7 +282,7 @@ export default function FinancialReportsPage() {
                     <CardTitle className="text-sm font-medium text-orange-600">
                       31-60 Days
                     </CardTitle>
-                    <CardDescription>Overdue</CardDescription>
+                    <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -298,7 +296,7 @@ export default function FinancialReportsPage() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-red-500">61-90 Days</CardTitle>
-                    <CardDescription>Overdue</CardDescription>
+                    <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
@@ -340,12 +338,12 @@ export default function FinancialReportsPage() {
               <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Invoice Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead>{t('ui.invoice')}</TableHead>
+                    <TableHead>{t('ui.patient')}</TableHead>
+                    <TableHead>{t('ui.invoice_date')}</TableHead>
+                    <TableHead>{t('ui.due_date')}</TableHead>
+                    <TableHead className="text-right">{t('ui.total')}</TableHead>
+                    <TableHead className="text-right">{t('ui.balance')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -407,7 +405,7 @@ export default function FinancialReportsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_revenue')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -421,7 +419,7 @@ export default function FinancialReportsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Treatments</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_treatments')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -443,11 +441,11 @@ export default function FinancialReportsPage() {
               <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Procedure</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-center">Count</TableHead>
+                    <TableHead>{t('ui.procedure')}</TableHead>
+                    <TableHead>{t('ui.category')}</TableHead>
+                    <TableHead className="text-center">{t('ui.count')}</TableHead>
                     <TableHead className="text-right">Avg. Revenue</TableHead>
-                    <TableHead className="text-right">Total Revenue</TableHead>
+                    <TableHead className="text-right">{t('ui.total_revenue')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -473,9 +471,7 @@ export default function FinancialReportsPage() {
                     ))
                   ) : procedureData?.byProcedure.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No procedure data available
-                      </TableCell>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">{t('ui.no_procedure_data_available')}</TableCell>
                     </TableRow>
                   ) : (
                     procedureData?.byProcedure.map((proc) => (
@@ -506,7 +502,7 @@ export default function FinancialReportsPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_revenue')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -520,7 +516,7 @@ export default function FinancialReportsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Treatments</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('ui.total_treatments')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -554,10 +550,10 @@ export default function FinancialReportsPage() {
               <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Doctor</TableHead>
-                    <TableHead className="text-center">Treatments</TableHead>
+                    <TableHead>{t('ui.doctor')}</TableHead>
+                    <TableHead className="text-center">{t('ui.treatments')}</TableHead>
                     <TableHead className="text-right">Avg. per Treatment</TableHead>
-                    <TableHead className="text-right">Total Revenue</TableHead>
+                    <TableHead className="text-right">{t('ui.total_revenue')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -650,23 +646,19 @@ export default function FinancialReportsPage() {
               <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
+                    <TableHead>{t('ui.date')}</TableHead>
                     <TableHead className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Banknote className="h-4 w-4" />
-                        Cash
-                      </div>
+                        <Banknote className="h-4 w-4" />{t('ui.cash')}</div>
                     </TableHead>
                     <TableHead className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <CreditCard className="h-4 w-4" />
-                        Card
-                      </div>
+                        <CreditCard className="h-4 w-4" />{t('ui.card')}</div>
                     </TableHead>
-                    <TableHead className="text-right">InstaPay</TableHead>
-                    <TableHead className="text-right">Bank Transfer</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-center">Count</TableHead>
+                    <TableHead className="text-right">{t('ui.instapay')}</TableHead>
+                    <TableHead className="text-right">{t('ui.bank_transfer')}</TableHead>
+                    <TableHead className="text-right">{t('ui.total')}</TableHead>
+                    <TableHead className="text-center">{t('ui.count')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

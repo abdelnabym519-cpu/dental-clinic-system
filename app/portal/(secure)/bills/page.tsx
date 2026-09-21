@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -57,6 +58,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function PatientBills() {
+  const { t } = useLanguage()
   const [statusFilter, setStatusFilter] = useState('all')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
@@ -106,10 +108,10 @@ export default function PatientBills() {
 
       <Tabs value={statusFilter} onValueChange={setStatusFilter}>
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="PENDING">Pending</TabsTrigger>
+          <TabsTrigger value="all">{t('ui.all')}</TabsTrigger>
+          <TabsTrigger value="PENDING">{t('ui.pending')}</TabsTrigger>
           <TabsTrigger value="PARTIALLY_PAID">Partial</TabsTrigger>
-          <TabsTrigger value="PAID">Paid</TabsTrigger>
+          <TabsTrigger value="PAID">{t('ui.paid')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={statusFilter} className="mt-4">
@@ -168,7 +170,7 @@ export default function PatientBills() {
 
                         {/* Items */}
                         <div>
-                          <p className="text-sm font-medium mb-2">Items</p>
+                          <p className="text-sm font-medium mb-2">{t('ui.items')}</p>
                           {inv.items.map((item, i) => (
                             <div key={i} className="flex justify-between text-sm py-1">
                               <span className="text-muted-foreground">
@@ -183,7 +185,7 @@ export default function PatientBills() {
                         {inv.payments.length > 0 && (
                           <div>
                             <Separator className="mb-3" />
-                            <p className="text-sm font-medium mb-2">Payment History</p>
+                            <p className="text-sm font-medium mb-2">{t('ui.payment_history')}</p>
                             {inv.payments.map((p) => (
                               <div
                                 key={p.id}

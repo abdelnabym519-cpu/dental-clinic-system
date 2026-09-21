@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -76,6 +77,7 @@ const STATUS_CONFIG: Record<
 }
 
 export default function PreAuthorizationsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [preAuths, setPreAuths] = useState<PreAuth[]>([])
   const [loading, setLoading] = useState(true)
@@ -203,10 +205,10 @@ export default function PreAuthorizationsPage() {
               }}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Statuses" />
+                <SelectValue placeholder={t('ui.all_statuses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="all">{t('ui.all_statuses')}</SelectItem>
                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>
                     {config.label}
@@ -234,13 +236,13 @@ export default function PreAuthorizationsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Auth #</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Procedures</TableHead>
+                    <TableHead>{t('ui.patient')}</TableHead>
+                    <TableHead>{t('ui.provider')}</TableHead>
+                    <TableHead>{t('ui.procedures')}</TableHead>
                     <TableHead className="text-right">Est. Cost</TableHead>
-                    <TableHead className="text-right">Approved</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">{t('ui.approved')}</TableHead>
+                    <TableHead>{t('ui.status')}</TableHead>
+                    <TableHead>{t('ui.date')}</TableHead>
                     <TableHead className="w-[50px]" />
                   </TableRow>
                 </TableHeader>
@@ -338,13 +340,13 @@ export default function PreAuthorizationsPage() {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Patient</p>
+                  <p className="text-muted-foreground">{t('ui.patient')}</p>
                   <p className="font-medium">
                     {viewItem.patient.firstName} {viewItem.patient.lastName}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Provider</p>
+                  <p className="text-muted-foreground">{t('ui.provider')}</p>
                   <p className="font-medium">{viewItem.policy.provider.name}</p>
                 </div>
                 <div>
@@ -352,7 +354,7 @@ export default function PreAuthorizationsPage() {
                   <p className="font-medium">{viewItem.policy.policyNumber}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Estimated Cost</p>
+                  <p className="text-muted-foreground">{t('ui.estimated_cost')}</p>
                   <p className="font-medium">{formatCurrency(Number(viewItem.estimatedCost))}</p>
                 </div>
                 {viewItem.approvedAmount && (
@@ -365,14 +367,14 @@ export default function PreAuthorizationsPage() {
                 )}
                 {viewItem.expiryDate && (
                   <div>
-                    <p className="text-muted-foreground">Expires</p>
+                    <p className="text-muted-foreground">{t('ui.expires')}</p>
                     <p className="font-medium">{formatDate(viewItem.expiryDate)}</p>
                   </div>
                 )}
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Procedures</p>
+                <p className="text-sm text-muted-foreground mb-2">{t('ui.procedures')}</p>
                 <div className="space-y-1">
                   {(viewItem.procedures as any[]).map((proc: any, i: number) => (
                     <div
@@ -400,7 +402,7 @@ export default function PreAuthorizationsPage() {
 
               {viewItem.notes && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Notes</p>
+                  <p className="text-sm text-muted-foreground">{t('ui.notes')}</p>
                   <p className="text-sm">{viewItem.notes}</p>
                 </div>
               )}

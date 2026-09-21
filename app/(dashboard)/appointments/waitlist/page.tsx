@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -82,6 +83,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function WaitlistPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [entries, setEntries] = useState<WaitlistEntry[]>([])
@@ -236,13 +238,11 @@ export default function WaitlistPage() {
         >
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add to Waitlist
-            </Button>
+              <Plus className="h-4 w-4 mr-2" />{t('ui.add_to_waitlist')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add to Waitlist</DialogTitle>
+              <DialogTitle>{t('ui.add_to_waitlist')}</DialogTitle>
               <DialogDescription>
                 Add a patient to the waitlist for the next available slot
               </DialogDescription>
@@ -257,15 +257,13 @@ export default function WaitlistPage() {
                       {selectedPatient.firstName} {selectedPatient.lastName} (
                       {selectedPatient.patientId})
                     </span>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedPatient(null)}>
-                      Change
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedPatient(null)}>{t('ui.change')}</Button>
                   </div>
                 ) : (
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search patient by name or ID..."
+                      placeholder={t('ui.search_patient_by_name_or_id')}
                       className="pl-9"
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
@@ -299,10 +297,10 @@ export default function WaitlistPage() {
                 <Label>Preferred Doctor (optional)</Label>
                 <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Any doctor" />
+                    <SelectValue placeholder={t('ui.any_doctor')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Any doctor</SelectItem>
+                    <SelectItem value="any">{t('ui.any_doctor')}</SelectItem>
                     {doctors.map((d: any) => (
                       <SelectItem key={d.id} value={d.id}>
                         Dr. {d.firstName} {d.lastName}
@@ -336,10 +334,10 @@ export default function WaitlistPage() {
                 <Label>Preferred Time (optional)</Label>
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Any time" />
+                    <SelectValue placeholder={t('ui.any_time')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Any time</SelectItem>
+                    <SelectItem value="any">{t('ui.any_time')}</SelectItem>
                     {TIME_SLOTS.map((slot) => (
                       <SelectItem key={slot.value} value={slot.value}>
                         {slot.label}
@@ -353,16 +351,14 @@ export default function WaitlistPage() {
               <div className="space-y-2">
                 <Label>Notes (optional)</Label>
                 <Textarea
-                  placeholder="Any additional notes..."
+                  placeholder={t('ui.any_additional_notes')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleAdd} disabled={adding || !selectedPatient}>
                 {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Add to Waitlist
@@ -382,7 +378,7 @@ export default function WaitlistPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{summary.active}</p>
-                <p className="text-sm text-muted-foreground">Waiting</p>
+                <p className="text-sm text-muted-foreground">{t('ui.waiting')}</p>
               </div>
             </div>
           </CardContent>
@@ -454,13 +450,13 @@ export default function WaitlistPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient</TableHead>
+                  <TableHead>{t('ui.patient')}</TableHead>
                   <TableHead>Doctor Preference</TableHead>
                   <TableHead>Preferred Days</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('ui.time')}</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

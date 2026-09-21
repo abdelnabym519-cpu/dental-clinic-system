@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,7 @@ const emptyForm = {
 }
 
 export default function InsuranceProvidersPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [providers, setProviders] = useState<Provider[]>([])
@@ -199,11 +201,11 @@ export default function InsuranceProvidersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead>{t('ui.provider')}</TableHead>
+                  <TableHead>{t('ui.code')}</TableHead>
+                  <TableHead>{t('ui.contact')}</TableHead>
                   <TableHead>Policies</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('ui.status')}</TableHead>
                   <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
@@ -257,14 +259,12 @@ export default function InsuranceProvidersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(p)}>
-                            <Edit className="h-4 w-4 mr-2" /> Edit
-                          </DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(p.id)}
                             className="text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
-                          </DropdownMenuItem>
+                            <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -293,7 +293,7 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div>
-                <Label>Code</Label>
+                <Label>{t('ui.code')}</Label>
                 <Input
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
@@ -301,11 +301,11 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div>
-                <Label>Contact Phone</Label>
+                <Label>{t('ui.contact_phone')}</Label>
                 <Input
                   value={form.contactPhone}
                   onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
-                  placeholder="Phone number"
+                  placeholder={t('ui.phone_number_2')}
                 />
               </div>
               <div className="col-span-2">
@@ -318,7 +318,7 @@ export default function InsuranceProvidersPage() {
                 />
               </div>
               <div className="col-span-2">
-                <Label>Website</Label>
+                <Label>{t('ui.website')}</Label>
                 <Input
                   value={form.website}
                   onChange={(e) => setForm({ ...form, website: e.target.value })}
@@ -352,9 +352,7 @@ export default function InsuranceProvidersPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update' : 'Create'}
               </Button>

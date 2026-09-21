@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect, useCallback } from 'react'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useRouter } from 'next/navigation'
@@ -37,6 +38,7 @@ interface Prescription {
 }
 
 export default function PrescriptionsPage() {
+  const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -98,9 +100,7 @@ export default function PrescriptionsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <ClipboardList className="h-8 w-8" />
-            Prescriptions
-          </h1>
+            <ClipboardList className="h-8 w-8" />{t('ui.prescriptions')}</h1>
           <p className="text-muted-foreground">Create and manage patient prescriptions</p>
         </div>
         <div className="flex gap-2">
@@ -132,9 +132,7 @@ export default function PrescriptionsPage() {
             }
           />
           <Button onClick={() => router.push('/prescriptions/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Prescription
-          </Button>
+            <Plus className="h-4 w-4 mr-2" />{t('ui.new_prescription')}</Button>
         </div>
       </div>
 
@@ -174,12 +172,12 @@ export default function PrescriptionsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Rx #</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead className="hidden md:table-cell">Doctor</TableHead>
-                  <TableHead className="hidden md:table-cell">Diagnosis</TableHead>
-                  <TableHead className="hidden lg:table-cell">Medications</TableHead>
-                  <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead>{t('ui.patient')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('ui.doctor')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('ui.diagnosis')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('ui.medications')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('ui.date')}</TableHead>
+                  <TableHead className="w-[100px]">{t('ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -251,9 +249,7 @@ export default function PrescriptionsPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-          >
-            Previous
-          </Button>
+          >{t('ui.previous')}</Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
             Page {pagination.page} of {pagination.pages}
           </span>
@@ -262,9 +258,7 @@ export default function PrescriptionsPage() {
             size="sm"
             disabled={pagination.page >= pagination.pages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-          >
-            Next
-          </Button>
+          >{t('ui.next')}</Button>
         </div>
       )}
       {ConfirmDialogComponent}

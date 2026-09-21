@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,6 +45,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function PatientAppointments() {
+  const { t } = useLanguage()
   const [filter, setFilter] = useState('upcoming')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -85,7 +87,7 @@ export default function PatientAppointments() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Appointments</h1>
+        <h1 className="text-2xl font-bold">{t('ui.appointments')}</h1>
         <Link href="/portal/book">
           <Button>
             <CalendarPlus className="h-4 w-4 mr-2" />
@@ -96,9 +98,9 @@ export default function PatientAppointments() {
 
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="upcoming">{t('ui.upcoming')}</TabsTrigger>
           <TabsTrigger value="past">Past</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="all">{t('ui.all')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={filter} className="mt-4">

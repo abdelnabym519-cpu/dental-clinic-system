@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { Receipt, Save } from 'lucide-react'
 import { GatewaySettings } from '@/components/billing/gateway-settings'
 
 export default function BillingSettingsPage() {
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
 
@@ -195,7 +197,7 @@ export default function BillingSettingsPage() {
         {/* Payment Terms */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Terms</CardTitle>
+            <CardTitle>{t('ui.payment_terms')}</CardTitle>
             <CardDescription>Default payment policies</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
