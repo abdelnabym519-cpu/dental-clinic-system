@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { formatCurrency } from '@/lib/i18n/format'
 
 interface PricingSuggestion {
   type: string
@@ -61,8 +62,7 @@ interface PricingData {
 }
 
 export default function PricingSuggestionsPage() {
-  const { locale } = useLanguage()
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const [data, setData] = useState<PricingData | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatedAt, setGeneratedAt] = useState<string | null>(null)
@@ -164,8 +164,8 @@ export default function PricingSuggestionsPage() {
                     <p className="text-sm text-muted-foreground">{t('Revenue Opportunity')}</p>
                   </div>
                   <p className="text-2xl font-bold">
-                    {'\u20B9'}
-                    {data.summary.revenueOpportunity?.toLocaleString()}{t("/mo")}
+                    {formatCurrency(data.summary.revenueOpportunity, { locale })}
+                    {t("/mo")}
                   </p>
                 </CardContent>
               </Card>

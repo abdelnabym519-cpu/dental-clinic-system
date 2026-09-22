@@ -41,6 +41,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
+import { formatCurrency } from '@/lib/i18n/format'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -99,8 +100,7 @@ const emptyPlanForm = {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function MembershipPlansPage() {
-  const { locale } = useLanguage()
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
 
@@ -393,13 +393,13 @@ export default function MembershipPlansPage() {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  const formatCurrency = (price: number) => `\u20B9${Number(price).toLocaleString(locale)}`
+  const formatPrice = (price: number) => formatCurrency(price, { locale })
 
   const formatDuration = (months: number) => {
-    if (months === 1) return '1 month'
-    if (months === 12) return '1 year'
-    if (months % 12 === 0) return `${months / 12} years`
-    return `${months} months`
+    if (months === 1) return t('1 month')
+    if (months === 12) return t('1 year')
+    if (months % 12 === 0) return t('{v1} years', { v1: months / 12 })
+    return t('{v1} months', { v1: months })
   }
 
   const formatDate = (dateStr: string) => {
@@ -449,9 +449,9 @@ export default function MembershipPlansPage() {
               {detailPlan.name}
             </h1>
             <p className="text-muted-foreground">
-              {formatCurrency(detailPlan.price)} / {formatDuration(detailPlan.durationMonths)}
+              {formatPrice(detailPlan.price)} / {formatDuration(detailPlan.durationMonths)}
               {' \u2022 '}
-              {detailPlan._count.memberships} {t("member")}{detailPlan._count.memberships !== 1 ? 's' : ''}
+              {t(detailPlan._count.memberships === 1 ? '{v1} member' : '{v1} members', { v1: detailPlan._count.memberships })}
             </p>
           </div>
           <Button onClick={() => openEnrollDialog(detailPlan)}>
@@ -652,7 +652,7 @@ export default function MembershipPlansPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
                   <span>
-                    {plan._count.memberships} {t("member")}{plan._count.memberships !== 1 ? 's' : ''}
+                    {t(plan._count.memberships === 1 ? '{v1} member' : '{v1} members', { v1: plan._count.memberships })}
                     {plan.maxMembers ? t(" / {v1} max", { v1: plan.maxMembers }) : ''}
                   </span>
                 </div>
@@ -714,7 +714,7 @@ export default function MembershipPlansPage() {
             {/* Price & Duration */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("Price (₹) *")}</Label>
+                <Label>{t("Price (EGP) *")}</Label>
                 <Input
                   type="number"
                   min="0"

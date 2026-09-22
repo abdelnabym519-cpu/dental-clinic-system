@@ -24,6 +24,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/i18n/format'
 
 interface Notification {
   id: string
@@ -48,20 +49,8 @@ const TYPE_CONFIG: Record<string, { icon: typeof Info; color: string }> = {
   SYSTEM: { icon: Settings, color: 'text-muted-foreground' },
 }
 
-function timeAgo(dateStr: string) {
-  const now = Date.now()
-  const then = new Date(dateStr).getTime()
-  const diff = Math.floor((now - then) / 1000)
-
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
-  return new Date(dateStr).toLocaleDateString()
-}
-
 export function NotificationTray() {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -201,7 +190,7 @@ export function NotificationTray() {
                         {n.message}
                       </p>
                       <p className="mt-1 text-[11px] text-muted-foreground/70">
-                        {timeAgo(n.createdAt)}
+                        {formatRelativeTime(n.createdAt, { locale })}
                       </p>
                     </div>
                   </button>

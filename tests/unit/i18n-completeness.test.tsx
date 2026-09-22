@@ -423,3 +423,74 @@ describe('page titles and report-builder chips (live-probe findings)', () => {
     }
   })
 })
+
+describe('data-dependent copy SSR sweeps cannot reach (feeds, durations, currency)', () => {
+  it('formats relative timestamps in Arabic for the notification feed', async () => {
+    const { formatRelativeTime } = await import('@/lib/i18n/format')
+    const now = Date.now()
+    // 30s / 5min / 3h / 2d ago — the tray renders these only when notifications exist
+    expect(formatRelativeTime(new Date(now - 30_000), { locale: 'ar-EG' })).toBe('الآن')
+    expect(formatRelativeTime(new Date(now - 5 * 60_000), { locale: 'ar-EG' })).toBe('قبل 5 دقيقة')
+    expect(formatRelativeTime(new Date(now - 3 * 3_600_000), { locale: 'ar-EG' })).toBe('قبل 3 ساعة')
+    expect(formatRelativeTime(new Date(now - 2 * 86_400_000), { locale: 'ar-EG' })).toBe('قبل 2 يوم')
+    // English mode keeps the original wording, and a null date uses the caller fallback
+    expect(formatRelativeTime(new Date(now - 5 * 60_000), { locale: 'en-EG' })).toBe('5m ago')
+    expect(formatRelativeTime(null, { locale: 'ar-EG', fallback: 'لم يتصل بعد' })).toBe('لم يتصل بعد')
+    // a stale timestamp falls through to a locale-aware absolute date
+    const stale = formatRelativeTime(new Date(now - 40 * 86_400_000), { locale: 'ar-EG' })
+    expect(stale).not.toMatch(/[A-Za-z]{3}/)
+  })
+
+  it('renders the notification tray in Arabic when notifications are present', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          notifications: [
+            {
+              id: 'n1',
+              title: 'Appointment confirmed',
+              message: 'Aisha Mahmoud confirmed her 10:00 visit',
+              type: 'APPOINTMENT',
+              isRead: false,
+              createdAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+            },
+          ],
+          unreadCount: 1,
+        }),
+      })) as never
+    )
+    const { NotificationTray } = await import('@/components/layout/notification-tray')
+    const { fireEvent } = await import('@testing-library/react')
+    render(<NotificationTray />)
+    // The feed lives in a Radix dropdown, so it only mounts once the tray is opened
+    // (keyboard activation is the reliable path in jsdom).
+    const trigger = await screen.findByRole('button', { name: /الإشعارات/ })
+    fireEvent.keyDown(trigger, { key: 'Enter', code: 'Enter' })
+    const relative = await screen.findAllByText('قبل 5 دقيقة')
+    expect(relative.length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Aisha Mahmoud confirmed her 10:00 visit').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/m ago/)).toBeNull()
+    vi.unstubAllGlobals()
+  })
+
+  it('ships Arabic membership durations, plural forms and an EGP price label', () => {
+    for (const [key, expected] of Object.entries({
+      '1 month': 'شهر واحد',
+      '1 year': 'سنة واحدة',
+      '{v1} months': '{v1} أشهر',
+      '{v1} years': '{v1} سنوات',
+      '{v1} member': '{v1} عضو',
+      '{v1} members': '{v1} أعضاء',
+      'Price (EGP) *': 'السعر (ج.م) *',
+    })) {
+      expect((ar as Record<string, string>)[key], `ar:${key}`).toBe(expected)
+    }
+    // the rupee sign has no place in an EGP clinic build
+    for (const [key, value] of Object.entries(ar)) {
+      if (key === 'p4.currency_placeholder') continue
+      expect(String(value), `ar:${key}`).not.toContain('₹')
+    }
+  })
+})

@@ -2836,7 +2836,6 @@
   "Preview Data": "Preview Data",
   "Preview of": "Preview of",
   "Preview:": "Preview:",
-  "Price (₹) *": "Price (₹) *",
   "Pricing Suggestions": "Pricing Suggestions",
   "Primary Phone *": "Primary Phone *",
   "Procedure *": "Procedure *",
@@ -3983,5 +3982,16 @@
   "Google Calendar": "Google Calendar",
   "Settings": "Settings",
   "Access Denied — 403": "Access Denied — 403",
-  "Patient Portal": "Patient Portal"
+  "Patient Portal": "Patient Portal",
+  "just now": "just now",
+  "{v1}m ago": "{v1}m ago",
+  "{v1}h ago": "{v1}h ago",
+  "{v1}d ago": "{v1}d ago",
+  "Price (EGP) *": "Price (EGP) *",
+  "1 month": "1 month",
+  "1 year": "1 year",
+  "{v1} months": "{v1} months",
+  "{v1} years": "{v1} years",
+  "{v1} member": "{v1} member",
+  "{v1} members": "{v1} members"
 }

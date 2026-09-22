@@ -43,6 +43,7 @@ import {
   Cpu,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { formatRelativeTime } from '@/lib/i18n/format'
 
 interface Device {
   id: string
@@ -86,8 +87,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 }
 
 export default function DevicesPage() {
-  const { locale } = useLanguage()
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   const [devices, setDevices] = useState<Device[]>([])
   const [summary, setSummary] = useState<DeviceSummary>({
     total: 0,
@@ -208,15 +208,8 @@ export default function DevicesPage() {
     setFormIp('')
   }
 
-  const formatLastPing = (dateStr: string | null) => {
-    if (!dateStr) return 'Never'
-    const date = new Date(dateStr)
-    const diff = Date.now() - date.getTime()
-    if (diff < 60000) return 'Just now'
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-    return date.toLocaleDateString(locale)
-  }
+  const formatLastPing = (dateStr: string | null) =>
+    formatRelativeTime(dateStr, { locale, fallback: t('Never') })
 
   return (
     <div className="space-y-6">

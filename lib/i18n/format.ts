@@ -10,6 +10,7 @@
  * See docs/LOCALIZATION.md.
  */
 import { defaultLocale, getLocaleDefaults, resolveLocale } from './config'
+import { translateText } from './dictionary'
 
 export interface CurrencyFormatOptions {
   locale?: string
@@ -140,4 +141,33 @@ export function createFormatters(locale: string | null | undefined = defaultLoca
     formatDateTime: (date: Date | string | number | null | undefined, o: DateFormatOptions = {}) =>
       formatDateTime(date, { locale: resolved, ...o }),
   }
+}
+
+/**
+ * Relative time ("just now", "5m ago", "3d ago") for feeds, trays and status
+ * columns — the single implementation for the whole app.
+ *
+ * It used to exist twice, both copies hardcoded English: the notification tray
+ * and the device list. The unit letters are part of the localized pattern
+ * (`{v1}m ago`), not concatenated, so Arabic reads naturally ("قبل 5 د").
+ */
+export function formatRelativeTime(
+  date: Date | string | number | null | undefined,
+  options: { locale?: string; fallback?: string } = {}
+): string {
+  const { locale, fallback = '' } = options
+  const value = toDate(date)
+  if (value === null) return fallback
+
+  const diffSeconds = Math.floor((Date.now() - value.getTime()) / 1000)
+  if (diffSeconds < 0) return formatDate(value, { locale, fallback })
+
+  const translated = (key: string, vars?: Record<string, string | number>) =>
+    translateText(locale, key, vars)
+
+  if (diffSeconds < 60) return translated('just now')
+  if (diffSeconds < 3600) return translated('{v1}m ago', { v1: Math.floor(diffSeconds / 60) })
+  if (diffSeconds < 86400) return translated('{v1}h ago', { v1: Math.floor(diffSeconds / 3600) })
+  if (diffSeconds < 604800) return translated('{v1}d ago', { v1: Math.floor(diffSeconds / 86400) })
+  return formatDate(value, { locale, fallback })
 }
