@@ -128,7 +128,7 @@ export function ReportBuilder() {
             }}
             className="rounded-full border px-3 py-1 text-xs hover:bg-muted transition-colors"
           >
-            {ex}
+            {t(ex)}
           </button>
         ))}
       </div>

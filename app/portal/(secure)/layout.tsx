@@ -2,9 +2,12 @@ import { redirect } from 'next/navigation'
 import { getAuthenticatedPatient } from '@/lib/patient-auth'
 import { prisma } from '@/lib/prisma'
 import { PortalShell } from '@/components/portal/portal-shell'
+import { getServerTranslator } from '@/lib/i18n/server'
 
-export const metadata = {
-  title: 'Patient Portal',
+export async function generateMetadata() {
+  // Browser-tab title follows the selected locale, like the rendered UI.
+  const { t } = await getServerTranslator()
+  return { title: t('Patient Portal') }
 }
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {

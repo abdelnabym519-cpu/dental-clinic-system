@@ -1,9 +1,12 @@
 import { SettingsOverview, type SettingsCategory } from '@/components/settings/settings-overview'
 import { auth } from '@/lib/auth'
 import { canAccessSettingsSection } from '@/lib/settings-access'
+import { getServerTranslator } from '@/lib/i18n/server'
 
-export const metadata = {
-  title: 'Settings',
+export async function generateMetadata() {
+  // Browser-tab title follows the selected locale, like the rendered UI.
+  const { t } = await getServerTranslator()
+  return { title: t('Settings') }
 }
 
 /** Every hub card with its destination. Staff management lives outside /settings. */

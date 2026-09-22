@@ -396,3 +396,30 @@ describe('dental-chart vocabulary (label-only wiring, no logic touched)', () => 
     }
   })
 })
+
+describe('page titles and report-builder chips (live-probe findings)', () => {
+  it('localizes page metadata titles instead of hardcoding English', () => {
+    for (const [key, expected] of Object.entries({
+      Settings: 'الإعدادات',
+      'Access Denied — 403': 'تم رفض الوصول — 403',
+      'Patient Portal': 'بوابة المريض',
+    })) {
+      expect((ar as Record<string, string>)[key], `ar:${key}`).toBe(expected)
+      expect((en as Record<string, string>)[key], `en:${key}`).toBe(key)
+    }
+  })
+
+  it('translates the report-builder example queries', () => {
+    for (const [key, expected] of Object.entries({
+      'Monthly revenue by procedure for last 3 months': 'إيرادات شهرية حسب الإجراء لآخر 3 أشهر',
+      "Patients who haven't visited in 6 months": 'مرضى لم يزوروا العيادة خلال 6 أشهر',
+      'Overdue invoices sorted by amount': 'الفواتير المتأخرة مرتبة حسب المبلغ',
+      'Appointment no-show rate by day of week': 'معدل عدم حضور المواعيد حسب يوم الأسبوع',
+      'Top 5 most performed procedures this quarter': 'أكثر 5 إجراءات تنفيذًا هذا الربع',
+      'Inventory items running low on stock': 'أصناف المخزون على وشك النفاد',
+      'Google Calendar': 'تقويم Google',
+    })) {
+      expect((ar as Record<string, string>)[key], `ar:${key}`).toBe(expected)
+    }
+  })
+})

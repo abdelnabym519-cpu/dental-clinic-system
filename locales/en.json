@@ -3973,5 +3973,15 @@
   "Lower Left Second Molar": "Lower Left Second Molar",
   "Lower Left Third Molar (Wisdom)": "Lower Left Third Molar (Wisdom)",
   "Condition:": "Condition:",
-  "surface": "surface"
+  "surface": "surface",
+  "Monthly revenue by procedure for last 3 months": "Monthly revenue by procedure for last 3 months",
+  "Patients who haven't visited in 6 months": "Patients who haven't visited in 6 months",
+  "Overdue invoices sorted by amount": "Overdue invoices sorted by amount",
+  "Appointment no-show rate by day of week": "Appointment no-show rate by day of week",
+  "Top 5 most performed procedures this quarter": "Top 5 most performed procedures this quarter",
+  "Inventory items running low on stock": "Inventory items running low on stock",
+  "Google Calendar": "Google Calendar",
+  "Settings": "Settings",
+  "Access Denied — 403": "Access Denied — 403",
+  "Patient Portal": "Patient Portal"
 }

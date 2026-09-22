@@ -2,9 +2,12 @@ import { AccessDenied } from '@/components/settings/access-denied'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { settingsSectionFromPath } from '@/lib/settings-access'
+import { getServerTranslator } from '@/lib/i18n/server'
 
-export const metadata = {
-  title: 'Access Denied — 403',
+export async function generateMetadata() {
+  // Browser-tab title follows the selected locale, like the rendered UI.
+  const { t } = await getServerTranslator()
+  return { title: t('Access Denied — 403') }
 }
 
 /**
