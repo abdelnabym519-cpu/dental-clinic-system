@@ -3,9 +3,13 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
 import ar from '../../locales/ar.json'
 import en from '../../locales/en.json'
 import { translate, translateText, directionFor } from '@/lib/i18n/dictionary'
+import { useLanguage } from '@/components/providers/language-provider'
 import { dateFnsLocale } from '@/lib/i18n/dates'
 import { format } from 'date-fns'
 
@@ -435,7 +439,7 @@ describe('data-dependent copy SSR sweeps cannot reach (feeds, durations, currenc
     expect(formatRelativeTime(new Date(now - 2 * 86_400_000), { locale: 'ar-EG' })).toBe('قبل 2 يوم')
     // English mode keeps the original wording, and a null date uses the caller fallback
     expect(formatRelativeTime(new Date(now - 5 * 60_000), { locale: 'en-EG' })).toBe('5m ago')
-    expect(formatRelativeTime(null, { locale: 'ar-EG', fallback: 'لم يتصل بعد' })).toBe('لم يتصل بعد')
+    expect(formatRelativeTime(null, { locale: 'ar-EG', fallback: ar['Never'] })).toBe('لم يحدث بعد')
     // a stale timestamp falls through to a locale-aware absolute date
     const stale = formatRelativeTime(new Date(now - 40 * 86_400_000), { locale: 'ar-EG' })
     expect(stale).not.toMatch(/[A-Za-z]{3}/)
@@ -492,5 +496,75 @@ describe('data-dependent copy SSR sweeps cannot reach (feeds, durations, currenc
       if (key === 'p4.currency_placeholder') continue
       expect(String(value), `ar:${key}`).not.toContain('₹')
     }
+  })
+})
+
+describe('shared keys used in several contexts (audited)', () => {
+  it('translates "Never" neutrally for all five empty-timestamp cells', () => {
+    // Used for last run, last visit, last sync, last sterilized and last ping.
+    // A devices-specific phrasing ("hasn't connected yet") would read wrong in
+    // the other four, so the value has to be context-neutral.
+    expect((ar as Record<string, string>)['Never']).toBe('لم يحدث بعد')
+    expect((en as Record<string, string>)['Never']).toBe('Never')
+  })
+
+  it('renders the N/A status cell in Arabic', () => {
+    expect((ar as Record<string, string>)['N/A']).toBe('لا ينطبق')
+  })
+
+  it('keeps sample identifiers and URLs in Latin script', () => {
+    // These are placeholder values typed into inputs (example emails, gateway
+    // URLs, dosages). They are identity entries on purpose: translating them
+    // would invent addresses and hosts that do not exist.
+    for (const placeholder of [
+      'admin@dentora-dental.com',
+      'doctor@clinic.com',
+      'info@yourclinic.com',
+      'https://provider.com',
+      'https://www.yourclinic.com',
+      'clinic@instapay',
+      '500mg',
+      'test@example.com',
+    ]) {
+      expect((ar as Record<string, string>)[placeholder], `ar:${placeholder}`).toBe(placeholder)
+    }
+  })
+})
+
+describe('data-dependent keys render through the provider', () => {
+  it('renders the empty-timestamp and N/A cells in Arabic', () => {
+    // These only appear when a record has no timestamp / is not applicable, so
+    // a server-rendered sweep cannot reach them — assert them through the same
+    // useLanguage() path the pages use.
+    function Probe() {
+      const { t } = useLanguage()
+      return (
+        <div>
+          <span data-testid="never">{t('Never')}</span>
+          <span data-testid="na">{t('N/A')}</span>
+        </div>
+      )
+    }
+    render(<Probe />)
+    expect(screen.getByTestId('never').textContent).toBe('لم يحدث بعد')
+    expect(screen.getByTestId('na').textContent).toBe('لا ينطبق')
+  })
+})
+
+describe('production build carries the embedded PDF font', () => {
+  it('lists the font in outputFileTracingIncludes for both send routes', async () => {
+    // The font is read from disk at runtime, which Next's output tracing
+    // cannot see. Without these entries a standalone build ships without the
+    // font and every Arabic PDF attachment fails. Asserted against the config
+    // source because requiring next.config.js pulls in the next-intl plugin.
+    const source = readFileSync(join(process.cwd(), 'next.config.js'), 'utf8')
+    expect(source).toContain('outputFileTracingIncludes')
+    for (const route of [
+      '/api/communications/invoices/[id]/send',
+      '/api/communications/prescriptions/[id]/send',
+    ]) {
+      expect(source, route).toContain(route)
+    }
+    expect(source).toContain('assets/fonts')
   })
 })

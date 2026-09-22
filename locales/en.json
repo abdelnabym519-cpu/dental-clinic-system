@@ -4008,5 +4008,6 @@
   "Medications:": "Medications:",
   "Clinic": "Clinic",
   "Notes: {v1}": "Notes: {v1}",
-  "This prescription was issued electronically by the clinic.": "This prescription was issued electronically by the clinic."
+  "This prescription was issued electronically by the clinic.": "This prescription was issued electronically by the clinic.",
+  "N/A": "N/A"
 }

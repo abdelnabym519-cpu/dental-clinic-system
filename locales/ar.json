@@ -3555,7 +3555,7 @@
   "All processed": "تمت معالجة الكل",
   "No messages": "لا رسائل",
   "No cost data": "لا توجد بيانات تكلفة",
-  "Never": "لم يتصل بعد",
+  "Never": "لم يحدث بعد",
   "Edit Automation": "تعديل الأتمتة",
   "Excellent": "ممتاز",
   "Good": "جيد",
@@ -4008,5 +4008,6 @@
   "Medications:": "الأدوية:",
   "Clinic": "العيادة",
   "Notes: {v1}": "ملاحظات: {v1}",
-  "This prescription was issued electronically by the clinic.": "صدرت هذه الروشتة إلكترونيًا من العيادة."
+  "This prescription was issued electronically by the clinic.": "صدرت هذه الروشتة إلكترونيًا من العيادة.",
+  "N/A": "لا ينطبق"
 }
