@@ -252,7 +252,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
               ) : (
                 <Video className="h-4 w-4 mr-2" />
               )}
-              {consultation.status === 'IN_PROGRESS' ? 'Rejoin Call' : 'Start Call'}
+              {consultation.status === 'IN_PROGRESS' ? t("Rejoin Call") : t("Start Call")}
             </Button>
           )}
           {consultation.status === 'SCHEDULED' && (
@@ -303,7 +303,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
                 <p className="text-xs font-medium text-muted-foreground uppercase">{t('ui.medical_alerts')}</p>
                 {consultation.patient.medicalHistory.hasAllergies && (
                   <p className="text-xs text-red-600">
-                    Allergies: {consultation.patient.medicalHistory.drugAllergies || 'Yes'}
+                    {t("Allergies:")} {consultation.patient.medicalHistory.drugAllergies || t("Yes")}
                   </p>
                 )}
                 {consultation.patient.medicalHistory.hasDiabetes && (
@@ -344,7 +344,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
               <div>
                 <p className="text-muted-foreground">{t('ui.doctor')}</p>
                 <p className="font-medium">
-                  Dr. {consultation.doctor.firstName} {consultation.doctor.lastName}
+                  {t("Dr.")} {consultation.doctor.firstName} {consultation.doctor.lastName}
                 </p>
               </div>
               {consultation.startedAt && (
@@ -378,7 +378,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
                   {consultation.appointment.appointmentNo}
                 </Link>
                 {consultation.appointment.chiefComplaint && (
-                  <p className="mt-1">Complaint: {consultation.appointment.chiefComplaint}</p>
+                  <p className="mt-1">{t("Complaint:")} {consultation.appointment.chiefComplaint}</p>
                 )}
               </div>
             )}

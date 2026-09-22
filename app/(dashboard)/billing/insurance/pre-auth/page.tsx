@@ -77,6 +77,7 @@ const STATUS_CONFIG: Record<
 }
 
 export default function PreAuthorizationsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [preAuths, setPreAuths] = useState<PreAuth[]>([])
@@ -235,7 +236,7 @@ export default function PreAuthorizationsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Auth #</TableHead>
+                    <TableHead>{t("Auth #")}</TableHead>
                     <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>{t('ui.provider')}</TableHead>
                     <TableHead>{t('ui.procedures')}</TableHead>
@@ -271,14 +272,14 @@ export default function PreAuthorizationsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(Number(pa.estimatedCost))}
+                        {formatCurrency(Number(pa.estimatedCost), locale)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {pa.approvedAmount ? formatCurrency(Number(pa.approvedAmount)) : '—'}
+                        {pa.approvedAmount ? formatCurrency(Number(pa.approvedAmount), locale) : '—'}
                       </TableCell>
                       <TableCell>{getStatusBadge(pa.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(pa.requestDate)}
+                        {formatDate(pa.requestDate, locale)}
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="icon" onClick={() => setViewItem(pa)}>
@@ -293,7 +294,7 @@ export default function PreAuthorizationsPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} of {total}
+                  {t("Showing")} {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} {t("of")} {total}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -305,7 +306,7 @@ export default function PreAuthorizationsPage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    Page {page} of {totalPages}
+                    {t("Page")} {page} {t("of")} {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -355,20 +356,20 @@ export default function PreAuthorizationsPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('ui.estimated_cost')}</p>
-                  <p className="font-medium">{formatCurrency(Number(viewItem.estimatedCost))}</p>
+                  <p className="font-medium">{formatCurrency(Number(viewItem.estimatedCost), locale)}</p>
                 </div>
                 {viewItem.approvedAmount && (
                   <div>
                     <p className="text-muted-foreground">{t('Approved Amount')}</p>
                     <p className="font-medium text-green-600">
-                      {formatCurrency(Number(viewItem.approvedAmount))}
+                      {formatCurrency(Number(viewItem.approvedAmount), locale)}
                     </p>
                   </div>
                 )}
                 {viewItem.expiryDate && (
                   <div>
                     <p className="text-muted-foreground">{t('ui.expires')}</p>
-                    <p className="font-medium">{formatDate(viewItem.expiryDate)}</p>
+                    <p className="font-medium">{formatDate(viewItem.expiryDate, locale)}</p>
                   </div>
                 )}
               </div>
@@ -386,7 +387,7 @@ export default function PreAuthorizationsPage() {
                         {proc.code && <span className="text-muted-foreground">({proc.code})</span>}
                       </span>
                       {proc.cost && (
-                        <span className="font-medium">{formatCurrency(proc.cost)}</span>
+                        <span className="font-medium">{formatCurrency(proc.cost, locale)}</span>
                       )}
                     </div>
                   ))}
@@ -416,7 +417,7 @@ export default function PreAuthorizationsPage() {
                       onClick={() => handleUpdateStatus(viewItem.id, 'SUBMITTED')}
                       disabled={updating}
                     >
-                      <FileCheck className="h-4 w-4 mr-1" /> Mark Submitted
+                      <FileCheck className="h-4 w-4 mr-1" /> {t("Mark Submitted")}
                     </Button>
                   )}
                   <Button
@@ -434,7 +435,7 @@ export default function PreAuthorizationsPage() {
                     }}
                     disabled={updating}
                   >
-                    <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                    <CheckCircle className="h-4 w-4 mr-1" /> {t("Approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -447,7 +448,7 @@ export default function PreAuthorizationsPage() {
                     }}
                     disabled={updating}
                   >
-                    <XCircle className="h-4 w-4 mr-1" /> Deny
+                    <XCircle className="h-4 w-4 mr-1" /> {t("Deny")}
                   </Button>
                 </div>
               )}

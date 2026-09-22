@@ -93,6 +93,7 @@ const categories = [
 ]
 
 export default function ProceduresSettingsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [procedures, setProcedures] = useState<Procedure[]>([])
@@ -458,7 +459,7 @@ export default function ProceduresSettingsPage() {
                     </TableCell>
                     <TableCell>{procedure.defaultDuration} {t('min')}</TableCell>
                     <TableCell className="font-medium">
-                      {formatCurrency(procedure.basePrice)}
+                      {formatCurrency(procedure.basePrice, locale)}
                     </TableCell>
                     <TableCell>
                       <Switch
@@ -498,9 +499,9 @@ export default function ProceduresSettingsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} procedures
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("procedures")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -511,7 +512,7 @@ export default function ProceduresSettingsPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
@@ -531,12 +532,12 @@ export default function ProceduresSettingsPage() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === 'create' ? 'Add New Procedure' : 'Edit Procedure'}
+              {dialogMode === 'create' ? t("Add New Procedure") : t("Edit Procedure")}
             </DialogTitle>
             <DialogDescription>
               {dialogMode === 'create'
-                ? 'Add a new procedure to your catalog'
-                : 'Update procedure details'}
+                ? t("Add a new procedure to your catalog")
+                : t("Update procedure details")}
             </DialogDescription>
           </DialogHeader>
 
@@ -550,12 +551,12 @@ export default function ProceduresSettingsPage() {
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="code">Code *</Label>
+                <Label htmlFor="code">{t("Code *")}</Label>
                 <Input
                   id="code"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  placeholder="e.g., PRV001"
+                  placeholder={t("e.g., PRV001")}
                   maxLength={10}
                   disabled={dialogMode === 'edit'}
                   className="uppercase"
@@ -565,7 +566,7 @@ export default function ProceduresSettingsPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+                <Label htmlFor="category">{t("Category *")}</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
@@ -585,7 +586,7 @@ export default function ProceduresSettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{t("Name *")}</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -607,7 +608,7 @@ export default function ProceduresSettingsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="defaultDuration">Duration (minutes)</Label>
+                <Label htmlFor="defaultDuration">{t("Duration (minutes)")}</Label>
                 <Input
                   id="defaultDuration"
                   type="number"
@@ -616,7 +617,7 @@ export default function ProceduresSettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="basePrice">Base Price *</Label>
+                <Label htmlFor="basePrice">{t("Base Price *")}</Label>
                 <Input
                   id="basePrice"
                   type="number"
@@ -690,14 +691,13 @@ export default function ProceduresSettingsPage() {
           <DialogHeader>
             <DialogTitle>{t('Delete Procedure')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedProcedure?.name}"? If this procedure is used
-              in treatments, it will be deactivated instead.
+              {t("Are you sure you want to delete \"")}{selectedProcedure?.name}{t("\"? If this procedure is used in treatments, it will be deactivated instead.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={actionLoading}>
-              {actionLoading ? 'Deleting...' : 'Delete'}
+              {actionLoading ? t("Deleting...") : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

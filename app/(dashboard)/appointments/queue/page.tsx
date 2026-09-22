@@ -84,6 +84,7 @@ interface Doctor {
 }
 
 export default function QueueManagementPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -276,7 +277,7 @@ export default function QueueManagementPage() {
               {getDoctorName(appointment.doctor)}
             </p>
             {appointment.chairNumber && (
-              <p className="text-xs text-muted-foreground">Chair {appointment.chairNumber}</p>
+              <p className="text-xs text-muted-foreground">{t("Chair")} {appointment.chairNumber}</p>
             )}
           </div>
         </div>
@@ -329,7 +330,7 @@ export default function QueueManagementPage() {
     </Card>
   )
 
-  const today = new Date().toLocaleDateString('en-EG', {
+  const today = new Date().toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -353,7 +354,7 @@ export default function QueueManagementPage() {
               <SelectItem value="all">{t('ui.all_doctors')}</SelectItem>
               {doctors.map((doctor) => (
                 <SelectItem key={doctor.id} value={doctor.id}>
-                  Dr. {doctor.firstName} {doctor.lastName}
+                  {t("Dr.")} {doctor.firstName} {doctor.lastName}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -445,7 +446,7 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-amber-50 border-b border-amber-200">
               <CardTitle className="flex items-center gap-2 text-amber-700">
                 <Clock className="h-5 w-5" />
-                Waiting ({queue.waiting.length})
+                {t("Waiting (")}{queue.waiting.length})
               </CardTitle>
               <CardDescription>{t('Patients checked in and waiting')}</CardDescription>
             </CardHeader>
@@ -463,7 +464,7 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-purple-50 border-b border-purple-200">
               <CardTitle className="flex items-center gap-2 text-purple-700">
                 <Play className="h-5 w-5" />
-                In Progress ({queue.inProgress.length})
+                {t("In Progress (")}{queue.inProgress.length})
               </CardTitle>
               <CardDescription>{t('Currently being attended')}</CardDescription>
             </CardHeader>
@@ -481,7 +482,7 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-blue-50 border-b border-blue-200">
               <CardTitle className="flex items-center gap-2 text-blue-700">
                 <Calendar className="h-5 w-5" />
-                Upcoming ({queue.upcoming.length})
+                {t("Upcoming (")}{queue.upcoming.length})
               </CardTitle>
               <CardDescription>{t('Scheduled appointments today')}</CardDescription>
             </CardHeader>
@@ -502,7 +503,7 @@ export default function QueueManagementPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700">
               <CheckCircle className="h-5 w-5" />
-              Completed Today ({queue.completed.length})
+              {t("Completed Today (")}{queue.completed.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -514,7 +515,7 @@ export default function QueueManagementPage() {
             {queue.completed.length > 6 && (
               <div className="text-center mt-4">
                 <Link href="/appointments?status=COMPLETED">
-                  <Button variant="outline">View All Completed ({queue.completed.length})</Button>
+                  <Button variant="outline">{t("View All Completed (")}{queue.completed.length})</Button>
                 </Link>
               </div>
             )}

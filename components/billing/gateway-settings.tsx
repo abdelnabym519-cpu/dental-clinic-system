@@ -211,7 +211,7 @@ export function GatewaySettings() {
               <Label htmlFor="gateway-live">
                 {t('Live Mode')}
                 <span className="text-xs text-muted-foreground ml-1">
-                  (uncheck for test/sandbox)
+                  {t("(uncheck for test/sandbox)")}
                 </span>
               </Label>
               <Switch id="gateway-live" checked={isLiveMode} onCheckedChange={setIsLiveMode} />
@@ -224,14 +224,14 @@ export function GatewaySettings() {
           <div className="space-y-4 border-t pt-4">
             <h4 className="font-medium text-sm">{t('Fawry Credentials')}</h4>
             <p className="text-xs text-muted-foreground">
-              Get these from your{' '}
+              {t("Get these from your")}{' '}
               <a
                 href="https://fawry.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline inline-flex items-center gap-1"
               >
-                Fawry Dashboard <ExternalLink className="h-3 w-3" />
+                {t("Fawry Dashboard")} <ExternalLink className="h-3 w-3" />
               </a>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -241,7 +241,7 @@ export function GatewaySettings() {
                   id="fawry-merchant"
                   value={fawryMerchantCode}
                   onChange={(e) => setFawryMerchantCode(e.target.value)}
-                  placeholder="e.g. 1AbCdEfGhIjK"
+                  placeholder={t("e.g. 1AbCdEfGhIjK")}
                 />
               </div>
               <div>
@@ -269,14 +269,14 @@ export function GatewaySettings() {
           <div className="space-y-4 border-t pt-4">
             <h4 className="font-medium text-sm">{t('Paymob (Accept) Credentials')}</h4>
             <p className="text-xs text-muted-foreground">
-              Get these from your{' '}
+              {t("Get these from your")}{' '}
               <a
                 href="https://accept.paymob.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary underline inline-flex items-center gap-1"
               >
-                Paymob Dashboard <ExternalLink className="h-3 w-3" />
+                {t("Paymob Dashboard")} <ExternalLink className="h-3 w-3" />
               </a>
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -329,7 +329,7 @@ export function GatewaySettings() {
                   id="instapay-handle"
                   value={instapayHandle}
                   onChange={(e) => setInstapayHandle(e.target.value)}
-                  placeholder="clinic@instapay"
+                  placeholder={t("clinic@instapay")}
                 />
               </div>
             </div>
@@ -341,8 +341,8 @@ export function GatewaySettings() {
           <div className="border-t pt-4">
             <Label>{t('Webhook URL')}</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Configure this URL in your {provider.charAt(0) + provider.slice(1).toLowerCase()}{' '}
-              dashboard to receive payment notifications
+              {t("Configure this URL in your")} {provider.charAt(0) + provider.slice(1).toLowerCase()}{' '}
+              {t("dashboard to receive payment notifications")}
             </p>
             <div className="flex items-center gap-2">
               <Input value={webhookUrl} readOnly className="font-mono text-xs bg-muted" />
@@ -365,7 +365,7 @@ export function GatewaySettings() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {saving ? 'Saving...' : 'Save Gateway Settings'}
+            {saving ? 'Saving...' : t("Save Gateway Settings")}
           </Button>
         </div>
       </CardContent>

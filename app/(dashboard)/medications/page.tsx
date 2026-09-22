@@ -371,7 +371,7 @@ export default function MedicationsPage() {
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
           >{t('ui.previous')}</Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
-            Page {pagination.page} of {pagination.pages}
+            {t("Page")} {pagination.page} {t("of")} {pagination.pages}
           </span>
           <Button
             variant="outline"
@@ -386,16 +386,16 @@ export default function MedicationsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit Medication' : 'Add Medication'}</DialogTitle>
+            <DialogTitle>{editing ? t("Edit Medication") : 'Add Medication'}</DialogTitle>
             <DialogDescription>
-              {editing ? 'Update medication details' : 'Add a new medication to your catalog'}
+              {editing ? t("Update medication details") : t("Add a new medication to your catalog")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label>Medication Name *</Label>
+                <Label>{t("Medication Name *")}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
@@ -451,7 +451,7 @@ export default function MedicationsPage() {
                 <Input
                   value={formData.strength}
                   onChange={(e) => setFormData((f) => ({ ...f, strength: e.target.value }))}
-                  placeholder="500mg"
+                  placeholder={t("500mg")}
                 />
               </div>
               <div>
@@ -459,7 +459,7 @@ export default function MedicationsPage() {
                 <Input
                   value={formData.manufacturer}
                   onChange={(e) => setFormData((f) => ({ ...f, manufacturer: e.target.value }))}
-                  placeholder={t('Cipla')}
+                  placeholder="Cipla"
                 />
               </div>
             </div>
@@ -472,7 +472,7 @@ export default function MedicationsPage() {
                   <Input
                     value={formData.defaultDosage}
                     onChange={(e) => setFormData((f) => ({ ...f, defaultDosage: e.target.value }))}
-                    placeholder="1 tablet"
+                    placeholder={t("1 tablet")}
                   />
                 </div>
                 <div>
@@ -482,7 +482,7 @@ export default function MedicationsPage() {
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, defaultFrequency: e.target.value }))
                     }
-                    placeholder="3 times a day"
+                    placeholder={t("3 times a day")}
                   />
                 </div>
                 <div>
@@ -492,7 +492,7 @@ export default function MedicationsPage() {
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, defaultDuration: e.target.value }))
                     }
-                    placeholder="5 days"
+                    placeholder={t("5 days")}
                   />
                 </div>
               </div>

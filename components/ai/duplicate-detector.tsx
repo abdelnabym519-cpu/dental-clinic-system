@@ -72,7 +72,7 @@ export function DuplicateDetector({
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
         <div className="h-3 w-3 animate-spin rounded-full border border-muted border-t-primary" />
-        <span>Checking for duplicates…</span>
+        <span>{t("Checking for duplicates…")}</span>
       </div>
     )
   }
@@ -82,7 +82,7 @@ export function DuplicateDetector({
   return (
     <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
       <p className="text-xs font-semibold text-amber-800 mb-2">
-        ⚠ Possible duplicate patient{duplicates.length > 1 ? 's' : ''} detected
+        {t("⚠ Possible duplicate patient")}{duplicates.length > 1 ? 's' : ''} {t("detected")}
       </p>
       <div className="space-y-2">
         {duplicates.map((d) => (
@@ -93,7 +93,7 @@ export function DuplicateDetector({
             <div>
               <p className="text-sm font-medium">{d.name}</p>
               <p className="text-xs text-muted-foreground">
-                {Math.round(d.confidence * 100)}% match · matched on {d.matchFields.join(', ')}
+                {Math.round(d.confidence * 100)}{t("% match · matched on")} {d.matchFields.join(', ')}
               </p>
             </div>
             <button

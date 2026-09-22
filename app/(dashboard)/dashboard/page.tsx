@@ -161,7 +161,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-5 w-5" />
-              <p>{error || 'An error occurred'}</p>
+              <p>{error || t("An error occurred")}</p>
             </div>
             <Button onClick={fetchDashboardStats} className="mt-4">
               {t('Retry')}
@@ -217,8 +217,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.overview.todayAppointments}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.overview.completedAppointmentsToday} completed,{' '}
-              {stats.overview.pendingAppointments} pending
+              {stats.overview.completedAppointmentsToday} {t("completed,")}{' '}
+              {stats.overview.pendingAppointments} {t("pending")}
             </p>
           </CardContent>
         </Card>
@@ -480,7 +480,7 @@ export default function DashboardPage() {
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Min: {item.minimumStock} {item.unit}
+                        {t("Min:")} {item.minimumStock} {item.unit}
                       </p>
                     </div>
                     <div className="text-red-600 font-medium">

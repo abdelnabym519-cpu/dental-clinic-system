@@ -62,7 +62,7 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
             {hospitalLogo ? (
               <img
                 src={hospitalLogo}
-                alt={hospitalName || 'Logo'}
+                alt={hospitalName || t("Logo")}
                 className="h-8 w-8 rounded-lg object-cover"
               />
             ) : (
@@ -71,7 +71,7 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
               </div>
             )}
             <span className="text-sm font-semibold truncate">
-              {hospitalName || 'Dental Clinic'}
+              {hospitalName || t("Dental Clinic")}
             </span>
           </Link>
           <Button

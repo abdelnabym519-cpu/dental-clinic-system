@@ -104,6 +104,7 @@ interface PaginationInfo {
 }
 
 export default function TreatmentsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const [treatments, setTreatments] = useState<Treatment[]>([])
@@ -230,7 +231,7 @@ export default function TreatmentsPage() {
                 Status: opt.status,
                 'Follow-up Required': opt.followUpRequired ? 'Yes' : 'No',
                 'Follow-up Date': opt.followUpDate || '',
-                Date: formatDate(opt.createdAt),
+                Date: formatDate(opt.createdAt, locale),
               }))
             }
           />
@@ -366,7 +367,7 @@ export default function TreatmentsPage() {
                     <TableCell>
                       <div className="font-medium">{treatment.treatmentNo}</div>
                       <div className="text-sm text-muted-foreground">
-                        {formatDate(treatment.createdAt)}
+                        {formatDate(treatment.createdAt, locale)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -391,7 +392,7 @@ export default function TreatmentsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        Dr. {treatment.doctor.firstName} {treatment.doctor.lastName}
+                        {t("Dr.")} {treatment.doctor.firstName} {treatment.doctor.lastName}
                       </div>
                       {treatment.doctor.specialization && (
                         <div className="text-sm text-muted-foreground">
@@ -409,7 +410,7 @@ export default function TreatmentsPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">{formatCurrency(treatment.cost)}</div>
+                      <div className="font-medium">{formatCurrency(treatment.cost, locale)}</div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -468,9 +469,9 @@ export default function TreatmentsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} treatments
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("treatments")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -481,7 +482,7 @@ export default function TreatmentsPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"

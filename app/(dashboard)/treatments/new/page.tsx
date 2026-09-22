@@ -50,6 +50,7 @@ interface Procedure {
 }
 
 export default function NewTreatmentPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -313,7 +314,7 @@ export default function NewTreatmentPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="doctor">Doctor *</Label>
+                <Label htmlFor="doctor">{t("Doctor *")}</Label>
                 <Select
                   value={formData.doctorId}
                   onValueChange={(value) => setFormData({ ...formData, doctorId: value })}
@@ -324,7 +325,7 @@ export default function NewTreatmentPage() {
                   <SelectContent>
                     {doctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id}>
-                        Dr. {doctor.firstName} {doctor.lastName}
+                        {t("Dr.")} {doctor.firstName} {doctor.lastName}
                         {doctor.specialization && ` - ${doctor.specialization}`}
                       </SelectItem>
                     ))}
@@ -333,7 +334,7 @@ export default function NewTreatmentPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="procedure">Procedure *</Label>
+                <Label htmlFor="procedure">{t("Procedure *")}</Label>
                 <Select value={formData.procedureId} onValueChange={handleProcedureSelect}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_procedure')} />
@@ -346,7 +347,7 @@ export default function NewTreatmentPage() {
                         </div>
                         {procs.map((proc) => (
                           <SelectItem key={proc.id} value={proc.id}>
-                            {proc.code} - {proc.name} ({formatCurrency(proc.basePrice)})
+                            {proc.code} - {proc.name} ({formatCurrency(proc.basePrice, locale)})
                           </SelectItem>
                         ))}
                       </div>
@@ -365,8 +366,8 @@ export default function NewTreatmentPage() {
                   </p>
                 )}
                 <div className="flex gap-4 mt-2 text-sm">
-                  <span>Duration: {selectedProcedure.defaultDuration} {t('min')}</span>
-                  <span>Base Price: {formatCurrency(selectedProcedure.basePrice)}</span>
+                  <span>{t("Duration:")} {selectedProcedure.defaultDuration} {t('min')}</span>
+                  <span>{t("Base Price:")} {formatCurrency(selectedProcedure.basePrice, locale)}</span>
                 </div>
               </div>
             )}

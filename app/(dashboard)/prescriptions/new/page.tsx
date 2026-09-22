@@ -286,7 +286,7 @@ export default function NewPrescriptionPage() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <Button variant="ghost" className="mb-4" onClick={() => router.push('/prescriptions')}>
-        <ArrowLeft className="h-4 w-4 mr-2" /> Back to Prescriptions
+        <ArrowLeft className="h-4 w-4 mr-2" /> {t("Back to Prescriptions")}
       </Button>
 
       <div className="mb-6">
@@ -313,7 +313,7 @@ export default function NewPrescriptionPage() {
                     {selectedPatient.patientId} · {selectedPatient.phone}
                     {selectedPatient.allergies && (
                       <span className="text-destructive ml-2">
-                        Allergies: {selectedPatient.allergies}
+                        {t("Allergies:")} {selectedPatient.allergies}
                       </span>
                     )}
                   </p>
@@ -371,7 +371,7 @@ export default function NewPrescriptionPage() {
               <Input
                 value={diagnosis}
                 onChange={(e) => setDiagnosis(e.target.value)}
-                placeholder="e.g., Dental caries, Periodontal disease"
+                placeholder={t("e.g., Dental caries, Periodontal disease")}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -400,7 +400,7 @@ export default function NewPrescriptionPage() {
               <div key={med.key} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Medication {index + 1}
+                    {t("Medication")} {index + 1}
                   </span>
                   {medications.length > 1 && (
                     <Button
@@ -416,7 +416,7 @@ export default function NewPrescriptionPage() {
 
                 {/* Medication name with search */}
                 <div className="relative">
-                  <Label>Medication Name *</Label>
+                  <Label>{t("Medication Name *")}</Label>
                   <Input
                     value={activeMedRow === index ? medSearch : med.medicationName}
                     onChange={(e) => {
@@ -452,27 +452,27 @@ export default function NewPrescriptionPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
-                    <Label>Dosage *</Label>
+                    <Label>{t("Dosage *")}</Label>
                     <Input
                       value={med.dosage}
                       onChange={(e) => updateMedRow(index, 'dosage', e.target.value)}
-                      placeholder="1 tablet"
+                      placeholder={t("1 tablet")}
                     />
                   </div>
                   <div>
-                    <Label>Frequency *</Label>
+                    <Label>{t("Frequency *")}</Label>
                     <Input
                       value={med.frequency}
                       onChange={(e) => updateMedRow(index, 'frequency', e.target.value)}
-                      placeholder="3 times a day"
+                      placeholder={t("3 times a day")}
                     />
                   </div>
                   <div>
-                    <Label>Duration *</Label>
+                    <Label>{t("Duration *")}</Label>
                     <Input
                       value={med.duration}
                       onChange={(e) => updateMedRow(index, 'duration', e.target.value)}
-                      placeholder="5 days"
+                      placeholder={t("5 days")}
                     />
                   </div>
                   <div>
@@ -560,7 +560,7 @@ export default function NewPrescriptionPage() {
           <Button variant="outline" onClick={() => router.push('/prescriptions')}>{t('ui.cancel')}</Button>
           <Button onClick={handleSubmit} disabled={saving} size="lg">
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Create Prescription
+            {t("Create Prescription")}
           </Button>
         </div>
       </div>

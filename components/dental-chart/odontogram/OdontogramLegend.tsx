@@ -3,6 +3,7 @@
 import React from 'react'
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
 import { DentalCondition } from '../types/odontogram'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface OdontogramLegendProps {
   activeFilter?: DentalCondition | 'ALL'
@@ -10,6 +11,7 @@ interface OdontogramLegendProps {
 }
 
 export function OdontogramLegend({ activeFilter = 'ALL', onFilterChange }: OdontogramLegendProps) {
+  const { t } = useLanguage()
   const conditions = Object.entries(DENTAL_CONDITION_CONFIG) as [
     DentalCondition,
     (typeof DENTAL_CONDITION_CONFIG)[DentalCondition],
@@ -19,15 +21,13 @@ export function OdontogramLegend({ activeFilter = 'ALL', onFilterChange }: Odont
     <div className="bg-muted/30 rounded-xl p-3 border border-border/60">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Condition Legend
-        </span>
+          {t("Condition Legend")} </span>
         {activeFilter !== 'ALL' && onFilterChange && (
           <button
             onClick={() => onFilterChange('ALL')}
             className="text-[11px] text-primary hover:underline font-medium"
           >
-            Reset filter
-          </button>
+            {t("Reset filter")} </button>
         )}
       </div>
 
@@ -53,13 +53,13 @@ export function OdontogramLegend({ activeFilter = 'ALL', onFilterChange }: Odont
                     : 'bg-background hover:bg-muted/80 text-foreground/80 border-border/80'
                 }
               `}
-              title={config.description}
+              title={t(config.description)}
             >
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10"
                 style={{ backgroundColor: config.fillColor }}
               />
-              <span>{config.label}</span>
+              <span>{t(config.label)}</span>
             </button>
           )
         })}

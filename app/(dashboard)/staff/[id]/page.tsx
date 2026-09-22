@@ -94,6 +94,7 @@ const roleLabels: Record<string, string> = {
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export default function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const resolvedParams = use(params)
   const router = useRouter()
@@ -138,7 +139,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('en-EG', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -317,7 +318,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-muted-foreground">{t('ui.emergency_contact')}</p>
                   <p className="font-medium">
                     {staff.emergencyContact
-                      ? `${staff.emergencyContact} (${staff.emergencyPhone || 'No phone'})`
+                      ? `${staff.emergencyContact} (${staff.emergencyPhone || t("No phone")})`
                       : '-'}
                   </p>
                 </div>
@@ -413,7 +414,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />{t('ui.work_schedule')}</CardTitle>
-              <CardDescription>Weekly work schedule for {staff.firstName}</CardDescription>
+              <CardDescription>{t("Weekly work schedule for")} {staff.firstName}</CardDescription>
             </CardHeader>
             <CardContent>
               {staff.shifts.length === 0 ? (
@@ -445,7 +446,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                         >
                           {shift && shift.isActive
                             ? `${shift.startTime} - ${shift.endTime}`
-                            : 'Off'}
+                            : t("Off")}
                         </span>
                       </div>
                     )

@@ -84,6 +84,7 @@ interface DoctorRevenue {
 }
 
 export default function FinancialReportsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [datePreset, setDatePreset] = useState('this_month')
@@ -256,68 +257,68 @@ export default function FinancialReportsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(outstandingData.aging.current.amount)}
+                      {formatCurrency(outstandingData.aging.current.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.current.count} invoices
+                      {outstandingData.aging.current.count} {t("invoices")}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-yellow-600">1-30 Days</CardTitle>
+                    <CardTitle className="text-sm font-medium text-yellow-600">{t("1-30 Days")}</CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(outstandingData.aging.days1_30.amount)}
+                      {formatCurrency(outstandingData.aging.days1_30.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days1_30.count} invoices
+                      {outstandingData.aging.days1_30.count} {t("invoices")}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-orange-600">
-                      31-60 Days
+                      {t("31-60 Days")}
                     </CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(outstandingData.aging.days31_60.amount)}
+                      {formatCurrency(outstandingData.aging.days31_60.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days31_60.count} invoices
+                      {outstandingData.aging.days31_60.count} {t("invoices")}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-red-500">61-90 Days</CardTitle>
+                    <CardTitle className="text-sm font-medium text-red-500">{t("61-90 Days")}</CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(outstandingData.aging.days61_90.amount)}
+                      {formatCurrency(outstandingData.aging.days61_90.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days61_90.count} invoices
+                      {outstandingData.aging.days61_90.count} {t("invoices")}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-red-700">90+ Days</CardTitle>
+                    <CardTitle className="text-sm font-medium text-red-700">{t("90+ Days")}</CardTitle>
                     <CardDescription>{t('Critical')}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(outstandingData.aging.over90.amount)}
+                      {formatCurrency(outstandingData.aging.over90.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.over90.count} invoices
+                      {outstandingData.aging.over90.count} {t("invoices")}
                     </p>
                   </CardContent>
                 </Card>
@@ -330,8 +331,8 @@ export default function FinancialReportsPage() {
             <CardHeader>
               <CardTitle>{t('Outstanding Invoices')}</CardTitle>
               <CardDescription>
-                Total: {formatCurrency(outstandingData?.totals.totalOutstanding || 0)} from{' '}
-                {outstandingData?.totals.invoiceCount || 0} invoices
+                {t("Total:")} {formatCurrency(outstandingData?.totals.totalOutstanding || 0, locale)} {t("from")}{' '}
+                {outstandingData?.totals.invoiceCount || 0} {t("invoices")}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
@@ -383,13 +384,13 @@ export default function FinancialReportsPage() {
                         <TableCell>
                           {invoice.patient.firstName} {invoice.patient.lastName}
                         </TableCell>
-                        <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
-                        <TableCell>{invoice.dueDate ? formatDate(invoice.dueDate) : '-'}</TableCell>
+                        <TableCell>{formatDate(invoice.invoiceDate, locale)}</TableCell>
+                        <TableCell>{invoice.dueDate ? formatDate(invoice.dueDate, locale) : '-'}</TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(invoice.totalAmount)}
+                          {formatCurrency(invoice.totalAmount, locale)}
                         </TableCell>
                         <TableCell className="text-right font-medium text-red-600">
-                          {formatCurrency(invoice.balanceAmount)}
+                          {formatCurrency(invoice.balanceAmount, locale)}
                         </TableCell>
                       </TableRow>
                     ))
@@ -412,7 +413,7 @@ export default function FinancialReportsPage() {
                   <Skeleton className="h-8 w-32" />
                 ) : (
                   <div className="text-2xl font-bold">
-                    {formatCurrency(procedureData?.totals.totalRevenue || 0)}
+                    {formatCurrency(procedureData?.totals.totalRevenue || 0, locale)}
                   </div>
                 )}
               </CardContent>
@@ -483,10 +484,10 @@ export default function FinancialReportsPage() {
                         <TableCell>{proc.category}</TableCell>
                         <TableCell className="text-center">{proc.count}</TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(proc.avgRevenue)}
+                          {formatCurrency(proc.avgRevenue, locale)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(proc.totalRevenue)}
+                          {formatCurrency(proc.totalRevenue, locale)}
                         </TableCell>
                       </TableRow>
                     ))
@@ -509,7 +510,7 @@ export default function FinancialReportsPage() {
                   <Skeleton className="h-8 w-32" />
                 ) : (
                   <div className="text-2xl font-bold">
-                    {formatCurrency(doctorData?.totals.totalRevenue || 0)}
+                    {formatCurrency(doctorData?.totals.totalRevenue || 0, locale)}
                   </div>
                 )}
               </CardContent>
@@ -584,7 +585,7 @@ export default function FinancialReportsPage() {
                     doctorData?.byDoctor.map((doc) => (
                       <TableRow key={doc.doctorId}>
                         <TableCell>
-                          <div className="font-medium">Dr. {doc.name}</div>
+                          <div className="font-medium">{t("Dr.")} {doc.name}</div>
                           {doc.specialization && (
                             <div className="text-sm text-muted-foreground">
                               {doc.specialization}
@@ -593,10 +594,10 @@ export default function FinancialReportsPage() {
                         </TableCell>
                         <TableCell className="text-center">{doc.treatmentCount}</TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(doc.avgPerTreatment)}
+                          {formatCurrency(doc.avgPerTreatment, locale)}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(doc.totalRevenue)}
+                          {formatCurrency(doc.totalRevenue, locale)}
                         </TableCell>
                       </TableRow>
                     ))
@@ -619,7 +620,7 @@ export default function FinancialReportsPage() {
                   <Skeleton className="h-8 w-32" />
                 ) : (
                   <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(dailyData?.totals.totalCollection || 0)}
+                    {formatCurrency(dailyData?.totals.totalCollection || 0, locale)}
                   </div>
                 )}
               </CardContent>
@@ -697,15 +698,15 @@ export default function FinancialReportsPage() {
                   ) : (
                     dailyData?.dailyData.map((day) => (
                       <TableRow key={day.date}>
-                        <TableCell className="font-medium">{formatDate(day.date)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.cash)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.card)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.instapay)}</TableCell>
+                        <TableCell className="font-medium">{formatDate(day.date, locale)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(day.cash, locale)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(day.card, locale)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(day.instapay, locale)}</TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(day.bankTransfer)}
+                          {formatCurrency(day.bankTransfer, locale)}
                         </TableCell>
                         <TableCell className="text-right font-medium text-green-600">
-                          {formatCurrency(day.total)}
+                          {formatCurrency(day.total, locale)}
                         </TableCell>
                         <TableCell className="text-center">{day.count}</TableCell>
                       </TableRow>

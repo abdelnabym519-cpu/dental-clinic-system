@@ -186,7 +186,7 @@ export function PayPage({
           {isPaid && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
               <CheckCircle className="h-4 w-4" />
-              This invoice has been fully paid. Thank you!
+              {t("This invoice has been fully paid. Thank you!")}
             </div>
           )}
 
@@ -222,7 +222,7 @@ export function PayPage({
           {state === 'idle' && canPay && (
             <Button className="w-full" size="lg" onClick={initiatePayment}>
               <CreditCard className="h-4 w-4 mr-2" />
-              Pay {formatCurrency(amount)}
+              {t("Pay")} {formatCurrency(amount)}
             </Button>
           )}
 
@@ -230,7 +230,7 @@ export function PayPage({
             <div className="flex flex-col items-center py-4 gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">
-                {state === 'loading' ? 'Preparing payment...' : 'Waiting for payment...'}
+                {state === 'loading' ? t("Preparing payment...") : t("Waiting for payment...")}
               </p>
             </div>
           )}
@@ -242,13 +242,12 @@ export function PayPage({
             </div>
           )}
 
-          {state === 'success' && (
+          {state === t("success") && (
             <div className="flex flex-col items-center py-6 gap-3">
               <CheckCircle className="h-12 w-12 text-green-500" />
               <p className="font-medium text-green-700">{t('Payment Successful!')}</p>
               <p className="text-sm text-muted-foreground text-center">
-                {formatCurrency(amount)} has been received for invoice {invoice.invoiceNo}. Thank
-                you!
+                {formatCurrency(amount)} {t("has been received for invoice")} {invoice.invoiceNo}{t(". Thank you!")}
               </p>
             </div>
           )}

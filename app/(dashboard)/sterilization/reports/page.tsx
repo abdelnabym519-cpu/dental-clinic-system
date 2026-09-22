@@ -188,7 +188,7 @@ export default function ComplianceReportsPage() {
               {report.complianceRate}%
             </div>
             <p className="text-xs text-muted-foreground">
-              {report.passCount} pass / {report.totalCycles} total
+              {report.passCount} {t("pass /")} {report.totalCycles} {t("total")}
             </p>
           </CardContent>
         </Card>

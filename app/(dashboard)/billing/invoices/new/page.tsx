@@ -79,6 +79,7 @@ interface InvoiceItem {
 }
 
 export default function NewInvoicePage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -106,8 +107,10 @@ export default function NewInvoicePage() {
   const [discountValue, setDiscountValue] = useState(0)
   const [paymentTermDays, setPaymentTermDays] = useState(0)
   const [notes, setNotes] = useState('')
-  const [termsAndConditions, setTermsAndConditions] = useState(
-    '1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.'
+  const [termsAndConditions, setTermsAndConditions] = useState(() =>
+    t(
+      '1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.'
+    )
   )
 
   // Calculated totals
@@ -431,7 +434,7 @@ export default function NewInvoicePage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <div className="font-medium">{formatCurrency(treatment.unitPrice)}</div>
+                            <div className="font-medium">{formatCurrency(treatment.unitPrice, locale)}</div>
                           </div>
                           <Button
                             variant="outline"
@@ -524,7 +527,7 @@ export default function NewInvoicePage() {
                           />
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(item.quantity * item.unitPrice)}
+                          {formatCurrency(item.quantity * item.unitPrice, locale)}
                         </TableCell>
                         <TableCell className="text-center">
                           <Checkbox
@@ -552,7 +555,7 @@ export default function NewInvoicePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Notes (visible on invoice)</Label>
+                <Label>{t("Notes (visible on invoice)")}</Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -595,7 +598,7 @@ export default function NewInvoicePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="FIXED">{t('EGP  Fixed')}</SelectItem>
-                      <SelectItem value="PERCENTAGE">% Percent</SelectItem>
+                      <SelectItem value="PERCENTAGE">{t("% Percent")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
@@ -631,21 +634,21 @@ export default function NewInvoicePage() {
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>{t('ui.subtotal')}</span>
-                  <span>{formatCurrency(totals.subtotal)}</span>
+                  <span>{formatCurrency(totals.subtotal, locale)}</span>
                 </div>
                 {totals.discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>{t('ui.discount')}</span>
-                    <span>-{formatCurrency(totals.discountAmount)}</span>
+                    <span>-{formatCurrency(totals.discountAmount, locale)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span>VAT ({vatConfig.rate}%)</span>
-                  <span>{formatCurrency(totals.cgstAmount)}</span>
+                  <span>{t("VAT (")}{vatConfig.rate}%)</span>
+                  <span>{formatCurrency(totals.cgstAmount, locale)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>{t('ui.total')}</span>
-                  <span className="text-primary">{formatCurrency(totals.totalAmount)}</span>
+                  <span className="text-primary">{formatCurrency(totals.totalAmount, locale)}</span>
                 </div>
               </div>
 
@@ -656,7 +659,7 @@ export default function NewInvoicePage() {
                   onClick={() => handleSubmit('PENDING')}
                   disabled={submitting || !selectedPatient || items.length === 0}
                 >
-                  {submitting ? 'Creating...' : 'Create & Send Invoice'}
+                  {submitting ? 'Creating...' : t("Create & Send Invoice")}
                 </Button>
                 <Button
                   variant="outline"

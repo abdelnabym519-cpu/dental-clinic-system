@@ -157,7 +157,7 @@ export default function NewPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">{t("First Name *")}</Label>
               <Input
                 id="firstName"
                 value={form.firstName}
@@ -167,7 +167,7 @@ export default function NewPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">{t("Last Name *")}</Label>
               <Input
                 id="lastName"
                 value={form.lastName}
@@ -236,7 +236,7 @@ export default function NewPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone *</Label>
+              <Label htmlFor="phone">{t("Phone *")}</Label>
               <Input
                 id="phone"
                 value={form.phone}
@@ -284,7 +284,7 @@ export default function NewPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">Governorate (المحافظة)</Label>
+              <Label htmlFor="state">{t("Governorate (المحافظة)")}</Label>
               <Input
                 id="state"
                 value={form.state}
@@ -320,12 +320,12 @@ export default function NewPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="aadharNumber">National ID (الرقم القومي)</Label>
+              <Label htmlFor="aadharNumber">{t("National ID (الرقم القومي)")}</Label>
               <Input
                 id="aadharNumber"
                 value={form.aadharNumber}
                 onChange={(e) => updateField('aadharNumber', e.target.value)}
-                placeholder="14-digit national ID"
+                placeholder={t("14-digit national ID")}
               />
             </div>
             <div className="space-y-2">
@@ -352,7 +352,7 @@ export default function NewPatientPage() {
                 id="referralCode"
                 value={form.referralCode}
                 onChange={(e) => updateField('referralCode', e.target.value)}
-                placeholder="e.g. REF-A3B2K9"
+                placeholder={t("e.g. REF-A3B2K9")}
               />
             </div>
           </CardContent>
@@ -389,7 +389,7 @@ export default function NewPatientPage() {
                 id="emergencyContactRelation"
                 value={form.emergencyContactRelation}
                 onChange={(e) => updateField('emergencyContactRelation', e.target.value)}
-                placeholder="e.g. Spouse, Parent"
+                placeholder={t("e.g. Spouse, Parent")}
               />
             </div>
           </CardContent>

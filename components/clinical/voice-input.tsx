@@ -118,7 +118,7 @@ export function VoiceInput({ onTranscript, language = 'en-EG', className }: Voic
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isListening ? 'Stop dictation' : 'Start voice dictation'}
+            {isListening ? t("Stop dictation") : t("Start voice dictation")}
           </TooltipContent>
         </Tooltip>
 

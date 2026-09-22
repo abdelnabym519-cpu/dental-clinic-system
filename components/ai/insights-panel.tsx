@@ -103,7 +103,7 @@ export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
       {insightsLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-          <span>Loading insights…</span>
+          <span>{t("Loading insights…")}</span>
         </div>
       )}
 
@@ -124,7 +124,7 @@ export function InsightsPanel({ maxItems = 4 }: { maxItems?: number }) {
       {/* More link */}
       {insights.length > maxItems && (
         <p className="text-xs text-muted-foreground">
-          +{insights.length - maxItems} more insight{insights.length - maxItems > 1 ? 's' : ''}
+          +{insights.length - maxItems} {t("more insight")}{insights.length - maxItems > 1 ? 's' : ''}
         </p>
       )}
     </div>

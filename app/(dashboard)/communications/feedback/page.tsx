@@ -154,7 +154,7 @@ export default function FeedbackAnalyticsPage() {
               <CardContent>
                 <div className="text-2xl font-bold">{data.totalResponses}</div>
                 <p className="text-xs text-muted-foreground">
-                  From {data.totalSurveys} active surveys
+                  {t("From")} {data.totalSurveys} {t("active surveys")}
                 </p>
               </CardContent>
             </Card>
@@ -184,10 +184,10 @@ export default function FeedbackAnalyticsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {data.nps.score >= 50
-                    ? 'Excellent'
+                    ? t("Excellent")
                     : data.nps.score >= 0
-                      ? 'Good'
-                      : 'Needs improvement'}
+                      ? t("Good")
+                      : t("Needs improvement")}
                 </p>
               </CardContent>
             </Card>
@@ -209,7 +209,7 @@ export default function FeedbackAnalyticsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('NPS Breakdown')}</CardTitle>
-                <CardDescription>Promoters (4-5), Passives (3), Detractors (1-2)</CardDescription>
+                <CardDescription>{t("Promoters (4-5), Passives (3), Detractors (1-2)")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Stacked bar */}
@@ -250,15 +250,15 @@ export default function FeedbackAnalyticsPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-1">
                     <span className="w-3 h-3 rounded-sm bg-green-500" />
-                    Promoters ({data.nps.promoters})
+                    {t("Promoters (")}{data.nps.promoters})
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="w-3 h-3 rounded-sm bg-yellow-400" />
-                    Passives ({data.nps.passives})
+                    {t("Passives (")}{data.nps.passives})
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="w-3 h-3 rounded-sm bg-red-500" />
-                    Detractors ({data.nps.detractors})
+                    {t("Detractors (")}{data.nps.detractors})
                   </span>
                 </div>
 
@@ -445,7 +445,7 @@ export default function FeedbackAnalyticsPage() {
                         className="flex flex-col items-center flex-1 group relative"
                       >
                         <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-popover border rounded px-2 py-1 whitespace-nowrap z-10">
-                          {m.month}: {m.avgRating}/5 ({m.count} responses)
+                          {m.month}: {m.avgRating}/5 ({m.count} {t("responses)")}
                         </div>
                         <div
                           className={`w-full rounded-t-sm ${
@@ -489,7 +489,7 @@ export default function FeedbackAnalyticsPage() {
                           fontSize: `${scale}rem`,
                           opacity,
                         }}
-                        title={`"${w.word}" — ${w.count} mentions`}
+                        title={t("\"{v1}\" — {v2} mentions", { v1: w.word, v2: w.count })}
                       >
                         {w.word}
                         <span className="text-[10px] text-muted-foreground ml-1">{w.count}</span>

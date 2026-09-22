@@ -113,6 +113,7 @@ interface Appointment {
 }
 
 export default function AppointmentDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
@@ -294,7 +295,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground">Created on {formatDate(appointment.createdAt)}</p>
+            <p className="text-muted-foreground">{t("Created on")} {formatDate(appointment.createdAt)}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -363,7 +364,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               <div>
                 <p className="text-sm text-muted-foreground">{t('Chair')}</p>
                 <p className="font-medium">
-                  {appointment.chairNumber ? `Chair ${appointment.chairNumber}` : 'Not assigned'}
+                  {appointment.chairNumber ? t("Chair {v1}", { v1: appointment.chairNumber }) : 'Not assigned'}
                 </p>
               </div>
               <div>
@@ -428,11 +429,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 <Separator />
                 <div className="rounded-lg bg-red-50 p-4">
                   <p className="text-sm font-medium text-red-700">
-                    Cancelled on {new Date(appointment.cancelledAt!).toLocaleString()}
+                    {t("Cancelled on")} {new Date(appointment.cancelledAt!).toLocaleString(locale)}
                   </p>
                   {appointment.cancellationReason && (
                     <p className="text-sm text-red-600 mt-1">
-                      Reason: {appointment.cancellationReason}
+                      {t("Reason:")} {appointment.cancellationReason}
                     </p>
                   )}
                 </div>
@@ -502,12 +503,12 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                   </div>
                   {appointment.patient.medicalHistory.drugAllergies && (
                     <p className="text-sm text-red-600 mt-2">
-                      Drug Allergies: {appointment.patient.medicalHistory.drugAllergies}
+                      {t("Drug Allergies:")} {appointment.patient.medicalHistory.drugAllergies}
                     </p>
                   )}
                   {appointment.patient.medicalHistory.currentMedications && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      Current Medications: {appointment.patient.medicalHistory.currentMedications}
+                      {t("Current Medications:")} {appointment.patient.medicalHistory.currentMedications}
                     </p>
                   )}
                 </div>

@@ -60,6 +60,7 @@ const statusConfig: Record<
 }
 
 export default function PatientFormsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [templates, setTemplates] = useState<AvailableTemplate[]>([])
@@ -127,7 +128,7 @@ export default function PatientFormsPage() {
                     </div>
                   )}
                 </div>
-                <Button size="sm">{opt('Fill Out')}</Button>
+                <Button size="sm">{t('Fill Out')}</Button>
               </Link>
             ))}
           </CardContent>
@@ -157,8 +158,8 @@ export default function PatientFormsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium">{s.template.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        Submitted:{' '}
-                        {new Date(s.createdAt).toLocaleDateString('en-EG', {
+                        {t("Submitted:")}{' '}
+                        {new Date(s.createdAt).toLocaleDateString(locale, {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',

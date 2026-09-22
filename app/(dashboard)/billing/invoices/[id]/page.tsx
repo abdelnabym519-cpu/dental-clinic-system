@@ -146,6 +146,7 @@ interface Invoice {
 }
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
@@ -342,7 +343,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <h1 className="text-3xl font-bold tracking-tight">{invoice.invoiceNo}</h1>
               {getStatusBadge(invoice.status)}
             </div>
-            <p className="text-muted-foreground">Created on {formatDate(invoice.invoiceDate)}</p>
+            <p className="text-muted-foreground">{t("Created on")} {formatDate(invoice.invoiceDate, locale)}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -422,7 +423,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                     {invoice.patient.firstName} {invoice.patient.lastName}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Patient ID: {invoice.patient.patientId}
+                    {t("Patient ID:")} {invoice.patient.patientId}
                   </div>
                   <div className="mt-2 space-y-1 text-sm">
                     <div className="flex items-center gap-2">
@@ -476,7 +477,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                             {item.treatment.doctor && (
                               <>
                                 {' '}
-                                • Dr. {item.treatment.doctor.firstName}{' '}
+                                {t("• Dr.")} {item.treatment.doctor.firstName}{' '}
                                 {item.treatment.doctor.lastName}
                               </>
                             )}
@@ -484,9 +485,9 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                         )}
                       </TableCell>
                       <TableCell className="text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.unitPrice, locale)}</TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.amount, locale)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -499,31 +500,31 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <div className="w-64 space-y-2">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t('ui.subtotal')}</span>
-                      <span>{formatCurrency(invoice.subtotal)}</span>
+                      <span>{formatCurrency(invoice.subtotal, locale)}</span>
                     </div>
                     {Number(invoice.discountAmount) > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>{t('ui.discount')}</span>
-                        <span>-{formatCurrency(invoice.discountAmount)}</span>
+                        <span>-{formatCurrency(invoice.discountAmount, locale)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">VAT ({invoice.cgstRate}%)</span>
-                      <span>{formatCurrency(invoice.cgstAmount)}</span>
+                      <span className="text-muted-foreground">{t("VAT (")}{invoice.cgstRate}%)</span>
+                      <span>{formatCurrency(invoice.cgstAmount, locale)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                       <span>{t('ui.total')}</span>
-                      <span>{formatCurrency(invoice.totalAmount)}</span>
+                      <span>{formatCurrency(invoice.totalAmount, locale)}</span>
                     </div>
                     <div className="flex justify-between text-green-600">
                       <span>{t('ui.paid')}</span>
-                      <span>{formatCurrency(invoice.paidAmount)}</span>
+                      <span>{formatCurrency(invoice.paidAmount, locale)}</span>
                     </div>
                     <div className="flex justify-between font-bold">
                       <span>{t('ui.balance_due')}</span>
                       <span className={Number(invoice.balanceAmount) > 0 ? 'text-red-600' : ''}>
-                        {formatCurrency(invoice.balanceAmount)}
+                        {formatCurrency(invoice.balanceAmount, locale)}
                       </span>
                     </div>
                   </div>
@@ -536,7 +537,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <Card>
             <CardContent className="py-4">
               <div className="text-sm">
-                <span className="text-muted-foreground">Amount in words: </span>
+                <span className="text-muted-foreground">{t("Amount in words:")} </span>
                 <span className="font-medium">{numberToWords(Number(invoice.totalAmount))}</span>
               </div>
             </CardContent>
@@ -566,11 +567,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                           <div className="font-medium">{payment.paymentNo}</div>
                           {payment.transactionId && (
                             <div className="text-sm text-muted-foreground">
-                              TXN: {payment.transactionId}
+                              {t("TXN:")} {payment.transactionId}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell>{formatDate(payment.paymentDate)}</TableCell>
+                        <TableCell>{formatDate(payment.paymentDate, locale)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getPaymentMethodIcon(payment.paymentMethod)}
@@ -580,7 +581,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(payment.amount)}
+                          {formatCurrency(payment.amount, locale)}
                         </TableCell>
                         <TableCell>{getPaymentStatusBadge(payment.status)}</TableCell>
                       </TableRow>
@@ -626,13 +627,13 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('ui.invoice_date')}</span>
-                <span>{formatDate(invoice.invoiceDate)}</span>
+                <span>{formatDate(invoice.invoiceDate, locale)}</span>
               </div>
               {invoice.dueDate && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t('ui.due_date')}</span>
                   <div className="text-right">
-                    <div>{formatDate(invoice.dueDate)}</div>
+                    <div>{formatDate(invoice.dueDate, locale)}</div>
                     {dueDays.isOverdue && invoice.status !== 'PAID' && (
                       <div className="text-xs text-red-600 flex items-center justify-end gap-1">
                         <Clock className="h-3 w-3" />
@@ -645,12 +646,12 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('ui.total_amount')}</span>
-                <span className="font-semibold">{formatCurrency(invoice.totalAmount)}</span>
+                <span className="font-semibold">{formatCurrency(invoice.totalAmount, locale)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t('Amount Paid')}</span>
                 <span className="text-green-600 font-semibold">
-                  {formatCurrency(invoice.paidAmount)}
+                  {formatCurrency(invoice.paidAmount, locale)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -658,7 +659,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 <span
                   className={`font-semibold ${Number(invoice.balanceAmount) > 0 ? 'text-red-600' : ''}`}
                 >
-                  {formatCurrency(invoice.balanceAmount)}
+                  {formatCurrency(invoice.balanceAmount, locale)}
                 </span>
               </div>
             </CardContent>
@@ -686,7 +687,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{t('ui.approved')}</span>
                     <span className="font-medium text-green-600">
-                      {formatCurrency(invoice.insuranceClaim.approvedAmount)}
+                      {formatCurrency(invoice.insuranceClaim.approvedAmount, locale)}
                     </span>
                   </div>
                 )}
@@ -714,7 +715,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   ) : (
                     <Share2 className="h-4 w-4 mr-2" />
                   )}
-                  {linkCopied ? 'Link Copied!' : 'Share Payment Link'}
+                  {linkCopied ? t("Link Copied!") : t("Share Payment Link")}
                 </Button>
               )}
               <Button
@@ -743,7 +744,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t('ui.record_payment')}</DialogTitle>
-            <DialogDescription>Record a payment for invoice {invoice.invoiceNo}</DialogDescription>
+            <DialogDescription>{t('Record a payment for invoice')} {invoice.invoiceNo}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
@@ -759,7 +760,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Balance due: {formatCurrency(invoice.balanceAmount)}
+                {t("Balance due:")} {formatCurrency(invoice.balanceAmount, locale)}
               </p>
             </div>
             <div className="space-y-2">
@@ -787,7 +788,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               />
             </div>
             <div className="space-y-2">
-              <Label>Transaction ID (Optional)</Label>
+              <Label>{t("Transaction ID (Optional)")}</Label>
               <Input
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
@@ -795,7 +796,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               />
             </div>
             <div className="space-y-2">
-              <Label>Notes (Optional)</Label>
+              <Label>{t("Notes (Optional)")}</Label>
               <Textarea
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
@@ -807,7 +808,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleRecordPayment} disabled={paymentSubmitting}>
-              {paymentSubmitting ? 'Recording...' : 'Record Payment'}
+              {paymentSubmitting ? t("Recording...") : 'Record Payment'}
             </Button>
           </DialogFooter>
         </DialogContent>

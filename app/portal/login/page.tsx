@@ -112,8 +112,8 @@ function PatientLoginForm() {
           <CardTitle className="text-xl">{t('ui.patient_portal')}</CardTitle>
           <CardDescription>
             {step === 'phone'
-              ? 'Enter your phone number to receive a login code'
-              : 'Enter the 6-digit code sent to your phone'}
+              ? t("Enter your phone number to receive a login code")
+              : t("Enter the 6-digit code sent to your phone")}
           </CardDescription>
         </CardHeader>
 
@@ -127,7 +127,7 @@ function PatientLoginForm() {
                   <Label htmlFor="clinic">{t('Clinic ID')}</Label>
                   <Input
                     id="clinic"
-                    placeholder="e.g. smile-dental"
+                    placeholder={t("e.g. smile-dental")}
                     value={clinicSlug}
                     onChange={(e) => setClinicSlug(e.target.value)}
                   />
@@ -153,7 +153,7 @@ function PatientLoginForm() {
               </div>
               <Button className="w-full" onClick={sendOTP} disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Send OTP
+                {t("Send OTP")}
               </Button>
             </>
           ) : (
@@ -174,11 +174,11 @@ function PatientLoginForm() {
                     autoFocus
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Sent to {phone}</p>
+                <p className="text-xs text-muted-foreground">{t("Sent to")} {phone}</p>
               </div>
               <Button className="w-full" onClick={verifyOTP} disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Verify & Login
+                {t("Verify & Login")}
               </Button>
               <Button
                 variant="ghost"

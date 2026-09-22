@@ -5,6 +5,7 @@ import { ToothViewModel, ToothSurfaceKey } from '../types/odontogram'
 import { FDI_QUADRANTS } from '../adapters/dental-chart-adapter'
 import { Quadrant } from './Quadrant'
 import { BridgeConnector } from './BridgeConnector'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ArchGridProps {
   viewModels: Record<number, ToothViewModel>
@@ -23,6 +24,7 @@ export function ArchGrid({
   interactive = true,
   mode = 'clinical',
 }: ArchGridProps) {
+  const { t } = useLanguage()
   return (
     <div className="w-full overflow-x-auto pb-2" dir="ltr">
       <div className="min-w-[760px] max-w-5xl mx-auto bg-gradient-to-b from-slate-50/90 via-white to-slate-50/90 dark:from-slate-900/70 dark:via-slate-950 dark:to-slate-900/70 rounded-2xl p-5 sm:p-6 border border-border shadow-sm relative select-none">
@@ -48,15 +50,14 @@ export function ArchGrid({
         <div className="relative pt-6 pb-2">
           <div className="text-center mb-3">
             <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/90 px-3 py-1 rounded-full bg-muted/80 border border-border/50">
-              Upper Jaw (Maxilla)
-            </span>
+              {t("Upper Jaw (Maxilla)")} </span>
           </div>
 
           <div className="relative flex justify-center items-center gap-2 sm:gap-4">
             {/* Quadrant 1 (18 -> 11) */}
             <Quadrant
               id="Q1"
-              title="Upper Right"
+              title={t("Upper Right")}
               subtitle="Q1 (UR)"
               teethNumbers={FDI_QUADRANTS.Q1}
               viewModels={viewModels}
@@ -70,14 +71,13 @@ export function ArchGrid({
             {/* MIDLINE VERTICAL SEPARATOR */}
             <div className="h-32 w-[2px] bg-border relative flex items-center justify-center">
               <span className="absolute text-[9px] font-bold text-muted-foreground/70 rotate-90 whitespace-nowrap select-none bg-background px-1 py-0.5 rounded-sm">
-                Midline
-              </span>
+                {t("Midline")} </span>
             </div>
 
             {/* Quadrant 2 (21 -> 28) */}
             <Quadrant
               id="Q2"
-              title="Upper Left"
+              title={t("Upper Left")}
               subtitle="Q2 (UL)"
               teethNumbers={FDI_QUADRANTS.Q2}
               viewModels={viewModels}
@@ -96,8 +96,7 @@ export function ArchGrid({
         <div className="relative my-4 flex items-center justify-center">
           <div className="w-full border-t-2 border-dashed border-border" />
           <span className="absolute bg-background px-3 py-0.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider rounded-full border border-border shadow-xs">
-            Occlusal Plane
-          </span>
+            {t("Occlusal Plane")} </span>
         </div>
 
         {/* ─── 2. LOWER JAW (MANDIBULAR ARCH) ─────────────────────────── */}
@@ -106,7 +105,7 @@ export function ArchGrid({
             {/* Quadrant 4 (48 -> 41) */}
             <Quadrant
               id="Q4"
-              title="Lower Right"
+              title={t("Lower Right")}
               subtitle="Q4 (LR)"
               teethNumbers={FDI_QUADRANTS.Q4}
               viewModels={viewModels}
@@ -125,7 +124,7 @@ export function ArchGrid({
             {/* Quadrant 3 (31 -> 38) */}
             <Quadrant
               id="Q3"
-              title="Lower Left"
+              title={t("Lower Left")}
               subtitle="Q3 (LL)"
               teethNumbers={FDI_QUADRANTS.Q3}
               viewModels={viewModels}
@@ -141,8 +140,7 @@ export function ArchGrid({
 
           <div className="text-center mt-3">
             <span className="text-xs font-bold tracking-wider uppercase text-muted-foreground/90 px-3 py-1 rounded-full bg-muted/80 border border-border/50">
-              Lower Jaw (Mandible)
-            </span>
+              {t("Lower Jaw (Mandible)")} </span>
           </div>
         </div>
       </div>

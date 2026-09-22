@@ -59,6 +59,7 @@ interface Hospital {
 }
 
 export default function PrescriptionDetailPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const params = useParams()
@@ -169,7 +170,7 @@ export default function PrescriptionDetailPage() {
                   </div>
                 )}
                 <div>
-                  <h1 className="text-xl font-bold">{hospital?.name || 'Dental Clinic'}</h1>
+                  <h1 className="text-xl font-bold">{hospital?.name || t("Dental Clinic")}</h1>
                   {hospital?.tagline && (
                     <p className="text-sm text-muted-foreground">{hospital.tagline}</p>
                   )}
@@ -179,7 +180,7 @@ export default function PrescriptionDetailPage() {
                       .join(', ')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {[hospital?.phone && `Ph: ${hospital.phone}`, hospital?.email]
+                    {[hospital?.phone && t("Ph: {v1}", { v1: hospital.phone }), hospital?.email]
                       .filter(Boolean)
                       .join(' | ')}
                   </p>
@@ -190,7 +191,7 @@ export default function PrescriptionDetailPage() {
                   {prescription.prescriptionNo}
                 </Badge>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(prescription.createdAt).toLocaleDateString('en-EG', {
+                  {new Date(prescription.createdAt).toLocaleDateString(locale, {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric',
@@ -204,38 +205,38 @@ export default function PrescriptionDetailPage() {
             {/* Patient Info */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm mb-4">
               <div>
-                <span className="text-muted-foreground">Patient: </span>
+                <span className="text-muted-foreground">{t("Patient:")} </span>
                 <span className="font-medium">
                   {prescription.patient.firstName} {prescription.patient.lastName}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">ID: </span>
+                <span className="text-muted-foreground">{t('ID:')}{" "}</span>
                 <span className="font-mono">{prescription.patient.patientId}</span>
               </div>
               {patientAge !== null && (
                 <div>
-                  <span className="text-muted-foreground">Age/Gender: </span>
+                  <span className="text-muted-foreground">{t("Age/Gender:")} </span>
                   <span>
-                    {patientAge} yrs
+                    {patientAge} {t("yrs")}
                     {prescription.patient.gender ? ` / ${prescription.patient.gender}` : ''}
                   </span>
                 </div>
               )}
               <div>
-                <span className="text-muted-foreground">Phone: </span>
+                <span className="text-muted-foreground">{t("Phone:")} </span>
                 <span>{prescription.patient.phone}</span>
               </div>
               {prescription.patient.allergies && (
                 <div className="col-span-2 text-destructive font-medium">
-                  Allergies: {prescription.patient.allergies}
+                  {t("Allergies:")} {prescription.patient.allergies}
                 </div>
               )}
             </div>
 
             {prescription.diagnosis && (
               <div className="mb-4 text-sm">
-                <span className="text-muted-foreground">Diagnosis: </span>
+                <span className="text-muted-foreground">{t("Diagnosis:")} </span>
                 <span className="font-medium">{prescription.diagnosis}</span>
               </div>
             )}
@@ -264,7 +265,7 @@ export default function PrescriptionDetailPage() {
                     <td className="py-3">
                       <div className="font-medium">{med.medicationName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {[med.route !== 'Oral' && med.route, med.timing]
+                        {[med.route !== t("Oral") && med.route, med.timing]
                           .filter(Boolean)
                           .join(' · ')}
                       </div>
@@ -285,15 +286,15 @@ export default function PrescriptionDetailPage() {
 
             {prescription.notes && (
               <div className="mb-6 p-3 bg-muted/50 rounded text-sm">
-                <span className="font-medium">Notes: </span>
+                <span className="font-medium">{t("Notes:")} </span>
                 {prescription.notes}
               </div>
             )}
 
             {prescription.validUntil && (
               <p className="text-xs text-muted-foreground mb-6">
-                Valid until:{' '}
-                {new Date(prescription.validUntil).toLocaleDateString('en-EG', {
+                {t("Valid until:")}{' '}
+                {new Date(prescription.validUntil).toLocaleDateString(locale, {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric',
@@ -313,7 +314,7 @@ export default function PrescriptionDetailPage() {
                 )}
                 {prescription.doctor.registrationNo && (
                   <p className="text-xs text-muted-foreground">
-                    Reg. No: {prescription.doctor.registrationNo}
+                    {t("Reg. No:")} {prescription.doctor.registrationNo}
                   </p>
                 )}
               </div>

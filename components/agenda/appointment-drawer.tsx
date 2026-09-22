@@ -85,6 +85,7 @@ export function AppointmentDrawer({
   onClose: () => void
   onChanged: () => void
 }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [appointment, setAppointment] = useState<DrawerAppointment | null>(null)
   const [busy, setBusy] = useState(false)
@@ -226,7 +227,7 @@ export function AppointmentDrawer({
   const status = appointment.status
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={`Appointment ${appointment.appointmentNo} details`}>
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={t("Appointment {v1} details", { v1: appointment.appointmentNo })}>
       <button
         type="button"
         aria-label={t('Close details')}
@@ -243,7 +244,7 @@ export function AppointmentDrawer({
             <h2 className="text-lg font-semibold">{getPatientName(appointment.patient)}</h2>
             <p className="text-sm text-muted-foreground">
               {appointment.scheduledDate} · {formatTime(appointment.scheduledTime)} ·{' '}
-              {appointment.duration} min
+              {appointment.duration} {t("min")}
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label={t('ui.close')}>
@@ -291,13 +292,13 @@ export function AppointmentDrawer({
             )}
             {capabilities.canSchedule && !['CANCELLED', 'COMPLETED'].includes(status) && (
               <Button size="sm" variant="outline" disabled={busy} onClick={cancelWithReason}>
-                Cancel…
+                {t("Cancel…")}
               </Button>
             )}
           </div>
           {appointment.cancellationReason && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Cancellation reason: {appointment.cancellationReason}
+              {t("Cancellation reason:")} {appointment.cancellationReason}
             </p>
           )}
         </section>
@@ -309,17 +310,17 @@ export function AppointmentDrawer({
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/patients/${patientId}?tab=appointments`}>
-                  <FileText className="h-3.5 w-3.5 mr-1" /> Patient file
+                  <FileText className="h-3.5 w-3.5 mr-1" /> {t("Patient file")}
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/patients/${patientId}?tab=dental-chart`}>
-                  <Sparkles className="h-3.5 w-3.5 mr-1" /> Odontogram
+                  <Sparkles className="h-3.5 w-3.5 mr-1" /> {t("Odontogram")}
                 </Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/patients/${patientId}?tab=appointments`}>
-                  <History className="h-3.5 w-3.5 mr-1" /> Full history
+                  <History className="h-3.5 w-3.5 mr-1" /> {t("Full history")}
                 </Link>
               </Button>
             </div>
@@ -333,10 +334,10 @@ export function AppointmentDrawer({
         {capabilities.canRemind && (
           <section className="mb-5">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Stethoscope className="h-4 w-4" /> Reminders
+              <Stethoscope className="h-4 w-4" /> {t("Reminders")}
             </h3>
             {remindersLoading ? (
-              <p className="text-xs text-muted-foreground">Loading reminders…</p>
+              <p className="text-xs text-muted-foreground">{t("Loading reminders…")}</p>
             ) : reminders.length === 0 ? (
               <p className="text-xs text-muted-foreground">{t('No reminders scheduled.')}</p>
             ) : (
@@ -346,12 +347,12 @@ export function AppointmentDrawer({
                     <Badge variant="outline" className="text-[10px]">
                       {r.reminderType}
                     </Badge>
-                    <span>{new Date(r.scheduledFor).toLocaleString()}</span>
+                    <span>{new Date(r.scheduledFor).toLocaleString(locale)}</span>
                     <span className="ml-auto font-medium">{r.status}</span>
                     {r.status !== 'SENT' && r.status !== 'CANCELLED' && (
                       <button
                         type="button"
-                        aria-label={`Cancel reminder for ${formatTime(appointment.scheduledTime)}`}
+                        aria-label={t("Cancel reminder for {v1}", { v1: formatTime(appointment.scheduledTime) })}
                         className="rounded p-1 hover:bg-muted disabled:opacity-50"
                         disabled={busy}
                         onClick={() => cancelReminder(r.id)}
@@ -391,12 +392,11 @@ export function AppointmentDrawer({
               </div>
               <Button size="sm" disabled={busy || !remindAt} onClick={addReminder}>
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellPlus className="h-3.5 w-3.5 mr-1" />}
-                Queue
+                {t("Queue")}
               </Button>
             </div>
             <p className="mt-2 text-[10px] text-muted-foreground">
-              Queued reminders are processed by the clinic reminder job — no message is sent from
-              this screen.
+              {t("Queued reminders are processed by the clinic reminder job — no message is sent from this screen.")}
             </p>
           </section>
         )}
@@ -404,23 +404,23 @@ export function AppointmentDrawer({
         <section className="space-y-2 text-sm">
           <h3 className="text-sm font-semibold">{t('Details')}</h3>
           <p>
-            <span className="text-muted-foreground">Provider:</span> Dr.{' '}
+            <span className="text-muted-foreground">{t("Provider:")}</span> {t("Dr.")}{' '}
             {getDoctorName(appointment.doctor)}
           </p>
           {appointment.chiefComplaint && (
             <p>
-              <span className="text-muted-foreground">Chief complaint:</span>{' '}
+              <span className="text-muted-foreground">{t("Chief complaint:")}</span>{' '}
               {appointment.chiefComplaint}
             </p>
           )}
           {appointment.notes && (
             <p>
-              <span className="text-muted-foreground">Notes:</span> {appointment.notes}
+              <span className="text-muted-foreground">{t("Notes:")}</span> {appointment.notes}
             </p>
           )}
           {appointment.recurrenceGroupId && (
             <p className="text-xs text-muted-foreground">
-              Part of a recurring series ({appointment.recurrenceGroupId})
+              {t("Part of a recurring series (")}{appointment.recurrenceGroupId})
             </p>
           )}
         </section>

@@ -201,7 +201,7 @@ export default function PatientsPage() {
                   <SelectItem value="O+">O+</SelectItem>
                   <SelectItem value="O-">O-</SelectItem>
                   <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
+                  <SelectItem value="AB-">{t("AB-")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -264,7 +264,7 @@ export default function PatientsPage() {
                       <Link href="/patients/new">
                         <Button variant="outline" size="sm">
                           <Plus className="h-4 w-4 mr-2" />
-{t('patients.addPatient')}Add Patient
+{t('patients.addPatient')}{t("Add Patient")}
                         </Button>
                       </Link>
                     </div>
@@ -348,9 +348,9 @@ export default function PatientsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} patients
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("patients")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -363,7 +363,7 @@ export default function PatientsPage() {
                   {t('Previous')}
                 </Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"

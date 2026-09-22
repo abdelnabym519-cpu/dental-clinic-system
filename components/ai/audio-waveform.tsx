@@ -1,6 +1,7 @@
 'use client'
 
 import type { VoiceState } from '@/hooks/use-web-voice'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface AudioWaveformProps {
   audioLevel: number
@@ -21,6 +22,8 @@ export function AudioWaveform({
   width = 220,
   height = 36,
 }: AudioWaveformProps) {
+  const { t } = useLanguage()
+
   if (state !== 'listening' && state !== 'speaking') return null
 
   const barWidth = Math.max(2, (width / barCount) * 0.55)
@@ -34,7 +37,7 @@ export function AudioWaveform({
       className="flex items-center justify-center"
       style={{ width, height }}
       role="img"
-      aria-label={state === 'listening' ? 'Audio input level' : 'Audio output level'}
+      aria-label={state === 'listening' ? t('Audio input level') : t('Audio output level')}
     >
       {Array.from({ length: barCount }, (_, i) => {
         // Center-weighted: bars near center are taller

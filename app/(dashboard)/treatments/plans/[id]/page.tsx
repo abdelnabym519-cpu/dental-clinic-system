@@ -98,6 +98,7 @@ interface TreatmentPlan {
 }
 
 export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
@@ -297,8 +298,8 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {plan.items.filter((i) => i.status === 'COMPLETED').length} of{' '}
-                    {plan.items.length} procedures completed
+                    {plan.items.filter((i) => i.status === 'COMPLETED').length} {t("of")}{' '}
+                    {plan.items.length} {t("procedures completed")}
                   </span>
                   <span className="text-sm font-medium">{progress}%</span>
                 </div>
@@ -345,7 +346,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                         )}
                       </TableCell>
                       <TableCell>{item.toothNumbers || '-'}</TableCell>
-                      <TableCell>{formatCurrency(item.estimatedCost)}</TableCell>
+                      <TableCell>{formatCurrency(item.estimatedCost, locale)}</TableCell>
                       <TableCell>{getItemStatusBadge(item.status)}</TableCell>
                       <TableCell>
                         {item.status === 'PENDING' && plan.status === 'IN_PROGRESS' && (
@@ -360,10 +361,10 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                   ))}
                   <TableRow>
                     <TableCell colSpan={3} className="text-right font-medium">
-                      Total Estimated Cost:
+                      {t("Total Estimated Cost:")}
                     </TableCell>
                     <TableCell className="font-bold text-lg">
-                      {formatCurrency(plan.estimatedCost)}
+                      {formatCurrency(plan.estimatedCost, locale)}
                     </TableCell>
                     <TableCell colSpan={2}></TableCell>
                   </TableRow>
@@ -436,7 +437,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">{t('ui.total_cost')}</div>
-                  <div className="font-bold text-lg">{formatCurrency(plan.estimatedCost)}</div>
+                  <div className="font-bold text-lg">{formatCurrency(plan.estimatedCost, locale)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">{t('ui.procedures')}</div>
@@ -456,24 +457,24 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('ui.created')}</span>
-                  <span>{formatDate(plan.createdAt)}</span>
+                  <span>{formatDate(plan.createdAt, locale)}</span>
                 </div>
                 {plan.startDate && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('ui.start_date')}</span>
-                    <span>{formatDate(plan.startDate)}</span>
+                    <span>{formatDate(plan.startDate, locale)}</span>
                   </div>
                 )}
                 {plan.expectedEndDate && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('Expected End')}</span>
-                    <span>{formatDate(plan.expectedEndDate)}</span>
+                    <span>{formatDate(plan.expectedEndDate, locale)}</span>
                   </div>
                 )}
                 {plan.completedDate && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('ui.completed')}</span>
-                    <span>{formatDate(plan.completedDate)}</span>
+                    <span>{formatDate(plan.completedDate, locale)}</span>
                   </div>
                 )}
               </div>
@@ -492,7 +493,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-muted-foreground">By recording consent, you confirm that:</p>
+            <p className="text-sm text-muted-foreground">{t("By recording consent, you confirm that:")}</p>
             <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
               <li>{t('The treatment plan has been explained to the patient')}</li>
               <li>{t('All questions have been answered')}</li>
@@ -503,7 +504,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           <DialogFooter>
             <Button variant="outline" onClick={() => setConsentDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleConsentGiven} disabled={actionLoading}>
-              {actionLoading ? 'Recording...' : 'Confirm Consent'}
+              {actionLoading ? t("Recording...") : t("Confirm Consent")}
             </Button>
           </DialogFooter>
         </DialogContent>

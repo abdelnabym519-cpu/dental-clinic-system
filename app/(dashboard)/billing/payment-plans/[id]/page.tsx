@@ -325,7 +325,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {statusBadge(plan.status)}
             </div>
             <p className="text-muted-foreground">
-              {plan.patient.firstName} {plan.patient.lastName} — Invoice{' '}
+              {plan.patient.firstName} {plan.patient.lastName} {t("— Invoice")}{' '}
               <Link
                 href={`/billing/invoices/${plan.invoice.id}`}
                 className="text-blue-600 hover:underline"
@@ -356,7 +356,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             <div className="text-2xl font-bold">{formatCurrency(plan.totalAmount)}</div>
             {plan.interestRate > 0 && (
               <p className="text-xs text-muted-foreground">
-                Includes {Number(plan.interestRate)}% interest
+                {t("Includes")} {Number(plan.interestRate)}{t("% interest")}
               </p>
             )}
           </CardContent>
@@ -371,7 +371,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {formatCurrency(plan.totalPaid)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {plan.paidInstallments} of {plan.installments} installments
+              {plan.paidInstallments} {t("of")} {plan.installments} {t("installments")}
             </p>
           </CardContent>
         </Card>
@@ -388,7 +388,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {plan.installments -
                 plan.paidInstallments -
                 plan.schedules.filter((s) => s.status === 'WAIVED').length}{' '}
-              remaining
+              {t("remaining")}
             </p>
           </CardContent>
         </Card>
@@ -425,10 +425,10 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </div>
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>
-              {plan.downPayment > 0 && `Down payment: ${formatCurrency(plan.downPayment)}`}
+              {plan.downPayment > 0 && t("Down payment: {v1}", { v1: formatCurrency(plan.downPayment) })}
             </span>
             <span>
-              {frequencyLabel(plan.frequency)} — Started{' '}
+              {frequencyLabel(plan.frequency)} {t("— Started")}{' '}
               {format(new Date(plan.startDate), 'dd MMM yyyy')}
             </span>
           </div>
@@ -620,7 +620,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Amount (EGP )</Label>
+              <Label>{t("Amount (EGP )")}</Label>
               <Input
                 type="number"
                 value={payAmount}
@@ -646,7 +646,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Transaction ID (Optional)</Label>
+              <Label>{t("Transaction ID (Optional)")}</Label>
               <Input
                 placeholder={t('Reference number...')}
                 value={payTransactionId}
@@ -663,7 +663,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
                   {t('Processing...')}
                 </>
               ) : (
-                `Record Payment — ${formatCurrency(payAmount)}`
+                t("Record Payment — {v1}", { v1: formatCurrency(payAmount) })
               )}
             </Button>
           </DialogFooter>
@@ -676,8 +676,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           <DialogHeader>
             <DialogTitle>{t('Cancel Payment Plan')}</DialogTitle>
             <DialogDescription>
-              This will cancel the payment plan and waive all remaining installments. Payments
-              already made will not be refunded.
+              {t("This will cancel the payment plan and waive all remaining installments. Payments already made will not be refunded.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

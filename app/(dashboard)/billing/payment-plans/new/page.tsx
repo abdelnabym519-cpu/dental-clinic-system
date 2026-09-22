@@ -303,7 +303,7 @@ export default function NewPaymentPlanPage() {
                                 {formatCurrency(inv.balanceAmount)}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                of {formatCurrency(inv.totalAmount)}
+                                {t("of")} {formatCurrency(inv.totalAmount)}
                               </div>
                             </div>
                           </div>
@@ -383,7 +383,7 @@ export default function NewPaymentPlanPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Down Payment (EGP )</Label>
+                  <Label>{t("Down Payment (EGP )")}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -392,7 +392,7 @@ export default function NewPaymentPlanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Interest Rate (%)</Label>
+                  <Label>{t("Interest Rate (%)")}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -414,7 +414,7 @@ export default function NewPaymentPlanPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Notes (Optional)</Label>
+                <Label>{t("Notes (Optional)")}</Label>
                 <Textarea
                   placeholder={t('Any additional terms or notes...')}
                   value={notes}
@@ -483,7 +483,7 @@ export default function NewPaymentPlanPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('ui.installment_schedule')}</CardTitle>
-                <CardDescription>Preview of {installments} {t('installments')}</CardDescription>
+                <CardDescription>{t("Preview of")} {installments} {t('installments')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[400px] overflow-y-auto">
@@ -525,7 +525,7 @@ export default function NewPaymentPlanPage() {
                 {t('Creating Plan...')}
               </>
             ) : (
-              'Create Payment Plan'
+              t('Create Payment Plan')
             )}
           </Button>
         </div>

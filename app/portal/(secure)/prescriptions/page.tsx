@@ -37,6 +37,7 @@ interface Prescription {
 }
 
 export default function PatientPrescriptions() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,7 +52,7 @@ export default function PatientPrescriptions() {
   }, [])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-EG', {
+    new Date(d).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -93,7 +94,7 @@ export default function PatientPrescriptions() {
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <User className="h-3 w-3" />
-                        Dr. {rx.doctor.firstName} {rx.doctor.lastName}
+                        {t("Dr.")} {rx.doctor.firstName} {rx.doctor.lastName}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -101,7 +102,7 @@ export default function PatientPrescriptions() {
                       </span>
                     </div>
                     {rx.diagnosis && (
-                      <p className="text-sm text-muted-foreground">Diagnosis: {rx.diagnosis}</p>
+                      <p className="text-sm text-muted-foreground">{t("Diagnosis:")} {rx.diagnosis}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -126,7 +127,7 @@ export default function PatientPrescriptions() {
                           </p>
                           {item.quantity && (
                             <Badge variant="outline" className="text-xs">
-                              Qty: {item.quantity}
+                              {t("Qty:")} {item.quantity}
                             </Badge>
                           )}
                         </div>
@@ -149,7 +150,7 @@ export default function PatientPrescriptions() {
                       <>
                         <Separator />
                         <p className="text-sm text-muted-foreground">
-                          <strong>Notes:</strong> {rx.notes}
+                          <strong>{t("Notes:")}</strong> {rx.notes}
                         </p>
                       </>
                     )}

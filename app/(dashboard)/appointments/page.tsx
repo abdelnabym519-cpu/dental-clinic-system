@@ -176,7 +176,7 @@ export default function AppointmentsPage() {
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="left" className="max-w-[250px]">
-          <p className="font-medium mb-1">No-Show Risk: {risk.riskLevel}</p>
+          <p className="font-medium mb-1">{t("No-Show Risk:")} {risk.riskLevel}</p>
           {risk.factors.map((f, i) => (
             <p key={i} className="text-xs">
               • {f}
@@ -325,7 +325,7 @@ export default function AppointmentsPage() {
               ) : (
                 <Brain className="h-4 w-4 mr-2" />
               )}
-              {showRisk ? 'Refresh Risk' : 'AI Risk'}
+              {showRisk ? t("Refresh Risk") : t("AI Risk")}
             </Button>
             <Link href="/appointments/new">
               <Button>
@@ -452,7 +452,7 @@ export default function AppointmentsPage() {
                         <div className="font-medium">{appointment.appointmentNo}</div>
                         {appointment.chairNumber && (
                           <div className="text-sm text-muted-foreground">
-                            Chair {appointment.chairNumber}
+                            {t("Chair")} {appointment.chairNumber}
                           </div>
                         )}
                       </TableCell>
@@ -567,9 +567,9 @@ export default function AppointmentsPage() {
             {!loading && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between border-t px-4 py-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} appointments
+                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                  {pagination.total} {t("appointments")}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -580,7 +580,7 @@ export default function AppointmentsPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                   <div className="text-sm">
-                    Page {pagination.page} of {pagination.totalPages}
+                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                   </div>
                   <Button
                     variant="outline"

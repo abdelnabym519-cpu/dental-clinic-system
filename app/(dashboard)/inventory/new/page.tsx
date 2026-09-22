@@ -130,7 +130,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., DM-001"
+              placeholder={t("e.g., DM-001")}
             />
           </div>
 
@@ -145,7 +145,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Composite Resin"
+              placeholder={t("e.g., Composite Resin")}
             />
           </div>
 
@@ -170,7 +170,7 @@ export default function NewInventoryItemPage() {
           {/* Item Type */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Item Type <span className="text-red-500">*</span>
+              {t("Item Type")} <span className="text-red-500">*</span>
             </label>
             <select
               name="itemType"
@@ -191,7 +191,7 @@ export default function NewInventoryItemPage() {
           {/* Unit of Measurement */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Unit of Measurement <span className="text-red-500">*</span>
+              {t("Unit of Measurement")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -200,7 +200,7 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., pieces, boxes, bottles, kg"
+              placeholder={t("e.g., pieces, boxes, bottles, kg")}
             />
           </div>
 
@@ -258,7 +258,7 @@ export default function NewInventoryItemPage() {
 
           {/* Unit Price */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Unit Price (EGP )</label>
+            <label className="block text-sm font-medium text-foreground mb-2">{t("Unit Price (EGP )")}</label>
             <input
               type="number"
               name="purchasePrice"
@@ -272,7 +272,7 @@ export default function NewInventoryItemPage() {
           {/* Selling Price */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Selling Price (EGP )
+              {t("Selling Price (EGP )")}
             </label>
             <input
               type="number"
@@ -299,7 +299,7 @@ export default function NewInventoryItemPage() {
           {/* Tax Percentage */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Tax Percentage (%)
+              {t("Tax Percentage (%)")}
             </label>
             <input
               type="number"
@@ -342,7 +342,7 @@ export default function NewInventoryItemPage() {
               value={formData.storageLocation}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Shelf A1"
+              placeholder={t("e.g., Shelf A1")}
             />
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function NewInventoryItemPage() {
             disabled={loading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? 'Creating...' : 'Create Item'}
+            {loading ? 'Creating...' : t("Create Item")}
           </button>
         </div>
       </form>

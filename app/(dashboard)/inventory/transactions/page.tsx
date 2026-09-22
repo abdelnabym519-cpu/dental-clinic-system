@@ -20,6 +20,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,7 +200,7 @@ export default function TransactionsPage() {
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            + New Transaction
+            {t("+ New Transaction")}
           </button>
         </div>
       </div>
@@ -267,7 +268,7 @@ export default function TransactionsPage() {
                   {transactions.map((transaction) => (
                     <tr key={transaction.id} className="hover:bg-muted/50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                        {new Date(transaction.transactionDate).toLocaleDateString()}
+                        {new Date(transaction.transactionDate).toLocaleDateString(locale)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getTransactionTypeBadge(transaction.type)}
@@ -302,9 +303,9 @@ export default function TransactionsPage() {
             <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> of{' '}
+                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> {t("of")}{' '}
                     <span className="font-medium">{pagination.pages}</span> ({pagination.total}{' '}
-                    total transactions)
+                    {t("total transactions)")}
                   </p>
                 </div>
                 <div>
@@ -336,7 +337,7 @@ export default function TransactionsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Transaction Type <span className="text-red-500">*</span>
+                    {t("Transaction Type")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="type"
@@ -388,7 +389,7 @@ export default function TransactionsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Unit Price (EGP )
+                    {t("Unit Price (EGP )")}
                   </label>
                   <input
                     type="number"
@@ -402,7 +403,7 @@ export default function TransactionsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Transaction Date <span className="text-red-500">*</span>
+                    {t("Transaction Date")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"

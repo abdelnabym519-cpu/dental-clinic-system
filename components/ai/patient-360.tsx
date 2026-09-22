@@ -81,7 +81,7 @@ export function Patient360({ patientId }: { patientId: string }) {
           <h3 className="text-sm font-semibold">{t('ui.ai_patient_summary')}</h3>
           {cached && (
             <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-              cached
+              {t("cached")}
             </span>
           )}
         </div>
@@ -89,7 +89,7 @@ export function Patient360({ patientId }: { patientId: string }) {
           onClick={() => load(true)}
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
         >
-          ↻ Regenerate
+          {t("↻ Regenerate")}
         </button>
       </div>
 
@@ -124,7 +124,7 @@ export function Patient360({ patientId }: { patientId: string }) {
 
       {/* footer row */}
       <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
-        {data.lastVisit && <span>Last visit: {data.lastVisit}</span>}
+        {data.lastVisit && <span>{t("Last visit:")} {data.lastVisit}</span>}
         {data.nextAction && <span className="text-primary font-medium">→ {data.nextAction}</span>}
       </div>
     </div>

@@ -117,6 +117,7 @@ function StatusBadge({ status }: { status: Referral['status'] }) {
 // ---------------------------------------------------------------------------
 
 export default function ReferralsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
 
@@ -500,7 +501,7 @@ export default function ReferralsPage() {
                         <StatusBadge status={referral.status} />
                       </TableCell>
                       <TableCell>
-                        {new Date(referral.createdAt).toLocaleDateString('en-EG')}
+                        {new Date(referral.createdAt).toLocaleDateString(locale)}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -552,9 +553,9 @@ export default function ReferralsPage() {
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} referrals
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("referrals")}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -635,7 +636,7 @@ export default function ReferralsPage() {
                 )}
               </div>
               {referrerPatientId && (
-                <p className="text-xs text-muted-foreground">Selected: {referrerDisplay}</p>
+                <p className="text-xs text-muted-foreground">{t("Selected:")} {referrerDisplay}</p>
               )}
             </div>
 

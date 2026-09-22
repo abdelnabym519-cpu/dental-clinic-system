@@ -90,6 +90,7 @@ interface Summary {
 }
 
 export default function PaymentsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const [payments, setPayments] = useState<Payment[]>([])
@@ -181,7 +182,7 @@ export default function PaymentsPage() {
               Patient: `${p.invoice.patient.firstName} ${p.invoice.patient.lastName}`,
               'Patient ID': p.invoice.patient.patientId,
               'Invoice No': p.invoice.invoiceNo,
-              'Payment Date': formatDate(p.paymentDate),
+              'Payment Date': formatDate(p.paymentDate, locale),
               Method: p.paymentMethod,
               Amount: Number(p.amount),
               Status: p.status,
@@ -205,7 +206,7 @@ export default function PaymentsPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(summary.totalReceived)}
+                {formatCurrency(summary.totalReceived, locale)}
               </div>
             )}
           </CardContent>
@@ -221,7 +222,7 @@ export default function PaymentsPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold text-red-600">
-                {formatCurrency(summary.totalRefunded)}
+                {formatCurrency(summary.totalRefunded, locale)}
               </div>
             )}
           </CardContent>
@@ -237,7 +238,7 @@ export default function PaymentsPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className="text-2xl font-bold">
-                {formatCurrency(summary.totalReceived - summary.totalRefunded)}
+                {formatCurrency(summary.totalReceived - summary.totalRefunded, locale)}
               </div>
             )}
           </CardContent>
@@ -365,7 +366,7 @@ export default function PaymentsPage() {
                       <div className="font-medium">{payment.paymentNo}</div>
                       {payment.transactionId && (
                         <div className="text-sm text-muted-foreground">
-                          TXN: {payment.transactionId}
+                          {t("TXN:")} {payment.transactionId}
                         </div>
                       )}
                     </TableCell>
@@ -392,7 +393,7 @@ export default function PaymentsPage() {
                         {payment.invoice.invoiceNo}
                       </Link>
                     </TableCell>
-                    <TableCell>{formatDate(payment.paymentDate)}</TableCell>
+                    <TableCell>{formatDate(payment.paymentDate, locale)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getPaymentMethodIcon(payment.paymentMethod)}
@@ -404,10 +405,10 @@ export default function PaymentsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="font-medium">{formatCurrency(payment.amount)}</div>
+                      <div className="font-medium">{formatCurrency(payment.amount, locale)}</div>
                       {payment.refundAmount && Number(payment.refundAmount) > 0 && (
                         <div className="text-sm text-red-600">
-                          Refund: {formatCurrency(payment.refundAmount)}
+                          {t("Refund:")} {formatCurrency(payment.refundAmount, locale)}
                         </div>
                       )}
                     </TableCell>
@@ -447,9 +448,9 @@ export default function PaymentsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} payments
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("payments")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -460,7 +461,7 @@ export default function PaymentsPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"

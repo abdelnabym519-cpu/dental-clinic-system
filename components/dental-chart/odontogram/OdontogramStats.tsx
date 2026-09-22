@@ -3,12 +3,14 @@
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { OdontogramSummaryStats } from '../adapters/dental-chart-adapter'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface OdontogramStatsProps {
   stats: OdontogramSummaryStats
 }
 
 export function OdontogramStats({ stats }: OdontogramStatsProps) {
+  const { t } = useLanguage()
   const cards = [
     {
       label: 'Present Teeth',
@@ -69,7 +71,7 @@ export function OdontogramStats({ stats }: OdontogramStatsProps) {
               )}
             </div>
             <div className="text-[11px] font-medium text-muted-foreground truncate">
-              {card.label}
+              {t(card.label)}
             </div>
           </CardContent>
         </Card>

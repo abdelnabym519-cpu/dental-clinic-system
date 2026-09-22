@@ -497,7 +497,7 @@ export default function Dental3DViewer({
                     fill="#9ca3af"
                     fontWeight={500}
                   >
-                    Maxillary (Upper)
+                    {t('Maxillary (Upper)')}
                   </text>
                 )}
                 {viewAngle !== 'upper' && (
@@ -509,7 +509,7 @@ export default function Dental3DViewer({
                     fill="#9ca3af"
                     fontWeight={500}
                   >
-                    Mandibular (Lower)
+                    {t('Mandibular (Lower)')}
                   </text>
                 )}
 
@@ -543,7 +543,7 @@ export default function Dental3DViewer({
               {selectedTooth && (
                 <Card className="border-blue-200 bg-blue-50/50">
                   <CardContent className="p-3">
-                    <p className="font-semibold text-sm">Tooth #{selectedTooth}</p>
+                    <p className="font-semibold text-sm">{t("Tooth #")}{selectedTooth}</p>
                     <p className="text-xs text-muted-foreground mb-2">
                       {TOOTH_NAMES[selectedTooth]}
                     </p>
@@ -559,7 +559,7 @@ export default function Dental3DViewer({
                       </div>
                       {selectedData?.severity && (
                         <p className="text-xs text-muted-foreground">
-                          Severity: {selectedData.severity}
+                          {t("Severity:")} {selectedData.severity}
                         </p>
                       )}
                       {selectedData?.notes && (

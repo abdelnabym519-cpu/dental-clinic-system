@@ -201,7 +201,7 @@ export default function SubscriptionPage() {
                 <span>{t('ui.patients')}</span>
                 <span className="text-muted-foreground">
                   {hospitalData.currentPatients} /{' '}
-                  {hospitalData.maxPatients === -1 ? 'Unlimited' : hospitalData.maxPatients}
+                  {hospitalData.maxPatients === -1 ? t("Unlimited") : hospitalData.maxPatients}
                 </span>
               </div>
               {hospitalData.maxPatients !== -1 && (
@@ -222,7 +222,7 @@ export default function SubscriptionPage() {
                 <span>{t('ui.staff_members')}</span>
                 <span className="text-muted-foreground">
                   {hospitalData.currentStaff} /{' '}
-                  {hospitalData.maxStaff === -1 ? 'Unlimited' : hospitalData.maxStaff}
+                  {hospitalData.maxStaff === -1 ? t("Unlimited") : hospitalData.maxStaff}
                 </span>
               </div>
               {hospitalData.maxStaff !== -1 && (
@@ -242,10 +242,10 @@ export default function SubscriptionPage() {
               <div className="flex justify-between text-sm">
                 <span>{t('Storage')}</span>
                 <span className="text-muted-foreground">
-                  {hospitalData.currentStorageMB} MB /{' '}
+                  {hospitalData.currentStorageMB} {t("MB /")}{' '}
                   {hospitalData.maxStorageMB === -1
-                    ? 'Unlimited'
-                    : `${hospitalData.maxStorageMB} MB`}
+                    ? t("Unlimited")
+                    : t("{v1} MB", { v1: hospitalData.maxStorageMB })}
                 </span>
               </div>
               {hospitalData.maxStorageMB !== -1 && (
@@ -311,13 +311,13 @@ export default function SubscriptionPage() {
                 <CardContent>
                   <div className="mb-4">
                     <span className="text-3xl font-bold">
-                      {plan.price === 'Custom' ? '' : 'EGP '}
+                      {plan.price === 'Custom' ? '' : t("EGP ")}
                       {plan.price}
                     </span>
                     {plan.priceNote ? (
                       <span className="text-muted-foreground"> {plan.priceNote}</span>
                     ) : plan.price !== 'Custom' && plan.price !== '0' ? (
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">{t("/month")}</span>
                     ) : null}
                   </div>
                   <ul className="space-y-2">
@@ -340,7 +340,7 @@ export default function SubscriptionPage() {
                       ? 'Current Plan'
                       : plan.price === 'Custom'
                         ? 'Contact Sales'
-                        : 'Upgrade'}
+                        : t("Upgrade")}
                   </Button>
                 </CardFooter>
               </Card>

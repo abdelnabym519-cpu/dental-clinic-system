@@ -68,6 +68,7 @@ interface Instrument {
 }
 
 export default function InstrumentsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -290,7 +291,7 @@ export default function InstrumentsPage() {
                 <TableRow>
                   <TableHead>{t('ui.name')}</TableHead>
                   <TableHead>{t('ui.category')}</TableHead>
-                  <TableHead>Serial #</TableHead>
+                  <TableHead>{t("Serial #")}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>{t('ui.location')}</TableHead>
                   <TableHead className="text-right">{t('Cycles')}</TableHead>
@@ -322,8 +323,8 @@ export default function InstrumentsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {inst.lastSterilizedAt
-                        ? new Date(inst.lastSterilizedAt).toLocaleDateString()
-                        : 'Never'}
+                        ? new Date(inst.lastSterilizedAt).toLocaleDateString(locale)
+                        : t("Never")}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -357,21 +358,21 @@ export default function InstrumentsPage() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Instrument' : 'Add Instrument'}</DialogTitle>
+            <DialogTitle>{editingId ? t("Edit Instrument") : 'Add Instrument'}</DialogTitle>
             <DialogDescription>{t('Enter instrument details')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Name *</Label>
+                <Label>{t("Name *")}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g., High-Speed Handpiece"
+                  placeholder={t("e.g., High-Speed Handpiece")}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Category *</Label>
+                <Label>{t("Category *")}</Label>
                 <Select
                   value={form.category}
                   onValueChange={(v) => setForm({ ...form, category: v })}
@@ -411,7 +412,7 @@ export default function InstrumentsPage() {
                 <Input
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder="e.g., Chair 1"
+                  placeholder={t("e.g., Chair 1")}
                 />
               </div>
               <div className="space-y-2">

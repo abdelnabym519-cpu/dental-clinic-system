@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge'
 import { ToothViewModel } from '../types/odontogram'
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ToothTooltipProps {
   tooth: ToothViewModel
@@ -12,6 +13,7 @@ interface ToothTooltipProps {
 }
 
 export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
+  const { t } = useLanguage()
   const conditionConfig = DENTAL_CONDITION_CONFIG[tooth.condition]
 
   const activeSurfaces = Object.entries(tooth.surfaces)
@@ -30,7 +32,7 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
             {/* Header: Number and Anatomical Name */}
             <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-1.5">
               <span className="font-bold text-sm text-foreground">#{tooth.number}</span>
-              <span className="text-muted-foreground font-medium truncate">{tooth.name}</span>
+              <span className="text-muted-foreground font-medium truncate">{t(tooth.name)}</span>
             </div>
 
             {/* Condition Badge & Category */}
@@ -55,17 +57,17 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
 
             {/* Clinical Anatomy Spec */}
             <div className="flex items-center justify-between text-[10px] text-muted-foreground/90 bg-muted/30 px-1.5 py-0.5 rounded">
-              <span>Anatomy:</span>
+              <span>{t("Anatomy:")}</span>
               <span className="font-medium">
-                {tooth.rootCount} Root{tooth.rootCount > 1 ? 's' : ''} &bull; {tooth.canalCount}{' '}
-                Canal{tooth.canalCount > 1 ? 's' : ''}
+                {tooth.rootCount} {t("Root")}{tooth.rootCount > 1 ? 's' : ''} &bull; {tooth.canalCount}{' '}
+                {t("Canal")}{tooth.canalCount > 1 ? 's' : ''}
               </span>
             </div>
 
             {/* Surfaces Involved */}
             {activeSurfaces.length > 0 && (
               <div className="text-[11px] text-muted-foreground pt-0.5">
-                <span className="font-semibold text-foreground">Surfaces: </span>
+                <span className="font-semibold text-foreground">{t("Surfaces:")} </span>
                 {activeSurfaces.join(', ')}
               </div>
             )}
@@ -80,7 +82,7 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
             {/* History Count */}
             {tooth.history.length > 1 && (
               <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/40 flex justify-between">
-                <span>Total records:</span>
+                <span>{t("Total records:")}</span>
                 <span className="font-semibold">{tooth.history.length}</span>
               </div>
             )}

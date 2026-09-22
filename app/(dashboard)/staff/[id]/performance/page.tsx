@@ -218,7 +218,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
             onChange={(e) => setStartDate(e.target.value)}
             className="w-[160px]"
           />
-          <span className="text-muted-foreground">to</span>
+          <span className="text-muted-foreground">{t("to")}</span>
           <Input
             type="date"
             value={endDate}
@@ -242,7 +242,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Avg: {formatCurrency(data.revenue.averagePerTreatment)} / treatment
+              {t("Avg:")} {formatCurrency(data.revenue.averagePerTreatment)} {t("/ treatment")}
             </p>
           </CardContent>
         </Card>
@@ -274,7 +274,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {data.treatments.inProgress} in progress
+              {data.treatments.inProgress} {t("in progress")}
             </p>
           </CardContent>
         </Card>
@@ -333,7 +333,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center gap-2 pt-2 border-t">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  Average wait time: {data.appointments.avgWaitTime} minutes
+                  {t("Average wait time:")} {data.appointments.avgWaitTime} {t("minutes")}
                 </span>
               </div>
             )}
@@ -409,7 +409,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
                             {categoryLabels[proc.category] || proc.category}
                           </Badge>
                           <span className="text-sm text-muted-foreground">
-                            {proc.count} procedures
+                            {proc.count} {t("procedures")}
                           </span>
                         </div>
                         <span className="font-medium">{formatCurrency(proc.revenue)}</span>

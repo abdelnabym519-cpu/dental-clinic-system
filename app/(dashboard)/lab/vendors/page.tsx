@@ -360,7 +360,7 @@ export default function LabVendorsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vendors.filter((v) => v.status === 'active').length}
+              {vendors.filter((v) => v.status === t("active")).length}
             </div>
           </CardContent>
         </Card>
@@ -475,7 +475,7 @@ export default function LabVendorsPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <Clock className="mr-1 h-3 w-3" />
-                          {vendor.avgTurnaround} days
+                          {vendor.avgTurnaround} {t("days")}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -512,9 +512,9 @@ export default function LabVendorsPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} vendors
+                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                  {pagination.total} {t("vendors")}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -542,13 +542,13 @@ export default function LabVendorsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingVendor ? 'Edit Lab Vendor' : 'Add Lab Vendor'}</DialogTitle>
+            <DialogTitle>{editingVendor ? t("Edit Lab Vendor") : t("Add Lab Vendor")}</DialogTitle>
             <DialogDescription>{t('Enter the vendor information below')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="code">Vendor Code *</Label>
+                <Label htmlFor="code">{t("Vendor Code *")}</Label>
                 <Input
                   id="code"
                   value={formData.code}
@@ -557,7 +557,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">Vendor Name *</Label>
+                <Label htmlFor="name">{t("Vendor Name *")}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -577,7 +577,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone *</Label>
+                <Label htmlFor="phone">{t("Phone *")}</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -657,13 +657,13 @@ export default function LabVendorsPage() {
                 id="specializations"
                 value={formData.specializations}
                 onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
-                placeholder="crown, bridge, denture, etc. (comma-separated)"
+                placeholder={t("crown, bridge, denture, etc. (comma-separated)")}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="avgTurnaround">Avg. Turnaround (days)</Label>
+                <Label htmlFor="avgTurnaround">{t("Avg. Turnaround (days)")}</Label>
                 <Input
                   id="avgTurnaround"
                   type="number"

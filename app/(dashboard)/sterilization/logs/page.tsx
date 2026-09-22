@@ -63,6 +63,7 @@ interface InstrumentOption {
 }
 
 export default function SterilizationLogsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -233,7 +234,7 @@ export default function SterilizationLogsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('ui.instrument')}</TableHead>
-                  <TableHead>Cycle #</TableHead>
+                  <TableHead>{t("Cycle #")}</TableHead>
                   <TableHead>{t('ui.method')}</TableHead>
                   <TableHead>{t('Temp/Pressure')}</TableHead>
                   <TableHead>{t('ui.duration')}</TableHead>
@@ -257,7 +258,7 @@ export default function SterilizationLogsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {log.temperature ? `${log.temperature}°C` : '—'}
-                      {log.pressure ? ` / ${log.pressure} bar` : ''}
+                      {log.pressure ? t(" / {v1} bar", { v1: log.pressure }) : ''}
                     </TableCell>
                     <TableCell className="text-sm">
                       {log.duration ? `${log.duration} ${t('min')}` : '—'}
@@ -281,7 +282,7 @@ export default function SterilizationLogsPage() {
                     </TableCell>
                     <TableCell>{resultBadge(log.result)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {new Date(log.startedAt).toLocaleString()}
+                      {new Date(log.startedAt).toLocaleString(locale)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -300,7 +301,7 @@ export default function SterilizationLogsPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="space-y-2">
-              <Label>Instrument *</Label>
+              <Label>{t("Instrument *")}</Label>
               <Select
                 value={form.instrumentId}
                 onValueChange={(v) => setForm({ ...form, instrumentId: v })}
@@ -321,7 +322,7 @@ export default function SterilizationLogsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Method *</Label>
+                <Label>{t("Method *")}</Label>
                 <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -340,13 +341,13 @@ export default function SterilizationLogsPage() {
                 <Input
                   value={form.machineId}
                   onChange={(e) => setForm({ ...form, machineId: e.target.value })}
-                  placeholder="e.g., AC-001"
+                  placeholder={t("e.g., AC-001")}
                 />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Temperature (°C)</Label>
+                <Label>{t("Temperature (°C)")}</Label>
                 <Input
                   type="number"
                   value={form.temperature}
@@ -355,7 +356,7 @@ export default function SterilizationLogsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Pressure (bar)</Label>
+                <Label>{t("Pressure (bar)")}</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -365,7 +366,7 @@ export default function SterilizationLogsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Duration (min)</Label>
+                <Label>{t("Duration (min)")}</Label>
                 <Input
                   type="number"
                   value={form.duration}
@@ -376,7 +377,7 @@ export default function SterilizationLogsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Started At *</Label>
+                <Label>{t("Started At *")}</Label>
                 <Input
                   type="datetime-local"
                   value={form.startedAt}
@@ -435,7 +436,7 @@ export default function SterilizationLogsPage() {
             <Button variant="outline" onClick={() => setShowDialog(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleRecord} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Record Cycle
+              {t('Record Cycle')}
             </Button>
           </DialogFooter>
         </DialogContent>

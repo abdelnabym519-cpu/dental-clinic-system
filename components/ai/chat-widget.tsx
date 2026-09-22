@@ -199,7 +199,7 @@ export function ChatWidget() {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow"
-          aria-label="Open AI chat"
+          aria-label={t("Open AI chat")}
         >
           <svg
             width="24"
@@ -222,7 +222,7 @@ export function ChatWidget() {
             <div>
               <p className="font-semibold text-sm">{t('ui.ai_assistant')}</p>
               <p className="text-xs opacity-70">
-                {voice.handsFreeMode ? 'Hands-free mode active' : 'Ask anything about your clinic'}
+                {voice.handsFreeMode ? t("Hands-free mode active") : t("Ask anything about your clinic")}
               </p>
             </div>
             <div className="flex gap-2 items-center">
@@ -236,8 +236,8 @@ export function ChatWidget() {
                       ? 'bg-primary-foreground text-primary'
                       : 'opacity-60 hover:opacity-100 border border-primary-foreground/30'
                   )}
-                  aria-label="Toggle hands-free mode"
-                  title="Hands-free: voice in + voice out, continuous"
+                  aria-label={t("Toggle hands-free mode")}
+                  title={t("Hands-free: voice in + voice out, continuous")}
                 >
                   {t('HF')}
                 </button>
@@ -246,15 +246,15 @@ export function ChatWidget() {
               <button
                 onClick={voice.toggleTts}
                 className="p-2 -m-1 opacity-60 hover:opacity-100 transition-opacity"
-                aria-label={voice.ttsEnabled ? 'Mute responses' : 'Read responses aloud'}
-                title={voice.ttsEnabled ? 'Voice responses ON' : 'Voice responses OFF'}
+                aria-label={voice.ttsEnabled ? t("Mute responses") : t("Read responses aloud")}
+                title={voice.ttsEnabled ? t("Voice responses ON") : t("Voice responses OFF")}
               >
                 <SpeakerIcon active={voice.ttsEnabled} />
               </button>
               <button
                 onClick={clearChat}
                 className="p-2 -m-1 opacity-60 hover:opacity-100 transition-opacity"
-                aria-label="Clear chat"
+                aria-label={t("Clear chat")}
               >
                 <svg
                   width="16"
@@ -304,7 +304,7 @@ export function ChatWidget() {
                     'Daily summary',
                     'Register patient',
                     'Book appointment',
-                    "Today's schedule",
+                    t("Today's schedule"),
                   ].map((hint) => (
                     <button
                       key={hint}
@@ -364,7 +364,7 @@ export function ChatWidget() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                   </span>
-                  {voice.interimTranscript || voice.transcript || 'Listening...'}
+                  {voice.interimTranscript || voice.transcript || t("Listening...")}
                 </div>
               </div>
             )}
@@ -384,7 +384,7 @@ export function ChatWidget() {
                   handleSend()
                 }
               }}
-              placeholder={listening ? 'Listening...' : 'Type or tap mic...'}
+              placeholder={listening ? t("Listening...") : t("Type or tap mic...")}
               rows={1}
               className="flex-1 resize-none rounded-md border bg-muted px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
             />
@@ -403,8 +403,8 @@ export function ChatWidget() {
                     ? 'bg-red-500 text-white hover:bg-red-600'
                     : 'bg-muted border hover:bg-accent'
                 )}
-                aria-label={listening ? 'Stop listening' : 'Start voice input'}
-                title={listening ? 'Stop listening' : 'Speak your message'}
+                aria-label={listening ? t("Stop listening") : t("Start voice input")}
+                title={listening ? t("Stop listening") : t("Speak your message")}
               >
                 <MicIcon listening={listening} />
               </button>

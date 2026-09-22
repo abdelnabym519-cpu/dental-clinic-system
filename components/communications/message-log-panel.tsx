@@ -56,6 +56,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export function MessageLogPanel() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [rows, setRows] = useState<LogRow[]>([])
   const [total, setTotal] = useState(0)
@@ -133,7 +134,7 @@ export function MessageLogPanel() {
         </Select>
         <Button variant="outline" size="sm" onClick={load} aria-label={t('Refresh message log')}>
           <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
-        <span className="ml-auto text-xs text-muted-foreground">{total} messages</span>
+        <span className="ml-auto text-xs text-muted-foreground">{total} {t("messages")}</span>
       </div>
 
       {error && (
@@ -144,12 +145,11 @@ export function MessageLogPanel() {
 
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading messages…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading messages…")}
         </div>
       ) : rows.length === 0 ? (
         <p className="py-8 text-sm text-muted-foreground">
-          No messages yet. Appointment confirmations, reminders, prescriptions and invoices appear
-          here once queued.
+          {t("No messages yet. Appointment confirmations, reminders, prescriptions and invoices appear here once queued.")}
         </p>
       ) : (
         <div className="overflow-x-auto rounded-md border" data-testid="message-log-table">
@@ -188,7 +188,7 @@ export function MessageLogPanel() {
                     </span>
                     {row.attempts > 0 && (
                       <span className="block text-[10px] text-muted-foreground">
-                        {row.attempts} attempt{row.attempts > 1 ? 's' : ''}
+                        {row.attempts} {t("attempt")}{row.attempts > 1 ? 's' : ''}
                       </span>
                     )}
                     {row.lastError && (
@@ -201,9 +201,9 @@ export function MessageLogPanel() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground">
-                    {new Date(row.scheduledAt).toLocaleString()}
+                    {new Date(row.scheduledAt).toLocaleString(locale)}
                     {row.sentAt && (
-                      <span className="block">✓ {new Date(row.sentAt).toLocaleString()}</span>
+                      <span className="block">✓ {new Date(row.sentAt).toLocaleString(locale)}</span>
                     )}
                   </td>
                   <td className="max-w-[260px] px-3 py-2 text-xs">
@@ -241,8 +241,7 @@ export function MessageLogPanel() {
         </div>
       )}
       <p className="text-[10px] text-muted-foreground">
-        Recipient numbers are masked for privacy. Delivery requires configured provider
-        credentials; without them the built-in test provider is used.
+        {t("Recipient numbers are masked for privacy. Delivery requires configured provider credentials; without them the built-in test provider is used.")}
       </p>
     </div>
   )

@@ -86,6 +86,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 }
 
 export default function DevicesPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [devices, setDevices] = useState<Device[]>([])
   const [summary, setSummary] = useState<DeviceSummary>({
@@ -214,7 +215,7 @@ export default function DevicesPage() {
     if (diff < 60000) return 'Just now'
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-    return date.toLocaleDateString()
+    return date.toLocaleDateString(locale)
   }
 
   return (
@@ -238,15 +239,15 @@ export default function DevicesPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Device Name *</Label>
+                  <Label>{t("Device Name *")}</Label>
                   <Input
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder="e.g. Chair Unit 1"
+                    placeholder={t("e.g. Chair Unit 1")}
                   />
                 </div>
                 <div>
-                  <Label>Device Type *</Label>
+                  <Label>{t("Device Type *")}</Label>
                   <Select value={formType} onValueChange={setFormType}>
                     <SelectTrigger>
                       <SelectValue placeholder={t('ui.select_type')} />
@@ -273,7 +274,7 @@ export default function DevicesPage() {
                   <Input
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
-                    placeholder="e.g. Operatory 1"
+                    placeholder={t("e.g. Operatory 1")}
                   />
                 </div>
                 <div>
@@ -383,7 +384,7 @@ export default function DevicesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Cpu className="h-5 w-5" /> Registered Devices
+            <Cpu className="h-5 w-5" /> {t("Registered Devices")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -493,23 +494,20 @@ export default function DevicesPage() {
           <CardTitle className="text-sm">{t('Device Integration API')}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>Connected devices can push data using these endpoints:</p>
+          <p>{t("Connected devices can push data using these endpoints:")}</p>
           <div className="bg-muted/50 p-3 rounded-md font-mono text-xs space-y-1">
             <p>
-              <span className="text-green-600 font-semibold">{t('POST')}</span> /api/devices/register —
-              Register new device
+              <span className="text-green-600 font-semibold">{t('POST')}</span> {t("/api/devices/register — Register new device")}
             </p>
             <p>
-              <span className="text-blue-600 font-semibold">{t('POST')}</span> /api/devices/data — Push
-              sensor readings
+              <span className="text-blue-600 font-semibold">{t('POST')}</span> {t("/api/devices/data — Push sensor readings")}
             </p>
             <p>
-              <span className="text-purple-600 font-semibold">{t('GET')}</span> /api/devices/status — Get
-              device statuses
+              <span className="text-purple-600 font-semibold">{t('GET')}</span> {t("/api/devices/status — Get device statuses")}
             </p>
           </div>
           <p>
-            Payload example for{' '}
+            {t("Payload example for")}{' '}
             <code className="text-xs bg-muted px-1 rounded">/api/devices/data</code>:
           </p>
           <pre className="bg-muted/50 p-3 rounded-md text-xs overflow-x-auto">

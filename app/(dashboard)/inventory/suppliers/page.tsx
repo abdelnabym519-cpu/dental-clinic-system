@@ -99,7 +99,7 @@ export default function SuppliersPage() {
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            + Add Supplier
+            {t("+ Add Supplier")}
           </button>
         </div>
       </div>
@@ -200,9 +200,9 @@ export default function SuppliersPage() {
             <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> of{' '}
+                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> {t("of")}{' '}
                     <span className="font-medium">{pagination.pages}</span> ({pagination.total}{' '}
-                    total suppliers)
+                    {t("total suppliers)")}
                   </p>
                 </div>
                 <div>
@@ -231,8 +231,7 @@ export default function SuppliersPage() {
           <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{t('Add New Supplier')}</h2>
             <p className="text-muted-foreground mb-4">
-              Supplier form will be implemented here. For now, please use the API directly or create
-              a dedicated page.
+              {t("Supplier form will be implemented here. For now, please use the API directly or create a dedicated page.")}
             </p>
             <button
               onClick={() => setShowAddModal(false)}

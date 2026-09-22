@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
+import { dateFnsLocale } from '@/lib/i18n/dates'
 
 interface CalendarStatus {
   connected: boolean
@@ -32,6 +33,7 @@ interface CalendarStatus {
 }
 
 export default function IntegrationsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -168,7 +170,7 @@ export default function IntegrationsPage() {
             </div>
             {!loading && (
               <Badge variant={calendarStatus?.connected ? 'default' : 'secondary'}>
-                {calendarStatus?.connected ? 'Connected' : 'Not Connected'}
+                {calendarStatus?.connected ? t("Connected") : t("Not Connected")}
               </Badge>
             )}
           </div>
@@ -190,7 +192,7 @@ export default function IntegrationsPage() {
                   <p className="text-muted-foreground">{t('Connected Since')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.createdAt
-                      ? format(new Date(calendarStatus.integration.createdAt), 'PPP')
+                      ? format(new Date(calendarStatus.integration.createdAt), 'PPP', { locale: dateFnsLocale(locale) })
                       : '—'}
                   </p>
                 </div>
@@ -198,15 +200,15 @@ export default function IntegrationsPage() {
                   <p className="text-muted-foreground">{t('Last Sync')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.lastSyncAt
-                      ? format(new Date(calendarStatus.integration.lastSyncAt), 'PPp')
-                      : 'Never'}
+                      ? format(new Date(calendarStatus.integration.lastSyncAt), 'PPp', { locale: dateFnsLocale(locale) })
+                      : t("Never")}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('ui.status')}</p>
                   <p className="font-medium flex items-center gap-1">
                     <Check className="h-4 w-4 text-green-600" />
-                    {calendarStatus.integration?.syncEnabled ? 'Sync Enabled' : 'Sync Disabled'}
+                    {calendarStatus.integration?.syncEnabled ? t("Sync Enabled") : t("Sync Disabled")}
                   </p>
                 </div>
               </div>
@@ -218,7 +220,7 @@ export default function IntegrationsPage() {
                   ) : (
                     <RefreshCcw className="h-4 w-4 mr-2" />
                   )}
-                  Sync Now
+                  {t("Sync Now")}
                 </Button>
                 <Button
                   variant="outline"
@@ -231,22 +233,19 @@ export default function IntegrationsPage() {
                   ) : (
                     <Unplug className="h-4 w-4 mr-2" />
                   )}
-                  Disconnect
+                  {t("Disconnect")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Connect your Google Calendar to automatically sync appointments. When you create or
-                update appointments in the system, they'll appear on your Google Calendar.
+                {t("Connect your Google Calendar to automatically sync appointments. When you create or update appointments in the system, they'll appear on your Google Calendar.")}
               </p>
               <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg">
                 <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
                 <p className="text-xs text-amber-800">
-                  Requires Google Calendar API credentials configured by the system administrator
-                  (GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET environment
-                  variables).
+                  {t("Requires Google Calendar API credentials configured by the system administrator (GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET environment variables).")}
                 </p>
               </div>
               <Button onClick={handleConnect} disabled={connecting}>
@@ -255,7 +254,7 @@ export default function IntegrationsPage() {
                 ) : (
                   <ExternalLink className="h-4 w-4 mr-2" />
                 )}
-                Connect Google Calendar
+                {t("Connect Google Calendar")}
               </Button>
             </div>
           )}

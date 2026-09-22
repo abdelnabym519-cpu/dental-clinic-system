@@ -85,7 +85,7 @@ export function KeyboardShortcutHelp() {
                     <div className="flex items-center gap-1">
                       {item.keys.map((key, i) => (
                         <span key={i}>
-                          {i > 0 && <span className="text-muted-foreground mx-0.5">then</span>}
+                          {i > 0 && <span className="text-muted-foreground mx-0.5">{t("then")}</span>}
                           <kbd className="px-2 py-0.5 bg-muted rounded border text-xs font-mono">
                             {key}
                           </kbd>

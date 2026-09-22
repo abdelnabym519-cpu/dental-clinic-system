@@ -311,7 +311,7 @@ export default function PaymentPlansPage() {
                       </div>
                       {plan.overdueInstallments > 0 && (
                         <span className="text-xs text-red-600">
-                          {plan.overdueInstallments} overdue
+                          {plan.overdueInstallments} {t("overdue")}
                         </span>
                       )}
                     </TableCell>
@@ -346,7 +346,7 @@ export default function PaymentPlansPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t("Page")} {page} {t("of")} {totalPages}
           </span>
           <Button
             variant="outline"

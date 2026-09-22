@@ -135,7 +135,7 @@ export default function VideoRoom({
         <div className="text-center space-y-2">
           <Phone className="h-12 w-12 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold">{t('Call Ended')}</h2>
-          <p className="text-muted-foreground">Duration: {formatDuration(elapsed)}</p>
+          <p className="text-muted-foreground">{t("Duration:")} {formatDuration(elapsed)}</p>
         </div>
         {isDoctor && (
           <div className="w-full max-w-lg space-y-3">
@@ -179,7 +179,7 @@ export default function VideoRoom({
                 onClick={() => setShowSidebar(!showSidebar)}
               >
                 <FileText className="h-4 w-4 mr-1" />
-                {showSidebar ? 'Hide' : 'Show'} Panel
+                {showSidebar ? 'Hide' : t("Show")} {t("Panel")}
               </Button>
             )}
             <Button
@@ -249,7 +249,7 @@ export default function VideoRoom({
                     {patient.medicalHistory.hasAllergies && (
                       <div className="flex items-center gap-1 text-red-600 text-xs">
                         <AlertTriangle className="h-3 w-3" />
-                        Allergies: {patient.medicalHistory.drugAllergies || 'Yes'}
+                        {t("Allergies:")} {patient.medicalHistory.drugAllergies || t("Yes")}
                       </div>
                     )}
                     {patient.medicalHistory.hasDiabetes && (
@@ -280,7 +280,7 @@ export default function VideoRoom({
                 <div className="text-muted-foreground">{appointment.appointmentNo}</div>
                 {appointment.chiefComplaint && (
                   <div>
-                    <span className="text-muted-foreground">Complaint:</span>{' '}
+                    <span className="text-muted-foreground">{t("Complaint:")}</span>{' '}
                     {appointment.chiefComplaint}
                   </div>
                 )}

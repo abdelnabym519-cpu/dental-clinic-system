@@ -6,6 +6,8 @@ import React from 'react'
 import ar from '../../locales/ar.json'
 import en from '../../locales/en.json'
 import { translate, translateText, directionFor } from '@/lib/i18n/dictionary'
+import { dateFnsLocale } from '@/lib/i18n/dates'
+import { format } from 'date-fns'
 
 /**
  * Arabic-mode completeness gates (i18n master mandate):
@@ -278,5 +280,119 @@ describe('Arabic-mode rendering of wired components', () => {
     expect(screen.getByText('القسم المحجوب: billing')).toBeTruthy()
     expect(screen.getByText('الذهاب إلى لوحة المعلومات')).toBeTruthy()
     expect(screen.queryByText(/Access Denied/)).toBeNull()
+  })
+})
+
+describe('pass-3 close-out sweep (JSX text nodes, JSX expressions, dates)', () => {
+  it('translates the copy that lived in JSX text nodes and ternaries', () => {
+    // These reached the browser as raw English before the sweep: text nodes that
+    // sat after an icon, on their own line, or inside a ternary/template.
+    const cases: [string, string][] = [
+      ['Queue', 'قائمة الانتظار'],
+      ['Waiting list', 'قائمة الانتظار'],
+      ['Analytics', 'التحليلات'],
+      ['Loading queue…', 'جارٍ تحميل قائمة الانتظار…'],
+      ['Date *', 'التاريخ *'],
+      ['Record Cycle', 'تسجيل دورة'],
+      ['Map columns to', 'مطابقة الأعمدة مع'],
+      ['Dental ERP v1.0', 'نظام إدارة العيادة v1.0'],
+      ['Dental Clinic', 'عيادة أسنان'],
+      ['Generate Forecast', 'إنشاء التوقع'],
+      ['AI Risk', 'مخاطر الذكاء الاصطناعي'],
+      ['Voice off', 'الصوت معطّل'],
+      ['Notes (visible on invoice)', 'ملاحظات (تظهر على الفاتورة)'],
+      ['EGP', 'ج.م'],
+      ['Odontogram', 'مخطط الأسنان'],
+      ['Fill Out', 'املأ النموذج'],
+    ]
+    for (const [en, ar] of cases) {
+      expect(translateText('ar-EG', en), `AR translation for ${JSON.stringify(en)}`).toBe(ar)
+      expect(translateText('en-EG', en), `EN round-trip for ${JSON.stringify(en)}`).toBe(en)
+    }
+  })
+
+  it('translates interpolated templates through vars', () => {
+    expect(translateText('ar-EG', 'Clinic holiday: {v1}', { v1: 'عيد الفطر' })).toBe('عطلة العيادة: عيد الفطر')
+    expect(translateText('ar-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe('تفاصيل الموعد A-12')
+    expect(translateText('ar-EG', '{v1} appointments loaded', { v1: 0 })).toBe('تم تحميل 0 موعد')
+    expect(translateText('ar-EG', 'EGP {v1}', { v1: '120' })).toBe('ج.م 120')
+    expect(translateText('en-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe('Appointment A-12 details')
+  })
+
+  it('date-fns formats in Arabic only when the UI locale is Arabic', () => {
+    expect(dateFnsLocale('ar-EG')).toBeTruthy()
+    expect(dateFnsLocale('en-EG')).toBeUndefined()
+    expect(dateFnsLocale('en-US')).toBeUndefined()
+    expect(dateFnsLocale(null)).toBeUndefined()
+    // end-to-end: the same date renders with Arabic month names for ar-EG
+    const d = new Date(2026, 8, 21)
+    expect(format(d, 'PP', { locale: dateFnsLocale('ar-EG') })).not.toMatch(/[A-Za-z]/)
+    expect(format(d, 'PP', { locale: dateFnsLocale('en-EG') })).toMatch(/Sep/)
+  })
+
+  it('clinic governorates and payment methods render in Arabic', () => {
+    for (const [en, ar] of [
+      ['Cairo', 'القاهرة'],
+      ['Giza', 'الجيزة'],
+      ['Sharqia', 'الشرقية'],
+      ['Cash payment', 'سداد نقدي'],
+      ['Fawry payment (POS, retail network)', 'سداد عبر فوري (نقاط البيع وشبكة التجزئة)'],
+    ] as [string, string][]) {
+      expect(translateText('ar-EG', en)).toBe(ar)
+    }
+  })
+})
+
+describe('dental-chart vocabulary (label-only wiring, no logic touched)', () => {
+  it('renders the odontogram summary cards in Arabic', async () => {
+    const { OdontogramStats } = await import(
+      '@/components/dental-chart/odontogram/OdontogramStats'
+    )
+    render(
+      <OdontogramStats
+        stats={{
+          presentTeeth: 28,
+          cariesTeeth: 2,
+          filledTeeth: 3,
+          missingTeeth: 4,
+          rootCanalTeeth: 1,
+          implantTeeth: 2,
+        } as never}
+      />
+    )
+    for (const label of ['الأسنان الموجودة', 'التسوس', 'الترميمات', 'المفقودة / المخلوعة', 'علاج العصب', 'الزرعات'])
+      expect(screen.getByText(label), label).toBeTruthy()
+    expect(screen.queryByText('Present Teeth')).toBeNull()
+  })
+
+  it('ships Arabic for every dental condition, description, severity and tooth name', () => {
+    for (const [key, expected] of Object.entries({
+      Crown: 'تاج',
+      Bridge: 'جسر',
+      Implant: 'زرعة',
+      'Root Canal': 'علاج العصب',
+      Extracted: 'مخلوع',
+      Missing: 'مفقود',
+      Fractured: 'مكسور',
+      Sensitive: 'حساس',
+      Mobility: 'حركية السن',
+      Abscess: 'خراج',
+      Periodontal: 'دواعم السن',
+      Veneer: 'فينير',
+      Mild: 'بسيطة',
+      Moderate: 'متوسطة',
+      Severe: 'شديدة',
+      'Upper Right Central Incisor': 'القاطع المركزي العلوي الأيمن',
+      'Lower Left Third Molar (Wisdom)': 'ضرس العقل السفلي الأيسر',
+      'Active carious lesion or enamel dedemineralization': 'تسوس نشط أو فقدان تمعدن المينا',
+      'Clinical Condition': 'الحالة السريرية',
+      'Surfaces Affected': 'الأسطح المتأثرة',
+      'Condition Legend': 'دليل الحالات',
+      'No prior historical records for this tooth.': 'لا توجد سجلات سابقة لهذا السن.',
+      'Save Failed': 'فشل الحفظ',
+    })) {
+      expect((ar as Record<string, string>)[key], `ar:${key}`).toBe(expected)
+      expect((en as Record<string, string>)[key], `en:${key}`).toBe(key)
+    }
   })
 })

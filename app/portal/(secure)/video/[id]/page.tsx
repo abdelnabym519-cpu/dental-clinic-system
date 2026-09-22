@@ -171,7 +171,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm">
-              Dr. {consultation.doctor.firstName} {consultation.doctor.lastName}
+              {t("Dr.")} {consultation.doctor.firstName} {consultation.doctor.lastName}
             </span>
             <Button
               variant="ghost"
@@ -231,7 +231,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
 
             <div className="text-center space-y-1">
               <h2 className="text-lg font-semibold">
-                Dr. {consultation.doctor.firstName} {consultation.doctor.lastName}
+                {t("Dr.")} {consultation.doctor.firstName} {consultation.doctor.lastName}
               </h2>
               {consultation.doctor.specialization && (
                 <p className="text-muted-foreground">{consultation.doctor.specialization}</p>
@@ -251,34 +251,33 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
 
             {consultation.appointment?.chiefComplaint && (
               <p className="text-sm text-center max-w-md">
-                <span className="text-muted-foreground">Reason: </span>
+                <span className="text-muted-foreground">{t("Reason:")} </span>
                 {consultation.appointment.chiefComplaint}
               </p>
             )}
 
             {consultation.duration != null && (
               <p className="text-sm text-muted-foreground">
-                Duration: {consultation.duration} minutes
+                {t("Duration:")} {consultation.duration} {t("minutes")}
               </p>
             )}
 
             {canJoin ? (
               <Button size="lg" onClick={joinCall} className="mt-4">
                 <Video className="h-5 w-5 mr-2" />
-                {consultation.status === 'IN_PROGRESS' ? 'Join Call' : 'Join When Ready'}
+                {consultation.status === 'IN_PROGRESS' ? t("Join Call") : t("Join When Ready")}
               </Button>
             ) : (
               <p className="text-muted-foreground text-sm mt-4">
                 {consultation.status === 'COMPLETED'
-                  ? 'This consultation has ended.'
-                  : 'This consultation is not available.'}
+                  ? t("This consultation has ended.")
+                  : t("This consultation is not available.")}
               </p>
             )}
 
             {canJoin && (
               <p className="text-xs text-muted-foreground max-w-sm text-center">
-                Please ensure you have a stable internet connection and have granted camera and
-                microphone permissions in your browser.
+                {t("Please ensure you have a stable internet connection and have granted camera and microphone permissions in your browser.")}
               </p>
             )}
           </div>

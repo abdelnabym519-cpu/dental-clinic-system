@@ -59,6 +59,7 @@ interface PatientFormSubmissionsProps {
 }
 
 export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProps) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [loading, setLoading] = useState(true)
@@ -158,14 +159,14 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
                     <div className="flex-1 min-w-0">
                       <div className="font-medium">{s.template.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(s.createdAt).toLocaleDateString('en-EG', {
+                        {new Date(s.createdAt).toLocaleDateString(locale, {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
-                        {s.signedAt && ' (Signed)'}
+                        {s.signedAt && t(" (Signed)")}
                       </div>
                     </div>
                     <Badge variant={sc.variant} className="flex items-center gap-1">
@@ -231,7 +232,7 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
               <Button variant="outline" onClick={() => setViewSubmission(null)}>{t('ui.close')}</Button>
               <Button onClick={handleReview} disabled={reviewing}>
                 {reviewing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Save Review
+                {t("Save Review")}
               </Button>
             </div>
           </div>

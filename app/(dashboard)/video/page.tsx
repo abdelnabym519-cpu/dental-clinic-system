@@ -255,7 +255,7 @@ export default function VideoConsultationsPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          Dr. {c.doctor.firstName} {c.doctor.lastName}
+                          {t("Dr.")} {c.doctor.firstName} {c.doctor.lastName}
                         </div>
                         {c.doctor.specialization && (
                           <div className="text-xs text-muted-foreground">
@@ -322,7 +322,7 @@ export default function VideoConsultationsPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t("Page")} {page} {t("of")} {totalPages}
           </span>
           <Button
             variant="outline"

@@ -280,16 +280,16 @@ export default function InsuranceProvidersPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Provider' : 'Add Insurance Provider'}</DialogTitle>
+            <DialogTitle>{editingId ? t("Edit Provider") : t("Add Insurance Provider")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Label>Provider Name *</Label>
+                <Label>{t("Provider Name *")}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g., MetLife Egypt"
+                  placeholder={t("e.g., MetLife Egypt")}
                 />
               </div>
               <div>
@@ -297,7 +297,7 @@ export default function InsuranceProvidersPage() {
                 <Input
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
-                  placeholder="e.g., STARHI"
+                  placeholder={t("e.g., STARHI")}
                 />
               </div>
               <div>
@@ -314,7 +314,7 @@ export default function InsuranceProvidersPage() {
                   type="email"
                   value={form.contactEmail}
                   onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-                  placeholder="claims@provider.com"
+                  placeholder={t("claims@provider.com")}
                 />
               </div>
               <div className="col-span-2">
@@ -322,7 +322,7 @@ export default function InsuranceProvidersPage() {
                 <Input
                   value={form.website}
                   onChange={(e) => setForm({ ...form, website: e.target.value })}
-                  placeholder="https://provider.com"
+                  placeholder={t("https://provider.com")}
                 />
               </div>
               <div className="col-span-2">
@@ -330,7 +330,7 @@ export default function InsuranceProvidersPage() {
                 <Input
                   value={form.claimSubmissionUrl}
                   onChange={(e) => setForm({ ...form, claimSubmissionUrl: e.target.value })}
-                  placeholder="https://provider.com/claims/submit"
+                  placeholder={t("https://provider.com/claims/submit")}
                 />
               </div>
               <div>
@@ -347,7 +347,7 @@ export default function InsuranceProvidersPage() {
                   type="password"
                   value={form.portalPassword}
                   onChange={(e) => setForm({ ...form, portalPassword: e.target.value })}
-                  placeholder={editingId ? 'Leave blank to keep' : 'Password'}
+                  placeholder={editingId ? t("Leave blank to keep") : 'Password'}
                 />
               </div>
             </div>

@@ -281,7 +281,7 @@ export default function InventoryPage() {
             ) : (
               <Brain className="h-4 w-4 mr-2" />
             )}
-            AI Forecast
+            {t("AI Forecast")}
           </Button>
           <Link href="/inventory/new">
             <Button>
@@ -302,7 +302,7 @@ export default function InventoryPage() {
                 <div className="text-2xl font-bold text-red-700">
                   {forecastData.summary?.criticalItems || 0}
                 </div>
-                <div className="text-xs text-red-600">Critical (stockout &le;7d)</div>
+                <div className="text-xs text-red-600">{t("Critical (stockout \u22647d)")}</div>
               </CardContent>
             </Card>
             <Card className="border-amber-200 bg-amber-50">
@@ -404,7 +404,7 @@ export default function InventoryPage() {
                             }
                           >
                             {forecast.daysUntilStockout > 365 ? '365+' : forecast.daysUntilStockout}{' '}
-                            days
+                            {t("days")}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -593,7 +593,7 @@ export default function InventoryPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">{item.categoryName || 'Uncategorized'}</div>
+                      <div className="text-sm">{item.categoryName || t("Uncategorized")}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{formatItemType(item.itemType)}</Badge>
@@ -604,7 +604,7 @@ export default function InventoryPage() {
                           {item.currentStock} {item.unit}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Min: {item.minimumStock}
+                          {t("Min:")} {item.minimumStock}
                         </div>
                       </div>
                     </TableCell>
@@ -612,7 +612,7 @@ export default function InventoryPage() {
                       <div className="font-medium">{formatCurrency(item.purchasePrice)}</div>
                       {item.sellingPrice > 0 && (
                         <div className="text-xs text-muted-foreground">
-                          Selling: {formatCurrency(item.sellingPrice)}
+                          {t("Selling:")} {formatCurrency(item.sellingPrice)}
                         </div>
                       )}
                     </TableCell>
@@ -658,9 +658,9 @@ export default function InventoryPage() {
           {!loading && pagination.pages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} items
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("items")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -671,7 +671,7 @@ export default function InventoryPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.pages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.pages}
                 </div>
                 <Button
                   variant="outline"

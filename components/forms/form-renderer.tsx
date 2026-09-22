@@ -95,7 +95,7 @@ export function FormRenderer({
 
       if (field.required) {
         if (val === undefined || val === null || val === '') {
-          newErrors[field.id] = `${field.label} is required`
+          newErrors[field.id] = t('{v1} is required', { v1: field.label })
           continue
         }
       }
@@ -145,9 +145,9 @@ export function FormRenderer({
       case 'heading':
         return (
           <div key={field.id} className="pt-4 pb-2">
-            <h3 className="text-lg font-semibold">{field.label}</h3>
+            <h3 className="text-lg font-semibold">{t(field.label)}</h3>
             {field.description && (
-              <p className="text-sm text-muted-foreground">{field.description}</p>
+              <p className="text-sm text-muted-foreground">{t(field.description)}</p>
             )}
           </div>
         )
@@ -155,7 +155,7 @@ export function FormRenderer({
       case 'paragraph':
         return (
           <div key={field.id} className="py-2">
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{field.label}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{t(field.label)}</p>
           </div>
         )
 
@@ -163,11 +163,11 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id}>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs text-muted-foreground">{t(field.description)}</p>
             )}
             <Input
               id={field.id}
@@ -185,11 +185,11 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id}>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs text-muted-foreground">{t(field.description)}</p>
             )}
             <Textarea
               id={field.id}
@@ -207,7 +207,7 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id}>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             <Input
@@ -228,7 +228,7 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id}>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             <Input
@@ -246,7 +246,7 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             <Select
@@ -255,7 +255,7 @@ export function FormRenderer({
               disabled={readOnly}
             >
               <SelectTrigger>
-                <SelectValue placeholder={field.placeholder || 'Select...'} />
+                <SelectValue placeholder={field.placeholder || t("Select...")} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((opt) => (
@@ -276,7 +276,7 @@ export function FormRenderer({
           return (
             <div key={field.id} className="space-y-2">
               <Label>
-                {field.label}
+                {t(field.label)}
                 {field.required && <span className="text-destructive ml-1">*</span>}
               </Label>
               <div className="space-y-2">
@@ -318,11 +318,11 @@ export function FormRenderer({
             />
             <div className="space-y-1">
               <label htmlFor={field.id} className="text-sm font-medium cursor-pointer">
-                {field.label}
+                {t(field.label)}
                 {field.required && <span className="text-destructive ml-1">*</span>}
               </label>
               {field.description && (
-                <p className="text-xs text-muted-foreground">{field.description}</p>
+                <p className="text-xs text-muted-foreground">{t(field.description)}</p>
               )}
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
@@ -333,7 +333,7 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2">
             <Label>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             <RadioGroup
@@ -358,14 +358,14 @@ export function FormRenderer({
         return (
           <div key={field.id} className="space-y-2 pt-4">
             <Label>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="text-destructive ml-1">*</span>}
             </Label>
             {!readOnly ? (
               <SignaturePad
                 onSignatureChange={setSignature}
                 initialSignature={signature}
-                label={signatureLabel || field.description || 'I agree to the terms above'}
+                label={signatureLabel || field.description || t('I agree to the terms above')}
               />
             ) : signature ? (
               <div className="border rounded-lg p-2 bg-background">

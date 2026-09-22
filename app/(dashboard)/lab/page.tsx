@@ -104,6 +104,7 @@ interface Stats {
 }
 
 export default function LabWorkPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const [orders, setOrders] = useState<LabOrder[]>([])
@@ -277,7 +278,7 @@ export default function LabWorkPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('en-EG', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -568,9 +569,9 @@ export default function LabWorkPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                  {pagination.total} orders
+                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                  {pagination.total} {t("orders")}
                 </p>
                 <div className="flex gap-2">
                   <Button

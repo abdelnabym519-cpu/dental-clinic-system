@@ -108,14 +108,14 @@ export function Breadcrumb({ className }: { className?: string }) {
           <ChevronRight className="h-3.5 w-3.5" />
           {crumb.isLast ? (
             <span className="font-medium text-foreground truncate max-w-[200px]">
-              {crumb.label}
+              {t(crumb.label)}
             </span>
           ) : (
             <Link
               href={crumb.href}
               className="hover:text-foreground transition-colors truncate max-w-[150px]"
             >
-              {crumb.label}
+              {t(crumb.label)}
             </Link>
           )}
         </div>

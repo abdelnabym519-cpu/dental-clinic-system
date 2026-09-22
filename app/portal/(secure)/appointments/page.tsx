@@ -45,6 +45,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function PatientAppointments() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [filter, setFilter] = useState('upcoming')
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -77,7 +78,7 @@ export default function PatientAppointments() {
   }, [filter])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-EG', {
+    new Date(d).toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
@@ -114,7 +115,7 @@ export default function PatientAppointments() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>No {filter} {t('appointments found')}</p>
+                <p>{t("No")} {filter} {t('appointments found')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -127,19 +128,19 @@ export default function PatientAppointments() {
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {formatDate(apt.scheduledDate)} at {apt.scheduledTime}
+                            {formatDate(apt.scheduledDate)} {t("at")} {apt.scheduledTime}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
-                            Dr. {apt.doctor.firstName} {apt.doctor.lastName}
+                            {t("Dr.")} {apt.doctor.firstName} {apt.doctor.lastName}
                             {apt.doctor.specialization && ` (${apt.doctor.specialization})`}
                           </span>
                         </div>
                         {apt.chiefComplaint && (
                           <p className="text-sm text-muted-foreground">
-                            Reason: {apt.chiefComplaint}
+                            {t("Reason:")} {apt.chiefComplaint}
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
@@ -167,7 +168,7 @@ export default function PatientAppointments() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Page {pagination.page} of {pagination.totalPages}
+                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                   </span>
                   <Button
                     variant="outline"

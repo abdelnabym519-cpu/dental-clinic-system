@@ -139,6 +139,7 @@ function usePatientSearch() {
 // ---------------------------------------------------------------------------
 
 export default function LoyaltyPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
 
@@ -380,7 +381,7 @@ export default function LoyaltyPage() {
             <form onSubmit={handleAward} className="space-y-4">
               {/* Patient search */}
               <div className="space-y-2">
-                <Label>Patient *</Label>
+                <Label>{t("Patient *")}</Label>
                 {awardPatient ? (
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div>
@@ -451,7 +452,7 @@ export default function LoyaltyPage() {
 
               {/* Points */}
               <div className="space-y-2">
-                <Label htmlFor="awardPoints">Points *</Label>
+                <Label htmlFor="awardPoints">{t("Points *")}</Label>
                 <Input
                   id="awardPoints"
                   type="number"
@@ -465,7 +466,7 @@ export default function LoyaltyPage() {
 
               {/* Type */}
               <div className="space-y-2">
-                <Label>Type *</Label>
+                <Label>{t("Type *")}</Label>
                 <Select value={awardType} onValueChange={(v) => setAwardType(v as PointType)}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_type')} />
@@ -517,7 +518,7 @@ export default function LoyaltyPage() {
             <form onSubmit={handleRedeem} className="space-y-4">
               {/* Patient search */}
               <div className="space-y-2">
-                <Label>Patient *</Label>
+                <Label>{t("Patient *")}</Label>
                 {redeemPatient ? (
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div>
@@ -592,14 +593,14 @@ export default function LoyaltyPage() {
                   <span className="text-sm font-medium">{t('Available Balance')}</span>
                   <span className="text-xl font-bold flex items-center gap-1">
                     <TrendingUp className="h-4 w-4 text-green-600" />
-                    {redeemBalance.toLocaleString()} pts
+                    {redeemBalance.toLocaleString()} {t("pts")}
                   </span>
                 </div>
               )}
 
               {/* Points */}
               <div className="space-y-2">
-                <Label htmlFor="redeemPoints">Points to Redeem *</Label>
+                <Label htmlFor="redeemPoints">{t("Points to Redeem *")}</Label>
                 <Input
                   id="redeemPoints"
                   type="number"
@@ -709,7 +710,7 @@ export default function LoyaltyPage() {
                     {transactions.map((tx) => (
                       <TableRow key={tx.id}>
                         <TableCell className="whitespace-nowrap text-sm">
-                          {new Date(tx.createdAt).toLocaleDateString('en-EG', {
+                          {new Date(tx.createdAt).toLocaleDateString(locale, {
                             day: '2-digit',
                             month: 'short',
                             year: 'numeric',
@@ -745,7 +746,7 @@ export default function LoyaltyPage() {
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages} ({pagination.total} {t("total)")}
                   </p>
                   <div className="flex gap-2">
                     <Button

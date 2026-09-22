@@ -95,11 +95,11 @@ export function CommandBar() {
             </p>
             <div className="flex flex-wrap gap-2">
               {[
-                "Show today's appointments",
-                'Check stock for composite resin',
-                "Show this month's revenue",
-                'Check overdue invoices',
-                'Low stock alerts',
+                t("Show today's appointments"),
+                t("Check stock for composite resin"),
+                t("Show this month's revenue"),
+                t("Check overdue invoices"),
+                t("Low stock alerts"),
               ].map((example) => (
                 <button
                   key={example}
@@ -137,7 +137,7 @@ export function CommandBar() {
         {commandLoading && (
           <div className="flex items-center gap-2 px-4 py-3 border-t">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-            <span className="text-sm text-muted-foreground">Processing…</span>
+            <span className="text-sm text-muted-foreground">{t("Processing…")}</span>
           </div>
         )}
 
@@ -225,7 +225,7 @@ export function CommandBar() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-red-600">{result.result?.message || 'No result'}</p>
+              <p className="text-sm text-red-600">{result.result?.message || t("No result")}</p>
             )}
           </div>
         )}

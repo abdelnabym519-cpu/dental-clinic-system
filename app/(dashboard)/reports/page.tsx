@@ -304,7 +304,7 @@ export default function ReportsPage() {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="w-[140px]"
-                placeholder="To"
+                placeholder={t("To")}
               />
             </>
           )}
@@ -369,7 +369,7 @@ export default function ReportsPage() {
                             (patientAnalytics.newPatients / patientAnalytics.totalPatients) * 100
                           )
                         : '0%'}{' '}
-                      of total
+                      {t("of total")}
                     </p>
                   </>
                 )}
@@ -396,7 +396,7 @@ export default function ReportsPage() {
                               100
                           )
                         : '0%'}{' '}
-                      of total
+                      {t("of total")}
                     </p>
                   </>
                 )}
@@ -527,7 +527,7 @@ export default function ReportsPage() {
                   patientAnalytics?.acquisitionSources.map((source) => (
                     <div key={source.source} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{source.source || 'Unknown'}</span>
+                        <span className="font-medium">{source.source || t("Unknown")}</span>
                         <span className="text-muted-foreground">
                           {source.count} ({formatPercentage(source.percentage)})
                         </span>
@@ -612,7 +612,7 @@ export default function ReportsPage() {
                       {clinicalAnalytics?.completedTreatments || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatPercentage(clinicalAnalytics?.completionRate || 0)} completion rate
+                      {formatPercentage(clinicalAnalytics?.completionRate || 0)} {t("completion rate")}
                     </p>
                   </>
                 )}
@@ -648,7 +648,7 @@ export default function ReportsPage() {
                     <div className="text-2xl font-bold">
                       {clinicalAnalytics?.avgTreatmentDuration || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">minutes per treatment</p>
+                    <p className="text-xs text-muted-foreground">{t("minutes per treatment")}</p>
                   </>
                 )}
               </CardContent>
@@ -686,7 +686,7 @@ export default function ReportsPage() {
                       <div className="text-right">
                         <div className="font-bold">{proc.count}</div>
                         <div className="text-xs text-green-600">
-                          {formatPercentage(proc.successRate)} success
+                          {formatPercentage(proc.successRate)} {t("success")}
                         </div>
                       </div>
                     </div>
@@ -827,7 +827,7 @@ export default function ReportsPage() {
                       {formatPercentage(financialAnalytics?.collectionEfficiency || 0)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Outstanding: {formatCurrency(financialAnalytics?.outstandingAmount || 0)}
+                      {t("Outstanding:")} {formatCurrency(financialAnalytics?.outstandingAmount || 0)}
                     </p>
                   </>
                 )}
@@ -984,7 +984,7 @@ export default function ReportsPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {formatPercentage(operationalAnalytics?.appointmentUtilization || 0)}{' '}
-                      utilization
+                      {t("utilization")}
                     </p>
                   </>
                 )}
@@ -1005,7 +1005,7 @@ export default function ReportsPage() {
                       {formatPercentage(operationalAnalytics?.noShowRate || 0)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {operationalAnalytics?.noShowCount || 0} appointments
+                      {operationalAnalytics?.noShowCount || 0} {t("appointments")}
                     </p>
                   </>
                 )}
@@ -1025,7 +1025,7 @@ export default function ReportsPage() {
                     <div className="text-2xl font-bold">
                       {operationalAnalytics?.avgWaitTime || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">minutes</p>
+                    <p className="text-xs text-muted-foreground">{t("minutes")}</p>
                   </>
                 )}
               </CardContent>

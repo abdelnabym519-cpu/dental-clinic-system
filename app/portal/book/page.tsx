@@ -45,6 +45,7 @@ interface Slot {
 type Step = 1 | 2 | 3 | 4
 
 export default function BookAppointment() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
 
@@ -187,7 +188,7 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" /> Select Doctor
+              <User className="h-5 w-5" /> {t("Select Doctor")}
             </CardTitle>
             <CardDescription>{t('Choose your preferred doctor')}</CardDescription>
           </CardHeader>
@@ -216,7 +217,7 @@ export default function BookAppointment() {
                     onClick={() => setSelectedDoctor(doc.id)}
                   >
                     <p className="font-medium">
-                      Dr. {doc.firstName} {doc.lastName}
+                      {t("Dr.")} {doc.firstName} {doc.lastName}
                     </p>
                     {doc.specialization && (
                       <p className="text-sm text-muted-foreground">{doc.specialization}</p>
@@ -237,12 +238,12 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="h-5 w-5" /> Select Date & Time
+              <Calendar className="h-5 w-5" /> {t("Select Date & Time")}
             </CardTitle>
             <CardDescription>
               {selectedDoctorObj && (
                 <>
-                  Dr. {selectedDoctorObj.firstName} {selectedDoctorObj.lastName}
+                  {t("Dr.")} {selectedDoctorObj.firstName} {selectedDoctorObj.lastName}
                 </>
               )}
             </CardDescription>
@@ -301,7 +302,7 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" /> Confirm Booking
+              <CheckCircle className="h-5 w-5" /> {t("Confirm Booking")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -311,13 +312,13 @@ export default function BookAppointment() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('ui.doctor')}</span>
                 <span className="font-medium">
-                  Dr. {selectedDoctorObj?.firstName} {selectedDoctorObj?.lastName}
+                  {t("Dr.")} {selectedDoctorObj?.firstName} {selectedDoctorObj?.lastName}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('ui.date')}</span>
                 <span className="font-medium">
-                  {new Date(selectedDate).toLocaleDateString('en-EG', {
+                  {new Date(selectedDate).toLocaleDateString(locale, {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -332,9 +333,9 @@ export default function BookAppointment() {
             </div>
 
             <div className="space-y-2">
-              <Label>Reason for visit (optional)</Label>
+              <Label>{t("Reason for visit (optional)")}</Label>
               <Textarea
-                placeholder={"Describe your dental concern " + COMPLAINT_HINT}
+                placeholder={t("Describe your dental concern ") + COMPLAINT_HINT}
                 value={chiefComplaint}
                 onChange={(e) => setChiefComplaint(e.target.value)}
                 rows={3}
@@ -346,7 +347,7 @@ export default function BookAppointment() {
                 <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
               <Button className="flex-1" onClick={handleBook} disabled={booking}>
                 {booking && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Confirm Booking
+                {t("Confirm Booking")}
               </Button>
             </div>
           </CardContent>
@@ -361,19 +362,19 @@ export default function BookAppointment() {
             <h2 className="text-xl font-bold text-green-700">{t('Booking Confirmed!')}</h2>
             <div className="p-4 rounded-lg bg-green-50 space-y-2 text-sm">
               <p>
-                <strong>Appointment:</strong> {bookingResult.appointmentNo}
+                <strong>{t("Appointment:")}</strong> {bookingResult.appointmentNo}
               </p>
               <p>
-                <strong>Doctor:</strong>{' '}
+                <strong>{t("Doctor:")}</strong>{' '}
                 {bookingResult.doctor?.firstName
-                  ? `Dr. ${bookingResult.doctor.firstName} ${bookingResult.doctor.lastName}`
+                  ? t("Dr. {v1} {v2}", { v1: bookingResult.doctor.firstName, v2: bookingResult.doctor.lastName })
                   : selectedDoctorObj
-                    ? `Dr. ${selectedDoctorObj.firstName} ${selectedDoctorObj.lastName}`
+                    ? t("Dr. {v1} {v2}", { v1: selectedDoctorObj.firstName, v2: selectedDoctorObj.lastName })
                     : ''}
               </p>
               <p>
-                <strong>Date:</strong>{' '}
-                {new Date(selectedDate).toLocaleDateString('en-EG', {
+                <strong>{t('Date:')}</strong>{' '}
+                {new Date(selectedDate).toLocaleDateString(locale, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -381,7 +382,7 @@ export default function BookAppointment() {
                 })}
               </p>
               <p>
-                <strong>Time:</strong> {selectedTime}
+                <strong>{t("Time:")}</strong> {selectedTime}
               </p>
             </div>
             <Button onClick={() => router.push('/portal/appointments')}>

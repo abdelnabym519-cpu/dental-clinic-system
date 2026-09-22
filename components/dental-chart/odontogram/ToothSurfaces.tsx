@@ -4,6 +4,7 @@ import React from 'react'
 import { ToothViewModel, ToothSurfaceKey } from '../types/odontogram'
 import { ToothGeometryPaths } from '../geometry/tooth-paths'
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ToothSurfacesProps {
   tooth: ToothViewModel
@@ -20,6 +21,7 @@ export function ToothSurfaces({
   onSurfaceClick,
   interactive = true,
 }: ToothSurfacesProps) {
+  const { t } = useLanguage()
   // Get active restorative / condition color
   const conditionConfig = DENTAL_CONDITION_CONFIG[tooth.condition]
   const fillColor = conditionConfig?.fillColor || '#ef4444'
@@ -65,7 +67,7 @@ export function ToothSurfaces({
               }
             }}
           >
-            <title>{`${tooth.name} - ${surfaceKey.toUpperCase()} surface`}</title>
+            <title>{`${t(tooth.name)} - ${surfaceKey.toUpperCase()} ${t('surface')}`}</title>
           </path>
         )
       })}

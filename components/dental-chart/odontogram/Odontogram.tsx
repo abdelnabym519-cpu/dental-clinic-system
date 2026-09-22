@@ -24,6 +24,7 @@ import { SurfaceSelectorDialog } from './SurfaceSelectorDialog'
 import { OdontogramLegend } from './OdontogramLegend'
 import { OdontogramStats } from './OdontogramStats'
 import { RefreshCw, CheckSquare, Sparkles } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 export function Odontogram({
   patientId,
@@ -40,6 +41,7 @@ export function Odontogram({
   mode = 'clinical',
   title = 'Interactive Dental Chart',
 }: OdontogramProps & { title?: string }) {
+  const { t } = useLanguage()
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(!externalChartData && !externalEntries)
@@ -75,7 +77,7 @@ export function Odontogram({
       console.error('Error loading dental chart:', err)
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: t('Error'),
         description: err.message || 'Failed to load dental chart',
       })
     } finally {
@@ -173,7 +175,7 @@ export function Odontogram({
       }
 
       toast({
-        title: 'Success',
+        title: t('Success'),
         description: `Tooth #${payload.toothNumber} marked as ${payload.condition}`,
       })
 
@@ -187,7 +189,7 @@ export function Odontogram({
     } catch (err: any) {
       toast({
         variant: 'destructive',
-        title: 'Save Failed',
+        title: t('Save Failed'),
         description: err.message || 'Could not save tooth record',
       })
     } finally {
@@ -221,8 +223,7 @@ export function Odontogram({
                 <span>{title}</span>
                 {mode === 'selection' && (
                   <Badge variant="secondary" className="gap-1 text-xs">
-                    <CheckSquare className="w-3 h-3 text-primary" /> Selection Mode
-                  </Badge>
+                    <CheckSquare className="w-3 h-3 text-primary" /> {t("Selection Mode")} </Badge>
                 )}
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">
@@ -242,8 +243,7 @@ export function Odontogram({
                   className="h-8 gap-1.5 text-xs rounded-lg"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
+                  {t("Refresh")} </Button>
               )}
             </div>
           </div>
@@ -268,7 +268,7 @@ export function Odontogram({
             <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-center justify-between gap-3 animate-in fade-in">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-foreground">
-                  Selected Teeth ({selectedTeeth.length}):
+                  {t("Selected Teeth (")}{selectedTeeth.length}):
                 </span>
                 {selectedTeeth
                   .sort((a, b) => a - b)
@@ -285,8 +285,7 @@ export function Odontogram({
                   onClick={() => onTeethSelect([])}
                   className="text-xs text-muted-foreground hover:text-foreground h-7"
                 >
-                  Clear all
-                </Button>
+                  {t("Clear all")} </Button>
               )}
             </div>
           )}

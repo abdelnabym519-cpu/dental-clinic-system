@@ -72,10 +72,10 @@ export function AuditMonitor() {
             onChange={(e) => setDaysBack(Number(e.target.value))}
             className="text-xs border rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
           >
-            <option value={3}>3 days</option>
-            <option value={7}>7 days</option>
-            <option value={14}>14 days</option>
-            <option value={30}>30 days</option>
+            <option value={3}>{t("3 days")}</option>
+            <option value={7}>{t("7 days")}</option>
+            <option value={14}>{t("14 days")}</option>
+            <option value={30}>{t("30 days")}</option>
           </select>
           <button
             onClick={load}
@@ -91,7 +91,7 @@ export function AuditMonitor() {
       {loading && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="h-3 w-3 animate-spin rounded-full border border-muted border-t-primary" />
-          <span>Analysing audit logs…</span>
+          <span>{t("Analysing audit logs…")}</span>
         </div>
       )}
 
@@ -122,11 +122,11 @@ export function AuditMonitor() {
               </div>
               <p className="opacity-80">{p.recommendation}</p>
               {p.affectedUsers && p.affectedUsers.length > 0 && (
-                <p className="mt-1 opacity-60">Affected users: {p.affectedUsers.join(', ')}</p>
+                <p className="mt-1 opacity-60">{t("Affected users:")} {p.affectedUsers.join(', ')}</p>
               )}
               {p.occurrences != null && (
                 <p className="mt-0.5 opacity-60">
-                  {p.occurrences} occurrence{p.occurrences !== 1 ? 's' : ''}
+                  {p.occurrences} {t("occurrence")}{p.occurrences !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -137,7 +137,7 @@ export function AuditMonitor() {
       {/* clean bill of health */}
       {!loading && analysis?.suspicious && analysis.suspicious.length === 0 && (
         <p className="text-xs text-emerald-700 bg-emerald-50 rounded border border-emerald-200 px-3 py-2">
-          ✓ No suspicious patterns detected in the last {daysBack} day{daysBack !== 1 ? 's' : ''}.
+          {t("✓ No suspicious patterns detected in the last")} {daysBack} {t("day")}{daysBack !== 1 ? 's' : ''}.
         </p>
       )}
     </div>

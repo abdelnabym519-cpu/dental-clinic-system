@@ -133,7 +133,7 @@ export default function SignupPage() {
             <Input
               id="email"
               type="email"
-              placeholder="doctor@clinic.com"
+              placeholder={t("doctor@clinic.com")}
               {...register('email')}
               disabled={isLoading}
             />
@@ -182,7 +182,7 @@ export default function SignupPage() {
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Account
+            {t("Create Account")}
           </Button>
         </form>
 

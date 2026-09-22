@@ -79,7 +79,7 @@ function VerifyEmailContent() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
-          {status === 'success' && (
+          {status === t("success") && (
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
@@ -96,15 +96,15 @@ function VerifyEmailContent() {
           )}
         </div>
         <CardTitle className="text-2xl font-bold">
-          {status === 'loading' && 'Verifying...'}
-          {status === 'success' && 'Email Verified!'}
-          {status === 'error' && 'Verification Failed'}
-          {status === 'pending' && 'Check Your Email'}
+          {status === 'loading' && t("Verifying...")}
+          {status === t("success") && t("Email Verified!")}
+          {status === 'error' && t("Verification Failed")}
+          {status === 'pending' && t("Check Your Email")}
         </CardTitle>
         <CardDescription className="text-base">{message}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {status === 'success' && (
+        {status === t("success") && (
           <Button asChild className="w-full">
             <Link href="/login">{t('ui.continue_to_login')}</Link>
           </Button>

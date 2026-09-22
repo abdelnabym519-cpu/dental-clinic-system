@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ClipboardList, FileText, Grid3x3, User, Calendar } from 'lucide-react'
 
 export default function PatientRecords() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [tab, setTab] = useState('treatments')
   const [data, setData] = useState<any>(null)
@@ -24,7 +25,7 @@ export default function PatientRecords() {
   }, [tab])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-EG', {
+    new Date(d).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -64,28 +65,28 @@ export default function PatientRecords() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {data.treatments.map((t: any) => (
-                <Card key={t.id}>
+              {data.treatments.map((treatment: any) => (
+                <Card key={treatment.id}>
                   <CardContent className="py-4">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <p className="font-medium">{t.procedure.name}</p>
-                        {t.procedure.code && (
-                          <p className="text-xs text-muted-foreground">Code: {t.procedure.code}</p>
+                        <p className="font-medium">{treatment.procedure.name}</p>
+                        {treatment.procedure.code && (
+                          <p className="text-xs text-muted-foreground">{t("Code:")} {treatment.procedure.code}</p>
                         )}
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            Dr. {t.doctor.firstName} {t.doctor.lastName}
+                            {t("Dr.")} {treatment.doctor.firstName} {treatment.doctor.lastName}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDate(t.createdAt)}
+                            {formatDate(treatment.createdAt)}
                           </span>
                         </div>
                       </div>
-                      <Badge className={statusColors[t.status] || 'bg-muted text-foreground'}>
-                        {t.status.replace('_', ' ')}
+                      <Badge className={statusColors[treatment.status] || 'bg-muted text-foreground'}>
+                        {treatment.status.replace('_', ' ')}
                       </Badge>
                     </div>
                   </CardContent>
@@ -112,7 +113,7 @@ export default function PatientRecords() {
                   <CardContent className="py-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">Tooth #{entry.toothNumber}</p>
+                        <p className="font-medium">{t("Tooth #")}{entry.toothNumber}</p>
                         <p className="text-sm text-muted-foreground">
                           {entry.condition} {entry.surface && `(${entry.surface})`}
                         </p>

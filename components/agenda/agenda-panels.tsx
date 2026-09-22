@@ -100,17 +100,17 @@ export function AgendaOperationsPanel({
           <TabsList className="mb-3">
             {capabilities.canCheckIn && (
               <TabsTrigger value="queue" className="gap-2">
-                <ClipboardList className="h-4 w-4" /> Queue
+                <ClipboardList className="h-4 w-4" /> {t("Queue")}
               </TabsTrigger>
             )}
             {capabilities.canWaitlist && (
               <TabsTrigger value="waitlist" className="gap-2">
-                <Hourglass className="h-4 w-4" /> Waiting list
+                <Hourglass className="h-4 w-4" /> {t("Waiting list")}
               </TabsTrigger>
             )}
             {capabilities.canViewAnalytics && (
               <TabsTrigger value="analytics" className="gap-2">
-                <BarChart3 className="h-4 w-4" /> Analytics
+                <BarChart3 className="h-4 w-4" /> {t("Analytics")}
               </TabsTrigger>
             )}
           </TabsList>
@@ -213,7 +213,7 @@ function TodayQueue({
       )}
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading queue…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading queue…")}
         </div>
       ) : items.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
@@ -232,7 +232,7 @@ function TodayQueue({
                 {getPatientName(apt.patient)}
               </button>
               <span className="text-xs text-muted-foreground">
-                Dr. {getDoctorName(apt.doctor)} · {apt.duration}m
+                {t("Dr.")} {getDoctorName(apt.doctor)} · {apt.duration}m
               </span>
               <Badge variant="outline" className="ml-auto text-[10px]">
                 {appointmentStatusConfig[apt.status]?.label ?? apt.status}
@@ -245,7 +245,7 @@ function TodayQueue({
                       variant="outline"
                       className="h-7 px-2 text-xs"
                       disabled={busyId === apt.id}
-                      aria-label={`Check in ${getPatientName(apt.patient)}`}
+                      aria-label={t("Check in {v1}", { v1: getPatientName(apt.patient) })}
                       onClick={() => setStatus(apt, 'CHECKED_IN')}
                     >{t('ui.check_in_2')}</Button>
                   )}
@@ -255,7 +255,7 @@ function TodayQueue({
                     variant="outline"
                     className="h-7 px-2 text-xs"
                     disabled={busyId === apt.id}
-                    aria-label={`Start visit for ${getPatientName(apt.patient)}`}
+                    aria-label={t("Start visit for {v1}", { v1: getPatientName(apt.patient) })}
                     onClick={() => setStatus(apt, 'IN_PROGRESS')}
                   >{t('ui.start')}</Button>
                 )}
@@ -265,7 +265,7 @@ function TodayQueue({
                     variant="outline"
                     className="h-7 px-2 text-xs"
                     disabled={busyId === apt.id}
-                    aria-label={`Complete visit for ${getPatientName(apt.patient)}`}
+                    aria-label={t("Complete visit for {v1}", { v1: getPatientName(apt.patient) })}
                     onClick={() => setStatus(apt, 'COMPLETED')}
                   >{t('ui.complete')}</Button>
                 )}
@@ -342,7 +342,7 @@ function WaitingListPanel({
       )}
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading waiting list…
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading waiting list…")}
         </div>
       ) : entries.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
@@ -358,12 +358,12 @@ function WaitingListPanel({
                   {entry.doctor ? (
                     <span className="text-muted-foreground">
                       {' '}
-                      · prefers Dr. {getDoctorName(entry.doctor)}
+                      {t("· prefers Dr.")} {getDoctorName(entry.doctor)}
                     </span>
                   ) : null}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {entry.preferredTime ? `Preferred: ${entry.preferredTime.toLowerCase()}` : 'Any time'}
+                  {entry.preferredTime ? t("Preferred: {v1}", { v1: entry.preferredTime.toLowerCase() }) : 'Any time'}
                   {entry.notes ? ` · ${entry.notes}` : ''}
                 </p>
               </div>
@@ -376,13 +376,13 @@ function WaitingListPanel({
                   size="sm"
                   className="h-7 px-2 text-xs"
                   disabled={busyId === entry.id}
-                  aria-label={`Book ${entry.patient.firstName} ${entry.patient.lastName} from the waiting list`}
+                  aria-label={t("Book {v1} {v2} from the waiting list", { v1: entry.patient.firstName, v2: entry.patient.lastName })}
                   onClick={() => promote(entry)}
                 >
                   {busyId === entry.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    'Book next slot'
+                    t("Book next slot")
                   )}
                 </Button>
               </div>
@@ -429,14 +429,14 @@ function AnalyticsSummary() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Computing analytics…
+        <Loader2 className="h-4 w-4 animate-spin" /> {t("Computing analytics…")}
       </div>
     )
   }
   if (error || !data) {
     return (
       <p role="alert" className="py-2 text-sm text-destructive">
-        {error || 'Analytics unavailable'}
+        {error || t("Analytics unavailable")}
       </p>
     )
   }
@@ -467,7 +467,7 @@ function AnalyticsSummary() {
       {data.doctorUtilization.length > 0 && (
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Doctor utilization (booked vs. published shift minutes)
+            {t("Doctor utilization (booked vs. published shift minutes)")}
           </p>
           <ul className="space-y-2">
             {data.doctorUtilization.map((d) => (
@@ -486,7 +486,7 @@ function AnalyticsSummary() {
         </div>
       )}
       <p className="mt-3 text-[10px] text-muted-foreground">
-        Period {data.period.from} → {data.period.to} · computed from live appointment records
+        {t("Period")} {data.period.from} → {data.period.to} {t("· computed from live appointment records")}
       </p>
     </div>
   )

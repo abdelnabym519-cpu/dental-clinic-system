@@ -104,6 +104,7 @@ const SEGMENT_CONFIG: Record<
 }
 
 export default function SegmentsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [data, setData] = useState<SegmentData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -167,7 +168,7 @@ export default function SegmentsPage() {
         <div>
           <h1 className="text-3xl font-bold">{t('ui.patient_segments')}</h1>
           <p className="text-muted-foreground mt-1">
-            {data?.totalPatients || 0} total active patients
+            {data?.totalPatients || 0} {t("total active patients")}
           </p>
         </div>
         <Button variant="outline" onClick={fetchAiSegments} disabled={aiLoading}>
@@ -176,7 +177,7 @@ export default function SegmentsPage() {
           ) : (
             <Brain className="h-4 w-4 mr-2" />
           )}
-          AI Churn Analysis
+          {t("AI Churn Analysis")}
         </Button>
       </div>
 
@@ -252,11 +253,11 @@ export default function SegmentsPage() {
                             <TableCell>{patient.phone}</TableCell>
                             <TableCell>
                               {patient.lastVisit
-                                ? new Date(patient.lastVisit).toLocaleDateString('en-EG')
-                                : 'Never'}
+                                ? new Date(patient.lastVisit).toLocaleDateString(locale)
+                                : t("Never")}
                             </TableCell>
                             <TableCell className="text-right">
-                              EGP {patient.totalSpend.toLocaleString('en-EG')}
+                              {t('EGP')} {patient.totalSpend.toLocaleString(locale)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -279,7 +280,7 @@ export default function SegmentsPage() {
               {t('AI Churn Prediction')}
             </CardTitle>
             <CardDescription>
-              RFM analysis with churn risk scores — avg risk: {aiData.summary?.avgChurnRisk || 0}%
+              {t("RFM analysis with churn risk scores — avg risk:")} {aiData.summary?.avgChurnRisk || 0}%
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -339,7 +340,7 @@ export default function SegmentsPage() {
                   <TableRow>
                     <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>{t('Segment')}</TableHead>
-                    <TableHead>Recency (days)</TableHead>
+                    <TableHead>{t("Recency (days)")}</TableHead>
                     <TableHead>{t('ui.frequency')}</TableHead>
                     <TableHead>{t('Spend')}</TableHead>
                     <TableHead>{t('Churn Risk')}</TableHead>
@@ -367,7 +368,7 @@ export default function SegmentsPage() {
                         <TableCell>{p.rfm?.recency || 'N/A'}</TableCell>
                         <TableCell>{p.rfm?.frequency || 0}</TableCell>
                         <TableCell>
-                          {p.rfm?.monetary ? `EGP ${p.rfm.monetary.toLocaleString('en-EG')}` : 'EGP 0'}
+                          {p.rfm?.monetary ? t("EGP {v1}", { v1: p.rfm.monetary.toLocaleString(locale) }) : t("EGP 0")}
                         </TableCell>
                         <TableCell>
                           <Badge

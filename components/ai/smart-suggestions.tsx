@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useAI, type Suggestion } from './ai-provider'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
 
 const URGENCY_STYLES: Record<string, string> = {
   normal: 'border-muted bg-muted/50 text-foreground',
@@ -16,6 +17,7 @@ const URGENCY_STYLES: Record<string, string> = {
  * AI-generated suggestions. Loads automatically on mount.
  */
 export function SmartSuggestions({ patientId }: { patientId?: string }) {
+  const { t } = useLanguage()
   const pathname = usePathname()
   const { suggestions, loadSuggestions } = useAI()
   const [executing, setExecuting] = useState<string | null>(null)
@@ -64,7 +66,7 @@ export function SmartSuggestions({ patientId }: { patientId?: string }) {
               disabled={executing === s.action}
               className="mt-2 text-xs underline underline-offset-2 hover:no-underline disabled:opacity-40 transition-opacity"
             >
-              {executing === s.action ? 'Working…' : 'Do this →'}
+              {executing === s.action ? t('Working…') : t('Do this →')}
             </button>
           </div>
         ))}

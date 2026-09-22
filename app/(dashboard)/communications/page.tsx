@@ -158,7 +158,7 @@ export default function CommunicationsPage() {
                   <Label htmlFor="sms-phone">{t('ui.phone_number')}</Label>
                   <Input
                     id="sms-phone"
-                    placeholder="10-digit mobile number"
+                    placeholder={t("10-digit mobile number")}
                     value={smsPhone}
                     onChange={(e) => setSmsPhone(e.target.value)}
                   />
@@ -175,7 +175,7 @@ export default function CommunicationsPage() {
                     onChange={(e) => setSmsMessage(e.target.value)}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    {smsMessage.length}/500 characters
+                    {smsMessage.length}{t("/500 characters")}
                   </p>
                 </div>
 
@@ -207,11 +207,11 @@ export default function CommunicationsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="email-to">To (Email Address)</Label>
+                  <Label htmlFor="email-to">{t("To (Email Address)")}</Label>
                   <Input
                     id="email-to"
                     type="email"
-                    placeholder="patient@example.com"
+                    placeholder={t("patient@example.com")}
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
                   />

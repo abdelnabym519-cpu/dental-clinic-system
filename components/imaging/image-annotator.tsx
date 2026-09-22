@@ -319,10 +319,10 @@ export function ImageAnnotator({
           {/* Top toolbar */}
           <div className="flex items-center justify-between px-4 py-2 bg-zinc-800 text-white border-b border-zinc-700">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">{title || 'Annotate Image'}</h3>
+              <h3 className="text-sm font-medium">{title || t("Annotate Image")}</h3>
               {!readOnly && (
                 <span className="text-xs text-zinc-400">
-                  ({annotations.length} annotation{annotations.length !== 1 ? 's' : ''})
+                  ({annotations.length} {t("annotation")}{annotations.length !== 1 ? 's' : ''})
                 </span>
               )}
             </div>
@@ -376,7 +376,7 @@ export function ImageAnnotator({
               <div className="w-px h-5 bg-zinc-600 mx-1" />
 
               {/* Line width */}
-              <span className="text-xs text-zinc-400">Width:</span>
+              <span className="text-xs text-zinc-400">{t("Width:")}</span>
               <input
                 type="range"
                 min={1}
@@ -515,7 +515,6 @@ function drawAnnotation(
   canvasW: number,
   canvasH: number
 ) {
-  const { t } = useLanguage()
   ctx.strokeStyle = ann.color
   ctx.fillStyle = ann.color
   ctx.lineWidth = ann.lineWidth

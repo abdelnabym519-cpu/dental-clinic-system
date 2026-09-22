@@ -188,7 +188,7 @@ export default function SecuritySettingsPage() {
                 <div>
                   <Label>{t('Require Uppercase Letters')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    At least one uppercase letter (A-Z)
+                    {t("At least one uppercase letter (A-Z)")}
                   </p>
                 </div>
                 <Switch
@@ -201,7 +201,7 @@ export default function SecuritySettingsPage() {
                 <div>
                   <Label>{t('Require Lowercase Letters')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    At least one lowercase letter (a-z)
+                    {t("At least one lowercase letter (a-z)")}
                   </p>
                 </div>
                 <Switch
@@ -213,7 +213,7 @@ export default function SecuritySettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>{t('Require Numbers')}</Label>
-                  <p className="text-sm text-muted-foreground">At least one number (0-9)</p>
+                  <p className="text-sm text-muted-foreground">{t("At least one number (0-9)")}</p>
                 </div>
                 <Switch
                   checked={passwordRequireNumbers}
@@ -225,7 +225,7 @@ export default function SecuritySettingsPage() {
                 <div>
                   <Label>{t('Require Special Characters')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    At least one special character (!@#$%)
+                    {t("At least one special character (!@#$%)")}
                   </p>
                 </div>
                 <Switch
@@ -238,7 +238,7 @@ export default function SecuritySettingsPage() {
             <Separator />
 
             <div className="space-y-2">
-              <Label>Password Expiry (days)</Label>
+              <Label>{t("Password Expiry (days)")}</Label>
               <Input
                 type="number"
                 value={passwordExpiryDays}
@@ -262,7 +262,7 @@ export default function SecuritySettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Session Timeout (minutes)</Label>
+              <Label>{t("Session Timeout (minutes)")}</Label>
               <Input
                 type="number"
                 value={sessionTimeoutMinutes}
@@ -303,7 +303,7 @@ export default function SecuritySettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Lockout Duration (minutes)</Label>
+                <Label>{t("Lockout Duration (minutes)")}</Label>
                 <Input
                   type="number"
                   value={lockoutDurationMinutes}
@@ -346,7 +346,7 @@ export default function SecuritySettingsPage() {
               <AlertTriangle className="w-5 h-5" />
               {t('IP Address Management')}
             </CardTitle>
-            <CardDescription>Control access based on IP addresses (optional)</CardDescription>
+            <CardDescription>{t("Control access based on IP addresses (optional)")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -393,18 +393,18 @@ export default function SecuritySettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-yellow-700 space-y-2">
-            <p>• Changes to security settings affect all users immediately</p>
-            <p>• Stricter password policies may require users to reset their passwords</p>
-            <p>• Be careful with IP restrictions to avoid locking yourself out</p>
-            <p>• Always test security changes in a non-production environment first</p>
-            <p>• Enabling 2FA is highly recommended for admin accounts</p>
+            <p>{t("• Changes to security settings affect all users immediately")}</p>
+            <p>{t("• Stricter password policies may require users to reset their passwords")}</p>
+            <p>{t("• Be careful with IP restrictions to avoid locking yourself out")}</p>
+            <p>{t("• Always test security changes in a non-production environment first")}</p>
+            <p>{t("• Enabling 2FA is highly recommended for admin accounts")}</p>
           </CardContent>
         </Card>
 
         {/* Save Button */}
         <div className="flex justify-end">
           <Button onClick={handleSaveSettings} disabled={saving} size="lg">
-            {saving ? 'Saving...' : 'Save Security Settings'}
+            {saving ? 'Saving...' : t("Save Security Settings")}
           </Button>
         </div>
       </div>

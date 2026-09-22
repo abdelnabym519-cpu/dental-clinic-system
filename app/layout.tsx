@@ -5,65 +5,78 @@ import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/providers'
 import { LanguageProvider } from '@/components/providers/language-provider'
-import { directionFor } from '@/lib/i18n/dictionary'
+import { directionFor, translateText } from '@/lib/i18n/dictionary'
 import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/config'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Dentora — Egyptian Dental Clinic Management',
-    template: '%s | Dentora',
-  },
-  description:
-    'Dental clinic management for Egypt. Patient records, appointment scheduling, VAT billing, inventory, AI-powered treatment planning, insurance claims, tele-dentistry. Built for Egyptian dental hospitals and clinics.',
-  keywords: [
-    'dental software Egypt',
-    'dental clinic management software',
-    'dental hospital management system',
-    'dental ERP',
-    'dental practice management',
-    'open source dental software',
-    'برنامج عيادات أسنان',
-    'نظام إدارة عيادات',
-    'patient management system dental',
-    'appointment scheduling dental',
-    'dental clinic software',
-    'hospital management system Egypt',
-    'dental records software',
-    'AI dental software',
-    'tele-dentistry Egypt',
-    'dental inventory management',
-    'dental insurance claims',
-    'dental lab management',
-    'multi-branch dental software',
-  ],
-  authors: [{ name: 'Dentora' }],
-  creator: 'Dentora',
-  manifest: '/manifest.json',
-  openGraph: {
-    type: 'website',
-    locale: 'ar_EG',
-    title: 'Dentora — Egyptian Dental Clinic Management',
-    description:
-      'AI-powered dental clinic management system built for Egyptian dental clinics. Patient records, VAT billing, appointments, inventory, insurance, tele-dentistry and more.',
-    siteName: 'Dentora',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Dentora — Egyptian Dental Clinic Management',
-    description:
-      'AI-powered dental clinic management system for Egypt. 16 AI skills, VAT billing, patient portal, tele-dentistry.'
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Dentora',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  // Browser-tab title and social previews follow the selected locale exactly
+  // like the rendered UI does: the language is a user/clinic preference, so it
+  // cannot live in a static object evaluated once at build time.
+  const locale = resolveLocale((await cookies()).get(LOCALE_COOKIE)?.value)
+  const t = (text: string) => translateText(locale, text)
+
+  const title = t('Dentora — Egyptian Dental Clinic Management')
+
+  return {
+    title: {
+      default: title,
+      template: '%s | Dentora',
+    },
+    description: t(
+      'Dental clinic management for Egypt. Patient records, appointment scheduling, VAT billing, inventory, AI-powered treatment planning, insurance claims, tele-dentistry. Built for Egyptian dental hospitals and clinics.'
+    ),
+    keywords: [
+      'dental software Egypt',
+      'dental clinic management software',
+      'dental hospital management system',
+      'dental ERP',
+      'dental practice management',
+      'open source dental software',
+      'برنامج عيادات أسنان',
+      'نظام إدارة عيادات',
+      'patient management system dental',
+      'appointment scheduling dental',
+      'dental clinic software',
+      'hospital management system Egypt',
+      'dental records software',
+      'AI dental software',
+      'tele-dentistry Egypt',
+      'dental inventory management',
+      'dental insurance claims',
+      'dental lab management',
+      'multi-branch dental software',
+    ],
+    authors: [{ name: 'Dentora' }],
+    creator: 'Dentora',
+    manifest: '/manifest.json',
+    openGraph: {
+      type: 'website',
+      locale: locale === 'ar-EG' ? 'ar_EG' : 'en_US',
+      title,
+      description: t(
+        'AI-powered dental clinic management system built for Egyptian dental clinics. Patient records, VAT billing, appointments, inventory, insurance, tele-dentistry and more.'
+      ),
+      siteName: 'Dentora',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: t(
+        'AI-powered dental clinic management system for Egypt. 16 AI skills, VAT billing, patient portal, tele-dentistry.'
+      ),
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'Dentora',
+    },
+  }
 }
 
 export const viewport: Viewport = {

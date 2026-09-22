@@ -30,6 +30,7 @@ import {
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
 import { ToothHistoryTimeline } from './ToothHistoryTimeline'
 import { Loader2, Check } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface SurfaceSelectorDialogProps {
   tooth: ToothViewModel | null
@@ -69,6 +70,7 @@ export function SurfaceSelectorDialog({
   onSave,
   isSaving = false,
 }: SurfaceSelectorDialogProps) {
+  const { t } = useLanguage()
   const [condition, setCondition] = useState<DentalCondition>('CARIES')
   const [severity, setSeverity] = useState<SeverityLevel>('MILD')
   const [notes, setNotes] = useState('')
@@ -159,13 +161,13 @@ export function SurfaceSelectorDialog({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <DialogTitle className="text-lg font-bold flex items-center gap-2">
-                  <span>Tooth #{tooth.number}</span>
+                  <span>{t("Tooth #")}{tooth.number}</span>
                   <Badge variant="outline" className="text-xs font-medium">
-                    {tooth.name}
+                    {t(tooth.name)}
                   </Badge>
                 </DialogTitle>
                 <DialogDescription className="text-xs mt-1">
-                  Quadrant {tooth.quadrant} •{' '}
+                  {t("Quadrant")} {tooth.quadrant} •{' '}
                   {tooth.position === 'upper' ? 'Maxillary' : 'Mandibular'} •{' '}
                   {tooth.side === 'right' ? 'Right' : 'Left'}
                 </DialogDescription>
@@ -176,7 +178,7 @@ export function SurfaceSelectorDialog({
           <div className="space-y-4 py-4">
             {/* 1. Condition Selector */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Clinical Condition</Label>
+              <Label className="text-xs font-semibold">{t("Clinical Condition")}</Label>
               <Select
                 value={condition}
                 onValueChange={(val) => setCondition(val as DentalCondition)}
@@ -187,29 +189,29 @@ export function SurfaceSelectorDialog({
                 <SelectContent className="max-h-64">
                   {Object.entries(DENTAL_CONDITION_CONFIG).map(([key, config]) => (
                     <SelectItem key={key} value={key}>
-                      {config.label}
+                      {t(config.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {currentConditionConfig && (
                 <p className="text-[11px] text-muted-foreground">
-                  {currentConditionConfig.description}
+                  {t(currentConditionConfig.description)}
                 </p>
               )}
             </div>
 
             {/* 2. Severity Level */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Severity</Label>
+              <Label className="text-xs font-semibold">{t("Severity")}</Label>
               <Select value={severity} onValueChange={(val) => setSeverity(val as SeverityLevel)}>
                 <SelectTrigger className="w-full h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MILD">Mild</SelectItem>
-                  <SelectItem value="MODERATE">Moderate</SelectItem>
-                  <SelectItem value="SEVERE">Severe</SelectItem>
+                  <SelectItem value="MILD">{t("Mild")}</SelectItem>
+                  <SelectItem value="MODERATE">{t("Moderate")}</SelectItem>
+                  <SelectItem value="SEVERE">{t("Severe")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -217,23 +219,21 @@ export function SurfaceSelectorDialog({
             {/* 3. Interactive Surface Selector */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Surfaces Affected</Label>
+                <Label className="text-xs font-semibold">{t("Surfaces Affected")}</Label>
                 <div className="flex items-center gap-2 text-[11px]">
                   <button
                     type="button"
                     onClick={handleSelectAllSurfaces}
                     className="text-primary hover:underline"
                   >
-                    All
-                  </button>
+                    {t("All")} </button>
                   <span>•</span>
                   <button
                     type="button"
                     onClick={handleClearSurfaces}
                     className="text-muted-foreground hover:underline"
                   >
-                    Clear
-                  </button>
+                    {t("Clear")} </button>
                 </div>
               </div>
 
@@ -262,7 +262,7 @@ export function SurfaceSelectorDialog({
                         />
                         <span>
                           <strong className="font-bold">{surf.short}</strong> -{' '}
-                          {surf.label.split(' ')[0]}
+                          {t(surf.label.split(' ')[0])}
                         </span>
                       </div>
                       {isChecked && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
@@ -274,10 +274,10 @@ export function SurfaceSelectorDialog({
 
             {/* 4. Clinical Observations & Notes */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Clinical Notes & Observations</Label>
+              <Label className="text-xs font-semibold">{t("Clinical Notes & Observations")}</Label>
               <Textarea
                 rows={2}
-                placeholder="Enter diagnostic findings, planned restoration material, or symptoms..."
+                placeholder={t("Enter diagnostic findings, planned restoration material, or symptoms...")}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="text-xs resize-none"
@@ -286,7 +286,7 @@ export function SurfaceSelectorDialog({
 
             {/* 5. Historical Record Timeline */}
             <div className="space-y-1.5 pt-2 border-t border-border/60">
-              <Label className="text-xs font-semibold">History</Label>
+              <Label className="text-xs font-semibold">{t("History")}</Label>
               <ToothHistoryTimeline entries={tooth.history} />
             </div>
           </div>
@@ -298,12 +298,10 @@ export function SurfaceSelectorDialog({
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
             >
-              Cancel
-            </Button>
+              {t("Cancel")} </Button>
             <Button type="submit" disabled={isSaving} className="gap-1.5">
               {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save Changes
-            </Button>
+              {t("Save Changes")} </Button>
           </DialogFooter>
         </form>
       </DialogContent>

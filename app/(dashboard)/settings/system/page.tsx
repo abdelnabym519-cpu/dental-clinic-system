@@ -238,8 +238,7 @@ export default function SystemSettingsPage() {
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong> Backups should be stored securely and regularly.
-                  Consider setting up automated backups using cron jobs or scheduled tasks.
+                  <strong>{t("Important:")}</strong> {t("Backups should be stored securely and regularly. Consider setting up automated backups using cron jobs or scheduled tasks.")}
                 </p>
               </div>
             </CardContent>
@@ -258,7 +257,7 @@ export default function SystemSettingsPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
-                  <span>Store backups in multiple locations (local + cloud storage)</span>
+                  <span>{t("Store backups in multiple locations (local + cloud storage)")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-blue-600">•</span>
@@ -298,13 +297,13 @@ export default function SystemSettingsPage() {
                         <div className="flex items-center gap-2">
                           <Shield className="w-4 h-4 text-muted-foreground" />
                           <span className="font-medium">{log.action}</span>
-                          <span className="text-sm text-muted-foreground">on {log.entityType}</span>
+                          <span className="text-sm text-muted-foreground">{t("on")} {log.entityType}</span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          By: {log.user?.name || 'System'} ({log.user?.email || 'N/A'})
+                          {t("By:")} {log.user?.name || 'System'} ({log.user?.email || 'N/A'})
                         </p>
                         {log.ipAddress && (
-                          <p className="text-xs text-muted-foreground mt-1">IP: {log.ipAddress}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t("IP:")} {log.ipAddress}</p>
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">

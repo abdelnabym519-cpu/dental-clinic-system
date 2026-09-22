@@ -65,6 +65,7 @@ interface PlanItem {
 }
 
 export default function NewTreatmentPlanPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -323,12 +324,12 @@ export default function NewTreatmentPlanPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">{t("Title *")}</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Full Mouth Rehabilitation, Orthodontic Treatment"
+                placeholder={t("e.g., Full Mouth Rehabilitation, Orthodontic Treatment")}
               />
             </div>
 
@@ -405,7 +406,7 @@ export default function NewTreatmentPlanPage() {
                   <Input
                     value={itemToothNumbers}
                     onChange={(e) => setItemToothNumbers(e.target.value)}
-                    placeholder="e.g., 11,12,13 or 11-13"
+                    placeholder={t("e.g., 11,12,13 or 11-13")}
                   />
                 </div>
               </div>
@@ -419,8 +420,8 @@ export default function NewTreatmentPlanPage() {
                     onChange={(e) => setItemCost(e.target.value)}
                     placeholder={
                       selectedProcedureId
-                        ? `Default: ${formatCurrency(procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0)}`
-                        : 'Enter cost'
+                        ? t("Default: {v1}", { v1: formatCurrency(procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0, locale) })
+                        : t("Enter cost")
                     }
                   />
                 </div>
@@ -475,7 +476,7 @@ export default function NewTreatmentPlanPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>{item.toothNumbers || '-'}</TableCell>
-                        <TableCell>{formatCurrency(item.estimatedCost)}</TableCell>
+                        <TableCell>{formatCurrency(item.estimatedCost, locale)}</TableCell>
                         <TableCell>
                           <Button
                             type="button"
@@ -490,10 +491,10 @@ export default function NewTreatmentPlanPage() {
                     ))}
                     <TableRow>
                       <TableCell colSpan={3} className="text-right font-medium">
-                        Total Estimated Cost:
+                        {t("Total Estimated Cost:")}
                       </TableCell>
                       <TableCell className="font-bold text-lg">
-                        {formatCurrency(calculateTotalCost())}
+                        {formatCurrency(calculateTotalCost(), locale)}
                       </TableCell>
                       <TableCell></TableCell>
                     </TableRow>

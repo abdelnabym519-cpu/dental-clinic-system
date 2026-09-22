@@ -110,6 +110,7 @@ interface Template {
 }
 
 export default function AutomationsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -357,7 +358,7 @@ export default function AutomationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>
-              Active Rules ({automations.filter((a) => a.isActive).length}/{automations.length})
+              {t("Active Rules (")}{automations.filter((a) => a.isActive).length}/{automations.length})
             </CardTitle>
             <CardDescription>
               {t('Automation rules are evaluated daily by the cron scheduler')}
@@ -395,7 +396,7 @@ export default function AutomationsPage() {
                     </TableCell>
                     <TableCell className="text-right">{auto.runCount}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {auto.lastRunAt ? new Date(auto.lastRunAt).toLocaleDateString() : 'Never'}
+                      {auto.lastRunAt ? new Date(auto.lastRunAt).toLocaleDateString(locale) : t("Never")}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -429,7 +430,7 @@ export default function AutomationsPage() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Edit Automation' : 'New Automation'}</DialogTitle>
+            <DialogTitle>{editingId ? t("Edit Automation") : 'New Automation'}</DialogTitle>
             <DialogDescription>
               {t('Define the trigger condition and action for this automation rule')}
             </DialogDescription>
@@ -440,7 +441,7 @@ export default function AutomationsPage() {
             <div className="space-y-2">
               <Label>{t('Automation Name')}</Label>
               <Input
-                placeholder="e.g., Re-engage inactive patients"
+                placeholder={t("e.g., Re-engage inactive patients")}
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
               />
@@ -448,7 +449,7 @@ export default function AutomationsPage() {
 
             {/* Trigger */}
             <div className="space-y-2">
-              <Label>Trigger (IF)</Label>
+              <Label>{t("Trigger (IF)")}</Label>
               <Select
                 value={formTriggerType}
                 onValueChange={(v) => {
@@ -485,7 +486,7 @@ export default function AutomationsPage() {
 
             {/* Action */}
             <div className="space-y-2">
-              <Label>Action (THEN)</Label>
+              <Label>{t("Action (THEN)")}</Label>
               <Select
                 value={formActionType}
                 onValueChange={(v) => {
@@ -537,7 +538,7 @@ export default function AutomationsPage() {
                 <div className="space-y-2">
                   <Label>{t('Notification Title')}</Label>
                   <Input
-                    placeholder="e.g., Patient Follow-up Required"
+                    placeholder={t("e.g., Patient Follow-up Required")}
                     value={formNotifTitle}
                     onChange={(e) => setFormNotifTitle(e.target.value)}
                   />
@@ -545,7 +546,7 @@ export default function AutomationsPage() {
                 <div className="space-y-2">
                   <Label>{t('Notification Message')}</Label>
                   <Input
-                    placeholder="e.g., Patient has not visited in 6 months"
+                    placeholder={t("e.g., Patient has not visited in 6 months")}
                     value={formNotifMessage}
                     onChange={(e) => setFormNotifMessage(e.target.value)}
                   />

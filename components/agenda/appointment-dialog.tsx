@@ -193,11 +193,11 @@ export function AppointmentDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="sm:max-w-[520px]" role="dialog" aria-modal="true">
         <DialogHeader>
-          <DialogTitle>{editing ? 'Edit appointment' : 'New appointment'}</DialogTitle>
+          <DialogTitle>{editing ? t("Edit appointment") : 'New appointment'}</DialogTitle>
           <DialogDescription>
             {editing
-              ? 'Update the appointment details. Reschedules are re-checked for provider conflicts.'
-              : 'Book a patient into the clinic schedule.'}
+              ? t("Update the appointment details. Reschedules are re-checked for provider conflicts.")
+              : t("Book a patient into the clinic schedule.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -237,7 +237,7 @@ export function AppointmentDialog({
               <SelectContent className="max-h-60">
                 {doctors.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
-                    Dr. {d.firstName} {d.lastName}
+                    {t("Dr.")} {d.firstName} {d.lastName}
                     {d.specialization ? ` — ${d.specialization}` : ''}
                   </SelectItem>
                 ))}
@@ -276,7 +276,7 @@ export function AppointmentDialog({
                 <SelectContent>
                   {DURATIONS.map((d) => (
                     <SelectItem key={d} value={String(d)}>
-                      {d} min
+                      {d} {t("min")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -366,7 +366,7 @@ export function AppointmentDialog({
                       <SelectContent>
                         {RECURRENCE_PATTERNS.map((pattern) => (
                           <SelectItem key={pattern} value={pattern}>
-                            {pattern === 'BIWEEKLY' ? 'Every 2 weeks' : pattern.toLowerCase()}
+                            {pattern === 'BIWEEKLY' ? t("Every 2 weeks") : pattern.toLowerCase()}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -388,7 +388,7 @@ export function AppointmentDialog({
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="apt-rec-end" className="text-xs">
-                      Until (optional)
+                      {t("Until (optional)")}
                     </Label>
                     <Input
                       id="apt-rec-end"
@@ -402,9 +402,7 @@ export function AppointmentDialog({
               )}
               {recurrenceEnabled && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Each occurrence is booked as a real appointment and conflict-checked
-                  individually (max 60). Editing later offers this-occurrence / future / whole
-                  series scope.
+                  {t("Each occurrence is booked as a real appointment and conflict-checked individually (max 60). Editing later offers this-occurrence / future / whole series scope.")}
                 </p>
               )}
             </fieldset>
@@ -416,22 +414,21 @@ export function AppointmentDialog({
               id="apt-complaint"
               value={form.chiefComplaint}
               onChange={(e) => set('chiefComplaint')(e.target.value)}
-              placeholder="e.g. Tooth pain, upper right"
+              placeholder={t("e.g. Tooth pain, upper right")}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="apt-contact-phone">WhatsApp number override (optional)</Label>
+            <Label htmlFor="apt-contact-phone">{t("WhatsApp number override (optional)")}</Label>
             <Input
               id="apt-contact-phone"
               value={form.contactPhone}
               onChange={(e) => set('contactPhone')(e.target.value)}
-              placeholder="e.g. 01012345678 — confirmation & reminders go here"
+              placeholder={t("e.g. 01012345678 — confirmation & reminders go here")}
               aria-label={t('WhatsApp contact number override')}
             />
             <p className="text-xs text-muted-foreground">
-              Leave empty to use the patient&apos;s stored number. Invalid numbers are skipped
-              safely.
+              {t("Leave empty to use the patient's stored number. Invalid numbers are skipped safely.")}
             </p>
           </div>
 
@@ -453,7 +450,7 @@ export function AppointmentDialog({
           </Button>
           <Button onClick={submit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {editing ? 'Save changes' : 'Book appointment'}
+            {editing ? t("Save changes") : 'Book appointment'}
           </Button>
         </DialogFooter>
       </DialogContent>

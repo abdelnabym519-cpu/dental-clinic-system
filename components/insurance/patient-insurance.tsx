@@ -78,6 +78,7 @@ const emptyForm = {
 }
 
 export function PatientInsurance({ patientId }: { patientId: string }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [policies, setPolicies] = useState<InsurancePolicy[]>([])
@@ -205,14 +206,14 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
     if (!p.verificationStatus) {
       return (
         <Badge variant="outline" className="text-xs">
-          <Clock className="h-3 w-3 mr-1" /> Unverified
+          <Clock className="h-3 w-3 mr-1" /> {t("Unverified")}
         </Badge>
       )
     }
     if (p.verificationStatus === 'VERIFIED') {
       return (
         <Badge variant="default" className="text-xs bg-green-600">
-          <CheckCircle className="h-3 w-3 mr-1" /> Verified
+          <CheckCircle className="h-3 w-3 mr-1" /> {t("Verified")}
         </Badge>
       )
     }
@@ -272,7 +273,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                       {!p.isActive && <Badge variant="secondary">{t('ui.inactive')}</Badge>}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Policy: {p.policyNumber} {p.groupNumber && `· Group: ${p.groupNumber}`}
+                      {t("Policy:")} {p.policyNumber} {p.groupNumber && t("· Group: {v1}", { v1: p.groupNumber })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -297,11 +298,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('Effective')}</p>
-                    <p className="font-medium">{formatDate(p.effectiveDate)}</p>
+                    <p className="font-medium">{formatDate(p.effectiveDate, locale)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('ui.expires')}</p>
-                    <p className="font-medium">{p.expiryDate ? formatDate(p.expiryDate) : 'N/A'}</p>
+                    <p className="font-medium">{p.expiryDate ? formatDate(p.expiryDate, locale) : 'N/A'}</p>
                   </div>
                 </div>
                 {(p.annualMaximum || p.deductible || p.copayPercentage) && (
@@ -309,14 +310,14 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     {p.annualMaximum && (
                       <div>
                         <p className="text-muted-foreground">{t('ui.annual_maximum')}</p>
-                        <p className="font-medium">{formatCurrency(Number(p.annualMaximum))}</p>
+                        <p className="font-medium">{formatCurrency(Number(p.annualMaximum), locale)}</p>
                       </div>
                     )}
                     {p.remainingAmount != null && (
                       <div>
                         <p className="text-muted-foreground">{t('ui.remaining')}</p>
                         <p className="font-medium text-green-600">
-                          {formatCurrency(Number(p.remainingAmount))}
+                          {formatCurrency(Number(p.remainingAmount), locale)}
                         </p>
                       </div>
                     )}
@@ -324,8 +325,8 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                       <div>
                         <p className="text-muted-foreground">{t('ui.deductible')}</p>
                         <p className="font-medium">
-                          {formatCurrency(Number(p.deductible))}
-                          {p.deductibleMet && <span className="text-green-600 ml-1">(Met)</span>}
+                          {formatCurrency(Number(p.deductible), locale)}
+                          {p.deductibleMet && <span className="text-green-600 ml-1">{t("(Met)")}</span>}
                         </p>
                       </div>
                     )}
@@ -352,7 +353,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                         <XCircle className="h-4 w-4 mr-1" />{t('ui.deactivate')}</>
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-1" /> Activate
+                        <CheckCircle className="h-4 w-4 mr-1" /> {t("Activate")}
                       </>
                     )}
                   </Button>
@@ -368,12 +369,12 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? 'Edit Insurance Policy' : 'Add Insurance Policy'}
+              {editingId ? t("Edit Insurance Policy") : t("Add Insurance Policy")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Insurance Provider *</Label>
+              <Label>{t("Insurance Provider *")}</Label>
               <Select
                 value={form.providerId}
                 onValueChange={(v) => setForm({ ...form, providerId: v })}
@@ -392,11 +393,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Policy Number *</Label>
+                <Label>{t("Policy Number *")}</Label>
                 <Input
                   value={form.policyNumber}
                   onChange={(e) => setForm({ ...form, policyNumber: e.target.value })}
-                  placeholder="e.g., POL-12345"
+                  placeholder={t("e.g., POL-12345")}
                 />
               </div>
               <div>
@@ -408,11 +409,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Member ID *</Label>
+                <Label>{t("Member ID *")}</Label>
                 <Input
                   value={form.memberId}
                   onChange={(e) => setForm({ ...form, memberId: e.target.value })}
-                  placeholder="e.g., MEM-001"
+                  placeholder={t("e.g., MEM-001")}
                 />
               </div>
               <div>
@@ -425,7 +426,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {['Self', 'Spouse', 'Child', 'Parent', 'Other'].map((r) => (
+                    {[t("Self"), t("Spouse"), t("Child"), t("Parent"), 'Other'].map((r) => (
                       <SelectItem key={r} value={r}>
                         {r}
                       </SelectItem>
@@ -434,7 +435,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label>Subscriber Name *</Label>
+                <Label>{t("Subscriber Name *")}</Label>
                 <Input
                   value={form.subscriberName}
                   onChange={(e) => setForm({ ...form, subscriberName: e.target.value })}
@@ -442,7 +443,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Effective Date *</Label>
+                <Label>{t("Effective Date *")}</Label>
                 <Input
                   type="date"
                   value={form.effectiveDate}
@@ -492,7 +493,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>Co-pay %</Label>
+                <Label>{t("Co-pay %")}</Label>
                 <Input
                   type="number"
                   value={form.copayPercentage}

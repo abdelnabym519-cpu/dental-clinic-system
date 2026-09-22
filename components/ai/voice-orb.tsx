@@ -2,6 +2,7 @@
 
 import type { VoiceState } from '@/hooks/use-web-voice'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface VoiceOrbProps {
   state: VoiceState
@@ -16,6 +17,7 @@ interface VoiceOrbProps {
  * Shows state through color, scale, ripple rings, and glow effects.
  */
 export function VoiceOrb({ state, audioLevel, size = 120, onPress, disabled }: VoiceOrbProps) {
+  const { t } = useLanguage()
   const isActive = state !== 'idle'
   // Dynamic scale based on audio level when listening
   const dynamicScale = state === 'listening' ? 1 + audioLevel * 0.15 : 1
@@ -28,12 +30,12 @@ export function VoiceOrb({ state, audioLevel, size = 120, onPress, disabled }: V
       style={{ width: size, height: size }}
       aria-label={
         state === 'idle'
-          ? 'Start voice input'
+          ? t('Start voice input')
           : state === 'listening'
-            ? 'Stop listening'
+            ? t('Stop listening')
             : state === 'speaking'
-              ? 'Interrupt'
-              : 'Processing...'
+              ? t('Interrupt')
+              : t('Processing...')
       }
     >
       {/* Ripple rings — visible when listening or speaking */}

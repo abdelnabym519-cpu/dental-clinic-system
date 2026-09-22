@@ -295,7 +295,7 @@ export default function NewLabOrderPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Lab Vendor *</Label>
+                <Label>{t("Lab Vendor *")}</Label>
                 <Select
                   value={form.labVendorId}
                   onValueChange={(v) => setForm((prev) => ({ ...prev, labVendorId: v }))}
@@ -307,7 +307,7 @@ export default function NewLabOrderPage() {
                     {vendors.map((vendor) => (
                       <SelectItem key={vendor.id} value={vendor.id}>
                         {vendor.name}
-                        {vendor.avgTurnaround ? ` (${vendor.avgTurnaround}d avg)` : ''}
+                        {vendor.avgTurnaround ? t(" ({v1}d avg)", { v1: vendor.avgTurnaround }) : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -315,7 +315,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Work Type *</Label>
+                <Label>{t("Work Type *")}</Label>
                 <Select
                   value={form.workType}
                   onValueChange={(v) => setForm((prev) => ({ ...prev, workType: v }))}
@@ -375,7 +375,7 @@ export default function NewLabOrderPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Order Date *</Label>
+                <Label>{t("Order Date *")}</Label>
                 <Input
                   type="date"
                   value={form.orderDate}
@@ -394,7 +394,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Estimated Cost (EGP) *</Label>
+                <Label>{t("Estimated Cost (EGP) *")}</Label>
                 <Input
                   type="number"
                   step="0.01"

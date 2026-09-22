@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 export default function InventoryReportsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [activeReport, setActiveReport] = useState('summary')
   const [loading, setLoading] = useState(false)
@@ -57,7 +58,7 @@ export default function InventoryReportsPage() {
             <h3 className="text-sm font-medium text-muted-foreground">{t('Total Items')}</h3>
             <p className="text-3xl font-bold mt-2">{reportData.summary.totalItems}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {reportData.summary.activeItems} active
+              {reportData.summary.activeItems} {t("active")}
             </p>
           </div>
 
@@ -104,7 +105,7 @@ export default function InventoryReportsPage() {
                 {reportData.categoryBreakdown.map((cat: any, index: number) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-                      {cat.category || 'Uncategorized'}
+                      {cat.category || t("Uncategorized")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {cat.itemCount}
@@ -232,7 +233,7 @@ export default function InventoryReportsPage() {
               {reportData.summary.expiredBatches || 0}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Value: {formatCurrency(reportData.summary.expiredValue || 0)}
+              {t("Value:")} {formatCurrency(reportData.summary.expiredValue || 0)}
             </p>
           </div>
 
@@ -242,7 +243,7 @@ export default function InventoryReportsPage() {
               {reportData.summary.expiringSoonBatches || 0}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Value: {formatCurrency(reportData.summary.expiringSoonValue || 0)}
+              {t("Value:")} {formatCurrency(reportData.summary.expiringSoonValue || 0)}
             </p>
           </div>
         </div>
@@ -280,10 +281,10 @@ export default function InventoryReportsPage() {
                       {item.batchNumber}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {new Date(item.expiryDate).toLocaleDateString()}
+                      {new Date(item.expiryDate).toLocaleDateString(locale)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
-                      {item.daysToExpiry} days
+                      {item.daysToExpiry} {t("days")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {item.remainingQty} {item.unit}
@@ -432,11 +433,11 @@ export default function InventoryReportsPage() {
               onChange={(e) => setReportParams({ ...reportParams, days: parseInt(e.target.value) })}
               className="px-4 py-2 border border-border rounded-lg"
             >
-              <option value="7">7 days</option>
-              <option value="15">15 days</option>
-              <option value="30">30 days</option>
-              <option value="60">60 days</option>
-              <option value="90">90 days</option>
+              <option value="7">{t("7 days")}</option>
+              <option value="15">{t("15 days")}</option>
+              <option value="30">{t("30 days")}</option>
+              <option value="60">{t("60 days")}</option>
+              <option value="90">{t("90 days")}</option>
             </select>
           </div>
         )}

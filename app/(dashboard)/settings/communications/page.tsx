@@ -346,7 +346,7 @@ export default function CommunicationSettingsPage() {
         <TabsList>
           <TabsTrigger value="sms">{t('SMS Configuration')}</TabsTrigger>
           <TabsTrigger value="email">{t('Email Configuration')}</TabsTrigger>
-          <TabsTrigger value="message-log">Message Log (WhatsApp/SMS)</TabsTrigger>
+          <TabsTrigger value="message-log">{t("Message Log (WhatsApp/SMS)")}</TabsTrigger>
           <TabsTrigger value="reviews">{t('Google Reviews')}</TabsTrigger>
         </TabsList>
 
@@ -410,12 +410,12 @@ export default function CommunicationSettingsPage() {
                   <Label htmlFor="sms-route">{t('Route / Sender type')}</Label>
                   <Input
                     id="sms-route"
-                    placeholder="transactional"
+                    placeholder={t("transactional")}
                     value={smsRoute}
                     onChange={(e) => setSmsRoute(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Gateway route or sender classification (e.g. transactional / promotional)
+                    {t("Gateway route or sender classification (e.g. transactional / promotional)")}
                   </p>
                 </div>
               </div>
@@ -434,11 +434,11 @@ export default function CommunicationSettingsPage() {
                       onChange={(e) => setTestPhone(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Enter an Egyptian mobile number (e.g. 01012345678)
+                      {t("Enter an Egyptian mobile number (e.g. 01012345678)")}
                     </p>
                   </div>
                   <Button onClick={handleTestSMS} disabled={testing} variant="outline">
-                    {testing ? 'Sending...' : 'Send Test SMS'}
+                    {testing ? t("Sending...") : t("Send Test SMS")}
                   </Button>
                 </div>
               </div>
@@ -448,14 +448,14 @@ export default function CommunicationSettingsPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">{t('TRAI Compliance')}</h4>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• SMS will only be sent between 9 AM - 9 PM Cairo time</li>
-                  <li>• DND registry will be checked before sending</li>
-                  <li>• Patient consent is required for promotional messages</li>
+                  <li>{t("• SMS will only be sent between 9 AM - 9 PM Cairo time")}</li>
+                  <li>{t("• DND registry will be checked before sending")}</li>
+                  <li>{t("• Patient consent is required for promotional messages")}</li>
                 </ul>
               </div>
 
               <Button onClick={handleSaveSMSSettings} disabled={loading}>
-                {loading ? 'Saving...' : 'Save SMS Settings'}
+                {loading ? 'Saving...' : t("Save SMS Settings")}
               </Button>
             </CardContent>
           </Card>
@@ -467,7 +467,7 @@ export default function CommunicationSettingsPage() {
             <CardHeader>
               <CardTitle>{t('Email SMTP Settings')}</CardTitle>
               <CardDescription>
-                Configure your email server (Hostinger, Gmail, etc.)
+                {t("Configure your email server (Hostinger, Gmail, etc.)")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -508,7 +508,7 @@ export default function CommunicationSettingsPage() {
                     <Label htmlFor="email-user">{t('SMTP Username')}</Label>
                     <Input
                       id="email-user"
-                      placeholder="info@yourclinic.com"
+                      placeholder={t("info@yourclinic.com")}
                       value={emailUser}
                       onChange={(e) => setEmailUser(e.target.value)}
                     />
@@ -528,7 +528,7 @@ export default function CommunicationSettingsPage() {
 
                 <div className="flex items-center space-x-2 mt-4">
                   <Switch checked={emailSecure} onCheckedChange={setEmailSecure} />
-                  <Label>Use SSL/TLS (for port 465)</Label>
+                  <Label>{t("Use SSL/TLS (for port 465)")}</Label>
                 </div>
               </div>
 
@@ -552,18 +552,18 @@ export default function CommunicationSettingsPage() {
                     <Input
                       id="email-from-email"
                       type="email"
-                      placeholder="info@yourclinic.com"
+                      placeholder={t("info@yourclinic.com")}
                       value={emailFromEmail}
                       onChange={(e) => setEmailFromEmail(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email-reply-to">Reply-To Email (Optional)</Label>
+                    <Label htmlFor="email-reply-to">{t("Reply-To Email (Optional)")}</Label>
                     <Input
                       id="email-reply-to"
                       type="email"
-                      placeholder="contact@yourclinic.com"
+                      placeholder={t("contact@yourclinic.com")}
                       value={emailReplyTo}
                       onChange={(e) => setEmailReplyTo(e.target.value)}
                     />
@@ -581,7 +581,7 @@ export default function CommunicationSettingsPage() {
                     <Input
                       id="test-email"
                       type="email"
-                      placeholder="test@example.com"
+                      placeholder={t("test@example.com")}
                       value={testEmail}
                       onChange={(e) => setTestEmail(e.target.value)}
                     />
@@ -590,7 +590,7 @@ export default function CommunicationSettingsPage() {
                     </p>
                   </div>
                   <Button onClick={handleTestEmail} disabled={testing} variant="outline">
-                    {testing ? 'Sending...' : 'Send Test Email'}
+                    {testing ? t("Sending...") : t("Send Test Email")}
                   </Button>
                 </div>
               </div>
@@ -602,14 +602,14 @@ export default function CommunicationSettingsPage() {
                   {t('Recommended Settings for Hostinger')}
                 </h4>
                 <ul className="text-sm text-green-800 space-y-1">
-                  <li>• SMTP Host: smtp.hostinger.com</li>
-                  <li>• SMTP Port: 587 (STARTTLS) or 465 (SSL)</li>
-                  <li>• Use your email and password for authentication</li>
+                  <li>{t("• SMTP Host: smtp.hostinger.com")}</li>
+                  <li>{t("• SMTP Port: 587 (STARTTLS) or 465 (SSL)")}</li>
+                  <li>{t("• Use your email and password for authentication")}</li>
                 </ul>
               </div>
 
               <Button onClick={handleSaveEmailSettings} disabled={loading}>
-                {loading ? 'Saving...' : 'Save Email Settings'}
+                {loading ? 'Saving...' : t("Save Email Settings")}
               </Button>
             </CardContent>
           </Card>
@@ -632,13 +632,12 @@ export default function CommunicationSettingsPage() {
                 <Label htmlFor="google-review-url">{t('Google Review URL')}</Label>
                 <Input
                   id="google-review-url"
-                  placeholder="https://g.page/r/YOUR_PLACE_ID/review"
+                  placeholder={t("https://g.page/r/YOUR_PLACE_ID/review")}
                   value={googleReviewUrl}
                   onChange={(e) => setGoogleReviewUrl(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Your Google Business review link. Find it in Google Business Profile &gt; Get more
-                  reviews.
+                  {t("Your Google Business review link. Find it in Google Business Profile > Get more reviews.")}
                 </p>
               </div>
 
@@ -655,7 +654,7 @@ export default function CommunicationSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="review-delay">Review Request Delay (hours)</Label>
+                <Label htmlFor="review-delay">{t("Review Request Delay (hours)")}</Label>
                 <Input
                   id="review-delay"
                   type="number"
@@ -676,19 +675,18 @@ export default function CommunicationSettingsPage() {
                 <h4 className="font-semibold text-amber-900 mb-2">{t('Review Gating')}</h4>
                 <ul className="text-sm text-amber-800 space-y-1">
                   <li>
-                    • Review requests are only sent to patients who rated their satisfaction 4/5 or
-                    higher
+                    {t("• Review requests are only sent to patients who rated their satisfaction 4/5 or higher")}
                   </li>
-                  <li>• Patients must have submitted a survey response within the last 30 days</li>
-                  <li>• Only one review request per patient per 30 days</li>
+                  <li>{t("• Patients must have submitted a survey response within the last 30 days")}</li>
+                  <li>{t("• Only one review request per patient per 30 days")}</li>
                   <li>
-                    • Patients who opted out of promotional messages will not receive requests
+                    {t("• Patients who opted out of promotional messages will not receive requests")}
                   </li>
                 </ul>
               </div>
 
               <Button onClick={handleSaveReviewSettings} disabled={loading}>
-                {loading ? 'Saving...' : 'Save Review Settings'}
+                {loading ? 'Saving...' : t("Save Review Settings")}
               </Button>
             </CardContent>
           </Card>

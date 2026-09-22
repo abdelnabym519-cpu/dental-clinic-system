@@ -303,7 +303,7 @@ export default function ClinicSettingsPage() {
                   ) : (
                     <Upload className="mr-2 h-4 w-4" />
                   )}
-                  {logo ? 'Change Logo' : 'Upload Logo'}
+                  {logo ? t("Change Logo") : t("Upload Logo")}
                 </Button>
                 {logo && (
                   <Button
@@ -335,7 +335,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="name">Clinic Name *</Label>
+                <Label htmlFor="name">{t("Clinic Name *")}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -367,7 +367,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">Primary Phone *</Label>
+                <Label htmlFor="phone">{t("Primary Phone *")}</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -394,7 +394,7 @@ export default function ClinicSettingsPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="info@yourclinic.com"
+                  placeholder={t("info@yourclinic.com")}
                 />
               </div>
 
@@ -404,7 +404,7 @@ export default function ClinicSettingsPage() {
                   id="website"
                   value={formData.website}
                   onChange={(e) => handleChange('website', e.target.value)}
-                  placeholder="https://www.yourclinic.com"
+                  placeholder={t("https://www.yourclinic.com")}
                 />
               </div>
             </div>
@@ -419,12 +419,12 @@ export default function ClinicSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="address">Street Address *</Label>
+              <Label htmlFor="address">{t("Street Address *")}</Label>
               <Textarea
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleChange('address', e.target.value)}
-                placeholder="123, Main Street, Ayanavaram"
+                placeholder={t("123, Main Street, Ayanavaram")}
                 rows={2}
                 required
               />
@@ -432,7 +432,7 @@ export default function ClinicSettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="city">City *</Label>
+                <Label htmlFor="city">{t("City *")}</Label>
                 <Input
                   id="city"
                   value={formData.city}
@@ -461,7 +461,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="pincode">Postal Code *</Label>
+                <Label htmlFor="pincode">{t("Postal Code *")}</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}
@@ -619,7 +619,7 @@ export default function ClinicSettingsPage() {
                   id="upiId"
                   value={formData.upiId}
                   onChange={(e) => handleChange('upiId', e.target.value)}
-                  placeholder="clinic@instapay"
+                  placeholder={t("clinic@instapay")}
                 />
               </div>
             </div>
@@ -677,7 +677,7 @@ export default function ClinicSettingsPage() {
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={saving} size="lg">
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : 'Save Clinic Information'}
+            {saving ? 'Saving...' : t("Save Clinic Information")}
           </Button>
         </div>
       </div>

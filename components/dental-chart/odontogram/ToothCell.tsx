@@ -5,6 +5,7 @@ import { ToothViewModel, ToothSurfaceKey } from '../types/odontogram'
 import { ToothSVG } from './ToothSVG'
 import { ToothTooltip } from './ToothTooltip'
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ToothCellProps {
   tooth: ToothViewModel
@@ -25,6 +26,7 @@ export function ToothCell({
   interactive = true,
   mode = 'clinical',
 }: ToothCellProps) {
+  const { t } = useLanguage()
   const isUpper = tooth.position === 'upper'
   const conditionConfig = DENTAL_CONDITION_CONFIG[tooth.condition]
 
@@ -42,7 +44,7 @@ export function ToothCell({
     }
   }
 
-  const ariaDescription = `${tooth.number}: ${tooth.name}, Condition: ${conditionConfig?.label || tooth.condition}${
+  const ariaDescription = `${tooth.number}: ${tooth.name}, ${t('Condition:')} ${conditionConfig ? t(conditionConfig.label) : tooth.condition}${
     tooth.severity !== 'MILD' ? ` (${tooth.severity})` : ''
   }${
     hasSurfaceInvolvement
@@ -123,7 +125,7 @@ export function ToothCell({
                 absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background shadow-xs
               `}
               style={{ backgroundColor: conditionConfig?.fillColor || '#ef4444' }}
-              title={conditionConfig?.label}
+              title={conditionConfig ? t(conditionConfig.label) : undefined}
             />
           )}
         </div>

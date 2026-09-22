@@ -52,7 +52,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
             {hospitalLogo ? (
               <img
                 src={hospitalLogo}
-                alt={hospitalName || 'Logo'}
+                alt={hospitalName || t("Logo")}
                 className="h-8 w-8 shrink-0 rounded-lg object-cover"
               />
             ) : (
@@ -63,7 +63,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
             {!isCollapsed && (
               <div className="flex flex-col">
                 <span className="text-sm font-semibold leading-tight truncate max-w-[140px]">
-                  {hospitalName || 'Dental Clinic'}
+                  {hospitalName || t("Dental Clinic")}
                 </span>
                 {plan && (
                   <span
@@ -190,7 +190,7 @@ export function Sidebar({ role, hospitalName, hospitalLogo, plan }: SidebarProps
         {/* Footer */}
         <div className={cn('border-t py-3 text-center', isCollapsed ? 'px-2' : 'px-4')}>
           <p className="text-[10px] text-muted-foreground">
-            {isCollapsed ? 'v1.0' : 'Dental ERP v1.0'}
+            {isCollapsed ? 'v1.0' : t("Dental ERP v1.0")}
           </p>
         </div>
       </div>

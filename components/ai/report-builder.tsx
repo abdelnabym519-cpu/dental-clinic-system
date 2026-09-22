@@ -86,7 +86,7 @@ export function ReportBuilder() {
       {/* header */}
       <div>
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <span>🤖</span> Natural Language Report Builder
+          <span>🤖</span> {t("Natural Language Report Builder")}
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
           {t('Ask questions in plain English — AI queries your data and returns results.')}
@@ -105,7 +105,7 @@ export function ReportBuilder() {
           onKeyDown={(e) => {
             if (e.key === 'Enter') execute()
           }}
-          placeholder="e.g. 'Show revenue by procedure for last month'"
+          placeholder={t("e.g. 'Show revenue by procedure for last month'")}
           className="flex-1 rounded-md border bg-muted px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground"
         />
         <button
@@ -113,7 +113,7 @@ export function ReportBuilder() {
           disabled={loading || !query.trim()}
           className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity"
         >
-          {loading ? 'Generating…' : 'Generate'}
+          {loading ? t("Generating…") : t("Generate")}
         </button>
       </div>
 
@@ -158,7 +158,7 @@ export function ReportBuilder() {
       {loading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-3">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-          <span>Querying your data…</span>
+          <span>{t("Querying your data…")}</span>
         </div>
       )}
 
@@ -174,7 +174,7 @@ export function ReportBuilder() {
 
           {/* error */}
           {!result.success && (
-            <div className="p-3 text-sm text-red-600">{result.error || 'Query failed'}</div>
+            <div className="p-3 text-sm text-red-600">{result.error || t("Query failed")}</div>
           )}
 
           {/* data table */}
@@ -225,7 +225,7 @@ export function ReportBuilder() {
                 onClick={exportJSON}
                 className="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                ⬇ Export JSON
+                {t("⬇ Export JSON")}
               </button>
             </div>
           )}

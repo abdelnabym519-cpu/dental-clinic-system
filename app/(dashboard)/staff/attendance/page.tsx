@@ -99,6 +99,7 @@ const roleColors: Record<string, string> = {
 }
 
 export default function AttendancePage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -235,7 +236,7 @@ export default function AttendancePage() {
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-lg font-medium">
-            {new Date().toLocaleDateString('en-EG', {
+            {new Date().toLocaleDateString(locale, {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -400,7 +401,7 @@ export default function AttendancePage() {
                           openMarkDialog(member)
                         }}
                       >
-                        {member.todayStatus ? 'Update' : 'Mark'}
+                        {member.todayStatus ? 'Update' : t("Mark")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -415,7 +416,7 @@ export default function AttendancePage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedStaff?.todayStatus ? 'Update' : 'Mark'} Attendance</DialogTitle>
+            <DialogTitle>{selectedStaff?.todayStatus ? 'Update' : t("Mark")} {t("Attendance")}</DialogTitle>
             <DialogDescription>
               {selectedStaff?.firstName} {selectedStaff?.lastName} ({selectedStaff?.employeeId})
             </DialogDescription>
@@ -423,7 +424,7 @@ export default function AttendancePage() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Status *</Label>
+              <Label>{t("Status *")}</Label>
               <Select
                 value={attendanceForm.status}
                 onValueChange={(value) => setAttendanceForm((prev) => ({ ...prev, status: value }))}
@@ -478,7 +479,7 @@ export default function AttendancePage() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleMarkAttendance} disabled={marking}>
               {marking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save
+              {t("Save")}
             </Button>
           </DialogFooter>
         </DialogContent>

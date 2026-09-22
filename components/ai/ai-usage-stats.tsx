@@ -109,7 +109,7 @@ export function AIUsageStats() {
               {card.format ? card.format(card.thisMonth) : card.thisMonth}
             </p>
             <p className="text-xs text-muted-foreground">
-              All-time: {card.format ? card.format(card.allTime) : card.allTime}
+              {t("All-time:")} {card.format ? card.format(card.allTime) : card.allTime}
             </p>
           </div>
         ))}
@@ -122,17 +122,17 @@ export function AIUsageStats() {
             <span>💰</span>
             <span className="text-xs font-semibold">{t('Estimated AI Cost')}</span>
           </div>
-          <span className="text-xs text-muted-foreground">via OpenRouter</span>
+          <span className="text-xs text-muted-foreground">{t("via OpenRouter")}</span>
         </div>
         <div className="flex items-center gap-6 mt-2">
           <div>
             <p className="text-xs text-muted-foreground">{t('This Month')}</p>
-            <p className="text-sm font-bold">EGP {stats.thisMonth.costEGP.toFixed(2)}</p>
+            <p className="text-sm font-bold">{t('EGP')} {stats.thisMonth.costEGP.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">{t('All-Time')}</p>
             <p className="text-sm font-semibold text-muted-foreground">
-              EGP {stats.allTime.costEGP.toFixed(2)}
+              {t('EGP')} {stats.allTime.costEGP.toFixed(2)}
             </p>
           </div>
           <div>
@@ -146,7 +146,7 @@ export function AIUsageStats() {
       {stats.skillBreakdown.length > 0 && (
         <div>
           <p className="text-xs font-semibold text-muted-foreground mb-2">
-            Top Skills (this month)
+            {t("Top Skills (this month)")}
           </p>
           <div className="space-y-2">
             {stats.skillBreakdown.slice(0, 6).map((s) => (

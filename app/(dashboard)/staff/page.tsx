@@ -102,6 +102,7 @@ const roleLabels: Record<string, string> = {
 }
 
 export default function StaffPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
@@ -186,7 +187,7 @@ export default function StaffPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-EG', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -429,9 +430,9 @@ export default function StaffPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} staff members
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("staff members")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -442,7 +443,7 @@ export default function StaffPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
@@ -463,11 +464,11 @@ export default function StaffPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Deactivate Staff Member')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to deactivate{' '}
+              {t("Are you sure you want to deactivate")}{' '}
               <strong>
                 {staffToDelete?.firstName} {staffToDelete?.lastName}
               </strong>
-              ? They will no longer be able to log in to the system.
+              {t("? They will no longer be able to log in to the system.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

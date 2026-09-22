@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { ToothViewModel } from '../types/odontogram'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface BridgeConnectorProps {
   viewModels: Record<number, ToothViewModel>
@@ -9,6 +10,7 @@ interface BridgeConnectorProps {
 }
 
 export function BridgeConnector({ viewModels, position }: BridgeConnectorProps) {
+  const { t } = useLanguage()
   // Find teeth in this jaw with BRIDGE condition
   const bridgeTeeth = Object.values(viewModels).filter((t) => t.position === position && t.isBridge)
 
@@ -24,7 +26,7 @@ export function BridgeConnector({ viewModels, position }: BridgeConnectorProps) 
           ${position === 'upper' ? 'top-1' : 'bottom-1'}
         `}
       >
-        Fixed Bridge Span: {bridgeTeeth.map((t) => t.number).join(', ')}
+        {t("Fixed Bridge Span:")} {bridgeTeeth.map((t) => t.number).join(', ')}
       </div>
     </div>
   )

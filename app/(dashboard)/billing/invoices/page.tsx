@@ -85,6 +85,7 @@ interface PaginationInfo {
 }
 
 export default function InvoicesPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -302,7 +303,7 @@ export default function InvoicesPage() {
                       <TableCell>
                         <div className="font-medium">{invoice.invoiceNo}</div>
                         <div className="text-sm text-muted-foreground">
-                          {formatDate(invoice.invoiceDate)}
+                          {formatDate(invoice.invoiceDate, locale)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -322,10 +323,10 @@ export default function InvoicesPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(invoice.totalAmount)}
+                        {formatCurrency(invoice.totalAmount, locale)}
                       </TableCell>
                       <TableCell className="text-right text-green-600">
-                        {formatCurrency(invoice.paidAmount)}
+                        {formatCurrency(invoice.paidAmount, locale)}
                       </TableCell>
                       <TableCell className="text-right">
                         <span
@@ -333,13 +334,13 @@ export default function InvoicesPage() {
                             Number(invoice.balanceAmount) > 0 ? 'text-red-600 font-medium' : ''
                           }
                         >
-                          {formatCurrency(invoice.balanceAmount)}
+                          {formatCurrency(invoice.balanceAmount, locale)}
                         </span>
                       </TableCell>
                       <TableCell>
                         {invoice.dueDate ? (
                           <div className="flex flex-col">
-                            <span className="text-sm">{formatDate(invoice.dueDate)}</span>
+                            <span className="text-sm">{formatDate(invoice.dueDate, locale)}</span>
                             {dueDays.isOverdue && invoice.status !== 'PAID' && (
                               <span className="text-xs text-red-600 flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
@@ -409,9 +410,9 @@ export default function InvoicesPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} invoices
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("invoices")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -422,7 +423,7 @@ export default function InvoicesPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"

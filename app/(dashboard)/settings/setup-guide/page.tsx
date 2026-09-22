@@ -833,7 +833,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
           <div className="mt-3 space-y-4">
             {/* Steps */}
             <div>
-              <p className="text-sm font-medium mb-2">Steps:</p>
+              <p className="text-sm font-medium mb-2">{t("Steps:")}</p>
               <ol className="space-y-1.5 ml-1">
                 {guide.steps.map((step, i) => (
                   <li key={i} className="flex gap-2 text-sm text-muted-foreground">
@@ -852,7 +852,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
             {guide.tips && guide.tips.length > 0 && (
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-3">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1.5">
-                  Tips:
+                  {t("Tips:")}
                 </p>
                 <ul className="space-y-1">
                   {guide.tips.map((tip, i) => (
@@ -933,8 +933,7 @@ export default function SetupGuidePage() {
           {t('Setup Guide')}
         </h1>
         <p className="text-muted-foreground mt-1">
-          Step-by-step instructions to set up your clinic. Follow the essential steps first, then
-          add optional integrations.
+          {t("Step-by-step instructions to set up your clinic. Follow the essential steps first, then add optional integrations.")}
         </p>
       </div>
 
@@ -1062,8 +1061,7 @@ export default function SetupGuidePage() {
           <div className="text-center">
             <h3 className="font-semibold mb-1">{t('Need More Help?')}</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              If you&apos;re stuck on any step, feel free to use the AI Chat Assistant (bottom-right
-              corner) for instant help, or contact our support team.
+              {t("If you're stuck on any step, feel free to use the AI Chat Assistant (bottom-right corner) for instant help, or contact our support team.")}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link href="/chat">

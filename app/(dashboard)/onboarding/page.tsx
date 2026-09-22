@@ -204,13 +204,13 @@ export default function OnboardingPage() {
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">
-              {currentStep === 4 ? "You're all set!" : `Setup ${hospitalName || 'your clinic'}`}
+              {currentStep === 4 ? t("You're all set!") : t("Setup {v1}", { v1: hospitalName || 'your clinic' })}
             </CardTitle>
             <CardDescription>
-              {currentStep === 1 && "Enter your clinic's location details"}
-              {currentStep === 2 && 'Set your working hours'}
-              {currentStep === 3 && 'Configure payment options (optional)'}
-              {currentStep === 4 && 'Your clinic is ready to accept patients'}
+              {currentStep === 1 && t("Enter your clinic's location details")}
+              {currentStep === 2 && t("Set your working hours")}
+              {currentStep === 3 && t("Configure payment options (optional)")}
+              {currentStep === 4 && t("Your clinic is ready to accept patients")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -219,7 +219,7 @@ export default function OnboardingPage() {
               {currentStep === 1 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tagline">Tagline (optional)</Label>
+                    <Label htmlFor="tagline">{t("Tagline (optional)")}</Label>
                     <Input
                       id="tagline"
                       placeholder={t('Your smile, our priority')}
@@ -228,8 +228,8 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address *</Label>
-                    <Input id="address" placeholder="123, Main Street" {...register('address')} />
+                    <Label htmlFor="address">{t("Address *")}</Label>
+                    <Input id="address" placeholder={t("123, Main Street")} {...register('address')} />
                     {errors.address && (
                       <p className="text-sm text-destructive">{errors.address.message}</p>
                     )}
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="city">City *</Label>
+                      <Label htmlFor="city">{t("City *")}</Label>
                       <Input id="city" placeholder="القاهرة" {...register('city')} />
                       {errors.city && (
                         <p className="text-sm text-destructive">{errors.city.message}</p>
@@ -266,7 +266,7 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="pincode">Postal Code *</Label>
+                      <Label htmlFor="pincode">{t("Postal Code *")}</Label>
                       <Input id="pincode" placeholder="11513" {...register('pincode')} />
                       {errors.pincode && (
                         <p className="text-sm text-destructive">{errors.pincode.message}</p>
@@ -331,7 +331,7 @@ export default function OnboardingPage() {
                             onChange={(e) => handleWorkingHoursChange(day, 'open', e.target.value)}
                             className="w-32"
                           />
-                          <span className="text-muted-foreground">to</span>
+                          <span className="text-muted-foreground">{t("to")}</span>
                           <Input
                             type="time"
                             value={hours.close || '18:00'}
@@ -357,7 +357,7 @@ export default function OnboardingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="upiId">{t('ui.instapay_handle')}</Label>
-                    <Input id="upiId" placeholder="clinic@instapay" {...register('upiId')} />
+                    <Input id="upiId" placeholder={t("clinic@instapay")} {...register('upiId')} />
                   </div>
 
                   <div className="border-t pt-4 mt-4">
@@ -412,8 +412,7 @@ export default function OnboardingPage() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{t('Setup Complete!')}</h3>
                   <p className="text-muted-foreground mb-6">
-                    Your clinic is now ready. Start by adding your first patient or exploring the
-                    dashboard.
+                    {t("Your clinic is now ready. Start by adding your first patient or exploring the dashboard.")}
                   </p>
                   <Button onClick={() => router.push('/dashboard')} className="w-full">
                     {t('Go to Dashboard')}
@@ -438,7 +437,7 @@ export default function OnboardingPage() {
                   ) : (
                     <Button type="submit" disabled={isLoading}>
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Complete Setup
+                      {t("Complete Setup")}
                     </Button>
                   )}
                 </div>

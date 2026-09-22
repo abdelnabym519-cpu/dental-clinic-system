@@ -38,6 +38,7 @@ interface Prescription {
 }
 
 export default function PrescriptionsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const { toast } = useToast()
@@ -116,13 +117,13 @@ export default function PrescriptionsPage() {
                 Medications: rx.medications
                   .map((m) => `${m.medicationName} ${m.dosage} ${m.frequency} ${m.duration}`)
                   .join('; '),
-                Date: new Date(rx.createdAt).toLocaleDateString('en-EG', {
+                Date: new Date(rx.createdAt).toLocaleDateString(locale, {
                   day: '2-digit',
                   month: 'short',
                   year: 'numeric',
                 }),
                 'Valid Until': rx.validUntil
-                  ? new Date(rx.validUntil).toLocaleDateString('en-EG', {
+                  ? new Date(rx.validUntil).toLocaleDateString(locale, {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -171,7 +172,7 @@ export default function PrescriptionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Rx #</TableHead>
+                  <TableHead>{t("Rx #")}</TableHead>
                   <TableHead>{t('ui.patient')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.doctor')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.diagnosis')}</TableHead>
@@ -208,7 +209,7 @@ export default function PrescriptionsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {new Date(rx.createdAt).toLocaleDateString('en-EG', {
+                      {new Date(rx.createdAt).toLocaleDateString(locale, {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric',
@@ -251,7 +252,7 @@ export default function PrescriptionsPage() {
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
           >{t('ui.previous')}</Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
-            Page {pagination.page} of {pagination.pages}
+            {t("Page")} {pagination.page} {t("of")} {pagination.pages}
           </span>
           <Button
             variant="outline"

@@ -214,7 +214,7 @@ export default async function PricingPage() {
                   <CardDescription>{t(plan.description)}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
-                      {plan.price === 'Custom' ? '' : 'EGP '}
+                      {plan.price === 'Custom' ? '' : t("EGP ")}
                       {plan.price}
                     </span>
                     {plan.priceNote ? (

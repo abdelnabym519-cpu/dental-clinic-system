@@ -139,6 +139,7 @@ export function CalendarView({
   canNoShow = false,
   onOpenAppointment,
 }: CalendarViewProps) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(initialDate)
@@ -398,7 +399,7 @@ export function CalendarView({
             role="status"
             className="absolute left-1 right-1 top-1 z-10 rounded bg-destructive/15 px-2 py-1 text-[10px] font-semibold text-destructive pointer-events-none"
           >
-            {onLeave ? 'Provider on leave' : `Clinic holiday: ${holiday?.name ?? ''}`}
+            {onLeave ? t("Provider on leave") : t("Clinic holiday: {v1}", { v1: holiday?.name ?? '' })}
           </div>
         )}
       </>
@@ -407,7 +408,7 @@ export function CalendarView({
 
   const getDateLabel = () => {
     if (viewMode === 'day') {
-      return currentDate.toLocaleDateString('en-EG', {
+      return currentDate.toLocaleDateString(locale, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -416,16 +417,16 @@ export function CalendarView({
     } else if (viewMode === 'week') {
       const weekStart = startOfWeek(currentDate)
       const weekEnd = addDays(weekStart, 6)
-      return `${weekStart.toLocaleDateString('en-EG', {
+      return `${weekStart.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'short',
-      })} - ${weekEnd.toLocaleDateString('en-EG', {
+      })} - ${weekEnd.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       })}`
     } else {
-      return currentDate.toLocaleDateString('en-EG', {
+      return currentDate.toLocaleDateString(locale, {
         month: 'long',
         year: 'numeric',
       })
@@ -517,7 +518,7 @@ export function CalendarView({
             <div className="relative shrink-0">
               <button
                 type="button"
-                aria-label={`Actions for appointment ${apt.appointmentNo}`}
+                aria-label={t("Actions for appointment {v1}", { v1: apt.appointmentNo })}
                 className="rounded p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-primary"
                 onClick={(e) => {
                   e.stopPropagation()
@@ -536,7 +537,7 @@ export function CalendarView({
                     className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
                     onClick={() => router.push(`/appointments/${apt.id}`)}
                   >
-                    <Eye className="h-3.5 w-3.5" /> View details
+                    <Eye className="h-3.5 w-3.5" /> {t("View details")}
                   </button>
                   {apt.patient.id && (
                     <button
@@ -544,7 +545,7 @@ export function CalendarView({
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
                       onClick={() => router.push(`/patients/${apt.patient.id}`)}
                     >
-                      <User className="h-3.5 w-3.5" /> View patient
+                      <User className="h-3.5 w-3.5" /> {t("View patient")}
                     </button>
                   )}
                   {canSchedule && (
@@ -554,7 +555,7 @@ export function CalendarView({
                       onClick={() => router.push(`/appointments/${apt.id}/edit`)}
                       disabled={cancelled}
                     >
-                      <Calendar className="h-3.5 w-3.5" /> Edit / Reschedule
+                      <Calendar className="h-3.5 w-3.5" /> {t("Edit / Reschedule")}
                     </button>
                   )}
                   {canSchedule && (
@@ -565,14 +566,14 @@ export function CalendarView({
                       disabled={cancelled || cancellingId === apt.id}
                     >
                       <CalendarX className="h-3.5 w-3.5" />
-                      {cancellingId === apt.id ? 'Cancelling…' : 'Cancel'}
+                      {cancellingId === apt.id ? t("Cancelling…") : 'Cancel'}
                     </button>
                   )}
                   {canCheckIn && (apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED') && (
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={`Check in for appointment ${apt.appointmentNo}`}
+                      aria-label={t("Check in for appointment {v1}", { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'CHECKED_IN')}
                     >
@@ -582,7 +583,7 @@ export function CalendarView({
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={`Start visit for appointment ${apt.appointmentNo}`}
+                      aria-label={t("Start visit for appointment {v1}", { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'IN_PROGRESS')}
                     >
@@ -592,7 +593,7 @@ export function CalendarView({
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={`Complete appointment ${apt.appointmentNo}`}
+                      aria-label={t("Complete appointment {v1}", { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'COMPLETED')}
                     >
@@ -603,7 +604,7 @@ export function CalendarView({
                       <button
                         type="button"
                         className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted"
-                        aria-label={`Mark no-show for appointment ${apt.appointmentNo}`}
+                        aria-label={t("Mark no-show for appointment {v1}", { v1: apt.appointmentNo })}
                         disabled={cancellingId === apt.id}
                         onClick={() => quickStatus(apt, 'NO_SHOW')}
                       >
@@ -644,7 +645,7 @@ export function CalendarView({
           groups.map(({ day, appts }) => (
             <div key={day.toISOString()}>
               <p className="mb-2 text-sm font-semibold">
-                {day.toLocaleDateString('en-EG', {
+                {day.toLocaleDateString(locale, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'short',
@@ -747,7 +748,7 @@ export function CalendarView({
               }`}
             >
               <p className="text-xs text-muted-foreground">
-                {day.toLocaleDateString('en-EG', { weekday: 'short' })}
+                {day.toLocaleDateString(locale, { weekday: 'short' })}
               </p>
               <p className="font-semibold">{day.getDate()}</p>
             </div>
@@ -805,7 +806,7 @@ export function CalendarView({
       >
         {/* Header */}
         <div className="grid grid-cols-7 bg-muted/30">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          {[t("Sun"), t("Mon"), t("Tue"), t("Wed"), t("Thu"), t("Fri"), t("Sat")].map((day) => (
             <div key={day} className="p-2 text-center text-sm font-medium">
               {day}
             </div>
@@ -843,7 +844,7 @@ export function CalendarView({
                       key={apt.id}
                       role="button"
                       tabIndex={0}
-                      aria-label={`Appointment ${apt.appointmentNo} on ${key}`}
+                      aria-label={t("Appointment {v1} on {v2}", { v1: apt.appointmentNo, v2: key })}
                       className={`text-xs p-1 rounded cursor-pointer truncate ${getStatusColor(
                         apt.status
                       )}`}
@@ -857,7 +858,7 @@ export function CalendarView({
                   ))}
                   {dayAppointments.length > 3 && (
                     <p className="text-xs text-muted-foreground pl-1">
-                      +{dayAppointments.length - 3} more
+                      +{dayAppointments.length - 3} {t("more")}
                     </p>
                   )}
                 </div>
@@ -897,7 +898,7 @@ export function CalendarView({
                   <SelectItem value="all">{t('ui.all_providers')}</SelectItem>
                   {providers.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      Dr. {p.firstName} {p.lastName}
+                      {t("Dr.")} {p.firstName} {p.lastName}
                       {p.specialization ? ` — ${p.specialization}` : ''}
                     </SelectItem>
                   ))}
@@ -966,7 +967,7 @@ export function CalendarView({
         </Card>
       ) : (
         <>
-          {viewMode === 'day' && (
+          {viewMode === t("day") && (
             <>
               <div className="hidden min-h-0 flex-1 flex-col md:flex">{renderDayView()}</div>
               <div className="md:hidden">{renderMobileList([currentDate])}</div>
@@ -1001,7 +1002,7 @@ export function CalendarView({
 
       {/* Accessibility: live region announcing loaded count */}
       <p className="sr-only" role="status" aria-live="polite">
-        {`${appointments.length} appointments loaded`}
+        {t("{v1} appointments loaded", { v1: appointments.length })}
       </p>
     </div>
   )

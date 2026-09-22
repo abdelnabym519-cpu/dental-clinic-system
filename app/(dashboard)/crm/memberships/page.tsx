@@ -99,6 +99,7 @@ const emptyPlanForm = {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function MembershipPlansPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -392,7 +393,7 @@ export default function MembershipPlansPage() {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  const formatCurrency = (price: number) => `\u20B9${Number(price).toLocaleString('en-EG')}`
+  const formatCurrency = (price: number) => `\u20B9${Number(price).toLocaleString(locale)}`
 
   const formatDuration = (months: number) => {
     if (months === 1) return '1 month'
@@ -402,7 +403,7 @@ export default function MembershipPlansPage() {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-EG', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -450,7 +451,7 @@ export default function MembershipPlansPage() {
             <p className="text-muted-foreground">
               {formatCurrency(detailPlan.price)} / {formatDuration(detailPlan.durationMonths)}
               {' \u2022 '}
-              {detailPlan._count.memberships} member{detailPlan._count.memberships !== 1 ? 's' : ''}
+              {detailPlan._count.memberships} {t("member")}{detailPlan._count.memberships !== 1 ? 's' : ''}
             </p>
           </div>
           <Button onClick={() => openEnrollDialog(detailPlan)}>
@@ -472,7 +473,7 @@ export default function MembershipPlansPage() {
                       {t(b.description)}
                       {b.discountPercent ? (
                         <Badge variant="secondary" className="ml-2 text-xs">
-                          {b.discountPercent}% off
+                          {b.discountPercent}{t("% off")}
                         </Badge>
                       ) : null}
                     </span>
@@ -528,7 +529,7 @@ export default function MembershipPlansPage() {
                       <TableCell>{formatDate(m.endDate)}</TableCell>
                       <TableCell>
                         <Badge variant={m.autoRenew ? 'default' : 'secondary'}>
-                          {m.autoRenew ? 'Yes' : 'No'}
+                          {m.autoRenew ? t("Yes") : t("No")}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -616,7 +617,7 @@ export default function MembershipPlansPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEditPlan(plan)}>
-                          <Edit className="h-4 w-4 mr-2" /> Edit Plan
+                          <Edit className="h-4 w-4 mr-2" /> {t("Edit Plan")}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEnrollDialog(plan)}>
                           <UserPlus className="h-4 w-4 mr-2" />{t('ui.enroll_patient')}</DropdownMenuItem>
@@ -639,7 +640,7 @@ export default function MembershipPlansPage() {
                   <div className="flex items-center gap-1">
                     <Banknote className="h-4 w-4 text-muted-foreground" />
                     <span className="text-2xl font-bold">
-                      {Number(plan.price).toLocaleString('en-EG')}
+                      {Number(plan.price).toLocaleString(locale)}
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
@@ -651,8 +652,8 @@ export default function MembershipPlansPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
                   <span>
-                    {plan._count.memberships} member{plan._count.memberships !== 1 ? 's' : ''}
-                    {plan.maxMembers ? ` / ${plan.maxMembers} max` : ''}
+                    {plan._count.memberships} {t("member")}{plan._count.memberships !== 1 ? 's' : ''}
+                    {plan.maxMembers ? t(" / {v1} max", { v1: plan.maxMembers }) : ''}
                   </span>
                 </div>
 
@@ -664,13 +665,13 @@ export default function MembershipPlansPage() {
                         <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
                         <span className="text-muted-foreground line-clamp-1">
                           {t(b.description)}
-                          {b.discountPercent ? ` (${b.discountPercent}% off)` : ''}
+                          {b.discountPercent ? t(" ({v1}% off)", { v1: b.discountPercent }) : ''}
                         </span>
                       </div>
                     ))}
                     {plan.benefits.length > 3 && (
                       <p className="text-xs text-muted-foreground pl-5">
-                        +{plan.benefits.length - 3} more benefit
+                        +{plan.benefits.length - 3} {t("more benefit")}
                         {plan.benefits.length - 3 > 1 ? 's' : ''}
                       </p>
                     )}
@@ -686,16 +687,16 @@ export default function MembershipPlansPage() {
       <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingPlanId ? 'Edit Plan' : 'Create Membership Plan'}</DialogTitle>
+            <DialogTitle>{editingPlanId ? t("Edit Plan") : t("Create Membership Plan")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Name */}
             <div>
-              <Label>Plan Name *</Label>
+              <Label>{t("Plan Name *")}</Label>
               <Input
                 value={planForm.name}
                 onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                placeholder="e.g., Gold Membership"
+                placeholder={t("e.g., Gold Membership")}
               />
             </div>
 
@@ -713,7 +714,7 @@ export default function MembershipPlansPage() {
             {/* Price & Duration */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Price (\u20B9) *</Label>
+                <Label>{t("Price (₹) *")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -724,7 +725,7 @@ export default function MembershipPlansPage() {
                 />
               </div>
               <div>
-                <Label>Duration (months) *</Label>
+                <Label>{t("Duration (months) *")}</Label>
                 <Input
                   type="number"
                   min="1"
@@ -737,7 +738,7 @@ export default function MembershipPlansPage() {
 
             {/* Max Members */}
             <div>
-              <Label>Max Members (optional)</Label>
+              <Label>{t("Max Members (optional)")}</Label>
               <Input
                 type="number"
                 min="1"
@@ -752,7 +753,7 @@ export default function MembershipPlansPage() {
               <div className="flex items-center justify-between mb-2">
                 <Label>{t('Benefits')}</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addBenefit}>
-                  <Plus className="h-3 w-3 mr-1" /> Add Benefit
+                  <Plus className="h-3 w-3 mr-1" /> {t("Add Benefit")}
                 </Button>
               </div>
               <div className="space-y-2">
@@ -772,7 +773,7 @@ export default function MembershipPlansPage() {
                         max="100"
                         value={benefit.discountPercent ?? ''}
                         onChange={(e) => updateBenefit(index, 'discountPercent', e.target.value)}
-                        placeholder="% off"
+                        placeholder={t("% off")}
                       />
                     </div>
                     <Button
@@ -811,7 +812,7 @@ export default function MembershipPlansPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleSavePlan} disabled={savingPlan}>
-                {savingPlan ? 'Saving...' : editingPlanId ? 'Update Plan' : 'Create Plan'}
+                {savingPlan ? 'Saving...' : editingPlanId ? t("Update Plan") : t("Create Plan")}
               </Button>
             </div>
           </div>
@@ -822,12 +823,12 @@ export default function MembershipPlansPage() {
       <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Enroll Patient in {enrollPlanName}</DialogTitle>
+            <DialogTitle>{t("Enroll Patient in")} {enrollPlanName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {/* Patient Search */}
             <div>
-              <Label>Search Patient *</Label>
+              <Label>{t("Search Patient *")}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -855,7 +856,7 @@ export default function MembershipPlansPage() {
                           {p.firstName} {p.lastName}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {p.phone || p.email || 'No contact info'}
+                          {p.phone || p.email || t("No contact info")}
                         </div>
                       </button>
                     ))
@@ -906,7 +907,7 @@ export default function MembershipPlansPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setEnrollDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleEnroll} disabled={enrolling || !selectedPatient}>
-                {enrolling ? 'Enrolling...' : 'Enroll Patient'}
+                {enrolling ? t("Enrolling...") : 'Enroll Patient'}
               </Button>
             </div>
           </div>

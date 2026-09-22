@@ -36,6 +36,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Clock, Plus, Trash2, Users, Bell, CheckCircle2, Loader2, Search } from 'lucide-react'
 import { format } from 'date-fns'
+import { dateFnsLocale } from '@/lib/i18n/dates'
 
 interface WaitlistEntry {
   id: string
@@ -83,6 +84,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function WaitlistPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
@@ -250,7 +252,7 @@ export default function WaitlistPage() {
             <div className="space-y-4 py-4">
               {/* Patient Search */}
               <div className="space-y-2">
-                <Label>Patient *</Label>
+                <Label>{t("Patient *")}</Label>
                 {selectedPatient ? (
                   <div className="flex items-center justify-between bg-muted p-2 rounded">
                     <span className="text-sm font-medium">
@@ -294,7 +296,7 @@ export default function WaitlistPage() {
 
               {/* Doctor Preference */}
               <div className="space-y-2">
-                <Label>Preferred Doctor (optional)</Label>
+                <Label>{t("Preferred Doctor (optional)")}</Label>
                 <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.any_doctor')} />
@@ -303,7 +305,7 @@ export default function WaitlistPage() {
                     <SelectItem value="any">{t('ui.any_doctor')}</SelectItem>
                     {doctors.map((d: any) => (
                       <SelectItem key={d.id} value={d.id}>
-                        Dr. {d.firstName} {d.lastName}
+                        {t("Dr.")} {d.firstName} {d.lastName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -312,7 +314,7 @@ export default function WaitlistPage() {
 
               {/* Preferred Days */}
               <div className="space-y-2">
-                <Label>Preferred Days (optional)</Label>
+                <Label>{t("Preferred Days (optional)")}</Label>
                 <div className="flex flex-wrap gap-1">
                   {DAYS.map((day) => (
                     <Button
@@ -331,7 +333,7 @@ export default function WaitlistPage() {
 
               {/* Preferred Time */}
               <div className="space-y-2">
-                <Label>Preferred Time (optional)</Label>
+                <Label>{t("Preferred Time (optional)")}</Label>
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.any_time')} />
@@ -349,7 +351,7 @@ export default function WaitlistPage() {
 
               {/* Notes */}
               <div className="space-y-2">
-                <Label>Notes (optional)</Label>
+                <Label>{t("Notes (optional)")}</Label>
                 <Textarea
                   placeholder={t('ui.any_additional_notes')}
                   value={notes}
@@ -361,7 +363,7 @@ export default function WaitlistPage() {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
               <Button onClick={handleAdd} disabled={adding || !selectedPatient}>
                 {adding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Add to Waitlist
+                {t("Add to Waitlist")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -420,7 +422,7 @@ export default function WaitlistPage() {
             size="sm"
             onClick={() => setStatusFilter(s)}
           >
-            {s.charAt(0) + s.slice(1).toLowerCase()}
+            {t(s.charAt(0) + s.slice(1).toLowerCase())}
           </Button>
         ))}
       </div>
@@ -464,23 +466,23 @@ export default function WaitlistPage() {
                   <TableRow key={entry.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{entry.patient?.name || 'Unknown'}</p>
+                        <p className="font-medium">{entry.patient?.name || t("Unknown")}</p>
                         <p className="text-xs text-muted-foreground">
                           {entry.patient?.patientId} | {entry.patient?.phone}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>{entry.doctor?.name || 'Any'}</TableCell>
+                    <TableCell>{entry.doctor?.name || t("Any")}</TableCell>
                     <TableCell>
                       {entry.preferredDays && (entry.preferredDays as string[]).length > 0
                         ? (entry.preferredDays as string[]).map((d) => d.slice(0, 3)).join(', ')
-                        : 'Any'}
+                        : t("Any")}
                     </TableCell>
-                    <TableCell>{entry.preferredTime || 'Any'}</TableCell>
+                    <TableCell>{entry.preferredTime || t("Any")}</TableCell>
                     <TableCell>
-                      <Badge className={STATUS_COLORS[entry.status] || ''}>{entry.status}</Badge>
+                      <Badge className={STATUS_COLORS[entry.status] || ''}>{t(entry.status.charAt(0) + entry.status.slice(1).toLowerCase())}</Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(entry.createdAt), 'PP')}</TableCell>
+                    <TableCell>{format(new Date(entry.createdAt), 'PP', { locale: dateFnsLocale(locale) })}</TableCell>
                     <TableCell className="text-right">
                       {entry.status === 'ACTIVE' && (
                         <Button variant="ghost" size="icon" onClick={() => handleRemove(entry.id)}>
@@ -489,12 +491,12 @@ export default function WaitlistPage() {
                       )}
                       {entry.notifiedAt && (
                         <span className="text-xs text-muted-foreground block">
-                          Notified {format(new Date(entry.notifiedAt), 'PP')}
+                          {t("Notified")} {format(new Date(entry.notifiedAt), 'PP', { locale: dateFnsLocale(locale) })}
                         </span>
                       )}
                       {entry.bookedAt && (
                         <span className="text-xs text-green-600 block">
-                          Booked {format(new Date(entry.bookedAt), 'PP')}
+                          {t("Booked")} {format(new Date(entry.bookedAt), 'PP', { locale: dateFnsLocale(locale) })}
                         </span>
                       )}
                     </TableCell>

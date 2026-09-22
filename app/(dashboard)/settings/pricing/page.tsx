@@ -61,6 +61,7 @@ interface PricingData {
 }
 
 export default function PricingSuggestionsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [data, setData] = useState<PricingData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -113,7 +114,7 @@ export default function PricingSuggestionsPage() {
           ) : (
             <Sparkles className="h-4 w-4 mr-2" />
           )}
-          {loading ? 'Analyzing...' : 'Generate Analysis'}
+          {loading ? t("Analyzing...") : t("Generate Analysis")}
         </Button>
       </div>
 
@@ -124,8 +125,7 @@ export default function PricingSuggestionsPage() {
           <div className="text-sm">
             <p className="font-medium text-blue-800">{t('Advisory Only')}</p>
             <p className="text-blue-700">
-              These are AI-generated recommendations. No pricing changes are applied automatically.
-              Review each suggestion and implement manually if appropriate.
+              {t("These are AI-generated recommendations. No pricing changes are applied automatically. Review each suggestion and implement manually if appropriate.")}
             </p>
           </div>
         </CardContent>
@@ -137,8 +137,7 @@ export default function PricingSuggestionsPage() {
             <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">{t('No Analysis Generated')}</p>
             <p className="text-muted-foreground mb-4">
-              Click &quot;Generate Analysis&quot; to get AI-powered pricing recommendations based on
-              your clinic&apos;s appointment and revenue data.
+              {t("Click \"Generate Analysis\" to get AI-powered pricing recommendations based on your clinic's appointment and revenue data.")}
             </p>
           </CardContent>
         </Card>
@@ -166,7 +165,7 @@ export default function PricingSuggestionsPage() {
                   </div>
                   <p className="text-2xl font-bold">
                     {'\u20B9'}
-                    {data.summary.revenueOpportunity?.toLocaleString()}/mo
+                    {data.summary.revenueOpportunity?.toLocaleString()}{t("/mo")}
                   </p>
                 </CardContent>
               </Card>
@@ -187,7 +186,7 @@ export default function PricingSuggestionsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Clock className="h-5 w-5" /> Peak & Off-Peak Analysis
+                  <Clock className="h-5 w-5" /> {t("Peak & Off-Peak Analysis")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -252,7 +251,7 @@ export default function PricingSuggestionsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <DollarSign className="h-5 w-5" /> Pricing Suggestions
+                  <DollarSign className="h-5 w-5" /> {t("Pricing Suggestions")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -284,7 +283,7 @@ export default function PricingSuggestionsPage() {
                       </div>
                       <p className="text-sm text-muted-foreground mb-1">{s.rationale}</p>
                       <p className="text-sm font-medium text-green-600">
-                        Est. Impact: {s.estimatedRevenueImpact}
+                        {t("Est. Impact:")} {s.estimatedRevenueImpact}
                       </p>
                     </div>
                   ))}
@@ -298,7 +297,7 @@ export default function PricingSuggestionsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-5 w-5" /> Doctor Utilization
+                  <Users className="h-5 w-5" /> {t("Doctor Utilization")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -353,9 +352,9 @@ export default function PricingSuggestionsPage() {
                       </div>
                       <div className="text-right text-sm">
                         <p>
-                          Booking: <span className="font-medium">{p.bookingRate}%</span>
+                          {t("Booking:")} <span className="font-medium">{p.bookingRate}%</span>
                         </p>
-                        <p className="text-muted-foreground">Avg wait: {p.avgWaitDays}d</p>
+                        <p className="text-muted-foreground">{t("Avg wait:")} {p.avgWaitDays}d</p>
                       </div>
                     </div>
                   ))}
@@ -366,7 +365,7 @@ export default function PricingSuggestionsPage() {
 
           {generatedAt && (
             <p className="text-xs text-muted-foreground text-center">
-              Generated at {new Date(generatedAt).toLocaleString()}
+              {t("Generated at")} {new Date(generatedAt).toLocaleString(locale)}
             </p>
           )}
         </>

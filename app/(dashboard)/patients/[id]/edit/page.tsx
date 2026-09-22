@@ -202,7 +202,7 @@ export default function EditPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">{t("First Name *")}</Label>
               <Input
                 id="firstName"
                 value={form.firstName}
@@ -212,7 +212,7 @@ export default function EditPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">{t("Last Name *")}</Label>
               <Input
                 id="lastName"
                 value={form.lastName}
@@ -281,7 +281,7 @@ export default function EditPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone *</Label>
+              <Label htmlFor="phone">{t("Phone *")}</Label>
               <Input
                 id="phone"
                 value={form.phone}
@@ -362,7 +362,7 @@ export default function EditPatientPage() {
                 id="aadharNumber"
                 value={form.aadharNumber}
                 onChange={(e) => updateField('aadharNumber', e.target.value)}
-                placeholder="14-digit national ID"
+                placeholder={t("14-digit national ID")}
               />
             </div>
             <div className="space-y-2">
@@ -418,7 +418,7 @@ export default function EditPatientPage() {
                 id="emergencyContactRelation"
                 value={form.emergencyContactRelation}
                 onChange={(e) => updateField('emergencyContactRelation', e.target.value)}
-                placeholder="e.g. Spouse, Parent"
+                placeholder={t("e.g. Spouse, Parent")}
               />
             </div>
           </CardContent>

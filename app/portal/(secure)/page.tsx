@@ -53,6 +53,7 @@ interface DashboardData {
 }
 
 export default function PatientDashboard() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -73,7 +74,7 @@ export default function PatientDashboard() {
     }).format(Number(val))
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-EG', {
+    new Date(d).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -188,13 +189,13 @@ export default function PatientDashboard() {
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          {formatDate(apt.scheduledDate)} at {apt.scheduledTime}
+                          {formatDate(apt.scheduledDate)} {t("at")} {apt.scheduledTime}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">
-                          Dr. {apt.doctor.firstName} {apt.doctor.lastName}
+                          {t("Dr.")} {apt.doctor.firstName} {apt.doctor.lastName}
                         </span>
                       </div>
                     </div>
@@ -232,7 +233,7 @@ export default function PatientDashboard() {
                       <p className="text-sm font-medium">{inv.invoiceNo}</p>
                       {inv.dueDate && (
                         <p className="text-xs text-muted-foreground">
-                          Due: {formatDate(inv.dueDate)}
+                          {t("Due:")} {formatDate(inv.dueDate)}
                         </p>
                       )}
                     </div>
@@ -277,7 +278,7 @@ export default function PatientDashboard() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium">{opt.procedure.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Dr. {opt.doctor.firstName} {opt.doctor.lastName} &middot;{' '}
+                        {t("Dr.")} {opt.doctor.firstName} {opt.doctor.lastName} &middot;{' '}
                         {formatDate(opt.createdAt)}
                       </p>
                     </div>

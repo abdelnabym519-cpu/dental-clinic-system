@@ -22,6 +22,7 @@ import {
  * reference), so this page only presents the transfer details.
  */
 export default function InstaPayInstructionsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const [reference, setReference] = useState('')
   const [amount, setAmount] = useState('')
@@ -61,7 +62,7 @@ export default function InstaPayInstructionsPage() {
             <p className="text-xs text-muted-foreground">{t('Amount due')}</p>
             <p className="text-3xl font-bold">{amount ? `${amount} ${t('currency.egp')}` : '—'}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {amount ? `EGP ${Number(amount).toLocaleString('en-EG')}` : ''}
+              {amount ? t("EGP {v1}", { v1: Number(amount).toLocaleString(locale) }) : ''}
             </p>
           </div>
 
@@ -69,7 +70,7 @@ export default function InstaPayInstructionsPage() {
           <div>
             <p className="text-sm font-medium mb-1">{t("Transfer to the clinic's InstaPay address")}</p>
             <p className="text-sm text-muted-foreground mb-2">
-              Transfer to the clinic&apos;s InstaPay address (IPA)
+              {t("Transfer to the clinic's InstaPay address (IPA)")}
             </p>
             <div className="flex items-center gap-2 rounded-md border p-3 font-mono text-lg" dir="ltr">
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />

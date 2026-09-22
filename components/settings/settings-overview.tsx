@@ -146,7 +146,7 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('settings.database')}:</span>
-              <span className="font-medium">{t('MySQL')}</span>
+              <span className="font-medium">MySQL</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('settings.environment')}:</span>
@@ -160,10 +160,10 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
             <CardTitle>{t('settings.quickTips')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• Regular backups are crucial for data safety</p>
-            <p>• Review audit logs periodically for security</p>
-            <p>• Keep clinic information updated</p>
-            <p>• Configure SMS/Email for automated reminders</p>
+            <p>{t("• Regular backups are crucial for data safety")}</p>
+            <p>{t("• Review audit logs periodically for security")}</p>
+            <p>{t("• Keep clinic information updated")}</p>
+            <p>{t("• Configure SMS/Email for automated reminders")}</p>
           </CardContent>
         </Card>
       </div>

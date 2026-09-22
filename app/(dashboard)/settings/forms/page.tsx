@@ -62,6 +62,7 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function FormsSettingsPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { confirm, ConfirmDialogComponent } = useConfirmDialog()
   const [templates, setTemplates] = useState<FormTemplate[]>([])
@@ -204,7 +205,7 @@ export default function FormsSettingsPage() {
                     </TableCell>
                     <TableCell className="text-right">{tf._count.submissions}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {new Date(tf.createdAt).toLocaleDateString('en-EG')}
+                      {new Date(tf.createdAt).toLocaleDateString(locale)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

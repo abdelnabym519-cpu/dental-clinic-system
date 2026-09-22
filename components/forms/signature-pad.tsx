@@ -21,6 +21,7 @@ export function SignaturePad({
   height = 200,
   label = 'I agree to the terms and conditions above',
 }: SignaturePadProps) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -238,8 +239,8 @@ export function SignaturePad({
         </label>
       </div>
       <p className="text-xs text-muted-foreground">
-        Signed on:{' '}
-        {new Date().toLocaleDateString('en-EG', { day: 'numeric', month: 'long', year: 'numeric' })}
+        {t("Signed on:")}{' '}
+        {new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
     </div>
   )

@@ -110,6 +110,7 @@ interface Treatment {
 }
 
 export default function TreatmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
@@ -258,7 +259,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               <h1 className="text-3xl font-bold tracking-tight">{treatment.treatmentNo}</h1>
               {getStatusBadge(treatment.status)}
             </div>
-            <p className="text-muted-foreground">Created on {formatDate(treatment.createdAt)}</p>
+            <p className="text-muted-foreground">{t("Created on")} {formatDate(treatment.createdAt, locale)}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -305,7 +306,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                 <div>
                   <div className="font-medium text-lg">{treatment.procedure.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    Code: {treatment.procedure.code}
+                    {t("Code:")} {treatment.procedure.code}
                   </div>
                 </div>
                 <Badge
@@ -324,11 +325,11 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">{t('ui.treatment_cost')}</div>
-                  <div className="font-medium text-lg">{formatCurrency(treatment.cost)}</div>
+                  <div className="font-medium text-lg">{formatCurrency(treatment.cost, locale)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">{t('Base Price')}</div>
-                  <div className="font-medium">{formatCurrency(treatment.procedure.basePrice)}</div>
+                  <div className="font-medium">{formatCurrency(treatment.procedure.basePrice, locale)}</div>
                 </div>
               </div>
 
@@ -336,12 +337,12 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Started: {formatDateTime(treatment.startTime)}</span>
+                    <span>{t("Started:")} {formatDateTime(treatment.startTime, locale)}</span>
                   </div>
                   {treatment.endTime && (
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span>Completed: {formatDateTime(treatment.endTime)}</span>
+                      <span>{t("Completed:")} {formatDateTime(treatment.endTime, locale)}</span>
                     </div>
                   )}
                 </div>
@@ -492,7 +493,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                 )}
                 {treatment.patient.bloodGroup && (
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Blood Group:</span>
+                    <span className="text-muted-foreground">{t("Blood Group:")}</span>
                     <Badge variant="outline">{treatment.patient.bloodGroup}</Badge>
                   </div>
                 )}
@@ -512,7 +513,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="font-medium">
-                Dr. {treatment.doctor.firstName} {treatment.doctor.lastName}
+                {t("Dr.")} {treatment.doctor.firstName} {treatment.doctor.lastName}
               </div>
               {treatment.doctor.specialization && (
                 <div className="text-sm text-muted-foreground">
@@ -538,7 +539,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               <CardContent className="space-y-2">
                 <div className="font-medium">{treatment.appointment.appointmentNo}</div>
                 <div className="text-sm text-muted-foreground">
-                  {formatDate(treatment.appointment.scheduledDate)} at{' '}
+                  {formatDate(treatment.appointment.scheduledDate, locale)} {t("at")}{' '}
                   {treatment.appointment.scheduledTime}
                 </div>
                 <Link href={`/appointments/${treatment.appointment.id}`}>
@@ -559,7 +560,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                 {treatment.followUpDate ? (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {formatDate(treatment.followUpDate)}
+                    {formatDate(treatment.followUpDate, locale)}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">{t('Date not scheduled')}</p>
@@ -580,7 +581,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
               </CardHeader>
               <CardContent>
                 <div className="text-sm">
-                  {treatment.prescriptions.length} prescription(s) issued
+                  {treatment.prescriptions.length} {t("prescription(s) issued")}
                 </div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   {t('View Prescriptions')}
@@ -597,7 +598,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
                   <Receipt className="h-5 w-5" />{t('ui.billing')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm">{treatment.invoiceItems.length} invoice item(s)</div>
+                <div className="text-sm">{treatment.invoiceItems.length} {t("invoice item(s)")}</div>
                 <Button variant="outline" size="sm" className="w-full mt-4">
                   {t('View Invoices')}
                 </Button>
@@ -659,7 +660,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="complications">Complications (if any)</Label>
+              <Label htmlFor="complications">{t("Complications (if any)")}</Label>
               <Textarea
                 id="complications"
                 value={completeFormData.complications}
@@ -709,7 +710,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
           <DialogFooter>
             <Button variant="outline" onClick={() => setCompleteDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleCompleteTreatment} disabled={actionLoading}>
-              {actionLoading ? 'Completing...' : 'Complete Treatment'}
+              {actionLoading ? t("Completing...") : 'Complete Treatment'}
             </Button>
           </DialogFooter>
         </DialogContent>

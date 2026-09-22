@@ -96,6 +96,7 @@ const statusColors: Record<string, string> = {
 }
 
 export default function LeavesPage() {
+  const { locale } = useLanguage()
   const { t } = useLanguage()
   const { toast } = useToast()
   const [leaves, setLeaves] = useState<LeaveRequest[]>([])
@@ -262,7 +263,7 @@ export default function LeavesPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-EG', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -398,7 +399,7 @@ export default function LeavesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {leaveTypeLabels[leave.leaveType] || leave.leaveType}
+                        {t(leaveTypeLabels[leave.leaveType] || leave.leaveType)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -408,7 +409,7 @@ export default function LeavesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {calculateDays(leave.startDate, leave.endDate)} days
+                        {calculateDays(leave.startDate, leave.endDate)} {t("days")}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -463,9 +464,9 @@ export default function LeavesPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
-                {pagination.total} requests
+                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
+                {pagination.total} {t("requests")}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -476,7 +477,7 @@ export default function LeavesPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
                 <div className="text-sm">
-                  Page {pagination.page} of {pagination.totalPages}
+                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
@@ -501,7 +502,7 @@ export default function LeavesPage() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Staff Member *</Label>
+              <Label>{t("Staff Member *")}</Label>
               <Select
                 value={newLeaveForm.staffId}
                 onValueChange={(value) => setNewLeaveForm((prev) => ({ ...prev, staffId: value }))}
@@ -520,7 +521,7 @@ export default function LeavesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Leave Type *</Label>
+              <Label>{t("Leave Type *")}</Label>
               <Select
                 value={newLeaveForm.leaveType}
                 onValueChange={(value) =>
@@ -543,7 +544,7 @@ export default function LeavesPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date *</Label>
+                <Label>{t("Start Date *")}</Label>
                 <Input
                   type="date"
                   value={newLeaveForm.startDate}
@@ -553,7 +554,7 @@ export default function LeavesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>End Date *</Label>
+                <Label>{t("End Date *")}</Label>
                 <Input
                   type="date"
                   value={newLeaveForm.endDate}
@@ -579,7 +580,7 @@ export default function LeavesPage() {
             <Button variant="outline" onClick={() => setNewDialogOpen(false)}>{t('ui.cancel')}</Button>
             <Button onClick={handleCreateLeave} disabled={creating}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Request
+              {t("Create Request")}
             </Button>
           </DialogFooter>
         </DialogContent>

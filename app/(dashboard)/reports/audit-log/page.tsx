@@ -118,12 +118,12 @@ export default function AuditLogPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-6 w-6" /> Audit Log
+            <Shield className="h-6 w-6" /> {t("Audit Log")}
           </h1>
           <p className="text-muted-foreground">{total.toLocaleString()} {t('total events')}</p>
         </div>
         <Button variant="outline" onClick={exportLogs}>
-          <Download className="h-4 w-4 mr-2" /> Export CSV
+          <Download className="h-4 w-4 mr-2" /> {t("Export CSV")}
         </Button>
       </div>
 
@@ -233,7 +233,7 @@ export default function AuditLogPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t("Page")} {page} {t("of")} {totalPages}
           </p>
           <div className="flex gap-2">
             <Button
