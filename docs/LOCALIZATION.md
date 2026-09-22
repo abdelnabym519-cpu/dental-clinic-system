@@ -171,13 +171,36 @@ instead of a dotted id. `messages/*.json` and `lib/i18n/request.ts` remain the
 `next-intl` request-config path for locale cascade resolution; the UI does not
 read its message catalogs.
 
-## 6. Known limitations
+## 6. PDF attachments — Arabic supported
 
-- **PDF attachments are Latin-1 only.** `lib/pdf.ts` writes Helvetica with
-  `/WinAnsiEncoding` and drops anything outside Latin-1, so the invoice and
-  prescription PDFs sent over WhatsApp (`app/api/communications/*/send`)
-  render Arabic names, item descriptions and diagnoses as `?`. The captions on
-  those documents are also still English literals. Fixing this needs an
-  embedded Arabic font with `Identity-H` CID encoding and shaping rules — a
-  font/rendering change, not a translation change. The WhatsApp/SMS *message*
-  text around the attachment is Arabic (`lib/messaging/templates.ts`).
+Patient-facing invoice and prescription PDFs
+(`app/api/communications/*/send`) follow the staff member's locale, exactly
+like the UI, and render Arabic properly:
+
+| Piece                | Where                                                       |
+| -------------------- | ----------------------------------------------------------- |
+| Contextual shaping   | `lib/pdf-arabic.ts` — isolated/final/initial/medial forms    |
+| Bidirectional order  | `lib/pdf-arabic.ts` — logical text → visual glyph order      |
+| Font subset + embed  | `lib/pdf-font.ts` + `lib/pdf.ts` — Type0/`Identity-H`, `/FontFile2` |
+| Font asset           | `assets/fonts/NotoNaskhArabic-Regular.ttf` (SIL OFL 1.1)     |
+
+Notes for future work:
+
+- Documents with no non-Latin-1 text still use the core Helvetica fonts, so an
+  English attachment embeds no font data at all.
+- Shaping is glyph-based rather than GSUB-based: the font ships the Arabic
+  presentation forms, so no layout tables are parsed and no shaping engine is
+  needed.
+- Lam+alef is deliberately **not** turned into a single ligature glyph — that
+  makes text extraction lossy (`بلال` came back as `بالل`), which would corrupt
+  the searchable text of patient names.
+- The subset keeps original glyph ids, so the cmap and composite glyphs stay
+  valid; `head`, `hhea`, `maxp`, `hmtx`, `loca` and `name` are the only tables
+  that need rewriting.
+- Characters the font does not cover fall back to `?` rather than `.notdef`
+  boxes, so a document never silently loses content.
+- `next.config.js` lists the font under `outputFileTracingIncludes`: it is read
+  from disk at runtime, which a standalone build would otherwise not trace.
+
+The WhatsApp/SMS *message* text around the attachment is Arabic as well
+(`lib/messaging/templates.ts`).

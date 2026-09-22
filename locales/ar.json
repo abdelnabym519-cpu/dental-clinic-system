@@ -3993,5 +3993,20 @@
   "{v1} months": "{v1} أشهر",
   "{v1} years": "{v1} سنوات",
   "{v1} member": "{v1} عضو",
-  "{v1} members": "{v1} أعضاء"
+  "{v1} members": "{v1} أعضاء",
+  "Invoice {v1}": "فاتورة {v1}",
+  "Prescription {v1}": "روشتة {v1}",
+  "Items:": "الأصناف:",
+  "Subtotal: {v1}": "الإجمالي الفرعي: {v1}",
+  "Total: {v1}": "الإجمالي: {v1}",
+  "Paid: {v1}": "المدفوع: {v1}",
+  "Balance: {v1}": "المتبقي: {v1}",
+  "Thank you for choosing our clinic.": "شكرًا لاختيارك عيادتنا.",
+  "Patient: {v1}": "المريض: {v1}",
+  "Doctor: {v1}": "الطبيب: {v1}",
+  "Diagnosis: {v1}": "التشخيص: {v1}",
+  "Medications:": "الأدوية:",
+  "Clinic": "العيادة",
+  "Notes: {v1}": "ملاحظات: {v1}",
+  "This prescription was issued electronically by the clinic.": "صدرت هذه الروشتة إلكترونيًا من العيادة."
 }

@@ -19,6 +19,13 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
+  // The Arabic PDF font is read from disk at runtime (lib/pdf-font.ts), which
+  // the bundler cannot see. Without this it would be missing from a standalone
+  // build and every Arabic invoice/prescription attachment would fail.
+  outputFileTracingIncludes: {
+    '/api/communications/invoices/[id]/send': ['./assets/fonts/**'],
+    '/api/communications/prescriptions/[id]/send': ['./assets/fonts/**'],
+  },
   // Ignore TypeScript errors in test files during build
   typescript: {
     ignoreBuildErrors: false,

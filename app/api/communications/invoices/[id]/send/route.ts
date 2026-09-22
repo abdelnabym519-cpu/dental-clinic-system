@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { renderSimplePdf } from '@/lib/pdf'
+import { formatCurrency, formatDate } from '@/lib/i18n/format'
+import { getServerLocale } from '@/lib/i18n/server'
+import { translateText } from '@/lib/i18n/dictionary'
 import { enqueueMessage } from '@/lib/messaging/service'
 import * as templates from '@/lib/messaging/templates'
 
@@ -37,33 +40,47 @@ export async function POST(
         ? body.contactPhone.trim()
         : invoice.patient.phone
 
-    const clinicName = (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ?? 'Clinic'
+    // The document follows the language the staff member is working in, so an
+    // Arabic-mode clinic sends Arabic invoices (see docs/LOCALIZATION.md §6).
+    const locale = await getServerLocale()
+    const t = (key: string, vars?: Record<string, string | number>) =>
+      translateText(locale, key, vars)
+
+    const clinicName =
+      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ??
+      t('Clinic')
+    // Caption values keep the message-template format that 3C–3J pins
+    // (plain 2-decimal total, ISO date); the document itself is localized.
     const dateStr = new Date().toISOString().slice(0, 10)
     const total = Number(invoice.totalAmount).toFixed(2)
+    const pdfDate = formatDate(new Date(), { locale })
+    const money = (value: unknown) => formatCurrency(Number(value), { locale })
 
     const pdf = renderSimplePdf({
-      title: `Invoice ${invoice.invoiceNo}`,
-      subtitle: `${clinicName} — ${dateStr}`,
+      title: t('Invoice {v1}', { v1: invoice.invoiceNo }),
+      subtitle: `${clinicName} — ${pdfDate}`,
       lines: [
         {
-          text: `Patient: ${invoice.patient.firstName} ${invoice.patient.lastName}`,
+          text: t('Patient: {v1}', {
+            v1: `${invoice.patient.firstName} ${invoice.patient.lastName}`,
+          }),
           bold: true,
           gapAfter: 10,
         },
-        { text: 'Items:', bold: true, gapAfter: 4 },
+        { text: t('Items:'), bold: true, gapAfter: 4 },
         ...invoice.items.map(
           (item: { description: string; quantity: number; amount: unknown }) => ({
-            text: `- ${item.description} × ${item.quantity} — ${Number(item.amount).toFixed(2)} EGP`,
+            text: `- ${item.description} × ${item.quantity} — ${money(item.amount)}`,
             gapAfter: 2,
           })
         ),
         { text: '', gapAfter: 6 },
-        { text: `Subtotal: ${Number(invoice.subtotal).toFixed(2)} EGP` },
-        { text: `Total: ${total} EGP`, bold: true },
-        { text: `Paid: ${Number(invoice.paidAmount).toFixed(2)} EGP` },
-        { text: `Balance: ${Number(invoice.balanceAmount).toFixed(2)} EGP` },
+        { text: t('Subtotal: {v1}', { v1: money(invoice.subtotal) }) },
+        { text: t('Total: {v1}', { v1: total }), bold: true },
+        { text: t('Paid: {v1}', { v1: money(invoice.paidAmount) }) },
+        { text: t('Balance: {v1}', { v1: money(invoice.balanceAmount) }) },
       ],
-      footer: 'Thank you for choosing our clinic.',
+      footer: t('Thank you for choosing our clinic.'),
     })
 
     const queueId = await enqueueMessage({

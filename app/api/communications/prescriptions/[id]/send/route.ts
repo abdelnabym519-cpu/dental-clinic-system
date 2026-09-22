@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { renderSimplePdf } from '@/lib/pdf'
+import { formatDate } from '@/lib/i18n/format'
+import { getServerLocale } from '@/lib/i18n/server'
+import { translateText } from '@/lib/i18n/dictionary'
 import { enqueueMessage } from '@/lib/messaging/service'
 import * as templates from '@/lib/messaging/templates'
 
@@ -44,25 +47,45 @@ export async function POST(
         ? body.contactPhone.trim()
         : prescription.patient.phone
 
-    const clinicName = (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ?? 'Clinic'
-    const dateStr = new Date().toISOString().slice(0, 10)
+    // Same rule as the invoice attachment: the document language follows the
+    // staff member's selected locale (docs/LOCALIZATION.md §6).
+    const locale = await getServerLocale()
+    const t = (key: string, vars?: Record<string, string | number>) =>
+      translateText(locale, key, vars)
+
+    const clinicName =
+      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ??
+      t('Clinic')
+    const dateStr = new Date().toISOString().slice(0, 10) // caption, as 3C–3J pins
+    const pdfDate = formatDate(new Date(), { locale })
     const doctorName = `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`
 
     const pdf = renderSimplePdf({
-      title: `Prescription ${prescription.prescriptionNo}`,
-      subtitle: `${clinicName} — ${dateStr}`,
+      title: t('Prescription {v1}', { v1: prescription.prescriptionNo }),
+      subtitle: `${clinicName} — ${pdfDate}`,
       lines: [
-        { text: `Patient: ${prescription.patient.firstName} ${prescription.patient.lastName}`, bold: true },
-        { text: `Doctor: ${doctorName}`, gapAfter: 10 },
-        ...(prescription.diagnosis ? [{ text: `Diagnosis: ${prescription.diagnosis}`, gapAfter: 8 }] : []),
-        { text: 'Medications:', bold: true, gapAfter: 4 },
-        ...prescription.medications.map((m: { medicationName: string; dosage: string; frequency: string; duration: string }) => ({
-          text: `- ${m.medicationName} — ${m.dosage}, ${m.frequency}, ${m.duration}`,
-          gapAfter: 2,
-        })),
-        ...(prescription.notes ? [{ text: `Notes: ${prescription.notes}`, gapAfter: 10 }] : []),
+        {
+          text: t('Patient: {v1}', {
+            v1: `${prescription.patient.firstName} ${prescription.patient.lastName}`,
+          }),
+          bold: true,
+        },
+        { text: t('Doctor: {v1}', { v1: doctorName }), gapAfter: 10 },
+        ...(prescription.diagnosis
+          ? [{ text: t('Diagnosis: {v1}', { v1: prescription.diagnosis }), gapAfter: 8 }]
+          : []),
+        { text: t('Medications:'), bold: true, gapAfter: 4 },
+        ...prescription.medications.map(
+          (m: { medicationName: string; dosage: string; frequency: string; duration: string }) => ({
+            text: `- ${m.medicationName} — ${m.dosage}, ${m.frequency}, ${m.duration}`,
+            gapAfter: 2,
+          })
+        ),
+        ...(prescription.notes
+          ? [{ text: t('Notes: {v1}', { v1: prescription.notes }), gapAfter: 10 }]
+          : []),
       ],
-      footer: 'This prescription was issued electronically by the clinic.',
+      footer: t('This prescription was issued electronically by the clinic.'),
     })
 
     const queueId = await enqueueMessage({

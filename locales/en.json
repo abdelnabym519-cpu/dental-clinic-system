@@ -3993,5 +3993,20 @@
   "{v1} months": "{v1} months",
   "{v1} years": "{v1} years",
   "{v1} member": "{v1} member",
-  "{v1} members": "{v1} members"
+  "{v1} members": "{v1} members",
+  "Invoice {v1}": "Invoice {v1}",
+  "Prescription {v1}": "Prescription {v1}",
+  "Items:": "Items:",
+  "Subtotal: {v1}": "Subtotal: {v1}",
+  "Total: {v1}": "Total: {v1}",
+  "Paid: {v1}": "Paid: {v1}",
+  "Balance: {v1}": "Balance: {v1}",
+  "Thank you for choosing our clinic.": "Thank you for choosing our clinic.",
+  "Patient: {v1}": "Patient: {v1}",
+  "Doctor: {v1}": "Doctor: {v1}",
+  "Diagnosis: {v1}": "Diagnosis: {v1}",
+  "Medications:": "Medications:",
+  "Clinic": "Clinic",
+  "Notes: {v1}": "Notes: {v1}",
+  "This prescription was issued electronically by the clinic.": "This prescription was issued electronically by the clinic."
 }
