@@ -31,7 +31,7 @@ conventions contributors must follow.
 | ------------------ | --------------------------------------------------------------------- |
 | Currency & numbers | `lib/i18n/format.ts` — single `Intl`-based module                      |
 | Dates & times      | `lib/i18n/format.ts` + `Africa/Cairo` from `lib/i18n/config.ts`        |
-| UI strings         | `messages/ar-EG.json`, `messages/en-US.json` via `next-intl`           |
+| UI strings         | `locales/ar.json`, `locales/en.json` via `lib/i18n/dictionary.ts`      |
 | Locale resolution  | `lib/i18n/request.ts` cascade (see §2.1)                               |
 | `<html lang/dir>`  | `app/layout.tsx` — cookie choice → default; `directionFor()`          |
 | Tax                | `vatConfig` / `calculateVAT()` in `lib/billing-utils.ts` (VAT 14%)     |
@@ -151,3 +151,33 @@ prisma/seed.ts       # Egyptian clinic, staff, patients, catalogue
 - **Egyptian Arabic numerals**: `ar-EG` formats with Arabic-Indic digits by
   default; the formatter accepts an explicit `numberingSystem` override for
   screens where Latin digits are operationally clearer.
+
+## 5. How UI strings are resolved (implemented)
+
+The rendered UI reads `locales/ar.json` and `locales/en.json` through
+`lib/i18n/dictionary.ts`:
+
+| Surface                                 | Entry point                                        |
+| --------------------------------------- | -------------------------------------------------- |
+| Client components                       | `useLanguage()` → `t(key, vars?)`                   |
+| Server components / `generateMetadata()`| `getServerTranslator()` in `lib/i18n/server.ts`     |
+| Non-component code (lib helpers)        | `translateText(locale, key, vars?)`                 |
+| Dates rendered with `date-fns`          | `dateFnsLocale(locale)` in `lib/i18n/dates.ts`      |
+
+Both files carry the same key set (parity is enforced by
+`tests/unit/i18n-completeness.test.tsx`), and the key is its own English text —
+`t('Save Changes')` — so an untranslated string degrades to readable English
+instead of a dotted id. `messages/*.json` and `lib/i18n/request.ts` remain the
+`next-intl` request-config path for locale cascade resolution; the UI does not
+read its message catalogs.
+
+## 6. Known limitations
+
+- **PDF attachments are Latin-1 only.** `lib/pdf.ts` writes Helvetica with
+  `/WinAnsiEncoding` and drops anything outside Latin-1, so the invoice and
+  prescription PDFs sent over WhatsApp (`app/api/communications/*/send`)
+  render Arabic names, item descriptions and diagnoses as `?`. The captions on
+  those documents are also still English literals. Fixing this needs an
+  embedded Arabic font with `Identity-H` CID encoding and shaping rules — a
+  font/rendering change, not a translation change. The WhatsApp/SMS *message*
+  text around the attachment is Arabic (`lib/messaging/templates.ts`).
