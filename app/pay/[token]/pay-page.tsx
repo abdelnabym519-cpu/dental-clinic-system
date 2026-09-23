@@ -256,7 +256,7 @@ export function PayPage({
             <div className="flex flex-col items-center py-4 gap-3">
               <AlertCircle className="h-10 w-10 text-red-500" />
               <p className="font-medium text-red-600">{t('ui.payment_failed')}</p>
-              <p className="text-sm text-muted-foreground text-center">{errorMsg}</p>
+              <p className="text-sm text-muted-foreground text-center">{t(errorMsg)}</p>
               {canPay && (
                 <Button onClick={initiatePayment} variant="outline">{t('ui.try_again')}</Button>
               )}
