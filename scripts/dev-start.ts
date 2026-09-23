@@ -6,9 +6,13 @@
  *
  * Steps:
  *   1. Sanity check: .env exists (or DATABASE_URL is already in the environment).
- *   2. `docker compose -f docker-compose.dev.yml up -d` — MySQL, Redis, MinIO,
- *      Mailpit. Idempotent: running containers are reused, stopped ones are
- *      started, images are pulled when missing.
+ *   2. `docker compose -f docker-compose.dev.yml up -d mysql redis` — only the
+ *      core services the application requires (MySQL, Redis; see
+ *      CORE_SERVICES). Idempotent: running containers are reused, stopped
+ *      ones are started, images are pulled when missing. The optional
+ *      MinIO / createbuckets / Mailpit services stay available in the compose
+ *      file for manual/future use but are intentionally NOT started here, so
+ *      a broken optional image can never block core startup.
  *   3. Wait until MySQL is ACTUALLY ready — a real `SELECT 1` through the
  *      generated Prisma client, polled at a fixed interval until it succeeds
  *      or a timeout is hit. No fixed sleeps, no trust in "the container is up".
@@ -38,6 +42,20 @@ import path from 'node:path'
 import { isDatabaseSeeded, type SeedCheckClient } from './seed-check'
 
 export const COMPOSE_FILE = 'docker-compose.dev.yml'
+
+/**
+ * The backing services the application actually requires at startup.
+ *
+ * docker-compose.dev.yml declares more services than this, on purpose:
+ * `minio` (S3-compatible storage for a future phase), `createbuckets`
+ * (a one-shot `minio/mc` container that initialises the bucket) and
+ * `mailpit` (optional SMTP catcher). None of them is required for the
+ * database startup path — and an optional service pulling a broken image
+ * (e.g. `minio/mc:latest`) must never be able to block core startup.
+ * The compose file's only `depends_on` edge is createbuckets -> minio, so
+ * scoping `up -d` to these two names starts exactly these two services.
+ */
+export const CORE_SERVICES = ['mysql', 'redis']
 
 /** 3 minutes: a cold image pull plus first-time volume init can exceed less.
  * The timeout exists so a broken setup fails instead of hanging forever. */
@@ -139,12 +157,15 @@ export async function runSafeStartup(
     throw new StartupError(`Compose file not found: ${composeFile} (looked in ${root}).`)
   }
 
-  // 2. Backing services.
+  // 2. Core backing services only. MinIO / createbuckets / Mailpit are
+  //    optional development infrastructure (see CORE_SERVICES) and are
+  //    deliberately NOT started here, so a broken optional image cannot
+  //    block the database startup path.
   const compose = await resolveCompose(deps.runCommand)
-  log('Starting backing services (MySQL, Redis, MinIO, Mailpit)...')
+  log(`Starting core backing services (${CORE_SERVICES.join(', ')})...`)
   const up = await deps.runCommand(
     compose[0],
-    [...compose.slice(1), '-f', composeFile, 'up', '-d'],
+    [...compose.slice(1), '-f', composeFile, 'up', '-d', ...CORE_SERVICES],
     {
       cwd: root,
     }

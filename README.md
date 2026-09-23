@@ -71,7 +71,7 @@ npm run dev:start
 
 `npm run dev:start` is the **normal development startup**. It:
 
-1. starts MySQL, Redis, MinIO and Mailpit via `docker compose -f docker-compose.dev.yml up -d` (idempotent — running containers are reused),
+1. starts the core dependencies — MySQL and Redis — via `docker compose -f docker-compose.dev.yml up -d mysql redis` (idempotent — running containers are reused). The optional MinIO / createbuckets / Mailpit development services are deliberately not started here, so a broken optional image can never block the core startup,
 2. waits until MySQL **actually** accepts connections — a live query through the Prisma client, polled until it succeeds or a 3-minute timeout fails loudly,
 3. applies pending migrations with `npx prisma migrate deploy` (a no-op when the database is already in sync),
 4. seeds the database **only if it has never been initialized** — an existing database is never re-seeded and never touched,
@@ -85,7 +85,7 @@ Use `npm run dev:start -- --db-only` to do steps 1–4 without starting the app.
 <summary>Manual equivalent, step by step</summary>
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d   # wait until the MySQL container is healthy
+docker compose -f docker-compose.dev.yml up -d mysql redis   # wait until the MySQL container is healthy
 npx prisma migrate deploy                        # create/refresh the schema
 npx prisma db seed                               # sample data — only for a fresh, empty database
 npm run dev                                      # raw Next.js dev server
@@ -201,7 +201,7 @@ npm run dev:start
 
 For a database that already contains data this:
 
-- starts (or reuses) the MySQL, Redis, MinIO and Mailpit containers,
+- starts (or reuses) the core MySQL and Redis containers,
 - waits for MySQL to accept a real connection before doing anything else,
 - runs `prisma migrate deploy`, which applies **pending** migrations and does
   nothing when the schema is already in sync,
@@ -213,6 +213,17 @@ For a database that already contains data this:
 The seed runs only against a database that has never been initialized — a
 fresh volume on a fresh machine. It is not re-run on subsequent startups, so
 it can never duplicate sample rows or overwrite accounts you changed.
+
+MinIO and Mailpit are **optional** development infrastructure (S3-compatible
+storage for a future phase, and an SMTP catcher). They are not required by
+the database startup path, so `dev:start` does not start them — deliberately,
+so an optional service's image pull can never block core startup. If you need
+them, the ordinary full-stack command reuses the running MySQL/Redis
+containers and adds the optional ones:
+
+```bash
+docker compose -f docker-compose.dev.yml up -d
+```
 
 > **`npx prisma migrate reset --force` is a destructive operation and is NOT
 > part of the normal startup.** It drops and recreates the database, deleting

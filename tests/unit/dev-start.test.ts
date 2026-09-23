@@ -7,6 +7,10 @@
  * pins the whole contract:
  *
  *   - step order (services -> readiness -> migrate deploy -> seed decision -> dev)
+ *   - the compose `up` is scoped to the core services (mysql, redis) — an
+ *     unscoped whole-stack `up -d` makes the harness throw, failing every
+ *     test that drives the flow (optional minio/mailpit/createbuckets must
+ *     never be able to block core startup)
  *   - a seeded database is never re-seeded (existing data preserved)
  *   - `prisma migrate reset` is never invoked
  *   - readiness is polled until success or timeout — no fixed sleep
@@ -19,6 +23,7 @@ import path from 'node:path'
 
 import {
   COMPOSE_FILE,
+  CORE_SERVICES,
   runSafeStartup,
   StartupError,
   type DevStartDeps,
@@ -29,6 +34,10 @@ import {
 import { isDatabaseSeeded, SEEDED_ADMIN_EMAIL } from '../../scripts/seed-check'
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..')
+
+/** The `up -d` command the startup must issue — scoped to the core services. */
+const coreUpKey = (compose: string) =>
+  `${compose} -f ${COMPOSE_FILE} up -d ${CORE_SERVICES.join(' ')}`
 
 interface HarnessOptions {
   /** SELECT 1 succeeds. Default true. */
@@ -72,11 +81,14 @@ function makeHarness(options: HarnessOptions = {}): Harness {
       }
       if (key === 'docker compose version') return { code: 0, stdout: '', stderr: '' }
       if (key === 'docker-compose version') return { code: 0, stdout: '', stderr: '' }
-      if (key === `docker compose -f ${COMPOSE_FILE} up -d`) {
+      if (key === coreUpKey('docker compose') || key === coreUpKey('docker-compose')) {
         return { code: options.composeUpCode ?? 0, stdout: '', stderr: '' }
       }
-      if (key === `docker-compose -f ${COMPOSE_FILE} up -d`) {
-        return { code: options.composeUpCode ?? 0, stdout: '', stderr: '' }
+      // Regression guard: if the startup ever reverts to an unscoped
+      // `up -d` (the whole stack — letting optional minio/mailpit/createbuckets
+      // block core startup), fail loudly so every test through the flow breaks.
+      if (key.endsWith(' up -d')) {
+        throw new Error(`regression: unscoped compose "up -d" (whole stack): ${key}`)
       }
       if (key === 'npx prisma migrate deploy') {
         return { code: options.migrateCode ?? 0, stdout: '', stderr: '' }
@@ -128,7 +140,7 @@ describe('runSafeStartup — happy paths', () => {
 
     expect(h.callKeys()).toEqual([
       'docker compose version',
-      `docker compose -f ${COMPOSE_FILE} up -d`,
+      coreUpKey('docker compose'),
       'npx prisma migrate deploy',
       'npm run dev',
     ])
@@ -179,12 +191,34 @@ describe('runSafeStartup — happy paths', () => {
     await runSafeStartup(h.deps, { root: REPO_ROOT })
 
     const keys = h.callKeys()
-    const upKey = `docker-compose -f ${COMPOSE_FILE} up -d`
+    const upKey = coreUpKey('docker-compose')
     expect(keys).toContain('docker-compose version')
     expect(keys).toContain(upKey)
-    expect(keys).not.toContain(`docker compose -f ${COMPOSE_FILE} up -d`)
+    expect(keys).not.toContain(coreUpKey('docker compose'))
     expect(keys.indexOf(upKey)).toBeLessThan(keys.indexOf('npx prisma migrate deploy'))
     expect(keys).toContain('npm run dev')
+  })
+})
+
+describe('runSafeStartup — core service scope', () => {
+  it('starts only the core services (mysql, redis) — never the whole stack', async () => {
+    const h = makeHarness({ seeded: true })
+    await runSafeStartup(h.deps, { root: REPO_ROOT })
+
+    const up = h.callKeys().find((k) => k.includes('up -d'))
+    expect(up).toBeDefined()
+    // Exactly the required core services, in the core command form...
+    expect(up).toBe(coreUpKey('docker compose'))
+    // ...so it must never be the unscoped whole-stack `up -d`...
+    expect(up).not.toBe(`docker compose -f ${COMPOSE_FILE} up -d`)
+    // ...and must never pull in the optional infrastructure by name.
+    expect(up).not.toContain('minio')
+    expect(up).not.toContain('mailpit')
+    expect(up).not.toContain('createbuckets')
+  })
+
+  it('CORE_SERVICES is exactly the core dependency set', () => {
+    expect(CORE_SERVICES).toEqual(['mysql', 'redis'])
   })
 })
 

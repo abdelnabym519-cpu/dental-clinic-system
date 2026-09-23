@@ -75,8 +75,10 @@ A `docker-compose.dev.yml` brings up MySQL, Redis, MinIO and Mailpit, each with 
 
 **The app itself stays on the host**, run with `npm run dev`. Only the backing services are containerised. Bind-mounting `node_modules` into a container is slow enough on Windows and macOS to ruin the edit-reload loop, and native hot reload is significantly better. A fully-containerised `app` service can be added behind a Compose profile later for anyone who wants one.
 
-**Safe startup and persistence.** `npm run dev:start` brings the stack up the
-safe way: `docker compose -f docker-compose.dev.yml up -d` (idempotent), then
+**Safe startup and persistence.** `npm run dev:start` brings the core stack
+up the safe way: `docker compose -f docker-compose.dev.yml up -d mysql redis`
+(idempotent — MinIO and Mailpit are optional infrastructure and are never
+required by the database startup path), then
 a poll until MySQL accepts a _real_ connection through the app's own Prisma
 client — no fixed sleeps, no trust in "the container is running" — then
 `prisma migrate deploy` (applies pending migrations, no-op when in sync),
