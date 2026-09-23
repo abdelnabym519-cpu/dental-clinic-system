@@ -24,6 +24,10 @@ interface LogRow {
   recipientMasked: string
   channel: string
   provider: string | null
+  providerMessageId: string | null
+  deliveryStatus: string | null
+  deliveredAt: string | null
+  readAt: string | null
   messageType: string
   status: string
   scheduledAt: string
@@ -53,6 +57,15 @@ const STATUS_STYLES: Record<string, string> = {
   SENT: 'bg-green-100 text-green-800',
   FAILED: 'bg-red-100 text-red-800',
   CANCELLED: 'bg-zinc-100 text-zinc-600',
+}
+
+// Phase 10 — provider-reported delivery state (webhook-driven), distinct from
+// the queue status above (SENT here means "accepted by the provider").
+const DELIVERY_STYLES: Record<string, string> = {
+  SENT: 'bg-sky-100 text-sky-800',
+  DELIVERED: 'bg-blue-100 text-blue-800',
+  READ: 'bg-violet-100 text-violet-800',
+  FAILED: 'bg-red-100 text-red-800',
 }
 
 export function MessageLogPanel() {
@@ -133,8 +146,12 @@ export function MessageLogPanel() {
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={load} aria-label={t('Refresh message log')}>
-          <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
-        <span className="ml-auto text-xs text-muted-foreground">{total} {t("messages")}</span>
+          <RefreshCw className="h-4 w-4 mr-1" />
+          {t('ui.refresh')}
+        </Button>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {total} {t('messages')}
+        </span>
       </div>
 
       {error && (
@@ -145,11 +162,13 @@ export function MessageLogPanel() {
 
       {loading ? (
         <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading messages…")}
+          <Loader2 className="h-4 w-4 animate-spin" /> {t('Loading messages…')}
         </div>
       ) : rows.length === 0 ? (
         <p className="py-8 text-sm text-muted-foreground">
-          {t("No messages yet. Appointment confirmations, reminders, prescriptions and invoices appear here once queued.")}
+          {t(
+            'No messages yet. Appointment confirmations, reminders, prescriptions and invoices appear here once queued.'
+          )}
         </p>
       ) : (
         <div className="overflow-x-auto rounded-md border" data-testid="message-log-table">
@@ -160,6 +179,7 @@ export function MessageLogPanel() {
                 <th className="px-3 py-2">{t('ui.channel')}</th>
                 <th className="px-3 py-2">{t('ui.type')}</th>
                 <th className="px-3 py-2">{t('ui.status')}</th>
+                <th className="px-3 py-2">{t('comm.log.delivery')}</th>
                 <th className="px-3 py-2">{t('Scheduled / Sent')}</th>
                 <th className="px-3 py-2">{t('ui.message')}</th>
                 <th className="px-3 py-2" />
@@ -172,7 +192,9 @@ export function MessageLogPanel() {
                   <td className="px-3 py-2 text-xs">
                     {row.channel === 'WHATSAPP' ? 'WhatsApp' : 'SMS'}
                     {row.provider ? (
-                      <span className="block text-[10px] text-muted-foreground">{row.provider}</span>
+                      <span className="block text-[10px] text-muted-foreground">
+                        {row.provider}
+                      </span>
                     ) : null}
                   </td>
                   <td className="px-3 py-2 text-xs">
@@ -188,7 +210,8 @@ export function MessageLogPanel() {
                     </span>
                     {row.attempts > 0 && (
                       <span className="block text-[10px] text-muted-foreground">
-                        {row.attempts} {t("attempt")}{row.attempts > 1 ? 's' : ''}
+                        {row.attempts} {t('attempt')}
+                        {row.attempts > 1 ? 's' : ''}
                       </span>
                     )}
                     {row.lastError && (
@@ -197,6 +220,38 @@ export function MessageLogPanel() {
                         title={row.lastError}
                       >
                         {row.lastError}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    {row.deliveryStatus ? (
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                          DELIVERY_STYLES[row.deliveryStatus] ?? 'bg-zinc-100 text-zinc-600'
+                        }`}
+                      >
+                        {row.deliveryStatus}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                    {row.providerMessageId && (
+                      <span
+                        className="mt-1 block max-w-[160px] truncate font-mono text-[10px] text-muted-foreground"
+                        title={row.providerMessageId}
+                        dir="ltr"
+                      >
+                        {row.providerMessageId}
+                      </span>
+                    )}
+                    {row.deliveredAt && (
+                      <span className="block text-[10px] text-muted-foreground">
+                        ✓ {new Date(row.deliveredAt).toLocaleString(locale)}
+                      </span>
+                    )}
+                    {row.readAt && (
+                      <span className="block text-[10px] text-muted-foreground">
+                        👁 {new Date(row.readAt).toLocaleString(locale)}
                       </span>
                     )}
                   </td>
@@ -222,7 +277,9 @@ export function MessageLogPanel() {
                         className="h-7 text-xs"
                         disabled={busyId === row.id}
                         onClick={() => act(row.id, 'cancel')}
-                      >{t('ui.cancel')}</Button>
+                      >
+                        {t('ui.cancel')}
+                      </Button>
                     )}
                     {row.status === 'FAILED' && (
                       <Button
@@ -231,7 +288,9 @@ export function MessageLogPanel() {
                         className="h-7 text-xs"
                         disabled={busyId === row.id}
                         onClick={() => act(row.id, 'retry')}
-                      >{t('ui.retry')}</Button>
+                      >
+                        {t('ui.retry')}
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -241,7 +300,9 @@ export function MessageLogPanel() {
         </div>
       )}
       <p className="text-[10px] text-muted-foreground">
-        {t("Recipient numbers are masked for privacy. Delivery requires configured provider credentials; without them the built-in test provider is used.")}
+        {t(
+          'Recipient numbers are masked for privacy. Delivery requires configured provider credentials; without them the built-in test provider is used.'
+        )}
       </p>
     </div>
   )

@@ -1,4 +1,5 @@
 import type { MessagingProvider, MessagePayload, SendResult } from './types'
+import { toProviderDigits } from '../phone'
 
 /**
  * Provider implementations (master prompt 3A). All network providers use
@@ -9,7 +10,19 @@ import type { MessagingProvider, MessagePayload, SendResult } from './types'
 
 const META_API_VERSION = process.env.META_API_VERSION || 'v18.0'
 
-/** Meta WhatsApp Business Cloud API (text + document/image by media upload). */
+/**
+ * Phase 10 — Meta Graph API error codes that must NOT be retried (terminal).
+ * 190 = token expired (alert the admin, rotating the token is the fix),
+ * 131047 = message undeliverable, 131026 = recipient not on WhatsApp.
+ * Everything else (130429 rate limit, 5xx, unknown) is retryable — fail safe.
+ */
+const META_NO_RETRY_CODES = new Set([190, 131047, 131026])
+
+export function metaErrorRetryable(code: number | undefined): boolean {
+  return code === undefined || !META_NO_RETRY_CODES.has(code)
+}
+
+/** Meta WhatsApp Business Cloud API (text + template + document/image by media upload). */
 export class MetaWhatsAppProvider implements MessagingProvider {
   readonly name = 'meta-whatsapp'
   readonly channel = 'WHATSAPP' as const
@@ -46,29 +59,21 @@ export class MetaWhatsAppProvider implements MessagingProvider {
     }
   }
 
-  async sendMessage(to: string, message: MessagePayload): Promise<SendResult> {
+  /** Phase 10 — normalized target: Meta takes international digits without "+". */
+  private target(to: string): string {
+    return toProviderDigits(to) ?? to
+  }
+
+  /**
+   * Phase 10 — shared POST to /messages with Meta error parsing:
+   * the Graph API error body carries a numeric `code` which drives the
+   * queue's retry decision via SendResult.retryable (metaErrorRetryable).
+   */
+  private async postMessage(body: Record<string, unknown>): Promise<SendResult> {
     if (!this.configured()) {
       return { success: false, error: 'Meta WhatsApp not configured (token / phone number id)' }
     }
     try {
-      let body: Record<string, unknown>
-      if (message.attachment) {
-        const mediaId = await this.uploadMedia(message.attachment)
-        if (!mediaId) return { success: false, error: 'Media upload failed' }
-        const kind = message.attachment.mimeType.startsWith('image/') ? 'image' : 'document'
-        body = {
-          messaging_product: 'whatsapp',
-          to,
-          type: kind,
-          [kind]:
-            kind === 'image'
-              ? { id: mediaId, caption: message.text }
-              : { id: mediaId, caption: message.text, filename: message.attachment.filename },
-        }
-      } else {
-        body = { messaging_product: 'whatsapp', to, type: 'text', text: { body: message.text } }
-      }
-
       const res = await fetch(`${this.apiBase}/${this.phoneNumberId}/messages`, {
         method: 'POST',
         headers: {
@@ -79,43 +84,77 @@ export class MetaWhatsAppProvider implements MessagingProvider {
       })
       const data = (await res.json().catch(() => ({}))) as {
         messages?: Array<{ id?: string }>
-        error?: { message?: string }
+        error?: { message?: string; code?: number }
       }
       if (!res.ok) {
-        return { success: false, error: data?.error?.message || `Meta API ${res.status}` }
+        const code = typeof data?.error?.code === 'number' ? data.error.code : undefined
+        return {
+          success: false,
+          error: data?.error?.message || `Meta API ${res.status}`,
+          errorCode: code,
+          retryable: metaErrorRetryable(code),
+        }
       }
       return { success: true, providerMessageId: data?.messages?.[0]?.id }
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Meta send failed' }
     }
   }
-}
-
-/**
- * Baileys (WhatsApp Web) provider — dev/fallback. The baileys package is an
- * optional peer: when it is not installed (or no session exists) the provider
- * reports a clear failure instead of crashing, and the queue falls back.
- */
-export class BaileysProvider implements MessagingProvider {
-  readonly name = 'baileys-whatsapp'
-  readonly channel = 'WHATSAPP' as const
 
   async sendMessage(to: string, message: MessagePayload): Promise<SendResult> {
-    try {
-      // Optional dependency — resolved lazily so builds never require it.
-      const mod = (await Function('return import("baileys")')()) as {
-        default?: { socket?: unknown }
+    let body: Record<string, unknown>
+    if (message.attachment) {
+      const mediaId = await this.uploadMedia(message.attachment)
+      if (!mediaId) return { success: false, error: 'Media upload failed' }
+      const kind = message.attachment.mimeType.startsWith('image/') ? 'image' : 'document'
+      body = {
+        messaging_product: 'whatsapp',
+        to: this.target(to),
+        type: kind,
+        [kind]:
+          kind === 'image'
+            ? { id: mediaId, caption: message.text }
+            : { id: mediaId, caption: message.text, filename: message.attachment.filename },
       }
-      if (!mod || !process.env.BAILEYS_SESSION_PATH) {
-        return { success: false, error: 'Baileys not installed or BAILEYS_SESSION_PATH unset' }
+    } else {
+      body = {
+        messaging_product: 'whatsapp',
+        to: this.target(to),
+        type: 'text',
+        text: { body: message.text },
       }
-      // Full Baileys session lifecycle is intentionally not implemented here:
-      // without a paired device no send can succeed, so fail fast and let the
-      // fallback chain take over.
-      return { success: false, error: 'Baileys session not paired' }
-    } catch {
-      return { success: false, error: 'Baileys not installed' }
     }
+    return this.postMessage(body)
+  }
+
+  /**
+   * Phase 10 — template message. Required for proactive outreach outside the
+   * 24h customer-service window (appointment confirmation/reminder). The
+   * template must be pre-approved in Meta Business Manager; parameters map
+   * positionally onto the body's {{1}}, {{2}}, … placeholders.
+   */
+  async sendTemplateMessage(
+    to: string,
+    templateName: string,
+    languageCode: string,
+    parameters: string[]
+  ): Promise<SendResult> {
+    const body: Record<string, unknown> = {
+      messaging_product: 'whatsapp',
+      to: this.target(to),
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components: [
+          {
+            type: 'body',
+            parameters: parameters.map((text) => ({ type: 'text', text })),
+          },
+        ],
+      },
+    }
+    return this.postMessage(body)
   }
 }
 
@@ -138,14 +177,17 @@ export class TwilioSMSProvider implements MessagingProvider {
         From: this.from,
         Body: message.text,
       })
-      const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.sid}/Messages.json`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${this.sid}:${this.token}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body,
-      })
+      const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${this.sid}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${this.sid}:${this.token}`).toString('base64')}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body,
+        }
+      )
       const data = (await res.json().catch(() => ({}))) as { sid?: string; message?: string }
       if (!res.ok) {
         return { success: false, error: data?.message || `Twilio API ${res.status}` }

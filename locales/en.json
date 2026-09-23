@@ -5049,5 +5049,18 @@
   "superAdmin.system": "System",
   "superAdmin.date": "Date",
   "Subscription not found": "Subscription not found",
-  "Subscription already exists — use PATCH": "Subscription already exists — use PATCH"
+  "Subscription already exists — use PATCH": "Subscription already exists — use PATCH",
+  "superAdmin.whatsapp.title": "WhatsApp (Baileys)",
+  "superAdmin.whatsapp.subtitle": "Pair the clinic number with your phone to send messages over WhatsApp — no Meta API billing required.",
+  "superAdmin.whatsapp.metaActiveTitle": "Meta provider is active",
+  "superAdmin.whatsapp.metaActive": "The Meta WhatsApp Cloud API is the active provider (WHATSAPP_PROVIDER=meta). This screen is for pairing the Baileys provider only — set WHATSAPP_PROVIDER=\"baileys\" in your .env and restart to see the QR here.",
+  "superAdmin.whatsapp.connected": "Connected — WhatsApp session active",
+  "superAdmin.whatsapp.connectedHint": "Messages are sent from your linked number. The session is stored in Redis — restarting the server does not require re-pairing.",
+  "superAdmin.whatsapp.qrAlt": "WhatsApp pairing QR code",
+  "superAdmin.whatsapp.scanTitle": "Scan with your phone",
+  "superAdmin.whatsapp.scanHint": "WhatsApp → Settings → Linked Devices → Link a Device. The code refreshes automatically if it expires.",
+  "superAdmin.whatsapp.refresh": "Refresh",
+  "superAdmin.whatsapp.connecting": "Connecting to WhatsApp… the QR appears here once the session is created (requires Redis to be running).",
+  "superAdmin.whatsapp.autoRefresh": "Auto-refresh every 10s",
+  "comm.log.delivery": "Delivery"
 }

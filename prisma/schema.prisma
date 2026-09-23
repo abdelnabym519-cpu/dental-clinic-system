@@ -2731,6 +2731,11 @@ model MessageQueue {
   status        MessageQueueStatus @default(PENDING)
   attempts      Int            @default(0)
   lastError     String?
+  // Phase 10 — provider correlation + delivery tracking (webhook-driven).
+  providerMessageId String?    // Meta wamid / Baileys message key id
+  deliveryStatus    String?    // SENT | DELIVERED | READ | FAILED (provider-reported)
+  deliveredAt       DateTime?
+  readAt            DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -2742,6 +2747,7 @@ model MessageQueue {
   @@index([status, scheduledAt])
   @@index([appointmentId])
   @@index([patientId])
+  @@index([providerMessageId])
 }
 
 enum MessageChannel {

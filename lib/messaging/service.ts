@@ -206,14 +206,14 @@ export async function queueAppointmentMessages(appointment: QueueableAppointment
 export async function queueDoctorCancellation(appointment: QueueableAppointment): Promise<number> {
   try {
     const ta = templateAppointment(appointment)
-    return await enqueueMessage({
+    return (await enqueueMessage({
       hospitalId: appointment.hospitalId,
       appointmentId: appointment.id,
       recipient: appointment.doctor.phone,
       channel: 'WHATSAPP',
       messageType: 'DOCTOR_CANCELLATION',
       payload: { text: templates.doctorCancellation(ta.patientName, ta.date) },
-    })
+    }))
       ? 1
       : 0
   } catch (err) {
@@ -226,14 +226,14 @@ export async function queueDoctorCancellation(appointment: QueueableAppointment)
 export async function queueDoctorReschedule(appointment: QueueableAppointment): Promise<number> {
   try {
     const ta = templateAppointment(appointment)
-    return await enqueueMessage({
+    return (await enqueueMessage({
       hospitalId: appointment.hospitalId,
       appointmentId: appointment.id,
       recipient: appointment.doctor.phone,
       channel: 'WHATSAPP',
       messageType: 'DOCTOR_RESCHEDULE',
       payload: { text: templates.doctorReschedule(ta.patientName, ta.date, ta.time) },
-    })
+    }))
       ? 1
       : 0
   } catch (err) {
@@ -247,7 +247,7 @@ export async function queueReviewRequest(appointment: QueueableAppointment): Pro
   try {
     const clinic = await getClinicInfo(appointment.hospitalId)
     const patientName = `${appointment.patient.firstName} ${appointment.patient.lastName}`
-    return await enqueueMessage({
+    return (await enqueueMessage({
       hospitalId: appointment.hospitalId,
       appointmentId: appointment.id,
       patientId: appointment.patient.id,
@@ -256,7 +256,7 @@ export async function queueReviewRequest(appointment: QueueableAppointment): Pro
       messageType: 'REVIEW_REQUEST',
       payload: { text: templates.reviewRequest(clinic, patientName) },
       scheduledAt: new Date(Date.now() + 24 * 3600_000),
-    })
+    }))
       ? 1
       : 0
   } catch (err) {
@@ -315,6 +315,9 @@ export async function processDueMessages(limit = 50): Promise<ProcessSummary> {
           attempts,
           provider: result.providerUsed ?? null,
           lastError: null,
+          // Phase 10 — provider correlation for webhook delivery tracking.
+          providerMessageId: result.providerMessageId ?? null,
+          deliveryStatus: 'SENT',
         },
       })
       summary.sent++
@@ -324,7 +327,11 @@ export async function processDueMessages(limit = 50): Promise<ProcessSummary> {
         data: {
           status: 'FAILED',
           attempts,
-          lastError: result.attempts.map((a) => `${a.provider}: ${a.error}`).join(' | ').slice(0, 190),
+          lastError: result.attempts
+            .map((a) => `${a.provider}: ${a.error}`)
+            .join(' | ')
+            .slice(0, 190),
+          deliveryStatus: 'FAILED',
         },
       })
       summary.deadLettered++
@@ -334,7 +341,10 @@ export async function processDueMessages(limit = 50): Promise<ProcessSummary> {
         data: {
           attempts,
           scheduledAt: new Date(Date.now() + backoffMs(attempts)),
-          lastError: result.attempts.map((a) => `${a.provider}: ${a.error}`).join(' | ').slice(0, 190),
+          lastError: result.attempts
+            .map((a) => `${a.provider}: ${a.error}`)
+            .join(' | ')
+            .slice(0, 190),
         },
       })
       summary.retried++
@@ -349,6 +359,10 @@ export interface MaskedMessageLogRow {
   recipientMasked: string
   channel: string
   provider: string | null
+  providerMessageId: string | null
+  deliveryStatus: string | null
+  deliveredAt: Date | null
+  readAt: Date | null
   messageType: string
   status: string
   scheduledAt: Date
@@ -399,6 +413,10 @@ export async function getMessageLog(options: {
         recipientMasked: maskPhone(row.recipient),
         channel: row.channel,
         provider: row.provider,
+        providerMessageId: row.providerMessageId,
+        deliveryStatus: row.deliveryStatus,
+        deliveredAt: row.deliveredAt,
+        readAt: row.readAt,
         messageType: row.messageType,
         status: row.status,
         scheduledAt: row.scheduledAt,

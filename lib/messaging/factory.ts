@@ -1,11 +1,11 @@
 import type { MessagingProvider, MessagePayload, SendResult } from './types'
 import {
   MetaWhatsAppProvider,
-  BaileysProvider,
   TwilioSMSProvider,
   AfricasTalkingSMSProvider,
   MockMessagingProvider,
 } from './providers'
+import { getBaileysProvider } from './baileys-provider'
 
 /**
  * Provider selection (master prompt 3A/3M):
@@ -22,7 +22,9 @@ export function getWhatsAppProvider(): MessagingProvider {
     case 'meta':
       return new MetaWhatsAppProvider()
     case 'baileys':
-      return new BaileysProvider()
+      // Process-wide singleton: the super-admin QR page and the queue must
+      // share one Baileys session (spec D4).
+      return getBaileysProvider()
     case 'mock':
       return new MockMessagingProvider('WHATSAPP')
     default:

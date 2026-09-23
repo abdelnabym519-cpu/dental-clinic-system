@@ -24,6 +24,14 @@ export interface SendResult {
   /** Provider-specific message id when available. */
   providerMessageId?: string
   error?: string
+  /** Provider error code (e.g. the Meta Graph API code) when the provider exposes one. */
+  errorCode?: number
+  /**
+   * Whether the queue may retry this failure. false for terminal errors
+   * (Meta 190 token expired, 131047 undeliverable, 131026 not on WhatsApp);
+   * true for rate limits, server errors and unknown failures (fail safe).
+   */
+  retryable?: boolean
 }
 
 export interface MessagingProvider {

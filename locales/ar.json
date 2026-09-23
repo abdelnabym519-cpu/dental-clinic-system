@@ -5049,5 +5049,18 @@
   "superAdmin.system": "النظام",
   "superAdmin.date": "التاريخ",
   "Subscription not found": "لم يتم العثور على الاشتراك",
-  "Subscription already exists — use PATCH": "يوجد اشتراك بالفعل — استخدم PATCH"
+  "Subscription already exists — use PATCH": "يوجد اشتراك بالفعل — استخدم PATCH",
+  "superAdmin.whatsapp.title": "واتساب (Baileys)",
+  "superAdmin.whatsapp.subtitle": "اربط رقم العيادة بهاتفك لإرسال الرسائل عبر واتساب — بدون تكلفة API من ميتا.",
+  "superAdmin.whatsapp.metaActiveTitle": "مزود ميتا هو النشط",
+  "superAdmin.whatsapp.metaActive": "مزود WhatsApp Cloud API (ميتا) هو المزود النشط (WHATSAPP_PROVIDER=meta). هذه الشاشة لربط مزود Baileys فقط — غيّر WHATSAPP_PROVIDER إلى \"baileys\" في ملف .env وأعد التشغيل لعرض الرمز هنا.",
+  "superAdmin.whatsapp.connected": "متصل — جلسة واتساب نشطة",
+  "superAdmin.whatsapp.connectedHint": "تُرسل الرسائل من رقمك المرتبط. الجلسة محفوظة في Redis — إعادة تشغيل السيرفر لا تتطلب إعادة الربط.",
+  "superAdmin.whatsapp.qrAlt": "رمز QR لربط واتساب",
+  "superAdmin.whatsapp.scanTitle": "امسح الرمز بهاتفك",
+  "superAdmin.whatsapp.scanHint": "واتساب → الإعدادات → الأجهزة المرتبطة → ربط جهاز. يتجدد الرمز تلقائيًا إذا انتهي.",
+  "superAdmin.whatsapp.refresh": "تحديث",
+  "superAdmin.whatsapp.connecting": "جارٍ الاتصال بواتساب… سيظهر الرمز هنا عند إنشاء الجلسة (يتطلب تشغيل Redis).",
+  "superAdmin.whatsapp.autoRefresh": "تحديث تلقائي كل ١٠ ثوانٍ",
+  "comm.log.delivery": "التسليم"
 }

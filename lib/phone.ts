@@ -95,3 +95,15 @@ export function maskPhone(raw: string | null | undefined): string {
   const tail = digits.slice(-4)
   return `${head}****${tail}`
 }
+
+/**
+ * Phase 10 — digits-only international form for the WhatsApp providers
+ * (Meta Cloud API and Baileys JIDs take international digits without "+").
+ * Reuses normalizeToE164, so invalid/implausible numbers yield null and the
+ * provider fails with a clear error instead of sending to a malformed target.
+ *   01012345678 → 201012345678 · +201012345678 → 201012345678 · 201012345678 → unchanged
+ */
+export function toProviderDigits(raw: string | null | undefined): string | null {
+  const e164 = normalizeToE164(raw)
+  return e164 ? e164.replace(/\D/g, '') : null
+}

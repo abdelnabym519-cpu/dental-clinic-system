@@ -44,6 +44,10 @@ const publicRoutes = [
   // this page (the dashboard layout gate redirects here). The page itself
   // still sends SUPER_ADMIN to /super-admin and logged-out visitors to /login.
   '/subscription-expired',
+  // Phase 10 — Meta's webhook handshake arrives from Meta's servers with no
+  // session. (All /api/* routes already pass through below; listed here so
+  // the public intent is explicit if the API pass-through ever gets tightened.)
+  '/api/webhooks/whatsapp',
 ]
 
 export default auth((req) => {
