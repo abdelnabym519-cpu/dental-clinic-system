@@ -211,12 +211,12 @@ export default function ProceduresSettingsPage() {
 
     // Validation
     if (dialogMode === 'create' && !formData.code) {
-      setError('Code is required')
+      setError(t('Code is required'))
       return
     }
 
     if (!formData.name || !formData.category || !formData.basePrice) {
-      setError('Name, category, and base price are required')
+      setError(t('Name, category, and base price are required'))
       return
     }
 
@@ -317,7 +317,7 @@ export default function ProceduresSettingsPage() {
 
       toast({
         title: 'Success',
-        description: `Procedure ${!procedure.isActive ? 'activated' : 'deactivated'} successfully`,
+        description: !procedure.isActive ? t('Procedure activated successfully') : t('Procedure deactivated successfully'),
       })
 
       fetchProcedures()

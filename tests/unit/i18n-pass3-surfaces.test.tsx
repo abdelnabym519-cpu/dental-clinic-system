@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import React from 'react'
-import { readFileSync } from 'node:fs'
+import fs, { readFileSync } from 'node:fs'
 
 import { translate, translateText } from '@/lib/i18n/dictionary'
 import ar from '../../locales/ar.json'
@@ -529,6 +529,90 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(memberships).not.toMatch(/>\s*\{plan\.name\}\s*</)
     for (const label of ['Today', 'This Month', 'Last Quarter', 'Custom Range']) {
       expect(translateText('ar-EG', label)).toMatch(/[\u0600-\u06FF]/)
+    }
+  })
+  it('translates every visible message slot - toasts, errors and dialogs', () => {
+    // Failure copy is invisible to a page-load sweep: it only paints when a request
+    // fails, a form is submitted empty, or a confirm dialog opens. So the source is
+    // audited instead. Every string written into a visible slot (title/description/
+    // message/label, or a positional toast()/setError() argument) must either be
+    // wrapped in t() at the call site, or resolve through the dictionary - which is
+    // what the shared renderers do: the toast viewport localizes title/description,
+    // and ConfirmDialog now localizes all four of its string slots.
+    // Templated strings are only accepted when t() receives the template, because a
+    // `${...}` interpolated at the call site can never match a dictionary key.
+    const dirs = ['app', 'components']
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const f2 = `${d}/${e.name}`
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        return /\.(tsx|ts)$/.test(e.name) ? [f2] : []
+      })
+    // Client components only: an API route's `error:` field is a JSON payload or an
+    // email subject, not a label in the Arabic UI, and it is already covered by the
+    // suite that asserts the API responses.
+    const files = dirs.flatMap(walk).filter((f2) => fs.readFileSync(f2, 'utf8').includes("'use client'"))
+    const SLOT = /\b(?:title|description|message|label)\s*[:=]\s*/g
+    const CALL = /\b(?:toast|notify)\s*(?:\.\w+)?\s*\(\s*|\bset[A-Za-z]{0,12}Error[A-Za-z]{0,8}\s*\(\s*/g
+    const readLiteral = (src: string, i: number, q: string): string | null => {
+      let out = ''
+      while (i < src.length) {
+        if (src[i] === '\\') { out += src[i + 1]; i += 2; continue }
+        if (src[i] === q) return out
+        if (src[i] === '\n' && out.length > 400) return null
+        out += src[i++]
+      }
+      return null
+    }
+    const offenders: string[] = []
+    let audited = 0
+    for (const file of files) {
+      const src = fs.readFileSync(file, 'utf8')
+      for (const rx of [SLOT, CALL]) {
+        let m: RegExpExecArray | null
+        while ((m = rx.exec(src))) {
+          let i = m.index + m[0].length
+          while (src[i] === '{' || src[i] === ' ' || src[i] === '\n' || src[i] === '\t') i++
+          // wrapped at the call site -> translated before it reaches the renderer
+          if (/^t\(/.test(src.slice(i, i + 64).replace(/\s+/g, ''))) continue
+          const q = src[i]
+          if (q !== '"' && q !== "'" && q !== '`') continue
+          const lit = readLiteral(src, i + 1, q)
+          if (lit === null) continue
+          audited++
+          const probe = lit.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          if (probe.length < 4 || !/[A-Za-z]{3}/.test(probe)) continue
+          if (/^(?:\/|https?:|@)/.test(probe)) continue
+          const translated = translateText('ar-EG', probe)
+          if (!/[\u0600-\u06FF]/.test(translated)) {
+            offenders.push(`${file}: ${probe.slice(0, 70)}`)
+          }
+        }
+      }
+    }
+    // guard against the scan silently matching nothing (that is how a green test lies)
+    expect(audited).toBeGreaterThan(200)
+    expect(offenders).toEqual([])
+    // the shared dialog really does translate what call sites hand it
+    const dialog = fs.readFileSync('components/ui/confirm-dialog.tsx', 'utf8')
+    for (const slot of ['title', 'description', 'cancelLabel', 'confirmLabel']) {
+      expect(dialog).toContain(`{localize(${slot})}`)
+    }
+    // spot-check the highest-traffic validation copy that shipped with this pass
+    for (const [en0, ar0] of [
+      ['Please select a doctor', 'يرجى اختيار طبيب'],
+      ['Network error. Please try again.', 'خطأ في الشبكة. حاول مرة أخرى.'],
+      ['Please enter a valid 10-digit phone number', 'أدخل رقم هاتف صحيح من ١٠ أرقام'],
+      ['Failed to send OTP', 'تعذّر إرسال رمز التحقق'],
+      ['Patient {name} has been registered successfully.', 'تم تسجيل المريض {name} بنجاح.'],
+      // observed live on /patients/new: the API's own message reaches the DOM verbatim,
+      // and the toast viewport translates it, so it only ever needed a dictionary entry
+      ['Patient limit reached', 'تم الوصول إلى الحد الأقصى لعدد المرضى المسجلين'],
+      ['Error', 'خطأ'],
+      ['{count} rows exported as {format}', 'تم تصدير {count} صفاً بصيغة {format}'],
+    ] as const) {
+      expect(translateText('ar-EG', en0)).toBe(ar0)
+      expect(translateText('en-EG', en0)).toBe(en0)
     }
   })
   it('localises the example-prefix placeholders without touching format samples', () => {

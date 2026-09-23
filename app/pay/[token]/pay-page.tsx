@@ -115,7 +115,7 @@ export function PayPage({
     if (url) window.location.href = url
     else {
       setState('error')
-      setErrorMsg('Redirect URL not available')
+      setErrorMsg(t('Redirect URL not available'))
     }
   }
 

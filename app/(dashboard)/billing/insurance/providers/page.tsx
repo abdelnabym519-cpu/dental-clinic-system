@@ -127,7 +127,7 @@ export default function InsuranceProvidersPage() {
         const data = await res.json()
         throw new Error(data.error || 'Failed to save')
       }
-      toast({ title: editingId ? 'Provider updated' : 'Provider created' })
+      toast({ title: editingId ? t('Provider updated') : t('Provider created') })
       setDialogOpen(false)
       fetchProviders()
     } catch (err: any) {
@@ -147,7 +147,7 @@ export default function InsuranceProvidersPage() {
     try {
       const res = await fetch(`/api/insurance-providers/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        toast({ title: 'Provider removed' })
+        toast({ title: t('Provider removed') })
         fetchProviders()
       }
     } catch {

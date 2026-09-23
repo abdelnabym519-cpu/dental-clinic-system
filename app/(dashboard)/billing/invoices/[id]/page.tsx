@@ -184,7 +184,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       setPaymentAmount(String(Number(data.balanceAmount)))
     } catch (error) {
       console.error('Error fetching invoice:', error)
-      setError('Failed to load invoice')
+      setError(t('Failed to load invoice'))
     } finally {
       setLoading(false)
     }
@@ -196,11 +196,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   const handleRecordPayment = async () => {
     if (!paymentAmount || Number(paymentAmount) <= 0) {
-      setError('Please enter a valid payment amount')
+      setError(t('Please enter a valid payment amount'))
       return
     }
     if (!paymentMethod) {
-      setError('Please select a payment method')
+      setError(t('Please select a payment method'))
       return
     }
 

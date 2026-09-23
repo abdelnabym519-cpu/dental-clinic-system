@@ -78,14 +78,14 @@ export default function PrescriptionsPage() {
   const handleDelete = async (rx: Prescription) => {
     const ok = await confirm({
       title: 'Delete Prescription',
-      description: `Delete prescription ${rx.prescriptionNo}?`,
+      description: t('Delete prescription {number}?', { number: rx.prescriptionNo }),
       confirmLabel: 'Delete',
     })
     if (!ok) return
     try {
       const res = await fetch(`/api/prescriptions/${rx.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed')
-      toast({ title: 'Deleted', description: `Prescription ${rx.prescriptionNo} removed` })
+      toast({ title: t('Deleted'), description: t('Prescription {number} removed', { number: rx.prescriptionNo }) })
       fetchPrescriptions()
     } catch {
       toast({

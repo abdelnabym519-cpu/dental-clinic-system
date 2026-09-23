@@ -185,12 +185,12 @@ export default function NewTreatmentPlanPage() {
     }
 
     if (!title) {
-      setError('Please enter a title for the treatment plan')
+      setError(t('Please enter a title for the treatment plan'))
       return
     }
 
     if (items.length === 0) {
-      setError('Please add at least one procedure to the plan')
+      setError(t('Please add at least one procedure to the plan'))
       return
     }
 

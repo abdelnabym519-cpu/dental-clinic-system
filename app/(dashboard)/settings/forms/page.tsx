@@ -102,7 +102,7 @@ export default function FormsSettingsPage() {
   const handleDelete = async (id: string, name: string) => {
     const ok = await confirm({
       title: 'Delete Template',
-      description: `Delete "${name}"? Templates with submissions will be deactivated instead.`,
+      description: t('Delete "{name}"? Templates with submissions will be deactivated instead.', { name }),
       confirmLabel: 'Delete',
     })
     if (!ok) return

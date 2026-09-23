@@ -273,7 +273,7 @@ export default function LoyaltyPage() {
       }
 
       toast({
-        title: `+${pts} points awarded to ${awardPatient.firstName} ${awardPatient.lastName}`,
+        title: t('Awarded {points} points to {name}', { points: pts, name: `${awardPatient.firstName} ${awardPatient.lastName}` }),
       })
 
       // Reset form
@@ -287,7 +287,7 @@ export default function LoyaltyPage() {
       // Refresh log
       fetchTransactions(1)
     } catch (error: any) {
-      toast({ title: error.message || 'Failed to award points', variant: 'destructive' })
+      toast({ title: error.message || t('Failed to award points'), variant: 'destructive' })
     } finally {
       setAwardSubmitting(false)
     }
@@ -330,7 +330,7 @@ export default function LoyaltyPage() {
       }
 
       toast({
-        title: `-${pts} points redeemed for ${redeemPatient.firstName} ${redeemPatient.lastName}`,
+        title: t('Redeemed {points} points for {name}', { points: pts, name: `${redeemPatient.firstName} ${redeemPatient.lastName}` }),
       })
 
       // Reset form
@@ -343,7 +343,7 @@ export default function LoyaltyPage() {
       // Refresh log
       fetchTransactions(1)
     } catch (error: any) {
-      toast({ title: error.message || 'Failed to redeem points', variant: 'destructive' })
+      toast({ title: error.message || t('Failed to redeem points'), variant: 'destructive' })
     } finally {
       setRedeemSubmitting(false)
     }

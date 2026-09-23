@@ -119,7 +119,7 @@ export default function NewStaffPage() {
 
       toast({
         title: 'Success',
-        description: `Staff member ${staff.firstName} ${staff.lastName} created successfully`,
+        description: t('Staff member {name} created successfully', { name: `${staff.firstName} ${staff.lastName}` }),
       })
 
       router.push('/staff')

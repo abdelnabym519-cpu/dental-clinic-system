@@ -235,7 +235,7 @@ export function SignaturePad({
           htmlFor="agree"
           className="text-sm text-muted-foreground leading-tight cursor-pointer"
         >
-          {label}
+          {t(label)}
         </label>
       </div>
       <p className="text-xs text-muted-foreground">

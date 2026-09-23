@@ -201,8 +201,8 @@ export default function MedicationsPage() {
       if (!res.ok) throw new Error(result.error)
 
       toast({
-        title: editing ? 'Updated' : 'Created',
-        description: `${formData.name} saved successfully`,
+        title: editing ? t('Updated') : t('Created'),
+        description: t('{name} saved successfully', { name: formData.name }),
       })
       setDialogOpen(false)
       fetchMedications()
@@ -217,14 +217,14 @@ export default function MedicationsPage() {
   const handleDelete = async (med: Medication) => {
     const ok = await confirm({
       title: 'Deactivate Medication',
-      description: `Deactivate "${med.name}"? It will no longer appear in prescription search.`,
+      description: t('Deactivate "{name}"? It will no longer appear in prescription search.', { name: med.name }),
       confirmLabel: 'Deactivate',
     })
     if (!ok) return
     try {
       const res = await fetch(`/api/medications/${med.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed')
-      toast({ title: 'Deactivated', description: `${med.name} has been deactivated` })
+      toast({ title: t('Deactivated'), description: t('{name} has been deactivated', { name: med.name }) })
       fetchMedications()
     } catch {
       toast({

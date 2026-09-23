@@ -243,7 +243,7 @@ export default function LabVendorsPage() {
 
       toast({
         title: 'Success',
-        description: `Lab vendor ${editingVendor ? 'updated' : 'created'} successfully`,
+        description: editingVendor ? t('Lab vendor updated successfully') : t('Lab vendor created successfully'),
       })
 
       setIsDialogOpen(false)

@@ -170,11 +170,11 @@ export default function NewTreatmentPage() {
       return
     }
     if (!formData.doctorId) {
-      setError('Please select a doctor')
+      setError(t('Please select a doctor'))
       return
     }
     if (!formData.procedureId) {
-      setError('Please select a procedure')
+      setError(t('Please select a procedure'))
       return
     }
 

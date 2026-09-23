@@ -177,7 +177,7 @@ export default function ClinicSettingsPage() {
       if (!res.ok) throw new Error('Failed to remove logo')
 
       setLogo(null)
-      toast({ title: 'Logo removed' })
+      toast({ title: t('Logo removed') })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Error', description: err.message })
     } finally {

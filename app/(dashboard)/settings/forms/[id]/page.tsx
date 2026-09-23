@@ -176,7 +176,7 @@ export default function EditFormTemplatePage({ params }: { params: Promise<{ id:
       if (res.ok) {
         toast.success('Template updated')
       } else {
-        toast.error(data.error || 'Failed to save')
+        toast.error(data.error || t('Failed to save'))
       }
     } catch {
       toast.error('Failed to save template')

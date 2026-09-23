@@ -252,22 +252,22 @@ export default function NewInvoicePage() {
     }
 
     if (items.length === 0) {
-      setError('Please add at least one item to the invoice')
+      setError(t('Please add at least one item to the invoice'))
       return
     }
 
     // Validate items
     for (const item of items) {
       if (!item.description.trim()) {
-        setError('All items must have a description')
+        setError(t('All items must have a description'))
         return
       }
       if (item.quantity <= 0) {
-        setError('Quantity must be greater than 0')
+        setError(t('Quantity must be greater than 0'))
         return
       }
       if (item.unitPrice < 0) {
-        setError('Unit price cannot be negative')
+        setError(t('Unit price cannot be negative'))
         return
       }
     }

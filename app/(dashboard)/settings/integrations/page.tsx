@@ -127,7 +127,7 @@ export default function IntegrationsPage() {
   const handleDisconnect = async () => {
     const ok = await confirm({
       title: 'Disconnect Google Calendar?',
-      description: "Your synced events won't be removed from Google.",
+      description: t("Your synced events won't be removed from Google."),
       confirmLabel: 'Yes, proceed',
     })
     if (!ok) return

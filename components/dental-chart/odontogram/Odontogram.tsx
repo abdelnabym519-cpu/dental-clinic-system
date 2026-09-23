@@ -176,7 +176,7 @@ export function Odontogram({
 
       toast({
         title: t('Success'),
-        description: `Tooth #${payload.toothNumber} marked as ${payload.condition}`,
+        description: t('Tooth #{number} marked as {condition}', { number: payload.toothNumber, condition: payload.condition }),
       })
 
       setDialogOpen(false)
@@ -220,7 +220,7 @@ export function Odontogram({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <span>{title}</span>
+                <span>{t(title)}</span>
                 {mode === 'selection' && (
                   <Badge variant="secondary" className="gap-1 text-xs">
                     <CheckSquare className="w-3 h-3 text-primary" /> {t("Selection Mode")} </Badge>

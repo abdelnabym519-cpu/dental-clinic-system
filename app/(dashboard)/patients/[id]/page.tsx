@@ -372,7 +372,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       if (!res.ok) throw new Error(data.error || 'Failed to queue the image')
       toast({
         title: 'Queued for WhatsApp',
-        description: `${doc.originalName} will be sent to the patient.`,
+        description: t('{file} will be sent to the patient.', { file: doc.originalName }),
       })
     } catch (err) {
       toast({

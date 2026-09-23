@@ -178,7 +178,7 @@ export default function NewLabOrderPage() {
 
       toast({
         title: 'Lab Order Created',
-        description: `Order ${result.data.orderNumber} created successfully.`,
+        description: t('Order {number} created successfully.', { number: result.data.orderNumber }),
       })
 
       router.push('/lab')

@@ -156,7 +156,7 @@ export default function EditPatientPage() {
 
       toast({
         title: 'Patient Updated',
-        description: `Patient ${form.firstName} ${form.lastName} has been updated successfully.`,
+        description: t('Patient {name} has been updated successfully.', { name: `${form.firstName} ${form.lastName}` }),
       })
 
       router.push(`/patients/${patientId}`)

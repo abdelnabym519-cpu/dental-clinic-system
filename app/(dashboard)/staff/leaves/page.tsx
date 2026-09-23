@@ -246,7 +246,7 @@ export default function LeavesPage() {
 
       toast({
         title: 'Success',
-        description: `Leave request ${newStatus.toLowerCase()}`,
+        description: t('Leave request {status}', { status: newStatus.toLowerCase() }),
       })
 
       fetchLeaves()

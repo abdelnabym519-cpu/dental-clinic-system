@@ -123,7 +123,7 @@ export default function PreAuthorizationsPage() {
         body: JSON.stringify({ status, ...extra }),
       })
       if (res.ok) {
-        toast({ title: `Pre-authorization ${status.toLowerCase()}` })
+        toast({ title: t('Pre-authorization {status}', { status: status.toLowerCase() }) })
         setViewItem(null)
         fetchPreAuths()
       }

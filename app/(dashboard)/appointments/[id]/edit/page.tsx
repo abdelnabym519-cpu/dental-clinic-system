@@ -173,17 +173,17 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
     setError('')
 
     if (!selectedDoctor) {
-      setError('Please select a doctor')
+      setError(t('Please select a doctor'))
       return
     }
 
     if (!selectedDate) {
-      setError('Please select a date')
+      setError(t('Please select a date'))
       return
     }
 
     if (!selectedTime) {
-      setError('Please select a time slot')
+      setError(t('Please select a time slot'))
       return
     }
 

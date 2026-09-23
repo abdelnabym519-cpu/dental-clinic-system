@@ -119,7 +119,7 @@ export default function NewPatientPage() {
 
       toast({
         title: 'Patient Created',
-        description: `Patient ${form.firstName} ${form.lastName} has been registered successfully.`,
+        description: t('Patient {name} has been registered successfully.', { name: `${form.firstName} ${form.lastName}` }),
       })
 
       router.push(`/patients/${patient.id}`)

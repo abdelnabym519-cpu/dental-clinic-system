@@ -115,7 +115,12 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
       }
       await fetchConsultation()
       toast({
-        title: `Consultation ${action === 'start' ? 'started' : action === 'cancel' ? 'cancelled' : 'updated'}`,
+        title:
+          action === 'start'
+            ? t('Consultation started')
+            : action === 'cancel'
+              ? t('Consultation cancelled')
+              : t('Consultation updated'),
       })
     } catch (err: any) {
       toast({ variant: 'destructive', title: err.message })

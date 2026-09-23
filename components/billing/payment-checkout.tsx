@@ -102,7 +102,7 @@ export function PaymentCheckout({
       window.location.href = redirectUrl
     } else {
       setState('error')
-      setErrorMsg('Failed to get the payment redirect URL')
+      setErrorMsg(t('Failed to get the payment redirect URL'))
     }
   }
 

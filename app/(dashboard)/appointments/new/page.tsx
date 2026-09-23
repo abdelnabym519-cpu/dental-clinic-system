@@ -131,7 +131,7 @@ export default function NewAppointmentPage() {
             setTimeSlots(data.slots)
           } else {
             setTimeSlots([])
-            setError(data.reason || 'No slots available')
+            setError(data.reason || t('No slots available'))
           }
         }
       } catch (err) {
@@ -163,17 +163,17 @@ export default function NewAppointmentPage() {
     }
 
     if (!selectedDoctor) {
-      setError('Please select a doctor')
+      setError(t('Please select a doctor'))
       return
     }
 
     if (!selectedDate) {
-      setError('Please select a date')
+      setError(t('Please select a date'))
       return
     }
 
     if (!selectedTime) {
-      setError('Please select a time slot')
+      setError(t('Please select a time slot'))
       return
     }
 

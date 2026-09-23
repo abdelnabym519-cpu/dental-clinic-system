@@ -162,7 +162,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
         const data = await res.json()
         throw new Error(data.error || 'Failed to save')
       }
-      toast({ title: editingId ? 'Policy updated' : 'Policy added' })
+      toast({ title: editingId ? t('Policy updated') : t('Policy added') })
       setDialogOpen(false)
       fetchPolicies()
     } catch (err: any) {
@@ -195,7 +195,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ policyId, isActive: !isActive }),
       })
-      toast({ title: isActive ? 'Policy deactivated' : 'Policy activated' })
+      toast({ title: isActive ? t('Policy deactivated') : t('Policy activated') })
       fetchPolicies()
     } catch {
       toast({ title: 'Failed to update policy', variant: 'destructive' })

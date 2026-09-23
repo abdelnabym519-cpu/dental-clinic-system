@@ -52,7 +52,7 @@ export function ExportMenu({
       }
       toast({
         title: 'Exported',
-        description: `${data.length} rows exported as ${format.toUpperCase()}`,
+        description: t('{count} rows exported as {format}', { count: data.length, format: format.toUpperCase() }),
       })
     } catch {
       toast({

@@ -147,7 +147,7 @@ export default function NewFormTemplatePage() {
         toast.success('Form template created')
         router.push('/settings/forms')
       } else {
-        toast.error(data.error || 'Failed to save')
+        toast.error(data.error || t('Failed to save'))
       }
     } catch {
       toast.error('Failed to save template')

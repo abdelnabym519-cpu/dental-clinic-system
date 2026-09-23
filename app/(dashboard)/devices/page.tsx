@@ -179,7 +179,7 @@ export default function DevicesPage() {
     try {
       const res = await fetch(`/api/devices/status?id=${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      toast({ title: 'Success', description: 'Device removed' })
+      toast({ title: t('Success'), description: t('Device removed') })
       fetchDevices()
     } catch {
       toast({ title: 'Error', description: 'Failed to remove device', variant: 'destructive' })

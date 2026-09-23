@@ -38,11 +38,11 @@ function PatientLoginForm() {
 
   const sendOTP = async () => {
     if (!phone || phone.length < 10) {
-      setError('Please enter a valid 10-digit phone number')
+      setError(t('Please enter a valid 10-digit phone number'))
       return
     }
     if (!clinicSlug) {
-      setError('Please enter your clinic identifier')
+      setError(t('Please enter your clinic identifier'))
       return
     }
 
@@ -59,13 +59,13 @@ function PatientLoginForm() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Failed to send OTP')
+        setError(data.error || t('Failed to send OTP'))
         return
       }
 
       setStep('otp')
     } catch {
-      setError('Network error. Please try again.')
+      setError(t('Network error. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -73,7 +73,7 @@ function PatientLoginForm() {
 
   const verifyOTP = async () => {
     if (!otp || otp.length !== 6) {
-      setError('Please enter the 6-digit OTP')
+      setError(t('Please enter the 6-digit OTP'))
       return
     }
 
@@ -96,7 +96,7 @@ function PatientLoginForm() {
 
       router.push('/portal')
     } catch {
-      setError('Network error. Please try again.')
+      setError(t('Network error. Please try again.'))
     } finally {
       setLoading(false)
     }

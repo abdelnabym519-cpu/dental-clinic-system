@@ -142,14 +142,14 @@ export default function BookAppointment() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || 'Booking failed')
+        setError(data.error || t('Booking failed'))
         return
       }
 
       setBookingResult(data.appointment)
       setStep(4)
     } catch {
-      setError('Network error. Please try again.')
+      setError(t('Network error. Please try again.'))
     } finally {
       setBooking(false)
     }

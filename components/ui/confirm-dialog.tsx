@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -37,7 +38,11 @@ export function ConfirmDialog({
   onConfirm,
   loading = false,
 }: ConfirmDialogProps) {
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(false)
+
+  /* Same pattern the toast viewport uses: translate any string slot, leave nodes alone. */
+  const localize = (node: ReactNode) => (typeof node === 'string' ? t(node) : node)
 
   const handleConfirm = async () => {
     setIsLoading(true)
@@ -55,11 +60,11 @@ export function ConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle>{localize(title)}</AlertDialogTitle>
+          <AlertDialogDescription>{localize(description)}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogCancel disabled={busy}>{localize(cancelLabel)}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault()
@@ -73,7 +78,7 @@ export function ConfirmDialog({
             }
           >
             {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {confirmLabel}
+            {localize(confirmLabel)}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

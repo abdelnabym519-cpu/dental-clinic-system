@@ -218,7 +218,7 @@ export default function MembershipPlansPage() {
         throw new Error(data.error || 'Failed to save plan')
       }
 
-      toast({ title: editingPlanId ? 'Plan updated' : 'Plan created' })
+      toast({ title: editingPlanId ? t('Plan updated') : t('Plan created') })
       setPlanDialogOpen(false)
       fetchPlans()
     } catch (err: any) {
@@ -350,7 +350,7 @@ export default function MembershipPlansPage() {
       }
 
       toast({
-        title: `${selectedPatient.firstName} ${selectedPatient.lastName} enrolled successfully`,
+        title: t('{name} enrolled successfully', { name: `${selectedPatient.firstName} ${selectedPatient.lastName}` }),
       })
       setEnrollDialogOpen(false)
       fetchPlans()

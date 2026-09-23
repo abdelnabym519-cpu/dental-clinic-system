@@ -273,7 +273,7 @@ export default function NewPrescriptionPage() {
 
       toast({
         title: 'Prescription created',
-        description: `${result.data.prescriptionNo} saved successfully`,
+        description: t('{number} saved successfully', { number: result.data.prescriptionNo }),
       })
       router.push(`/prescriptions/${result.data.id}`)
     } catch (err: any) {

@@ -142,7 +142,7 @@ export function AppointmentDialog({
     setError(null)
 
     if (!form.patientId || !form.doctorId || !form.scheduledDate || !form.scheduledTime) {
-      setError('Patient, provider, date, and start time are required.')
+      setError(t('Patient, provider, date, and start time are required.'))
       return
     }
 

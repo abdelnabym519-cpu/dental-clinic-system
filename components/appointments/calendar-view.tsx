@@ -341,7 +341,7 @@ export function CalendarView({
             <div
               key={`break-${i}`}
               aria-hidden
-              title={`Break${b.label ? `: ${b.label}` : ''}`}
+              title={b.label ? t('Break: {label}', { label: b.label }) : t('Break')}
               className="absolute left-0 right-0 bg-orange-100/80 dark:bg-orange-900/25 pointer-events-none"
               style={{
                 top: `${pct(timeToMinutes(b.startTime) - AGENDA_START_MINUTES)}%`,
@@ -373,7 +373,7 @@ export function CalendarView({
             <div
               key={`blocked-${i}`}
               role="status"
-              title={`Blocked${slot.reason ? `: ${slot.reason}` : ''}`}
+              title={slot.reason ? t('Blocked: {reason}', { reason: slot.reason }) : t('Blocked')}
               className="absolute left-0 right-0 z-[5] bg-zinc-300/70 dark:bg-zinc-700/50 pointer-events-none flex items-start justify-center"
               style={{
                 top: `${pct(fromMin - AGENDA_START_MINUTES)}%`,
@@ -493,7 +493,7 @@ export function CalendarView({
         key={apt.id}
         role="button"
         tabIndex={0}
-        aria-label={`Appointment ${apt.appointmentNo}: ${getPatientName(apt.patient)} at ${startLabel}, ${appointmentStatusConfig[apt.status]?.label ?? apt.status}`}
+        aria-label={t('Appointment {number}: {patient} at {time}, {status}', { number: apt.appointmentNo, patient: getPatientName(apt.patient), time: startLabel, status: appointmentStatusConfig[apt.status]?.label ?? apt.status })}
         className={`absolute left-1 right-1 rounded-md px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(
           apt.status
         )} ${cancelled ? 'opacity-60' : ''} hover:ring-1 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary`}
@@ -660,11 +660,15 @@ export function CalendarView({
                         apt.status
                       )} ${apt.status === 'CANCELLED' ? 'opacity-60' : ''}`}
                       onClick={() => router.push(`/appointments/${apt.id}`)}
-                      aria-label={`Appointment ${apt.appointmentNo}: ${getPatientName(
-                        apt.patient
-                      )} at ${formatTime(apt.scheduledTime)}, ${
-                        appointmentStatusConfig[apt.status]?.label ?? apt.status
-                      }`}
+                      aria-label={t(
+                        'Appointment {number}: {patient} at {time}, {status}',
+                        {
+                          number: apt.appointmentNo,
+                          patient: getPatientName(apt.patient),
+                          time: formatTime(apt.scheduledTime),
+                          status: appointmentStatusConfig[apt.status]?.label ?? apt.status,
+                        }
+                      )}
                     >
                       <span className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium">

@@ -185,7 +185,7 @@ export default function AuditLogPage() {
         <EmptyState
           icon={Activity}
           title={t('No audit logs found')}
-          description="No activity matches your current filters. Try adjusting your search criteria."
+          description={t('No activity matches your current filters. Try adjusting your search criteria.')}
         />
       ) : (
         <Card>

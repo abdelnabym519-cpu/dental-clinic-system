@@ -32,12 +32,12 @@ export default function UploadPhotoPage() {
     if (!selected) return
 
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(selected.type)) {
-      setError('Please select a JPEG, PNG, or WebP image')
+      setError(t('Please select a JPEG, PNG, or WebP image'))
       return
     }
 
     if (selected.size > 10 * 1024 * 1024) {
-      setError('File size must be under 10MB')
+      setError(t('File size must be under 10MB'))
       return
     }
 
