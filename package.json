@@ -48,6 +48,7 @@
     "db:restore-dev-admin": "npx tsx scripts/restore-dev-admin.ts",
     "verify:persistence": "npx tsx scripts/verify-persistence.ts",
     "verify:phase9": "npx tsx scripts/verify-phase9.ts",
+    "whatsapp:validate": "npx tsx scripts/validate-whatsapp-env.ts",
     "storage:migrate": "npx tsx scripts/migrate-storage.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
