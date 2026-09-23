@@ -338,6 +338,7 @@ npm run db:migrate:deploy  # Apply pending migrations (setup and deploys)
 npm run db:seed      # Seed sample data (only for a fresh database — dev:start handles this)
 npm run db:restore-dev-admin  # One-off: restore the documented dev admin password (never part of startup)
 npm run verify:persistence    # Prove existing data survives stop -> start (add --restart for the full cycle)
+npm run verify:phase9      # Phase 9 (licensing) acceptance: .env -> services -> migrate+seed -> real login, SUSPEND -> /subscription-expired, cron auth. Prints a PASS/FAIL table.
 npm run db:studio    # Open Prisma Studio (DB GUI)
 ```
 
