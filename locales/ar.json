@@ -5045,5 +5045,9 @@
   "Payment Collection – Tier {tier}": "متابعة التحصيل – المستوى {tier}",
   "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} due in 3 days.": "قسط خطة السداد رقم {no} للمريض {first} {last} (فاتورة {invoice}) — {amount} ج.م مستحق خلال ٣ أيام.",
   "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is due today.": "قسط خطة السداد رقم {no} للمريض {first} {last} (فاتورة {invoice}) — {amount} ج.م مستحق اليوم.",
-  "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue.": "قسط خطة السداد رقم {no} للمريض {first} {last} (فاتورة {invoice}) — {amount} ج.م متأخر {days} يومًا."
+  "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue.": "قسط خطة السداد رقم {no} للمريض {first} {last} (فاتورة {invoice}) — {amount} ج.م متأخر {days} يومًا.",
+  "Submit Form": "إرسال النموذج",
+  "Submit (Preview)": "إرسال (معاينة)",
+  "Yes, proceed": "نعم، متابعة",
+  "{hours} hours booked this period": "محجوز {hours} ساعة في هذه الفترة"
 }

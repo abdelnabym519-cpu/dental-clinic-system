@@ -5045,5 +5045,9 @@
   "Payment Collection – Tier {tier}": "Payment Collection – Tier {tier}",
   "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} due in 3 days.": "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} due in 3 days.",
   "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is due today.": "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is due today.",
-  "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue.": "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue."
+  "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue.": "Payment plan installment #{no} for {first} {last} (Invoice {invoice}) — EGP {amount} is {days} days overdue.",
+  "Submit Form": "Submit Form",
+  "Submit (Preview)": "Submit (Preview)",
+  "Yes, proceed": "Yes, proceed",
+  "{hours} hours booked this period": "{hours} hours booked this period"
 }

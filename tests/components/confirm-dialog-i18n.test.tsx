@@ -65,6 +65,22 @@ describe('ConfirmDialog localization', () => {
     expect(screen.getByRole('button', { name: 'إلغاء' })).toBeTruthy()
   })
 
+  it('paints the "Yes, proceed" label the two real call sites hand it', () => {
+    // app/(dashboard)/settings/integrations/page.tsx and app/(dashboard)/billing/
+    // payment-plans/[id]/page.tsx both pass `confirmLabel: 'Yes, proceed'`. The call site
+    // cannot fix this - it is the dialog that localizes its four string slots - so the
+    // proof has to be a render, and the fix has to be a dictionary key.
+    renderDialog('ar-EG', {
+      title: 'Waive installment?',
+      description: "Waive this installment? The patient won't need to pay it.",
+      confirmLabel: 'Yes, proceed',
+    })
+    expect(screen.getByRole('button', { name: 'نعم، متابعة' })).toBeTruthy()
+    expect(screen.getByText('إعفاء القسط؟')).toBeTruthy()
+    renderDialog('en-EG', { confirmLabel: 'Yes, proceed' })
+    expect(screen.getByRole('button', { name: 'Yes, proceed' })).toBeTruthy()
+  })
+
   it('still passes through a node (not a string) without mangling it', () => {
     renderDialog('ar-EG', { title: <span data-testid="node-title">عنوان</span> })
     expect(screen.getByTestId('node-title')).toBeTruthy()

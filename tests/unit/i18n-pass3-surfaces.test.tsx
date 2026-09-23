@@ -553,6 +553,13 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     // suite that asserts the API responses.
     const files = dirs.flatMap(walk).filter((f2) => fs.readFileSync(f2, 'utf8').includes("'use client'"))
     const SLOT = /\b(?:title|description|message|label)\s*[:=]\s*/g
+    // rev 10: attributes that reach the DOM without passing through any shared renderer, so
+    // nothing localizes them downstream. (`aria-label` is already caught above: the leading
+    // hyphen makes `label` a word boundary, so `\blabel\s*[:=]` matches it.)
+    const ATTR = /\b(?:placeholder|alt|helperText|caption|submitLabel|cancelLabel|confirmLabel|emptyText|emptyMessage|heading|subtitle|tooltip|hint|actionLabel|okLabel)\s*[:=]\s*/g
+    // Typed data shown as an example of a format, not UI copy - deliberately Latin, and
+    // already reported as such in the gate report. Listed here so the audit cannot drift.
+    const FORMAT_SAMPLE = /^(?:Cipla|www\.myclinic\.com|smtp\.hostinger\.com|TN\/\d+|DD\/MM\/YYYY|YYYY-MM-DD|HH:MM(?:\s*24)?|0101234567)$/
     const CALL = /\b(?:toast|notify)\s*(?:\.\w+)?\s*\(\s*|\bset[A-Za-z]{0,12}Error[A-Za-z]{0,8}\s*\(\s*/g
     const readLiteral = (src: string, i: number, q: string): string | null => {
       let out = ''
@@ -568,7 +575,7 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     let audited = 0
     for (const file of files) {
       const src = fs.readFileSync(file, 'utf8')
-      for (const rx of [SLOT, CALL]) {
+      for (const rx of [SLOT, CALL, ATTR]) {
         let m: RegExpExecArray | null
         while ((m = rx.exec(src))) {
           let i = m.index + m[0].length
@@ -583,6 +590,17 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
           const probe = lit.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
           if (probe.length < 4 || !/[A-Za-z]{3}/.test(probe)) continue
           if (/^(?:\/|https?:|@)/.test(probe)) continue
+          if (rx === ATTR) {
+            // The frame must resolve as written (rev 9's pattern pass covers real sentences with
+            // values baked in); if the copy is nothing but the interpolation, there is no label
+            // to translate. Format samples stay Latin on purpose.
+            if (/^[\s]*$/.test(probe.replace(/\$\{[^}]*\}/g, ' '))) continue
+            if (FORMAT_SAMPLE.test(probe)) continue
+            const translatedFrame = translateText('ar-EG', probe)
+            if (/[\u0600-\u06FF]/.test(translatedFrame)) continue
+            offenders.push(`${file}: ${probe.slice(0, 70)}`)
+            continue
+          }
           const translated = translateText('ar-EG', probe)
           if (!/[\u0600-\u06FF]/.test(translated)) {
             offenders.push(`${file}: ${probe.slice(0, 70)}`)
@@ -686,6 +704,23 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(translateText('ar-EG', en0)).toBe(ar0)
       expect(translateText('en-EG', en0)).toBe(en0)
     }
+  })
+
+  it('localizes the DOM attributes that no shared renderer touches', () => {
+    // placeholder / alt / hint / submitLabel etc. are handed straight to the DOM, so nothing
+    // downstream can localize them: either the render site calls t() or the value must be a
+    // dictionary key. The audit above fails the build when one of them resolves to nothing;
+    // these two cases pin the fixes it drove.
+    const formRenderer = fs.readFileSync('components/forms/form-renderer.tsx', 'utf8')
+    expect(formRenderer).toContain('{t(submitLabel)}')
+    expect(translateText('ar-EG', 'Submit Form')).toBe('إرسال النموذج')
+    expect(translateText('ar-EG', 'Submit (Preview)')).toBe('إرسال (معاينة)')
+
+    // the agenda tile hint: interpolated copy, now a keyed template with a real param
+    const agenda = fs.readFileSync('components/agenda/agenda-panels.tsx', 'utf8')
+    expect(agenda).toContain("hint: t('{hours} hours booked this period'")
+    expect(translateText('ar-EG', '{hours} hours booked this period', { hours: 3 })).toBe('محجوز 3 ساعة في هذه الفترة')
+    expect(translateText('en-EG', '{hours} hours booked this period', { hours: 3 })).toBe('3 hours booked this period')
   })
 
   it('localises the example-prefix placeholders without touching format samples', () => {

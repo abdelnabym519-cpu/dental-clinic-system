@@ -449,7 +449,7 @@ function AnalyticsSummary() {
     {
       label: 'Clinic occupancy',
       value: `${data.clinic.occupancyPercent}%`,
-      hint: `${Math.round(data.bookedMinutes / 60)}h booked this period`,
+      hint: t('{hours} hours booked this period', { hours: Math.round(data.bookedMinutes / 60) }),
     },
   ]
 
