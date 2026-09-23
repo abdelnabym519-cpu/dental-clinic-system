@@ -77,8 +77,11 @@ describe('SubscriptionWarningBanner', () => {
     renderBanner()
 
     const alert = await screen.findByRole('alert')
-    expect(alert.textContent).toContain('5')
-    expect(alert.textContent).toContain('Contact support')
+    // Exact copy: the message (en.json with {days} interpolated — no stray
+    // braces) plus the CTA link. No duplicated call-to-action.
+    expect(alert.textContent).toBe(
+      'Warning: your subscription expires in 5 day(s). Contact support'
+    )
   })
 
   it('shows nothing when more than 7 days remain', async () => {
@@ -96,9 +99,11 @@ describe('SubscriptionWarningBanner', () => {
     renderBanner()
 
     const alert = await screen.findByRole('alert')
-    expect(alert.textContent).toContain('2')
-    // Grace copy says the subscription HAS expired — not "expires in".
-    expect(alert.textContent).toContain('has expired')
+    // Grace copy says the subscription HAS expired (not "expires in") and the
+    // remaining grace days are interpolated without braces.
+    expect(alert.textContent).toBe(
+      'Your subscription has expired! You have 2 grace day(s) left before access is suspended. Contact support'
+    )
   })
 
   it('is silent for non-ADMIN roles and never fetches', async () => {

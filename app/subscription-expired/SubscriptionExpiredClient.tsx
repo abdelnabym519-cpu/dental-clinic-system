@@ -34,7 +34,7 @@ export function SubscriptionExpiredClient({ userEmail }: { userEmail: string }) 
         )}
 
         <a
-          href="mailto:support@dentora.com?subject=DenToRa%20%E2%80%94%20"
+          href="mailto:support@dentora.com?subject=DenToRa%20%E2%80%94%20subscription%20renewal"
           className="mb-3 block w-full rounded-xl bg-primary py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           {t('subscription.contact_to_renew')}
