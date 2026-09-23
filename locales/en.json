@@ -4029,5 +4029,10 @@
   "Wednesday": "Wednesday",
   "Thursday": "Thursday",
   "Friday": "Friday",
-  "Saturday": "Saturday"
+  "Saturday": "Saturday",
+  "No verification token or email provided.": "No verification token or email provided.",
+  "Your email has been verified successfully!": "Your email has been verified successfully!",
+  "Verification failed. Please try again.": "Verification failed. Please try again.",
+  "An error occurred during verification. Please try again.": "An error occurred during verification. Please try again.",
+  "We've sent a verification email to {v1}. Please check your inbox and click the verification link.": "We've sent a verification email to {v1}. Please check your inbox and click the verification link."
 }

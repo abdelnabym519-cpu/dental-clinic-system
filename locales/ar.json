@@ -4029,5 +4029,10 @@
   "Wednesday": "الأربعاء",
   "Thursday": "الخميس",
   "Friday": "الجمعة",
-  "Saturday": "السبت"
+  "Saturday": "السبت",
+  "No verification token or email provided.": "لم يتم توفير رمز تحقق أو بريد إلكتروني.",
+  "Your email has been verified successfully!": "تم التحقق من بريدك الإلكتروني بنجاح!",
+  "Verification failed. Please try again.": "فشل التحقق. يرجى المحاولة مرة أخرى.",
+  "An error occurred during verification. Please try again.": "حدث خطأ أثناء التحقق. يرجى المحاولة مرة أخرى.",
+  "We've sent a verification email to {v1}. Please check your inbox and click the verification link.": "لقد أرسلنا رسالة تحقق إلى {v1}. يرجى التحقق من بريدك الوارد والضغط على رابط التحقق."
 }

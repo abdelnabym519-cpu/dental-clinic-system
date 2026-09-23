@@ -394,4 +394,42 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(src, f).toMatch(/t\((DAY_LABELS\[day\]|day|dayNames\[index\])\)/)
     }
   })
+
+  it('translates the AI feature toggles and the email-verification messages', () => {
+    // These five labels were already dictionary values; /settings/ai simply
+    // rendered the raw English next to a translated description.
+    const ai: Record<string, string> = {
+      'AI Chat Widget': 'أداة محادثة الذكاء الاصطناعي',
+      'Command Bar (Ctrl+K)': 'شريط الأوامر (Ctrl+K)',
+      'Auto Appointment Reminders': 'تذكيرات المواعيد التلقائية',
+      'Morning Briefing': 'الملخص الصباحي',
+      'Patient Risk Scoring': 'تقييم مخاطر المرضى',
+    }
+    for (const [label, arabic] of Object.entries(ai)) {
+      expect(translateText('ar-EG', label), label).toBe(arabic)
+      expect(translateText('en-EG', label), label).toBe(label)
+    }
+    const aiPage = readFileSync('app/(dashboard)/settings/ai/page.tsx', 'utf8')
+    expect(aiPage).toContain('{t(label)}')
+    expect(aiPage).toContain('label={t(label)}')
+    expect(aiPage).not.toMatch(/<p className="text-sm font-medium">\{label\}<\/p>/)
+
+    const verify: Record<string, string> = {
+      'No verification token or email provided.': 'لم يتم توفير رمز تحقق أو بريد إلكتروني.',
+      'Your email has been verified successfully!': 'تم التحقق من بريدك الإلكتروني بنجاح!',
+      'Verification failed. Please try again.': 'فشل التحقق. يرجى المحاولة مرة أخرى.',
+      'An error occurred during verification. Please try again.':
+        'حدث خطأ أثناء التحقق. يرجى المحاولة مرة أخرى.',
+    }
+    for (const [key, arabic] of Object.entries(verify)) {
+      expect(ar[key as keyof typeof ar], key).toBe(arabic)
+      expect(en[key as keyof typeof en], key).toBe(key)
+    }
+    expect(ar['We\'ve sent a verification email to {v1}. Please check your inbox and click the verification link.'])
+      .toContain('{v1}')
+    const page = readFileSync('app/(auth)/verify-email/page.tsx', 'utf8')
+    // no user-visible message may be assigned as a raw literal any more
+    expect(page).not.toMatch(/setMessage\(\s*['"`][^'"`]*['"`]\s*\)/)
+    expect(page.match(/setMessage\(\s*t\(/g)?.length ?? 0).toBeGreaterThanOrEqual(4)
+  })
 })

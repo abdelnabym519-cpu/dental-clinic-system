@@ -26,11 +26,11 @@ function VerifyEmailContent() {
     } else if (email) {
       setStatus('pending')
       setMessage(
-        `We've sent a verification email to ${email}. Please check your inbox and click the verification link.`
+        t('We\'ve sent a verification email to {v1}. Please check your inbox and click the verification link.', { v1: email })
       )
     } else {
       setStatus('error')
-      setMessage('No verification token or email provided.')
+      setMessage(t('No verification token or email provided.'))
     }
   }, [token, email])
 
@@ -46,18 +46,18 @@ function VerifyEmailContent() {
 
       if (response.ok) {
         setStatus('success')
-        setMessage('Your email has been verified successfully!')
+        setMessage(t('Your email has been verified successfully!'))
         toast({
           title: 'Email verified!',
           description: 'You can now log in to your account.',
         })
       } else {
         setStatus('error')
-        setMessage(result.error || 'Verification failed. Please try again.')
+        setMessage(result.error ? t(result.error) : t('Verification failed. Please try again.'))
       }
     } catch {
       setStatus('error')
-      setMessage('An error occurred during verification. Please try again.')
+      setMessage(t('An error occurred during verification. Please try again.'))
     }
   }
 

@@ -182,10 +182,12 @@ export default function AISettingsPage() {
         ].map(({ key, label, desc }) => (
           <div key={key} className="flex items-center justify-between p-3 rounded-lg border">
             <div>
-              <p className="text-sm font-medium">{label}</p>
+              {/* the label strings are already dictionary values (e.g.
+                  "Morning Briefing" -> الملخص الصباحي); only `desc` was translated */}
+              <p className="text-sm font-medium">{t(label)}</p>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
-            <ToggleSwitch checked={settings[key]} onChange={() => toggle(key)} label={label} />
+            <ToggleSwitch checked={settings[key]} onChange={() => toggle(key)} label={t(label)} />
           </div>
         ))}
       </section>
