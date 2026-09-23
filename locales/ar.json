@@ -5053,5 +5053,21 @@
   "Inventory item created successfully!": "تم إنشاء صنف المخزون بنجاح!",
   "Transaction recorded successfully!": "تم تسجيل الحركة بنجاح!",
   "Cancel appointment {no} for {name}?": "هل تريد إلغاء الموعد {no} الخاص بـ {name}؟",
-  "Export functionality coming soon!": "ميزة التصدير متاحة قريبًا!"
+  "Export functionality coming soon!": "ميزة التصدير متاحة قريبًا!",
+  "Please enter a valid email address": "أدخل بريداً إلكترونياً صحيحاً",
+  "Hospital name must be at least 2 characters": "يجب أن يتكون اسم المستشفى من حرفين على الأقل",
+  "Your name must be at least 2 characters": "يجب أن يتكون اسمك من حرفين على الأقل",
+  "Phone number must be at least 10 digits": "يجب أن يتضمن رقم الهاتف ١٠ أرقام على الأقل",
+  "Password must be at least 8 characters": "يجب أن تتضمن كلمة المرور ٨ أحرف على الأقل",
+  "Address is required": "العنوان مطلوب",
+  "City is required": "المدينة مطلوبة",
+  "State is required": "المحافظة مطلوبة",
+  "Postal code must be 5 digits (11111-99999)": "الرمز البريدي يجب أن يتكون من ٥ أرقام (11111-99999)",
+  "Signature is required": "التوقيع مطلوب",
+  "Minimum {min} characters": "الحد الأدنى {min} حرفًا",
+  "Maximum {max} characters": "الحد الأقصى {max} حرفًا",
+  "Minimum value is {min}": "الحد الأدنى للقيمة هو {min}",
+  "Maximum value is {max}": "الحد الأقصى للقيمة هو {max}",
+  "{first} {last} uploaded a photo": "رفع {first} {last} صورة",
+  "{first} {last} uploaded a photo ({category})": "رفع {first} {last} صورة ({category})"
 }

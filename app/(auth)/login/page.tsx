@@ -94,7 +94,7 @@ function LoginForm() {
               {...register('email')}
               disabled={isLoading}
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            {errors.email && <p className="text-sm text-destructive">{t(errors.email.message ?? '')}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{t('auth.password')}</Label>
@@ -106,7 +106,7 @@ function LoginForm() {
               disabled={isLoading}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{t(errors.password.message ?? '')}</p>
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>

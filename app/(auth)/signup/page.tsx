@@ -111,7 +111,7 @@ export default function SignupPage() {
               disabled={isLoading}
             />
             {errors.hospitalName && (
-              <p className="text-sm text-destructive">{errors.hospitalName.message}</p>
+              <p className="text-sm text-destructive">{t(errors.hospitalName.message ?? '')}</p>
             )}
           </div>
 
@@ -124,7 +124,7 @@ export default function SignupPage() {
               disabled={isLoading}
             />
             {errors.adminName && (
-              <p className="text-sm text-destructive">{errors.adminName.message}</p>
+              <p className="text-sm text-destructive">{t(errors.adminName.message ?? '')}</p>
             )}
           </div>
 
@@ -137,7 +137,7 @@ export default function SignupPage() {
               {...register('email')}
               disabled={isLoading}
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            {errors.email && <p className="text-sm text-destructive">{t(errors.email.message ?? '')}</p>}
           </div>
 
           <div className="space-y-2">
@@ -149,7 +149,7 @@ export default function SignupPage() {
               {...register('phone')}
               disabled={isLoading}
             />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+            {errors.phone && <p className="text-sm text-destructive">{t(errors.phone.message ?? '')}</p>}
           </div>
 
           <div className="space-y-2">
@@ -162,7 +162,7 @@ export default function SignupPage() {
               disabled={isLoading}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{t(errors.password.message ?? '')}</p>
             )}
           </div>
 
@@ -176,7 +176,7 @@ export default function SignupPage() {
               disabled={isLoading}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              <p className="text-sm text-destructive">{t(errors.confirmPassword.message ?? '')}</p>
             )}
           </div>
 

@@ -103,18 +103,18 @@ export function FormRenderer({
       if (val && field.validation) {
         const str = String(val)
         if (field.validation.minLength && str.length < field.validation.minLength) {
-          newErrors[field.id] = `Minimum ${field.validation.minLength} characters`
+          newErrors[field.id] = t('Minimum {min} characters', { min: field.validation.minLength })
         }
         if (field.validation.maxLength && str.length > field.validation.maxLength) {
-          newErrors[field.id] = `Maximum ${field.validation.maxLength} characters`
+          newErrors[field.id] = t('Maximum {max} characters', { max: field.validation.maxLength })
         }
         if (field.type === 'number') {
           const num = Number(val)
           if (field.validation.min !== undefined && num < field.validation.min) {
-            newErrors[field.id] = `Minimum value is ${field.validation.min}`
+            newErrors[field.id] = t('Minimum value is {min}', { min: field.validation.min })
           }
           if (field.validation.max !== undefined && num > field.validation.max) {
-            newErrors[field.id] = `Maximum value is ${field.validation.max}`
+            newErrors[field.id] = t('Maximum value is {max}', { max: field.validation.max })
           }
         }
       }
@@ -123,7 +123,7 @@ export function FormRenderer({
     // Check signature if form has a signature field
     const hasSignatureField = fields.some((f) => f.type === 'signature')
     if (hasSignatureField && showSignature && !signature) {
-      newErrors['_signature'] = 'Signature is required'
+      newErrors['_signature'] = t('Signature is required')
     }
 
     setErrors(newErrors)

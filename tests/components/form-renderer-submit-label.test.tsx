@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 
 // ---------------------------------------------------------------------------
@@ -36,6 +36,14 @@ function renderForm(locale: string, props: Record<string, unknown> = {}) {
   )
 }
 
+/** the shipped suite submits the form element, not the button: jsdom's implicit
+ *  submit-on-click is unreliable here, and a silent no-submit is how a validation
+ *  test ends up asserting nothing at all */
+function submitForm(name: string) {
+  const form = screen.getByText(name).closest('form')!
+  fireEvent.submit(form)
+}
+
 describe('FormRenderer submit label', () => {
   it('paints the component default in Arabic when a call site omits it', () => {
     renderForm('ar-EG')
@@ -52,5 +60,48 @@ describe('FormRenderer submit label', () => {
   it('does not mangle a label the dictionary does not know', () => {
     renderForm('ar-EG', { submitLabel: 'Send to front desk' })
     expect(screen.getByRole('button', { name: 'Send to front desk' })).toBeTruthy()
+  })
+})
+describe('FormRenderer validation copy', () => {
+  // These messages are produced by an assignment (`newErrors[field.id] = …`) and painted through
+  // `{error}` raw, so a dictionary entry cannot rescue them - the producer itself has to call t().
+  // The English assertions matter as much as the Arabic ones: the fix had to leave en rendering
+  // byte-identical, and these are the strings the pre-existing form-validation suite already checks.
+  const TEXT = { id: 'name', label: 'Full name', type: 'text', required: true, validation: { minLength: 3 } }
+  const NUM = { id: 'score', label: 'Score', type: 'number', required: true, validation: { min: 0, max: 100 } }
+
+  it('paints the min-length message in Arabic', () => {
+    renderForm('ar-EG', { fields: [TEXT] })
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ab' } })
+    submitForm('إرسال النموذج')
+    expect(screen.getByText('الحد الأدنى 3 حرفًا')).toBeTruthy()
+  })
+
+  it('paints the numeric upper bound in Arabic', () => {
+    renderForm('ar-EG', { fields: [NUM] })
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '200' } })
+    submitForm('إرسال النموذج')
+    expect(screen.getByText('الحد الأقصى للقيمة هو 100')).toBeTruthy()
+  })
+
+  it('paints the numeric lower bound in Arabic', () => {
+    renderForm('ar-EG', { fields: [NUM] })
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '-5' } })
+    submitForm('إرسال النموذج')
+    expect(screen.getByText('الحد الأدنى للقيمة هو 0')).toBeTruthy()
+  })
+
+  it('renders the same min-length message in English, byte-identical to before the fix', () => {
+    renderForm('en-EG', { fields: [TEXT] })
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ab' } })
+    submitForm('Submit Form')
+    expect(screen.getByText('Minimum 3 characters')).toBeTruthy()
+  })
+
+  it('renders the same numeric message in English, byte-identical to before the fix', () => {
+    renderForm('en-EG', { fields: [NUM] })
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '200' } })
+    submitForm('Submit Form')
+    expect(screen.getByText('Maximum value is 100')).toBeTruthy()
   })
 })

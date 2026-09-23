@@ -231,7 +231,7 @@ export default function OnboardingPage() {
                     <Label htmlFor="address">{t("Address *")}</Label>
                     <Input id="address" placeholder={t("123, Main Street")} {...register('address')} />
                     {errors.address && (
-                      <p className="text-sm text-destructive">{errors.address.message}</p>
+                      <p className="text-sm text-destructive">{t(errors.address.message ?? '')}</p>
                     )}
                   </div>
 
@@ -240,7 +240,7 @@ export default function OnboardingPage() {
                       <Label htmlFor="city">{t("City *")}</Label>
                       <Input id="city" placeholder="القاهرة" {...register('city')} />
                       {errors.city && (
-                        <p className="text-sm text-destructive">{errors.city.message}</p>
+                        <p className="text-sm text-destructive">{t(errors.city.message ?? '')}</p>
                       )}
                     </div>
                     <div className="space-y-2">
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
                   ))}
                       </datalist>
                       {errors.state && (
-                        <p className="text-sm text-destructive">{errors.state.message}</p>
+                        <p className="text-sm text-destructive">{t(errors.state.message ?? '')}</p>
                       )}
                     </div>
                   </div>
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
                       <Label htmlFor="pincode">{t("Postal Code *")}</Label>
                       <Input id="pincode" placeholder="11513" {...register('pincode')} />
                       {errors.pincode && (
-                        <p className="text-sm text-destructive">{errors.pincode.message}</p>
+                        <p className="text-sm text-destructive">{t(errors.pincode.message ?? '')}</p>
                       )}
                     </div>
                     <div className="space-y-2">

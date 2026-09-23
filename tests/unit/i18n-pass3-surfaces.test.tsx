@@ -63,6 +63,14 @@ beforeEach(() => {
   hoisted.locale = 'ar-EG'
 })
 
+/**
+ * "Prose" = two words of 3+ letters. Deliberately looser than the two-consecutive-4-letter-words
+ * test this suite used until rev 12: the most common validation sentence in this app is
+ * `City is required`, and the stricter shape silently skipped every one of them (60 of 425 sites).
+ * It still refuses fragments that cannot be sentences (`Total: 1,000`, `Chair 3`).
+ */
+const isProse = (s: string) => s.split(' ').filter((w) => /[A-Za-z]{3,}/.test(w)).length >= 2
+
 describe('profile settings page (Arabic mode)', () => {
   it('renders with no English left on screen', async () => {
     const element = await ProfileSettingsPage()
@@ -706,6 +714,69 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     }
   })
 
+  it('translates validation copy, at the render site and at the producer', () => {
+    // Two shapes no prop-based audit can see, because the string arrives from somewhere else:
+    //  1. react-hook-form errors — `{errors.email.message}` paints whatever the zod schema said,
+    //     and the schema lives at module scope where there is no `t` to call. So the *render
+    //     site* is the only place that can translate it.
+    //  2. error objects built by assignment (`newErrors[field.id] = …`), which FormRenderer then
+    //     paints through `{error}` raw — there a dictionary entry is not enough, the assignment
+    //     itself has to call t(), exactly as with native dialogs.
+    const dirs = ['app', 'components']
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const f2 = `${d}/${e.name}`
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        return /\.tsx$/.test(e.name) && !f2.includes('/api/') ? [f2] : []
+      })
+    const offenders: string[] = []
+
+    const RAW_RHF = /\{\s*(?:t\(\s*)?((?:form\.)?errors\??(?:\.[A-Za-z0-9_]+|\[[^\]]{1,40}\])+\.message)/g
+    let rhfSites = 0
+    for (const file of dirs.flatMap(walk)) {
+      const src = fs.readFileSync(file, 'utf8')
+      for (const m of src.matchAll(RAW_RHF)) {
+        rhfSites++
+        // the wrapped shape is `{t(errors.x.message …)}`, which the match itself reports
+        if (!m[0].startsWith('{t(')) offenders.push(`${file}: renders ${m[1]} without translating`)
+      }
+    }
+    // 15 of these existed on the auth + onboarding screens before rev 12; a scan that sees none
+    // has stopped matching, which is the failure mode worth guarding here
+    expect(rhfSites).toBeGreaterThanOrEqual(15)
+
+    // producer side: no raw literal may be assigned straight into an error holder
+    const RAW_ASSIGN = /\b(?:new|form|validation)?[Ee]rrors?\w*(?:\s*\[[^\]]{1,40}\]|\s*\.\w+){0,2}\s*=\s*(['`])((?:\\.|(?!\1)[^\n]){5,140})\1/g
+    let assigned = 0
+    for (const file of dirs.flatMap(walk)) {
+      const src = fs.readFileSync(file, 'utf8')
+      for (const m of src.matchAll(RAW_ASSIGN)) {
+        const lit = m[2].replace(/\s+/g, ' ').trim()
+        if (!isProse(lit) || lit.includes('${')) continue
+        assigned++
+        offenders.push(`${file}: assigns untranslated validation copy: ${lit.slice(0, 56)}`)
+      }
+    }
+    expect(assigned).toBe(0)
+    expect(offenders).toEqual([])
+
+    // positive control: the fix really is what those files now say
+    const formRenderer = fs.readFileSync('components/forms/form-renderer.tsx', 'utf8')
+    expect(formRenderer).toContain("newErrors['_signature'] = t('Signature is required')")
+    expect(formRenderer).toContain("t('Minimum {min} characters', { min: field.validation.minLength })")
+
+    // and the shipped strings, in both directions
+    expect(translateText('ar-EG', 'Please enter a valid email address')).toBe('أدخل بريداً إلكترونياً صحيحاً')
+    expect(translateText('ar-EG', 'City is required')).toBe('المدينة مطلوبة')
+    expect(translateText('ar-EG', 'Postal code must be 5 digits (11111-99999)')).toBe('الرمز البريدي يجب أن يتكون من ٥ أرقام (11111-99999)')
+    expect(translateText('ar-EG', 'Password must be at least 8 characters')).toBe('يجب أن تتضمن كلمة المرور ٨ أحرف على الأقل')
+    expect(translateText('ar-EG', 'Hospital name must be at least 2 characters')).toBe('يجب أن يتكون اسم المستشفى من حرفين على الأقل')
+    expect(translateText('ar-EG', 'Minimum {min} characters', { min: 3 })).toBe('الحد الأدنى 3 حرفًا')
+    expect(translateText('en-EG', 'Minimum {min} characters', { min: 3 })).toBe('Minimum 3 characters')
+    expect(translateText('en-EG', 'Maximum value is {max}', { max: 100 })).toBe('Maximum value is 100')
+    expect(translateText('en-EG', 'City is required')).toBe('City is required')
+  })
+
   it('translates every native alert()/confirm() message, which no renderer can fix', () => {
     // A native dialog renders the JS string verbatim: the toast viewport localizes its slots and
     // ConfirmDialog localizes its four, but nothing stands between `alert('Failed to export')`
@@ -745,7 +816,7 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
         if (quoted.length === 0) continue
         for (const q of quoted) {
           const lit = q[2].replace(/\s+/g, ' ').trim()
-          if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(lit)) continue
+          if (!isProse(lit)) continue
           audited++
           const before = arg.slice(0, q.index)
           if (!/(?:^|[\s(])t\s*\(/.test(before)) {

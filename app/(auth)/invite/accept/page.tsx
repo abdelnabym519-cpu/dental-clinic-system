@@ -228,7 +228,7 @@ function AcceptInviteContent() {
               {...register('phone')}
               disabled={isSubmitting}
             />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+            {errors.phone && <p className="text-sm text-destructive">{t(errors.phone.message ?? '')}</p>}
           </div>
 
           <div className="space-y-2">
@@ -241,7 +241,7 @@ function AcceptInviteContent() {
               disabled={isSubmitting}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{t(errors.password.message ?? '')}</p>
             )}
           </div>
 
@@ -255,7 +255,7 @@ function AcceptInviteContent() {
               disabled={isSubmitting}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              <p className="text-sm text-destructive">{t(errors.confirmPassword.message ?? '')}</p>
             )}
           </div>
 

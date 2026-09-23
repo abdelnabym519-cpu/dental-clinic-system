@@ -14,6 +14,14 @@ import { translateText } from '@/lib/i18n/dictionary'
 // paint English in Arabic mode.
 // ---------------------------------------------------------------------------
 
+/**
+ * "Prose" = two words of 3+ letters. Deliberately looser than the two-consecutive-4-letter-words
+ * test this suite used until rev 12: the most common validation sentence in this app is
+ * `City is required`, and the stricter shape silently skipped every one of them (60 of 425 sites).
+ * It still refuses fragments that cannot be sentences (`Total: 1,000`, `Chair 3`).
+ */
+const isProse = (s: string) => s.split(' ').filter((w) => /[A-Za-z]{3,}/.test(w)).length >= 2
+
 function walk(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const f = path.join(dir, e.name)
@@ -112,7 +120,11 @@ describe('API error messages are Arabic-resolvable', () => {
         if (/[?{][^}]*}/.test(tmpl.replace(/\$\{[^}]*\}/g, ''))) continue // conditional/odd shape
         if (!/\$\{/.test(tmpl)) continue
         const sentence = tmpl.replace(/\$\{[^}]*\}/g, SAMPLE)
-        if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(sentence)) continue
+        // a nested template (`` `…${cond ? `x` : ''}` ``) cannot be sampled faithfully: the
+        // capture stops at the inner backtick and leaves a dangling fragment. Those routes build
+        // their sentence from parts, and the *served* string is asserted separately below.
+        if (sentence.includes('${')) continue
+        if (!isProse(sentence)) continue
         sampled++
         const ar = translateText('ar-EG', sentence)
         if (!/[\u0600-\u06FF]/.test(ar)) unresolved.push(`${file}: ${sentence.slice(0, 74)}`)
@@ -135,7 +147,7 @@ describe('API error messages are Arabic-resolvable', () => {
         if (!/\$\{/.test(m[1])) {
           // a template literal with no interpolation is just a string - it must translate
           const lit = m[1].trim()
-          if (/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(lit)) {
+          if (isProse(lit)) {
             expect(/[\u0600-\u06FF]/.test(translateText('ar-EG', lit))).toBe(true)
           }
           continue
@@ -168,9 +180,10 @@ describe('API error messages are Arabic-resolvable', () => {
     for (const file of files) {
       for (const m of fs.readFileSync(file, 'utf8').matchAll(RX)) {
         const raw = (m[1] ?? m[2]).trim()
-        if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(raw)) continue
+        if (!isProse(raw)) continue
         // sample the interpolation so the frame can be matched the way the runtime will
         const sentence = raw.replace(/\$\{[^}]*\}/g, 'ZZ-42')
+        if (sentence.includes('${')) continue // nested template: un-sampling is honest, not silent
         audited++
         if (!/[\u0600-\u06FF]/.test(translateText('ar-EG', sentence))) unresolved.push(`${file}: ${sentence.slice(0, 70)}`)
       }

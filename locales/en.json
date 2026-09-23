@@ -5053,5 +5053,21 @@
   "Export functionality coming soon!": "Export functionality coming soon!",
   "Inventory item created successfully!": "Inventory item created successfully!",
   "Transaction recorded successfully!": "Transaction recorded successfully!",
-  "Cancel appointment {no} for {name}?": "Cancel appointment {no} for {name}?"
+  "Cancel appointment {no} for {name}?": "Cancel appointment {no} for {name}?",
+  "Please enter a valid email address": "Please enter a valid email address",
+  "Hospital name must be at least 2 characters": "Hospital name must be at least 2 characters",
+  "Your name must be at least 2 characters": "Your name must be at least 2 characters",
+  "Phone number must be at least 10 digits": "Phone number must be at least 10 digits",
+  "Password must be at least 8 characters": "Password must be at least 8 characters",
+  "Address is required": "Address is required",
+  "City is required": "City is required",
+  "State is required": "State is required",
+  "Postal code must be 5 digits (11111-99999)": "Postal code must be 5 digits (11111-99999)",
+  "Signature is required": "Signature is required",
+  "Minimum {min} characters": "Minimum {min} characters",
+  "Maximum {max} characters": "Maximum {max} characters",
+  "Minimum value is {min}": "Minimum value is {min}",
+  "Maximum value is {max}": "Maximum value is {max}",
+  "{first} {last} uploaded a photo": "{first} {last} uploaded a photo",
+  "{first} {last} uploaded a photo ({category})": "{first} {last} uploaded a photo ({category})"
 }
