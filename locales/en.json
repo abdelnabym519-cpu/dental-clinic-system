@@ -5049,5 +5049,9 @@
   "Submit Form": "Submit Form",
   "Submit (Preview)": "Submit (Preview)",
   "Yes, proceed": "Yes, proceed",
-  "{hours} hours booked this period": "{hours} hours booked this period"
+  "{hours} hours booked this period": "{hours} hours booked this period",
+  "Export functionality coming soon!": "Export functionality coming soon!",
+  "Inventory item created successfully!": "Inventory item created successfully!",
+  "Transaction recorded successfully!": "Transaction recorded successfully!",
+  "Cancel appointment {no} for {name}?": "Cancel appointment {no} for {name}?"
 }

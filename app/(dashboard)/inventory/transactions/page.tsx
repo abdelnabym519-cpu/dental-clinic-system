@@ -137,7 +137,7 @@ export default function TransactionsPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert('Transaction recorded successfully!')
+        alert(t('Transaction recorded successfully!'))
         setShowAddModal(false)
         fetchTransactions()
         // Reset form
@@ -151,11 +151,11 @@ export default function TransactionsPage() {
           notes: '',
         })
       } else {
-        alert(data.error || t('Failed to record transaction'))
+        alert(t(data.error || 'Failed to record transaction'))
       }
     } catch (error) {
       console.error('Error recording transaction:', error)
-      alert('Failed to record transaction')
+      alert(t('Failed to record transaction'))
     }
   }
 

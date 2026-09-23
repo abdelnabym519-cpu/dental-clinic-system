@@ -237,7 +237,7 @@ export function CalendarView({
   const cancelAppointment = async (apt: Appointment) => {
     if (cancellingId) return
     const reason = window.confirm(
-      `Cancel appointment ${apt.appointmentNo} for ${getPatientName(apt.patient)}?`
+      t('Cancel appointment {no} for {name}?', { no: apt.appointmentNo, name: getPatientName(apt.patient) })
     )
     if (!reason) return
     try {

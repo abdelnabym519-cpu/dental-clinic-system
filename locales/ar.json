@@ -5049,5 +5049,9 @@
   "Submit Form": "إرسال النموذج",
   "Submit (Preview)": "إرسال (معاينة)",
   "Yes, proceed": "نعم، متابعة",
-  "{hours} hours booked this period": "محجوز {hours} ساعة في هذه الفترة"
+  "{hours} hours booked this period": "محجوز {hours} ساعة في هذه الفترة",
+  "Inventory item created successfully!": "تم إنشاء صنف المخزون بنجاح!",
+  "Transaction recorded successfully!": "تم تسجيل الحركة بنجاح!",
+  "Cancel appointment {no} for {name}?": "هل تريد إلغاء الموعد {no} الخاص بـ {name}؟",
+  "Export functionality coming soon!": "ميزة التصدير متاحة قريبًا!"
 }

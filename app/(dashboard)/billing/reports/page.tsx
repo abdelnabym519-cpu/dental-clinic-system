@@ -165,7 +165,7 @@ export default function FinancialReportsPage() {
 
   const handleExport = () => {
     // TODO: Implement export functionality
-    alert('Export functionality coming soon!')
+    alert(t('Export functionality coming soon!'))
   }
 
   return (

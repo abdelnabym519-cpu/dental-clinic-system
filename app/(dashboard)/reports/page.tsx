@@ -242,7 +242,7 @@ export default function ReportsPage() {
       document.body.removeChild(a)
     } catch (error) {
       console.error('Export error:', error)
-      alert('Failed to export report')
+      alert(t('Failed to export report'))
     }
   }
 

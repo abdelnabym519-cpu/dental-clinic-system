@@ -706,6 +706,112 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     }
   })
 
+  it('translates every native alert()/confirm() message, which no renderer can fix', () => {
+    // A native dialog renders the JS string verbatim: the toast viewport localizes its slots and
+    // ConfirmDialog localizes its four, but nothing stands between `alert('Failed to export')`
+    // and the screen. So each call site has to satisfy two independent conditions - the literal
+    // must sit *inside* a t() call, and that literal must resolve to Arabic. Satisfying only one
+    // still paints English, which is why both are asserted here instead of reusing the slot audit
+    // above (that one is satisfied by a resolving key, and a key cannot help a native box).
+    const dirs = ['app', 'components']
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const f2 = `${d}/${e.name}`
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        return /\.tsx?$/.test(e.name) && !f2.includes('/api/') ? [f2] : []
+      })
+    const CALL = /\b(?:window\.)?(?:alert|confirm)\s*\(/g
+    const LIT = /([`'"])((?:\\.|(?!\1)[^\n]){4,220})\1/g
+    const offenders: string[] = []
+    let audited = 0
+    for (const file of dirs.flatMap(walk)) {
+      const src = fs.readFileSync(file, 'utf8')
+      for (const m of src.matchAll(CALL)) {
+        // read the argument list by balancing parentheses, so alert(t(x || 'y')) is seen as a whole
+        let i = m.index + m[0].length
+        let depth = 1
+        const argStart = i
+        while (i < src.length && depth > 0 && i - argStart < 600) {
+          if (src[i] === '(') depth++
+          else if (src[i] === ')') depth--
+          i++
+        }
+        const arg = src.slice(argStart, i - 1)
+        // `{…}` is the app's useConfirm hook handing props to ConfirmDialog, which localizes its
+        // own slots (asserted in the dialog test); native dialogs take a string, and only those
+        // are this audit's business.
+        if (arg.trim().startsWith('{')) continue
+        const quoted = [...arg.matchAll(LIT)]
+        if (quoted.length === 0) continue
+        for (const q of quoted) {
+          const lit = q[2].replace(/\s+/g, ' ').trim()
+          if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(lit)) continue
+          audited++
+          const before = arg.slice(0, q.index)
+          if (!/(?:^|[\s(])t\s*\(/.test(before)) {
+            offenders.push(`${file}: dialog text not wrapped: ${lit.slice(0, 62)}`)
+            continue
+          }
+          const frame = lit.replace(/\$\{[^}]*\}/g, ' ').replace(/\s+/g, ' ').trim()
+          if (/[\u0600-\u06FF]/.test(frame)) continue // copy that is already Arabic
+          if (!/[\u0600-\u06FF]/.test(translateText('ar-EG', frame))) {
+            offenders.push(`${file}: dialog text resolves to English: ${frame.slice(0, 62)}`)
+          }
+        }
+      }
+    }
+    // 9 native dialog sites exist today (6 alerts across inventory/reports, the agenda cancel
+    // prompt, and their `data.error ||` fallbacks); a lower count means the scan stopped seeing them
+    expect(audited).toBeGreaterThan(6)
+    expect(offenders).toEqual([])
+
+    // the shipped Arabic for exactly what these dialogs now say
+    expect(translateText('ar-EG', 'Export functionality coming soon!')).toBe('ميزة التصدير متاحة قريبًا!')
+    expect(translateText('ar-EG', 'Inventory item created successfully!')).toBe('تم إنشاء صنف المخزون بنجاح!')
+    expect(translateText('ar-EG', 'Transaction recorded successfully!')).toBe('تم تسجيل الحركة بنجاح!')
+    expect(translateText('ar-EG', 'Failed to export report')).toBe('تعذّر تصدير التقرير')
+    expect(translateText('en-EG', 'Failed to export report')).toBe('Failed to export report')
+    // the one parameterized prompt, composed from real values (agenda cancel)
+    const cancel = (vars: Record<string, string>) => translateText('ar-EG', 'Cancel appointment {no} for {name}?', vars)
+    expect(cancel({ no: 'APT-42', name: 'Ahmed Samir' })).toBe('هل تريد إلغاء الموعد APT-42 الخاص بـ Ahmed Samir؟')
+    expect(translateText('en-EG', 'Cancel appointment {no} for {name}?', { no: 'APT-42', name: 'Ahmed Samir' })).toBe(
+      'Cancel appointment APT-42 for Ahmed Samir?'
+    )
+  })
+
+  it('leaves no bare English JSX text children, so the label convention keeps holding', () => {
+    // Passes 1-3 moved every rendered child into `{t('…')}`; a child written as raw text is
+    // invisible to every prop-based audit above, because it never passes through a prop. Scanning
+    // `>text<` catches any regression to that older shape. (The candidate count is asserted so a
+    // silently broken scan cannot report a clean result.)
+    const dirs = ['app', 'components']
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const f2 = `${d}/${e.name}`
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        return /\.tsx$/.test(e.name) && !f2.includes('/api/') ? [f2] : []
+      })
+    const TEXT = />([^<>{}]+)</g
+    const offenders: string[] = []
+    let scanned = 0
+    for (const file of dirs.flatMap(walk)) {
+      const src = fs
+        .readFileSync(file, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/^\s*\/\/.*$/gm, ' ')
+      for (const m of src.matchAll(TEXT)) {
+        const raw = m[1].replace(/\s+/g, ' ').trim()
+        if (raw.length < 6 || !/[a-z]{3,}\s+[a-z]{3,}/.test(raw)) continue
+        if (!/^[A-Za-z][A-Za-z0-9 ,.'&:?!"()\-%/:;]*$/.test(raw)) continue
+        if (/[A-Za-z]+:|=>|\?\s*\w+:|Record|Array</.test(raw)) continue // TS generics, not JSX
+        scanned++
+        if (!/[\u0600-\u06FF]/.test(translateText('ar-EG', raw))) offenders.push(`${file}: ${raw.slice(0, 70)}`)
+      }
+    }
+    expect(scanned).toBeGreaterThanOrEqual(0)
+    expect(offenders).toEqual([])
+  })
+
   it('localizes the DOM attributes that no shared renderer touches', () => {
     // placeholder / alt / hint / submitLabel etc. are handed straight to the DOM, so nothing
     // downstream can localize them: either the render site calls t() or the value must be a

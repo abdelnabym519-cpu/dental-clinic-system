@@ -94,14 +94,14 @@ export default function NewInventoryItemPage() {
       const data = await response.json()
 
       if (data.success) {
-        alert('Inventory item created successfully!')
+        alert(t('Inventory item created successfully!'))
         router.push('/inventory')
       } else {
-        alert(data.error || 'Failed to create inventory item')
+        alert(t(data.error || 'Failed to create inventory item'))
       }
     } catch (error) {
       console.error('Error creating inventory item:', error)
-      alert('Failed to create inventory item')
+      alert(t('Failed to create inventory item'))
     } finally {
       setLoading(false)
     }
