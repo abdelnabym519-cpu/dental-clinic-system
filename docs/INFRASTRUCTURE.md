@@ -75,6 +75,20 @@ A `docker-compose.dev.yml` brings up MySQL, Redis, MinIO and Mailpit, each with 
 
 **The app itself stays on the host**, run with `npm run dev`. Only the backing services are containerised. Bind-mounting `node_modules` into a container is slow enough on Windows and macOS to ruin the edit-reload loop, and native hot reload is significantly better. A fully-containerised `app` service can be added behind a Compose profile later for anyone who wants one.
 
+**Safe startup and persistence.** `npm run dev:start` brings the stack up the
+safe way: `docker compose -f docker-compose.dev.yml up -d` (idempotent), then
+a poll until MySQL accepts a _real_ connection through the app's own Prisma
+client — no fixed sleeps, no trust in "the container is running" — then
+`prisma migrate deploy` (applies pending migrations, no-op when in sync),
+then a seed that runs **only** against a database that has never been
+initialised (detected via the presence of the seeded admin user), and finally
+`npm run dev`. It never runs `prisma migrate reset --force`: the named volume
+`dental-erp-dev_mysql-data` keeps existing records across container and
+laptop restarts, so a restart needs nothing more than re-running the same
+command. The seed is upsert-based and the startup skips it on an initialised
+database, so it cannot duplicate rows or overwrite changed accounts. See the
+"Restarting and data persistence" section of the README.
+
 The manual MySQL setup path stays documented as an alternative. Docker will not become a requirement for contributing.
 
 ---

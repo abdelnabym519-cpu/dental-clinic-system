@@ -62,17 +62,36 @@ git clone https://github.com/abinauv/dental-erp.git
 cd dental-erp
 npm install
 cp .env.example .env
-
-# Start MySQL, Redis, MinIO and Mailpit
-docker compose -f docker-compose.dev.yml up -d
-
-# Set DATABASE_URL in .env to match the container:
+# Fill in NEXTAUTH_SECRET, ENCRYPTION_KEY and CRON_SECRET (each has a
+# generator command beside it in .env.example), and set:
 #   DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"
 
-npx prisma migrate deploy   # create the schema
-npx prisma db seed          # sample data (optional)
-npm run dev
+npm run dev:start
 ```
+
+`npm run dev:start` is the **normal development startup**. It:
+
+1. starts MySQL, Redis, MinIO and Mailpit via `docker compose -f docker-compose.dev.yml up -d` (idempotent — running containers are reused),
+2. waits until MySQL **actually** accepts connections — a live query through the Prisma client, polled until it succeeds or a 3-minute timeout fails loudly,
+3. applies pending migrations with `npx prisma migrate deploy` (a no-op when the database is already in sync),
+4. seeds the database **only if it has never been initialized** — an existing database is never re-seeded and never touched,
+5. starts the Next.js dev server.
+
+It never resets or deletes anything, so it is also what you run after a
+laptop or Docker restart — see [Restarting and data persistence](#restarting-and-data-persistence).
+Use `npm run dev:start -- --db-only` to do steps 1–4 without starting the app.
+
+<details>
+<summary>Manual equivalent, step by step</summary>
+
+```bash
+docker compose -f docker-compose.dev.yml up -d   # wait until the MySQL container is healthy
+npx prisma migrate deploy                        # create/refresh the schema
+npx prisma db seed                               # sample data — only for a fresh, empty database
+npm run dev                                      # raw Next.js dev server
+```
+
+</details>
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -167,6 +186,44 @@ npx prisma migrate deploy
 
 </details>
 
+### Restarting and data persistence
+
+Your development data lives in the Docker **named volume**
+`dental-erp-dev_mysql-data`. It survives container restarts, Docker Desktop
+restarts and laptop reboots — nothing is ever re-created from scratch when
+you turn the machine back on.
+
+To bring the development environment up after any kind of restart, run:
+
+```bash
+npm run dev:start
+```
+
+For a database that already contains data this:
+
+- starts (or reuses) the MySQL, Redis, MinIO and Mailpit containers,
+- waits for MySQL to accept a real connection before doing anything else,
+- runs `prisma migrate deploy`, which applies **pending** migrations and does
+  nothing when the schema is already in sync,
+- detects that the database was already seeded and **skips the seed entirely**
+  — no record is written, changed or re-created,
+- starts the app with the same accounts as before
+  (e.g. `admin@dentora-dental.com`).
+
+The seed runs only against a database that has never been initialized — a
+fresh volume on a fresh machine. It is not re-run on subsequent startups, so
+it can never duplicate sample rows or overwrite accounts you changed.
+
+> **`npx prisma migrate reset --force` is a destructive operation and is NOT
+> part of the normal startup.** It drops and recreates the database, deleting
+> every patient, appointment, invoice and other record in
+> `dental-erp-dev_mysql-data`. (The "stop and wipe the data" command above,
+> `docker compose -f docker-compose.dev.yml down -v`, does the same.) Use it
+> only when you deliberately want a clean-slate development database — never
+> to fix a failed login or a "database looks stale" feeling after a restart.
+> If a startup fails, fix the reported step and re-run `npm run dev:start`;
+> it is safe to re-run at any time.
+
 ### Default Credentials (after seeding)
 
 | Role        | Email                   | Password    |
@@ -193,7 +250,8 @@ See [`.env.example`](.env.example) for all available variables. Key ones:
 ## Available Scripts
 
 ```bash
-npm run dev          # Start development server
+npm run dev          # Start development server (raw Next.js; assumes the database is ready)
+npm run dev:start    # Safe development startup: services -> readiness -> migrations -> seed only if empty -> dev
 npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint

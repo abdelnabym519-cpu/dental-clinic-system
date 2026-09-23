@@ -34,6 +34,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:start": "npx tsx scripts/dev-start.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -44,6 +45,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "npx tsx prisma/seed.ts",
+    "verify:persistence": "npx tsx scripts/verify-persistence.ts",
     "storage:migrate": "npx tsx scripts/migrate-storage.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
