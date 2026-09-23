@@ -372,10 +372,14 @@ async function main(): Promise<void> {
   try {
     // ── Step 4: check A — super-admin login -> /super-admin ──
     log('── Step 4/6: checks ──')
+    // next-auth (v5) returns ABSOLUTE Location URLs (http://localhost:3000/...),
+    // while app-level Next redirects are relative. Normalize to pathname before
+    // comparing — verified live against a running dev server.
+    const pathOf = (loc: string | null) => (loc ? new URL(loc, BASE).pathname : null)
     const superAdmin = new Client()
     const a = await login(superAdmin, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD, '/super-admin')
     const aPage =
-      a.status >= 300 && a.status < 400 && a.location === '/super-admin'
+      a.status >= 300 && a.status < 400 && pathOf(a.location) === '/super-admin'
         ? await superAdmin.get(`${BASE}/super-admin`)
         : { status: 0, body: `login redirected to ${a.location} (expected /super-admin)` }
     record(
@@ -448,7 +452,7 @@ async function main(): Promise<void> {
       const cPage =
         cBlocked.status >= 300 &&
         cBlocked.status < 400 &&
-        cBlocked.location === '/subscription-expired'
+        pathOf(cBlocked.location) === '/subscription-expired'
           ? await admin.get(`${BASE}/subscription-expired`)
           : {
               status: 0,
@@ -457,11 +461,11 @@ async function main(): Promise<void> {
       record(
         'C: SUSPEND redirects clinic admin to /subscription-expired',
         suspendedOk &&
-          cBlocked.location === '/subscription-expired' &&
+          pathOf(cBlocked.location) === '/subscription-expired' &&
           cPage.status === 200 &&
           cPage.body.includes('Subscription expired'),
         suspendedOk
-          ? cBlocked.location === '/subscription-expired' && cPage.status === 200
+          ? pathOf(cBlocked.location) === '/subscription-expired' && cPage.status === 200
             ? 'redirected, expired page rendered'
             : `redirect=${cBlocked.location}, pageStatus=${cPage.status}`
           : `PATCH status=${suspend.status}`
@@ -482,11 +486,15 @@ async function main(): Promise<void> {
       )
     }
 
-    // ── check D — cron endpoint auth ──
+    // ── check D — cron endpoint auth (POST, per the route's JSDoc) ──
     const cronClient = new Client()
-    const anonCron = await cronClient.get(`${BASE}/api/cron/subscription-check`)
-    const authedCron = await cronClient.request('GET', `${BASE}/api/cron/subscription-check`, {
-      headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
+    const anonCron = await cronClient.postJson(`${BASE}/api/cron/subscription-check`, {})
+    const authedCron = await cronClient.request('POST', `${BASE}/api/cron/subscription-check`, {
+      body: '{}',
+      headers: {
+        authorization: `Bearer ${process.env.CRON_SECRET}`,
+        'content-type': 'application/json',
+      },
     })
     let dBody = { success: false }
     if (authedCron.status === 200) {

@@ -120,11 +120,16 @@ beforeAll(async () => {
         (form.get('email') === SUPERADMIN_EMAIL && form.get('password') === SUPERADMIN_PASSWORD) ||
         (form.get('email') === ADMIN_EMAIL && form.get('password') === ADMIN_PASSWORD)
       if (!okCsrf || !cred) {
-        redirect(`${form.get('callbackUrl') ?? '/'}?error=CredentialsSignin`)
+        // Real next-auth v5: absolute URL + error query
+        redirect(`${base}/login?error=CredentialsSignin&code=credentials`)
         return
       }
       const who = form.get('email') === SUPERADMIN_EMAIL ? 'super' : 'admin'
-      redirect(form.get('callbackUrl') ?? '/', `session-token=sess-${who}; Path=/; HttpOnly`)
+      // Real next-auth v5: absolute Location (NEXTAUTH_URL + callbackUrl)
+      redirect(
+        `${base}${form.get('callbackUrl') ?? '/'}`,
+        `session-token=sess-${who}; Path=/; HttpOnly`
+      )
       return
     }
 
@@ -180,7 +185,12 @@ beforeAll(async () => {
       return json({ id: 's1', status: body.status })
     }
 
-    if (p === '/api/cron/subscription-check' && req.method === 'GET') {
+    if (p === '/api/cron/subscription-check') {
+      // Mirrors the real route: POST only (its JSDoc documents -X POST)
+      if (req.method !== 'POST') {
+        res.writeHead(405, { allow: 'POST' })
+        return res.end()
+      }
       const auth = req.headers.authorization ?? ''
       if (auth !== `Bearer ${CRON_SECRET}`) return json({ error: 'Unauthorized' }, 401)
       return json({ success: true, timestamp: new Date().toISOString(), results: [] })
@@ -200,19 +210,19 @@ afterAll(async () => {
 })
 
 describe('verify-phase9.ts network layer', () => {
-  it('login: correct credentials land on the callback URL with a working session', async () => {
+  it('login: correct credentials land on the callback URL (absolute) with a working session', async () => {
     const client = new Client(httpFetch)
     const res = await login(client, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD, '/super-admin', base)
-    expect(res.location).toBe('/super-admin')
+    expect(res.location).toBe(`${base}/super-admin`)
     const page = await client.get(`${base}/super-admin`)
     expect(page.status).toBe(200)
     expect(page.body).toContain('Subscription overview')
   })
 
-  it('login: wrong password is redirected to the callback URL with ?error=CredentialsSignin', async () => {
+  it('login: wrong password is redirected to /login with error=CredentialsSignin', async () => {
     const client = new Client(httpFetch)
     const res = await login(client, ADMIN_EMAIL, 'wrong-password', '/dashboard', base)
-    expect(res.location).toBe('/dashboard?error=CredentialsSignin')
+    expect(res.location).toBe(`${base}/login?error=CredentialsSignin&code=credentials`)
     const page = await client.get(`${base}/dashboard`)
     expect(page.location).toBe('/login') // session was never established
   })
@@ -223,9 +233,9 @@ describe('verify-phase9.ts network layer', () => {
     expect(
       (await login(superAdmin, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD, '/super-admin', base))
         .location
-    ).toBe('/super-admin')
+    ).toBe(`${base}/super-admin`)
     expect((await login(admin, ADMIN_EMAIL, ADMIN_PASSWORD, '/dashboard', base)).location).toBe(
-      '/dashboard'
+      `${base}/dashboard`
     )
 
     const normal = await admin.get(`${base}/dashboard`)
@@ -269,12 +279,15 @@ describe('verify-phase9.ts network layer', () => {
     expect(back.status).toBe(200)
   })
 
-  it('check D: cron endpoint is 401 without Bearer and 200 {success:true} with it', async () => {
+  it('check D: cron endpoint is POST-only, 401 without Bearer, 200 {success:true} with it', async () => {
     const client = new Client(httpFetch)
-    const anon = await client.get(`${base}/api/cron/subscription-check`)
+    const wrongMethod = await client.get(`${base}/api/cron/subscription-check`)
+    expect(wrongMethod.status).toBe(405)
+    const anon = await client.postJson(`${base}/api/cron/subscription-check`, {})
     expect(anon.status).toBe(401)
-    const authed = await client.request('GET', `${base}/api/cron/subscription-check`, {
-      headers: { authorization: `Bearer ${CRON_SECRET}` },
+    const authed = await client.request('POST', `${base}/api/cron/subscription-check`, {
+      body: '{}',
+      headers: { authorization: `Bearer ${CRON_SECRET}`, 'content-type': 'application/json' },
     })
     expect(authed.status).toBe(200)
     expect(JSON.parse(authed.body) as { success: boolean }).toEqual(
