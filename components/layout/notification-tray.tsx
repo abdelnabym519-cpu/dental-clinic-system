@@ -180,14 +180,14 @@ export function NotificationTray() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className={cn('text-sm leading-tight', !n.isRead && 'font-medium')}>
-                          {n.title}
+                          {t(n.title)}
                         </p>
                         {!n.isRead && (
                           <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                         )}
                       </div>
                       <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                        {n.message}
+                        {t(n.message)}
                       </p>
                       <p className="mt-1 text-[11px] text-muted-foreground/70">
                         {formatRelativeTime(n.createdAt, { locale })}

@@ -56,6 +56,72 @@ describe('API error messages are Arabic-resolvable', () => {
     expect(offenders).toEqual([])
   })
 
+  it('recovers Arabic for messages that arrive already interpolated', () => {
+    // A route returns `Room is already booked by appointment ${no} at ${time}`. By the time the
+    // client renders data.error, the values are baked in, so the string can never equal a key.
+    // translateText's third step matches the sentence back onto the key's literal frame and
+    // re-renders the locale template with the captured values.
+    const cases: Array<[string, string]> = [
+      ['Room is already booked by appointment INV-7 at 2026-01-05T09:30:00.000Z', 'الغرفة محجوزة بالفعل'],
+      ['Doctor already has appointment A-12 from 09:00 (30 min) overlapping this time', 'للطبيب موعد بالفعل'],
+      ['Cannot check in appointment with status: CANCELLED', 'لا يمكن تسجيل حضور موعد حالته'],
+      ['Your plan allows up to 500 patients. Please upgrade to add more.', 'خطتك تسمح بحتى 500 مريضًا'],
+      ['Staff limit reached. Your plan allows 20 staff members. Current: 20.', 'تم بلوغ حد الموظفين'],
+      ['Patient "P-0042" not found', 'لم يتم العثور على المريض'],
+      ['Payment amount (900) exceeds balance (500)', 'مبلغ الدفع (900) يتجاوز المتبقي'],
+      ['Unsupported file type ".txt". Accepted: .csv, .xlsx, .xls, .pdf', 'نوع الملف غير مدعوم'],
+      ['Failed to fetch patient (503)', 'تعذّر جلب بيانات المريض'],
+    ]
+    for (const [sentence, expectArabic] of cases) {
+      const ar = translateText('ar-EG', sentence)
+      expect(ar).toMatch(/[\u0600-\u06FF]/)
+      expect(ar).toContain(expectArabic)
+      // English must come back byte-identical: the pattern pass re-renders the en template,
+      // whose value equals the key, with the same captured values.
+      expect(translateText('en-EG', sentence)).toBe(sentence)
+    }
+    // the interpolation itself has to survive the round trip, not just the sentence
+    expect(translateText('ar-EG', 'Insufficient points. Balance: 12')).toContain('12')
+  })
+
+  it('never guesses free text into a label-shaped key', () => {
+    // The index only accepts frames whose literal skeleton has >=2 words and >=14 chars, which
+    // is what keeps `Patient: {v1}` / `Total: {v1}` / `Notes: {v1}` from swallowing arbitrary
+    // copy that happens to start with the same prefix.
+    for (const text of [
+      'Patient: not found in the database',
+      'Total: 1,000 EGP for the whole quarter',
+      'Notes: bring the file tomorrow morning',
+      'Invoice pending approval by the manager today',
+      'Plain unknown text here that matches nothing',
+    ]) {
+      expect(translateText('ar-EG', text)).toBe(text)
+    }
+  })
+
+  it('every sampled route template resolves, not just the ones listed above', () => {
+    // Self-maintaining: each `error: \`...\`` template in app/api is sampled with a stand-in
+    // value and must resolve to Arabic. Conditional fragments cannot be sampled and are skipped.
+    const SAMPLE = 'ZZ-42'
+    let sampled = 0
+    const unresolved: string[] = []
+    for (const file of walk('app/api')) {
+      const src = fs.readFileSync(file, 'utf8')
+      for (const m of src.matchAll(/(?:error|message)\s*:\s*`([^`]{6,220})`/g)) {
+        const tmpl = m[1]
+        if (/[?{][^}]*}/.test(tmpl.replace(/\$\{[^}]*\}/g, ''))) continue // conditional/odd shape
+        if (!/\$\{/.test(tmpl)) continue
+        const sentence = tmpl.replace(/\$\{[^}]*\}/g, SAMPLE)
+        if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(sentence)) continue
+        sampled++
+        const ar = translateText('ar-EG', sentence)
+        if (!/[\u0600-\u06FF]/.test(ar)) unresolved.push(`${file}: ${sentence.slice(0, 74)}`)
+      }
+    }
+    expect(sampled).toBeGreaterThan(25)
+    expect(unresolved).toEqual([])
+  })
+
   it('leaves only data-interpolated messages untranslated, and never more than today', () => {
     // A message like `Room is already booked by appointment ${no} at ${time}` embeds live
     // values, so no dictionary key can match it. Fixing that class needs an API contract
@@ -80,6 +146,37 @@ describe('API error messages are Arabic-resolvable', () => {
     }
     expect(templates).toBeLessThanOrEqual(48)
     expect(samples.length).toBeGreaterThan(0)
+  })
+
+  it('covers the notification copy that is stored, then rendered later', () => {
+    // A cron job writes `title`/`message` into the database and the tray renders them whenever
+    // the user opens it, so the sentence is baked with values long before it reaches t(). Same
+    // rule as the API responses: every stored frame must resolve. (The tray now calls t() on
+    // both slots, which is what makes this worth auditing at all.)
+    const tray = fs.readFileSync('components/layout/notification-tray.tsx', 'utf8')
+    expect(tray).toContain('{t(n.title)}')
+    expect(tray).toContain('{t(n.message)}')
+
+    const files = walk('app/api').filter((f2) => {
+      const src = fs.readFileSync(f2, 'utf8')
+      return src.includes('notification.create') || f2.includes('/cron/')
+    })
+    expect(files.length).toBeGreaterThan(3)
+    const RX = /(?:title|message|body)\s*:\s*(?:'([^'\n]{4,140})'|`([^`\n]{4,240})`)/g
+    const unresolved: string[] = []
+    let audited = 0
+    for (const file of files) {
+      for (const m of fs.readFileSync(file, 'utf8').matchAll(RX)) {
+        const raw = (m[1] ?? m[2]).trim()
+        if (!/[A-Za-z]{4,}\s+[A-Za-z]{4,}/.test(raw)) continue
+        // sample the interpolation so the frame can be matched the way the runtime will
+        const sentence = raw.replace(/\$\{[^}]*\}/g, 'ZZ-42')
+        audited++
+        if (!/[\u0600-\u06FF]/.test(translateText('ar-EG', sentence))) unresolved.push(`${file}: ${sentence.slice(0, 70)}`)
+      }
+    }
+    expect(audited).toBeGreaterThan(10)
+    expect(unresolved).toEqual([])
   })
 
   it('paints the shipped Arabic wording for the messages users actually hit', () => {
