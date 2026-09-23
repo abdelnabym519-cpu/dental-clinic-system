@@ -568,3 +568,42 @@ describe('production build carries the embedded PDF font', () => {
     expect(source).toContain('assets/fonts')
   })
 })
+
+describe('numeric and placeholder fidelity of Arabic values', () => {
+  const ARABIC_DIGITS = { '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9' }
+  const toLatin = (v) => v.replace(/[٠-٩]/g, (c) => ARABIC_DIGITS[c])
+
+  it('states the same limits in Arabic as the English message carries', () => {
+    // An Arabic validation message that quotes the wrong bound is worse than no translation:
+    // the server rejects > 480 while the UI promises 480 and the copy said 48. Only numeric
+    // *limit* sentences are checked, deliberately, so prose that spells a number as a word
+    // ("بعد ساعتين") or adds context is not forced into digit-for-digit agreement.
+    const LIMITS = /\b(between|at least|at most|maximum|minimum|up to|within|no more than|less than|more than|at most)\s+(\d+)(?:\s+and\s+(\d+))?/gi
+    let checked = 0
+    const wrong = []
+    for (const [key, value] of Object.entries(en)) {
+      if (typeof value !== 'string') continue
+      const enNums = [...value.matchAll(LIMITS)].flatMap((m) => [m[2], m[3]].filter(Boolean))
+      if (enNums.length === 0) continue
+      checked++
+      const arValue = ar[key]
+      if (typeof arValue !== 'string' || !/[٠-٩0-9]/.test(arValue)) continue
+      const arNums = toLatin(arValue).match(/\d+/g) ?? []
+      for (const n of enNums) if (!arNums.includes(n)) wrong.push(`${key}: en says ${n}, ar says [${arNums}]`)
+    }
+    expect(checked).toBeGreaterThan(10)
+    expect(wrong).toEqual([])
+  })
+
+  it('never loses or invents an interpolation placeholder in translation', () => {
+    const ph = /\{(\w+)\}/g
+    const drift = []
+    for (const [key, value] of Object.entries(en)) {
+      const want = [...key.matchAll(ph)].map((m) => m[1]).sort().join(',')
+      if (!want) continue
+      const got = [...String(ar[key]).matchAll(ph)].map((m) => m[1]).sort().join(',')
+      if (got !== want) drift.push(`${key} -> want [${want}] got [${got}]`)
+    }
+    expect(drift).toEqual([])
+  })
+})

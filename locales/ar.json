@@ -4840,7 +4840,7 @@
   "Default templates already exist": "القوالب الافتراضية موجودة مسبقًا",
   "Doctors can only block their own time": "يمكن للأطباء حجز أوقاتهم هم فقط",
   "Doctors can only remove their own blocked slots": "يمكن للأطباء حذف الفراغات المحجوزة الخاصة بهم فقط",
-  "Duration must be between 5 and 480 minutes": "يجب أن تكون المدة بين ٥ و٤٨ دقيقة",
+  "Duration must be between 5 and 480 minutes": "يجب أن تكون المدة بين ٥ و٤٨٠ دقيقة",
   "Each shift must have startTime and endTime": "يجب أن يحتوي كل وردية على وقت البداية والنهاية",
   "Email address is required for email test": "عنوان البريد الإلكتروني مطلوب لاختبار الإرسال",
   "Execution error": "خطأ في التنفيذ",
