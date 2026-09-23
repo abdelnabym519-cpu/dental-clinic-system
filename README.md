@@ -288,11 +288,18 @@ deletes, drops or re-seeds.
 
 ### Default Credentials (after seeding)
 
-| Role        | Email                   | Password    |
-| ----------- | ----------------------- | ----------- |
-| Super Admin | `admin@dentora-dental.com` | `Admin@123` |
+| Role                        | Email                        | Password        |
+| --------------------------- | ---------------------------- | --------------- |
+| Super Admin (platform)      | `superadmin@dentora.com`     | `SuperAdmin@123` |
+| Clinic Admin (ADMIN)        | `admin@dentora-dental.com`   | `Admin@123`     |
+| Doctor (DOCTOR)             | `doctor@dentora-dental.com`  | `Doctor@123`    |
+| Receptionist (RECEPTIONIST) | `reception@dentora-dental.com` | `Reception@123` |
 
-> **Warning**: Change the default password immediately in production.
+The platform Super Admin has no hospital and works from the `/super-admin`
+control panel (subscription management, license audit log). Clinic accounts
+are scoped to the seeded demo hospital.
+
+> **Warning**: Change the default passwords immediately in production.
 
 ## Environment Variables
 
