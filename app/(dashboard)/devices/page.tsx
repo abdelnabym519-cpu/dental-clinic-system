@@ -275,7 +275,7 @@ export default function DevicesPage() {
                   <Input
                     value={formIp}
                     onChange={(e) => setFormIp(e.target.value)}
-                    placeholder="e.g. 192.168.1.100"
+                    placeholder={`${t('e.g.')} 192.168.1.100`}
                   />
                 </div>
                 <Button className="w-full" onClick={handleRegister}>{t('ui.register_device')}</Button>

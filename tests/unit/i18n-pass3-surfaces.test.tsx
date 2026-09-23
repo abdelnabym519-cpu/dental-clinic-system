@@ -531,4 +531,96 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(translateText('ar-EG', label)).toMatch(/[\u0600-\u06FF]/)
     }
   })
+  it('localises the example-prefix placeholders without touching format samples', () => {
+    // "e.g., D3310" is English copy glued to a Latin format sample; the prefix now
+    // comes from the dictionary while the sample itself stays as typed data.
+    expect(translateText('ar-EG', 'e.g.')).toBe('مثال:')
+    expect(translateText('en-EG', 'e.g.')).toBe('e.g.')
+    expect(translateText('ar-EG', 'e.g.,')).toBe('مثال:')
+    expect(translateText('en-EG', 'e.g.,')).toBe('e.g.,')
+    const referrals = readFileSync('app/(dashboard)/crm/referrals/page.tsx', 'utf8')
+    expect(referrals).toContain("placeholder={`${t('e.g.')} 100`}")
+    const preAuth = readFileSync('app/(dashboard)/billing/insurance/pre-auth/new/page.tsx', 'utf8')
+    expect(preAuth).toContain("placeholder={`${t('e.g.,')} D3310`}")
+    // brand / host / id-format samples stay Latin on purpose
+    const medications = readFileSync('app/(dashboard)/medications/page.tsx', 'utf8')
+    expect(medications).toContain('placeholder="Cipla"')
+    const staffNew = readFileSync('app/(dashboard)/staff/new/page.tsx', 'utf8')
+    expect(staffNew).toContain('placeholder="TN/12345"')
+  })
+  it('translates every setup-guide step and tip line, and keeps it that way', () => {
+    // The guide stores its instructions as plain string arrays, which is why 263
+    // lines used to render English in Arabic mode. Rather than pinning a sample,
+    // re-extract the arrays from the source with the same rules the runtime uses
+    // (leading whitespace stripped for steps only) and require Arabic for each.
+    const src = readFileSync('app/(dashboard)/settings/setup-guide/page.tsx', 'utf8')
+    const decode = (raw: string) =>
+      raw
+        .replace(/\\u([0-9a-f]{4})/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\'/g, "'")
+        .replace(/\\"/g, '"')
+        .replace(/\\`/g, '`')
+    const literalsOf = (body: string) => {
+      const out: string[] = []
+      for (let i = 0; i < body.length; i++) {
+        const q = body[i]
+        if (q !== "'" && q !== '"' && q !== '`') continue
+        let j = i + 1
+        let buf = ''
+        while (j < body.length) {
+          if (body[j] === '\\') { buf += body[j] + body[j + 1]; j += 2; continue }
+          if (body[j] === q) break
+          buf += body[j++]
+        }
+        if (j < body.length) { out.push(decode(buf)); i = j }
+      }
+      return out
+    }
+    const blocksOf = (prop: string) => {
+      const blocks: string[] = []
+      const re = new RegExp(`\\b${prop}\\s*:\\s*\\[`, 'g')
+      let m: RegExpExecArray | null
+      while ((m = re.exec(src))) {
+        const start = src.indexOf('[', m.index + m[0].length - 1)
+        let depth = 0
+        for (let j = start; j < src.length; j++) {
+          const c = src[j]
+          if ('[{('.includes(c)) depth++
+          else if (']})'.includes(c)) { depth--; if (depth === 0) { blocks.push(src.slice(start + 1, j)); break } }
+        }
+      }
+      return blocks
+    }
+    const steps = blocksOf('steps').flatMap(literalsOf).map((s) => s.replace(/^\s+/, ''))
+    const tips = blocksOf('tips').flatMap(literalsOf)
+    const lines = [...steps, ...tips]
+    expect(lines.length).toBeGreaterThan(250)
+
+    const untranslated = lines.filter((line) => {
+      const v = translateText('ar-EG', line)
+      return line.length > 3 && !/[\u0600-\u06FF]/.test(v)
+    })
+    expect(untranslated).toEqual([])
+    // the render sites must go through t(), otherwise the keys above are dead weight
+    expect(src).toContain("{t(step.replace(/^\\s+/, ''))}")
+    expect(src).toContain('<span>{t(tip)}</span>')
+    // the same must hold for every other guide field: titles, descriptions, labels
+    for (const prop of ['title', 'description', 'label', 'estimatedTime']) {
+      const re = new RegExp(`\\b${prop}\\s*:\\s*\\n?\\s*(['"])((?:\\\\.|((?!\\1)[^\\s])){4,400})\\1`, 'g')
+      const fieldRe = new RegExp(`\\b${prop}\\s*:\\s*\\n?\\s*(["'])([\\s\\S]{4,400}?)\\1`, 'g')
+      let mm
+      const unresolved: string[] = []
+      while ((mm = fieldRe.exec(src))) {
+        const raw = mm[2]
+        if (raw.includes('\n')) continue
+        const val = raw.replace(/\\'/g, "'").replace(/\\"/g, '"')
+        if (/[A-Za-z]{3}/.test(val) && !/[\u0600-\u06FF]/.test(translateText('ar-EG', val))) unresolved.push(val)
+      }
+      expect(unresolved).toEqual([])
+    }
+    // English mode still shows the English instruction, not a missing-key artefact
+    expect(translateText('en-EG', steps[0])).toBe(steps[0])
+  })
 })

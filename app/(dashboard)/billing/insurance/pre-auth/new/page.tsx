@@ -313,7 +313,7 @@ export default function NewPreAuthPage() {
                   <div className="col-span-3">
                     {i === 0 && <Label className="text-xs">{t('ui.code')}</Label>}
                     <Input
-                      placeholder="e.g., D3310"
+                      placeholder={`${t('e.g.,')} D3310`}
                       value={proc.code}
                       onChange={(e) => updateProcedure(i, 'code', e.target.value)}
                     />

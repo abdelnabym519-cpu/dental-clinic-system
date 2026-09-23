@@ -841,7 +841,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
                       {step.startsWith('  ') ? '' : `${i + 1}.`}
                     </span>
                     <span className={step.startsWith('  ') ? 'ml-5' : ''}>
-                      {step.replace(/^\s+/, '')}
+                      {t(step.replace(/^\s+/, ''))}
                     </span>
                   </li>
                 ))}
@@ -858,7 +858,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
                   {guide.tips.map((tip, i) => (
                     <li key={i} className="text-xs text-amber-700 dark:text-amber-500 flex gap-1.5">
                       <span className="shrink-0">•</span>
-                      <span>{tip}</span>
+                      <span>{t(tip)}</span>
                     </li>
                   ))}
                 </ul>

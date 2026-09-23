@@ -299,7 +299,7 @@ export function GatewaySettings() {
                   id="paymob-integration"
                   value={paymobIntegrationId}
                   onChange={(e) => setPaymobIntegrationId(e.target.value)}
-                  placeholder="e.g. 123456"
+                  placeholder={`${t('e.g.')} 123456`}
                 />
               </div>
               <div>
@@ -308,7 +308,7 @@ export function GatewaySettings() {
                   id="paymob-iframe"
                   value={paymobIframeId}
                   onChange={(e) => setPaymobIframeId(e.target.value)}
-                  placeholder="e.g. 789012"
+                  placeholder={`${t('e.g.')} 789012`}
                 />
               </div>
             </div>

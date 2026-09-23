@@ -721,7 +721,7 @@ export default function MembershipPlansPage() {
                   step="0.01"
                   value={planForm.price}
                   onChange={(e) => setPlanForm({ ...planForm, price: e.target.value })}
-                  placeholder="e.g., 5000"
+                  placeholder={`${t('e.g.,')} 5000`}
                 />
               </div>
               <div>
@@ -731,7 +731,7 @@ export default function MembershipPlansPage() {
                   min="1"
                   value={planForm.durationMonths}
                   onChange={(e) => setPlanForm({ ...planForm, durationMonths: e.target.value })}
-                  placeholder="e.g., 12"
+                  placeholder={`${t('e.g.,')} 12`}
                 />
               </div>
             </div>

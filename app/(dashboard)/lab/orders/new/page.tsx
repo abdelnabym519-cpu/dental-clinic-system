@@ -340,7 +340,7 @@ export default function NewLabOrderPage() {
                 <Input
                   value={form.toothNumbers}
                   onChange={(e) => setForm((prev) => ({ ...prev, toothNumbers: e.target.value }))}
-                  placeholder="e.g. 11, 21, 36"
+                  placeholder={`${t('e.g.')} 11, 21, 36`}
                 />
               </div>
 
@@ -349,7 +349,7 @@ export default function NewLabOrderPage() {
                 <Input
                   value={form.shadeGuide}
                   onChange={(e) => setForm((prev) => ({ ...prev, shadeGuide: e.target.value }))}
-                  placeholder="e.g. A2, B1"
+                  placeholder={`${t('e.g.')} A2, B1`}
                 />
               </div>
             </div>

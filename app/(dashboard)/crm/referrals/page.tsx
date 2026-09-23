@@ -687,7 +687,7 @@ export default function ReferralsPage() {
                 id="rewardValue"
                 type="number"
                 min="1"
-                placeholder="e.g. 100"
+                placeholder={`${t('e.g.')} 100`}
                 value={rewardValue}
                 onChange={(e) => setRewardValue(e.target.value)}
               />
