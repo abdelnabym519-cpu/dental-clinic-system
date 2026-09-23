@@ -4043,8 +4043,8 @@
   "Payment transactions": "Payment transactions",
   "Stock items & levels": "Stock items & levels",
   "No results found for {q}": "No results found for “{q}”",
-  "Critical (stockout ≤7d)": "Critical (stockout ≤7d)",
   "WhatsApp contact number override": "WhatsApp contact number override",
   "No invite token provided.": "No invite token provided.",
-  "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.": "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit."
+  "Invalid invite link.": "Invalid invite link.",
+  "An error occurred. Please try again.": "An error occurred. Please try again."
 }

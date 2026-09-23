@@ -2688,7 +2688,7 @@
   "Create Request": "إنشاء طلب",
   "Create Staff Member": "إضافة موظف",
   "Created on": "أُنشئ في",
-  "Critical (stockout ≤7d)": "حرِج (نفاد المخزون خلال 7 أيام أو أقل)",
+  "Critical (stockout ≤7d)": "حرج (نفاد المخزون خلال ≤7 أيام)",
   "Current Medications:": "الأدوية الحالية:",
   "Cycle #": "رقم الدورة",
   "Default Slot Duration (minutes)": "المدة الافتراضية للفترة (بالدقائق)",
@@ -3854,7 +3854,7 @@
   "Create a lab order for": "أنشئ طلب معمل لـ",
   "Show all staff members": "اعرض جميع الموظفين",
   "Create Payment Plan": "إنشاء خطة سداد",
-  "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.": "1. يستحق السداد وفقًا لشروط السداد المحددة.\n2. يرجى إحضار هذه الفاتورة للرجوع إليها في زيارتك القادمة.",
+  "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.": "1. يستحق السداد خلال شروط الدفع المحددة.\n2. يرجى إحضار هذه الفاتورة للرجوع إليها عند زيارتك القادمة.",
   "Crown": "تاج",
   "Bridge": "جسر",
   "Implant": "زرعة",
@@ -4043,8 +4043,8 @@
   "Payment transactions": "عمليات الدفع",
   "Stock items & levels": "أصناف المخزون ومستوياته",
   "No results found for {q}": "لا توجد نتائج لـ “{q}”",
-  "Critical (stockout ≤7d)": "حرج (نفاد المخزون خلال ≤7 أيام)",
   "WhatsApp contact number override": "تجاوز رقم تواصل واتساب",
   "No invite token provided.": "لم يتم توفير رمز دعوة.",
-  "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.": "1. يستحق السداد خلال شروط الدفع المحددة.\n2. يرجى إحضار هذه الفاتورة للرجوع إليها عند زيارتك القادمة."
+  "Invalid invite link.": "رابط الدعوة غير صالح.",
+  "An error occurred. Please try again.": "حدث خطأ ما. حاول مرة أخرى."
 }

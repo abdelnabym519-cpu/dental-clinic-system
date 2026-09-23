@@ -191,7 +191,7 @@ export default function FinancialReportsPage() {
             <SelectContent>
               {dateRangePresets.map((preset) => (
                 <SelectItem key={preset.value} value={preset.value}>
-                  {preset.label}
+                  {t(preset.label)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -603,7 +603,7 @@ export default function MembershipPlansPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <Crown className="h-5 w-5 text-amber-500" />
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                    <CardTitle className="text-lg">{t(plan.name)}</CardTitle>
                   </div>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <Badge variant={plan.isActive ? 'default' : 'secondary'}>

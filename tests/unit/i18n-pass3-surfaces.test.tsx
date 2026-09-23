@@ -504,10 +504,31 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(en[termsKey as keyof typeof en]).toBe(termsKey)
 
     const invite = readFileSync('app/(auth)/invite/accept/page.tsx', 'utf8')
-    expect(invite).toContain("setErrorMessage(t('No invite token provided.'))")
+    // the invite page stores the message and translates it at render, because the
+    // provider's t() is English until its mount effect applies the locale cookie
+    expect(invite).toContain("setErrorMessage('No invite token provided.')")
+    expect(invite).toContain('<CardDescription>{t(errorMessage)}</CardDescription>')
+    expect(invite).not.toContain('setErrorMessage(t(')
+    expect(ar['Invalid invite link.']).toBe('رابط الدعوة غير صالح.')
+    expect(translateText('ar-EG', 'Invalid invite link.')).toBe('رابط الدعوة غير صالح.')
+    expect(translateText('ar-EG', 'An error occurred. Please try again.')).toBe('حدث خطأ ما. حاول مرة أخرى.')
     expect(invite).not.toMatch(/title: 'Account created!'/)
     expect(readFileSync('components/layout/global-search.tsx', 'utf8')).toContain(
       "t('No results found for {q}', { q: query })"
     )
+  })
+  it('wraps labels that come from a config array declared in another module', () => {
+    // dateRangePresets lives in reports/page.tsx but is rendered by
+    // billing/reports/page.tsx, so a per-file scan misses it; both of these
+    // resolved through the reverse index and needed no new keys.
+    const billingReports = readFileSync('app/(dashboard)/billing/reports/page.tsx', 'utf8')
+    expect(billingReports).toContain('{t(preset.label)}')
+    expect(billingReports).not.toMatch(/>\s*\{preset\.label\}\s*</)
+    const memberships = readFileSync('app/(dashboard)/crm/memberships/page.tsx', 'utf8')
+    expect(memberships).toContain('{t(plan.name)}')
+    expect(memberships).not.toMatch(/>\s*\{plan\.name\}\s*</)
+    for (const label of ['Today', 'This Month', 'Last Quarter', 'Custom Range']) {
+      expect(translateText('ar-EG', label)).toMatch(/[\u0600-\u06FF]/)
+    }
   })
 })

@@ -61,7 +61,7 @@ function AcceptInviteContent() {
       validateToken(token)
     } else {
       setStatus('invalid')
-      setErrorMessage(t('No invite token provided.'))
+      setErrorMessage('No invite token provided.')
     }
   }, [token])
 
@@ -155,7 +155,7 @@ function AcceptInviteContent() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">{t('Invalid Invite')}</CardTitle>
-          <CardDescription>{errorMessage}</CardDescription>
+          <CardDescription>{t(errorMessage)}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline" className="w-full">
