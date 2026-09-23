@@ -48,8 +48,8 @@ function VerifyEmailContent() {
         setStatus('success')
         setMessage(t('Your email has been verified successfully!'))
         toast({
-          title: 'Email verified!',
-          description: 'You can now log in to your account.',
+          title: t('Email verified!'),
+          description: t('You can now log in to your account.'),
         })
       } else {
         setStatus('error')
@@ -65,8 +65,8 @@ function VerifyEmailContent() {
     if (!email) return
 
     toast({
-      title: 'Verification email sent',
-      description: 'Please check your inbox for the verification link.',
+      title: t('Verification email sent'),
+      description: t('Please check your inbox for the verification link.'),
     })
   }
 

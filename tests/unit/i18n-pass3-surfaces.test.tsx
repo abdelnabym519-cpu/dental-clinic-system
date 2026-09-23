@@ -431,5 +431,12 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     // no user-visible message may be assigned as a raw literal any more
     expect(page).not.toMatch(/setMessage\(\s*['"`][^'"`]*['"`]\s*\)/)
     expect(page.match(/setMessage\(\s*t\(/g)?.length ?? 0).toBeGreaterThanOrEqual(4)
+    // the success/resend toasts render through t() too (their wording already
+    // exists as dictionary values, e.g. "Email verified!" -> تم تأكيد البريد)
+    expect(page).not.toMatch(/title:\s*['"`]/)
+    expect(page).not.toMatch(/description:\s*['"`]/)
+    for (const label of ['Email verified!', 'You can now log in to your account.', 'Verification email sent', 'Please check your inbox for the verification link.']) {
+      expect(translateText('ar-EG', label), label).toMatch(/[\u0600-\u06FF]/)
+    }
   })
 })
