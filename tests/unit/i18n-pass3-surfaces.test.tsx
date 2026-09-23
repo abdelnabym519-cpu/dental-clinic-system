@@ -439,4 +439,75 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(translateText('ar-EG', label), label).toMatch(/[\u0600-\u06FF]/)
     }
   })
+
+  it('translates the data-import entity descriptions', () => {
+    const descs: Record<string, string> = {
+      'Demographics, contact info': 'البيانات الأساسية ومعلومات التواصل',
+      'Doctors, nurses, admin': 'الأطباء والممرضون والموظفون الإداريون',
+      'Scheduled visits': 'الزيارات المجدولة',
+      'Procedures & records': 'الإجراءات والسجلات',
+      'Bills & amounts': 'الفواتير والمبالغ',
+      'Payment transactions': 'عمليات الدفع',
+      'Stock items & levels': 'أصناف المخزون ومستوياته',
+    }
+    for (const [key, arabic] of Object.entries(descs)) {
+      expect(ar[key as keyof typeof ar], key).toBe(arabic)
+      expect(en[key as keyof typeof en], key).toBe(key)
+      expect(translateText('ar-EG', key), key).toBe(arabic)
+    }
+    const page = readFileSync('app/(dashboard)/settings/import/page.tsx', 'utf8')
+    expect(page).toContain('{t(opt.desc)}')
+    expect(page).not.toMatch(/text-muted-foreground">\{opt\.desc\}/)
+  })
+
+  it('translates config-array labels rendered outside the dictionary', () => {
+    // The recurring defect: a component renders {obj.label} straight from a
+    // config array, so the dictionary is bypassed even though the Arabic
+    // wording already exists as a value. Wrapping is key-free and safe.
+    const labels = ['Dental Chair', 'Pulse Oximeter', 'BP Monitor', 'Autoclave', 'Patients', 'Invoices']
+    for (const label of labels) {
+      expect(translateText('ar-EG', label), label).toMatch(/[\u0600-\u06FF]/)
+      expect(translateText('en-EG', label), label).toBe(label)
+    }
+    const sites: Array<[string, RegExp]> = [
+      ['app/(dashboard)/devices/page.tsx', /\{t\(cfg\.label\)\}/],
+      ['components/layout/global-search.tsx', /\{t\(cat\.label\)\}/],
+      ['app/(dashboard)/settings/subscription/page.tsx', /\{t\(plan\.name\)\}/],
+    ]
+    for (const [file, re] of sites) {
+      expect(re.test(readFileSync(file, 'utf8')), file).toBe(true)
+    }
+    // plan names must not be rendered raw anywhere on the subscription screen
+    expect(readFileSync('app/(dashboard)/settings/subscription/page.tsx', 'utf8')).not.toMatch(
+      />\{plan\.name\}</
+    )
+  })
+
+  it('covers the keys that t() was being called on without a dictionary entry', () => {
+    // These call sites looked translated but had no entry, so they rendered
+    // English; the fixes added the keys (or retargeted the literal).
+    expect(ar['No invite token provided.']).toBe('لم يتم توفير رمز دعوة.')
+    expect(translateText('ar-EG', 'No invite token provided.')).toBe('لم يتم توفير رمز دعوة.')
+    expect(translateText('ar-EG', 'Account created!')).toBe('تم إنشاء الحساب!')
+    expect(translateText('ar-EG', 'Something went wrong. Please try again.')).toBe('حدث خطأ ما. حاول مرة أخرى.')
+    expect(ar['Critical (stockout \u22647d)'.replace(/\u2264/, '\u2264')]).toBeDefined()
+    expect(translateText('ar-EG', 'WhatsApp contact number override')).toMatch(/[\u0600-\u06FF]/)
+    // templated search-empty key: {q} must survive substitution
+    const templated = translateText('ar-EG', 'No results found for {q}', { q: 'سارة' })
+    expect(templated).toContain('سارة')
+    expect(templated).toMatch(/[\u0600-\u06FF]/)
+    expect(templated).not.toContain('No results')
+    // the new-invoice terms default is localized the same way settings/billing is
+    const termsKey =
+      '1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.'
+    expect(ar[termsKey as keyof typeof ar]).toMatch(/[\u0600-\u06FF]/)
+    expect(en[termsKey as keyof typeof en]).toBe(termsKey)
+
+    const invite = readFileSync('app/(auth)/invite/accept/page.tsx', 'utf8')
+    expect(invite).toContain("setErrorMessage(t('No invite token provided.'))")
+    expect(invite).not.toMatch(/title: 'Account created!'/)
+    expect(readFileSync('components/layout/global-search.tsx', 'utf8')).toContain(
+      "t('No results found for {q}', { q: query })"
+    )
+  })
 })

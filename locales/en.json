@@ -4034,5 +4034,17 @@
   "Your email has been verified successfully!": "Your email has been verified successfully!",
   "Verification failed. Please try again.": "Verification failed. Please try again.",
   "An error occurred during verification. Please try again.": "An error occurred during verification. Please try again.",
-  "We've sent a verification email to {v1}. Please check your inbox and click the verification link.": "We've sent a verification email to {v1}. Please check your inbox and click the verification link."
+  "We've sent a verification email to {v1}. Please check your inbox and click the verification link.": "We've sent a verification email to {v1}. Please check your inbox and click the verification link.",
+  "Demographics, contact info": "Demographics, contact info",
+  "Doctors, nurses, admin": "Doctors, nurses, admin",
+  "Scheduled visits": "Scheduled visits",
+  "Procedures & records": "Procedures & records",
+  "Bills & amounts": "Bills & amounts",
+  "Payment transactions": "Payment transactions",
+  "Stock items & levels": "Stock items & levels",
+  "No results found for {q}": "No results found for “{q}”",
+  "Critical (stockout ≤7d)": "Critical (stockout ≤7d)",
+  "WhatsApp contact number override": "WhatsApp contact number override",
+  "No invite token provided.": "No invite token provided.",
+  "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit.": "1. Payment is due within the specified payment terms.\n2. Please bring this invoice for reference during your next visit."
 }

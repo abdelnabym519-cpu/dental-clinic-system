@@ -455,7 +455,7 @@ export default function DataImportPage() {
                         <Icon className="h-4 w-4" />
                       </div>
                       <p className="text-sm font-medium">{t(opt.label)}</p>
-                      <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                      <p className="text-xs text-muted-foreground">{t(opt.desc)}</p>
                     </button>
                   )
                 })}

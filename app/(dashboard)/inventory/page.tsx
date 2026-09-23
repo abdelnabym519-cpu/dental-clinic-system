@@ -302,7 +302,7 @@ export default function InventoryPage() {
                 <div className="text-2xl font-bold text-red-700">
                   {forecastData.summary?.criticalItems || 0}
                 </div>
-                <div className="text-xs text-red-600">{t("Critical (stockout \u22647d)")}</div>
+                <div className="text-xs text-red-600">{t('Critical (stockout \u22647d)')}</div>
               </CardContent>
             </Card>
             <Card className="border-amber-200 bg-amber-50">

@@ -425,7 +425,8 @@ export function AppointmentDialog({
               value={form.contactPhone}
               onChange={(e) => set('contactPhone')(e.target.value)}
               placeholder={t("e.g. 01012345678 — confirmation & reminders go here")}
-              aria-label={t('WhatsApp contact number override')}
+              aria-label={t('WhatsApp contact number override')} /* key added below;
+            the label was already routed through t() but had no dictionary entry */
             />
             <p className="text-xs text-muted-foreground">
               {t("Leave empty to use the patient's stored number. Invalid numbers are skipped safely.")}

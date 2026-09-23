@@ -208,7 +208,7 @@ export function GlobalSearch() {
             {/* No results */}
             {hasSearched && totalResults === 0 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                {t("No results found for \u201c")}{query}&rdquo;
+                {t('No results found for {q}', { q: query })}
               </div>
             )}
 
@@ -224,7 +224,7 @@ export function GlobalSearch() {
                     <div key={cat.key}>
                       <div className="px-4 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                         <Icon className="h-3.5 w-3.5" />
-                        {cat.label}
+                        {t(cat.label)}
                       </div>
                       {items.map((item) => {
                         const globalIdx = flatResults.findIndex(
@@ -243,6 +243,9 @@ export function GlobalSearch() {
                             onMouseEnter={() => setActiveIndex(globalIdx)}
                           >
                             <div className="flex-1 min-w-0">
+                              {/* item.label is a record from the database (a patient's
+                                  name, an invoice number), not UI copy, so it is
+                                  rendered verbatim by design. */}
                               <div className="text-sm font-medium truncate">{item.label}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {item.sublabel}

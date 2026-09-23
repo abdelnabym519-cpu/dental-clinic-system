@@ -431,7 +431,7 @@ export default function DevicesPage() {
                           <SelectTrigger className="h-7 w-36">
                             <div className="flex items-center gap-1">
                               <StatusIcon className="h-3.5 w-3.5" />
-                              <Badge className={`${cfg.color} text-xs`}>{cfg.label}</Badge>
+                              <Badge className={`${cfg.color} text-xs`}>{t(cfg.label)}</Badge>
                             </div>
                           </SelectTrigger>
                           <SelectContent>

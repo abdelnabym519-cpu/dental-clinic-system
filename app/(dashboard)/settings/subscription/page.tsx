@@ -300,7 +300,7 @@ export default function SubscriptionPage() {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      <CardTitle className="text-lg">{t(plan.name)}</CardTitle>
                       {isCurrent && (
                         <Badge variant="outline" className="text-xs">{t('ui.current')}</Badge>
                       )}

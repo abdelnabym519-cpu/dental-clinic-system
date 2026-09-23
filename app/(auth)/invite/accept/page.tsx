@@ -61,7 +61,7 @@ function AcceptInviteContent() {
       validateToken(token)
     } else {
       setStatus('invalid')
-      setErrorMessage('No invite token provided.')
+      setErrorMessage(t('No invite token provided.'))
     }
   }, [token])
 
@@ -104,21 +104,21 @@ function AcceptInviteContent() {
       if (response.ok) {
         setStatus('success')
         toast({
-          title: 'Account created!',
-          description: 'You can now log in to your account.',
+          title: t('Account created!'),
+          description: t('You can now log in to your account.'),
         })
       } else {
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: result.error || 'Something went wrong. Please try again.',
+          title: t('Error'),
+          description: result.error ? t(result.error) : t('Something went wrong. Please try again.'),
         })
       }
     } catch {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        title: t('Error'),
+        description: t('Something went wrong. Please try again.'),
       })
     } finally {
       setIsSubmitting(false)
