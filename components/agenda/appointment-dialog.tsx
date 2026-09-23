@@ -191,8 +191,15 @@ export function AppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="sm:max-w-[520px]" role="dialog" aria-modal="true">
-        <DialogHeader>
+      {/* Viewport-bounded dialog (max-h from DialogContent base): the header and
+          footer stay fixed while only the fields region scrolls, so the
+          Book/Cancel actions are always on-screen even on short viewports. */}
+      <DialogContent
+        className="sm:max-w-[520px] flex flex-col overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+      >
+        <DialogHeader className="shrink-0">
           <DialogTitle>{editing ? t("Edit appointment") : 'New appointment'}</DialogTitle>
           <DialogDescription>
             {editing
@@ -201,7 +208,7 @@ export function AppointmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-2">
+        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto py-2">
           {error && (
             <div
               role="alert"
@@ -445,7 +452,7 @@ export function AppointmentDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button variant="outline" onClick={onClose} disabled={saving}>
             {t('Cancel')}
           </Button>
