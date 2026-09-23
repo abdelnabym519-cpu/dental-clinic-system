@@ -88,7 +88,7 @@ export default function VideoConsultationsPage() {
       if (statusFilter) params.set('status', statusFilter)
 
       const res = await fetch(`/api/video/consultations?${params}`)
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) throw new Error(t('Failed to fetch'))
       const data = await res.json()
       setConsultations(data.consultations)
       setTotalPages(data.totalPages)

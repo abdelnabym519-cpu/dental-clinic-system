@@ -121,7 +121,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
           router.push('/staff')
           return
         }
-        throw new Error('Failed to fetch performance data')
+        throw new Error(t('Failed to fetch performance data'))
       }
 
       const result = await response.json()

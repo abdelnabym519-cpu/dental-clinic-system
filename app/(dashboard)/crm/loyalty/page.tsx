@@ -223,7 +223,7 @@ export default function LoyaltyPage() {
         const params = new URLSearchParams({ page: String(page), limit: '20' })
         if (filterType !== 'ALL') params.set('type', filterType)
         const res = await fetch(`/api/loyalty?${params.toString()}`)
-        if (!res.ok) throw new Error('Failed to load')
+        if (!res.ok) throw new Error(t('Failed to load'))
         const data = await res.json()
         setTransactions(data.transactions ?? [])
         setPagination(data.pagination ?? { page, limit: 20, total: 0, totalPages: 0 })
@@ -321,7 +321,7 @@ export default function LoyaltyPage() {
           patientId: redeemPatient.id,
           points: -pts,
           type: 'REDEMPTION',
-          description: redeemDesc || 'Points redeemed',
+          description: redeemDesc || t('Points redeemed'),
         }),
       })
       if (!res.ok) {

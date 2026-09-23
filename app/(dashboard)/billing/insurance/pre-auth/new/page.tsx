@@ -147,7 +147,7 @@ export default function NewPreAuthPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to create')
+        throw new Error(data.error || t('Failed to create'))
       }
 
       toast({ title: 'Pre-authorization request created' })

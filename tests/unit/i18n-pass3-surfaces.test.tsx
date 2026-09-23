@@ -615,6 +615,79 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(translateText('en-EG', en0)).toBe(en0)
     }
   })
+  it('requires every error-path fallback to reach Arabic', () => {
+    // The slot audit above reads title/description/message/label. It structurally cannot
+    // see copy that reaches those slots indirectly: `throw new Error('Failed to fetch x')`
+    // and `data.error || 'Failed to fetch x'` and `err ? err.message : 'x'`. That is the
+    // same user-visible sentence, so it gets the same rule.
+    const DEV_ONLY = /must be used (?:inside|within)/ // React context invariants: developer-facing
+    const TECHNICAL = /^Failed to load script: / // loader rejection carrying a script URL
+    // Enum / brand data that legitimately travels through the same slots, and the AI
+    // module the brief puts out of reach. Listed so the exclusion is visible, not silent.
+    const DATA_OR_OUT_OF_SCOPE = /^(?:CONSULTATION|HEALTHY|READING|VODAFONE)$/
+    const OUT_OF_SCOPE_FILE = /(^|\/)components\/ai\//
+    const dirs = ['app', 'components']
+    const walk = (d: string): string[] =>
+      fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
+        const f2 = `${d}/${e.name}`
+        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        return /\.(tsx|ts)$/.test(e.name) ? [f2] : []
+      })
+    const PATS = [
+      /throw new Error\(\s*'([^']{6,120})'/g,
+      /\|\|\s*'([A-Z][^']{6,120}?)'/g,
+      /\?\s*err(?:or)?\.\w+\s*:\s*'([^']{6,120})'/g,
+    ]
+    const offenders: string[] = []
+    let audited = 0
+    for (const file of dirs.flatMap(walk)) {
+      if (file.startsWith('app/api')) continue // server payloads: own audit file
+      const src = fs.readFileSync(file, 'utf8')
+      if (!src.includes("'use client'")) continue
+      for (const rx of PATS) {
+        for (const m of src.matchAll(rx)) {
+          const lit = m[1].trim()
+          if (DEV_ONLY.test(lit) || TECHNICAL.test(lit)) continue
+          if (DATA_OR_OUT_OF_SCOPE.test(lit) || OUT_OF_SCOPE_FILE.test(file)) continue
+          if (/[A-Za-z]{3,}\s+[A-Za-z]{3,}/.test(lit) === false && lit.length < 12) continue
+          audited++
+          // only the strings the app actually shows matter; a wrapped one resolves either way
+          const ar = translateText('ar-EG', lit)
+          if (!/[\u0600-\u06FF]/.test(ar)) offenders.push(`${file}: ${lit}`)
+        }
+      }
+    }
+    expect(audited).toBeGreaterThan(40)
+    expect(offenders).toEqual([])
+    // Stronger invariant: a client component must never throw a raw English sentence into
+    // an Error. Whether the catch renders it via a localizing slot (toast) or raw (an inline
+    // `setErr(err.message)` paragraph) varies per page, and a raw render paints English even
+    // when the dictionary has the string - so the wrap, not the entry, is what guarantees it.
+    const RAW_THROW = /throw new Error\(\s*'([A-Z][A-Za-z ,.'()/\-:]{5,80})'\)/g
+    const raw: string[] = []
+    for (const file of dirs.flatMap(walk)) {
+      if (file.startsWith('app/api') || /(^|\/)components\/ai\//.test(file)) continue
+      const src = fs.readFileSync(file, 'utf8')
+      if (!src.includes("'use client'")) continue
+      for (const m of src.matchAll(RAW_THROW)) {
+        if (/must be used (?:inside|within)/.test(m[1])) continue
+        raw.push(`${file}: ${m[1]}`)
+      }
+    }
+    expect(raw).toEqual([])
+    // the sentences this pass keyed, verified in both directions
+    for (const [en0, ar0] of [
+      ['Failed to load patient details', 'تعذّر تحميل بيانات المريض'],
+      ['Cancelled from Agenda', 'تم إلغاء الموعد من الأجندة'],
+      ['Failed to create patient ({status})', 'تعذّر تسجيل المريض ({status})'],
+      ['Could not save tooth record', 'تعذّر حفظ سجل السن'],
+      ['Unsupported provider', 'مزوّد الدفع غير مدعوم'],
+    ] as const) {
+      expect(translateText('ar-EG', en0)).toBe(ar0)
+      expect(translateText('en-EG', en0)).toBe(en0)
+    }
+  })
+
   it('localises the example-prefix placeholders without touching format samples', () => {
     // "e.g., D3310" is English copy glued to a Latin format sample; the prefix now
     // comes from the dictionary while the sample itself stays as typed data.

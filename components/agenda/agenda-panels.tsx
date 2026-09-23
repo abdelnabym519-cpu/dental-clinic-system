@@ -163,7 +163,7 @@ function TodayQueue({
       setLoading(true)
       setError(null)
       const res = await fetch(`/api/appointments?view=list&date=${toDateKey(new Date())}`)
-      if (!res.ok) throw new Error('Failed to load the queue')
+      if (!res.ok) throw new Error(t('Failed to load the queue'))
       const data = await res.json()
       const list: QueueAppointment[] = (data.appointments ?? []).filter((a: QueueAppointment) =>
         QUEUE_ACTIVE.has(a.status)
@@ -297,7 +297,7 @@ function WaitingListPanel({
       setLoading(true)
       setError(null)
       const res = await fetch('/api/appointments/waitlist?status=ACTIVE')
-      if (!res.ok) throw new Error('Failed to load the waiting list')
+      if (!res.ok) throw new Error(t('Failed to load the waiting list'))
       const data = await res.json()
       const list: WaitlistEntry[] = data.entries ?? []
       setEntries(Array.isArray(list) ? list : [])
@@ -408,10 +408,10 @@ function AnalyticsSummary() {
         setLoading(true)
         setError(null)
         const res = await fetch('/api/appointments/analytics')
-        if (!res.ok) throw new Error('Failed to load analytics')
+        if (!res.ok) throw new Error(t('Failed to load analytics'))
         const json = await res.json()
         if (!json || typeof json.total !== 'number' || !json.clinic) {
-          throw new Error('Unexpected analytics payload')
+          throw new Error(t('Unexpected analytics payload'))
         }
         if (!cancelled) setData(json)
       } catch (err) {

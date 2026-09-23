@@ -223,7 +223,7 @@ export default function MedicationsPage() {
     if (!ok) return
     try {
       const res = await fetch(`/api/medications/${med.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) throw new Error(t('Failed'))
       toast({ title: t('Deactivated'), description: t('{name} has been deactivated', { name: med.name }) })
       fetchMedications()
     } catch {

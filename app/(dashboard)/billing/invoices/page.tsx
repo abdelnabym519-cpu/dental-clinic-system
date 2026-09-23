@@ -120,7 +120,7 @@ export default function InvoicesPage() {
       if (overdueOnly) params.append('overdue', 'true')
 
       const response = await fetch(`/api/invoices?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch invoices')
+      if (!response.ok) throw new Error(t('Failed to fetch invoices'))
 
       const data = await response.json()
       setInvoices(data.invoices)
@@ -157,7 +157,7 @@ export default function InvoicesPage() {
       const response = await fetch(`/api/invoices/${id}`, {
         method: 'DELETE',
       })
-      if (!response.ok) throw new Error('Failed to delete invoice')
+      if (!response.ok) throw new Error(t('Failed to delete invoice'))
       fetchInvoices()
     } catch (error) {
       console.error('Error deleting invoice:', error)

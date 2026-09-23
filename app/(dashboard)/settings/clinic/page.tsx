@@ -174,7 +174,7 @@ export default function ClinicSettingsPage() {
     setUploadingLogo(true)
     try {
       const res = await fetch('/api/settings/clinic/logo', { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to remove logo')
+      if (!res.ok) throw new Error(t('Failed to remove logo'))
 
       setLogo(null)
       toast({ title: t('Logo removed') })

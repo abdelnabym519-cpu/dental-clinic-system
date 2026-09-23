@@ -233,7 +233,7 @@ export default function DataImportPage() {
         body: JSON.stringify({ jobId: jId }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Mapping failed')
+      if (!res.ok) throw new Error(data.error || t('Mapping failed'))
 
       setMapping(data.mapping || {})
       setConfidence(data.confidence || {})
@@ -338,7 +338,7 @@ export default function DataImportPage() {
         body: JSON.stringify({ jobId, mapping, editedRows, skipErrorRows }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Import failed')
+      if (!res.ok) throw new Error(data.error || t('Import failed'))
       setImportResult(data)
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Import Failed', description: err.message })

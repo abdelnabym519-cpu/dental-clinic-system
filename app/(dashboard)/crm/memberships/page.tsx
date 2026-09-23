@@ -138,7 +138,7 @@ export default function MembershipPlansPage() {
   const fetchPlans = useCallback(async () => {
     try {
       const res = await fetch('/api/memberships/plans')
-      if (!res.ok) throw new Error('Failed to fetch plans')
+      if (!res.ok) throw new Error(t('Failed to fetch plans'))
       const data = await res.json()
       setPlans(data)
     } catch {
@@ -215,7 +215,7 @@ export default function MembershipPlansPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to save plan')
+        throw new Error(data.error || t('Failed to save plan'))
       }
 
       toast({ title: editingPlanId ? t('Plan updated') : t('Plan created') })
@@ -371,7 +371,7 @@ export default function MembershipPlansPage() {
     setLoadingDetail(true)
     try {
       const res = await fetch(`/api/memberships/enroll?planId=${planId}`)
-      if (!res.ok) throw new Error('Failed to load members')
+      if (!res.ok) throw new Error(t('Failed to load members'))
       const data = await res.json()
       setDetailMembers(Array.isArray(data) ? data : data.memberships || [])
     } catch {

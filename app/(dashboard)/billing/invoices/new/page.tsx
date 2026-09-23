@@ -130,7 +130,7 @@ export default function NewInvoicePage() {
     const fetchPatients = async () => {
       try {
         const response = await fetch(`/api/patients?search=${patientSearch}&limit=10`)
-        if (!response.ok) throw new Error('Failed to fetch patients')
+        if (!response.ok) throw new Error(t('Failed to fetch patients'))
         const data = await response.json()
         setPatients(data.patients)
       } catch (error) {
@@ -154,7 +154,7 @@ export default function NewInvoicePage() {
         try {
           setLoading(true)
           const response = await fetch(`/api/patients?search=${preSelectedPatientId}`)
-          if (!response.ok) throw new Error('Failed to fetch patient')
+          if (!response.ok) throw new Error(t('Failed to fetch patient'))
           const data = await response.json()
           if (data.patients.length > 0) {
             setSelectedPatient(data.patients[0])
@@ -182,7 +182,7 @@ export default function NewInvoicePage() {
     try {
       setLoadingTreatments(true)
       const response = await fetch(`/api/billing/unbilled-treatments?patientId=${patientId}`)
-      if (!response.ok) throw new Error('Failed to fetch unbilled treatments')
+      if (!response.ok) throw new Error(t('Failed to fetch unbilled treatments'))
       const data = await response.json()
       setUnbilledTreatments(data.treatments)
     } catch (error) {

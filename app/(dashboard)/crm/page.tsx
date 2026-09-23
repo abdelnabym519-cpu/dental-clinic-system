@@ -36,7 +36,7 @@ export default function CRMDashboardPage() {
     async function fetchDashboard() {
       try {
         const res = await fetch('/api/crm/dashboard')
-        if (!res.ok) throw new Error('Failed to fetch')
+        if (!res.ok) throw new Error(t('Failed to fetch'))
         setData(await res.json())
       } catch {
         toast({ title: 'Failed to load CRM dashboard', variant: 'destructive' })

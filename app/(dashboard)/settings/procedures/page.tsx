@@ -145,7 +145,7 @@ export default function ProceduresSettingsPage() {
       if (activeFilter && activeFilter !== 'all') params.append('isActive', activeFilter)
 
       const response = await fetch(`/api/settings/procedures?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch procedures')
+      if (!response.ok) throw new Error(t('Failed to fetch procedures'))
 
       const data = await response.json()
       setProcedures(data.data || [])
@@ -242,7 +242,7 @@ export default function ProceduresSettingsPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save procedure')
+        throw new Error(data.error || t('Failed to save procedure'))
       }
 
       toast({
@@ -313,7 +313,7 @@ export default function ProceduresSettingsPage() {
         body: JSON.stringify({ isActive: !procedure.isActive }),
       })
 
-      if (!response.ok) throw new Error('Failed to update procedure')
+      if (!response.ok) throw new Error(t('Failed to update procedure'))
 
       toast({
         title: 'Success',

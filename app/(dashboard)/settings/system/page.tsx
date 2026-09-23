@@ -70,7 +70,7 @@ export default function SystemSettingsPage() {
           description: 'Backup downloaded successfully',
         })
       } else {
-        throw new Error('Failed to export backup')
+        throw new Error(t('Failed to export backup'))
       }
     } catch (error: any) {
       toast({

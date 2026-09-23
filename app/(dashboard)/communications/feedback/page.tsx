@@ -88,7 +88,7 @@ export default function FeedbackAnalyticsPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/communications/feedback/analytics?period=${p}`)
-      if (!res.ok) throw new Error('Failed to fetch analytics')
+      if (!res.ok) throw new Error(t('Failed to fetch analytics'))
       setData(await res.json())
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' })

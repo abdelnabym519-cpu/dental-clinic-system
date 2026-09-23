@@ -65,7 +65,7 @@ export default function EditPatientPage() {
     async function loadPatient() {
       try {
         const res = await fetch(`/api/patients/${patientId}`)
-        if (!res.ok) throw new Error('Failed to load patient')
+        if (!res.ok) throw new Error(t('Failed to load patient'))
         const data = await res.json()
         const p = data.patient || data
 
@@ -151,7 +151,7 @@ export default function EditPatientPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(data.error || `Failed to update patient (${response.status})`)
+        throw new Error(data.error || t('Failed to update patient ({status})', { status: response.status }))
       }
 
       toast({
@@ -164,7 +164,7 @@ export default function EditPatientPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to update patient',
+        description: error.message || t('Failed to update patient'),
       })
     } finally {
       setSubmitting(false)

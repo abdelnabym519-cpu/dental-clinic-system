@@ -177,7 +177,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     try {
       setLoading(true)
       const response = await fetch(`/api/invoices/${id}`)
-      if (!response.ok) throw new Error('Failed to fetch invoice')
+      if (!response.ok) throw new Error(t('Failed to fetch invoice'))
       const data = await response.json()
       setInvoice(data)
       // Set default payment amount to balance
@@ -250,7 +250,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       })
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Failed to generate link')
+        throw new Error(data.error || t('Failed to generate link'))
       }
       const data = await res.json()
       setPaymentLink(data.link.url)
@@ -363,7 +363,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   body: JSON.stringify({}),
                 })
                 const data = await res.json().catch(() => ({}))
-                if (!res.ok) throw new Error(data.error || 'Failed to queue the invoice message')
+                if (!res.ok) throw new Error(data.error || t('Failed to queue the invoice message'))
                 setWhatsAppQueued(true)
               } catch {
                 setWhatsAppQueued(false)

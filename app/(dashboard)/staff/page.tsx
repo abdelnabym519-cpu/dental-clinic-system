@@ -137,7 +137,7 @@ export default function StaffPage() {
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter)
 
       const response = await fetch(`/api/staff?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch staff')
+      if (!response.ok) throw new Error(t('Failed to fetch staff'))
 
       const data = await response.json()
       setStaff(data.staff)
@@ -166,7 +166,7 @@ export default function StaffPage() {
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to deactivate staff')
+      if (!response.ok) throw new Error(t('Failed to deactivate staff'))
 
       toast({
         title: 'Success',

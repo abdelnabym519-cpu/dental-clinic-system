@@ -136,7 +136,7 @@ export default function LabWorkPage() {
   const fetchVendors = async () => {
     try {
       const response = await fetch('/api/lab-vendors?status=active')
-      if (!response.ok) throw new Error('Failed to fetch vendors')
+      if (!response.ok) throw new Error(t('Failed to fetch vendors'))
       const data = await response.json()
       setVendors(data.data)
     } catch (error) {
@@ -159,7 +159,7 @@ export default function LabWorkPage() {
       if (priorityFilter && priorityFilter !== 'all') params.append('priority', priorityFilter)
 
       const response = await fetch(`/api/lab-orders?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch lab orders')
+      if (!response.ok) throw new Error(t('Failed to fetch lab orders'))
 
       const data = await response.json()
       setOrders(data.data)

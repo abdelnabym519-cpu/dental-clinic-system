@@ -150,7 +150,7 @@ export default function LabVendorsPage() {
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter)
 
       const response = await fetch(`/api/lab-vendors?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch vendors')
+      if (!response.ok) throw new Error(t('Failed to fetch vendors'))
 
       const data = await response.json()
       setVendors(data.data)
@@ -238,7 +238,7 @@ export default function LabVendorsPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to save vendor')
+        throw new Error(error.error || t('Failed to save vendor'))
       }
 
       toast({
@@ -274,7 +274,7 @@ export default function LabVendorsPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to delete vendor')
+        throw new Error(error.error || t('Failed to delete vendor'))
       }
 
       toast({

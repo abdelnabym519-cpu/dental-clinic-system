@@ -133,7 +133,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
     try {
       setLoading(true)
       const response = await fetch(`/api/treatments/${id}`)
-      if (!response.ok) throw new Error('Failed to fetch treatment')
+      if (!response.ok) throw new Error(t('Failed to fetch treatment'))
       const data = await response.json()
       setTreatment(data)
 
@@ -162,7 +162,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
       const response = await fetch(`/api/treatments/${id}/start`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to start treatment')
+      if (!response.ok) throw new Error(t('Failed to start treatment'))
       fetchTreatment()
     } catch (error) {
       console.error('Error starting treatment:', error)
@@ -179,7 +179,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(completeFormData),
       })
-      if (!response.ok) throw new Error('Failed to complete treatment')
+      if (!response.ok) throw new Error(t('Failed to complete treatment'))
       setCompleteDialogOpen(false)
       fetchTreatment()
     } catch (error) {
@@ -197,7 +197,7 @@ export default function TreatmentDetailPage({ params }: { params: Promise<{ id: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'CANCELLED' }),
       })
-      if (!response.ok) throw new Error('Failed to cancel treatment')
+      if (!response.ok) throw new Error(t('Failed to cancel treatment'))
       setCancelDialogOpen(false)
       fetchTreatment()
     } catch (error) {

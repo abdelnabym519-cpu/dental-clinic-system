@@ -59,7 +59,7 @@ export function Odontogram({
       setLoading(true)
       const response = await fetch(`/api/dental-chart?patientId=${patientId}&isActive=true`)
       if (!response.ok) {
-        throw new Error('Failed to load dental chart entries')
+        throw new Error(t('Failed to load dental chart entries'))
       }
       const data = await response.json()
       if (data.entries) {
@@ -78,7 +78,7 @@ export function Odontogram({
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description: err.message || 'Failed to load dental chart',
+        description: err.message || t('Failed to load dental chart'),
       })
     } finally {
       setLoading(false)
@@ -171,7 +171,7 @@ export function Odontogram({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update tooth condition')
+        throw new Error(errorData.error || t('Failed to update tooth condition'))
       }
 
       toast({
@@ -190,7 +190,7 @@ export function Odontogram({
       toast({
         variant: 'destructive',
         title: t('Save Failed'),
-        description: err.message || 'Could not save tooth record',
+        description: err.message || t('Could not save tooth record'),
       })
     } finally {
       setIsSaving(false)

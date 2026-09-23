@@ -98,7 +98,7 @@ export default function PatientsPage() {
         params.append('bloodGroup', bloodGroupFilter)
 
       const response = await fetch(`/api/patients?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch patients')
+      if (!response.ok) throw new Error(t('Failed to fetch patients'))
 
       const data = await response.json()
       setPatients(data.patients)

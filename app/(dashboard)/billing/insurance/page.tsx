@@ -144,7 +144,7 @@ export default function InsuranceClaimsPage() {
       if (dateTo) params.append('dateTo', dateTo)
 
       const response = await fetch(`/api/insurance-claims?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch claims')
+      if (!response.ok) throw new Error(t('Failed to fetch claims'))
 
       const data = await response.json()
       setClaims(data.claims)
@@ -187,7 +187,7 @@ export default function InsuranceClaimsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ claimId: claim.id }),
       })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) throw new Error(t('Failed'))
       setAiAnalysis(await res.json())
     } catch {
       setAiAnalysis({ error: 'Failed to analyze claim' })
@@ -211,7 +211,7 @@ export default function InsuranceClaimsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'SUBMITTED' }),
       })
-      if (!response.ok) throw new Error('Failed to submit claim')
+      if (!response.ok) throw new Error(t('Failed to submit claim'))
       fetchClaims()
     } catch (error) {
       console.error('Error submitting claim:', error)
@@ -243,7 +243,7 @@ export default function InsuranceClaimsPage() {
             denialForm.appealStatus === 'SUBMITTED' ? new Date().toISOString() : undefined,
         }),
       })
-      if (!response.ok) throw new Error('Failed to update')
+      if (!response.ok) throw new Error(t('Failed to update'))
       setDenialClaim(null)
       fetchClaims()
     } catch (error) {

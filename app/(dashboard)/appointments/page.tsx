@@ -203,7 +203,7 @@ export default function AppointmentsPage() {
       if (dateFilter) params.append('date', dateFilter)
 
       const response = await fetch(`/api/appointments?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch appointments')
+      if (!response.ok) throw new Error(t('Failed to fetch appointments'))
 
       const data = await response.json()
       setAppointments(data.appointments)
@@ -224,7 +224,7 @@ export default function AppointmentsPage() {
       const response = await fetch(`/api/appointments/${id}/check-in`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to check in')
+      if (!response.ok) throw new Error(t('Failed to check in'))
       fetchAppointments()
     } catch (error) {
       console.error('Error checking in:', error)
@@ -236,7 +236,7 @@ export default function AppointmentsPage() {
       const response = await fetch(`/api/appointments/${id}/check-out`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to check out')
+      if (!response.ok) throw new Error(t('Failed to check out'))
       fetchAppointments()
     } catch (error) {
       console.error('Error checking out:', error)
@@ -250,7 +250,7 @@ export default function AppointmentsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (!response.ok) throw new Error('Failed to update status')
+      if (!response.ok) throw new Error(t('Failed to update status'))
       fetchAppointments()
     } catch (error) {
       console.error('Error updating status:', error)

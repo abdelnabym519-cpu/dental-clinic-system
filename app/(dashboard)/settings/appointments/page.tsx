@@ -87,7 +87,7 @@ export default function AppointmentSettingsPage() {
           description: 'Appointment settings saved successfully',
         })
       } else {
-        throw new Error('Failed to save settings')
+        throw new Error(t('Failed to save settings'))
       }
     } catch (error: any) {
       toast({
@@ -128,7 +128,7 @@ export default function AppointmentSettingsPage() {
         setNewHoliday({ name: '', date: '' })
         fetchHolidays()
       } else {
-        throw new Error('Failed to add holiday')
+        throw new Error(t('Failed to add holiday'))
       }
     } catch (error: any) {
       toast({
@@ -152,7 +152,7 @@ export default function AppointmentSettingsPage() {
         })
         fetchHolidays()
       } else {
-        throw new Error('Failed to delete holiday')
+        throw new Error(t('Failed to delete holiday'))
       }
     } catch (error: any) {
       toast({

@@ -113,7 +113,7 @@ export default function WaitlistPage() {
       if (statusFilter) params.set('status', statusFilter)
 
       const response = await fetch(`/api/appointments/waitlist?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch')
+      if (!response.ok) throw new Error(t('Failed to fetch'))
       const data = await response.json()
       setEntries(data.entries)
       setSummary(data.summary)
@@ -179,7 +179,7 @@ export default function WaitlistPage() {
 
       if (!response.ok) {
         const err = await response.json()
-        throw new Error(err.error || 'Failed to add')
+        throw new Error(err.error || t('Failed to add'))
       }
 
       toast({ title: 'Added to waitlist' })
@@ -202,7 +202,7 @@ export default function WaitlistPage() {
     if (!ok) return
     try {
       const response = await fetch(`/api/appointments/waitlist?id=${id}`, { method: 'DELETE' })
-      if (!response.ok) throw new Error('Failed to remove')
+      if (!response.ok) throw new Error(t('Failed to remove'))
       toast({ title: 'Removed from waitlist' })
       fetchWaitlist()
     } catch {

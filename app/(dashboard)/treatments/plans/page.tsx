@@ -128,7 +128,7 @@ export default function TreatmentPlansPage() {
       if (consentFilter && consentFilter !== 'all') params.append('consentGiven', consentFilter)
 
       const response = await fetch(`/api/treatment-plans?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch treatment plans')
+      if (!response.ok) throw new Error(t('Failed to fetch treatment plans'))
 
       const data = await response.json()
       setPlans(data.treatmentPlans)

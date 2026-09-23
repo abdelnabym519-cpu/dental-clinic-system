@@ -174,7 +174,7 @@ export default function ReferralsPage() {
       params.set('limit', '20')
 
       const res = await fetch(`/api/referrals?${params.toString()}`)
-      if (!res.ok) throw new Error('Failed to fetch referrals')
+      if (!res.ok) throw new Error(t('Failed to fetch referrals'))
       const data = await res.json()
 
       setReferrals(data.referrals || [])
@@ -206,7 +206,7 @@ export default function ReferralsPage() {
       try {
         setPatientSearchLoading(true)
         const res = await fetch(`/api/patients?search=${encodeURIComponent(patientSearch)}&limit=5`)
-        if (!res.ok) throw new Error('Search failed')
+        if (!res.ok) throw new Error(t('Search failed'))
         const data = await res.json()
         const patients: PatientSearchResult[] = Array.isArray(data) ? data : data.patients || []
         setPatientResults(patients)

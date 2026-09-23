@@ -138,7 +138,7 @@ export default function TreatmentsPage() {
       if (dateTo) params.append('dateTo', dateTo)
 
       const response = await fetch(`/api/treatments?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch treatments')
+      if (!response.ok) throw new Error(t('Failed to fetch treatments'))
 
       const data = await response.json()
       setTreatments(data.treatments)
@@ -159,7 +159,7 @@ export default function TreatmentsPage() {
       const response = await fetch(`/api/treatments/${id}/start`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to start treatment')
+      if (!response.ok) throw new Error(t('Failed to start treatment'))
       fetchTreatments()
     } catch (error) {
       console.error('Error starting treatment:', error)
@@ -173,7 +173,7 @@ export default function TreatmentsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      if (!response.ok) throw new Error('Failed to complete treatment')
+      if (!response.ok) throw new Error(t('Failed to complete treatment'))
       fetchTreatments()
     } catch (error) {
       console.error('Error completing treatment:', error)

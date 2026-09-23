@@ -101,7 +101,7 @@ export default function SterilizationLogsPage() {
         fetch(`/api/sterilization/logs?${params}`),
         fetch('/api/sterilization/instruments'),
       ])
-      if (!logsRes.ok) throw new Error('Failed to fetch logs')
+      if (!logsRes.ok) throw new Error(t('Failed to fetch logs'))
       const logsData = await logsRes.json()
       setLogs(logsData.logs)
 
@@ -136,7 +136,7 @@ export default function SterilizationLogsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error((await res.json()).error || 'Failed to record')
+      if (!res.ok) throw new Error((await res.json()).error || t('Failed to record'))
       toast({ title: 'Success', description: 'Sterilization cycle recorded' })
       setShowDialog(false)
       setForm({

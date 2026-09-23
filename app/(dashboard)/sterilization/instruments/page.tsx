@@ -103,7 +103,7 @@ export default function InstrumentsPage() {
       if (filterCategory !== 'all') params.set('category', filterCategory)
 
       const res = await fetch(`/api/sterilization/instruments?${params}`)
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) throw new Error(t('Failed to fetch'))
       const data = await res.json()
       setInstruments(data.instruments)
     } catch (err: any) {
@@ -195,7 +195,7 @@ export default function InstrumentsPage() {
     if (!ok) return
     try {
       const res = await fetch(`/api/sterilization/instruments/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed to delete')
+      if (!res.ok) throw new Error(t('Failed to delete'))
       setInstruments((prev) => prev.filter((i) => i.id !== id))
       toast({ title: 'Success', description: 'Instrument deleted' })
     } catch (err: any) {

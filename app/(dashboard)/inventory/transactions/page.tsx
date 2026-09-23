@@ -151,7 +151,7 @@ export default function TransactionsPage() {
           notes: '',
         })
       } else {
-        alert(data.error || 'Failed to record transaction')
+        alert(data.error || t('Failed to record transaction'))
       }
     } catch (error) {
       console.error('Error recording transaction:', error)

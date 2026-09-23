@@ -121,7 +121,7 @@ export default function AttendancePage() {
     try {
       setLoading(true)
       const response = await fetch('/api/staff/attendance/today')
-      if (!response.ok) throw new Error('Failed to fetch attendance')
+      if (!response.ok) throw new Error(t('Failed to fetch attendance'))
 
       const data = await response.json()
       setTodayData(data)
@@ -189,7 +189,7 @@ export default function AttendancePage() {
         body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error('Failed to mark attendance')
+      if (!response.ok) throw new Error(t('Failed to mark attendance'))
 
       toast({
         title: 'Success',

@@ -165,7 +165,7 @@ export function CalendarView({
       if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`
       const response = await fetch(url)
       if (!response.ok) {
-        throw new Error('Failed to load the schedule')
+        throw new Error(t('Failed to load the schedule'))
       }
       const data = await response.json()
       setAppointments(data.appointments)

@@ -186,7 +186,7 @@ export default function ReportsPage() {
       }
 
       const response = await fetch(`/api/reports/analytics?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch analytics')
+      if (!response.ok) throw new Error(t('Failed to fetch analytics'))
       const data = await response.json()
 
       switch (type) {
@@ -229,7 +229,7 @@ export default function ReportsPage() {
       }
 
       const response = await fetch(`/api/reports/export?${params}`)
-      if (!response.ok) throw new Error('Failed to export report')
+      if (!response.ok) throw new Error(t('Failed to export report'))
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)

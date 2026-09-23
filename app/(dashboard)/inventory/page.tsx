@@ -131,7 +131,7 @@ export default function InventoryPage() {
   const fetchCategories = async () => {
     try {
       const response = await fetch('/api/inventory/categories')
-      if (!response.ok) throw new Error('Failed to fetch categories')
+      if (!response.ok) throw new Error(t('Failed to fetch categories'))
       const data = await response.json()
       setCategories(data.data)
     } catch (error) {
@@ -154,7 +154,7 @@ export default function InventoryPage() {
       if (lowStockOnly) params.append('lowStock', 'true')
 
       const response = await fetch(`/api/inventory/items?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch inventory items')
+      if (!response.ok) throw new Error(t('Failed to fetch inventory items'))
 
       const data = await response.json()
       setItems(data.data)

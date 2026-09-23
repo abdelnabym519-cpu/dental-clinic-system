@@ -171,7 +171,7 @@ export default function NewLabOrderPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(data.error || `Failed to create lab order (${response.status})`)
+        throw new Error(data.error || t('Failed to create lab order ({status})', { status: response.status }))
       }
 
       const result = await response.json()

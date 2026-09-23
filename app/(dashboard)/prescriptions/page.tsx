@@ -84,7 +84,7 @@ export default function PrescriptionsPage() {
     if (!ok) return
     try {
       const res = await fetch(`/api/prescriptions/${rx.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) throw new Error(t('Failed'))
       toast({ title: t('Deleted'), description: t('Prescription {number} removed', { number: rx.prescriptionNo }) })
       fetchPrescriptions()
     } catch {

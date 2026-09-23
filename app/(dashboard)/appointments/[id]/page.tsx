@@ -129,7 +129,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
     try {
       setLoading(true)
       const response = await fetch(`/api/appointments/${id}`)
-      if (!response.ok) throw new Error('Failed to fetch appointment')
+      if (!response.ok) throw new Error(t('Failed to fetch appointment'))
       const data = await response.json()
       setAppointment(data)
     } catch (error) {
@@ -149,7 +149,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
       const response = await fetch(`/api/appointments/${id}/check-in`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to check in')
+      if (!response.ok) throw new Error(t('Failed to check in'))
       fetchAppointment()
     } catch (error) {
       console.error('Error:', error)
@@ -164,7 +164,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
       const response = await fetch(`/api/appointments/${id}/check-out`, {
         method: 'POST',
       })
-      if (!response.ok) throw new Error('Failed to check out')
+      if (!response.ok) throw new Error(t('Failed to check out'))
       fetchAppointment()
     } catch (error) {
       console.error('Error:', error)
@@ -186,7 +186,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!response.ok) throw new Error('Failed to update status')
+      if (!response.ok) throw new Error(t('Failed to update status'))
       fetchAppointment()
       setShowCancelDialog(false)
       setCancellationReason('')

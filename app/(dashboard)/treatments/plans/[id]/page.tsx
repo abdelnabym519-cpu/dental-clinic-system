@@ -112,7 +112,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
     try {
       setLoading(true)
       const response = await fetch(`/api/treatment-plans/${id}`)
-      if (!response.ok) throw new Error('Failed to fetch treatment plan')
+      if (!response.ok) throw new Error(t('Failed to fetch treatment plan'))
       const data = await response.json()
       setPlan(data)
     } catch (error) {
@@ -134,7 +134,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (!response.ok) throw new Error('Failed to update status')
+      if (!response.ok) throw new Error(t('Failed to update status'))
       fetchPlan()
     } catch (error) {
       console.error('Error updating status:', error)
@@ -154,7 +154,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           status: plan?.status === 'PROPOSED' ? 'ACCEPTED' : plan?.status,
         }),
       })
-      if (!response.ok) throw new Error('Failed to record consent')
+      if (!response.ok) throw new Error(t('Failed to record consent'))
       setConsentDialogOpen(false)
       fetchPlan()
     } catch (error) {
@@ -172,7 +172,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'CANCELLED' }),
       })
-      if (!response.ok) throw new Error('Failed to cancel plan')
+      if (!response.ok) throw new Error(t('Failed to cancel plan'))
       setCancelDialogOpen(false)
       fetchPlan()
     } catch (error) {

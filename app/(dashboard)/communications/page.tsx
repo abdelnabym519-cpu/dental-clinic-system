@@ -63,7 +63,7 @@ export default function CommunicationsPage() {
         setSmsPhone('')
         setSmsMessage('')
       } else {
-        throw new Error(data.error || 'Failed to send SMS')
+        throw new Error(data.error || t('Failed to send SMS'))
       }
     } catch (error: any) {
       toast({
@@ -109,7 +109,7 @@ export default function CommunicationsPage() {
         setEmailSubject('')
         setEmailBody('')
       } else {
-        throw new Error(data.error || 'Failed to send email')
+        throw new Error(data.error || t('Failed to send email'))
       }
     } catch (error: any) {
       toast({

@@ -89,7 +89,7 @@ export default function IntegrationsPage() {
       const res = await fetch('/api/integrations/google-calendar/auth')
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || 'Failed to start connection')
+        throw new Error(err.error || t('Failed to start connection'))
       }
       const data = await res.json()
       window.location.href = data.authUrl
@@ -136,7 +136,7 @@ export default function IntegrationsPage() {
       const res = await fetch('/api/integrations/google-calendar/disconnect', {
         method: 'POST',
       })
-      if (!res.ok) throw new Error('Failed to disconnect')
+      if (!res.ok) throw new Error(t('Failed to disconnect'))
       toast({ title: 'Google Calendar disconnected' })
       setCalendarStatus({ connected: false, integration: null })
     } catch (err: any) {

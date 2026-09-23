@@ -139,7 +139,7 @@ export default function LeavesPage() {
       if (leaveTypeFilter !== 'all') params.append('leaveType', leaveTypeFilter)
 
       const response = await fetch(`/api/staff/leaves?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch leaves')
+      if (!response.ok) throw new Error(t('Failed to fetch leaves'))
 
       const data = await response.json()
       setLeaves(data.leaves)
@@ -159,7 +159,7 @@ export default function LeavesPage() {
   const fetchStaff = async () => {
     try {
       const response = await fetch('/api/staff?all=true&status=active')
-      if (!response.ok) throw new Error('Failed to fetch staff')
+      if (!response.ok) throw new Error(t('Failed to fetch staff'))
 
       const data = await response.json()
       setStaffList(data.staff)
@@ -242,7 +242,7 @@ export default function LeavesPage() {
         body: JSON.stringify({ status: newStatus }),
       })
 
-      if (!response.ok) throw new Error('Failed to update leave status')
+      if (!response.ok) throw new Error(t('Failed to update leave status'))
 
       toast({
         title: 'Success',

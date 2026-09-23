@@ -86,7 +86,7 @@ export function PaymentCheckout({
           handleRedirectCheckout(checkout)
           break
         default:
-          throw new Error(`Unsupported provider: ${checkout.provider}`)
+          throw new Error(t('Unsupported provider: {provider}', { provider: checkout.provider }))
       }
     } catch (err: unknown) {
       setState('error')

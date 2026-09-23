@@ -112,7 +112,7 @@ export default function NewPatientPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(data.error || `Failed to create patient (${response.status})`)
+        throw new Error(data.error || t('Failed to create patient ({status})', { status: response.status }))
       }
 
       const patient = await response.json()

@@ -125,7 +125,7 @@ export default function PaymentsPage() {
       if (dateTo) params.append('dateTo', dateTo)
 
       const response = await fetch(`/api/payments?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch payments')
+      if (!response.ok) throw new Error(t('Failed to fetch payments'))
 
       const data = await response.json()
       setPayments(data.payments)

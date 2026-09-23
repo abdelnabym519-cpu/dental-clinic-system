@@ -122,7 +122,7 @@ export function AppointmentDrawer({
     const load = async () => {
       try {
         const res = await fetch(`/api/appointments/${appointmentId}`)
-        if (!res.ok) throw new Error('Failed to load the appointment')
+        if (!res.ok) throw new Error(t('Failed to load the appointment'))
         const data = await res.json()
         if (!cancelled) {
           setAppointment(data)
@@ -179,7 +179,7 @@ export function AppointmentDrawer({
   const cancelWithReason = () => {
     const reason = window.prompt('Cancellation reason (recorded on the appointment):')
     if (reason === null) return
-    setStatus('CANCELLED', { cancellationReason: reason || 'Cancelled from Agenda' })
+    setStatus('CANCELLED', { cancellationReason: reason || t('Cancelled from Agenda') })
   }
 
   const addReminder = async () => {

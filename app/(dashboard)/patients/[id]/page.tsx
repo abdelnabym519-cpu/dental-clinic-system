@@ -241,7 +241,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || `Failed to fetch patient (${response.status})`)
+        throw new Error(errorData.error || t('Failed to fetch patient ({status})', { status: response.status }))
       }
 
       const data = await response.json()
@@ -251,7 +251,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to load patient details',
+        description: error.message || t('Failed to load patient details'),
       })
     } finally {
       setLoading(false)
@@ -267,7 +267,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       setTimelineLoading(true)
       const typeParam = timelineFilter !== 'all' ? `?type=${timelineFilter}` : ''
       const response = await fetch(`/api/patients/${resolvedParams.id}/timeline${typeParam}`)
-      if (!response.ok) throw new Error('Failed to fetch timeline')
+      if (!response.ok) throw new Error(t('Failed to fetch timeline'))
 
       const data = await response.json()
       setTimelineEvents(data.events)
@@ -311,7 +311,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to upload document')
+        throw new Error(error.error || t('Failed to upload document'))
       }
 
       toast({
@@ -328,7 +328,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to upload document',
+        description: error.message || t('Failed to upload document'),
       })
     } finally {
       setUploading(false)
@@ -340,7 +340,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       const response = await fetch(
         `/api/patients/${resolvedParams.id}/documents/${doc.id}?download=true`
       )
-      if (!response.ok) throw new Error('Failed to download document')
+      if (!response.ok) throw new Error(t('Failed to download document'))
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
@@ -396,7 +396,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete document')
+      if (!response.ok) throw new Error(t('Failed to delete document'))
 
       toast({
         title: 'Success',

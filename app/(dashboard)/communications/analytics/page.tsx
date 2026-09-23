@@ -90,7 +90,7 @@ export default function CampaignAnalyticsPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/communications/analytics?period=${p}`)
-      if (!res.ok) throw new Error('Failed to fetch analytics')
+      if (!res.ok) throw new Error(t('Failed to fetch analytics'))
       const json = await res.json()
       setData(json)
     } catch (err: any) {

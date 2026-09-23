@@ -88,7 +88,7 @@ export function PayPage({
 
       if (!orderRes.ok) {
         const data = await orderRes.json()
-        throw new Error(data.error || 'Failed to create payment')
+        throw new Error(data.error || t('Failed to create payment'))
       }
 
       const orderData = await orderRes.json()
@@ -103,7 +103,7 @@ export function PayPage({
           handleRedirect(checkout.redirectUrl)
           break
         default:
-          throw new Error('Unsupported provider')
+          throw new Error(t('Unsupported provider'))
       }
     } catch (err: unknown) {
       setState('error')

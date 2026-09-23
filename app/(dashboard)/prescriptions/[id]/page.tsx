@@ -83,7 +83,7 @@ export default function PrescriptionDetailPage() {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: err.message || 'Failed to load prescription',
+          description: err.message || t('Failed to load prescription'),
         })
       } finally {
         setLoading(false)
@@ -105,7 +105,7 @@ export default function PrescriptionDetailPage() {
     if (!ok) return
     try {
       const res = await fetch(`/api/prescriptions/${params.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) throw new Error(t('Failed'))
       toast({ title: 'Deleted' })
       router.push('/prescriptions')
     } catch {

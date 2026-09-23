@@ -99,7 +99,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
           router.push('/staff')
           return
         }
-        throw new Error('Failed to fetch staff')
+        throw new Error(t('Failed to fetch staff'))
       }
 
       const data = await response.json()

@@ -91,7 +91,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
     try {
       setLoading(true)
       const res = await fetch(`/api/video/consultations/${id}`)
-      if (!res.ok) throw new Error('Failed to fetch consultation')
+      if (!res.ok) throw new Error(t('Failed to fetch consultation'))
       const data = await res.json()
       setConsultation(data)
     } catch {
@@ -134,7 +134,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
       setActionLoading(true)
       // Get token
       const tokenRes = await fetch(`/api/video/token?consultationId=${id}`)
-      if (!tokenRes.ok) throw new Error('Failed to get join token')
+      if (!tokenRes.ok) throw new Error(t('Failed to get join token'))
       const data = await tokenRes.json()
       setTokenData(data)
 
@@ -158,7 +158,7 @@ export default function DoctorVideoPage({ params }: { params: Promise<{ id: stri
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'end', notes }),
       })
-      if (!res.ok) throw new Error('Failed to end consultation')
+      if (!res.ok) throw new Error(t('Failed to end consultation'))
       setInCall(false)
       await fetchConsultation()
       toast({ title: 'Consultation ended and notes saved' })

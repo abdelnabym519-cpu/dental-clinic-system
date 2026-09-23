@@ -134,7 +134,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
     try {
       setLoading(true)
       const res = await fetch(`/api/payment-plans/${id}`)
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) throw new Error(t('Failed to fetch'))
       const data = await res.json()
       setPlan(data)
     } catch {

@@ -119,7 +119,7 @@ export default function SegmentsPage() {
     try {
       setAiLoading(true)
       const res = await fetch('/api/ai/patient-segments')
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) throw new Error(t('Failed'))
       setAiData(await res.json())
     } catch {
       toast({ title: 'Failed to load AI segments', variant: 'destructive' })
@@ -132,7 +132,7 @@ export default function SegmentsPage() {
     async function fetchSegments() {
       try {
         const res = await fetch('/api/crm/segments')
-        if (!res.ok) throw new Error('Failed to fetch')
+        if (!res.ok) throw new Error(t('Failed to fetch'))
         setData(await res.json())
       } catch {
         toast({ title: 'Failed to load segments', variant: 'destructive' })

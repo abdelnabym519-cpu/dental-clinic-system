@@ -135,7 +135,7 @@ export default function FinancialReportsPage() {
       }
 
       const response = await fetch(`/api/billing/reports?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch report')
+      if (!response.ok) throw new Error(t('Failed to fetch report'))
       const data = await response.json()
 
       switch (type) {

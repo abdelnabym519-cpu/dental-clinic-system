@@ -66,7 +66,7 @@ export default function CommunicationSettingsPage() {
       const response = await fetch('/api/settings/communications')
 
       if (!response.ok) {
-        throw new Error('Failed to load settings')
+        throw new Error(t('Failed to load settings'))
       }
 
       const data = await response.json()

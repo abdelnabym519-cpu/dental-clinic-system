@@ -134,7 +134,7 @@ export default function AutomationsPage() {
     setLoading(true)
     try {
       const res = await fetch('/api/communications/automations')
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) throw new Error(t('Failed to fetch'))
       const json = await res.json()
       setAutomations(json.automations)
     } catch (err: any) {
@@ -259,7 +259,7 @@ export default function AutomationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: auto.id, isActive: !auto.isActive }),
       })
-      if (!res.ok) throw new Error('Failed to update')
+      if (!res.ok) throw new Error(t('Failed to update'))
       setAutomations((prev) =>
         prev.map((a) => (a.id === auto.id ? { ...a, isActive: !a.isActive } : a))
       )
@@ -282,7 +282,7 @@ export default function AutomationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       })
-      if (!res.ok) throw new Error('Failed to delete')
+      if (!res.ok) throw new Error(t('Failed to delete'))
       setAutomations((prev) => prev.filter((a) => a.id !== id))
       toast({ title: 'Success', description: 'Automation deleted' })
     } catch (err: any) {

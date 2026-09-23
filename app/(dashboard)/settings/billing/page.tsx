@@ -86,7 +86,7 @@ export default function BillingSettingsPage() {
           description: 'Billing settings saved successfully',
         })
       } else {
-        throw new Error('Failed to save settings')
+        throw new Error(t('Failed to save settings'))
       }
     } catch (error: any) {
       toast({

@@ -72,7 +72,7 @@ export default function PricingSuggestionsPage() {
     setLoading(true)
     try {
       const res = await fetch('/api/ai/pricing-suggestions')
-      if (!res.ok) throw new Error('Failed to generate suggestions')
+      if (!res.ok) throw new Error(t('Failed to generate suggestions'))
       const result = await res.json()
       setData(result.suggestions)
       setGeneratedAt(result.generatedAt)

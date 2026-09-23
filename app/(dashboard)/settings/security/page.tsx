@@ -50,7 +50,7 @@ export default function SecuritySettingsPage() {
       setLoading(true)
       const response = await fetch('/api/settings/security')
 
-      if (!response.ok) throw new Error('Failed to load settings')
+      if (!response.ok) throw new Error(t('Failed to load settings'))
 
       const data = await response.json()
       const settings = data.data || {}
@@ -117,7 +117,7 @@ export default function SecuritySettingsPage() {
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to save settings')
+      if (!response.ok) throw new Error(t('Failed to save settings'))
 
       toast({
         title: 'Success',

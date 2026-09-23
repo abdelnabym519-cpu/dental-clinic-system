@@ -67,7 +67,7 @@ export default function ComplianceReportsPage() {
         fetch('/api/sterilization/logs?limit=500'),
       ])
 
-      if (!instrRes.ok || !logsRes.ok) throw new Error('Failed to fetch data')
+      if (!instrRes.ok || !logsRes.ok) throw new Error(t('Failed to fetch data'))
 
       const instrData = await instrRes.json()
       const logsData = await logsRes.json()

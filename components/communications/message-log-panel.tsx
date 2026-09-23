@@ -74,7 +74,7 @@ export function MessageLogPanel() {
       if (status !== 'all') params.set('status', status)
       if (channel !== 'all') params.set('channel', channel)
       const res = await fetch(`/api/communications/messages?${params.toString()}`)
-      if (!res.ok) throw new Error('Failed to load the message log')
+      if (!res.ok) throw new Error(t('Failed to load the message log'))
       const data = await res.json()
       setRows(data.rows ?? [])
       setTotal(data.total ?? 0)
@@ -98,7 +98,7 @@ export function MessageLogPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       })
-      if (!res.ok) throw new Error('Action failed')
+      if (!res.ok) throw new Error(t('Action failed'))
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed')
