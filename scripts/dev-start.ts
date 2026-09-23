@@ -60,7 +60,7 @@ export const CORE_SERVICES = ['mysql', 'redis']
 /** 3 minutes: a cold image pull plus first-time volume init can exceed less.
  * The timeout exists so a broken setup fails instead of hanging forever. */
 export const DEFAULT_READINESS_TIMEOUT_MS = 180_000
-const DEFAULT_READINESS_INTERVAL_MS = 2_000
+export const DEFAULT_READINESS_INTERVAL_MS = 2_000
 
 export class StartupError extends Error {}
 
@@ -247,7 +247,53 @@ async function waitForMysqlReady(
   intervalMs: number
 ) {
   log('Waiting for MySQL to accept connections...')
-  const deadline = Date.now() + timeoutMs
+  await waitForDatabaseReady(prisma, deps.sleep, {
+    timeoutMs,
+    intervalMs,
+    composeFile,
+    log,
+  })
+  log('MySQL is ready (a live SELECT 1 succeeded through Prisma).')
+}
+
+/**
+ * The client surface the readiness probe needs (a full Prisma client
+ * satisfies it structurally).
+ */
+export interface DatabaseReadyProbe {
+  $queryRawUnsafe(query: string): Promise<unknown>
+}
+
+export interface ReadyWaitOptions {
+  timeoutMs: number
+  intervalMs: number
+  /** Named in the error message for `docker compose ... ps` / `logs` hints. */
+  composeFile: string
+  /** Receives the bounded wait's progress lines (attempt count + time left). */
+  log?: (message: string) => void
+}
+
+/**
+ * Bounded, observable readiness probe — the ONLY "is the database usable"
+ * check in the startup/verification flow: poll a live `SELECT 1` through the
+ * given client until it succeeds or `timeoutMs` is exhausted.
+ *
+ * `runSafeStartup` uses it right after the containers start;
+ * `scripts/verify-persistence.ts` uses it with its own FRESH client after a
+ * full stop/start cycle (a client whose engine was connected to the stopped
+ * container cannot be trusted to reconnect — see that script's header).
+ *
+ * No fixed sleeps: every attempt is a real query, the wait is bounded
+ * (a broken setup fails instead of hanging forever), and the last error is
+ * reported with compose diagnostics.
+ */
+export async function waitForDatabaseReady(
+  prisma: DatabaseReadyProbe,
+  sleep: (ms: number) => Promise<void>,
+  opts: ReadyWaitOptions
+): Promise<void> {
+  const logLine = opts.log ?? (() => {})
+  const deadline = Date.now() + opts.timeoutMs
   let lastError = ''
   for (let attempt = 1; ; attempt++) {
     try {
@@ -260,18 +306,18 @@ async function waitForMysqlReady(
       if (Date.now() >= deadline) break
       if (attempt === 1 || attempt % 15 === 0) {
         const secondsLeft = Math.max(0, Math.round((deadline - Date.now()) / 1000))
-        log(`  still waiting (${attempt} attempts, ~${secondsLeft}s left)...`)
+        logLine(`  still waiting (${attempt} attempts, ~${secondsLeft}s left)...`)
       }
-      await deps.sleep(intervalMs)
+      await sleep(opts.intervalMs)
     }
   }
   throw new StartupError(
     [
-      `MySQL did not become ready within ${Math.round(timeoutMs / 1000)}s.`,
+      `MySQL did not become ready within ${Math.round(opts.timeoutMs / 1000)}s.`,
       `  Last error: ${lastError}`,
       '  Diagnostics:',
-      `    docker compose -f ${composeFile} ps`,
-      `    docker compose -f ${composeFile} logs mysql`,
+      `    docker compose -f ${opts.composeFile} ps`,
+      `    docker compose -f ${opts.composeFile} logs mysql`,
       '  Common causes: the Docker engine just started and is still',
       '  initializing a fresh volume (re-run the same command); port 3306 is',
       '  taken by a different MySQL server; wrong DATABASE_URL in .env.',

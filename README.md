@@ -262,6 +262,13 @@ sentinel and the seeded admin survived, and the seed was **not** re-run on the
 populated database. It exits non-zero if anything regressed. Nothing is ever
 deleted. Without `--restart` it only snapshots and creates the sentinel.
 
+One lifecycle detail: the BEFORE snapshot's database client is disconnected
+before the stack stops, and the AFTER snapshot is taken with a **fresh**
+client that first passes a bounded live-query readiness check. A client whose
+engine was connected to the stopped MySQL container cannot be trusted to
+reconnect after the container is replaced, so the verification never depends
+on one.
+
 ### Login stopped working because the admin password drifted?
 
 If the seeded admin row exists (active, linked to an active hospital) but
