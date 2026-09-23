@@ -215,7 +215,7 @@ export default async function PricingPage() {
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
                       {plan.price === 'Custom' ? '' : t("EGP ")}
-                      {plan.price}
+                      {t(plan.price)}
                     </span>
                     {plan.priceNote ? (
                       <span className="text-muted-foreground"> {t(plan.priceNote)}</span>

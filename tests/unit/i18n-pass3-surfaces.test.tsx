@@ -10,7 +10,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import React from 'react'
+import { readFileSync } from 'node:fs'
 
+import { translate, translateText } from '@/lib/i18n/dictionary'
 import ar from '../../locales/ar.json'
 import en from '../../locales/en.json'
 
@@ -255,5 +257,141 @@ describe('breadcrumbs', () => {
     const nav = screen.getByRole('navigation')
     expect(nav.textContent).toContain('Settings')
     expect(nav.textContent).toContain('Profile')
+  })
+})
+
+/**
+ * Phase-9 browser-audit regressions.
+ *
+ * The final gate drove a real Chromium over the app and found three strings
+ * that rendered as English in Arabic mode:
+ *   - the `/settings/setup-guide` breadcrumb, because the segment had no
+ *     ROUTE_LABELS entry and the slug fallback produced "Setup guide";
+ *   - the "~5 min per staff" style durations on the setup-guide cards, which
+ *     were interpolated without `t()`;
+ *   - the selected payment-terms label on the new-invoice form, which used the
+ *     raw `option.label` from lib/billing-utils.
+ */
+describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
+  it('translates the setup-guide breadcrumb instead of slug-rendering it', () => {
+    hoisted.path = '/settings/setup-guide'
+    render(
+      <LanguageProvider initialLocale="ar-EG">
+        <Breadcrumb />
+      </LanguageProvider>
+    )
+    const text = screen.getByRole('navigation').textContent || ''
+    expect(text).toContain(ar['nav.setupGuide'])
+    expect(text).not.toContain('Setup guide')
+  })
+
+  it('renders the breadcrumb in English for en-EG', () => {
+    hoisted.path = '/settings/setup-guide'
+    render(
+      <LanguageProvider initialLocale="en-EG">
+        <Breadcrumb />
+      </LanguageProvider>
+    )
+    expect(screen.getByRole('navigation').textContent).toContain('Setup Guide')
+  })
+
+  it('has Arabic for every setup-guide duration label', () => {
+    const durations = ['2 min', '5 min', '10 min', '15 min', '5 min per staff', '10 min per device', '15-30 min', '20-60 min']
+    for (const d of durations) {
+      expect(ar[d], `ar:${d}`).toBeTruthy()
+      expect(ar[d]).toMatch(/[\u0600-\u06FF]/)
+      expect(en[d]).toBe(d)
+    }
+  })
+
+  it('localizes every payment-terms label offered on the new-invoice form', () => {
+    const terms = ['Due on Receipt', 'Net 7 Days', 'Net 15 Days', 'Net 30 Days', 'Net 45 Days', 'Net 60 Days']
+    for (const term of terms) {
+      expect(ar[term], `ar:${term}`).toMatch(/[\u0600-\u06FF]/)
+      expect(translate('ar-EG', term)).toBe(ar[term])
+    }
+  })
+
+  it('keeps the three fixed call sites wrapped in t()', () => {
+    const setupGuide = readFileSync('app/(dashboard)/settings/setup-guide/page.tsx', 'utf8')
+    expect(setupGuide).toContain('~{t(section.estimatedTime)}')
+    const invoiceForm = readFileSync('app/(dashboard)/billing/invoices/new/page.tsx', 'utf8')
+    expect(invoiceForm).toContain('{t(option.label)}')
+    const breadcrumb = readFileSync('components/ui/breadcrumb.tsx', 'utf8')
+    expect(breadcrumb).toContain("'setup-guide': 'Setup Guide'")
+  })
+
+  it('localizes the discount-type, plan-price and plan-note labels', () => {
+    const newKeys: Record<string, string> = {
+      'Fixed Amount (EGP)': 'مبلغ ثابت (ج.م)',
+      Custom: 'حسب الطلب',
+      'one-time': 'دفعة واحدة',
+    }
+    for (const [key, arabic] of Object.entries(newKeys)) {
+      expect(ar[key], `ar:${key}`).toBe(arabic)
+      expect(ar[key]).toMatch(/[\u0600-\u06FF]/)
+      expect(en[key], `en:${key}`).toBe(key)
+      expect(translate('ar-EG', key)).toBe(arabic)
+    }
+    const invoiceForm = readFileSync('app/(dashboard)/billing/invoices/new/page.tsx', 'utf8')
+    expect(invoiceForm).toContain("t('Fixed Amount (EGP)')")
+    expect(invoiceForm).not.toContain("t('EGP  Fixed')")
+    for (const f of ['app/(auth)/pricing/page.tsx', 'app/(dashboard)/settings/subscription/page.tsx']) {
+      const src = readFileSync(f, 'utf8')
+      expect(src, f).toContain('{t(plan.price)}')
+      expect(src, f).not.toContain('{plan.price}\n')
+    }
+    expect(readFileSync('app/(dashboard)/settings/subscription/page.tsx', 'utf8')).toContain('{t(plan.priceNote)}')
+  })
+
+  it('resolves every audited breadcrumb crumb to Arabic (no slug fallback leaks)', () => {
+    // Mirrors <Breadcrumb/>'s own lookup: ROUTE_LABELS entry, else the
+    // title-cased slug, then translate() (exact key, else English-value reverse index).
+    const crumbs: Record<string, string> = {
+      'setup-guide': 'Setup Guide',
+      'audit-log': 'Audit Log',
+      orders: 'Lab Orders',
+      portal: 'Patient Portal',
+      'access-denied': 'Access denied',
+    }
+    for (const [segment, label] of Object.entries(crumbs)) {
+      // <Breadcrumb/> goes through the provider's t(), i.e. translateText():
+      // exact key, else the English-value reverse index, else raw text.
+      const out = translateText('ar-EG', label)
+      expect(out, `crumb ${segment}`).toMatch(/[\u0600-\u06FF]/)
+      expect(out).not.toBe(label)
+    }
+    const src = readFileSync('components/ui/breadcrumb.tsx', 'utf8')
+    for (const segment of Object.keys(crumbs)) {
+      // keys may be written quoted or bare in the map literal
+      expect(new RegExp(`^\\s*'?${segment}'?:`, 'm').test(src), `ROUTE_LABELS:${segment}`).toBe(true)
+    }
+  })
+
+  it('localizes weekday labels on the clinic schedule and staff shift screens', () => {
+    const days: Record<string, string> = {
+      Sunday: 'الأحد',
+      Monday: 'الاثنين',
+      Tuesday: 'الثلاثاء',
+      Wednesday: 'الأربعاء',
+      Thursday: 'الخميس',
+      Friday: 'الجمعة',
+      Saturday: 'السبت',
+    }
+    for (const [en_, ar_] of Object.entries(days)) {
+      expect(ar[en_ as keyof typeof ar], `ar:${en_}`).toBe(ar_)
+      expect(translateText('ar-EG', en_)).toBe(ar_)
+      expect(translateText('en-EG', en_)).toBe(en_)
+    }
+    // every render site must go through t(); the raw arrays leaked English
+    // weekday names into the Arabic schedule pickers.
+    for (const f of [
+      'app/(dashboard)/settings/clinic/page.tsx',
+      'app/(dashboard)/staff/[id]/page.tsx',
+      'app/(dashboard)/staff/[id]/edit/page.tsx',
+    ]) {
+      const src = readFileSync(f, 'utf8')
+      expect(src, f).toMatch(/t\((DAY_LABELS\[day\]|day|dayNames\[index\])\)/)
+    }
   })
 })

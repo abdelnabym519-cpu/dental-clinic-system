@@ -1025,7 +1025,7 @@ export default function SetupGuidePage() {
                         <CardTitle className="text-base">{t(section.title)}</CardTitle>
                         <PriorityBadge priority={section.priority} />
                         <span className="text-xs text-muted-foreground">
-                          ~{section.estimatedTime}
+                          ~{t(section.estimatedTime)}
                         </span>
                       </div>
                       <CardDescription className="text-sm">{t(section.description)}</CardDescription>

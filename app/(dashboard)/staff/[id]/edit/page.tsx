@@ -583,7 +583,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium">{dayNames[index]}</span>
+                      <span className="font-medium">{t(dayNames[index])}</span>
                       <Switch
                         checked={shift.isActive}
                         onCheckedChange={(checked) =>

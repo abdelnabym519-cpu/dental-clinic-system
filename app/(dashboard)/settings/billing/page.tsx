@@ -23,22 +23,24 @@ export default function BillingSettingsPage() {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
 
-  const [settings, setSettings] = useState({
+  // The seeded defaults are localized on first render (the saved values come
+  // from /api/settings and are shown verbatim). Without this the Arabic UI
+  // showed the English placeholder defaults as editable text in the boxes.
+  const [settings, setSettings] = useState(() => ({
     cgstRate: '14',
     sgstRate: '0',
     defaultPaymentTerms: '30',
     invoicePrefix: 'INV',
     receiptPrefix: 'REC',
     invoiceStartingNumber: '1001',
-    invoiceNotes: 'Thank you for choosing our services.',
-    termsAndConditions:
-      'Payment is due within 30 days from the invoice date.\nLate payments may incur additional charges.',
+    invoiceNotes: t('Thank you for choosing our services.'),
+    termsAndConditions: t('settings.billing.defaultTerms'),
     currencySymbol: 'EGP ',
     currencyCode: 'EGP',
     enableAutoInvoice: 'true',
     lateFeePercentage: '2',
     minimumDueAmount: '100',
-  })
+  }))
 
   useEffect(() => {
     fetchSettings()

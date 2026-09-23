@@ -63,6 +63,20 @@ const ROUTE_LABELS: Record<string, string> = {
   system: 'System',
   subscription: 'Subscription',
   procedures: 'Procedures',
+  // Slug-fallback labels that the dictionaries do not carry verbatim, so they
+  // would otherwise render raw English crumbs. Each value below is chosen to be
+  // an existing dictionary entry (or an existing English value) so the crumb
+  // reuses wording the app already translates:
+  //   /settings/setup-guide -> "Setup Guide"
+  //   /reports/audit-log    -> "Audit Log"
+  //   /lab/orders*          -> "Lab Orders"
+  //   /portal/*             -> "Patient Portal"
+  //   /settings/access-denied -> "Access denied" (new key, added to both locales)
+  'setup-guide': 'Setup Guide',
+  'audit-log': 'Audit Log',
+  orders: 'Lab Orders',
+  portal: 'Patient Portal',
+  'access-denied': 'Access denied',
 }
 
 function isUUID(segment: string): boolean {

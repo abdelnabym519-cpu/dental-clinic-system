@@ -438,7 +438,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                           shift && shift.isActive ? 'bg-green-50' : 'bg-muted/50'
                         }`}
                       >
-                        <span className="font-medium">{day}</span>
+                        <span className="font-medium">{t(day)}</span>
                         <span
                           className={
                             shift && shift.isActive ? 'text-green-700' : 'text-muted-foreground'

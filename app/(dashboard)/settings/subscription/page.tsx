@@ -312,10 +312,10 @@ export default function SubscriptionPage() {
                   <div className="mb-4">
                     <span className="text-3xl font-bold">
                       {plan.price === 'Custom' ? '' : t("EGP ")}
-                      {plan.price}
+                      {t(plan.price)}
                     </span>
                     {plan.priceNote ? (
-                      <span className="text-muted-foreground"> {plan.priceNote}</span>
+                      <span className="text-muted-foreground"> {t(plan.priceNote)}</span>
                     ) : plan.price !== 'Custom' && plan.price !== '0' ? (
                       <span className="text-muted-foreground">{t("/month")}</span>
                     ) : null}

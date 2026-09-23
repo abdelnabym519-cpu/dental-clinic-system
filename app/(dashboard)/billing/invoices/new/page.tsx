@@ -597,7 +597,7 @@ export default function NewInvoicePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="FIXED">{t('EGP  Fixed')}</SelectItem>
+                      <SelectItem value="FIXED">{t('Fixed Amount (EGP)')}</SelectItem>
                       <SelectItem value="PERCENTAGE">{t("% Percent")}</SelectItem>
                     </SelectContent>
                   </Select>
@@ -623,7 +623,7 @@ export default function NewInvoicePage() {
                   <SelectContent>
                     {paymentTermsOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value.toString()}>
-                        {option.label}
+                        {t(option.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>

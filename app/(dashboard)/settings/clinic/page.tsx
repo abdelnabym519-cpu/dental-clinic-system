@@ -538,7 +538,7 @@ export default function ClinicSettingsPage() {
                   key={day}
                   className="grid grid-cols-1 md:grid-cols-[140px_1fr_1fr_80px_40px] gap-3 items-center"
                 >
-                  <span className="text-sm font-medium">{DAY_LABELS[day]}</span>
+                  <span className="text-sm font-medium">{t(DAY_LABELS[day])}</span>
                   <Input
                     type="time"
                     value={d.closed ? '' : d.open}
