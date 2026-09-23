@@ -45,6 +45,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "npx tsx prisma/seed.ts",
+    "db:restore-dev-admin": "npx tsx scripts/restore-dev-admin.ts",
     "verify:persistence": "npx tsx scripts/verify-persistence.ts",
     "storage:migrate": "npx tsx scripts/migrate-storage.ts",
     "db:studio": "prisma studio",

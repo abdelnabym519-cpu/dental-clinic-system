@@ -249,7 +249,13 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error(`[verify] Unexpected error: ${err instanceof Error ? err.stack : String(err)}`)
-  process.exit(1)
-})
+// The orchestrator is importable (scripts/dev-start.ts is imported by it);
+// only run the CLI when this file is the entry point (npx tsx
+// scripts/verify-persistence.ts).
+const entryPoint = process.argv[1]
+if (entryPoint !== undefined && path.resolve(entryPoint) === path.resolve(__filename)) {
+  main().catch((err) => {
+    console.error(`[verify] Unexpected error: ${err instanceof Error ? err.stack : String(err)}`)
+    process.exit(1)
+  })
+}

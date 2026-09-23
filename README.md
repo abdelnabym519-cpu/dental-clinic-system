@@ -224,6 +224,50 @@ it can never duplicate sample rows or overwrite accounts you changed.
 > If a startup fails, fix the reported step and re-run `npm run dev:start`;
 > it is safe to re-run at any time.
 
+### Intentionally initialising a fresh database
+
+To deliberately start over from an empty, seeded database, you must perform
+the destructive step yourself, then let the normal startup do the rest:
+
+```bash
+npx prisma migrate reset --force    # DESTRUCTIVE — you are choosing this
+npm run dev:start                   # migrate deploy + seed (runs once) + app
+```
+
+`dev:start` alone will **never** do the destructive part. On a database that
+already has data it only migrates and skips the seed.
+
+### Proving data survives a restart
+
+```bash
+npm run verify:persistence -- --restart
+```
+
+This takes a snapshot (row counts of users, hospitals, patients, appointments,
+invoices, plus the seeded-admin and a single sentinel record), stops the stack
+(`docker compose down` — volumes are kept), runs the **real** safe startup
+(`dev:start`'s database path), and re-verifies: no table lost rows, the
+sentinel and the seeded admin survived, and the seed was **not** re-run on the
+populated database. It exits non-zero if anything regressed. Nothing is ever
+deleted. Without `--restart` it only snapshots and creates the sentinel.
+
+### Login stopped working because the admin password drifted?
+
+If the seeded admin row exists (active, linked to an active hospital) but
+`bcrypt.compare()` of the documented password against the stored hash is
+`false`, the database is fine and the fix is a **separate, explicit** command
+— it is deliberately _not_ part of the normal startup, which must never modify
+an existing database:
+
+```bash
+npm run db:restore-dev-admin
+```
+
+It sets the documented development password on the seeded admin account only
+(one row, one column), reports the result without printing the secret, and
+warns (without acting) if the account is currently inactive. It never resets,
+deletes, drops or re-seeds.
+
 ### Default Credentials (after seeding)
 
 | Role        | Email                   | Password    |
@@ -266,7 +310,9 @@ npm run db:generate  # Generate Prisma client
 npm run db:push      # Push schema without recording a migration (dev only)
 npm run db:migrate   # Create a migration from schema changes (development)
 npm run db:migrate:deploy  # Apply pending migrations (setup and deploys)
-npm run db:seed      # Seed sample data
+npm run db:seed      # Seed sample data (only for a fresh database — dev:start handles this)
+npm run db:restore-dev-admin  # One-off: restore the documented dev admin password (never part of startup)
+npm run verify:persistence    # Prove existing data survives stop -> start (add --restart for the full cycle)
 npm run db:studio    # Open Prisma Studio (DB GUI)
 ```
 
