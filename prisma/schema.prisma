@@ -148,18 +148,52 @@ enum Plan {
 model Subscription {
   id                     String             @id @default(cuid())
   hospitalId             String             @unique
+  // Plan tiers reuse the existing Plan enum (FREE/PROFESSIONAL/ENTERPRISE/
+  // SELF_HOSTED) - deliberately NOT a new enum: this column predates Phase 9
+  // and changing its value set would be destructive to existing rows.
   plan                   Plan
-  status                 SubscriptionStatus @default(ACTIVE)
+  // Status lifecycle (Phase 9 licensing): TRIAL/ACTIVE run normally,
+  // GRACE_PERIOD stays usable after period end, EXPIRED/SUSPENDED/CANCELLED
+  // hard-block the tenant. Legacy PAST_DUE/TRIALING values remain for rows
+  // created before Phase 9.
+  status                 SubscriptionStatus @default(TRIAL)
   currentPeriodStart     DateTime
   currentPeriodEnd       DateTime
   cancelledAt            DateTime?
   paymentProvider        String?
   externalSubscriptionId String?
+
+  // Phase 9 licensing management
+  gracePeriodDays        Int                @default(3)
+  autoRenew              Boolean            @default(false)
+  notes                  String?            @db.Text
+  managedBy              String?
+
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
 
   hospital               Hospital           @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   payments               SubscriptionPayment[]
+  auditLogs              LicenseAuditLog[]
+
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+model LicenseAuditLog {
+  id             String             @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  action         String // CREATED, RENEWED, SUSPENDED, REACTIVATED, EXPIRED, GRACE_STARTED, STATUS_CHANGED_TO_*, UPDATED
+  previousStatus SubscriptionStatus?
+  newStatus      SubscriptionStatus
+  performedBy    String? // userId; null = system (cron/seed)
+  notes          String?            @db.Text
+  metadata       Json?
+  createdAt      DateTime           @default(now())
+
+  @@index([subscriptionId])
+  @@index([createdAt])
 }
 
 model SubscriptionPayment {
@@ -185,6 +219,10 @@ enum SubscriptionStatus {
   CANCELLED
   EXPIRED
   TRIALING
+  // Phase 9 licensing statuses
+  TRIAL
+  GRACE_PERIOD
+  SUSPENDED
 }
 
 enum SubscriptionPaymentStatus {
@@ -198,7 +236,9 @@ enum SubscriptionPaymentStatus {
 
 model User {
   id              String    @id @default(cuid())
-  hospitalId      String
+  // Nullable on purpose: the platform-level SUPER_ADMIN (licensing/subscription
+  // management, Phase 9) belongs to no hospital. All other roles stay scoped.
+  hospitalId      String?
   email           String    @unique
   password        String
   name            String
@@ -219,7 +259,7 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  hospital        Hospital  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  hospital        Hospital? @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   staff           Staff?
   auditLogs       AuditLog[]
   notifications   Notification[]
@@ -274,6 +314,7 @@ model VerificationToken {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   DOCTOR
   RECEPTIONIST

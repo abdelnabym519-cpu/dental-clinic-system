@@ -106,6 +106,59 @@ async function main() {
 
   console.log('Created admin user:', admin.email)
 
+  // Phase 9 licensing: the platform-level SUPER_ADMIN belongs to no hospital
+  // and manages every clinic's subscription from /super-admin.
+  // Deliberately `update: {}` — a seed re-run must NEVER overwrite the
+  // platform account's password (unlike the demo admin, whose documented
+  // credential must stay restamped so a reset always yields a loginable row).
+  // Documented credential: SuperAdmin@123
+  const superAdminPassword = await bcrypt.hash('SuperAdmin@123', 12)
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'superadmin@dentora.com' },
+    update: {},
+    create: {
+      email: 'superadmin@dentora.com',
+      name: 'محمد عبدالنبي - SUPER ADMIN',
+      password: superAdminPassword,
+      role: Role.SUPER_ADMIN,
+      hospitalId: null,
+      isActive: true,
+    },
+  })
+  console.log('Created super admin user:', superAdmin.email)
+
+  // Phase 9 licensing: the demo hospital starts with a 30-day subscription.
+  // Created only when missing — an existing subscription belongs to the
+  // SUPER_ADMIN (via /super-admin) and the seed never touches it.
+  const existingSubscription = await prisma.subscription.findUnique({
+    where: { hospitalId: hospital.id },
+  })
+  if (!existingSubscription) {
+    const subscription = await prisma.subscription.create({
+      data: {
+        hospitalId: hospital.id,
+        plan: Plan.PROFESSIONAL,
+        status: 'ACTIVE',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        gracePeriodDays: 3,
+        autoRenew: false,
+        notes: 'Initial subscription — created by seed',
+      },
+    })
+    await prisma.licenseAuditLog.create({
+      data: {
+        subscriptionId: subscription.id,
+        action: 'CREATED',
+        previousStatus: null,
+        newStatus: 'ACTIVE',
+        performedBy: null, // system (seed)
+        notes: 'Initial subscription — seeded automatically',
+      },
+    })
+    console.log('Created initial subscription for:', hospital.name)
+  }
+
   // Create doctor user
   const doctorPassword = await bcrypt.hash('Doctor@123', 10)
   const doctor = await prisma.user.upsert({

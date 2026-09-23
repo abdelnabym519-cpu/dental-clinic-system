@@ -40,6 +40,10 @@ const publicRoutes = [
   '/invite/accept',
   '/portal',
   '/pay',
+  // Phase 9 licensing: an expired, logged-in session must be able to land on
+  // this page (the dashboard layout gate redirects here). The page itself
+  // still sends SUPER_ADMIN to /super-admin and logged-out visitors to /login.
+  '/subscription-expired',
 ]
 
 export default auth((req) => {

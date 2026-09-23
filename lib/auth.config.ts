@@ -44,6 +44,9 @@ export const authConfig: NextAuthConfig = {
         token.staffId = user.staffId
         token.hospitalId = user.hospitalId
         token.isHospitalAdmin = user.isHospitalAdmin
+        // Phase 9 licensing: platform-level admin, derived from the role so
+        // the flag can never drift from the role itself.
+        token.isSuperAdmin = user.role === 'SUPER_ADMIN'
       }
       return token
     },
@@ -52,8 +55,9 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.staffId = token.staffId as string | undefined
-        session.user.hospitalId = token.hospitalId as string
+        session.user.hospitalId = (token.hospitalId as string | null) ?? null
         session.user.isHospitalAdmin = token.isHospitalAdmin as boolean
+        session.user.isSuperAdmin = token.isSuperAdmin === true || token.role === 'SUPER_ADMIN'
       }
       return session
     },

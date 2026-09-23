@@ -26,11 +26,15 @@ vi.mock('@/lib/auth.config', () => ({
 import { hasRole, hasMinimumRole, roleHierarchy } from '@/lib/auth'
 
 describe('roleHierarchy', () => {
-  it('defines 5 roles', () => {
-    expect(Object.keys(roleHierarchy)).toHaveLength(5)
+  it('defines 6 roles (Phase 9 added SUPER_ADMIN above every hospital role)', () => {
+    expect(Object.keys(roleHierarchy)).toHaveLength(6)
   })
 
-  it('ADMIN has highest level (5)', () => {
+  it('SUPER_ADMIN has the highest level (6)', () => {
+    expect(roleHierarchy['SUPER_ADMIN']).toBe(6)
+  })
+
+  it('ADMIN has level 5', () => {
     expect(roleHierarchy['ADMIN']).toBe(5)
   })
 

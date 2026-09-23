@@ -45,8 +45,13 @@ export async function authorize(credentials: unknown) {
 
   if (!user.isActive) return null
 
-        // Check if the user's hospital is active
-  if (!user.hospital || !user.hospital.isActive) return null
+  // Phase 9 licensing: SUPER_ADMIN is a platform-level account (hospitalId is
+  // null) — it never logs into a hospital's workspace, so the hospital-active
+  // gate does not apply to it. Every other role still requires an active hospital.
+  if (user.role !== 'SUPER_ADMIN') {
+    // Check if the user's hospital is active
+    if (!user.hospital || !user.hospital.isActive) return null
+  }
 
   const passwordMatch = await bcrypt.compare(password, user.password)
   if (!passwordMatch) return null
@@ -59,6 +64,8 @@ export async function authorize(credentials: unknown) {
     staffId: user.staff?.id,
     hospitalId: user.hospitalId,
     isHospitalAdmin: user.isHospitalAdmin,
+    // Phase 9: part of the next-auth User contract (types/next-auth.d.ts).
+    isSuperAdmin: user.role === 'SUPER_ADMIN',
   }
 }
 
@@ -88,6 +95,7 @@ export function hasRole(userRole: string, allowedRoles: string[]): boolean {
 
 // Role hierarchy for permission checking
 export const roleHierarchy: Record<string, number> = {
+  SUPER_ADMIN: 6, // Phase 9: platform-level, above every hospital role
   ADMIN: 5,
   DOCTOR: 4,
   ACCOUNTANT: 3,

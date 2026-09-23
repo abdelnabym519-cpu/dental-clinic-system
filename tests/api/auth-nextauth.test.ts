@@ -239,6 +239,39 @@ describe('NextAuth — POST /api/auth/[...nextauth]', () => {
         staffId: 'staff-1',
         hospitalId: 'hospital-1',
         isHospitalAdmin: true,
+        // Phase 9: session contract gained the super-admin flag.
+        isSuperAdmin: false,
+      })
+    })
+
+    it('lets SUPER_ADMIN log in without a hospital (platform-level account)', async () => {
+      vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({
+        id: 'super-1',
+        email: 'superadmin@dentora.com',
+        name: 'Super Admin',
+        password: '$2a$10$hashedpassword',
+        role: 'SUPER_ADMIN',
+        isActive: true,
+        isHospitalAdmin: false,
+        hospitalId: null,
+        staff: null,
+        hospital: null,
+      })
+      vi.mocked(mockBcrypt.compare).mockResolvedValue(true)
+
+      const result = await authorize({ email: 'superadmin@dentora.com', password: 'password123' })
+
+      // Phase 9: hospital-active gate is bypassed for SUPER_ADMIN; the
+      // session carries isSuperAdmin=true and hospitalId=null.
+      expect(result).toEqual({
+        id: 'super-1',
+        email: 'superadmin@dentora.com',
+        name: 'Super Admin',
+        role: 'SUPER_ADMIN',
+        staffId: undefined,
+        hospitalId: null,
+        isHospitalAdmin: false,
+        isSuperAdmin: true,
       })
     })
 

@@ -7,8 +7,11 @@ declare module 'next-auth' {
     name: string
     role: string
     staffId?: string
-    hospitalId: string
+    // Nullable: the platform-level SUPER_ADMIN (Phase 9) belongs to no hospital.
+    hospitalId: string | null
     isHospitalAdmin: boolean
+    // Derived convenience flag: role === 'SUPER_ADMIN'.
+    isSuperAdmin: boolean
   }
 
   interface Session {
@@ -18,8 +21,9 @@ declare module 'next-auth' {
       name: string
       role: string
       staffId?: string
-      hospitalId: string
+      hospitalId: string | null
       isHospitalAdmin: boolean
+      isSuperAdmin: boolean
     }
   }
 }
@@ -29,7 +33,8 @@ declare module 'next-auth/jwt' {
     id: string
     role: string
     staffId?: string
-    hospitalId: string
+    hospitalId: string | null
     isHospitalAdmin: boolean
+    isSuperAdmin: boolean
   }
 }
