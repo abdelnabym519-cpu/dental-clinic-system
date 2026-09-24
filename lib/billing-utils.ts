@@ -29,6 +29,12 @@ export const invoiceStatusConfig: Record<
     bgColor: 'bg-muted',
     description: 'Invoice is being prepared',
   },
+  ISSUED: {
+    label: 'Issued',
+    color: 'text-indigo-700',
+    bgColor: 'bg-indigo-100',
+    description: 'Formally issued — PDF generated and sent',
+  },
   PENDING: {
     label: 'Pending',
     color: 'text-yellow-700',
@@ -90,6 +96,11 @@ export const paymentMethodConfig: Record<
     label: 'InstaPay',
     icon: 'Smartphone',
     description: 'InstaPay bank transfer',
+  },
+  PAYMOB: {
+    label: 'Paymob',
+    icon: 'CreditCard',
+    description: 'Paymob gateway (card, wallet, online)',
   },
   FAWRY: {
     label: 'Fawry',

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { renderSimplePdf } from '@/lib/pdf'
-import { formatCurrency, formatDate } from '@/lib/i18n/format'
+import { generateInvoicePDF } from '@/lib/billing/invoice-pdf'
 import { getServerLocale } from '@/lib/i18n/server'
 import { translateText } from '@/lib/i18n/dictionary'
 import { enqueueMessage } from '@/lib/messaging/service'
 import * as templates from '@/lib/messaging/templates'
+import { getStorage } from '@/lib/storage'
+import { buildStorageKey } from '@/lib/storage/keys'
 
 /**
  * POST /api/communications/invoices/[id]/send — invoice via WhatsApp
@@ -53,34 +54,27 @@ export async function POST(
     // (plain 2-decimal total, ISO date); the document itself is localized.
     const dateStr = new Date().toISOString().slice(0, 10)
     const total = Number(invoice.totalAmount).toFixed(2)
-    const pdfDate = formatDate(new Date(), { locale })
-    const money = (value: unknown) => formatCurrency(Number(value), { locale })
 
-    const pdf = renderSimplePdf({
-      title: t('Invoice {v1}', { v1: invoice.invoiceNo }),
-      subtitle: `${clinicName} — ${pdfDate}`,
-      lines: [
-        {
-          text: t('Patient: {v1}', {
-            v1: `${invoice.patient.firstName} ${invoice.patient.lastName}`,
-          }),
-          bold: true,
-          gapAfter: 10,
-        },
-        { text: t('Items:'), bold: true, gapAfter: 4 },
-        ...invoice.items.map(
-          (item: { description: string; quantity: number; amount: unknown }) => ({
-            text: `- ${item.description} × ${item.quantity} — ${money(item.amount)}`,
-            gapAfter: 2,
-          })
-        ),
-        { text: '', gapAfter: 6 },
-        { text: t('Subtotal: {v1}', { v1: money(invoice.subtotal) }) },
-        { text: t('Total: {v1}', { v1: total }), bold: true },
-        { text: t('Paid: {v1}', { v1: money(invoice.paidAmount) }) },
-        { text: t('Balance: {v1}', { v1: money(invoice.balanceAmount) }) },
-      ],
-      footer: t('Thank you for choosing our clinic.'),
+    // Phase 12 — the full invoice layout (Arabic, 14% VAT breakdown, payment
+    // status) instead of the minimal line list.
+    const pdf = await generateInvoicePDF({
+      invoiceNo: invoice.invoiceNo,
+      status: invoice.status,
+      clinicName,
+      patientName: `${invoice.patient.firstName} ${invoice.patient.lastName}`.trim(),
+      patientPhone: invoice.patient.phone,
+      issueDate: new Date(),
+      issuedAt: invoice.issuedAt,
+      dueDate: invoice.dueDate,
+      items: invoice.items,
+      subtotal: invoice.subtotal,
+      discountAmount: invoice.discountAmount,
+      vatRate: invoice.cgstRate,
+      vatAmount: invoice.cgstAmount,
+      total: invoice.totalAmount,
+      paidAmount: invoice.paidAmount,
+      balanceAmount: invoice.balanceAmount,
+      notes: invoice.notes,
     })
 
     const queueId = await enqueueMessage({
@@ -106,7 +100,19 @@ export async function POST(
       )
     }
 
-    return NextResponse.json({ success: true, queueId }, { status: 201 })
+    // Phase 12 — persist the sent PDF and mark the invoice (same rule as the
+    // e-prescription send): the stored file is what the patient received.
+    const storageKey = buildStorageKey(hospitalId, 'invoices', invoice.id, 'invoice.pdf')
+    await getStorage().put(storageKey, pdf, { contentType: 'application/pdf' })
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: { sentViaWhatsApp: true, pdfUrl: storageKey },
+    })
+
+    return NextResponse.json(
+      { success: true, queueId, pdfUrl: storageKey },
+      { status: 201 }
+    )
   } catch (err) {
     console.error('Error sending invoice:', err)
     return NextResponse.json({ error: 'Failed to queue invoice message' }, { status: 500 })

@@ -120,12 +120,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Generate payment number
     const paymentNo = await generatePaymentNo(prisma)
 
-    // Create payment
+    // Create payment (Phase 12 — attributed to the recorder + patient)
     const payment = await prisma.payment.create({
       data: {
         hospitalId,
         paymentNo,
         invoiceId: id,
+        patientId: invoice.patientId,
+        recordedById: session.user.id,
         amount,
         paymentMethod: paymentMethod as PaymentMethod,
         paymentDate: new Date(paymentDate),
@@ -145,7 +147,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Determine new invoice status
     let newStatus:
-      'DRAFT' | 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'CANCELLED' | 'REFUNDED' =
+      | 'DRAFT'
+      | 'ISSUED'
+      | 'PENDING'
+      | 'PARTIALLY_PAID'
+      | 'PAID'
+      | 'OVERDUE'
+      | 'CANCELLED'
+      | 'REFUNDED' =
       invoice.status
     if (newBalanceAmount <= 0) {
       newStatus = 'PAID'
@@ -164,6 +173,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         paidAmount: newPaidAmount,
         balanceAmount: newBalanceAmount,
         status: newStatus,
+        // Phase 12 — stamp the fully-paid moment once
+        ...(newStatus === 'PAID' && !invoice.paidAt ? { paidAt: new Date() } : {}),
       },
     })
 

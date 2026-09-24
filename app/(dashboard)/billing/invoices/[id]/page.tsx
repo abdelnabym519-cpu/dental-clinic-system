@@ -160,6 +160,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   // Payment dialog state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(showPaymentDialog)
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false)
+  const [issuing, setIssuing] = useState(false)
   const [whatsAppQueued, setWhatsAppQueued] = useState<boolean | null>(null)
   const [paymentSubmitting, setPaymentSubmitting] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState('')
@@ -347,6 +348,34 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {invoice.status === 'DRAFT' && (
+            <Button
+              variant="outline"
+              disabled={issuing}
+              onClick={async () => {
+                setIssuing(true)
+                try {
+                  const res = await fetch(`/api/invoices/${id}/issue`, { method: 'POST' })
+                  const data = await res.json().catch(() => ({}))
+                  if (!res.ok) throw new Error(data.error || t('Failed to issue invoice'))
+                  await fetchInvoice()
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : t('Failed to issue invoice'))
+                } finally {
+                  setIssuing(false)
+                }
+              }}
+            >
+              {issuing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4 mr-2" />
+              )}
+              {t('billing.issue_invoice')}
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => window.open(`/api/invoices/${id}/pdf`, '_blank')}>
+            <FileText className="h-4 w-4 mr-2" />{t('billing.preview_pdf')}</Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" />{t('ui.print')}</Button>
           <Button

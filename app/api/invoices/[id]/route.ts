@@ -131,6 +131,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       notes,
       termsAndConditions,
       status,
+      // Phase 12 — optional clinical links
+      appointmentId,
+      treatmentPlanId,
     } = body
 
     let updateData: any = {
@@ -141,6 +144,32 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Update due date if provided
     if (dueDate !== undefined) {
       updateData.dueDate = dueDate ? new Date(dueDate) : null
+    }
+
+    // Phase 12 — clinical links must belong to the invoice's patient
+    if (appointmentId !== undefined) {
+      if (appointmentId) {
+        const appt = await prisma.appointment.findFirst({
+          where: { id: appointmentId, hospitalId },
+          select: { id: true, patientId: true },
+        })
+        if (!appt || appt.patientId !== existingInvoice.patientId) {
+          return NextResponse.json({ error: 'Appointment does not belong to this patient' }, { status: 400 })
+        }
+      }
+      updateData.appointmentId = appointmentId
+    }
+    if (treatmentPlanId !== undefined) {
+      if (treatmentPlanId) {
+        const plan = await prisma.treatmentPlan.findFirst({
+          where: { id: treatmentPlanId, hospitalId },
+          select: { id: true, patientId: true },
+        })
+        if (!plan || plan.patientId !== existingInvoice.patientId) {
+          return NextResponse.json({ error: 'Treatment plan does not belong to this patient' }, { status: 400 })
+        }
+      }
+      updateData.treatmentPlanId = treatmentPlanId
     }
 
     // Recalculate totals if items are being updated
@@ -193,7 +222,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (status) {
       // Validate status transition
       const validTransitions: Record<InvoiceStatus, InvoiceStatus[]> = {
-        DRAFT: ['PENDING', 'CANCELLED'],
+        DRAFT: ['ISSUED', 'PENDING', 'CANCELLED'],
+        ISSUED: ['PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'],
         PENDING: ['PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'],
         PARTIALLY_PAID: ['PAID', 'OVERDUE', 'CANCELLED'],
         PAID: ['REFUNDED'],

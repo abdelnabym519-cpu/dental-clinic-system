@@ -184,6 +184,10 @@ export async function POST(request: NextRequest) {
       termsAndConditions,
       paymentTermDays = 0,
       status = 'DRAFT',
+      // Phase 12 — optional clinical links + attribution + currency
+      appointmentId = null,
+      treatmentPlanId = null,
+      currency = 'EGP',
     } = body
 
     // Validate required fields
@@ -213,6 +217,26 @@ export async function POST(request: NextRequest) {
           },
           { status: 400 }
         )
+      }
+    }
+
+    // Phase 12 — clinical links must belong to the same patient
+    if (appointmentId) {
+      const appt = await prisma.appointment.findFirst({
+        where: { id: appointmentId, hospitalId },
+        select: { id: true, patientId: true },
+      })
+      if (!appt || appt.patientId !== patientId) {
+        return NextResponse.json({ error: 'Appointment does not belong to this patient' }, { status: 400 })
+      }
+    }
+    if (treatmentPlanId) {
+      const plan = await prisma.treatmentPlan.findFirst({
+        where: { id: treatmentPlanId, hospitalId },
+        select: { id: true, patientId: true },
+      })
+      if (!plan || plan.patientId !== patientId) {
+        return NextResponse.json({ error: 'Treatment plan does not belong to this patient' }, { status: 400 })
       }
     }
 
@@ -263,6 +287,10 @@ export async function POST(request: NextRequest) {
         status: status as InvoiceStatus,
         notes,
         termsAndConditions,
+        appointmentId,
+        treatmentPlanId,
+        createdById: session.user.id,
+        currency,
         items: {
           create: items.map((item: any) => ({
             treatmentId: item.treatmentId || null,

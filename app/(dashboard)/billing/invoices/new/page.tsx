@@ -84,6 +84,8 @@ export default function NewInvoicePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preSelectedPatientId = searchParams.get('patientId')
+  const preSelectedAppointmentId = searchParams.get('appointmentId')
+  const preSelectedPlanId = searchParams.get('treatmentPlanId')
 
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -281,6 +283,8 @@ export default function NewInvoicePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           patientId: selectedPatient.id,
+          ...(preSelectedAppointmentId ? { appointmentId: preSelectedAppointmentId } : {}),
+          ...(preSelectedPlanId ? { treatmentPlanId: preSelectedPlanId } : {}),
           items: items.map((item) => ({
             treatmentId: item.treatmentId,
             description: item.description,

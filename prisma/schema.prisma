@@ -262,6 +262,8 @@ model User {
   hospital        Hospital? @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   staff           Staff?
   auditLogs       AuditLog[]
+  invoicesCreated Invoice[]           // Phase 12
+  paymentsRecorded Payment[]          // Phase 12
   notifications   Notification[]
   sessions        Session[]
   accounts        Account[]
@@ -541,6 +543,7 @@ model Patient {
   preAuthorizations PreAuthorization[]
   memberships     PatientMembership[]
   paymentPlans    PaymentPlan[]
+  invoicePayments Payment[]           @relation("PatientInvoicePayments") // Phase 12
   videoConsultations VideoConsultation[]
 
   @@unique([hospitalId, patientId])
@@ -669,6 +672,7 @@ model Appointment {
   treatments      Treatment[]
   // Phase 11 — clinical workflow links.
   treatmentPlans  TreatmentPlan[]   @relation("AppointmentTreatmentPlans")
+  invoices        Invoice[]         // Phase 12
   prescriptions   Prescription[]    @relation("AppointmentPrescriptions")
   clinicalNotes   ClinicalNote[]
   reminders       AppointmentReminder[]
@@ -876,6 +880,7 @@ model TreatmentPlan {
 
   doctor          Staff?              @relation("DoctorTreatmentPlans", fields: [doctorId], references: [id])
   appointment     Appointment?        @relation("AppointmentTreatmentPlans", fields: [appointmentId], references: [id])
+  invoices        Invoice[]           // Phase 12
   prescriptions   Prescription[]
   clinicalNotes   ClinicalNote[]
 
@@ -1139,6 +1144,16 @@ model Invoice {
   insuranceClaimId String?
   insuranceAmount Decimal?      @db.Decimal(10, 2)
 
+  // Phase 12 — clinical links, attribution, issue lifecycle, PDF + WhatsApp
+  appointmentId   String?
+  treatmentPlanId String?
+  createdById     String?
+  currency        String        @default("EGP")
+  issuedAt        DateTime?
+  paidAt          DateTime?
+  pdfUrl          String?
+  sentViaWhatsApp Boolean       @default(false)
+
   notes           String?       @db.Text
   termsAndConditions String?    @db.Text
 
@@ -1152,6 +1167,11 @@ model Invoice {
   paymentLinks    PaymentLink[]
   paymentPlans    PaymentPlan[]
   insuranceClaim  InsuranceClaim? @relation(fields: [insuranceClaimId], references: [id])
+
+  // Phase 12
+  appointment     Appointment?    @relation("AppointmentInvoices", fields: [appointmentId], references: [id])
+  treatmentPlan   TreatmentPlan?  @relation("TreatmentPlanInvoices", fields: [treatmentPlanId], references: [id])
+  createdBy       User?           @relation("UserCreatedInvoices", fields: [createdById], references: [id])
 
   @@unique([hospitalId, invoiceNo])
   @@index([hospitalId])
@@ -1170,6 +1190,10 @@ model InvoiceItem {
   unitPrice       Decimal    @db.Decimal(10, 2)
   amount          Decimal    @db.Decimal(10, 2)
   taxable         Boolean    @default(true)
+
+  // Phase 12 — optional clinical context
+  toothNumber     Int?
+  procedureCode   String?
 
   createdAt       DateTime   @default(now())
 
@@ -1204,12 +1228,19 @@ model Payment {
   gatewayOrderId    String?    // Provider's order/transaction ID
   gatewayPaymentId  String?    // Provider's payment ID
   gatewayStatus     String?    // Provider-reported status
+  gatewayResponse   Json?      // Phase 12 — raw gateway/webhook payload
+
+  // Phase 12 — attribution + patient denormalisation
+  patientId         String?
+  recordedById      String?
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   hospital        Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   invoice         Invoice       @relation(fields: [invoiceId], references: [id])
+  patient         Patient?      @relation("PatientInvoicePayments", fields: [patientId], references: [id])
+  recordedBy      User?         @relation("UserRecordedPayments", fields: [recordedById], references: [id])
 
   @@unique([hospitalId, paymentNo])
   @@index([hospitalId])
@@ -1265,6 +1296,8 @@ enum DiscountType {
 
 enum InvoiceStatus {
   DRAFT
+  // Phase 12 — explicitly issued (issuedAt + PDF generated)
+  ISSUED
   PENDING
   PARTIALLY_PAID
   PAID
@@ -1286,6 +1319,8 @@ enum PaymentMethod {
   // Egyptian methods
   INSTAPAY
   FAWRY
+  // Phase 12
+  PAYMOB
 }
 
 enum PaymentProvider {

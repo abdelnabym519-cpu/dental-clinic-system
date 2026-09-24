@@ -35,6 +35,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     invoice: {
       findFirst: vi.fn(),
+      update: vi.fn(),
     },
     document: {
       findFirst: vi.fn(),
@@ -439,6 +440,16 @@ describe('invoice send (3G, item 23) — RBAC: ACCOUNTANT/ADMIN', () => {
     expect(created[0].messageType).toBe('INVOICE')
     expect(payload.text).toContain('الإجمالي: 250.00 جنيه')
     expect(payload.attachment.mimeType).toBe('application/pdf')
+
+    // Phase 12 — the sent invoice PDF is persisted and the invoice is marked
+    expect(storageMock.put).toHaveBeenCalled()
+    expect(prisma.invoice.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ sentViaWhatsApp: true, pdfUrl: expect.any(String) }),
+      })
+    )
+    const body = await res.json()
+    expect(body.pdfUrl).toBeTruthy()
   })
 
   it('DOCTOR is denied (RBAC: ACCOUNTANT, ADMIN)', async () => {
