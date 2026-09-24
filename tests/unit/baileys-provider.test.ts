@@ -86,7 +86,13 @@ describe('BaileysProvider (Phase 10, DI-driven)', () => {
       sockets.push(next)
       return next
     })
-    provider = new BaileysProvider({ redis: redisFixture.redis, socketFactory: factory })
+    // loggedOutCode mirrors production: the real code is always known by the
+    // time a socket exists (set from the loaded baileys module).
+    provider = new BaileysProvider({
+      redis: redisFixture.redis,
+      socketFactory: factory,
+      loggedOutCode: DisconnectReason.loggedOut,
+    })
   })
 
   afterEach(() => {

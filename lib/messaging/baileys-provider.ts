@@ -20,7 +20,6 @@
  * automated bulk sending from a single personal number can trigger a Meta
  * BAN — reserve it for low-volume clinic use (that is the Phase 10 intent).
  */
-import makeWASocket, { DisconnectReason, type WASocket } from '@whiskeysockets/baileys'
 import pino from 'pino'
 import { createClient } from 'redis'
 import type { MessagingProvider, MessagePayload, SendResult } from './types'
@@ -30,6 +29,20 @@ const SESSION_KEY = 'baileys:session'
 const QR_KEY = 'baileys:qr'
 const QR_TTL_SECONDS = 120
 const RECONNECT_DELAY_MS = 5000
+
+/**
+ * `@whiskeysockets/baileys` is loaded lazily (dynamic import) so that
+ * Meta-only deployments, the Next.js server bundle and CLI scripts never
+ * evaluate its module graph (ESM-only + native bridge) unless Baileys is
+ * actually the active provider.
+ */
+type BaileysModule = typeof import('@whiskeysockets/baileys')
+let baileysModule: BaileysModule | null = null
+
+async function loadBaileys(): Promise<BaileysModule> {
+  if (!baileysModule) baileysModule = await import('@whiskeysockets/baileys')
+  return baileysModule
+}
 
 /** Minimal Redis surface the provider needs (DI seam for tests). */
 export interface RedisLike {
@@ -103,6 +116,11 @@ export interface BaileysOptions {
   redis?: RedisLike
   /** Inject the socket factory (tests). Defaults to makeWASocket. */
   socketFactory?: BaileysSocketFactory
+  /**
+   * Test seam: the numeric "logged out" close code (baileys's
+   * DisconnectReason.loggedOut). Production sets it from the loaded module.
+   */
+  loggedOutCode?: number
 }
 
 export class BaileysProvider implements MessagingProvider {
@@ -115,12 +133,20 @@ export class BaileysProvider implements MessagingProvider {
   private isConnected = false
   private initializing = false
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private loggedOutCode: number | null
 
   constructor(options: BaileysOptions = {}) {
     this.redisClient = options.redis ?? null
+    this.loggedOutCode = options.loggedOutCode ?? null
+    // Default factory: lazy-load baileys, then open the socket.
     this.socketFactory =
       options.socketFactory ??
-      (((opts) => makeWASocket(opts as Parameters<typeof makeWASocket>[0])) as BaileysSocketFactory)
+      (async (opts) => {
+        const m = await loadBaileys()
+        this.loggedOutCode = this.loggedOutCode ?? m.DisconnectReason.loggedOut
+        const socket = await m.default(opts as Parameters<BaileysModule['default']>[0])
+        return socket as unknown as BaileysSocketLike
+      })
   }
 
   get connected(): boolean {
@@ -164,10 +190,13 @@ export class BaileysProvider implements MessagingProvider {
           this.isConnected = false
           const statusCode = lastDisconnect?.error?.output?.statusCode
           // Reconnect unless the session was explicitly logged out (re-scan needed).
-          if (statusCode !== DisconnectReason.loggedOut) {
-            this.scheduleReconnect()
-          } else {
+          // loggedOutCode is known by the time a socket exists (set when the
+          // socket was created); null only with a DI socket without a code,
+          // where reconnecting is the safe default.
+          if (this.loggedOutCode !== null && statusCode === this.loggedOutCode) {
             void redis.del(SESSION_KEY).catch(() => {})
+          } else {
+            this.scheduleReconnect()
           }
         }
       })
@@ -355,7 +384,7 @@ export class BaileysProvider implements MessagingProvider {
   async close(): Promise<void> {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
     try {
-      await this.sock?.end?.(DisconnectReason.loggedOut)
+      await this.sock?.end?.(this.loggedOutCode ?? undefined)
     } catch {
       // already closed
     }
@@ -372,5 +401,3 @@ export function getBaileysProvider(): BaileysProvider {
   if (!singleton) singleton = new BaileysProvider()
   return singleton
 }
-
-export type { WASocket }
