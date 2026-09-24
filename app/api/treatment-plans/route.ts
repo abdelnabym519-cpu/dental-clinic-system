@@ -104,6 +104,14 @@ export async function GET(request: NextRequest) {
               items: true,
             },
           },
+          // Phase 11 — plan owner (all scalar fields incl. chiefComplaint,
+          // diagnosis, currency, appointmentId are returned automatically).
+          doctor: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -147,7 +155,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { patientId, title, notes, startDate, expectedEndDate, items = [] } = body
+    const { patientId, title, notes, startDate, expectedEndDate, items = [], appointmentId = null, chiefComplaint, diagnosis, currency, estimatedCost: explicitCost } = body
 
     // Validate required fields
     if (!patientId || !title) {
@@ -176,6 +184,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'One or more procedures not found' }, { status: 404 })
       }
     }
+
+    // Phase 11 — optional appointment link (same patient only)
+    let linkedAppointment = null
+    if (appointmentId) {
+      linkedAppointment = await prisma.appointment.findFirst({
+        where: { id: appointmentId, hospitalId, patientId },
+        select: { id: true },
+      })
+      if (!linkedAppointment) {
+        return NextResponse.json(
+          { error: 'Appointment not found for this patient' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Phase 11 — attribute the creating doctor when the actor is staff here
+    const actorStaff = await prisma.staff.findFirst({
+      where: { userId: session.user.id, hospitalId },
+    })
 
     // Generate plan number unique to this hospital
     const planNumber = await generatePlanNumber(hospitalId)
@@ -212,11 +240,16 @@ export async function POST(request: NextRequest) {
         title,
         notes,
         status: 'DRAFT',
-        estimatedCost,
+        estimatedCost: explicitCost ?? estimatedCost,
         estimatedDuration,
         startDate: startDate ? new Date(startDate) : null,
         expectedEndDate: expectedEndDate ? new Date(expectedEndDate) : null,
         consentGiven: false,
+        appointmentId: linkedAppointment?.id ?? null,
+        doctorId: actorStaff?.id ?? null,
+        chiefComplaint: chiefComplaint || null,
+        diagnosis: diagnosis || null,
+        currency: currency || 'EGP',
         items: {
           create: items.map((item: any, index: number) => ({
             procedureId: item.procedureId,

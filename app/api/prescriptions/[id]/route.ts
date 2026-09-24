@@ -105,3 +105,106 @@ export async function DELETE(
     )
   }
 }
+
+/**
+ * PATCH (Phase 11) — edit a DRAFT prescription (diagnosis, notes, expiry,
+ * medications, appointment/plan links). DOCTOR/ADMIN. Once signed the
+ * document is frozen — edit requires cancel + re-create (the signed PDF
+ * must stay truthful to what was issued).
+ */
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { error, hospitalId } = await requireAuthAndRole(['ADMIN', 'DOCTOR'])
+  if (error || !hospitalId) {
+    return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { id } = await params
+    const existing = await prisma.prescription.findFirst({ where: { id, hospitalId } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+    }
+    if (existing.status !== 'DRAFT') {
+      return NextResponse.json({ error: 'Only DRAFT prescriptions can be edited' }, { status: 409 })
+    }
+
+    const body = await request.json()
+
+    if (body.appointmentId) {
+      const appt = await prisma.appointment.findFirst({
+        where: { id: body.appointmentId, hospitalId },
+        select: { id: true, patientId: true },
+      })
+      if (!appt) return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+      if (appt.patientId !== existing.patientId) {
+        return NextResponse.json(
+          { error: 'Appointment belongs to a different patient' },
+          { status: 400 }
+        )
+      }
+    }
+    if (body.treatmentPlanId) {
+      const plan = await prisma.treatmentPlan.findFirst({
+        where: { id: body.treatmentPlanId, hospitalId },
+        select: { id: true, patientId: true },
+      })
+      if (!plan) return NextResponse.json({ error: 'Treatment plan not found' }, { status: 404 })
+      if (plan.patientId !== existing.patientId) {
+        return NextResponse.json(
+          { error: 'Treatment plan belongs to a different patient' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const data: Record<string, unknown> = {}
+    if (body.diagnosis !== undefined) data.diagnosis = body.diagnosis
+    if (body.notes !== undefined) data.notes = body.notes
+    if (body.validUntil !== undefined) {
+      data.validUntil = body.validUntil ? new Date(body.validUntil) : null
+    }
+    if (body.appointmentId !== undefined) data.appointmentId = body.appointmentId || null
+    if (body.treatmentPlanId !== undefined) data.treatmentPlanId = body.treatmentPlanId || null
+
+    // Medications: replace the whole list (draft editing is all-or-nothing).
+    if (Array.isArray(body.medications)) {
+      for (const m of body.medications) {
+        if (!m?.medicationName || !m?.dosage || !m?.frequency || !m?.duration) {
+          return NextResponse.json(
+            { error: 'Each medication needs name, dosage, frequency and duration' },
+            { status: 400 }
+          )
+        }
+      }
+      await prisma.prescriptionMedication.deleteMany({ where: { prescriptionId: existing.id } })
+      await prisma.prescriptionMedication.createMany({
+        data: body.medications.map((m: Record<string, unknown>) => ({
+          prescriptionId: existing.id,
+          medicationId: m.medicationId || null,
+          medicationName: m.medicationName,
+          dosage: m.dosage,
+          frequency: m.frequency,
+          duration: m.duration,
+          route: m.route || 'Oral',
+          timing: m.timing || null,
+          quantity: m.quantity || null,
+          instructions: m.instructions || null,
+        })),
+      })
+    }
+
+    const prescription = await prisma.prescription.update({
+      where: { id: existing.id },
+      data: data as never,
+      include: { medications: true },
+    })
+
+    return NextResponse.json({ success: true, data: prescription })
+  } catch (err: any) {
+    console.error('Error updating prescription:', err)
+    return NextResponse.json(
+      { error: err.message || 'Failed to update prescription' },
+      { status: 500 }
+    )
+  }
+}

@@ -48,6 +48,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             priority: 'asc',
           },
         },
+        // Phase 11 — plan owner
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     })
 
@@ -114,6 +121,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (body.expectedEndDate !== undefined)
       updateData.expectedEndDate = body.expectedEndDate ? new Date(body.expectedEndDate) : null
     if (body.consentGiven !== undefined) updateData.consentGiven = body.consentGiven
+
+    // Phase 11 — extended fields
+    if (body.chiefComplaint !== undefined) updateData.chiefComplaint = body.chiefComplaint || null
+    if (body.diagnosis !== undefined) updateData.diagnosis = body.diagnosis || null
+    if (body.currency !== undefined) updateData.currency = body.currency
+    if (body.estimatedCost !== undefined) updateData.estimatedCost = body.estimatedCost
 
     // Handle completion
     if (body.status === 'COMPLETED' && !existingPlan.completedDate) {
@@ -187,6 +200,117 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                 code: true,
                 name: true,
                 category: true,
+                basePrice: true,
+              },
+            },
+          },
+          orderBy: {
+            priority: 'asc',
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(treatmentPlan)
+  } catch (error) {
+    console.error('Error updating treatment plan:', error)
+    return NextResponse.json({ error: 'Failed to update treatment plan' }, { status: 500 })
+  }
+}
+
+// PATCH - Phase 11 — status-machine aware partial update (used by the
+// appointment-detail Clinical section). The legacy PUT above is preserved
+// for the existing /treatments/plans pages.
+const PLAN_TRANSITIONS: Record<string, string[]> = {
+  DRAFT: ['PROPOSED', 'ACCEPTED', 'CANCELLED'],
+  PROPOSED: ['ACCEPTED', 'CANCELLED'],
+  ACCEPTED: ['IN_PROGRESS', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { error, hospitalId, session } = await requireAuthAndRole()
+
+  if (error || !hospitalId) {
+    return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
+    return NextResponse.json(
+      { error: "You don't have permission to update treatment plans" },
+      { status: 403 }
+    )
+  }
+
+  try {
+    const { id } = await params
+    const body = await request.json()
+
+    const existingPlan = await prisma.treatmentPlan.findFirst({
+      where: { id, hospitalId },
+    })
+    if (!existingPlan) {
+      return NextResponse.json({ error: 'Treatment plan not found' }, { status: 404 })
+    }
+
+    const updateData: any = {}
+    if (body.title !== undefined) updateData.title = body.title
+    if (body.notes !== undefined) updateData.notes = body.notes
+    if (body.startDate !== undefined)
+      updateData.startDate = body.startDate ? new Date(body.startDate) : null
+    if (body.expectedEndDate !== undefined)
+      updateData.expectedEndDate = body.expectedEndDate ? new Date(body.expectedEndDate) : null
+    if (body.consentGiven !== undefined) {
+      updateData.consentGiven = body.consentGiven
+      if (body.consentGiven) updateData.consentDate = new Date()
+    }
+    if (body.chiefComplaint !== undefined) updateData.chiefComplaint = body.chiefComplaint || null
+    if (body.diagnosis !== undefined) updateData.diagnosis = body.diagnosis || null
+    if (body.currency !== undefined) updateData.currency = body.currency
+    if (body.estimatedCost !== undefined) updateData.estimatedCost = body.estimatedCost
+
+    if (body.status !== undefined && body.status !== existingPlan.status) {
+      const allowed = PLAN_TRANSITIONS[existingPlan.status] || []
+      if (!allowed.includes(body.status)) {
+        return NextResponse.json(
+          { error: 'Invalid treatment plan status transition' },
+          { status: 400 }
+        )
+      }
+      updateData.status = body.status
+      if (body.status === 'COMPLETED') updateData.completedDate = new Date()
+    }
+
+    const treatmentPlan = await prisma.treatmentPlan.update({
+      where: { id },
+      data: updateData,
+      include: {
+        patient: {
+          select: {
+            id: true,
+            patientId: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            email: true,
+            dateOfBirth: true,
+            gender: true,
+          },
+        },
+        items: {
+          include: {
+            procedure: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                category: true,
+                description: true,
+                defaultDuration: true,
                 basePrice: true,
               },
             },

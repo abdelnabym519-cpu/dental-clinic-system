@@ -31,6 +31,7 @@ vi.mock('@/lib/prisma', () => ({
     room: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]), create: vi.fn() },
     prescription: {
       findFirst: vi.fn(),
+      update: vi.fn(),
     },
     invoice: {
       findFirst: vi.fn(),
@@ -73,6 +74,12 @@ const storageMock = {
     body: Buffer.from('fake-image-bytes'),
     contentType: 'image/jpeg',
     size: 17,
+  })),
+  // Phase 11 — prescription send persists the rendered PDF (markSent)
+  put: vi.fn(async (_key: string, _body: unknown, _opts?: unknown) => ({
+    key: _key,
+    size: 0,
+    contentType: 'application/pdf',
   })),
 }
 
@@ -320,8 +327,11 @@ describe('prescription send (3F, item 22) — RBAC + tenant + PDF attachment', (
     id: 'rx-1',
     hospitalId: HOSPITAL,
     prescriptionNo: 'RX-0001',
+    // Phase 11 — send requires the signed state
+    status: 'SIGNED',
     diagnosis: 'DDS',
     notes: null,
+    pdfUrl: null,
     patient: { id: 'pat-1', firstName: 'أحمد', lastName: 'محمد', phone: '+201012345678' },
     doctor: { id: 'dr-1', firstName: 'سمير', lastName: 'علي', phone: '+201198765432' },
     medications: [{ medicationName: 'Amoxicillin', dosage: '500mg', frequency: '3x/day', duration: '7 days' }],
@@ -347,6 +357,31 @@ describe('prescription send (3F, item 22) — RBAC + tenant + PDF attachment', (
     expect(payload.text).toContain('وصفتك الطبية من عيادة دنتورا 💊')
     expect(payload.attachment.mimeType).toBe('application/pdf')
     expect(Buffer.from(payload.attachment.data, 'base64').toString('latin1').startsWith('%PDF')).toBe(true)
+
+    // Phase 11 — the signed PDF is persisted and the prescription is marked SENT
+    expect(storageMock.put).toHaveBeenCalled()
+    expect(prisma.prescription.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'SENT',
+          sentViaWhatsApp: true,
+          pdfUrl: expect.any(String),
+        }),
+      })
+    )
+    const body = await res.json()
+    expect(body.pdfUrl).toBeTruthy()
+  })
+
+  it('Phase 11: DRAFT prescription cannot be sent (must be signed first)', async () => {
+    await authAs('DOCTOR')
+    prisma.prescription.findFirst.mockResolvedValue({ ...prescription, status: 'DRAFT' })
+    const res = await sendPrescription(jsonReq('http://localhost/x', {}), {
+      params: Promise.resolve({ id: 'rx-1' }),
+    })
+    expect(res.status).toBe(409)
+    expect(prisma.messageQueue.create).not.toHaveBeenCalled()
+    expect(prisma.prescription.update).not.toHaveBeenCalled()
   })
 
   it('RECEPTIONIST is denied (RBAC: DOCTOR, ADMIN only)', async () => {

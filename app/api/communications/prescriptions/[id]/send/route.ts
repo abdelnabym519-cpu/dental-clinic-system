@@ -7,6 +7,8 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { translateText } from '@/lib/i18n/dictionary'
 import { enqueueMessage } from '@/lib/messaging/service'
 import * as templates from '@/lib/messaging/templates'
+import { getStorage } from '@/lib/storage'
+import { buildStorageKey } from '@/lib/storage/keys'
 
 /**
  * POST /api/communications/prescriptions/[id]/send — electronic prescription
@@ -16,10 +18,7 @@ import * as templates from '@/lib/messaging/templates'
  * message. The MessageQueue row is the sent-prescription record (status +
  * timestamps); actual delivery is the queue processor's job.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId, session } = await requireAuthAndRole(['DOCTOR', 'ADMIN'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,11 +31,21 @@ export async function POST(
       include: {
         patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
         doctor: { select: { id: true, firstName: true, lastName: true, phone: true } },
-        medications: { select: { medicationName: true, dosage: true, frequency: true, duration: true } },
+        medications: {
+          select: { medicationName: true, dosage: true, frequency: true, duration: true },
+        },
       },
     })
     if (!prescription) {
       return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+    }
+
+    // Phase 11 — a prescription is only sent after the doctor signed it.
+    if (prescription.status !== 'SIGNED') {
+      return NextResponse.json(
+        { error: 'Prescription must be signed before sending' },
+        { status: 409 }
+      )
     }
 
     // Recipient: manual override number on the prescription request body wins
@@ -54,11 +63,32 @@ export async function POST(
       translateText(locale, key, vars)
 
     const clinicName =
-      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ??
-      t('Clinic')
+      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))
+        ?.name ?? t('Clinic')
     const dateStr = new Date().toISOString().slice(0, 10) // caption, as 3C–3J pins
     const pdfDate = formatDate(new Date(), { locale })
     const doctorName = `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`
+
+    // Phase 11 — the rendered PDF is persisted (storage key in prescription.pdfUrl)
+    // so it can be re-sent / previewed without re-rendering.
+    const storageKey = buildStorageKey(
+      hospitalId,
+      'prescriptions',
+      prescription.id,
+      'prescription.pdf'
+    )
+    const markSent = async () => {
+      await getStorage().put(storageKey, pdf, { contentType: 'application/pdf' })
+      await prisma.prescription.update({
+        where: { id: prescription.id },
+        data: {
+          status: 'SENT',
+          sentViaWhatsApp: true,
+          whatsappSentAt: new Date(),
+          pdfUrl: storageKey,
+        },
+      })
+    }
 
     const pdf = renderSimplePdf({
       title: t('Prescription {v1}', { v1: prescription.prescriptionNo }),
@@ -111,8 +141,16 @@ export async function POST(
       )
     }
 
+    await markSent()
+
     return NextResponse.json(
-      { success: true, queueId, maskedRecipient: true, actorId: session?.user?.id },
+      {
+        success: true,
+        queueId,
+        maskedRecipient: true,
+        actorId: session?.user?.id,
+        pdfUrl: storageKey,
+      },
       { status: 201 }
     )
   } catch (err) {

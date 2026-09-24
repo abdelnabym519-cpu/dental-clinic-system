@@ -27,6 +27,10 @@ import {
   FileText,
   History,
   Video,
+  ClipboardList,
+  Pill,
+  StickyNote,
+  Smile,
 } from 'lucide-react'
 import {
   Dialog,
@@ -36,6 +40,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useSession } from 'next-auth/react'
+import { TreatmentPlanPanel } from '@/components/clinical/TreatmentPlanPanel'
+import { PrescriptionForm } from '@/components/clinical/PrescriptionForm'
+import { ClinicalNotesPanel } from '@/components/clinical/ClinicalNotesPanel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -120,6 +128,14 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
   const [appointment, setAppointment] = useState<Appointment | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
+
+  // Phase 11 — clinical section (DOCTOR/ADMIN only)
+  const { data: sessionData } = useSession()
+  const viewerRole = sessionData?.user?.role
+  const canEditClinical = viewerRole === 'DOCTOR' || viewerRole === 'ADMIN'
+  const [clinicalDialog, setClinicalDialog] = useState<'plan' | 'prescription' | 'notes' | null>(
+    null
+  )
 
   // Cancel dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -295,7 +311,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground">{t("Created on")} {formatDate(appointment.createdAt)}</p>
+            <p className="text-muted-foreground">
+              {t('Created on')} {formatDate(appointment.createdAt)}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -311,11 +329,15 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
             )}
           {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
             <Button onClick={handleCheckIn} disabled={actionLoading}>
-              <LogIn className="h-4 w-4 mr-2" />{t('ui.check_in')}</Button>
+              <LogIn className="h-4 w-4 mr-2" />
+              {t('ui.check_in')}
+            </Button>
           )}
           {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
             <Button onClick={handleCheckOut} disabled={actionLoading}>
-              <LogOut className="h-4 w-4 mr-2" />{t('ui.check_out')}</Button>
+              <LogOut className="h-4 w-4 mr-2" />
+              {t('ui.check_out')}
+            </Button>
           )}
           {appointment.status === 'SCHEDULED' && (
             <Button
@@ -323,11 +345,15 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               onClick={() => handleStatusChange('CONFIRMED')}
               disabled={actionLoading}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />{t('ui.confirm')}</Button>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {t('ui.confirm')}
+            </Button>
           )}
           <Link href={`/appointments/${id}/edit`}>
             <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
+              <Edit className="h-4 w-4 mr-2" />
+              {t('ui.edit')}
+            </Button>
           </Link>
           {!['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(appointment.status) && (
             <Button
@@ -335,7 +361,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               onClick={() => setShowCancelDialog(true)}
               disabled={actionLoading}
             >
-              <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel')}</Button>
+              <XCircle className="h-4 w-4 mr-2" />
+              {t('ui.cancel')}
+            </Button>
           )}
         </div>
       </div>
@@ -345,7 +373,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />{t('ui.appointment_details')}</CardTitle>
+              <Calendar className="h-5 w-5" />
+              {t('ui.appointment_details')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -359,12 +389,16 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('ui.duration')}</p>
-                <p className="font-medium">{appointment.duration} {t('minutes')}</p>
+                <p className="font-medium">
+                  {appointment.duration} {t('minutes')}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t('Chair')}</p>
                 <p className="font-medium">
-                  {appointment.chairNumber ? t("Chair {v1}", { v1: appointment.chairNumber }) : 'Not assigned'}
+                  {appointment.chairNumber
+                    ? t('Chair {v1}', { v1: appointment.chairNumber })
+                    : 'Not assigned'}
                 </p>
               </div>
               <div>
@@ -400,7 +434,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                   {appointment.waitTime !== null && appointment.waitTime > 0 && (
                     <div>
                       <p className="text-sm text-muted-foreground">{t('Wait Time')}</p>
-                      <p className="font-medium">{appointment.waitTime} {t('minutes')}</p>
+                      <p className="font-medium">
+                        {appointment.waitTime} {t('minutes')}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -429,11 +465,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                 <Separator />
                 <div className="rounded-lg bg-red-50 p-4">
                   <p className="text-sm font-medium text-red-700">
-                    {t("Cancelled on")} {new Date(appointment.cancelledAt!).toLocaleString(locale)}
+                    {t('Cancelled on')} {new Date(appointment.cancelledAt!).toLocaleString(locale)}
                   </p>
                   {appointment.cancellationReason && (
                     <p className="text-sm text-red-600 mt-1">
-                      {t("Reason:")} {appointment.cancellationReason}
+                      {t('Reason:')} {appointment.cancellationReason}
                     </p>
                   )}
                 </div>
@@ -446,7 +482,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />{t('ui.patient_information')}</CardTitle>
+              <User className="h-5 w-5" />
+              {t('ui.patient_information')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
@@ -503,12 +541,13 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
                   </div>
                   {appointment.patient.medicalHistory.drugAllergies && (
                     <p className="text-sm text-red-600 mt-2">
-                      {t("Drug Allergies:")} {appointment.patient.medicalHistory.drugAllergies}
+                      {t('Drug Allergies:')} {appointment.patient.medicalHistory.drugAllergies}
                     </p>
                   )}
                   {appointment.patient.medicalHistory.currentMedications && (
                     <p className="text-sm text-muted-foreground mt-2">
-                      {t("Current Medications:")} {appointment.patient.medicalHistory.currentMedications}
+                      {t('Current Medications:')}{' '}
+                      {appointment.patient.medicalHistory.currentMedications}
                     </p>
                   )}
                 </div>
@@ -529,7 +568,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5" />{t('ui.doctor')}</CardTitle>
+              <Stethoscope className="h-5 w-5" />
+              {t('ui.doctor')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -555,7 +596,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />{t('ui.treatments')}</CardTitle>
+              <FileText className="h-5 w-5" />
+              {t('ui.treatments')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {appointment.treatments.length === 0 ? (
@@ -578,7 +621,79 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
             )}
           </CardContent>
         </Card>
+
+        {/* Phase 11 — Clinical section: one-click workflow while the patient
+            is in the chair (IN_PROGRESS) or after the visit (COMPLETED). */}
+        {canEditClinical && ['IN_PROGRESS', 'COMPLETED'].includes(appointment.status) && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                {t('clinical.clinical_section')}
+              </CardTitle>
+              <CardDescription>
+                {t('clinical.treatment_plan')} · {t('clinical.prescription')} ·{' '}
+                {t('clinical.clinical_notes')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Button variant="outline" onClick={() => setClinicalDialog('plan')}>
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  {t('clinical.treatment_plan')}
+                </Button>
+                <Button variant="outline" onClick={() => setClinicalDialog('prescription')}>
+                  <Pill className="mr-2 h-4 w-4" />
+                  {t('clinical.prescription')}
+                </Button>
+                <Button variant="outline" onClick={() => setClinicalDialog('notes')}>
+                  <StickyNote className="mr-2 h-4 w-4" />
+                  {t('clinical.clinical_notes')}
+                </Button>
+                <Link href={`/patients/${appointment.patient.id}/odontogram`}>
+                  <Button variant="outline" className="w-full">
+                    <Smile className="mr-2 h-4 w-4" />
+                    {t('clinical.odontogram')}
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Phase 11 — clinical panels (dialog-hosted) */}
+      <Dialog
+        open={clinicalDialog !== null}
+        onOpenChange={(open) => !open && setClinicalDialog(null)}
+      >
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {clinicalDialog === 'plan' && t('clinical.treatment_plan')}
+              {clinicalDialog === 'prescription' && t('clinical.prescription')}
+              {clinicalDialog === 'notes' && t('clinical.clinical_notes')}
+            </DialogTitle>
+          </DialogHeader>
+          {clinicalDialog === 'plan' && (
+            <TreatmentPlanPanel
+              appointmentId={appointment.id}
+              patientId={appointment.patient.id}
+              canEdit={canEditClinical}
+            />
+          )}
+          {clinicalDialog === 'prescription' && (
+            <PrescriptionForm
+              appointmentId={appointment.id}
+              patientId={appointment.patient.id}
+              canEdit={canEditClinical}
+            />
+          )}
+          {clinicalDialog === 'notes' && (
+            <ClinicalNotesPanel appointmentId={appointment.id} canEdit={canEditClinical} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Cancel Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -607,7 +722,9 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               variant="destructive"
               onClick={() => handleStatusChange('CANCELLED')}
               disabled={actionLoading}
-            >{t('ui.cancel_appointment')}</Button>
+            >
+              {t('ui.cancel_appointment')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

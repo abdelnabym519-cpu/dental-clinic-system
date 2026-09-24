@@ -391,6 +391,8 @@ model Staff {
   appointments    Appointment[] @relation("DoctorAppointments")
   treatments      Treatment[]
   prescriptions   Prescription[]
+  treatmentPlans  TreatmentPlan[]   @relation("DoctorTreatmentPlans")
+  clinicalNotes   ClinicalNote[]    @relation("DoctorClinicalNotes")
   attendance      Attendance[]
   shifts          StaffShift[]
   breaks            DoctorBreak[]
@@ -528,6 +530,7 @@ model Patient {
   treatmentPlans  TreatmentPlan[]
   dentalChart     DentalChartEntry[]
   prescriptions   Prescription[]
+  clinicalNotes   ClinicalNote[]
   invoices        Invoice[]
   documents       Document[]
   queuedMessages  MessageQueue[]
@@ -664,6 +667,10 @@ model Appointment {
   patient         Patient           @relation(fields: [patientId], references: [id])
   doctor          Staff             @relation("DoctorAppointments", fields: [doctorId], references: [id])
   treatments      Treatment[]
+  // Phase 11 — clinical workflow links.
+  treatmentPlans  TreatmentPlan[]   @relation("AppointmentTreatmentPlans")
+  prescriptions   Prescription[]    @relation("AppointmentPrescriptions")
+  clinicalNotes   ClinicalNote[]
   reminders       AppointmentReminder[]
   videoConsultation VideoConsultation?
   room            Room?             @relation(fields: [roomId], references: [id])
@@ -860,6 +867,18 @@ model TreatmentPlan {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
+  // Phase 11 — clinical workflow: plan ownership + appointment link.
+  doctorId        String?
+  chiefComplaint  String?             @db.Text
+  diagnosis       String?             @db.Text
+  currency        String              @default("EGP")
+  appointmentId   String?
+
+  doctor          Staff?              @relation("DoctorTreatmentPlans", fields: [doctorId], references: [id])
+  appointment     Appointment?        @relation("AppointmentTreatmentPlans", fields: [appointmentId], references: [id])
+  prescriptions   Prescription[]
+  clinicalNotes   ClinicalNote[]
+
   hospital        Hospital            @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   patient         Patient             @relation(fields: [patientId], references: [id])
   items           TreatmentPlanItem[]
@@ -868,6 +887,8 @@ model TreatmentPlan {
   @@index([hospitalId])
   @@index([patientId])
   @@index([status])
+  @@index([doctorId])
+  @@index([appointmentId])
 }
 
 model TreatmentPlanItem {
@@ -974,18 +995,75 @@ model Prescription {
 
   validUntil      DateTime?
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  // Phase 11 — e-prescription workflow: DRAFT → SIGNED → SENT.
+  status          PrescriptionStatus @default(DRAFT)
+  issuedAt        DateTime?
+  pdfUrl          String?           // storage key of the rendered PDF
+  sentViaWhatsApp Boolean          @default(false)
+  whatsappSentAt  DateTime?
+  appointmentId   String?
+  treatmentPlanId String?
 
-  hospital        Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
-  patient         Patient      @relation(fields: [patientId], references: [id])
-  doctor          Staff        @relation(fields: [doctorId], references: [id])
+  appointment     Appointment?     @relation("AppointmentPrescriptions", fields: [appointmentId], references: [id])
+  treatmentPlan   TreatmentPlan?   @relation(fields: [treatmentPlanId], references: [id])
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  hospital        Hospital         @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  patient         Patient          @relation(fields: [patientId], references: [id])
+  doctor          Staff            @relation(fields: [doctorId], references: [id])
   medications     PrescriptionMedication[]
 
   @@unique([hospitalId, prescriptionNo])
   @@index([hospitalId])
   @@index([patientId])
   @@index([doctorId])
+  @@index([status])
+  @@index([appointmentId])
+  @@index([treatmentPlanId])
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  SIGNED
+  SENT
+  CANCELLED
+}
+
+// Phase 11 — clinical notes attached to an appointment (doctor documentation).
+model ClinicalNote {
+  id              String        @id @default(cuid())
+  hospitalId      String
+  appointmentId   String
+  patientId       String
+  doctorId        String
+  treatmentPlanId String?
+
+  content         String        @db.Text
+  noteType        NoteType      @default(GENERAL)
+  isPrivate       Boolean       @default(false) // true = DOCTOR/ADMIN only
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  hospital        Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  appointment     Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  doctor          Staff         @relation("DoctorClinicalNotes", fields: [doctorId], references: [id])
+  treatmentPlan   TreatmentPlan? @relation(fields: [treatmentPlanId], references: [id])
+
+  @@index([hospitalId])
+  @@index([appointmentId])
+  @@index([patientId])
+}
+
+enum NoteType {
+  GENERAL
+  EXAMINATION
+  TREATMENT
+  FOLLOW_UP
+  REFERRAL
 }
 
 model PrescriptionMedication {
