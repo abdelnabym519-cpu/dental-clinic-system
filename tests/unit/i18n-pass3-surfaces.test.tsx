@@ -602,7 +602,7 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     for (const [en0, ar0] of [
       ['Please select a doctor', 'يرجى اختيار طبيب'],
       ['Network error. Please try again.', 'خطأ في الشبكة. حاول مرة أخرى.'],
-      ['Please enter a valid 10-digit phone number', 'أدخل رقم هاتف صحيح من ١٠ أرقام'],
+      ['Please enter a valid 11-digit phone number', 'أدخل رقم هاتف صحيح من ١١ رقماً'],
       ['Failed to send OTP', 'تعذّر إرسال رمز التحقق'],
       ['Patient {name} has been registered successfully.', 'تم تسجيل المريض {name} بنجاح.'],
       // observed live on /patients/new: the API's own message reaches the DOM verbatim,

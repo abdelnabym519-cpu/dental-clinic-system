@@ -3834,7 +3834,6 @@
   "Search by patient name, plan number, or title...": "Search by patient name, plan number, or title...",
   "Copy reference": "Copy reference",
   "Describe your symptoms, when they started, and any other details...": "Describe your symptoms, when they started, and any other details...",
-  "Enter your 10-digit number": "Enter your 10-digit number",
   "Enter 6-digit OTP": "Enter 6-digit OTP",
   "Date *": "Date *",
   "Record a payment for invoice": "Record a payment for invoice",
@@ -4341,7 +4340,6 @@
   "Please select a JPEG, PNG, or WebP image": "Please select a JPEG, PNG, or WebP image",
   "File size must be under 10MB": "File size must be under 10MB",
   "Booking failed": "Booking failed",
-  "Please enter a valid 10-digit phone number": "Please enter a valid 10-digit phone number",
   "Please enter your clinic identifier": "Please enter your clinic identifier",
   "Failed to send OTP": "Failed to send OTP",
   "Please enter the 6-digit OTP": "Please enter the 6-digit OTP",
@@ -5270,5 +5268,7 @@
   "portal_err.create_account_failed": "Failed to create portal account",
   "portal_err.rx_pdf_failed": "Failed to render prescription PDF",
   "portal_err.cancel_failed": "Failed to cancel appointment",
-  "portal_err.rx_queue_failed": "Failed to queue the prescription message"
+  "portal_err.rx_queue_failed": "Failed to queue the prescription message",
+  "Please enter a valid 11-digit phone number": "Please enter a valid 11-digit phone number",
+  "Enter your 11-digit number": "Enter your 11-digit number"
 }

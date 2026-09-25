@@ -38,8 +38,8 @@ function PatientLoginForm() {
   const [clinicName, setClinicName] = useState('')
 
   const sendOTP = async () => {
-    if (!phone || phone.length < 10) {
-      setError(t('Please enter a valid 10-digit phone number'))
+    if (!phone || phone.length < 11) {
+      setError(t('Please enter a valid 11-digit phone number'))
       return
     }
     if (!clinicSlug) {
@@ -175,11 +175,11 @@ function PatientLoginForm() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder={t('Enter your 10-digit number')}
+                    placeholder={t('Enter your 11-digit number')}
                     className="pl-10"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    maxLength={10}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    maxLength={11}
                   />
                 </div>
               </div>

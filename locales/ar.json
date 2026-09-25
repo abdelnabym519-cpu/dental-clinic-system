@@ -3834,7 +3834,6 @@
   "Search by patient name, plan number, or title...": "ابحث باسم المريض أو رقم الخطة أو العنوان...",
   "Copy reference": "نسخ المرجع",
   "Describe your symptoms, when they started, and any other details...": "صف أعراضك ومتى بدأت وأي تفاصيل أخرى...",
-  "Enter your 10-digit number": "أدخل رقمك المكوّن من 10 أرقام",
   "Enter 6-digit OTP": "أدخل رمز التحقق المكوّن من 6 أرقام",
   "Date *": "التاريخ *",
   "Record a payment for invoice": "تسجيل دفعة للفاتورة",
@@ -4341,7 +4340,6 @@
   "Please select a JPEG, PNG, or WebP image": "اختر صورة بصيغة JPEG أو PNG أو WebP",
   "File size must be under 10MB": "حجم الملف يجب أن يكون أقل من ١٠ ميجابايت",
   "Booking failed": "فشل حجز الموعد",
-  "Please enter a valid 10-digit phone number": "أدخل رقم هاتف صحيح من ١٠ أرقام",
   "Please enter your clinic identifier": "أدخل معرّف العيادة الخاص بك",
   "Failed to send OTP": "تعذّر إرسال رمز التحقق",
   "Please enter the 6-digit OTP": "أدخل رمز التحقق المكون من ٦ أرقام",
@@ -5270,5 +5268,7 @@
   "portal_err.create_account_failed": "فشل في إنشاء حساب البوابة",
   "portal_err.rx_pdf_failed": "فشل في عرض وصفة PDF",
   "portal_err.cancel_failed": "فشل في إلغاء الموعد",
-  "portal_err.rx_queue_failed": "فشل في إرسال رسالة الوصفة"
+  "portal_err.rx_queue_failed": "فشل في إرسال رسالة الوصفة",
+  "Please enter a valid 11-digit phone number": "أدخل رقم هاتف صحيح من ١١ رقماً",
+  "Enter your 11-digit number": "أدخل رقمك المكوّن من 11 رقمًا"
 }
