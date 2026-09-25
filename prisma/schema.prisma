@@ -274,6 +274,7 @@ model User {
   acknowledgedStockAlerts StockAlert[]
   labOrderStatusChanges   LabOrderHistory[]
   uploadedLabOrderDocuments LabOrderDocument[]
+  portalPatient         Patient?         // Phase 13 — linked portal account (role PATIENT)
 
   @@index([email])
   @@index([role])
@@ -322,6 +323,10 @@ enum Role {
   RECEPTIONIST
   LAB_TECH
   ACCOUNTANT
+  // Phase 13 — portal-linked patient accounts (see D2). Portal sessions
+  // themselves ride the OTP/JWT cookie (lib/patient-auth.ts); this role
+  // models the linked User record and keeps such users out of staff routes.
+  PATIENT
 }
 
 // ==================== STAFF INVITES ====================
@@ -518,8 +523,16 @@ model Patient {
   // clinic" — same reasoning as User.locale above.
   locale          String?
 
+  // Phase 13 — portal account linking. portalUserId points at the PATIENT-role
+  // User created by /api/portal/accounts (password login); the OTP flow works
+  // without it. NULL = portal not enabled for this patient.
+  portalUserId    String?  @unique
+  portalEnabled   Boolean  @default(false)
+
   aiSummary       Json?
   aiSummaryAt     DateTime?
+
+  portalUser      User?    @relation("PatientPortalUser", fields: [portalUserId], references: [id], onDelete: SetNull)
 
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())

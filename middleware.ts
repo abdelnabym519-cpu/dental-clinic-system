@@ -98,6 +98,14 @@ export default auth((req) => {
     return NextResponse.rewrite(new URL('/settings/access-denied', nextUrl))
   }
 
+  // Phase 13 — portal-linked users (role PATIENT) live in the patient
+  // portal, not the staff dashboard. Any non-portal page sends them back to
+  // the portal login. (The portal itself is intentionally public in the
+  // list above — it carries its own cookie-based auth in the layout.)
+  if (userRole === 'PATIENT' && !pathname.startsWith('/portal') && !pathname.startsWith('/pay')) {
+    return NextResponse.redirect(new URL('/portal/login', nextUrl))
+  }
+
   // Check role-based access
   for (const [path, roles] of Object.entries(roleRoutes)) {
     if (pathname.startsWith(path)) {

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Building2, Phone, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react'
 
-type Step = 'phone' | 'otp'
+type Step = 'phone' | 'otp' | 'password'
 
 // useSearchParams() needs a Suspense boundary, otherwise this page cannot be
 // prerendered. It used to inherit a dynamic parent layout, which masked this.
@@ -31,6 +31,7 @@ function PatientLoginForm() {
   const [step, setStep] = useState<Step>('phone')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [clinicSlug, setClinicSlug] = useState(clinic)
@@ -102,6 +103,37 @@ function PatientLoginForm() {
     }
   }
 
+  const loginWithPassword = async () => {
+    if (!password || password.length < 8) {
+      setError(t('Password must be at least 8 characters'))
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/patient-portal/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password, hospitalSlug: clinicSlug }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || t('Login failed'))
+        return
+      }
+
+      router.push('/portal')
+    } catch {
+      setError(t('Network error. Please try again.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-muted/50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -155,8 +187,19 @@ function PatientLoginForm() {
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {t("Send OTP")}
               </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setStep('password')
+                  setOtp('')
+                  setError('')
+                }}
+              >
+                {t('Login with password')}
+              </Button>
             </>
-          ) : (
+          ) : step === 'otp' ? (
             <>
               <div className="space-y-2">
                 <Label htmlFor="otp">{t('Verification Code')}</Label>
@@ -191,6 +234,42 @@ function PatientLoginForm() {
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 {t('Change Phone Number')}
+              </Button>
+            </>
+          ) : null}
+
+          {step === 'password' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="password">{t('ui.password')}</Label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder={t('Enter your password')}
+                    className="pl-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <Button className="w-full" onClick={loginWithPassword} disabled={loading}>
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {t('Login')}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setStep('otp')
+                  setPassword('')
+                  setError('')
+                }}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t('Use OTP instead')}
               </Button>
             </>
           )}

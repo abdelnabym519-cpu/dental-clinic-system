@@ -38,6 +38,7 @@ export interface QueueMessageInput {
     | 'RADIOLOGY'
     | 'REVIEW_REQUEST'
     | 'TEST'
+    | 'WELCOME' // Phase 13 — portal account activation (patient-facing)
   payload: MessagePayload
   scheduledAt?: Date
 }

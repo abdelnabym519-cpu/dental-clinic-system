@@ -146,6 +146,9 @@ describe('POST /api/patient-portal/appointments', () => {
   it('creates appointment with generated number', async () => {
     mockPatientAuth()
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
+    vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
     vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ appointmentNo: 'APT00042' } as any)
     vi.mocked(prisma.appointment.create).mockResolvedValue({
       id: 'a1',
@@ -154,10 +157,13 @@ describe('POST /api/patient-portal/appointments', () => {
       doctor: { firstName: 'Dr', lastName: 'Smith', specialization: 'General' },
     } as any)
 
+    // Phase 13 — booking rules require a future date (computed at test time)
+    const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
     const res = await appointmentsPOST(
       makeReq('/api/patient-portal/appointments', 'POST', {
         doctorId: 'd1',
-        date: '2026-03-15',
+        date: futureDate,
         time: '10:00',
         chiefComplaint: 'Tooth pain',
       })

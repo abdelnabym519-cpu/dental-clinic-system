@@ -3,10 +3,11 @@
 import { useLanguage } from '@/components/providers/language-provider'
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { Pill, User, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
+import { Pill, User, Calendar, ChevronDown, ChevronUp, FileDown, MessageCircle, Check, Loader2 } from 'lucide-react'
 
 interface Prescription {
   id: string
@@ -42,6 +43,8 @@ export default function PatientPrescriptions() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
+  const [resentId, setResentId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/patient-portal/prescriptions')
@@ -50,6 +53,21 @@ export default function PatientPrescriptions() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  const requestResend = async (id: string) => {
+    setResendingId(id)
+    setResentId(null)
+    try {
+      const res = await fetch(`/api/patient-portal/prescriptions/${id}/resend`, {
+        method: 'POST',
+      })
+      if (res.ok) setResentId(id)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setResendingId(null)
+    }
+  }
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(locale, {
@@ -107,6 +125,39 @@ export default function PatientPrescriptions() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{rx.medications.length} {t('meds')}</Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={t('Download PDF')}
+                      title={t('Download PDF')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        window.open(`/api/patient-portal/prescriptions/${rx.id}/pdf`, '_blank')
+                      }}
+                    >
+                      <FileDown className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={t('Resend via WhatsApp')}
+                      title={t('Resend via WhatsApp')}
+                      disabled={resendingId === rx.id}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        requestResend(rx.id)
+                      }}
+                    >
+                      {resendingId === rx.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : resentId === rx.id ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <MessageCircle className="h-4 w-4" />
+                      )}
+                    </Button>
                     {expandedId === rx.id ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (

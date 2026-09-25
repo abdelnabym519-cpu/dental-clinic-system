@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, CalendarPlus, Clock, User, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, CalendarPlus, Clock, User, ChevronLeft, ChevronRight, XCircle, Loader2 } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -56,6 +56,7 @@ export default function PatientAppointments() {
     totalPages: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
 
   const fetchAppointments = async (page = 1) => {
     setLoading(true)
@@ -76,6 +77,23 @@ export default function PatientAppointments() {
   useEffect(() => {
     fetchAppointments(1)
   }, [filter])
+
+  const cancelAppointment = async (id: string) => {
+    if (!window.confirm(t('Are you sure you want to cancel this appointment?'))) return
+    setCancellingId(id)
+    try {
+      const res = await fetch(`/api/patient-portal/appointments/${id}/cancel`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        fetchAppointments(pagination.page)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(locale, {
@@ -148,9 +166,27 @@ export default function PatientAppointments() {
                           {apt.appointmentType.replace('_', ' ')}
                         </p>
                       </div>
-                      <Badge className={statusColors[apt.status] || 'bg-muted text-foreground'}>
-                        {apt.status.replace('_', ' ')}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge className={statusColors[apt.status] || 'bg-muted text-foreground'}>
+                          {apt.status.replace('_', ' ')}
+                        </Badge>
+                        {apt.status === 'SCHEDULED' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-red-600 hover:text-red-700"
+                            disabled={cancellingId === apt.id}
+                            onClick={() => cancelAppointment(apt.id)}
+                          >
+                            {cancellingId === apt.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-1" />
+                            )}
+                            {t('Cancel Appointment')}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

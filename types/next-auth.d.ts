@@ -10,6 +10,8 @@ declare module 'next-auth' {
     // Nullable: the platform-level SUPER_ADMIN (Phase 9) belongs to no hospital.
     hospitalId: string | null
     isHospitalAdmin: boolean
+    // Phase 13 — set for role PATIENT: the linked Patient record id.
+    patientId?: string
     // Derived convenience flag: role === 'SUPER_ADMIN'.
     isSuperAdmin: boolean
   }

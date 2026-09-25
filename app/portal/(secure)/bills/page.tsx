@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Receipt,
   CheckCircle,
+  FileDown,
+  Loader2,
 } from 'lucide-react'
 
 interface Invoice {
@@ -65,6 +67,7 @@ export default function PatientBills() {
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [payingId, setPayingId] = useState<string | null>(null)
 
   const fetchBills = useCallback(
     async (page = 1) => {
@@ -168,6 +171,54 @@ export default function PatientBills() {
                     {expandedId === inv.id && (
                       <div className="mt-4 space-y-3">
                         <Separator />
+
+                        {/* Phase 13 — actions: pay online (Fawry/Paymob when
+                            configured) + invoice PDF */}
+                        <div className="flex flex-wrap gap-2">
+                          {Number(inv.balanceAmount) > 0 && (
+                            <Button
+                              size="sm"
+                              disabled={payingId === inv.id}
+                              onClick={async () => {
+                                setPayingId(inv.id)
+                                try {
+                                  const res = await fetch(
+                                    `/api/patient-portal/bills/${inv.id}/pay`,
+                                    {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({}),
+                                    }
+                                  )
+                                  const data = await res.json()
+                                  if (!res.ok) throw new Error(data.error || t('Failed to start payment'))
+                                  if (data.paymentUrl) window.open(data.paymentUrl, '_blank')
+                                } catch (err) {
+                                  alert(err instanceof Error ? err.message : t('Failed to start payment'))
+                                } finally {
+                                  setPayingId(null)
+                                }
+                              }}
+                            >
+                              {payingId === inv.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <CreditCard className="h-4 w-4 mr-2" />
+                              )}
+                              {t('Pay Online')}
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              window.open(`/api/patient-portal/bills/${inv.id}/pdf`, '_blank')
+                            }
+                          >
+                            <FileDown className="h-4 w-4 mr-2" />
+                            {t('Download PDF')}
+                          </Button>
+                        </div>
 
                         {/* Items */}
                         <div>
