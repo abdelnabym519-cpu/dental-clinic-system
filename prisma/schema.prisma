@@ -130,6 +130,8 @@ model Hospital {
   devices             Device[]
   pushDevices         PushDevice[]
   dataImportJobs      DataImportJob[]
+  imagingStudies    ImagingStudy[]
+  aiAnalysisJobs    AIAnalysisJob[]
 
   @@index([slug])
   @@index([plan])
@@ -275,6 +277,9 @@ model User {
   labOrderStatusChanges   LabOrderHistory[]
   uploadedLabOrderDocuments LabOrderDocument[]
   portalPatient         Patient?         // Phase 13 — linked portal account (role PATIENT)
+  imagingStudiesUploaded ImagingStudy[]   // Phase 19A
+  aiAnalysisJobsRequested AIAnalysisJob[] // Phase 19A
+  aiAnalysisJobsReviewed  AIAnalysisJob[] // Phase 19A (reviewedById)
 
   @@index([email])
   @@index([role])
@@ -558,6 +563,7 @@ model Patient {
   paymentPlans    PaymentPlan[]
   invoicePayments Payment[]           @relation("PatientInvoicePayments") // Phase 12
   videoConsultations VideoConsultation[]
+  imagingStudies   ImagingStudy[]  // Phase 19A
 
   @@unique([hospitalId, patientId])
   @@index([hospitalId])
@@ -692,6 +698,7 @@ model Appointment {
   videoConsultation VideoConsultation?
   room            Room?             @relation(fields: [roomId], references: [id])
   queuedMessages  MessageQueue[]
+  imagingStudies  ImagingStudy[]   // Phase 19A
 
   @@unique([hospitalId, appointmentNo])
   @@index([roomId])
@@ -3223,4 +3230,125 @@ enum DataImportStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// ==================== AI IMAGING — PHASE 19A ====================
+// Imaging studies (uploaded X-rays/photos) and the AI analysis jobs run
+// against them by the AI platform (ai-compose.yml). Ownership:
+//   - Next.js creates the study (UPLOADED) and the job (PENDING), and owns
+//     doctor review (reviewDecision / acceptedFindings / study -> REVIEWED)
+//   - the AI orchestrator owns processing transitions
+//     (PENDING -> PROCESSING -> COMPLETED/FAILED) + provenance
+// Originals are IMMUTABLE: AI outputs are stored as separate objects under
+// {hospitalId}/imaging/.../ai/... (see lib/storage/keys.ts tenant guard).
+
+enum StudyModality {
+  PANORAMIC
+  PERIAPICAL
+  BITEWING
+  CBCT
+  THREE_D_SCAN
+  PHOTO
+}
+
+enum ImagingStudyStatus {
+  UPLOADED
+  ANALYZED
+  REVIEWED
+}
+
+enum AIJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AIReviewDecision {
+  ACCEPTED
+  MODIFIED
+  REJECTED
+}
+
+model ImagingStudy {
+  id            String    @id @default(cuid())
+  hospitalId    String
+  patientId     String
+  appointmentId String?
+
+  studyType     String
+  modality      StudyModality
+
+  // The original image object. Immutable after upload (the AI stack is
+  // read-only with respect to this key).
+  originalKey   String    @unique
+  originalSize  Int
+  originalHash  String
+  mimeType      String
+
+  studyDate     DateTime?
+  description   String?   @db.Text
+  uploadedById  String?
+
+  status        ImagingStudyStatus @default(UPLOADED)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  hospital      Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  patient       Patient      @relation(fields: [patientId], references: [id])
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  uploadedBy    User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  aiJobs        AIAnalysisJob[]
+
+  @@index([hospitalId])
+  @@index([hospitalId, patientId])
+  @@index([status])
+}
+
+model AIAnalysisJob {
+  id            String    @id @default(cuid())
+  hospitalId    String
+  studyId       String
+  engine        String
+  status        AIJobStatus @default(PENDING)
+
+  requestedById String?
+
+  // Provenance — the exact artifact that ran (D9 / spec section 13).
+  modelVersion        String?
+  modelChecksum       String?
+  modelSource         String?
+  modelLicense        String?
+  orchestratorVersion String?
+
+  startedAt        DateTime?
+  completedAt      DateTime?
+  processingTimeMs Int?
+
+  rawOutputKey   String?
+  findings       Json?
+  confidence     Float?
+  errorMessage   String? @db.Text
+  provenance     Json?
+
+  reviewedById   String?
+  reviewedAt     DateTime?
+  reviewDecision AIReviewDecision?
+  reviewNotes    String? @db.Text
+  acceptedFindings Json?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  hospital    Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  study       ImagingStudy  @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  requestedBy User?         @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  reviewedBy  User?         @relation("AIJobReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([hospitalId])
+  @@index([studyId])
+  @@index([status])
+  @@index([hospitalId, status])
 }

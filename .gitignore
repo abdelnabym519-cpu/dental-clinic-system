@@ -70,3 +70,8 @@ next-env.d.ts
 
 # Local visual-verification raster outputs (regenerate: npx tsx tools/render-arch.tsx)
 tools/preview/
+
+# Python (Phase 19A AI services)
+__pycache__/
+*.pyc
+.pytest_cache/

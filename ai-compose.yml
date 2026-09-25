@@ -1,0 +1,102 @@
+# DenToRa AI platform — Phase 19A (Liodon PoC).
+#
+#   docker compose -f ai-compose.yml up -d
+#
+# Brings up the AI Orchestrator (FastAPI, :8000) and the Liodon engine
+# (FastAPI + ONNX Runtime CPU, :8001) on the shared `dentora-network` created
+# by docker-compose.dev.yml, so they reach MinIO (http://minio:9000) and
+# MySQL (http://mysql:3306) by service name — no extra published ports, no
+# changes to the core stack.
+#
+# Start the core stack first:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Credentials and endpoints come from the existing project environment
+# (.env), the same variables the Next.js storage driver uses:
+#   DATABASE_URL, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET,
+#   S3_REGION, S3_FORCE_PATH_STYLE
+# plus the Phase 19A additions:
+#   AI_ORCHESTRATOR_URL, ORCHESTRATOR_SECRET
+#
+# The Liodon model is NOT baked into the image and NOT committed to git —
+# it is the publisher's CC-BY-NC-4.0 artifact, verified by SHA-256 on the
+# machine that runs it (see ai-validation/liodon/model/README.md). The
+# read-only mount below points at that verified file; the engine refuses to
+# start if the checksum does not match the registry.
+#
+# Development ports 8000/8001 are published for local validation only; this
+# is not a production security configuration (see docs/INFRASTRUCTURE.md).
+
+name: dentora-ai
+
+services:
+  ai-orchestrator:
+    build:
+      context: ./ai/orchestrator
+      dockerfile: Dockerfile
+    container_name: dentora-ai-orchestrator
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      # Engine routing
+      LIODON_ENGINE_URL: http://liodon-engine:8001
+      # Object storage — same variables the Next.js S3 storage driver uses
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-dentalerp}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-dentalerp123}
+      S3_BUCKET: ${S3_BUCKET:-dental-erp-uploads}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
+      # Job state + audit trail live in the core application database
+      DATABASE_URL: ${DATABASE_URL}
+      # Internal auth shared with Next.js. Required — the orchestrator
+      # refuses to start without it (no silent fallback to a default).
+      ORCHESTRATOR_SECRET: ${ORCHESTRATOR_SECRET:?ORCHESTRATOR_SECRET must be set in .env}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8000/health", timeout=3).status == 200 else 1)']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      liodon-engine:
+        condition: service_healthy
+
+  liodon-engine:
+    build:
+      context: ./ai/engines/liodon
+      dockerfile: Dockerfile
+    container_name: dentora-liodon-engine
+    restart: unless-stopped
+    ports:
+      - '8001:8001'
+    environment:
+      # Resolved from the read-only mount below. The engine verifies the
+      # SHA-256 against the model registry before loading and refuses to
+      # start on mismatch (ai-validation/liodon/MODEL_PROVENANCE.md).
+      MODEL_PATH: /app/models/liodon/best.onnx
+      DEVICE: cpu
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # The validated artifact, exactly as verified on this machine:
+    #   ai-validation/liodon/model/best.onnx
+    #   SHA-256 4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71
+    # Read-only: the service never writes to the model.
+    volumes:
+      - ./ai-validation/liodon/model:/app/models/liodon:ro
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8001/health", timeout=3).status == 200 else 1)']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+networks:
+  dentora-network:
+    external: true
+    name: dentora-network

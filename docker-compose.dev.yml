@@ -47,6 +47,8 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
+    networks:
+      - dentora-network
 
   redis:
     image: redis:7-alpine
@@ -60,6 +62,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - dentora-network
 
   # S3-compatible object storage. Nothing uses this yet — it is here so the
   # storage work in Phase 3 has somewhere to point without every contributor
@@ -81,6 +85,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - dentora-network
 
   # One-shot: creates the uploads bucket, then exits. `docker compose ps` will
   # show it as Exited(0) — that is success, not a failure.
@@ -101,6 +107,10 @@ services:
       mc mb --ignore-existing local/dental-erp-uploads &&
       echo 'bucket ready'
       "
+    # Phase 19A — must share dentora-network with minio, which no longer
+    # joins the project default network.
+    networks:
+      - dentora-network
 
   # Catches all outbound SMTP so email can be tested with no credentials and no
   # risk of mailing a real patient. Web UI at http://localhost:8025
@@ -115,8 +125,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - dentora-network
 
 volumes:
   mysql-data:
   redis-data:
   minio-data:
+
+# Phase 19A — shared bridge network so the AI stack (ai-compose.yml) can
+# reach the backing services by name (http://minio:9000, etc.) without
+# publishing extra ports. The AI compose file references it as external.
+networks:
+  dentora-network:
+    driver: bridge
+    name: dentora-network

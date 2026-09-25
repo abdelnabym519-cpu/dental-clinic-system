@@ -225,6 +225,26 @@ const mockPrismaClient = {
     count: vi.fn(),
   },
 
+  // Phase 19A — AI imaging
+  imagingStudy: {
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+  aiAnalysisJob: {
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+
   // CommunicationTemplate
   communicationTemplate: {
     findUnique: vi.fn(),

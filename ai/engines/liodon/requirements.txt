@@ -1,0 +1,10 @@
+# Liodon engine service — Phase 19A.
+#
+# CPU-only ONNX Runtime inference. Same dependency surface as the validated
+# lab (ai-validation/liodon/requirements.txt) plus the web server. No
+# PyTorch, no CUDA, no GPU providers, no cloud calls.
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+onnxruntime>=1.17,<2   # CPU build — the only inference engine used
+numpy>=1.24
+Pillow>=10.0
