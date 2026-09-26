@@ -17,7 +17,6 @@ Responsibilities here are narrow:
 
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import os
@@ -60,7 +59,12 @@ class ObjectStorage:
         self._put(key, data, "application/json")
 
     def put_png(self, key: str, png_hex: str) -> None:
-        self._put(key, base64.b64decode(png_hex), "image/png")
+        # The engine hex-encodes the annotated PNG (model.py:
+        # buf.getvalue().hex(), field annotated_png_hex) — decode as hex.
+        # (Hex digits are a subset of the base64 alphabet, so b64decode
+        # accepted them and silently stored garbage bytes instead of the
+        # PNG.)
+        self._put(key, bytes.fromhex(png_hex), "image/png")
 
     def _put(self, key: str, data: bytes, content_type: str) -> None:
         try:

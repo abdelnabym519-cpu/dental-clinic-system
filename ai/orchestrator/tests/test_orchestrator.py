@@ -186,6 +186,13 @@ def test_analyze_success_end_to_end(harness):
         f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/liodon/result.json",
         f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/liodon/annotated.png",
     ]
+    # The annotated object must be the engine's PNG bytes verbatim —
+    # hex-decoded (regression: the old base64 decode of hex input silently
+    # stored garbage bytes, so the object existed but was not a PNG).
+    stored = dict(storage.puts)
+    ann = stored[f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/liodon/annotated.png"]
+    assert ann == bytes.fromhex("89504e470d0a1a0a")
+    assert ann[:8] == b"\x89PNG\r\n\x1a\n"
 
     # engine received the decoded original bytes
     assert len(engine.calls) == 1
@@ -270,3 +277,24 @@ def test_get_job_returns_state(harness):
     assert r.status_code == 200
     assert r.json()["job"]["id"] == JOB
     assert client.get("/jobs/missing", headers=H).status_code == 404
+
+
+def test_put_png_decodes_hex_not_base64(monkeypatch):
+    """Regression: the engine's annotated_png_hex is HEX (model.py:
+    buf.getvalue().hex()). The old base64.b64decode silently stored
+    garbage bytes, because hex digits are a subset of the base64
+    alphabet — the object existed in MinIO but was not a PNG."""
+    from app.storage import ObjectStorage
+
+    monkeypatch.setenv("S3_ENDPOINT", "http://minio:9000")
+    monkeypatch.setenv("S3_ACCESS_KEY", "test")
+    monkeypatch.setenv("S3_SECRET_KEY", "test")
+    monkeypatch.setenv("S3_REGION", "us-east-1")
+    store = ObjectStorage()
+    captured = {}
+    store._put = lambda key, data, content_type: captured.update(
+        key=key, data=data, content_type=content_type
+    )
+    store.put_png("k/annotated.png", "89504e470d0a1a0a")
+    assert captured["data"] == b"\x89PNG\r\n\x1a\n"
+    assert captured["content_type"] == "image/png"

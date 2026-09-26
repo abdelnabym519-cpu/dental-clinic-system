@@ -121,9 +121,9 @@ class FakeStorage:
         self.puts.append((key, json.dumps(payload).encode()))
 
     def put_png(self, key, png_hex):
-        import base64
-
-        self.puts.append((key, base64.b64decode(png_hex)))
+        # Mirror the production contract: the engine's annotated_png_hex is
+        # HEX-encoded PNG bytes (model.py: buf.getvalue().hex()).
+        self.puts.append((key, bytes.fromhex(png_hex)))
 
 
 class FakeEngine:
