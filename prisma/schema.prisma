@@ -66,6 +66,7 @@ model Hospital {
   appointments        Appointment[]
   treatments          Treatment[]
   treatmentPlans      TreatmentPlan[]
+  clinicalNotes       ClinicalNote[]
   dentalChartEntries  DentalChartEntry[]
   prescriptions       Prescription[]
   procedures          Procedure[]
@@ -264,8 +265,8 @@ model User {
   hospital        Hospital? @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   staff           Staff?
   auditLogs       AuditLog[]
-  invoicesCreated Invoice[]           // Phase 12
-  paymentsRecorded Payment[]          // Phase 12
+  invoicesCreated Invoice[]           @relation("UserCreatedInvoices") // Phase 12
+  paymentsRecorded Payment[]          @relation("UserRecordedPayments") // Phase 12
   notifications   Notification[]
   sessions        Session[]
   accounts        Account[]
@@ -276,7 +277,7 @@ model User {
   acknowledgedStockAlerts StockAlert[]
   labOrderStatusChanges   LabOrderHistory[]
   uploadedLabOrderDocuments LabOrderDocument[]
-  portalPatient         Patient?         // Phase 13 — linked portal account (role PATIENT)
+  portalPatient         Patient?         @relation("PatientPortalUser") // Phase 13 — linked portal account (role PATIENT)
   imagingStudiesUploaded ImagingStudy[]   // Phase 19A
   aiAnalysisJobsRequested AIAnalysisJob[] @relation("AIJobRequestedBy") // Phase 19A
   aiAnalysisJobsReviewed  AIAnalysisJob[] @relation("AIJobReviewedBy") // Phase 19A (reviewedById)
@@ -691,7 +692,7 @@ model Appointment {
   treatments      Treatment[]
   // Phase 11 — clinical workflow links.
   treatmentPlans  TreatmentPlan[]   @relation("AppointmentTreatmentPlans")
-  invoices        Invoice[]         // Phase 12
+  invoices        Invoice[]         @relation("AppointmentInvoices") // Phase 12
   prescriptions   Prescription[]    @relation("AppointmentPrescriptions")
   clinicalNotes   ClinicalNote[]
   reminders       AppointmentReminder[]
@@ -900,7 +901,7 @@ model TreatmentPlan {
 
   doctor          Staff?              @relation("DoctorTreatmentPlans", fields: [doctorId], references: [id])
   appointment     Appointment?        @relation("AppointmentTreatmentPlans", fields: [appointmentId], references: [id])
-  invoices        Invoice[]           // Phase 12
+  invoices        Invoice[]           @relation("TreatmentPlanInvoices") // Phase 12
   prescriptions   Prescription[]
   clinicalNotes   ClinicalNote[]
 
