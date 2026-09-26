@@ -263,7 +263,12 @@ export async function POST(req: NextRequest) {
       select: { id: true, status: true },
     })
     return NextResponse.json(
-      { study: { ...study, status: freshStudy?.status ?? 'ANALYZED' }, job: result },
+      {
+        study: { ...study, status: freshStudy?.status ?? 'ANALYZED' },
+        // The orchestrator's wire object carries the identifier as `job_id`;
+        // the API contract is `id` (see the 502 branch and /jobs/[id]/review).
+        job: { id: job.id, ...result },
+      },
       { status: 201 }
     )
   } catch (err) {
