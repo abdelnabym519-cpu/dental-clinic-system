@@ -57,7 +57,15 @@ import { readFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { describe, it, expect, beforeAll } from 'vitest'
 
-const ENABLED = process.env.E2E_LOCAL === '1'
+// The unit suite (default vitest config) installs `global.fetch = vi.fn()`
+// (tests/setup.ts) and points DATABASE_URL at the _test schema; the real
+// E2E only runs under vitest.e2e.config.ts (real fetch, real .env). A
+// vi.fn() exposes `.mock`; the real undici fetch does not. This keeps the
+// suite skipped (never executed) under the unit harness even when
+// E2E_LOCAL=1 is still set in the shell from a dedicated E2E run.
+const UNDER_UNIT_SETUP =
+  typeof fetch === 'function' && (fetch as { mock?: unknown }).mock !== undefined
+const ENABLED = process.env.E2E_LOCAL === '1' && !UNDER_UNIT_SETUP
 
 const BASE = (process.env.E2E_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
 const ORCH = (process.env.E2E_ORCHESTRATOR_URL || 'http://localhost:8000').replace(/\/$/, '')
