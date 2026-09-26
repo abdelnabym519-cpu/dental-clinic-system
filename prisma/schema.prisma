@@ -278,8 +278,8 @@ model User {
   uploadedLabOrderDocuments LabOrderDocument[]
   portalPatient         Patient?         // Phase 13 — linked portal account (role PATIENT)
   imagingStudiesUploaded ImagingStudy[]   // Phase 19A
-  aiAnalysisJobsRequested AIAnalysisJob[] // Phase 19A
-  aiAnalysisJobsReviewed  AIAnalysisJob[] // Phase 19A (reviewedById)
+  aiAnalysisJobsRequested AIAnalysisJob[] @relation("AIJobRequestedBy") // Phase 19A
+  aiAnalysisJobsReviewed  AIAnalysisJob[] @relation("AIJobReviewedBy") // Phase 19A (reviewedById)
 
   @@index([email])
   @@index([role])
@@ -3344,7 +3344,7 @@ model AIAnalysisJob {
 
   hospital    Hospital      @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   study       ImagingStudy  @relation(fields: [studyId], references: [id], onDelete: Cascade)
-  requestedBy User?         @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  requestedBy User?         @relation("AIJobRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
   reviewedBy  User?         @relation("AIJobReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   @@index([hospitalId])
