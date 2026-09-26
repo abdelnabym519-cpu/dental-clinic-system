@@ -334,8 +334,13 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
       form.append('analyze', 'true')
 
       const res = await api('/api/imaging/studies', { method: 'POST', body: form })
-      expect(res.status, await res.text()).toBe(201)
-      const body = await res.json()
+      // Read the body ONCE — undici throws "Body is unusable: Body has
+      // already been read" on a second consumption, and the eager
+      // `await res.text()` inside the expect() message argument consumed it
+      // before res.json() could run (truncated for readable diagnostics).
+      const raw = await res.text()
+      expect(res.status, raw.slice(0, 500)).toBe(201)
+      const body = JSON.parse(raw)
       state.study = body.study
       state.job = body.job
 
@@ -479,8 +484,10 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision: 'ACCEPTED', reviewNotes: 'E2E acceptance' }),
       })
-      expect(res.status, await res.text()).toBe(200)
-      const body = await res.json()
+      // Same single-body-consumption rule as test 1 (undici).
+      const raw = await res.text()
+      expect(res.status, raw.slice(0, 500)).toBe(200)
+      const body = JSON.parse(raw)
       expect(body.job.reviewDecision).toBe('ACCEPTED')
       expect(body.study.status).toBe('REVIEWED')
 
