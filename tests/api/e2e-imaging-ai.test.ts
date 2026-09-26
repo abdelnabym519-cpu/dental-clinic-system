@@ -71,6 +71,8 @@ const EXPECTED_SAMPLE_SHA = (
 ).toLowerCase()
 // Pinned artifact (ai-validation/liodon/MODEL_PROVENANCE.md) — the real Liodon.
 const REAL_MODEL_SHA = '4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71'
+// Auth.js v5 csrf cookie name (default; observed on /api/auth/csrf).
+const CSRF_COOKIE = 'authjs.csrf-token'
 const MODEL_SOURCE =
   'https://huggingface.co/liodon-ai/dental-panoramic-detector@8bef2036b099e80e51f93f24de4b0c0edd366256'
 const CLASSES = new Set(['caries', 'periapical_lesion', 'impacted_tooth'])
@@ -156,7 +158,9 @@ function loadDotEnvFile(file = path.resolve(process.cwd(), '.env')): void {
  *
  * v5 flow:
  *   1. GET  /api/auth/csrf
- *      → { csrfToken } + Set-Cookie: authjs.csrf-token=<token>.<hash>
+ *      → { csrfToken } + Set-Cookie: authjs.csrf-token=<token>|<hash>
+ *        (NOTE: this build emits that cookie twice — see the selection
+ *         logic in Step 1 below)
  *   2. POST /api/auth/callback/credentials
  *      Content-Type: application/x-www-form-urlencoded
  *      Cookie:      <the csrf cookie from step 1>
@@ -169,9 +173,30 @@ async function loginAsDoctor(): Promise<string> {
   // Step 1 — CSRF token + its cookie (the cookie is mandatory in v5).
   const csrfRes = await fetch(`${BASE}/api/auth/csrf`)
   expect(csrfRes.status, `GET /api/auth/csrf returned ${csrfRes.status}`).toBe(200)
-  const csrfCookie = (csrfRes.headers.getSetCookie() ?? []).join('; ')
   const { csrfToken } = await csrfRes.json()
   expect(csrfToken, 'csrf response did not include a csrfToken').toBeTruthy()
+
+  // This Auth.js build emits the csrf cookie MORE THAN ONCE per response
+  // (the middleware session check and the csrf action each run init): the
+  // LAST Set-Cookie carries the token returned in the JSON body, while the
+  // server validates the body token against the FIRST cookie it sees in the
+  // request header. Sending all Set-Cookie values joined (naive approach)
+  // makes the server validate against the stale first token → MissingCSRF.
+  // Select the entry whose value matches the JSON token (fallback: the last
+  // occurrence — standard cookie semantics) and send ONLY its name=value.
+  const setCookies = csrfRes.headers.getSetCookie() ?? []
+  const csrfEntries = setCookies.filter((c) => c.split(';')[0].startsWith(`${CSRF_COOKIE}=`))
+  const chosen =
+    csrfEntries.find((c) => {
+      const value = c.split(';')[0].slice(`${CSRF_COOKIE}=`.length)
+      try {
+        return decodeURIComponent(value).startsWith(`${csrfToken}|`)
+      } catch {
+        return false
+      }
+    }) ?? csrfEntries[csrfEntries.length - 1]
+  expect(chosen, 'csrf response did not set an authjs.csrf-token cookie').toBeTruthy()
+  const csrfCookie = chosen!.split(';')[0] // clean name=value, no attributes
 
   // Step 2 — login with the CSRF cookie + urlencoded body.
   const loginRes = await fetch(`${BASE}/api/auth/callback/credentials`, {
@@ -190,8 +215,8 @@ async function loginAsDoctor(): Promise<string> {
   })
 
   // Step 3 — session cookie, set on the 302 (no need to follow the redirect).
-  const setCookies = loginRes.headers.getSetCookie() ?? []
-  const session = setCookies.find(
+  const loginCookies = loginRes.headers.getSetCookie() ?? []
+  const session = loginCookies.find(
     (c) =>
       c.startsWith('authjs.session-token=') ||
       c.startsWith('next-auth.session-token=')
