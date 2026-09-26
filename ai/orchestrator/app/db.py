@@ -135,6 +135,10 @@ class JobStore:
         hospitalId, so concurrent claimants cannot double-process.
         """
         now = _utcnow()
+        # Pre-claim row — the documented return value of a successful claim.
+        # (The rowcount != 1 branch below re-fetches it, because the status
+        # may have changed between this SELECT and the UPDATE — lost race.)
+        existing = self.get_job(job_id)
         cur = self._execute(
             "UPDATE AIAnalysisJob SET status='PROCESSING', startedAt=%s, updatedAt=%s "
             "WHERE id=%s AND status='PENDING' AND hospitalId=%s",
