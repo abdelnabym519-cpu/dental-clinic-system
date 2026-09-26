@@ -40,10 +40,13 @@
  * setup, no fetch mock, .env honored for DATABASE_URL/STORAGE_DRIVER/S3_*):
  *
  *   Windows (PowerShell):
- *     $env:E2E_LOCAL='1'; $env:E2E_DOCTOR_EMAIL='...'; $env:E2E_DOCTOR_PASSWORD='...'
+ *     $env:E2E_LOCAL='1'
  *     npx vitest run --config vitest.e2e.config.ts
  *   Windows (CMD):
- *     set E2E_LOCAL=1 && set E2E_DOCTOR_EMAIL=... && set E2E_DOCTOR_PASSWORD=*** && npx vitest run --config vitest.e2e.config.ts
+ *     set E2E_LOCAL=1 && npx vitest run --config vitest.e2e.config.ts
+ *
+ *   E2E_DOCTOR_EMAIL / E2E_DOCTOR_PASSWORD are optional overrides — the
+ *   default is the seeded doctor (doctor@dentora-dental.com).
  *
  * Under the default vitest config (npx vitest run) this file is collected in
  * a jsdom environment and SKIPS cleanly — the regression suite never touches
@@ -59,8 +62,9 @@ const ENABLED = process.env.E2E_LOCAL === '1'
 const BASE = (process.env.E2E_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
 const ORCH = (process.env.E2E_ORCHESTRATOR_URL || 'http://localhost:8000').replace(/\/$/, '')
 const ENGINE = (process.env.E2E_ENGINE_URL || 'http://localhost:8001').replace(/\/$/, '')
-const EMAIL = process.env.E2E_DOCTOR_EMAIL || ''
-const PASSWORD = process.env.E2E_DOCTOR_PASSWORD || ''
+// Default: the seeded E2E doctor (prisma/seed.ts) — env vars override.
+const EMAIL = process.env.E2E_DOCTOR_EMAIL || 'doctor@dentora-dental.com'
+const PASSWORD = process.env.E2E_DOCTOR_PASSWORD || 'Doctor@123'
 const SAMPLE_PATH = process.env.E2E_SAMPLE_PATH || 'ai-validation/liodon/input/sample.jpg'
 const EXPECTED_SAMPLE_SHA = (
   process.env.E2E_EXPECTED_SAMPLE_SHA || 'f0a1ffa2e77a88aa13957220eef2844b3bc14719061be8c2d3e8d417fff0f3ec'
@@ -142,13 +146,71 @@ function loadDotEnvFile(file = path.resolve(process.cwd(), '.env')): void {
   }
 }
 
+/**
+ * Auth.js v5 (next-auth 5.x-beta) credentials login.
+ *
+ * The v4 pattern (JSON body) fails against this app: v5 does not parse
+ * `application/json` on /api/auth/callback/credentials, and its CSRF check
+ * validates the token against the `authjs.csrf-token` COOKIE — the old flow
+ * produced `302 → /login?error=MissingCSRF`.
+ *
+ * v5 flow:
+ *   1. GET  /api/auth/csrf
+ *      → { csrfToken } + Set-Cookie: authjs.csrf-token=<token>.<hash>
+ *   2. POST /api/auth/callback/credentials
+ *      Content-Type: application/x-www-form-urlencoded
+ *      Cookie:      <the csrf cookie from step 1>
+ *      body:        csrfToken=…&email=…&password=…&json=true
+ *   3. The (302) response itself carries the session cookie —
+ *      `authjs.session-token` in v5 (`next-auth.session-token` in v4;
+ *      both names are accepted so the helper survives either major version).
+ */
+async function loginAsDoctor(): Promise<string> {
+  // Step 1 — CSRF token + its cookie (the cookie is mandatory in v5).
+  const csrfRes = await fetch(`${BASE}/api/auth/csrf`)
+  expect(csrfRes.status, `GET /api/auth/csrf returned ${csrfRes.status}`).toBe(200)
+  const csrfCookie = (csrfRes.headers.getSetCookie() ?? []).join('; ')
+  const { csrfToken } = await csrfRes.json()
+  expect(csrfToken, 'csrf response did not include a csrfToken').toBeTruthy()
+
+  // Step 2 — login with the CSRF cookie + urlencoded body.
+  const loginRes = await fetch(`${BASE}/api/auth/callback/credentials`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: csrfCookie,
+    },
+    body: new URLSearchParams({
+      csrfToken,
+      email: EMAIL,
+      password: PASSWORD,
+      json: 'true',
+    }),
+    redirect: 'manual',
+  })
+
+  // Step 3 — session cookie, set on the 302 (no need to follow the redirect).
+  const setCookies = loginRes.headers.getSetCookie() ?? []
+  const session = setCookies.find(
+    (c) =>
+      c.startsWith('authjs.session-token=') ||
+      c.startsWith('next-auth.session-token=')
+  )
+  if (!session) {
+    const location = loginRes.headers.get('location') ?? ''
+    throw new Error(
+      `login failed for ${EMAIL}: HTTP ${loginRes.status}` +
+        (location ? `, redirect: ${location}` : '') +
+        (location.includes('MissingCSRF')
+          ? ' — the CSRF cookie from step 1 was not sent or not accepted'
+          : ' — check the credentials and that the user AND the hospital are active')
+    )
+  }
+  return session.split(';')[0]
+}
+
 describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
   beforeAll(async () => {
-    if (ENABLED && (!EMAIL || !PASSWORD)) {
-      throw new Error(
-        'E2E enabled (E2E_LOCAL=1) but E2E_DOCTOR_EMAIL / E2E_DOCTOR_PASSWORD are not set'
-      )
-    }
     if (!ENABLED) return
 
     // Load the repo's .env with dotenv semantics (never overrides a variable
@@ -194,22 +256,8 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
       `orchestrator cannot reach the engine at ${oh.liodon_engine_url}`
     ).toBe(true)
 
-    // Official login flow: NextAuth v4 credentials (csrf + callback/credentials).
-    const csrfRes = await fetch(`${BASE}/api/auth/csrf`)
-    const { csrfToken } = await csrfRes.json()
-    const loginRes = await fetch(`${BASE}/api/auth/callback/credentials`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csrfToken, email: EMAIL, password: PASSWORD, json: true }),
-      redirect: 'manual',
-    })
-    const cookies = loginRes.headers.getSetCookie() ?? []
-    const session = cookies.find((c) => c.startsWith('next-auth.session-token='))
-    expect(
-      session,
-      `login failed for ${EMAIL} (no session cookie). Check credentials + that the hospital is active.`
-    ).toBeTruthy()
-    state.cookie = session!.split(';')[0]
+    // Official login flow — Auth.js v5 (csrf cookie + urlencoded body).
+    state.cookie = await loginAsDoctor()
 
     // Tenant + role from the session's own user row (never client-supplied).
     const user = await prisma.user.findUnique({
