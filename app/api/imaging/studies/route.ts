@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { getStorage, buildStorageKey } from '@/lib/storage'
+import { getStorage, buildStorageKey, uploadUrl } from '@/lib/storage'
 import {
   OrchestratorError,
   requestOrchestratorAnalyze,
@@ -46,15 +46,28 @@ const FORM_SCHEMA = z.object({
 })
 
 // Phase 19A (D11) — list the caller's studies, newest first, tenant-guarded.
-export async function GET() {
-  const { error, hospitalId } = await requireAuthAndRole()
+// Phase 20 (D7/D8) — optional ?patientId= and ?appointmentId= filters.
+// Both narrow within the caller's own hospital (the tenant guard stays the
+// hospitalId scope), so a foreign id simply returns an empty list — no
+// existence oracle for other tenants.
+export async function GET(req: NextRequest) {
+  // Explicit view roles — imaging is not an ACCOUNTANT surface (Phase 20 spec).
+  const { error, hospitalId } = await requireAuthAndRole(['DOCTOR', 'ADMIN', 'RECEPTIONIST'])
 
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const searchParams = new URL(req.url).searchParams
+  const patientId = searchParams.get('patientId')?.trim()
+  const appointmentId = searchParams.get('appointmentId')?.trim()
+
   const studies = await prisma.imagingStudy.findMany({
-    where: { hospitalId },
+    where: {
+      hospitalId,
+      ...(patientId ? { patientId } : {}),
+      ...(appointmentId ? { appointmentId } : {}),
+    },
     orderBy: { createdAt: 'desc' },
     take: 200,
     include: {
@@ -62,7 +75,14 @@ export async function GET() {
       aiJobs: {
         orderBy: { createdAt: 'desc' },
         take: 1,
-        select: { id: true, status: true, engine: true, reviewedAt: true },
+        select: {
+          id: true,
+          status: true,
+          engine: true,
+          reviewedAt: true,
+          findings: true,
+          reviewedBy: { select: { name: true } },
+        },
       },
     },
   })
@@ -74,7 +94,15 @@ export async function GET() {
     studyType: string
     status: string
     createdAt: Date
-    aiJobs: Array<{ id: string; status: string; engine: string; reviewedAt: Date | null }>
+    originalKey: string
+    aiJobs: Array<{
+      id: string
+      status: string
+      engine: string
+      reviewedAt: Date | null
+      findings: unknown
+      reviewedBy: { name: string } | null
+    }>
   }
 
   return NextResponse.json({
@@ -88,7 +116,18 @@ export async function GET() {
       studyType: s.studyType,
       status: s.status,
       createdAt: s.createdAt,
-      latestJob: s.aiJobs[0] ?? null,
+      // Served by the tenant-guarded /api/uploads route.
+      originalUrl: uploadUrl(s.originalKey),
+      latestJob: s.aiJobs[0]
+        ? {
+            id: s.aiJobs[0].id,
+            status: s.aiJobs[0].status,
+            engine: s.aiJobs[0].engine,
+            reviewedAt: s.aiJobs[0].reviewedAt,
+            findingsCount: Array.isArray(s.aiJobs[0].findings) ? s.aiJobs[0].findings.length : 0,
+            reviewedByName: s.aiJobs[0].reviewedBy?.name ?? null,
+          }
+        : null,
     })),
   })
 }

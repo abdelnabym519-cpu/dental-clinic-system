@@ -34,6 +34,44 @@ interface SimplePdfInput {
   subtitle?: string
   lines: PdfLine[]
   footer?: string
+  /**
+   * Optional embedded raster image (JPEG only — DCTDecode, no re-encoding).
+   * Drawn below the title block, scaled to fit the text width. Documents
+   * without an image render byte-identically to before this option existed.
+   */
+  image?: PdfImageInput
+}
+
+interface PdfImageInput {
+  /** Raw JPEG bytes. */
+  data: Buffer
+  /** Pixel dimensions (must match the JPEG header). */
+  width: number
+  height: number
+}
+
+/**
+ * Read the first SOF (start-of-frame) marker of a JPEG stream.
+ * Returns width/height and the component count (1 = grayscale, 3 = RGB).
+ * Returns `null` when the buffer is not a JPEG we can parse.
+ */
+export function jpegInfo(
+  data: Buffer
+): { width: number; height: number; components: number } | null {
+  if (data.length < 4 || data[0] !== 0xff || data[1] !== 0xd8) return null
+  for (let i = 2; i + 10 < data.length; i++) {
+    if (data[i] !== 0xff) continue
+    const marker = data[i + 1]
+    // SOF0–SOF15, excluding DHT (C4), JPG (C8) and DAC (CC).
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return {
+        height: data.readUInt16BE(i + 5),
+        width: data.readUInt16BE(i + 7),
+        components: data[i + 9],
+      }
+    }
+  }
+  return null
 }
 
 /** Escape PDF literal-string specials. */
@@ -208,6 +246,35 @@ export function renderSimplePdf(input: SimplePdfInput): Buffer {
     writeLine(subtitleLine)
     y -= 6
   }
+
+  // Optional embedded JPEG (Phase 20 imaging report). When present the text
+  // block is closed, the image drawn, and a second text block opened — the
+  // pen position `y` already accounts for the image height below.
+  const image = input.image
+  const maxImageWidth = pageWidth - leftMargin - rightMargin
+  const maxImageHeight = 240
+  let drawImage = false
+  if (image) {
+    const scale = Math.min(maxImageWidth / image.width, maxImageHeight / image.height)
+    const displayWidth = image.width * scale
+    const displayHeight = image.height * scale
+    // Keep at least the footer zone free; if it cannot fit, drop the image
+    // rather than overflowing the single page.
+    if (y - displayHeight >= 96) {
+      const x = (pageWidth - displayWidth) / 2
+      contentOps.push('ET')
+      contentOps.push('q')
+      contentOps.push(
+        `${displayWidth.toFixed(2)} 0 0 ${displayHeight.toFixed(2)} ${x.toFixed(2)} ${(y - displayHeight).toFixed(2)} cm`
+      )
+      contentOps.push('/Im0 Do')
+      contentOps.push('Q')
+      contentOps.push('BT')
+      y -= displayHeight + 12
+      drawImage = true
+    }
+  }
+
   y -= 8
   for (const line of bodyLines) {
     if (y < 72) break // single-page guard
@@ -226,14 +293,43 @@ export function renderSimplePdf(input: SimplePdfInput): Buffer {
     objects.push(typeof value === 'string' ? Buffer.from(value, 'latin1') : value)
   }
 
-  const fontResources = embeddedFont ? '/F1 5 0 R /F2 6 0 R /CF1 7 0 R' : '/F1 5 0 R /F2 6 0 R'
+  // Object numbering: the image XObject takes slot 5 when present, which
+  // pushes every font object one slot higher. Without an image the numbering
+  // is exactly the legacy layout (F1=5, F2=6, CF1=7, CIDFont=8, …).
+  const f1 = drawImage ? 7 : 5
+  const f2 = f1 + 1
+  const cf1 = f2 + 1
+  const cidFont = cf1 + 1
+  const fontDescriptor = cidFont + 1
+  const toUnicodeNum = fontDescriptor + 1
+  const fontFileNum = toUnicodeNum + 1
+
+  const fontResources = embeddedFont
+    ? `/F1 ${f1} 0 R /F2 ${f2} 0 R /CF1 ${cf1} 0 R`
+    : `/F1 ${f1} 0 R /F2 ${f2} 0 R`
 
   push('<< /Type /Catalog /Pages 2 0 R >>')
   push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>')
   push(
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << ${fontResources} >> >> /Contents 4 0 R >>`
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << ${fontResources} >>${drawImage ? ' /XObject << /Im0 5 0 R >>' : ''} >> /Contents 4 0 R >>`
   )
   push(`<< /Length ${Buffer.byteLength(content, 'latin1')} >>\nstream\n${content}\nendstream`)
+  if (drawImage && image) {
+    // DCTDecode takes the raw JPEG bytes; the colour space follows the
+    // number of components in the JPEG header itself.
+    const components = jpegInfo(image.data)?.components
+    const colorSpace = components === 1 ? 'DeviceGray' : 'DeviceRGB'
+    push(
+      Buffer.concat([
+        Buffer.from(
+          `<< /Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /${colorSpace} /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.data.length} >>\nstream\n`,
+          'latin1'
+        ),
+        image.data,
+        Buffer.from('\nendstream', 'latin1'),
+      ])
+    )
+  }
   push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>')
   push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>')
 
@@ -250,13 +346,13 @@ export function renderSimplePdf(input: SimplePdfInput): Buffer {
     const descriptorFlags = 4 | 32 // symbolic + non-symbolic, per common practice
 
     push(
-      '<< /Type /Font /Subtype /Type0 /BaseFont /NotoNaskhArabic /Encoding /Identity-H /DescendantFonts [8 0 R] /ToUnicode 10 0 R >>'
+      `<< /Type /Font /Subtype /Type0 /BaseFont /NotoNaskhArabic /Encoding /Identity-H /DescendantFonts [${cidFont} 0 R] /ToUnicode ${toUnicodeNum} 0 R >>`
     )
     push(
-      `<< /Type /Font /Subtype /CIDFontType2 /BaseFont /NotoNaskhArabic /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 9 0 R /DW 1000 /W [${widths}] /CIDToGIDMap /Identity >>`
+      `<< /Type /Font /Subtype /CIDFontType2 /BaseFont /NotoNaskhArabic /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ${fontDescriptor} 0 R /DW 1000 /W [${widths}] /CIDToGIDMap /Identity >>`
     )
     push(
-      `<< /Type /FontDescriptor /FontName /NotoNaskhArabic /Flags ${descriptorFlags} /FontBBox [${bbox}] /ItalicAngle 0 /Ascent ${Math.round(embeddedFont.ascent * scale)} /Descent ${Math.round(embeddedFont.descent * scale)} /CapHeight 700 /StemV 80 /FontFile2 11 0 R >>`
+      `<< /Type /FontDescriptor /FontName /NotoNaskhArabic /Flags ${descriptorFlags} /FontBBox [${bbox}] /ItalicAngle 0 /Ascent ${Math.round(embeddedFont.ascent * scale)} /Descent ${Math.round(embeddedFont.descent * scale)} /CapHeight 700 /StemV 80 /FontFile2 ${fontFileNum} 0 R >>`
     )
     const cmap = toUnicodeCMap(gidToUnicode)
     push(`<< /Length ${Buffer.byteLength(cmap, 'latin1')} >>\nstream\n${cmap}\nendstream`)
