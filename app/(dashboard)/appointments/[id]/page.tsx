@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   ArrowLeft,
   Calendar,
+  Camera,
   Clock,
   User,
   Phone,
@@ -55,6 +56,15 @@ import {
   getPatientName,
   getDoctorName,
 } from '@/lib/appointment-utils'
+
+interface LinkedStudyRow {
+  id: string
+  modality: string
+  status: string
+  createdAt: string
+  originalUrl: string
+  latestJob: { id: string; status: string; engine: string; reviewedAt: string | null } | null
+}
 
 interface Appointment {
   id: string
@@ -140,6 +150,26 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
   // Cancel dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancellationReason, setCancellationReason] = useState('')
+
+  // Phase 20 (D8) — imaging studies linked to this appointment.
+  const [linkedStudies, setLinkedStudies] = useState<LinkedStudyRow[] | null>(null)
+  useEffect(() => {
+    if (!appointment || viewerRole === 'ACCOUNTANT') return
+    let cancelled = false
+    fetch(
+      `/api/imaging/studies?patientId=${appointment.patient.id}&appointmentId=${id}`
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled) setLinkedStudies((data?.studies ?? []) as LinkedStudyRow[])
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedStudies([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [appointment, viewerRole, id])
 
   const fetchAppointment = async () => {
     try {
@@ -355,6 +385,18 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               {t('ui.edit')}
             </Button>
           </Link>
+          {/* Phase 20 (D8) — jump straight to the patient's imaging page with
+              this appointment pre-filled in the upload form. */}
+          {canEditClinical && (
+            <Link
+              href={`/patients/${appointment.patient.id}/imaging?appointmentId=${id}`}
+            >
+              <Button variant="outline">
+                <Camera className="h-4 w-4 mr-2" />
+                {t('imaging.add_xray')}
+              </Button>
+            </Link>
+          )}
           {!['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(appointment.status) && (
             <Button
               variant="destructive"
@@ -621,6 +663,65 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
             )}
           </CardContent>
         </Card>
+
+        {/* Phase 20 (D8) — imaging studies linked to this appointment. */}
+        {viewerRole !== 'ACCOUNTANT' && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                {t('imaging.linked_studies')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {linkedStudies === null ? (
+                <p className="text-sm text-muted-foreground">…</p>
+              ) : linkedStudies.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t('imaging.no_linked_studies')}
+                </p>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {linkedStudies.map((s) => {
+                    const modalityKey = `imaging.modality.${s.modality}`
+                    const modalityLabel = t(modalityKey)
+                    const statusKey = `imaging.status.${
+                      s.latestJob && (s.latestJob.status === 'PENDING' || s.latestJob.status === 'PROCESSING') && s.status === 'UPLOADED'
+                        ? 'PROCESSING'
+                        : s.status
+                    }`
+                    const statusLabel = t(statusKey)
+                    return (
+                      <Link
+                        key={s.id}
+                        href={`/patients/${appointment.patient.id}/imaging?study=${s.id}`}
+                        className="flex items-center gap-3 rounded-lg border p-2 transition-colors hover:bg-accent/50"
+                      >
+                        {s.originalUrl && (
+                          <img
+                            src={s.originalUrl}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {modalityLabel === modalityKey ? s.modality : modalityLabel}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(s.createdAt).toISOString().slice(0, 10)}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {statusLabel === statusKey ? s.status : statusLabel}
+                        </Badge>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Phase 11 — Clinical section: one-click workflow while the patient
             is in the chair (IN_PROGRESS) or after the visit (COMPLETED). */}
