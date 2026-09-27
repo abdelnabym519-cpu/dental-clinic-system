@@ -513,8 +513,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-9">
+      <Tabs
+        value={activeTab}
+        // "imaging" navigates to its own page (Phase 20 D2) rather than
+        // switching tab content, so it is excluded from the local state.
+        onValueChange={(value) => value !== 'imaging' && setActiveTab(value)}
+      >
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="overview" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('ui.overview')}</span>
@@ -553,6 +558,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <TabsTrigger value="insurance" className="gap-2">
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">{t('ui.insurance')}</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="imaging"
+            className="gap-2"
+            onClick={() => router.push(`/patients/${patient.id}/imaging`)}
+          >
+            <FileScan className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('imaging.tab')}</span>
           </TabsTrigger>
         </TabsList>
 
