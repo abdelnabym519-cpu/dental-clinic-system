@@ -77,6 +77,19 @@ beforeEach(() => {
   prisma.appointment.findFirst.mockResolvedValue({ id: 'apt-1' })
 })
 
+// ──────────────────────────── delegate surface guard ───────────────────────
+
+describe('prisma delegate surface (regression guard)', () => {
+  it('exposes aIAnalysisJob (generated-client naming for model AIAnalysisJob) and NOT the typo aiAnalysisJob', () => {
+    // The generated client for `model AIAnalysisJob` exposes delegate
+    // `aIAnalysisJob`. The shared mock must mirror that surface exactly:
+    // a lowercase alias would silently mask the 500 it once hid.
+    expect(prisma).toHaveProperty('aIAnalysisJob')
+    expect((prisma as any).aIAnalysisJob).toHaveProperty('create')
+    expect(prisma).not.toHaveProperty('aiAnalysisJob')
+  })
+})
+
 // ──────────────────────────── auth / validation ────────────────────────────
 
 describe('POST /api/imaging/studies — auth & validation', () => {
@@ -124,6 +137,27 @@ describe('POST /api/imaging/studies — auth & validation', () => {
     } as any
     const res = await POST(req)
     expect(res.status).toBe(400)
+  })
+
+  it('rejects oversized files (50MB limit) before touching storage', async () => {
+    const data = new Map<string, any>()
+    data.set('file', {
+      name: 'huge.png',
+      type: 'image/png',
+      size: 51 * 1024 * 1024,
+      arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(0).buffer),
+    })
+    data.set('patientId', PATIENT.id)
+    const req = {
+      formData: vi.fn().mockResolvedValue({
+        get: (key: string) => data.get(key) ?? null,
+      }),
+    } as any
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toContain('50MB')
+    expect(mockStorage.put).not.toHaveBeenCalled()
+    expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
   })
 
   it('rejects patients from other tenants (no oracle)', async () => {
@@ -182,6 +216,49 @@ describe('POST /api/imaging/studies — upload', () => {
     expect(nv.originalHash).toBe(SHA)
     expect(nv.originalKey).toBe(key)
   })
+
+  it('retry/duplicate upload (same patient + file, AI on) creates two independent studies + jobs — no corruption', async () => {
+    const studyRow = { id: 'study-r1', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
+    const studyRow2 = { id: 'study-r2', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
+    prisma.imagingStudy.create
+      .mockResolvedValueOnce(studyRow)
+      .mockResolvedValueOnce(studyRow2)
+    prisma.aIAnalysisJob.create
+      .mockResolvedValueOnce({ ...studyRow, id: 'job-r1' })
+      .mockResolvedValueOnce({ ...studyRow2, id: 'job-r2' })
+    prisma.auditLog.create.mockResolvedValue({})
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-r1', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-r1',
+      status: 'COMPLETED',
+      findings: [],
+      provenance: { engine: 'liodon', model_version: '1.0.0', model_checksum: 'f'.repeat(64) },
+      processing_time_ms: 100,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-r1/ai/liodon/result.json`,
+    })
+
+    const res1 = await POST(makeUploadForm({ analyze: 'true' }))
+    const res2 = await POST(makeUploadForm({ analyze: 'true' }))
+    const body1 = await res1.json()
+    const body2 = await res2.json()
+
+    // Each attempt is a distinct study + job (UUID keys), both succeed.
+    expect(res1.status).toBe(201)
+    expect(res2.status).toBe(201)
+    expect(body1.study.id).toBe('study-r1')
+    expect(body2.study.id).toBe('study-r2')
+    expect(body1.job.id).toBe('job-r1')
+    expect(body2.job.id).toBe('job-r2')
+
+    const key1 = mockStorage.put.mock.calls[0][0] as string
+    const key2 = mockStorage.put.mock.calls[1][0] as string
+    expect(key1).not.toBe(key2) // immutability: originals are never overwritten
+    expect(prisma.imagingStudy.create).toHaveBeenCalledTimes(2)
+    expect(prisma.aIAnalysisJob.create).toHaveBeenCalledTimes(2)
+    // Every job is scoped to the caller's tenant and its own study.
+    expect(prisma.aIAnalysisJob.create.mock.calls[0][0].data.studyId).toBe('study-r1')
+    expect(prisma.aIAnalysisJob.create.mock.calls[1][0].data.studyId).toBe('study-r2')
+  })
 })
 
 // ──────────────────────────── AI trigger ───────────────────────────────────
@@ -190,7 +267,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   it('routes BITEWING + analyze to implant-ai (19B D14: 2D non-panoramic radiographs)', async () => {
     const studyRow = { id: 'study-2', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'BITEWING' }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
-    prisma.aiAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-2' })
+    prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-2' })
     prisma.auditLog.create.mockResolvedValue({})
     prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-2', status: 'ANALYZED' })
     mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
@@ -210,7 +287,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(res.status).toBe(201)
     expect(body.job.status).toBe('COMPLETED')
 
-    const jobData = prisma.aiAnalysisJob.create.mock.calls[0][0].data
+    const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
     expect(jobData.engine).toBe('implant-ai')
 
     const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
@@ -221,7 +298,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   it('routes CEPHALOMETRIC + analyze to orthodontic-ai (19B D14: 38 cephalometric landmarks)', async () => {
     const studyRow = { id: 'study-5', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'CEPHALOMETRIC' }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
-    prisma.aiAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-5' })
+    prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-5' })
     prisma.auditLog.create.mockResolvedValue({})
     prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-5', status: 'ANALYZED' })
     mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
@@ -250,7 +327,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(body.job.findings).toHaveLength(38)
     expect(body.job.findings[0]).toMatchObject({ landmark_id: 0, landmark_name: '0' })
 
-    const jobData = prisma.aiAnalysisJob.create.mock.calls[0][0].data
+    const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
     expect(jobData.engine).toBe('orthodontic-ai')
 
     const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
@@ -273,7 +350,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(body.error).toBe('AI analysis is not supported for this modality')
     expect(body.modality).toBe('PHOTO')
     expect(mockOrchestrator.requestOrchestratorAnalyze).not.toHaveBeenCalled()
-    expect(prisma.aiAnalysisJob.create).not.toHaveBeenCalled()
+    expect(prisma.aIAnalysisJob.create).not.toHaveBeenCalled()
   })
 
   it('refuses AI for 3D modalities on this image path (THREE_D_SCAN) with an explicit 422', async () => {
@@ -298,7 +375,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   it('creates PENDING job, audits, calls orchestrator, returns COMPLETED + findings', async () => {
     const studyRow = { id: 'study-3', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
-    prisma.aiAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-1' })
+    prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-1' })
     prisma.auditLog.create.mockResolvedValue({})
     prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-3', status: 'ANALYZED' })
     mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
@@ -328,7 +405,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(body.study.status).toBe('ANALYZED')
 
     // job created PENDING by Next.js
-    const jobData = prisma.aiAnalysisJob.create.mock.calls[0][0].data
+    const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
     expect(jobData.status).toBe('PENDING')
     expect(jobData.engine).toBe('liodon')
     expect(jobData.hospitalId).toBe(HOSPITAL)
@@ -353,10 +430,10 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   it('marks the job FAILED + audits when the orchestrator is unreachable', async () => {
     const studyRow = { id: 'study-4', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
-    prisma.aiAnalysisJob.create.mockResolvedValue({ id: 'job-4' })
+    prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-4' })
     prisma.auditLog.create.mockResolvedValue({})
-    prisma.aiAnalysisJob.findUnique.mockResolvedValue({ id: 'job-4', status: 'PENDING' })
-    prisma.aiAnalysisJob.update.mockResolvedValue({})
+    prisma.aIAnalysisJob.findUnique.mockResolvedValue({ id: 'job-4', status: 'PENDING' })
+    prisma.aIAnalysisJob.update.mockResolvedValue({})
     mockOrchestrator.requestOrchestratorAnalyze.mockRejectedValue(
       new mockOrchestrator.OrchestratorError(503, 'orchestrator unreachable: connection refused')
     )
@@ -369,7 +446,7 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(body.error).toContain('unreachable')
 
     // fallback FAILED transition + audit from this route
-    const upd = prisma.aiAnalysisJob.update.mock.calls[0][0]
+    const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
     expect(upd.where.id).toBe('job-4')
     expect(upd.data.status).toBe('FAILED')
     expect(upd.data.errorMessage).toContain('unreachable')

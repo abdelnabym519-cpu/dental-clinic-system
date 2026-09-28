@@ -225,7 +225,13 @@ const mockPrismaClient = {
     count: vi.fn(),
   },
 
-  // Phase 19A — AI imaging
+  // Phase 19A — AI imaging.
+  // NOTE: `aIAnalysisJob` is the delegate the generated client exposes for
+  // model `AIAnalysisJob` (Prisma lowercases only the FIRST letter). A
+  // lowercase-aliased `aiAnalysisJob` must NOT be added here — that alias
+  // masked a real runtime 500 (`prisma.aiAnalysisJob === undefined`) in the
+  // imaging upload/review routes; the mock deliberately mirrors the real
+  // client surface so that regression stays loud in tests.
   imagingStudy: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -235,7 +241,7 @@ const mockPrismaClient = {
     delete: vi.fn(),
     count: vi.fn(),
   },
-  aiAnalysisJob: {
+  aIAnalysisJob: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     findMany: vi.fn(),

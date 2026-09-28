@@ -81,7 +81,7 @@ describe('auth & validation', () => {
   })
 
   it('rejects invalid decision values', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
     const m = makeReq('MAYBE'); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(400)
   })
@@ -89,20 +89,20 @@ describe('auth & validation', () => {
   it('returns 404 for jobs of other tenants (no oracle)', async () => {
     // findFirst is called with where {id, hospitalId: HOSPITAL}; a foreign job
     // simply does not match.
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(null)
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(null)
     const m = makeReq(); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(404)
-    expect(prisma.aiAnalysisJob.update).not.toHaveBeenCalled()
+    expect(prisma.aIAnalysisJob.update).not.toHaveBeenCalled()
   })
 
   it('refuses review of non-completed jobs with 409', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob('PROCESSING'))
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob('PROCESSING'))
     const m = makeReq(); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(409)
   })
 
   it('requires acceptedFindings for MODIFIED', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
     const m = makeReq('MODIFIED'); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(400)
   })
@@ -110,8 +110,8 @@ describe('auth & validation', () => {
 
 describe('review decisions (D11 + D12)', () => {
   it('ACCEPTED persists the AI findings as-is, moves study to REVIEWED, audits', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
-    prisma.aiAnalysisJob.update.mockResolvedValue({
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
       reviewDecision: 'ACCEPTED',
@@ -129,7 +129,7 @@ describe('review decisions (D11 + D12)', () => {
     expect(body.job.reviewDecision).toBe('ACCEPTED')
     expect(body.study.status).toBe('REVIEWED')
 
-    const upd = prisma.aiAnalysisJob.update.mock.calls[0][0]
+    const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
     expect(upd.data.reviewedById).toBe(USER.id)
     expect(upd.data.reviewDecision).toBe('ACCEPTED')
     expect(upd.data.acceptedFindings).toEqual(FINDINGS)
@@ -150,7 +150,7 @@ describe('review decisions (D11 + D12)', () => {
   })
 
   it('MODIFIED stores the doctor-corrected findings', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
     const modified = [
       {
         condition: 'impacted_tooth',
@@ -159,7 +159,7 @@ describe('review decisions (D11 + D12)', () => {
         bounding_box: { x: 10, y: 20, width: 30, height: 40, x2: 40, y2: 60 },
       },
     ]
-    prisma.aiAnalysisJob.update.mockResolvedValue({
+    prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
       reviewDecision: 'MODIFIED',
@@ -173,14 +173,14 @@ describe('review decisions (D11 + D12)', () => {
     const m = makeReq('MODIFIED', { acceptedFindings: modified }); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(200)
 
-    const upd = prisma.aiAnalysisJob.update.mock.calls[0][0]
+    const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
     expect(upd.data.acceptedFindings).toEqual(modified)
     expect(prisma.auditLog.create.mock.calls[0][0].data.action).toBe('AI_FINDING_MODIFIED')
   })
 
   it('REJECTED stores no accepted findings and audits the rejection', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
-    prisma.aiAnalysisJob.update.mockResolvedValue({
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
       reviewDecision: 'REJECTED',
@@ -194,14 +194,14 @@ describe('review decisions (D11 + D12)', () => {
     const m = makeReq('REJECTED'); const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(200)
 
-    const upd = prisma.aiAnalysisJob.update.mock.calls[0][0]
+    const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
     expect(upd.data.acceptedFindings).toBeNull()
     expect(prisma.auditLog.create.mock.calls[0][0].data.action).toBe('AI_FINDING_REJECTED')
   })
 
   it('audits include engine + study context (who/when/tenant/what/resource)', async () => {
-    prisma.aiAnalysisJob.findFirst.mockResolvedValue(makeJob())
-    prisma.aiAnalysisJob.update.mockResolvedValue({
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
+    prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
       reviewDecision: 'ACCEPTED',

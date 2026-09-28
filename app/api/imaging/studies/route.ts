@@ -293,7 +293,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const job = await prisma.aiAnalysisJob.create({
+  const job = await prisma.aIAnalysisJob.create({
     data: {
       hospitalId,
       studyId: study.id,
@@ -344,7 +344,7 @@ export async function POST(req: NextRequest) {
     // If the orchestrator did not get far enough to record the failure
     // itself (unreachable, or a non-domain error), this route is the
     // fallback owner of the FAILED state + audit.
-    const current = await prisma.aiAnalysisJob.findUnique({
+    const current = await prisma.aIAnalysisJob.findUnique({
       where: { id: job.id },
       select: { id: true, status: true },
     })
@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
       const detail = err instanceof Error ? err.name : 'unknown error'
       const fallbackMessage = 'AI analysis failed: ' + detail
       const message = err instanceof OrchestratorError ? err.message : fallbackMessage
-      await prisma.aiAnalysisJob.update({
+      await prisma.aIAnalysisJob.update({
         where: { id: job.id },
         data: {
           status: 'FAILED',

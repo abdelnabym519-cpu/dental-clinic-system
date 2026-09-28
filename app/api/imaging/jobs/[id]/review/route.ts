@@ -88,7 +88,7 @@ export async function POST(
   const { decision, reviewNotes } = body.data
 
   // Tenant guard: job must belong to the caller's hospital (D11.1).
-  const job = await prisma.aiAnalysisJob.findFirst({
+  const job = await prisma.aIAnalysisJob.findFirst({
     where: { id, hospitalId },
     include: { study: { select: { id: true, status: true } } },
   })
@@ -120,7 +120,7 @@ export async function POST(
     acceptedFindings = body.data.acceptedFindings
   }
 
-  const updated = await prisma.aiAnalysisJob.update({
+  const updated = await prisma.aIAnalysisJob.update({
     where: { id: job.id },
     data: {
       reviewedById: user.id,
