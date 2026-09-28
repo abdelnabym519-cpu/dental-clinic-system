@@ -14,6 +14,14 @@
 #
 # build-essential/python3-dev: the ONLY source build in the whole stack is
 # xtcocotools' C++ extension (mmpose dependency). Everything else is wheels.
+#
+# libgl1 + libglib2.0-0: xtcocotools depends on the FULL opencv-python
+# distribution (its wheel hard-requires it), whose cv2 import loads
+# libGL.so.1 / libglib-2.0.so.0 on Linux. The headless pin in
+# requirements.txt covers the direct import, but pip still installs the
+# full wheel as xtcocotools' dependency — the OS libraries make the image
+# loadable either way (same pattern as the meshsegnet-max Dockerfile,
+# where the VTK wheel needs libGL.so.1).
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -25,7 +33,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential python3-dev wget \
+    && apt-get install -y --no-install-recommends build-essential python3-dev wget libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # --- the audited repository, pinned revision, checksum-gated ---
