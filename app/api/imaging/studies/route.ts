@@ -10,17 +10,27 @@ import {
   requestOrchestratorAnalyze,
 } from '@/lib/ai-orchestrator'
 
-// Phase 19A (D10) — imaging study upload + Liodon AI trigger.
+// Phase 19A (D10) — imaging study upload + AI trigger.
+// Phase 19B (D14) — modality → engine map for the IMAGE engines:
+//   PANORAMIC     → liodon          (19A rule, unchanged)
+//   PERIAPICAL    → implant-ai      (19B spec D14: 2D non-panoramic radiographs)
+//   BITEWING      → implant-ai
+//   CEPHALOMETRIC → orthodontic-ai  (19B engine 3: 38 cephalometric landmarks)
+//   PHOTO, THREE_D_SCAN, CBCT → no image engine on this route: PHOTO has no
+//   model; the 3D modalities need surface-mesh uploads, which this
+//   image-based upload path deliberately does not accept (the MeshSegNet
+//   engines are reachable via the orchestrator, not yet via this route).
 //
 // POST /api/imaging/studies  (multipart/form-data)
 //   file:         JPEG/PNG/WebP image, <= 50MB
 //   patientId:    existing patient (must belong to the caller's hospital)
-//   modality:     PANORAMIC | PERIAPICAL | BITEWING | CBCT | THREE_D_SCAN | PHOTO
+//   modality:     PANORAMIC | PERIAPICAL | BITEWING | CBCT | THREE_D_SCAN | PHOTO | CEPHALOMETRIC
 //   studyType:    optional label (default 'IMAGING')
 //   appointmentId: optional
 //   studyDate:    optional ISO date
 //   description:  optional
-//   analyze:      'true' to trigger AI analysis (Liodon, PANORAMIC only)
+//   analyze:      'true' to trigger AI analysis (engine chosen by modality,
+//                 above; the orchestrator re-validates modality↔engine)
 //
 // Tenant + identity come from the authenticated session — client-supplied
 // hospital/user ids are never trusted (D10 / D11.1).
@@ -33,7 +43,26 @@ const ALLOWED_TYPES: Record<string, string> = {
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB
 
-const MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO'] as const
+const MODALITIES = [
+  'PANORAMIC',
+  'PERIAPICAL',
+  'BITEWING',
+  'CBCT',
+  'THREE_D_SCAN',
+  'PHOTO',
+  'CEPHALOMETRIC',
+] as const
+
+// Phase 19B (D14) — the ONLY place a modality is mapped to an engine.
+// Mirrors the orchestrator registry's supported_modalities (extend-only):
+// every value here is a modality the named engine declares it supports.
+// PHOTO / THREE_D_SCAN / CBCT intentionally have no entry (see header).
+const ENGINE_BY_MODALITY: Record<string, string> = {
+  PANORAMIC: 'liodon',
+  PERIAPICAL: 'implant-ai',
+  BITEWING: 'implant-ai',
+  CEPHALOMETRIC: 'orthodontic-ai',
+}
 
 const FORM_SCHEMA = z.object({
   patientId: z.string().min(1),
@@ -246,17 +275,18 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  // ---- AI trigger (D10.1: Liodon runs on PANORAMIC only) ----------------
+  // ---- AI trigger (19A D10.1 / 19B D14: engine chosen by modality) ------
   if (body.analyze !== 'true') {
     return NextResponse.json({ study, job: null }, { status: 201 })
   }
 
-  if (study.modality !== 'PANORAMIC') {
+  const engine = ENGINE_BY_MODALITY[study.modality]
+  if (!engine) {
     // Prose stays a dictionary key (i18n audit); the modality travels as data.
     return NextResponse.json(
       {
         study,
-        error: 'AI analysis is only supported for PANORAMIC studies',
+        error: 'AI analysis is not supported for this modality',
         modality: study.modality,
       },
       { status: 422 }
@@ -267,7 +297,7 @@ export async function POST(req: NextRequest) {
     data: {
       hospitalId,
       studyId: study.id,
-      engine: 'liodon',
+      engine,
       status: 'PENDING',
       requestedById: user.id,
     },
@@ -280,7 +310,7 @@ export async function POST(req: NextRequest) {
       action: 'AI_JOB_REQUESTED',
       entityType: 'AIAnalysisJob',
       entityId: job.id,
-      newValues: JSON.stringify({ engine: 'liodon', studyId: study.id, modality: 'PANORAMIC' }),
+      newValues: JSON.stringify({ engine, studyId: study.id, modality: study.modality }),
     },
   })
 
@@ -291,8 +321,8 @@ export async function POST(req: NextRequest) {
       hospitalId,
       imageKey: originalKey,
       imageSha256: originalHash,
-      engine: 'liodon',
-      modality: 'PANORAMIC',
+      engine,
+      modality: study.modality,
       requestedBy: user.id,
     })
     // The orchestrator already persisted COMPLETED + provenance + audit and
@@ -339,7 +369,7 @@ export async function POST(req: NextRequest) {
           action: 'AI_JOB_FAILED',
           entityType: 'AIAnalysisJob',
           entityId: job.id,
-          newValues: JSON.stringify({ engine: 'liodon', error: message.slice(0, 500) }),
+          newValues: JSON.stringify({ engine, error: message.slice(0, 500) }),
         },
       })
     }

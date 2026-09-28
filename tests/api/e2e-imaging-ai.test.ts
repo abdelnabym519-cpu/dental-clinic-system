@@ -10,10 +10,11 @@
  *   → result.json + annotated.png persisted as SEPARATE objects
  *   → provenance + COMPLETED + study ANALYZED + audit trail
  *   → doctor review (ACCEPTED → REVIEWED + audit)
- *   → non-PANORAMIC rejection, tenant isolation, original immutability
+ *   → 19B engine map (BITEWING → implant-ai job; PHOTO → 422), tenant
+ *     isolation, original immutability
  *
  * ALWAYS SKIPS unless explicitly enabled — the full regression suite
- * (default vitest config) collects the file and reports 11 skipped tests;
+ * (default vitest config) collects the file and reports 12 skipped tests;
  * it never touches live services and never reports them as passed.
  *
  * Optional overrides:
@@ -29,12 +30,15 @@
  *   - Next.js app running at E2E_BASE_URL with DATABASE_URL + STORAGE_DRIVER=s3
  *     + S3_* pointing at MinIO (host-side), .env loaded by the test process
  *   - ai stack running: orchestrator :8000, liodon engine :8001 (real
- *     best.onnx mounted, checksum 4cee38b5… verified, stand-in=false)
+ *     best.onnx mounted, checksum 4cee38b5… verified, stand-in=false) and
+ *     implant engine :8004 (real 8024.pt mounted, checksum
+ *     e7cc1377… verified, stand-in=false) for the 19B engine-map item
  *   - MySQL reachable (prisma migrate deploy applied, 14 migrations)
  *
- * The test creates real rows (one study + one job, one rejected BITEWING
- * study, one review, audit events) in the tenant of E2E_DOCTOR_EMAIL — the
- * same data the production flow would create. It never deletes them.
+ * The test creates real rows (one study + one job, one implant-ai BITEWING
+ * study, one rejected PHOTO study, one review, audit events) in the tenant
+ * of E2E_DOCTOR_EMAIL — the same data the production flow would create.
+ * It never deletes them.
  *
  * ALWAYS RUN WITH THE DEDICATED E2E CONFIG (node environment, no global DOM
  * setup, no fetch mock, .env honored for DATABASE_URL/STORAGE_DRIVER/S3_*):
@@ -515,7 +519,7 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
   )
 
   it(
-    '8. non-PANORAMIC + analyze → 422 (Liodon runs on PANORAMIC only)',
+    '8. 19B engine map: BITEWING + analyze → implant-ai job (no longer a 422)',
     async () => {
       const form = new FormData()
       form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
@@ -523,10 +527,41 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
       form.append('modality', 'BITEWING')
       form.append('analyze', 'true')
       const res = await api('/api/imaging/studies', { method: 'POST', body: form })
+      // 201 when the implant engine completes; 502 only if the implant
+      // engine is down in this environment (the job still records FAILED).
+      // The 19A 422 "Liodon runs on PANORAMIC only" is gone: 19B D14 routes
+      // BITEWING to implant-ai.
+      expect([201, 502]).toContain(res.status)
+      const body = await res.json()
+
+      const { PrismaClient } = await import('@prisma/client')
+      const prisma = new PrismaClient()
+      const jobs = await prisma.aIAnalysisJob.findMany({
+        where: { studyId: body.study!.id },
+        select: { id: true, engine: true, status: true },
+      })
+      await prisma.$disconnect()
+      expect(jobs.length).toBe(1)
+      expect(jobs[0].engine).toBe('implant-ai')
+      expect(['COMPLETED', 'FAILED']).toContain(jobs[0].status)
+      expect(body.study.status).toBe(jobs[0].status === 'COMPLETED' ? 'ANALYZED' : 'UPLOADED')
+    },
+    60000
+  )
+
+  it(
+    '8b. 19B engine map: PHOTO + analyze → 422 (no image engine for that modality)',
+    async () => {
+      const form = new FormData()
+      form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
+      form.append('patientId', state.patientId!)
+      form.append('modality', 'PHOTO')
+      form.append('analyze', 'true')
+      const res = await api('/api/imaging/studies', { method: 'POST', body: form })
       expect(res.status).toBe(422)
       const body = await res.json()
-      expect(body.error).toBe('AI analysis is only supported for PANORAMIC studies')
-      expect(body.modality).toBe('BITEWING')
+      expect(body.error).toBe('AI analysis is not supported for this modality')
+      expect(body.modality).toBe('PHOTO')
     },
     60000
   )

@@ -5,13 +5,22 @@ import { Check, X } from 'lucide-react'
 import { useLanguage } from '@/components/providers/language-provider'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { findingColor, type ImagingFinding } from '@/components/imaging/types'
+import {
+  FALLBACK_COLOR,
+  findingColor,
+  isBoxFinding,
+  isLandmarkFinding,
+  LANDMARK_COLOR,
+  type ImagingFinding,
+} from '@/components/imaging/types'
 
 // Phase 20 (D5) — detail card for a single AI finding.
+// Phase 19B (D15) — one card shape per engine result:
+//   box (Liodon/Implant AI), landmark (Orthodontic AI), segment (MeshSegNet).
 //
-// Deliberate omission: there is NO severity badge. The Liodon model emits
-// class + confidence + box only, and Phase 19A fixed the rule that confidence
-// must never be re-labelled as severity — the UI honours that.
+// Deliberate omission: there is NO severity badge. The models emit class +
+// confidence/score + geometry only, and Phase 19A fixed the rule that
+// confidence must never be re-labelled as severity — the UI honours that.
 
 interface FindingCardProps {
   finding: ImagingFinding
@@ -34,12 +43,34 @@ export function FindingCard({
   onReviewToggle,
 }: FindingCardProps) {
   const { t } = useLanguage()
-  const color = findingColor(finding.condition)
-  const pct = Math.round((finding.confidence ?? 0) * 100)
 
-  const key = `imaging.condition.${finding.condition}`
-  const out = t(key)
-  const condition = out === key ? finding.condition : out
+  // Per-engine display fields (19B D15): boxes show condition + confidence;
+  // landmarks show the number (1..38) + the model's own name + point;
+  // segments show the neutral class + cell count. No shape invents a
+  // confidence it does not have.
+  let color = FALLBACK_COLOR
+  let title = ''
+  let tooth: number | string | null = null
+  let subline: string | null = null
+  let pct: number | null = null
+  if (isBoxFinding(finding)) {
+    color = findingColor(finding.condition)
+    const key = `imaging.condition.${finding.condition}`
+    const out = t(key)
+    title = out === key ? finding.condition : out
+    tooth = finding.tooth_number
+    pct = Math.round((finding.confidence ?? 0) * 100)
+  } else if (isLandmarkFinding(finding)) {
+    color = LANDMARK_COLOR
+    title = t('imaging.landmark_label', { n: finding.landmark_id + 1 })
+    subline = `${finding.landmark_name} · (${Math.round(finding.x)}, ${Math.round(finding.y)})`
+    pct = finding.score === null ? null : Math.round(finding.score * 100)
+  } else {
+    // MeshSegNet neutral vocabulary is the recorded identity — shown as-is.
+    color = findingColor(finding.class_name)
+    title = finding.class_name
+    subline = t('imaging.point_count', { count: finding.point_count })
+  }
 
   return (
     <Card
@@ -74,10 +105,10 @@ export function FindingCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <p className="truncate text-sm font-medium">
-              {condition}
-              {finding.tooth_number != null && (
+              {title}
+              {tooth != null && (
                 <span className="ml-1 text-xs font-normal text-muted-foreground">
-                  · {t('imaging.tooth')} {finding.tooth_number}
+                  · {t('imaging.tooth')} {tooth}
                 </span>
               )}
             </p>
@@ -91,13 +122,24 @@ export function FindingCard({
               </span>
             )}
           </div>
+          {subline && (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{subline}</p>
+          )}
           <div className="mt-1 flex items-center gap-2">
-            <Progress
-              value={pct}
-              className="h-1.5 flex-1"
-              aria-label={t('imaging.confidence')}
-            />
-            <span className="text-xs tabular-nums text-muted-foreground">{pct}%</span>
+            {pct === null ? (
+              <span className="text-xs text-muted-foreground">
+                {t('imaging.no_confidence_emitted')}
+              </span>
+            ) : (
+              <>
+                <Progress
+                  value={pct}
+                  className="h-1.5 flex-1"
+                  aria-label={t('imaging.confidence')}
+                />
+                <span className="text-xs tabular-nums text-muted-foreground">{pct}%</span>
+              </>
+            )}
           </div>
         </div>
       </div>

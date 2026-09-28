@@ -18,11 +18,48 @@ export interface BoundingBox {
   units?: string
 }
 
+/** Phase 19A / 19B (Liodon + Implant AI): a detection with a bounding box. */
 export interface OrchestratorFinding {
   condition: string
   tooth_number: null
   confidence: number
   bounding_box: BoundingBox
+}
+
+/** Phase 19B (Orthodontic AI): one of the 38 cephalometric landmarks. */
+export interface OrchestratorLandmark {
+  landmark_id: number
+  landmark_name: string
+  x: number
+  y: number
+  score: number | null
+  coordinate_space: string
+}
+
+/** Phase 19B (MeshSegNet): one row of the 15-class segment histogram. */
+export interface OrchestratorSegment {
+  class_id: number
+  class_name: string
+  point_count: number
+}
+
+/**
+ * Every result shape the orchestrator can return (per-engine validation in
+ * ai/orchestrator/app/validation.py is the authority on each one).
+ */
+export type OrchestratorResultFinding = OrchestratorFinding | OrchestratorLandmark | OrchestratorSegment
+
+export function isBoxFinding(f: OrchestratorResultFinding): f is OrchestratorFinding {
+  const bb = (f as OrchestratorFinding).bounding_box
+  return typeof bb === 'object' && bb !== null
+}
+
+export function isLandmarkFinding(f: OrchestratorResultFinding): f is OrchestratorLandmark {
+  return typeof (f as OrchestratorLandmark).landmark_id === 'number'
+}
+
+export function isSegmentFinding(f: OrchestratorResultFinding): f is OrchestratorSegment {
+  return typeof (f as OrchestratorSegment).point_count === 'number'
 }
 
 export interface OrchestratorProvenance {
@@ -45,7 +82,7 @@ export interface OrchestratorProvenance {
 export interface AnalyzeResult {
   job_id: string
   status: 'COMPLETED'
-  findings: OrchestratorFinding[]
+  findings: OrchestratorResultFinding[]
   top_confidence: number | null
   provenance: OrchestratorProvenance
   processing_time_ms: number

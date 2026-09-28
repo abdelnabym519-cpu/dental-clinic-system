@@ -3250,6 +3250,9 @@ enum StudyModality {
   CBCT
   THREE_D_SCAN
   PHOTO
+  // Phase 19B (D14) — lateral cephalograms (Orthodontic AI, port 8005).
+  // Added additively by 20260928120000_add_cephalometric_modality.
+  CEPHALOMETRIC
 }
 
 enum ImagingStudyStatus {

@@ -21,22 +21,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-
-interface Finding {
-  condition: string
-  tooth_number: null
-  confidence: number
-  bounding_box: {
-    x: number
-    y: number
-    width: number
-    height: number
-    x2: number
-    y2: number
-    coordinate_space?: string
-    units?: string
-  }
-}
+import {
+  isBoxFinding,
+  isLandmarkFinding,
+  type ImagingFinding as Finding,
+} from '@/components/imaging/types'
 
 interface Job {
   id: string
@@ -82,6 +71,92 @@ interface Study {
   aiJobs: Job[]
   originalUrl: string
   annotatedUrl: string | null
+}
+
+type Translate = (key: string, vars?: Record<string, string | number>) => string
+
+// Phase 19B (D15) — the findings table, shaped by the job's result:
+// boxes (19A), the 38 cephalometric landmarks (Orthodontic AI), or the
+// 15-class segment histogram (MeshSegNet).
+function FindingsTable({ findings, t }: { findings: Finding[]; t: Translate }) {
+  const [first] = findings
+  if (isLandmarkFinding(first)) {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('imaging.landmark_table.number')}</TableHead>
+            <TableHead>{t('imaging.landmark_table.name')}</TableHead>
+            <TableHead>{t('imaging.landmark_table.x')}</TableHead>
+            <TableHead>{t('imaging.landmark_table.y')}</TableHead>
+            <TableHead>{t('imaging.landmark_table.score')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {findings.map((f, i) =>
+            isLandmarkFinding(f) ? (
+              <TableRow key={i}>
+                <TableCell className="font-medium">{f.landmark_id + 1}</TableCell>
+                <TableCell>{f.landmark_name}</TableCell>
+                <TableCell className="font-mono text-xs">{Math.round(f.x)}</TableCell>
+                <TableCell className="font-mono text-xs">{Math.round(f.y)}</TableCell>
+                <TableCell>
+                  {f.score === null ? '—' : `${(f.score * 100).toFixed(1)}%`}
+                </TableCell>
+              </TableRow>
+            ) : null
+          )}
+        </TableBody>
+      </Table>
+    )
+  }
+  if (first && !isBoxFinding(first)) {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('imaging.segment_table.class')}</TableHead>
+            <TableHead>{t('imaging.segment_table.cells')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {findings.map((f, i) =>
+            !isBoxFinding(f) && !isLandmarkFinding(f) ? (
+              <TableRow key={i}>
+                <TableCell className="font-medium">{f.class_name}</TableCell>
+                <TableCell>{f.point_count}</TableCell>
+              </TableRow>
+            ) : null
+          )}
+        </TableBody>
+      </Table>
+    )
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>{t('Condition')}</TableHead>
+          <TableHead>{t('Confidence')}</TableHead>
+          <TableHead>{t('Bounding box (x, y, w, h)')}</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {findings.map((f, i) =>
+          isBoxFinding(f) ? (
+            <TableRow key={i}>
+              <TableCell className="font-medium">{f.condition}</TableCell>
+              <TableCell>{(f.confidence * 100).toFixed(1)}%</TableCell>
+              <TableCell className="font-mono text-xs">
+                {f.bounding_box.x.toFixed(0)}, {f.bounding_box.y.toFixed(0)},{' '}
+                {f.bounding_box.width.toFixed(0)}, {f.bounding_box.height.toFixed(0)}
+              </TableCell>
+            </TableRow>
+          ) : null
+        )}
+      </TableBody>
+    </Table>
+  )
 }
 
 export default function ImagingStudyDetailPage() {
@@ -262,27 +337,11 @@ export default function ImagingStudyDetailPage() {
               {(job.findings ?? []).length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">{t('No findings detected')}</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('Condition')}</TableHead>
-                      <TableHead>{t('Confidence')}</TableHead>
-                      <TableHead>{t('Bounding box (x, y, w, h)')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(job.findings ?? []).map((f, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{f.condition}</TableCell>
-                        <TableCell>{(f.confidence * 100).toFixed(1)}%</TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {f.bounding_box.x.toFixed(0)}, {f.bounding_box.y.toFixed(0)},{' '}
-                          {f.bounding_box.width.toFixed(0)}, {f.bounding_box.height.toFixed(0)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                // One job carries one engine's shape (the orchestrator
+                // validates it); the table renders that shape. Phase 19B:
+                // landmarks (Orthodontic AI) and segments (MeshSegNet) join
+                // the 19A bounding-box table.
+                <FindingsTable findings={job.findings ?? []} t={t} />
               )}
 
               {job.provenance && (

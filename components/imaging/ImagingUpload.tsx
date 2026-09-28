@@ -43,7 +43,20 @@ type Phase =
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = 50 * 1024 * 1024 // 50 MB
-const MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO'] as const
+const MODALITIES = [
+  'PANORAMIC',
+  'PERIAPICAL',
+  'BITEWING',
+  'CBCT',
+  'THREE_D_SCAN',
+  'PHOTO',
+  'CEPHALOMETRIC',
+] as const
+
+// Phase 19B (D14) — the modalities this image upload path can analyze
+// (same map as the studies route; 3D modalities need mesh uploads, which
+// this path does not offer).
+const AI_ANALYZABLE_MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CEPHALOMETRIC'] as const
 
 export function ImagingUpload({ patientId, appointmentId = null, onUploadComplete }: ImagingUploadProps) {
   const { t } = useLanguage()
@@ -57,7 +70,7 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
   const inputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const analyzingLocked = modality !== 'PANORAMIC'
+  const analyzingLocked = !AI_ANALYZABLE_MODALITIES.includes(modality as (typeof AI_ANALYZABLE_MODALITIES)[number])
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -159,8 +172,9 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
           }
           if (xhr.status === 422) {
             // The study itself WAS uploaded — only the AI trigger was refused
-            // (non-PANORAMIC). Surface the server message and list the study.
-            // body.error is a dictionary key (19A i18n contract), not prose.
+            // (no engine for the modality). Surface the server message and
+            // list the study. body.error is a dictionary key (i18n audit
+            // contract), not prose; the modality travels as data (19B D14).
             toast({
               variant: 'destructive',
               title: t('imaging.run_ai'),
@@ -259,7 +273,15 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
             <div className="space-y-2">
               <div>
                 <label className="mb-1 block text-xs text-muted-foreground">{t('imaging.study_type')}</label>
-                <Select value={modality} onValueChange={(v) => { setModality(v); if (v !== 'PANORAMIC') setAnalyze(false) }}>
+                <Select
+                value={modality}
+                onValueChange={(v) => {
+                  setModality(v)
+                  if (!AI_ANALYZABLE_MODALITIES.includes(v as (typeof AI_ANALYZABLE_MODALITIES)[number])) {
+                    setAnalyze(false)
+                  }
+                }}
+              >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -283,7 +305,7 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
                 {t('imaging.run_ai')}
                 {analyzingLocked && (
                   <span className="text-xs text-muted-foreground">
-                    ({t('AI analysis is only supported for PANORAMIC studies')})
+                    ({t('AI analysis is not supported for this modality')})
                   </span>
                 )}
               </label>

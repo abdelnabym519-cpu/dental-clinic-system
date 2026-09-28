@@ -10,7 +10,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
-import { findingColor, type ImagingFinding } from '@/components/imaging/types'
+import {
+  FALLBACK_COLOR,
+  LANDMARK_COLOR,
+  findingColor,
+  isBoxFinding,
+  isLandmarkFinding,
+  type ImagingFinding,
+} from '@/components/imaging/types'
 
 // Phase 20 (D6) — the mandatory human gate over AI findings.
 //
@@ -23,8 +30,8 @@ import { findingColor, type ImagingFinding } from '@/components/imaging/types'
 //   "رفض الكل"      → REJECTED          (confirmation dialog required)
 //
 // The server is the source of truth: findings sent back must match its
-// schema (condition / tooth_number / confidence / bounding_box), which they
-// do by construction — we only subset the AI array, never reshape it.
+// schema (box / landmark / segment — the 19B D15 union), which they do by
+// construction — we only subset the AI array, never reshape it.
 
 export type ReviewDecision = 'ACCEPTED' | 'MODIFIED' | 'REJECTED'
 
@@ -129,13 +136,36 @@ export function DoctorReviewPanel({ jobId, findings, onReviewComplete }: DoctorR
         {/* Per-finding accept/reject selection (spec D6 layout). */}
         <div className="space-y-1.5">
           {findings.map((finding, index) => {
-            const key = `imaging.condition.${finding.condition}`
-            const out = t(key)
-            const condition = out === key ? finding.condition : out
-            const pct = Math.round((finding.confidence ?? 0) * 100)
+            // Per-engine display (19B D15): boxes show the condition,
+            // landmarks their number, segments the neutral class. The
+            // accept/reject checkbox works identically for every shape —
+            // the server re-validates the accepted subset.
+            let color = FALLBACK_COLOR
+            let label = ''
+            let tooth: number | string | null = null
+            let pct: number | null = null
+            let key: string
+            if (isBoxFinding(finding)) {
+              color = findingColor(finding.condition)
+              const condKey = `imaging.condition.${finding.condition}`
+              const out = t(condKey)
+              label = out === condKey ? finding.condition : out
+              tooth = finding.tooth_number
+              pct = Math.round((finding.confidence ?? 0) * 100)
+              key = `box-${finding.bounding_box.x}-${finding.bounding_box.y}-${index}`
+            } else if (isLandmarkFinding(finding)) {
+              color = LANDMARK_COLOR
+              label = t('imaging.landmark_label', { n: finding.landmark_id + 1 })
+              pct = finding.score === null ? null : Math.round(finding.score * 100)
+              key = `lm-${finding.landmark_id}-${index}`
+            } else {
+              color = findingColor(finding.class_name)
+              label = finding.class_name
+              key = `seg-${finding.class_id}-${index}`
+            }
             return (
               <label
-                key={`${finding.bounding_box.x}-${finding.bounding_box.y}-${index}`}
+                key={key}
                 className="flex items-center gap-3 rounded-md border p-2 text-sm hover:bg-accent/40"
               >
                 <input
@@ -146,21 +176,21 @@ export function DoctorReviewPanel({ jobId, findings, onReviewComplete }: DoctorR
                 />
                 <span
                   className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
-                  style={{ backgroundColor: findingColor(finding.condition) }}
+                  style={{ backgroundColor: color }}
                 />
                 <span className="min-w-0 flex-1 truncate">
-                  {condition}
-                  {finding.tooth_number != null && (
+                  {label}
+                  {tooth != null && (
                     <span className="ml-1 text-xs text-muted-foreground">
-                      · {t('imaging.tooth')} {finding.tooth_number}
+                      · {t('imaging.tooth')} {tooth}
                     </span>
                   )}
                 </span>
                 <span className="w-16">
-                  <Progress value={pct} className="h-1" />
+                  {pct !== null && <Progress value={pct} className="h-1" />}
                 </span>
                 <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">
-                  {pct}%
+                  {pct === null ? '—' : `${pct}%`}
                 </span>
               </label>
             )

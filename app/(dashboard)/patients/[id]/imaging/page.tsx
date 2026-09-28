@@ -28,6 +28,8 @@ import { FindingCard } from '@/components/imaging/FindingCard'
 import { DoctorReviewPanel, type ReviewDecision } from '@/components/imaging/DoctorReviewPanel'
 import {
   derivedStudyStatus,
+  isBoxFinding,
+  isLandmarkFinding,
   type ImagingJob,
   type ImagingStudyDetail,
   type ImagingStudySummary,
@@ -317,7 +319,13 @@ export default function PatientImagingPage({ params }: { params: Promise<{ id: s
                     <div className="grid gap-2 sm:grid-cols-2">
                       {findings.map((f, i) => (
                         <FindingCard
-                          key={`${f.bounding_box.x}-${f.bounding_box.y}-${i}`}
+                          key={
+                            isBoxFinding(f)
+                              ? `box-${f.bounding_box.x}-${f.bounding_box.y}-${i}`
+                              : isLandmarkFinding(f)
+                                ? `lm-${f.landmark_id}-${i}`
+                                : `seg-${f.class_id}-${i}`
+                          }
                           finding={f}
                           index={i}
                           selected={selectedFinding === i}

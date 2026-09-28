@@ -15,7 +15,9 @@ import { requireAuthAndRole } from '@/lib/api-helpers'
 // before anything reaches the clinical record. Every decision is audited
 // (D12) and the study progresses to REVIEWED.
 
-const FINDING_SCHEMA = z.object({
+// Phase 19A — Liodon/Implant AI findings: bounding boxes in original-image
+// pixels (the 19A wire contract).
+const BOX_FINDING_SCHEMA = z.object({
   condition: z.string().min(1),
   tooth_number: z.null(),
   confidence: z.number().min(0).max(1),
@@ -30,6 +32,33 @@ const FINDING_SCHEMA = z.object({
     units: z.string().optional(),
   }),
 })
+
+// Phase 19B (D14) — Orthodontic AI findings: the 38 cephalometric landmarks
+// in the cropped-original image's pixel space (the repository's own
+// zero-padding crop; top-left origin unchanged, so coordinates place
+// directly on the original).
+const LANDMARK_FINDING_SCHEMA = z.object({
+  landmark_id: z.number().int().min(0).max(37),
+  landmark_name: z.string().min(1),
+  x: z.number().finite(),
+  y: z.number().finite(),
+  score: z.number().min(0).max(1).nullable(),
+  coordinate_space: z.string().optional(),
+})
+
+// Phase 19B (D14) — MeshSegNet findings: the 15-class per-cell segment
+// histogram (3D input — no boxes, no image).
+const SEGMENT_FINDING_SCHEMA = z.object({
+  class_id: z.number().int().min(0),
+  class_name: z.string().min(1),
+  point_count: z.number().int().positive(),
+})
+
+// A doctor-corrected finding must be one of the engines' shapes. The union
+// is permissive across engines by design: this endpoint validates STRUCTURE
+// (finite numbers, bounded ids, non-negative counts), and the per-engine
+// validation already ran when the job completed.
+const FINDING_SCHEMA = z.union([BOX_FINDING_SCHEMA, LANDMARK_FINDING_SCHEMA, SEGMENT_FINDING_SCHEMA])
 
 const REVIEW_SCHEMA = z.object({
   decision: z.enum(['ACCEPTED', 'MODIFIED', 'REJECTED']),

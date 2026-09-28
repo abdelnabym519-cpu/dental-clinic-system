@@ -8,18 +8,26 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import {
-  CONDITION_COLORS,
   findingColor,
+  findingConfidence,
+  isBoxFinding,
+  isLandmarkFinding,
+  isSegmentFinding,
+  LANDMARK_COLOR,
   type ImagingFinding,
 } from '@/components/imaging/types'
 
-// Phase 20 (D5) — X-ray viewer with REAL Liodon bounding-box overlays.
-//
-// The boxes are drawn from the job's findings, in original-image pixel
-// coordinates: the overlay is an SVG whose viewBox equals the image's
-// natural size, so a box at (x, y, w, h) pixels lands exactly on the image
-// no matter the zoom or pan. The original image is never modified — the
-// "annotated" view is a separate object the AI stack produced.
+// Phase 20 (D5) — X-ray viewer with REAL engine result overlays.
+// Phase 19B (D15) — two overlay grammars:
+//   - box findings (Liodon / Implant AI): rects in original-image pixel
+//     coordinates (the 19A behaviour, unchanged);
+//   - landmark findings (Orthodontic AI): numbered dots at (x, y) — the 38
+//     cephalometric points in the cropped original's pixel space (top-left
+//     origin unchanged, so they place directly on the original image).
+// The overlay is an SVG whose viewBox equals the image's natural size, so
+// pixel coordinates land exactly on the image no matter the zoom or pan.
+// The original image is never modified — the "annotated" view is a separate
+// object the AI stack produced.
 
 interface FindingsViewerProps {
   imageUrl: string
@@ -62,7 +70,13 @@ export function FindingsViewer({
   const activeSrc = view === 'annotated' && annotatedUrl ? annotatedUrl : imageUrl
 
   const visibleFindings = useMemo(
-    () => findings.filter((f) => (f.confidence ?? 0) * 100 >= minConfidence),
+    () =>
+      findings.filter((f) => {
+        const c = findingConfidence(f)
+        // Findings with no certainty value (MeshSegNet segments) are always
+        // shown — there is no score to filter on and none is invented.
+        return c === null || c * 100 >= minConfidence
+      }),
     [findings, minConfidence]
   )
 
@@ -122,6 +136,37 @@ export function FindingsViewer({
   // 3000px wide images.
   const labelSize = natural.width ? Math.max(13, Math.round(natural.width / 90)) : 16
   const boxStroke = natural.width ? Math.max(1.5, Math.round(natural.width / 900)) : 2
+
+  // Legend from the findings actually present (19B: box conditions, the
+  // landmark set, or segment classes — never the whole static colour table).
+  const legend = useMemo(() => {
+    const items: { key: string; label: string; color: string }[] = []
+    const boxSeen = new Set<string>()
+    const segSeen = new Set<number>()
+    let landmarks = false
+    for (const f of findings) {
+      if (isBoxFinding(f) && !boxSeen.has(f.condition)) {
+        boxSeen.add(f.condition)
+        items.push({ key: `box-${f.condition}`, label: conditionLabel(f.condition), color: findingColor(f.condition) })
+      } else if (isLandmarkFinding(f)) {
+        landmarks = true
+      } else if (isSegmentFinding(f) && !segSeen.has(f.class_id)) {
+        // MeshSegNet's neutral vocabulary is the recorded identity (no
+        // official label-to-tooth-name map exists) — shown as-is.
+        segSeen.add(f.class_id)
+        items.push({ key: `seg-${f.class_id}`, label: f.class_name, color: findingColor(f.class_name) })
+      }
+    }
+    if (landmarks) {
+      items.push({
+        key: 'landmarks',
+        label: t('imaging.landmarks', { count: findings.filter(isLandmarkFinding).length }),
+        color: LANDMARK_COLOR,
+      })
+    }
+    return items
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [findings, t])
 
   return (
     <Card>
@@ -224,10 +269,52 @@ export function FindingsViewer({
               >
                 {visibleFindings.map((f, vi) => {
                   const idx = findings.indexOf(f)
-                  const bb = f.bounding_box
-                  if (!bb || typeof bb.x !== 'number') return null
-                  const color = findingColor(f.condition)
                   const selected = selectedFinding === idx
+
+                  // Orthodontic AI — numbered landmark dot (1..38, the same
+                  // numbering as the engine's own overlay PNG).
+                  if (isLandmarkFinding(f)) {
+                    const dotR = labelSize * 0.85
+                    const left = f.x > dotR
+                    return (
+                      <g key={`lm-${f.landmark_id}-${vi}`}>
+                        <circle
+                          cx={f.x}
+                          cy={f.y}
+                          r={dotR}
+                          fill={LANDMARK_COLOR}
+                          fillOpacity={selected ? 0.85 : 0.4}
+                          stroke={selected ? '#ffffff' : LANDMARK_COLOR}
+                          strokeWidth={selected ? boxStroke * 2 : boxStroke}
+                          vectorEffect="non-scaling-stroke"
+                          className="pointer-events-auto cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onFindingClick?.(idx)
+                          }}
+                        />
+                        <text
+                          x={left ? f.x - dotR - boxStroke : f.x + dotR + boxStroke}
+                          y={f.y + labelSize * 0.35}
+                          fill="#ffffff"
+                          fontSize={labelSize}
+                          fontWeight={600}
+                          stroke="#09090b"
+                          strokeWidth={labelSize / 5}
+                          paintOrder="stroke"
+                          textAnchor={left ? 'end' : 'start'}
+                        >
+                          {f.landmark_id + 1}
+                        </text>
+                      </g>
+                    )
+                  }
+
+                  // MeshSegNet — 3D segments have no 2D overlay position.
+                  if (!isBoxFinding(f)) return null
+
+                  const bb = f.bounding_box
+                  const color = findingColor(f.condition)
                   // Label through the dictionary (i18n audit): the condition
                   // is already translated, the template itself is a key.
                   const label = t('imaging.finding_label', {
@@ -277,10 +364,10 @@ export function FindingsViewer({
         {/* Legend */}
         {findings.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-            {Object.entries(CONDITION_COLORS).map(([cond, color]) => (
-              <span key={cond} className="flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: color }} />
-                {conditionLabel(cond)}
+            {legend.map((item) => (
+              <span key={item.key} className="flex items-center gap-1">
+                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.color }} />
+                {item.label}
               </span>
             ))}
             <span className="ml-auto">

@@ -78,14 +78,26 @@ describe('ImagingUpload — file pre-flight', () => {
     expect(uploadButton.disabled).toBe(false)
   })
 
-  it('locks the AI switch for non-PANORAMIC modalities', () => {
+  it('keeps the AI switch available for 19B-analyzable modalities (Periapical → Implant AI)', () => {
     renderUpload()
     const switchInput = document.querySelector('input[type="checkbox"]')
     expect(switchInput.checked).toBe(true) // PANORAMIC default
     expect(switchInput.disabled).toBe(false)
 
+    // 19B D14: PERIAPICAL routes to implant-ai, so analyze stays enabled.
     fireEvent.click(screen.getByRole('combobox'))
     fireEvent.click(screen.getByRole('option', { name: 'Periapical' }))
+    expect(switchInput.disabled).toBe(false)
+  })
+
+  it('locks the AI switch for modalities without an image engine (CBCT)', () => {
+    renderUpload()
+    const switchInput = document.querySelector('input[type="checkbox"]')
+    expect(switchInput.checked).toBe(true) // PANORAMIC default
+
+    // 3D modalities need mesh uploads, which this image path does not offer.
+    fireEvent.click(screen.getByRole('combobox'))
+    fireEvent.click(screen.getByRole('option', { name: 'CBCT' }))
     expect(switchInput.checked).toBe(false)
     expect(switchInput.disabled).toBe(true)
   })
@@ -130,21 +142,23 @@ describe('ImagingUpload — upload outcomes', () => {
     await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith('study-9'))
   })
 
-  it('422 (non-PANORAMIC analyze) surfaces the server key and still lists the study', async () => {
+  it('422 (no engine for the modality) surfaces the translated message and still lists the study', async () => {
     const onUploadComplete = vi.fn()
     renderUpload({ onUploadComplete })
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
     // Uploads a PANORAMIC with analyze=true; the server-side 422 backstop
-    // (19A) still governs non-PANORAMIC uploads regardless of the client.
+    // still governs modalities without an image engine regardless of the
+    // client (19B D14: the message is a dictionary key + modality data).
     fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     FakeXHR.instances[0].complete(422, {
       study: { id: 'study-10' },
-      error: 'AI analysis is only supported for PANORAMIC studies',
+      error: 'AI analysis is not supported for this modality',
+      modality: 'CBCT',
     })
     await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith('study-10'))
     // The dictionary key is translated, not shown raw.
-    expect(screen.getByText('AI analysis is only supported for PANORAMIC studies')).toBeTruthy()
+    expect(screen.getByText('AI analysis is not supported for this modality')).toBeTruthy()
   })
 
   it('upload progress is reported via XHR upload events', async () => {

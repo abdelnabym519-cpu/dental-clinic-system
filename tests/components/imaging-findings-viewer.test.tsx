@@ -171,3 +171,104 @@ describe('FindingCard', () => {
     expect(screen.getByText(/Tooth 16/)).toBeTruthy()
   })
 })
+
+// Phase 19B (D15) — the Orthodontic AI landmark shape: 38 numbered dots in
+// the cropped original's pixel space (top-left origin unchanged → they place
+// directly on the original image), the same 1-based numbering as the
+// engine's own overlay PNG.
+const LANDMARKS = Array.from({ length: 38 }, (_, i) => ({
+  landmark_id: i,
+  landmark_name: String(i),
+  x: 100 + i * 20,
+  y: 150 + (i % 10) * 30,
+  score: 0.9,
+  coordinate_space: 'cropped_original_image',
+}))
+
+describe('FindingsViewer — cephalometric landmark overlay (19B)', () => {
+  it('draws one numbered SVG circle per landmark at its pixel position', () => {
+    const { container } = renderViewer({ findings: LANDMARKS })
+    loadNaturalSize(container, 800, 600)
+
+    const circles = container.querySelectorAll('[data-testid="findings-overlay"] circle')
+    expect(circles).toHaveLength(38)
+    expect(circles[0].getAttribute('cx')).toBe('100')
+    expect(circles[0].getAttribute('cy')).toBe('150')
+    expect(circles[10].getAttribute('cx')).toBe('300')
+    expect(circles[0].getAttribute('fill')).toBe('#ef4444') // the engine's own red
+
+    // 1-based numbering, matching the engine overlay
+    expect(screen.getByText('1')).toBeTruthy()
+    expect(screen.getByText('38')).toBeTruthy()
+  })
+
+  it('clicking a landmark reports its finding index', () => {
+    const onFindingClick = vi.fn()
+    const { container } = renderViewer({ findings: LANDMARKS, onFindingClick })
+    loadNaturalSize(container, 800, 600)
+    const circles = container.querySelectorAll('[data-testid="findings-overlay"] circle')
+    fireEvent.click(circles[5])
+    expect(onFindingClick).toHaveBeenCalledWith(5)
+  })
+
+  it('legend shows the landmark set, not the box conditions', () => {
+    const { container } = renderViewer({ findings: LANDMARKS })
+    loadNaturalSize(container, 800, 600)
+    expect(screen.getByText('38 cephalometric landmarks')).toBeTruthy()
+    expect(screen.queryByText('Caries (94%)')).toBeNull()
+  })
+
+  it('filters landmarks by score with the minimum-confidence slider', () => {
+    const { container } = renderViewer({
+      findings: [
+        { landmark_id: 0, landmark_name: '0', x: 10, y: 10, score: 0.9, coordinate_space: 'cropped_original_image' },
+        { landmark_id: 1, landmark_name: '1', x: 20, y: 20, score: 0.3, coordinate_space: 'cropped_original_image' },
+      ],
+    })
+    loadNaturalSize(container, 800, 600)
+    const slider = container.querySelector('input[type="range"]')
+    fireEvent.change(slider, { target: { value: '50' } })
+    const circles = container.querySelectorAll('[data-testid="findings-overlay"] circle')
+    expect(circles).toHaveLength(1)
+    expect(circles[0].getAttribute('cx')).toBe('10')
+  })
+})
+
+describe('FindingCard — 19B result shapes', () => {
+  it('landmark card: number, the model name + point, score bar', () => {
+    render(
+      <LanguageProvider initialLocale="en-US">
+        <FindingCard
+          finding={{ landmark_id: 7, landmark_name: '7', x: 123.4, y: 456.7, score: 0.83, coordinate_space: 'cropped_original_image' }}
+          index={7}
+        />
+      </LanguageProvider>
+    )
+    expect(screen.getByText('Landmark 8')).toBeTruthy()
+    expect(screen.getByText('7 · (123, 457)')).toBeTruthy()
+    expect(screen.getByText('83%')).toBeTruthy()
+  })
+
+  it('landmark card without a score never invents one', () => {
+    render(
+      <LanguageProvider initialLocale="en-US">
+        <FindingCard
+          finding={{ landmark_id: 0, landmark_name: '0', x: 1, y: 2, score: null, coordinate_space: 'cropped_original_image' }}
+          index={0}
+        />
+      </LanguageProvider>
+    )
+    expect(screen.getByText('no confidence emitted by this model')).toBeTruthy()
+  })
+
+  it('segment card: neutral class + cell count, no confidence bar', () => {
+    render(
+      <LanguageProvider initialLocale="en-US">
+        <FindingCard finding={{ class_id: 3, class_name: 'Tooth_3', point_count: 355 }} index={0} />
+      </LanguageProvider>
+    )
+    expect(screen.getByText('Tooth_3')).toBeTruthy()
+    expect(screen.getByText('355 cells')).toBeTruthy()
+    expect(screen.getByText('no confidence emitted by this model')).toBeTruthy()
+  })
+})

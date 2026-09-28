@@ -186,22 +186,113 @@ describe('POST /api/imaging/studies — upload', () => {
 
 // ──────────────────────────── AI trigger ───────────────────────────────────
 
-describe('POST /api/imaging/studies — Liodon trigger (D10.1)', () => {
-  it('refuses AI for non-panoramic modalities with an explicit 422', async () => {
-    prisma.imagingStudy.create.mockResolvedValue({
-      id: 'study-2',
-      status: 'UPLOADED',
-      modality: 'BITEWING',
-    })
+describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine map)', () => {
+  it('routes BITEWING + analyze to implant-ai (19B D14: 2D non-panoramic radiographs)', async () => {
+    const studyRow = { id: 'study-2', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'BITEWING' }
+    prisma.imagingStudy.create.mockResolvedValue(studyRow)
+    prisma.aiAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-2' })
     prisma.auditLog.create.mockResolvedValue({})
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-2', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-2',
+      status: 'COMPLETED',
+      findings: [],
+      top_confidence: null,
+      provenance: { engine: 'implant-ai', model_version: '1.0.0', model_checksum: 'd'.repeat(64) },
+      processing_time_ms: 910,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-2/ai/implant-ai/result.json`,
+      annotated_image_key: `${HOSPITAL}/imaging/pat-1/study-2/ai/implant-ai/annotated.png`,
+    })
 
     const res = await POST(makeUploadForm({ modality: 'BITEWING', analyze: 'true' }))
     const body = await res.json()
 
+    expect(res.status).toBe(201)
+    expect(body.job.status).toBe('COMPLETED')
+
+    const jobData = prisma.aiAnalysisJob.create.mock.calls[0][0].data
+    expect(jobData.engine).toBe('implant-ai')
+
+    const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
+    expect(params.engine).toBe('implant-ai')
+    expect(params.modality).toBe('BITEWING')
+  })
+
+  it('routes CEPHALOMETRIC + analyze to orthodontic-ai (19B D14: 38 cephalometric landmarks)', async () => {
+    const studyRow = { id: 'study-5', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'CEPHALOMETRIC' }
+    prisma.imagingStudy.create.mockResolvedValue(studyRow)
+    prisma.aiAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-5' })
+    prisma.auditLog.create.mockResolvedValue({})
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-5', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-5',
+      status: 'COMPLETED',
+      findings: Array.from({ length: 38 }, (_, i) => ({
+        landmark_id: i,
+        landmark_name: String(i),
+        x: 100 + i,
+        y: 200 + i,
+        score: 0.9,
+        coordinate_space: 'cropped_original_image',
+      })),
+      top_confidence: 0.9,
+      provenance: { engine: 'orthodontic-ai', model_version: '1.0.0', model_checksum: 'e'.repeat(64) },
+      processing_time_ms: 19857,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-5/ai/orthodontic-ai/result.json`,
+      annotated_image_key: `${HOSPITAL}/imaging/pat-1/study-5/ai/orthodontic-ai/annotated.png`,
+    })
+
+    const res = await POST(makeUploadForm({ modality: 'CEPHALOMETRIC', analyze: 'true' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(201)
+    expect(body.job.status).toBe('COMPLETED')
+    expect(body.job.findings).toHaveLength(38)
+    expect(body.job.findings[0]).toMatchObject({ landmark_id: 0, landmark_name: '0' })
+
+    const jobData = prisma.aiAnalysisJob.create.mock.calls[0][0].data
+    expect(jobData.engine).toBe('orthodontic-ai')
+
+    const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
+    expect(params.engine).toBe('orthodontic-ai')
+    expect(params.modality).toBe('CEPHALOMETRIC')
+  })
+
+  it('refuses AI for modalities without an image engine (PHOTO) with an explicit 422', async () => {
+    prisma.imagingStudy.create.mockResolvedValue({
+      id: 'study-6',
+      status: 'UPLOADED',
+      modality: 'PHOTO',
+    })
+    prisma.auditLog.create.mockResolvedValue({})
+
+    const res = await POST(makeUploadForm({ modality: 'PHOTO', analyze: 'true' }))
+    const body = await res.json()
+
     expect(res.status).toBe(422)
-    expect(body.error).toContain('PANORAMIC')
+    expect(body.error).toBe('AI analysis is not supported for this modality')
+    expect(body.modality).toBe('PHOTO')
     expect(mockOrchestrator.requestOrchestratorAnalyze).not.toHaveBeenCalled()
     expect(prisma.aiAnalysisJob.create).not.toHaveBeenCalled()
+  })
+
+  it('refuses AI for 3D modalities on this image path (THREE_D_SCAN) with an explicit 422', async () => {
+    // The MeshSegNet engines need surface-mesh uploads, which this
+    // image-based upload path deliberately does not accept (19B D14).
+    prisma.imagingStudy.create.mockResolvedValue({
+      id: 'study-7',
+      status: 'UPLOADED',
+      modality: 'THREE_D_SCAN',
+    })
+    prisma.auditLog.create.mockResolvedValue({})
+
+    const res = await POST(makeUploadForm({ modality: 'THREE_D_SCAN', analyze: 'true' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(422)
+    expect(body.error).toBe('AI analysis is not supported for this modality')
+    expect(body.modality).toBe('THREE_D_SCAN')
+    expect(mockOrchestrator.requestOrchestratorAnalyze).not.toHaveBeenCalled()
   })
 
   it('creates PENDING job, audits, calls orchestrator, returns COMPLETED + findings', async () => {
