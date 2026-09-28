@@ -134,7 +134,10 @@ def load_mesh(data: bytes, fmt: str) -> tuple[np.ndarray, np.ndarray, int]:
             import tempfile
 
             import vedo
-        except Exception as exc:  # pragma: no cover - deployment-dependent
+        except BaseException as exc:  # pragma: no cover - deployment-dependent
+            # BaseException, not Exception: vedo's __init__ calls sys.exit(1)
+            # when VTK is missing, and SystemExit would otherwise escape as
+            # an unhandled 500.
             raise MeshFormatError(
                 f"format .{fmt} requires the vedo/VTK runtime (not installed): {exc}"
             ) from exc
@@ -164,7 +167,10 @@ def decimate(points: np.ndarray, faces: np.ndarray,
         return points, faces, False
     try:
         import vedo
-    except Exception as exc:  # pragma: no cover - deployment-dependent
+    except BaseException as exc:  # pragma: no cover - deployment-dependent
+        # BaseException, not Exception: vedo's __init__ calls sys.exit(1)
+        # when VTK is missing, and SystemExit would otherwise escape as
+        # an unhandled 500.
         raise MeshFormatError(
             f"decimation to {target_cells} cells requires the vedo/VTK runtime "
             f"(not installed): {exc}"
