@@ -33,9 +33,12 @@ MESHSEGNET_MAN_EXPECTED_SHA256 = "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cab
 
 # Modalities the orchestrator will accept per engine. Liodon: PANORAMIC only
 # (19A decision, D10.1). MeshSegNet: 3D surface-mesh modalities (19B, D14).
-# Stored in uppercase to match the Prisma StudyModality enum.
+# Implant AI: the 2D radiographs that are NOT panoramic (19B spec D14):
+# PERIAPICAL + BITEWING. Stored in uppercase to match the Prisma
+# StudyModality enum.
 LIODON_SUPPORTED_MODALITIES = ["PANORAMIC"]
 MESHSEGNET_SUPPORTED_MODALITIES = ["THREE_D_SCAN", "CBCT"]
+IMPLANT_SUPPORTED_MODALITIES = ["PERIAPICAL", "BITEWING"]
 
 # Neutral MeshSegNet class names — the official repository publishes NO
 # label-to-tooth-name map (provenance §3), so numeric ids are the identity
@@ -48,6 +51,26 @@ MESHSEGNET_CLASSES_NOTE = (
     "No official label-to-tooth-name mapping exists; numeric ids are "
     "the recorded identity."
 )
+
+# Expected identity of the audited implant checkpoint (MUST match
+# ai-validation/yolov8-8024/README.md + AUDIT.md fields 5-6 and the engine's
+# own registry, ai/engines/implant-ai/app/model.py).
+IMPLANT_EXPECTED_SHA256 = "e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98"
+IMPLANT_SIZE_BYTES = 143_955_443
+
+# The 8 class labels read from 8024.pt's OWN bytes (AUDIT.md field 11) — the
+# model card spells three of them differently and the file's wording is never
+# replaced (audit rule), so these are exactly what findings report.
+IMPLANT_CLASSES = {
+    0: "Caries",
+    1: "Crown",
+    2: "Filling",
+    3: "Implant",
+    4: "Missing teeth",
+    5: "Periapical lesion",
+    6: "Root Piece",
+    7: "Root canal obturation",
+}
 
 
 def _meshsegnet_entry(name: str, jaw: str, checksum: str, size: int, filename: str) -> dict:
@@ -119,6 +142,38 @@ class EngineRegistry:
                 MESHSEGNET_MAN_EXPECTED_SHA256, 28_866_886,
                 "MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip",
             ),
+            # Phase 19B engine 2 — YOLOv8 instance segmentation for
+            # periapical / bitewing radiographs (ai-validation/yolov8-8024).
+            "implant-ai": {
+                "name": "implant-ai",
+                "display_name": "Implant AI — YOLOv8-seg dental radiograph findings (8 classes)",
+                "publisher": "nsitnov",
+                "model_version": "1.0.0",
+                "model_checksum": IMPLANT_EXPECTED_SHA256,
+                "model_size_bytes": IMPLANT_SIZE_BYTES,
+                "model_source": (
+                    "https://huggingface.co/nsitnov/8024-yolov8-model"
+                    "@0304179670f4838bf0dec1053b963112a16a66cf (8024.pt)"
+                ),
+                "model_license": (
+                    "Apache-2.0 (weights as published); restricted loader: "
+                    "ultralytics 8.4.155 (AGPL-3.0) — "
+                    "ai-validation/yolov8-8024/AUDIT.md"
+                ),
+                "input_spec": "JPEG/PNG dental X-ray (periapical / bitewing)",
+                "tensor_input": [1, 3, 640, 640],
+                "tensor_output": [1, 44, 8400],
+                "classes": dict(IMPLANT_CLASSES),
+                "classes_note": (
+                    "8 labels read from the checkpoint's own bytes "
+                    "(ai-validation/yolov8-8024, AUDIT.md field 11)"
+                ),
+                "runtime": "ultralytics 8.4.155 (restricted loader) / torch (CPU)",
+                "device": "cpu",
+                "supported_modalities": list(IMPLANT_SUPPORTED_MODALITIES),
+                "model_path": "/app/models/8024.pt",
+                "result_kind": "findings",
+            },
         }
 
     def get(self, name: str) -> dict | None:

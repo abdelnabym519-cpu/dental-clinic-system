@@ -186,6 +186,71 @@ def harness(monkeypatch):
     return client, db, storage, engine, real_sha
 
 
+def _default_implant_response() -> dict:
+    """A valid Implant AI /infer response (real-model checksum, 2 findings).
+
+    The implant engine mirrors the Liodon response structure (19B spec), so
+    this is the Liodon shape over the implant's 8 audited checkpoint classes.
+    """
+    from app.registry import registry
+
+    reg = registry.get("implant-ai")
+    return {
+        "is_standin_not_implant": False,
+        "image": {"width": 1200, "height": 900, "sha256": "b" * 64},
+        "detection_count": 2,
+        "counts_by_class": {"Implant": 1, "Caries": 1},
+        "detections": [
+            {
+                "class_id": 3,
+                "class_name": "Implant",
+                "condition": "Implant",
+                "tooth_number": None,
+                "confidence": 0.71,
+                "bbox": {
+                    "format": "xyxy",
+                    "units": "pixels",
+                    "coordinate_space": "original_image",
+                    "x1": 310.0, "y1": 200.0, "x2": 480.0, "y2": 560.0,
+                    "x": 310.0, "y": 200.0, "width": 170.0, "height": 360.0,
+                },
+            },
+            {
+                "class_id": 0,
+                "class_name": "Caries",
+                "condition": "Caries",
+                "tooth_number": None,
+                "confidence": 0.44,
+                "bbox": {
+                    "format": "xyxy",
+                    "units": "pixels",
+                    "coordinate_space": "original_image",
+                    "x1": 800.0, "y1": 420.0, "x2": 915.0, "y2": 505.0,
+                    "x": 800.0, "y": 420.0, "width": 115.0, "height": 85.0,
+                },
+            },
+        ],
+        "raw_model_output": {"task": "segment", "detections_after_nms": 2},
+        "timings_ms": {"total_ms": 910},
+        "annotated_png_hex": "89504e470d0a1a0a",
+        "parameters": {"conf": 0.35, "iou": 0.35, "imgsz": 640},
+        "model": {
+            "model_name": "implant-ai",
+            "model_version": "1.0.0",
+            "model_sha256": reg["model_checksum"],
+            "model_sha256_expected": reg["model_checksum"],
+            "model_size_bytes": reg["model_size_bytes"],
+            "model_source": reg["model_source"],
+            "model_license": reg["model_license"],
+            "task": "segment",
+            "num_classes": 8,
+            "classes": {str(k): v for k, v in reg["classes"].items()},
+        },
+        "device": "cpu",
+        "runtime": {"loader": "ultralytics restricted (ULTRALYTICS_SAFE_LOAD=1)"},
+    }
+
+
 def _default_meshsegnet_response(engine_name: str = "meshsegnet-max") -> dict:
     """A valid MeshSegNet /infer response (real-model checksum, 3 segments)."""
     from app.registry import registry

@@ -73,6 +73,7 @@ services:
       # dentora-network.
       MESHSEGNET_MAX_ENGINE_URL: http://meshsegnet-max-engine:8002
       MESHSEGNET_MAN_ENGINE_URL: http://meshsegnet-man-engine:8003
+      IMPLANT_ENGINE_URL: http://implant-engine:8004
       # Internal auth shared with Next.js. Required — the orchestrator
       # refuses to start without it (no silent fallback to a default).
       ORCHESTRATOR_SECRET: ${ORCHESTRATOR_SECRET:?ORCHESTRATOR_SECRET must be set in .env}
@@ -91,6 +92,8 @@ services:
       meshsegnet-max-engine:
         condition: service_healthy
       meshsegnet-man-engine:
+        condition: service_healthy
+      implant-engine:
         condition: service_healthy
 
   liodon-engine:
@@ -164,6 +167,47 @@ services:
       timeout: 10s
       retries: 5
       start_period: 90s    # torch model loading + module import takes longer
+
+  # ---------------------------------------------------------------------
+  # Phase 19B (Engine 2) — Implant AI, YOLOv8 instance segmentation for
+  # periapical / bitewing dental radiographs (8 classes).
+  #
+  # Same provenance contract as the other engines: the audited checkpoint
+  # 8024.pt is NOT baked into the image and NOT committed to git. It is
+  # mounted read-only from ai-validation/yolov8-8024/model/ and verified at
+  # startup against the audited SHA-256 (ai-validation/yolov8-8024/AUDIT.md,
+  # 16 fields); on any mismatch the container refuses to start. The file is
+  # loaded ONLY through ultralytics 8.4.155's restricted loader
+  # (ULTRALYTICS_SAFE_LOAD=1) — see AUDIT.md fields 13-14.
+  # ---------------------------------------------------------------------
+  implant-engine:
+    build:
+      context: ./ai/engines/implant-ai
+      dockerfile: Dockerfile
+    container_name: dentora-implant-engine
+    restart: unless-stopped
+    ports:
+      - '8004:8004'
+    environment:
+      MODEL_PATH: /app/models/8024.pt
+      DEVICE: cpu
+      # The engine sets this itself before importing ultralytics; declared
+      # here so the intent is visible in `docker compose config`.
+      ULTRALYTICS_SAFE_LOAD: '1'
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # The audited artifact, exactly as verified in the validation lab:
+    #   ai-validation/yolov8-8024/model/8024.pt
+    #   SHA-256 e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98
+    volumes:
+      - ./ai-validation/yolov8-8024/model:/app/models:ro
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8004/health", timeout=3).status == 200 else 1)']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s    # torch + ultralytics import + restricted checkpoint load
 
   meshsegnet-man-engine:
     build:

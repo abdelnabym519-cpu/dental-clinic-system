@@ -62,9 +62,9 @@ def test_health(harness):
     assert r.status_code == 200
     body = r.json()
     assert body["orchestrator_version"] == "19B.0.0"
-    assert body["engines"] == ["liodon", "meshsegnet-man", "meshsegnet-max"]
+    assert body["engines"] == ["implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max"]
     # Phase 19B: per-engine reachability block + back-compatible liodon key
-    assert set(body["engines_health"]) == {"liodon", "meshsegnet-man", "meshsegnet-max"}
+    assert set(body["engines_health"]) == {"implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max"}
     assert body["liodon_engine"] == body["engines_health"]["liodon"]
 
 
@@ -88,6 +88,13 @@ def test_engines_lists_registry(harness):
                              enumerate(["Gingiva"] + [f"Tooth_{i}" for i in range(1, 15)])}
     mn = next(e for e in engines if e["name"] == "meshsegnet-man")
     assert mn["model_checksum"] == "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf"
+    # Phase 19B engine 2: Implant AI pinned to the audited checkpoint.
+    im = next(e for e in engines if e["name"] == "implant-ai")
+    assert im["model_checksum"] == "e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98"
+    assert im["supported_modalities"] == ["BITEWING", "PERIAPICAL"] or im["supported_modalities"] == ["PERIAPICAL", "BITEWING"]
+    assert im["result_kind"] == "findings"
+    assert im["classes"]["3"] == "Implant"
+    assert im["classes"]["7"] == "Root canal obturation"
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +358,32 @@ def _mesh_harness(monkeypatch, engine_name="meshsegnet-max", response=None):
     return TestClient(main.app), db, storage, clients, real_sha
 
 
+def _implant_harness(monkeypatch, response=None):
+    """Harness for the Implant AI engine: IMAGE object key + image bytes
+    (the 19A image contract), per-engine fake clients."""
+    import hashlib
+
+    from tests.conftest import (
+        FakeEngine, FakeJobStore, FakeStorage,
+        IMAGE_KEY, _default_implant_response,
+    )
+
+    img_bytes = b"periapical-xray-bytes-" + b"0" * 32
+    real_sha = hashlib.sha256(img_bytes).hexdigest()
+
+    db = FakeJobStore()
+    storage = FakeStorage(img_bytes, key=IMAGE_KEY)
+    resp = response if response is not None else _default_implant_response()
+    clients = {name: FakeEngine(response=resp) for name in main.ENGINE_URLS}
+
+    monkeypatch.setattr(main, "_state", {
+        "db": db, "storage": storage, "engine_http": None,
+        "engine_clients": clients,
+    })
+    from fastapi.testclient import TestClient
+    return TestClient(main.app), db, storage, clients, real_sha
+
+
 def _mesh_payload(real_sha: str, **over) -> dict:
     base = {
         "job_id": JOB,
@@ -509,4 +542,139 @@ def test_meshsegnet_cell_cap_enforced(monkeypatch):
     client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
     r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
     assert r.status_code == 502
+    _assert_failed(db)
+
+
+# ---------------------------------------------------------------------------
+# Phase 19B engine 2 — Implant AI routing + validation (D8 gate)
+# ---------------------------------------------------------------------------
+
+IMPLANT_CHECKSUM = "e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98"
+
+
+def _implant_payload(real_sha: str, **over) -> dict:
+    base = {
+        "job_id": JOB,
+        "study_id": STUDY,
+        "hospital_id": HOSPITAL,
+        "image_key": IMAGE_KEY,
+        "image_sha256": real_sha,
+        "engine": "implant-ai",
+        "modality": "PERIAPICAL",
+        "requested_by": "user-1",
+    }
+    base.update(over)
+    return base
+
+
+def test_implant_routing_success(monkeypatch):
+    from tests.conftest import _default_implant_response
+
+    client, db, storage, clients, real_sha = _implant_harness(
+        monkeypatch, response=_default_implant_response()
+    )
+    r = client.post("/analyze", json=_implant_payload(real_sha), headers=H)
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    assert body["status"] == "COMPLETED"
+    assert len(body["findings"]) == 2
+    f0 = body["findings"][0]
+    assert f0["condition"] == "Implant"
+    assert f0["tooth_number"] is None
+    assert f0["bounding_box"]["x"] == 310.0
+    assert f0["bounding_box"]["coordinate_space"] == "original_image"
+    assert body["top_confidence"] == pytest.approx(0.71)
+
+    p = body["provenance"]
+    assert p["engine"] == "implant-ai"
+    assert p["model_checksum"] == IMPLANT_CHECKSUM
+    assert p["image_width"] == 1200
+    assert p["image_height"] == 900
+
+    assert db.jobs[JOB]["status"] == "COMPLETED"
+    assert db.jobs[JOB]["modelChecksum"] == IMPLANT_CHECKSUM
+    assert db.studies[STUDY]["status"] == "ANALYZED"
+
+    # storage: result.json + annotated.png under the implant engine key
+    keys = [k for k, _ in storage.puts]
+    assert keys == [
+        f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/implant-ai/result.json",
+        f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/implant-ai/annotated.png",
+    ]
+
+    # the dialed engine got IMAGE bytes (not mesh) — the 19A image contract
+    call = clients["implant-ai"].calls
+    assert len(call) == 1
+    sent = call[0]["json"]
+    assert "mesh" not in sent
+    assert base64.b64decode(sent["image"]) == storage.image_bytes
+    assert sent["annotate"] is True
+    assert clients["liodon"].calls == []
+    assert clients["meshsegnet-max"].calls == []
+    assert clients["meshsegnet-man"].calls == []
+
+
+def test_implant_bitewing_accepted(monkeypatch):
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch)
+    r = client.post("/analyze", json=_implant_payload(real_sha, modality="BITEWING"), headers=H)
+    assert r.status_code == 200, r.text
+
+
+def test_implant_rejects_panormic(monkeypatch):
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch)
+    r = client.post("/analyze", json=_implant_payload(real_sha, modality="PANORAMIC"), headers=H)
+    assert r.status_code == 422
+    assert "does not support modality" in r.json()["detail"]
+    assert clients["implant-ai"].calls == []
+
+
+def test_liodon_rejects_periapical(monkeypatch):
+    """19A rule stays intact: PERIAPICAL is implant territory, not Liodon's."""
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch)
+    r = client.post("/analyze", json=_implant_payload(real_sha, engine="liodon", modality="PERIAPICAL"), headers=H)
+    assert r.status_code == 422
+    assert clients["liodon"].calls == []
+
+
+def test_implant_standin_results_never_stored(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_implant_response
+
+    resp = copy.deepcopy(_default_implant_response())
+    resp["is_standin_not_implant"] = True
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_implant_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "stand-in" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_implant_checksum_mismatch_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_implant_response
+
+    resp = copy.deepcopy(_default_implant_response())
+    resp["model"]["model_sha256"] = "f" * 64
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_implant_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "checksum mismatch" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_implant_unknown_class_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_implant_response
+
+    resp = copy.deepcopy(_default_implant_response())
+    resp["detections"][0]["condition"] = "implanted_tooth"
+    resp["detections"][0]["class_name"] = "implanted_tooth"
+    client, db, storage, clients, real_sha = _implant_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_implant_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "unknown class" in r.json()["detail"]
     _assert_failed(db)

@@ -1,0 +1,18 @@
+# Implant AI engine — Phase 19B (engine 2 of 3).
+# Pinned exactly as audited (ai-validation/yolov8-8024/AUDIT.md):
+#   - ultralytics 8.4.155 ships the restricted loader (ULTRALYTICS_SAFE_LOAD)
+#     whose behaviour was read out of this exact wheel (AUDIT.md field 14)
+#   - torch >= 2.6 is REQUIRED for the restricted loader to be active;
+#     on older torch the flag is silently ignored (the engine refuses to start)
+#   - 8.4.155 is a 2026-lineage release: it bundles yolo11/12/26 model yamls
+#     (no v8 yamls), which is why the sandbox stand-in is built from
+#     yolo11n-seg.yaml — the audited 8024.pt itself is YOLOv8 architecture,
+#     loaded through the same restricted path.
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+numpy==1.26.4
+torch==2.6.0
+torchvision==0.21.0
+ultralytics==8.4.155
+Pillow==11.3.0
+pydantic==2.11.7

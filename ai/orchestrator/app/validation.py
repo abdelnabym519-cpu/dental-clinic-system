@@ -227,3 +227,97 @@ def validate_meshsegnet_response(body: dict, expected_checksum: str | None = Non
         "raw_model_output": {"labels": labels, "probabilities_shape": body.get("probabilities_shape")},
         "processing_time_ms": processing,
     }
+
+
+def validate_implant_response(body: dict, expected_checksum: str | None = None) -> dict:
+    """Validate the Implant AI /infer response (Phase 19B, D8).
+
+    The engine mirrors the Liodon contract (19B spec: "output mirrors Liodon
+    structure"), so this validator is the Liodon validator's twin over the
+    implant's 8 audited checkpoint classes. Same trust model: checksum must
+    match the registry, a stand-in (synthetic) result is always refused,
+    unknown classes never become findings.
+    """
+    if not isinstance(body, dict):
+        raise ValidationResultError("engine response is not an object")
+
+    if body.get("is_standin_not_implant"):
+        raise ValidationResultError(
+            "engine returned stand-in (synthetic) results — refusing to store"
+        )
+
+    model = body.get("model") or {}
+    reported_checksum = (model.get("model_sha256") or "").lower()
+    if expected_checksum and reported_checksum != expected_checksum.lower():
+        raise ValidationResultError(
+            f"engine model checksum mismatch: reported {reported_checksum!r}, "
+            f"registry expects {expected_checksum.lower()!r}"
+        )
+    if not model.get("model_version"):
+        raise ValidationResultError("engine response missing model version")
+
+    engine = registry.get("implant-ai")
+    known_classes = set(engine["classes"].values())
+
+    dets = body.get("detections")
+    if not isinstance(dets, list):
+        raise ValidationResultError("detections missing or not a list")
+
+    findings = []
+    for i, d in enumerate(dets):
+        if not isinstance(d, dict):
+            raise ValidationResultError(f"detection[{i}] is not an object")
+        condition = d.get("condition") or d.get("class_name")
+        if condition not in known_classes:
+            raise ValidationResultError(
+                f"detection[{i}] has unknown class {condition!r} (known: {sorted(known_classes)})"
+            )
+        confidence = _finite(d.get("confidence"), f"detections[{i}].confidence")
+        if not 0.0 <= confidence <= 1.0:
+            raise ValidationResultError(f"detections[{i}].confidence out of range: {confidence}")
+
+        bbox = d.get("bbox") or {}
+        x = _finite(bbox.get("x", bbox.get("x1")), f"detections[{i}].bbox.x")
+        y = _finite(bbox.get("y", bbox.get("y1")), f"detections[{i}].bbox.y")
+        w = _finite(bbox.get("width"), f"detections[{i}].bbox.width")
+        h = _finite(bbox.get("height"), f"detections[{i}].bbox.height")
+        x2 = _finite(bbox.get("x2"), f"detections[{i}].bbox.x2")
+        y2 = _finite(bbox.get("y2"), f"detections[{i}].bbox.y2")
+        if w < 0 or h < 0:
+            raise ValidationResultError(f"detections[{i}].bbox has negative size")
+        if x2 < x or y2 < y:
+            raise ValidationResultError(f"detections[{i}].bbox x2/y2 before x1/y1")
+
+        findings.append({
+            "condition": condition,
+            "tooth_number": d.get("tooth_number"),  # always None — no tooth numbering
+            "confidence": round(confidence, 6),
+            "bounding_box": {
+                "x": x,
+                "y": y,
+                "width": w,
+                "height": h,
+                "x2": x2,
+                "y2": y2,
+                "coordinate_space": bbox.get("coordinate_space", "original_image"),
+                "units": bbox.get("units", "pixels"),
+            },
+        })
+
+    timings = body.get("timings_ms") or {}
+    processing = _finite(timings.get("total_ms", 0), "timings_ms.total_ms")
+    if processing < 0:
+        raise ValidationResultError("negative processing time")
+
+    image = body.get("image") or {}
+    return {
+        "findings": findings,
+        "top_confidence": max((f["confidence"] for f in findings), default=None),
+        "image": {
+            "width": image.get("width"),
+            "height": image.get("height"),
+            "sha256": image.get("sha256"),
+        },
+        "raw_model_output": body.get("raw_model_output"),
+        "processing_time_ms": processing,
+    }
