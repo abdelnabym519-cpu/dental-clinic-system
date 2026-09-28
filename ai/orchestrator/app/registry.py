@@ -28,7 +28,7 @@ LIODON_EXPECTED_SHA256 = "4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d
 # ai-validation/meshsegnet/MODEL_PROVENANCE.md §2 and
 # scripts/verify_artifacts.py::EXPECTED (values taken from the official
 # Tai-Hsien/MeshSegNet repository itself).
-MESHSEGNET_MAX_EXPECTED_SHA256 = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+MESHSEGNET_MAX_EXPECTED_SHA256 = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2"
 MESHSEGNET_MAN_EXPECTED_SHA256 = "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf"
 
 # Modalities the orchestrator will accept per engine. Liodon: PANORAMIC only

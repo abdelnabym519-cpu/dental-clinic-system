@@ -19,7 +19,7 @@ from app import main as main_mod
 from app import model as model_mod
 from app import pipeline as pipe
 
-PINNED_SHA256 = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+PINNED_SHA256 = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2"
 PINNED_SIZE = 28_860_102
 
 

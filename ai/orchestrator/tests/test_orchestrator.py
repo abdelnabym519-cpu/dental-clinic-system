@@ -85,7 +85,7 @@ def test_engines_lists_registry(harness):
     assert liodon["result_kind"] == "findings"
     # Phase 19B: both MeshSegNet jaws registered with their pinned artifacts.
     mx = next(e for e in engines if e["name"] == "meshsegnet-max")
-    assert mx["model_checksum"] == "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+    assert mx["model_checksum"] == "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2"
     assert mx["supported_modalities"] == ["THREE_D_SCAN", "CBCT"]
     assert mx["result_kind"] == "segments"
     assert mx["classes"] == {str(i): n for i, n in
@@ -339,7 +339,7 @@ def test_put_png_decodes_hex_not_base64(monkeypatch):
 # Phase 19B — MeshSegNet routing + validation (D4 gate)
 # ---------------------------------------------------------------------------
 
-MESH_CHECKSUM_MAX = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+MESH_CHECKSUM_MAX = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2"
 MESH_CHECKSUM_MAN = "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf"
 
 

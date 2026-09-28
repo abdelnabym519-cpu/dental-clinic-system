@@ -159,7 +159,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
     # The validated artifact, exactly as verified in the validation lab:
     #   ai-validation/meshsegnet/model/MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip
-    #   SHA-256 727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d
+    #   SHA-256 727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2
     volumes:
       - ./ai-validation/meshsegnet/model:/app/models:ro
     networks:

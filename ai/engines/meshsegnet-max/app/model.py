@@ -76,7 +76,7 @@ MESHSEGNET = {
     "device": "cpu",
     "jaw": "maxilla (upper)",
     "filename": "MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip",
-    "expected_sha256": "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d",
+    "expected_sha256": "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2",
     "expected_size_bytes": 28_860_102,
     "num_classes": 15,
     # Neutral class names — the official repository publishes no
