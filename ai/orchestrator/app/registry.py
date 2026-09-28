@@ -39,6 +39,23 @@ MESHSEGNET_MAN_EXPECTED_SHA256 = "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cab
 LIODON_SUPPORTED_MODALITIES = ["PANORAMIC"]
 MESHSEGNET_SUPPORTED_MODALITIES = ["THREE_D_SCAN", "CBCT"]
 IMPLANT_SUPPORTED_MODALITIES = ["PERIAPICAL", "BITEWING"]
+# Orthodontic AI: lateral cephalograms only (19B spec D14) — the StudyModality
+# CEPHALOMETRIC value is added to the Prisma schema by an additive migration.
+ORTHODONTIC_SUPPORTED_MODALITIES = ["CEPHALOMETRIC"]
+ORTHODONTIC_NUM_LANDMARKS = 38
+
+# Orthodontic AI: the 38 cephalometric landmark ids. The repository's own
+# metainfo names the keypoints "0".."37" (numeric placeholders) and no
+# official anatomical label map is published, so the model's own vocabulary
+# is what is reported — never invented clinical names (same provenance rule
+# as MeshSegNet's neutral names).
+ORTHODONTIC_LANDMARKS = {i: str(i) for i in range(ORTHODONTIC_NUM_LANDMARKS)}
+ORTHODONTIC_LANDMARKS_NOTE = (
+    "38 cephalometric landmarks; the repository's metainfo names them "
+    "\"0\"..\"37\" and no official anatomical label map is published, so the "
+    "model's own vocabulary is reported (numeric ids are the recorded "
+    "identity)."
+)
 
 # Neutral MeshSegNet class names — the official repository publishes NO
 # label-to-tooth-name map (provenance §3), so numeric ids are the identity
@@ -57,6 +74,12 @@ MESHSEGNET_CLASSES_NOTE = (
 # own registry, ai/engines/implant-ai/app/model.py).
 IMPLANT_EXPECTED_SHA256 = "e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98"
 IMPLANT_SIZE_BYTES = 143_955_443
+
+# Expected identity of the audited CLDetection2023 checkpoint (MUST match
+# ai-validation/cldetection2023/AUDIT.md fields 5-6 and the engine's own
+# registry, ai/engines/orthodontic-ai/app/model.py).
+ORTHODONTIC_EXPECTED_SHA256 = "fb1a781ac1c83149b379cb15724e3b0fae06ba2d567978f35c61e9d06b46fdcc"
+ORTHODONTIC_SIZE_BYTES = 268_846_952
 
 # The 8 class labels read from 8024.pt's OWN bytes (AUDIT.md field 11) — the
 # model card spells three of them differently and the file's wording is never
@@ -173,6 +196,39 @@ class EngineRegistry:
                 "supported_modalities": list(IMPLANT_SUPPORTED_MODALITIES),
                 "model_path": "/app/models/8024.pt",
                 "result_kind": "findings",
+            },
+            # Phase 19B engine 3 — 38 cephalometric landmarks on lateral
+            # cephalograms (ai-validation/cldetection2023). The input is not
+            # fixed-size (the whole radiograph is fed whole-image, exactly
+            # like the repository's own validation loop), so there is no
+            # tensor_input/tensor_output to pin — the audited input identity
+            # is the SHA-256-verified image bytes, as for all image engines.
+            "orthodontic-ai": {
+                "name": "orthodontic-ai",
+                "display_name": "Orthodontic AI — 38 cephalometric landmarks (CLDetection2023)",
+                "publisher": "Team SUTD-VLG (MICCAI CLDetection2023 winning solution)",
+                "model_version": "1.0.0",
+                "model_checksum": ORTHODONTIC_EXPECTED_SHA256,
+                "model_size_bytes": ORTHODONTIC_SIZE_BYTES,
+                "model_source": (
+                    "https://github.com/5k5000/CLdetection2023"
+                    "@18d17d1934970016e7610c4849311900b8d1f191 "
+                    "(model/model_pretrained_on_train_and_val.pth)"
+                ),
+                "model_license": (
+                    "Apache-2.0 (repository); restricted loader: bounded "
+                    "safe-globals allow-list + strict weights_only torch.load "
+                    "— ai-validation/cldetection2023/AUDIT.md §7"
+                ),
+                "input_spec": "JPEG/PNG lateral cephalometric X-ray",
+                "classes": dict(ORTHODONTIC_LANDMARKS),
+                "classes_note": ORTHODONTIC_LANDMARKS_NOTE,
+                "num_landmarks": ORTHODONTIC_NUM_LANDMARKS,
+                "runtime": "mmpose 1.0.0 fork / mmcv-lite 2.1.0 / mmengine 0.10.7 / torch (CPU)",
+                "device": "cpu",
+                "supported_modalities": list(ORTHODONTIC_SUPPORTED_MODALITIES),
+                "model_path": "/app/models/model_pretrained_on_train_and_val.pth",
+                "result_kind": "landmarks",
             },
         }
 

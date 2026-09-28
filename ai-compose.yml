@@ -74,6 +74,7 @@ services:
       MESHSEGNET_MAX_ENGINE_URL: http://meshsegnet-max-engine:8002
       MESHSEGNET_MAN_ENGINE_URL: http://meshsegnet-man-engine:8003
       IMPLANT_ENGINE_URL: http://implant-engine:8004
+      ORTHODONTIC_ENGINE_URL: http://orthodontic-engine:8005
       # Internal auth shared with Next.js. Required — the orchestrator
       # refuses to start without it (no silent fallback to a default).
       ORCHESTRATOR_SECRET: ${ORCHESTRATOR_SECRET:?ORCHESTRATOR_SECRET must be set in .env}
@@ -94,6 +95,8 @@ services:
       meshsegnet-man-engine:
         condition: service_healthy
       implant-engine:
+        condition: service_healthy
+      orthodontic-engine:
         condition: service_healthy
 
   liodon-engine:
@@ -233,6 +236,39 @@ services:
       timeout: 10s
       retries: 5
       start_period: 90s
+
+  orthodontic-engine:
+    build:
+      context: ./ai/engines/orthodontic-ai
+      dockerfile: Dockerfile
+    container_name: dentora-orthodontic-engine
+    restart: unless-stopped
+    ports:
+      - '8005:8005'
+    environment:
+      MODEL_PATH: /app/models/model_pretrained_on_train_and_val.pth
+      # The audited repository (vendored mmpose fork + config + ceph
+      # metainfo) is baked into the image at /opt/cld2023 by the Dockerfile
+      # (pinned revision, checksum-gated). Declared so the intent is visible.
+      REPO_PATH: /opt/cld2023
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # The audited artifact, exactly as verified in the validation lab:
+    #   ai-validation/cldetection2023/model/model_pretrained_on_train_and_val.pth
+    #   SHA-256 fb1a781ac1c83149b379cb15724e3b0fae06ba2d567978f35c61e9d06b46fdcc
+    #   268,846,952 bytes — the engine re-verifies both on every start and
+    #   refuses to load on any mismatch (ai-validation/cldetection2023/AUDIT.md).
+    volumes:
+      - ./ai-validation/cldetection2023/model:/app/models:ro
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8005/health", timeout=3).status == 200 else 1)']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      # mmpose/mmcv import + strict-guard checkpoint load + the audited
+      # ~20 s inference budget per request is well inside this window.
+      start_period: 180s
 
 networks:
   dentora-network:

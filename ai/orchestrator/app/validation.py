@@ -321,3 +321,131 @@ def validate_implant_response(body: dict, expected_checksum: str | None = None) 
         "raw_model_output": body.get("raw_model_output"),
         "processing_time_ms": processing,
     }
+
+
+def validate_orthodontic_response(body: dict, expected_checksum: str | None = None) -> dict:
+    """Validate the Orthodontic AI /infer response (Phase 19B, engine 3 of 3).
+
+    The result is a fixed set of 38 cephalometric landmarks, not detections,
+    so this is a new result shape (result_kind "landmarks"). Same trust model
+    as the others: a stand-in (synthetic) result is always refused, the
+    engine-reported model checksum must match the registry, and every
+    landmark must be structurally sound (finite coordinates, the model's own
+    neutral name, 0..1 score when present).
+
+    Coordinates live in the CROPPED original image's pixel space — the
+    repository's own zero-padding crop is applied before inference and the
+    challenge ground truth uses the same crop, so the engine reports both
+    the original and cropped dimensions. The orchestrator preserves both so
+    a viewer can place the dots without guessing the space.
+    """
+    if not isinstance(body, dict):
+        raise ValidationResultError("engine response is not an object")
+
+    if body.get("is_standin_not_orthodontic"):
+        raise ValidationResultError(
+            "engine returned stand-in (synthetic) results — refusing to store"
+        )
+
+    model = body.get("model") or {}
+    reported_checksum = (model.get("model_sha256") or "").lower()
+    if expected_checksum and reported_checksum != expected_checksum.lower():
+        raise ValidationResultError(
+            f"engine model checksum mismatch: reported {reported_checksum!r}, "
+            f"registry expects {expected_checksum.lower()!r}"
+        )
+    if not model.get("model_version"):
+        raise ValidationResultError("engine response missing model version")
+
+    engine = registry.get("orthodontic-ai")
+    expected_count = engine["num_landmarks"]
+    known_names = set(engine["classes"].values())
+
+    # Architecture identity: a different head/dataset would silently relabel
+    # the 38 points, so the raw model output must name the audited model.
+    raw = body.get("raw_model_output") or {}
+    if raw.get("estimator") != "TopdownPoseEstimator":
+        raise ValidationResultError(
+            f"raw_model_output.estimator is {raw.get('estimator')!r}, not TopdownPoseEstimator"
+        )
+    if raw.get("num_joints") != expected_count:
+        raise ValidationResultError(
+            f"raw_model_output.num_joints is {raw.get('num_joints')!r}, expected {expected_count}"
+        )
+
+    pts = body.get("landmarks")
+    if not isinstance(pts, list) or len(pts) != expected_count:
+        raise ValidationResultError(
+            f"landmarks missing or wrong count: expected {expected_count}, "
+            f"got {len(pts) if isinstance(pts, list) else type(pts).__name__}"
+        )
+    if body.get("landmark_count") != expected_count:
+        raise ValidationResultError(
+            f"landmark_count {body.get('landmark_count')!r} != {expected_count}"
+        )
+
+    seen_ids: set[int] = set()
+    landmarks = []
+    for i, p in enumerate(pts):
+        if not isinstance(p, dict):
+            raise ValidationResultError(f"landmarks[{i}] is not an object")
+        lid = p.get("id")
+        if not isinstance(lid, int) or isinstance(lid, bool) or not (0 <= lid < expected_count):
+            raise ValidationResultError(f"landmarks[{i}].id out of range: {lid!r}")
+        if lid in seen_ids:
+            raise ValidationResultError(f"landmarks[{i}].id duplicate: {lid}")
+        seen_ids.add(lid)
+
+        name = p.get("name")
+        if name not in known_names:
+            raise ValidationResultError(
+                f"landmarks[{i}].name {name!r} is not a registered landmark name"
+            )
+
+        x = _finite(p.get("x"), f"landmarks[{i}].x")
+        y = _finite(p.get("y"), f"landmarks[{i}].y")
+
+        score_raw = p.get("score")
+        if score_raw is None:
+            score = None
+        else:
+            score = _finite(score_raw, f"landmarks[{i}].score")
+            if not 0.0 <= score <= 1.0:
+                raise ValidationResultError(f"landmarks[{i}].score out of range: {score}")
+
+        landmarks.append({
+            "landmark_id": lid,
+            "landmark_name": name,
+            "x": x,
+            "y": y,
+            "score": round(score, 6) if score is not None else None,
+            "coordinate_space": "cropped_original_image",
+        })
+
+    timings = body.get("timings_ms") or {}
+    processing = _finite(timings.get("total_ms", 0), "timings_ms.total_ms")
+    if processing < 0:
+        raise ValidationResultError("negative processing time")
+
+    image = body.get("image") or {}
+    crop = body.get("image_after_padding_crop") or {}
+
+    scores = [lm["score"] for lm in landmarks if lm["score"] is not None]
+    return {
+        # "findings" carries the landmarks so the existing job store /
+        # provenance / viewer plumbing is reused unchanged.
+        "findings": landmarks,
+        "top_confidence": max(scores) if scores else None,
+        "image": {
+            "width": image.get("width"),
+            "height": image.get("height"),
+            "sha256": image.get("sha256"),
+        },
+        "image_after_padding_crop": {
+            "width": crop.get("width"),
+            "height": crop.get("height"),
+            "coordinate_space": crop.get("coordinate_space", "cropped_original_image"),
+        },
+        "raw_model_output": raw,
+        "processing_time_ms": processing,
+    }

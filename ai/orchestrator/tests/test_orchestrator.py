@@ -62,9 +62,13 @@ def test_health(harness):
     assert r.status_code == 200
     body = r.json()
     assert body["orchestrator_version"] == "19B.0.0"
-    assert body["engines"] == ["implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max"]
+    assert body["engines"] == [
+        "implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max", "orthodontic-ai",
+    ]
     # Phase 19B: per-engine reachability block + back-compatible liodon key
-    assert set(body["engines_health"]) == {"implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max"}
+    assert set(body["engines_health"]) == {
+        "implant-ai", "liodon", "meshsegnet-man", "meshsegnet-max", "orthodontic-ai",
+    }
     assert body["liodon_engine"] == body["engines_health"]["liodon"]
 
 
@@ -95,6 +99,13 @@ def test_engines_lists_registry(harness):
     assert im["result_kind"] == "findings"
     assert im["classes"]["3"] == "Implant"
     assert im["classes"]["7"] == "Root canal obturation"
+    # Phase 19B engine 3: Orthodontic AI pinned to the audited checkpoint,
+    # the 38 neutral landmark names, cephalometric modality only.
+    oa = next(e for e in engines if e["name"] == "orthodontic-ai")
+    assert oa["model_checksum"] == ORTHODONTIC_CHECKSUM
+    assert oa["supported_modalities"] == ["CEPHALOMETRIC"]
+    assert oa["result_kind"] == "landmarks"
+    assert oa["classes"] == {str(i): str(i) for i in range(38)}
 
 
 # ---------------------------------------------------------------------------
@@ -678,3 +689,252 @@ def test_implant_unknown_class_fails_job(monkeypatch):
     assert r.status_code == 502
     assert "unknown class" in r.json()["detail"]
     _assert_failed(db)
+
+
+# ---------------------------------------------------------------------------
+# Phase 19B engine 3 — Orthodontic AI routing + validation (8005)
+# ---------------------------------------------------------------------------
+
+ORTHODONTIC_CHECKSUM = "fb1a781ac1c83149b379cb15724e3b0fae06ba2d567978f35c61e9d06b46fdcc"
+
+
+def _ortho_harness(monkeypatch, response=None):
+    """Harness for the Orthodontic AI engine: IMAGE object key + image bytes
+    (the 19A image contract), per-engine fake clients."""
+    import hashlib
+
+    from tests.conftest import (
+        FakeEngine, FakeJobStore, FakeStorage,
+        IMAGE_KEY, _default_orthodontic_response,
+    )
+
+    img_bytes = b"cephalogram-xray-bytes-" + b"0" * 32
+    real_sha = hashlib.sha256(img_bytes).hexdigest()
+
+    db = FakeJobStore()
+    storage = FakeStorage(img_bytes, key=IMAGE_KEY)
+    resp = response if response is not None else _default_orthodontic_response()
+    clients = {name: FakeEngine(response=resp) for name in main.ENGINE_URLS}
+
+    monkeypatch.setattr(main, "_state", {
+        "db": db, "storage": storage, "engine_http": None,
+        "engine_clients": clients,
+    })
+    from fastapi.testclient import TestClient
+    return TestClient(main.app), db, storage, clients, real_sha
+
+
+def _ortho_payload(real_sha: str, **over) -> dict:
+    base = {
+        "job_id": JOB,
+        "study_id": STUDY,
+        "hospital_id": HOSPITAL,
+        "image_key": IMAGE_KEY,
+        "image_sha256": real_sha,
+        "engine": "orthodontic-ai",
+        "modality": "CEPHALOMETRIC",
+        "requested_by": "user-1",
+    }
+    base.update(over)
+    return base
+
+
+def test_registry_contains_orthodontic_entry(harness):
+    from app.registry import registry
+
+    reg = registry.get("orthodontic-ai")
+    assert reg is not None
+    assert reg["model_checksum"] == ORTHODONTIC_CHECKSUM
+    assert reg["model_size_bytes"] == 268_846_952
+    assert reg["num_landmarks"] == 38
+    assert reg["classes"] == {i: str(i) for i in range(38)}
+    assert reg["supported_modalities"] == ["CEPHALOMETRIC"]
+    assert reg["result_kind"] == "landmarks"
+    assert reg["model_path"] == "/app/models/model_pretrained_on_train_and_val.pth"
+    assert "18d17d1934970016e7610c4849311900b8d1f191" in reg["model_source"]
+    assert "Apache-2.0" in reg["model_license"]
+
+
+def test_orthodontic_routing_success(monkeypatch):
+    import base64
+
+    from tests.conftest import _default_orthodontic_response
+
+    client, db, storage, clients, real_sha = _ortho_harness(
+        monkeypatch, response=_default_orthodontic_response()
+    )
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    assert body["status"] == "COMPLETED"
+    assert len(body["findings"]) == 38
+    f0 = body["findings"][0]
+    assert f0["landmark_id"] == 0
+    assert f0["landmark_name"] == "0"  # the model's own neutral vocabulary
+    assert f0["coordinate_space"] == "cropped_original_image"
+    ids = [f["landmark_id"] for f in body["findings"]]
+    assert ids == list(range(38))
+    assert body["top_confidence"] == pytest.approx(0.9)
+
+    p = body["provenance"]
+    assert p["engine"] == "orthodontic-ai"
+    assert p["model_checksum"] == ORTHODONTIC_CHECKSUM
+    assert p["image_width"] == 2400
+    assert p["image_height"] == 2880
+
+    assert db.jobs[JOB]["status"] == "COMPLETED"
+    assert db.jobs[JOB]["modelChecksum"] == ORTHODONTIC_CHECKSUM
+    assert db.studies[STUDY]["status"] == "ANALYZED"
+
+    # storage: result.json + annotated.png under the orthodontic engine key
+    keys = [k for k, _ in storage.puts]
+    assert keys == [
+        f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/orthodontic-ai/result.json",
+        f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/orthodontic-ai/annotated.png",
+    ]
+
+    # the dialed engine got IMAGE bytes (not mesh) — the 19A image contract
+    call = clients["orthodontic-ai"].calls
+    assert len(call) == 1
+    sent = call[0]["json"]
+    assert "mesh" not in sent
+    assert base64.b64decode(sent["image"]) == storage.image_bytes
+    assert sent["annotate"] is True
+    assert clients["liodon"].calls == []
+    assert clients["implant-ai"].calls == []
+    assert clients["meshsegnet-max"].calls == []
+    assert clients["meshsegnet-man"].calls == []
+
+
+def test_orthodontic_rejects_panoramic(monkeypatch):
+    """CEPHALOMETRIC is orthodontic territory; PANORAMIC stays Liodon's."""
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch)
+    r = client.post("/analyze", json=_ortho_payload(real_sha, modality="PANORAMIC"), headers=H)
+    assert r.status_code == 422
+    assert "does not support modality" in r.json()["detail"]
+    assert clients["orthodontic-ai"].calls == []
+
+
+def test_liodon_rejects_cephalometric(monkeypatch):
+    """19A rule stays intact in reverse: Liodon never takes cephalograms."""
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch)
+    r = client.post(
+        "/analyze", json=_ortho_payload(real_sha, engine="liodon", modality="CEPHALOMETRIC"),
+        headers=H,
+    )
+    assert r.status_code == 422
+    assert clients["liodon"].calls == []
+
+
+def test_orthodontic_standin_results_never_stored(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    resp["is_standin_not_orthodontic"] = True
+    resp["model"]["is_standin_not_orthodontic"] = True
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "stand-in" in r.json()["detail"]
+    _assert_failed(db)
+    assert storage.puts == []  # nothing persisted
+
+
+def test_orthodontic_checksum_mismatch_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    resp["model"]["model_sha256"] = "0" * 64
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "checksum mismatch" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_orthodontic_wrong_landmark_count_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    resp["landmarks"] = resp["landmarks"][:37]
+    resp["landmark_count"] = 37
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "wrong count" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_orthodontic_unknown_landmark_name_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    # an anatomical name that the model never emits — never invented upstream
+    resp["landmarks"][0]["name"] = "Sella"
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "not a registered landmark name" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_orthodontic_nonfinite_coordinate_fails_job(monkeypatch):
+    import copy
+    import math
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    resp["landmarks"][5]["x"] = math.nan
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "not finite" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_orthodontic_raw_model_output_mismatch_fails_job(monkeypatch):
+    """A different estimator/head must not pass — it would relabel the 38
+    points while keeping their coordinates plausible-looking."""
+    import copy
+
+    from tests.conftest import _default_orthodontic_response
+
+    resp = copy.deepcopy(_default_orthodontic_response())
+    resp["raw_model_output"]["estimator"] = "TopdownPoseEstimator"
+    resp["raw_model_output"]["num_joints"] = 17  # COCO, not ceph
+    client, db, storage, clients, real_sha = _ortho_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_ortho_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "num_joints" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_orthodontic_validator_accepts_and_rejects_directly():
+    from app.validation import (
+        ValidationResultError,
+        validate_orthodontic_response,
+    )
+    from tests.conftest import _default_orthodontic_response
+
+    reg = _default_orthodontic_response()
+    ok = validate_orthodontic_response(
+        reg, expected_checksum=ORTHODONTIC_CHECKSUM
+    )
+    assert len(ok["findings"]) == 38
+    assert ok["findings"][0]["landmark_name"] == "0"
+    assert ok["image_after_padding_crop"]["width"] == 2400
+
+    standin = _default_orthodontic_response()
+    standin["is_standin_not_orthodontic"] = True
+    with pytest.raises(ValidationResultError, match="stand-in"):
+        validate_orthodontic_response(standin, expected_checksum=ORTHODONTIC_CHECKSUM)

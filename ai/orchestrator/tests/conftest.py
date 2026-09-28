@@ -337,3 +337,65 @@ def _default_engine_response(image_sha: str) -> dict:
         "device": "cpu",
         "runtime": {"onnxruntime_version": "1.30.0", "execution_provider": "CPUExecutionProvider"},
     }
+
+
+def _default_orthodontic_response() -> dict:
+    """A valid Orthodontic AI /infer response (real-model checksum, 38
+    landmarks in the cropped-original coordinate space)."""
+    from app.registry import registry
+
+    reg = registry.get("orthodontic-ai")
+    landmarks = [
+        {
+            "id": i,
+            "name": str(i),
+            "x": round(100.0 + i * 37.5, 2),
+            "y": round(180.0 + (i % 9) * 91.0, 2),
+            "score": round(0.9 - i * 0.01, 6),
+        }
+        for i in range(reg["num_landmarks"])
+    ]
+    return {
+        "is_standin_not_orthodontic": False,
+        "image": {"width": 2400, "height": 2880, "sha256": "c" * 64},
+        "image_after_padding_crop": {
+            "width": 2400,
+            "height": 1935,
+            "coordinate_space": "cropped_original_image",
+        },
+        "landmark_count": reg["num_landmarks"],
+        "landmarks": landmarks,
+        "scores_mean": round(sum(lm["score"] for lm in landmarks) / len(landmarks), 6),
+        "raw_model_output": {
+            "estimator": "TopdownPoseEstimator",
+            "backbone": "HRNet",
+            "head": "SRPoseHead",
+            "num_joints": reg["num_landmarks"],
+            "flip_test": True,
+            "metainfo": "cephalometric (38 keypoints)",
+        },
+        "timings_ms": {
+            "decode_ms": 12, "crop_ms": 8, "inference_ms": 19800,
+            "postprocess_ms": 2, "draw_ms": 35, "total_ms": 19857,
+        },
+        "annotated_png_hex": "89504e470d0a1a0a",  # fake PNG bytes
+        "model": {
+            "name": "orthodontic-ai",
+            "version": "1.0.0",
+            "model_version": "1.0.0",
+            "model_sha256": reg["model_checksum"],
+            "model_sha256_expected": reg["model_checksum"],
+            "model_size_bytes": reg["model_size_bytes"],
+            "model_source": reg["model_source"],
+            "model_license": reg["model_license"],
+            "is_standin_not_orthodontic": False,
+            "parameter_count": 66_800_000,
+            "num_landmarks": reg["num_landmarks"],
+            "landmarks": {str(k): v for k, v in reg["classes"].items()},
+        },
+        "device": "cpu",
+        "runtime": {
+            "loader": "mmpose init_model + bounded safe-globals allow-list "
+                      "(ai-validation/cldetection2023 AUDIT.md §7)",
+        },
+    }

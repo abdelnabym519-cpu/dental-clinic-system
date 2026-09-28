@@ -43,6 +43,7 @@ from .validation import (
     validate_implant_response,
     validate_liodon_response,
     validate_meshsegnet_response,
+    validate_orthodontic_response,
 )
 
 log = logging.getLogger("orchestrator")
@@ -56,6 +57,7 @@ LIODON_ENGINE_URL = os.environ.get("LIODON_ENGINE_URL", "http://liodon-engine:80
 MESHSEGNET_MAX_ENGINE_URL = os.environ.get("MESHSEGNET_MAX_ENGINE_URL", "http://meshsegnet-max-engine:8002").rstrip("/")
 MESHSEGNET_MAN_ENGINE_URL = os.environ.get("MESHSEGNET_MAN_ENGINE_URL", "http://meshsegnet-man-engine:8003").rstrip("/")
 IMPLANT_ENGINE_URL = os.environ.get("IMPLANT_ENGINE_URL", "http://implant-engine:8004").rstrip("/")
+ORTHODONTIC_ENGINE_URL = os.environ.get("ORTHODONTIC_ENGINE_URL", "http://orthodontic-engine:8005").rstrip("/")
 ENGINE_TIMEOUT_S = float(os.environ.get("ENGINE_TIMEOUT_SECONDS", "120"))
 
 # Phase 19B — one URL per registered engine (env-overridable, same pattern as
@@ -66,6 +68,7 @@ ENGINE_URLS = {
     "meshsegnet-max": MESHSEGNET_MAX_ENGINE_URL,
     "meshsegnet-man": MESHSEGNET_MAN_ENGINE_URL,
     "implant-ai": IMPLANT_ENGINE_URL,
+    "orthodontic-ai": ORTHODONTIC_ENGINE_URL,
 }
 # Engines that consume 3D surface meshes (payload carries mesh bytes); every
 # other registered engine consumes an image.
@@ -128,6 +131,8 @@ def _validate_engine_response(engine: str, body: dict) -> dict:
         return validate_liodon_response(body, expected_checksum=reg["model_checksum"])
     if engine == "implant-ai":
         return validate_implant_response(body, expected_checksum=reg["model_checksum"])
+    if engine == "orthodontic-ai":
+        return validate_orthodontic_response(body, expected_checksum=reg["model_checksum"])
     raise ValidationResultError(f"no response validator registered for {engine!r}")
 
 
