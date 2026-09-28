@@ -68,6 +68,11 @@ services:
       # MYSQL_DATABASE); override with AI_MYSQL_* only if you change the core
       # stack (e.g. non-default port '3307:3306').
       DATABASE_URL: "mysql://${AI_MYSQL_USER:-root}:${AI_MYSQL_PASSWORD:-dental}@mysql:${AI_MYSQL_PORT:-3306}/${AI_MYSQL_DATABASE:-dental_erp}"
+      # Phase 19B engine routing (ADD — the 19A liodon line is unchanged):
+      # the orchestrator dials each engine by this name inside
+      # dentora-network.
+      MESHSEGNET_MAX_ENGINE_URL: http://meshsegnet-max-engine:8002
+      MESHSEGNET_MAN_ENGINE_URL: http://meshsegnet-man-engine:8003
       # Internal auth shared with Next.js. Required — the orchestrator
       # refuses to start without it (no silent fallback to a default).
       ORCHESTRATOR_SECRET: ${ORCHESTRATOR_SECRET:?ORCHESTRATOR_SECRET must be set in .env}
@@ -82,6 +87,10 @@ services:
       start_period: 30s
     depends_on:
       liodon-engine:
+        condition: service_healthy
+      meshsegnet-max-engine:
+        condition: service_healthy
+      meshsegnet-man-engine:
         condition: service_healthy
 
   liodon-engine:
@@ -113,6 +122,73 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+
+  # ---------------------------------------------------------------------
+  # Phase 19B (Engine 1) — MeshSegNet 3D dental surface segmentation.
+  #
+  # Same provenance contract as Liodon: the model is NOT baked into the
+  # image and NOT committed to git — it is the official Tai-Hsien/MeshSegNet
+  # artifact, verified by SHA-256 on the machine that runs it (see
+  # ai-validation/meshsegnet/model/README.md). The read-only mount points
+  # at the verified file; the engine refuses to start if the checksum does
+  # not match the registry. MIT licensed.
+  #
+  #   max = maxilla (upper jaw)  — port 8002
+  #   man = mandible (lower jaw) — port 8003
+  # ---------------------------------------------------------------------
+  meshsegnet-max-engine:
+    build:
+      context: ./ai/engines/meshsegnet-max
+      dockerfile: Dockerfile
+    container_name: dentora-meshsegnet-max-engine
+    restart: unless-stopped
+    ports:
+      - '8002:8002'
+    environment:
+      # Resolved from the read-only mount below. The engine verifies the
+      # SHA-256 against the model registry before loading and refuses to
+      # start on mismatch (ai-validation/meshsegnet/MODEL_PROVENANCE.md).
+      MODEL_PATH: /app/models/MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip
+      DEVICE: cpu
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # The validated artifact, exactly as verified in the validation lab:
+    #   ai-validation/meshsegnet/model/MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip
+    #   SHA-256 727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d
+    volumes:
+      - ./ai-validation/meshsegnet/model:/app/models:ro
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8002/health", timeout=3).status == 200 else 1)']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s    # torch model loading + module import takes longer
+
+  meshsegnet-man-engine:
+    build:
+      context: ./ai/engines/meshsegnet-man
+      dockerfile: Dockerfile
+    container_name: dentora-meshsegnet-man-engine
+    restart: unless-stopped
+    ports:
+      - '8003:8003'
+    environment:
+      MODEL_PATH: /app/models/MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip
+      DEVICE: cpu
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    #   ai-validation/meshsegnet/model/MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip
+    #   SHA-256 d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf
+    volumes:
+      - ./ai-validation/meshsegnet/model:/app/models:ro
+    networks:
+      - dentora-network
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8003/health", timeout=3).status == 200 else 1)']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
 
 networks:
   dentora-network:

@@ -126,3 +126,104 @@ def validate_liodon_response(body: dict, expected_checksum: str | None = None) -
         "raw_model_output": body.get("raw_model_output"),
         "processing_time_ms": processing,
     }
+
+
+def validate_meshsegnet_response(body: dict, expected_checksum: str | None = None,
+                                 engine_name: str = "meshsegnet-max") -> dict:
+    """Validate a MeshSegNet /infer response (Phase 19B, D4).
+
+    Same trust model as the Liodon validator: checksum must match the
+    registry, a stand-in (synthetic) result is always refused, and every
+    segment must be a registered class. Returns the normalized findings
+    (the 15-class segment histogram — 3D data has no bounding boxes).
+    """
+    if not isinstance(body, dict):
+        raise ValidationResultError("engine response is not an object")
+
+    if body.get("is_standin_not_meshsegnet"):
+        raise ValidationResultError(
+            "engine returned stand-in (synthetic) results — refusing to store"
+        )
+
+    model = body.get("model") or {}
+    reported_checksum = (model.get("model_sha256") or "").lower()
+    if expected_checksum and reported_checksum != expected_checksum.lower():
+        raise ValidationResultError(
+            f"engine model checksum mismatch: reported {reported_checksum!r}, "
+            f"registry expects {expected_checksum.lower()!r}"
+        )
+    if not model.get("model_version"):
+        raise ValidationResultError("engine response missing model version")
+
+    engine = registry.get(engine_name)
+    if engine is None:
+        raise ValidationResultError(f"unknown engine {engine_name!r}")
+    known_classes = engine["classes"]  # {id: neutral name}
+
+    segs = body.get("segments")
+    if not isinstance(segs, list) or not segs:
+        raise ValidationResultError("segments missing or empty")
+
+    findings = []
+    total = 0
+    seen_ids: set[int] = set()
+    for i, s in enumerate(segs):
+        if not isinstance(s, dict):
+            raise ValidationResultError(f"segments[{i}] is not an object")
+        cid = s.get("class_id")
+        if not isinstance(cid, int) or isinstance(cid, bool) or cid not in known_classes:
+            raise ValidationResultError(
+                f"segments[{i}] has unknown class_id {cid!r} (known: {sorted(known_classes)})"
+            )
+        if s.get("class_name") != known_classes[cid]:
+            raise ValidationResultError(
+                f"segments[{i}] class_name {s.get('class_name')!r} does not match "
+                f"registry name {known_classes[cid]!r} for id {cid}"
+            )
+        count = s.get("point_count")
+        if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+            raise ValidationResultError(f"segments[{i}].point_count must be a positive int")
+        if cid in seen_ids:
+            raise ValidationResultError(f"segments contains duplicate class_id {cid}")
+        seen_ids.add(cid)
+        total += count
+        findings.append({"class_id": cid, "class_name": known_classes[cid], "point_count": count})
+
+    n_total = body.get("num_points_total")
+    if not isinstance(n_total, int) or isinstance(n_total, bool) or n_total <= 0:
+        raise ValidationResultError("num_points_total missing or not a positive int")
+    if total != n_total:
+        raise ValidationResultError(
+            f"segment counts sum to {total} but num_points_total is {n_total}"
+        )
+    # Official pipeline: meshes above 10,000 cells are decimated to exactly
+    # 10,000 — a result claiming more cells than that did not run the
+    # validated pipeline.
+    official_cap = engine.get("tensor_input", [None, None, 10000])[2]
+    if n_total > official_cap:
+        raise ValidationResultError(
+            f"num_points_total {n_total} exceeds the official {official_cap}-cell cap"
+        )
+
+    labels = body.get("labels")
+    if labels is not None:
+        if not isinstance(labels, list) or len(labels) != n_total:
+            raise ValidationResultError("labels length does not match num_points_total")
+        for i, l in enumerate(labels):
+            if not isinstance(l, int) or isinstance(l, bool) or l not in known_classes:
+                raise ValidationResultError(f"labels[{i}] is not a known class id: {l!r}")
+
+    processing = _finite(body.get("processing_time_ms", 0), "processing_time_ms")
+    if processing < 0:
+        raise ValidationResultError("negative processing time")
+
+    return {
+        "findings": findings,
+        "top_confidence": None,  # 15-class softmax labels carry no finding-level confidence
+        "image": None,           # 3D input — no image dimensions in provenance
+        "num_points_total": n_total,
+        "cells_original": body.get("cells_original"),
+        "downsampled": body.get("downsampled"),
+        "raw_model_output": {"labels": labels, "probabilities_shape": body.get("probabilities_shape")},
+        "processing_time_ms": processing,
+    }

@@ -39,8 +39,10 @@ def build_provenance(
         "model_license": (reg or {}).get("model_license"),
         "orchestrator_version": ORCHESTRATOR_VERSION,
         "image_sha256": (image_sha256 or "").lower(),
-        "image_width": validated["image"].get("width"),
-        "image_height": validated["image"].get("height"),
+        # 3D engines (Phase 19B) have no image dimensions — validated["image"]
+        # is None for them and the provenance records nulls, not a crash.
+        "image_width": (validated.get("image") or {}).get("width"),
+        "image_height": (validated.get("image") or {}).get("height"),
         "device": (reg or {}).get("device", "cpu"),
         "runtime": (reg or {}).get("runtime"),
         "processing_time_ms": validated["processing_time_ms"],

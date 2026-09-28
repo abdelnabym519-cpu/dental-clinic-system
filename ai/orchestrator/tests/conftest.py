@@ -25,6 +25,7 @@ PATIENT = "pat-1"
 STUDY = "study-1"
 JOB = "job-1"
 IMAGE_KEY = f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/original.png"
+MESH_KEY = f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/original.obj"
 IMAGE_SHA = "a" * 64
 
 
@@ -107,12 +108,13 @@ class FakeJobStore:
 
 
 class FakeStorage:
-    def __init__(self, image_bytes: bytes):
+    def __init__(self, image_bytes: bytes, key: str = IMAGE_KEY):
         self.image_bytes = image_bytes
+        self.key = key
         self.puts: list[tuple[str, bytes]] = []
 
     def get_object(self, key):
-        assert key == IMAGE_KEY, f"unexpected key {key}"
+        assert key == self.key, f"unexpected key {key}"
         return self.image_bytes
 
     def put_json(self, key, payload):
@@ -175,11 +177,48 @@ def harness(monkeypatch):
     storage = FakeStorage(image_bytes)
     engine = FakeEngine(response=_default_engine_response(real_sha))
 
+    # Phase 19B: one client per engine URL; the same fake stands in for all.
     monkeypatch.setattr(main, "_state", {
-        "db": db, "storage": storage, "engine_http": engine,
+        "db": db, "storage": storage, "engine_http": None,
+        "engine_clients": {name: engine for name in main.ENGINE_URLS},
     })
     client = TestClient(main.app)
     return client, db, storage, engine, real_sha
+
+
+def _default_meshsegnet_response(engine_name: str = "meshsegnet-max") -> dict:
+    """A valid MeshSegNet /infer response (real-model checksum, 3 segments)."""
+    from app.registry import registry
+
+    reg = registry.get(engine_name)
+    return {
+        "is_standin_not_meshsegnet": False,
+        "segments": [
+            {"class_id": 0, "class_name": "Gingiva", "point_count": 412},
+            {"class_id": 3, "class_name": "Tooth_3", "point_count": 355},
+            {"class_id": 11, "class_name": "Tooth_11", "point_count": 233},
+        ],
+        "labels": [0] * 412 + [3] * 355 + [11] * 233,
+        "num_points_total": 1000,
+        "cells_original": 42_105,
+        "downsampled": True,
+        "probabilities_shape": [1, 1000, 15],
+        "processing_time_ms": 812,
+        "model": {
+            "model_name": reg["name"],
+            "model_version": reg["model_version"],
+            "model_sha256": reg["model_checksum"],
+            "model_sha256_expected": reg["model_checksum"],
+            "model_size_bytes": reg["model_size_bytes"],
+            "model_source": reg["model_source"],
+            "model_license": "MIT",
+            "jaw": reg["jaw"],
+            "num_classes": 15,
+            "classes": {str(i): n for i, n in reg["classes"].items()},
+        },
+        "device": "cpu",
+        "runtime": {"torch_version": "2.6.0"},
+    }
 
 
 def _default_engine_response(image_sha: str) -> dict:

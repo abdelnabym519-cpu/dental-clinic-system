@@ -38,7 +38,11 @@ from .db import JobError, JobStore
 from .provenance import build_provenance
 from .registry import ORCHESTRATOR_VERSION, registry
 from .storage import ObjectStorage, StorageError, ai_output_keys
-from .validation import ValidationResultError, validate_liodon_response
+from .validation import (
+    ValidationResultError,
+    validate_liodon_response,
+    validate_meshsegnet_response,
+)
 
 log = logging.getLogger("orchestrator")
 logging.basicConfig(
@@ -48,7 +52,21 @@ logging.basicConfig(
 
 ORCHESTRATOR_SECRET = os.environ.get("ORCHESTRATOR_SECRET", "")
 LIODON_ENGINE_URL = os.environ.get("LIODON_ENGINE_URL", "http://liodon-engine:8001").rstrip("/")
+MESHSEGNET_MAX_ENGINE_URL = os.environ.get("MESHSEGNET_MAX_ENGINE_URL", "http://meshsegnet-max-engine:8002").rstrip("/")
+MESHSEGNET_MAN_ENGINE_URL = os.environ.get("MESHSEGNET_MAN_ENGINE_URL", "http://meshsegnet-man-engine:8003").rstrip("/")
 ENGINE_TIMEOUT_S = float(os.environ.get("ENGINE_TIMEOUT_SECONDS", "120"))
+
+# Phase 19B — one URL per registered engine (env-overridable, same pattern as
+# the 19A LIODON_ENGINE_URL). The orchestrator never dials an address that is
+# not in this map.
+ENGINE_URLS = {
+    "liodon": LIODON_ENGINE_URL,
+    "meshsegnet-max": MESHSEGNET_MAX_ENGINE_URL,
+    "meshsegnet-man": MESHSEGNET_MAN_ENGINE_URL,
+}
+# Engines that consume 3D surface meshes (payload carries mesh bytes); every
+# other registered engine consumes an image.
+MESH_ENGINES = ("meshsegnet-max", "meshsegnet-man")
 
 if not ORCHESTRATOR_SECRET:
     # Fail closed: an unauthenticated internal API is worse than a dead one.
@@ -81,6 +99,33 @@ def _require_secret(x_orchestrator_secret: str | None) -> None:
         raise HTTPException(status_code=401, detail="invalid orchestrator secret")
 
 
+def _engine_payload(engine: str, data: bytes, object_key: str) -> dict:
+    """Build the /infer request body for an engine.
+
+    Mesh engines (Phase 19B): base64 mesh bytes + the container format,
+    derived from the object key's extension (the Next.js upload route names
+    keys with the real extension). Image engines: the 19A image contract.
+    """
+    if engine in MESH_ENGINES:
+        ext = object_key.rsplit(".", 1)[-1].lower() if "." in object_key else ""
+        return {"mesh": _b64(data), "format": ext or "obj"}
+    return {"image": _b64(data), "annotate": True}
+
+
+def _validate_engine_response(engine: str, body: dict) -> dict:
+    """Per-engine result validation (schema + checksum + stand-in guard)."""
+    reg = registry.get(engine)
+    if reg is None:
+        raise ValidationResultError(f"unknown engine {engine!r}")
+    if engine in MESH_ENGINES:
+        return validate_meshsegnet_response(
+            body, expected_checksum=reg["model_checksum"], engine_name=engine
+        )
+    if engine == "liodon":
+        return validate_liodon_response(body, expected_checksum=reg["model_checksum"])
+    raise ValidationResultError(f"no response validator registered for {engine!r}")
+
+
 # ---------------------------------------------------------------------------
 # App state (lazy singletons)
 # ---------------------------------------------------------------------------
@@ -88,7 +133,8 @@ def _require_secret(x_orchestrator_secret: str | None) -> None:
 _state: dict = {
     "db": None,
     "storage": None,
-    "engine_http": None,
+    "engine_http": None,       # 19A single-client slot (back-compat shim)
+    "engine_clients": None,    # 19B per-engine client cache
 }
 
 
@@ -107,12 +153,26 @@ def _storage() -> ObjectStorage:
     return _state["storage"]
 
 
-def _engine_http() -> httpx.Client:
-    if _state["engine_http"] is None:
-        _state["engine_http"] = httpx.Client(
-            base_url=LIODON_ENGINE_URL, timeout=ENGINE_TIMEOUT_S
-        )
-    return _state["engine_http"]
+def _engine_client(engine: str) -> httpx.Client:
+    """Per-engine HTTP client (lazy, cached). Phase 19B: the 19A single
+    `engine_http` slot is generalized to one client per engine URL."""
+    clients = _state.get("engine_clients")
+    if clients is None:
+        if _state.get("engine_http") is not None:
+            # Back-compat: a test harness (or old deployment) wired the
+            # single-client slot — treat it as the liodon client.
+            clients = {"liodon": _state["engine_http"]}
+        else:
+            clients = {}
+        _state["engine_clients"] = clients
+    if engine not in clients:
+        url = ENGINE_URLS.get(engine)
+        if url is None:
+            raise HTTPException(
+                status_code=404, detail=f"no engine URL configured for {engine!r}"
+            )
+        clients[engine] = httpx.Client(base_url=url, timeout=ENGINE_TIMEOUT_S)
+    return clients[engine]
 
 
 def _fail_job(db: JobStore, payload: AnalyzeRequest, reason: str) -> None:
@@ -148,16 +208,24 @@ def health():
         out["database"] = "up" if _db().ping() else "down"
     except Exception:
         out["database"] = "unconfigured"
-    try:
-        r = _engine_http().get("/health", timeout=5)
-        out["liodon_engine"] = {
-            "reachable": True,
-            "model_loaded": bool(r.json().get("model_loaded")),
-            "status": r.json().get("status"),
-        }
-    except Exception:
-        out["liodon_engine"] = {"reachable": False}
-    out["status"] = "ok" if out["liodon_engine"].get("reachable") else "degraded"
+    engines_health: dict[str, dict] = {}
+    for name in ENGINE_URLS:
+        try:
+            r = _engine_client(name).get("/health", timeout=5)
+            j = r.json()
+            engines_health[name] = {
+                "reachable": True,
+                "model_loaded": bool(j.get("model_loaded")),
+                "status": j.get("status"),
+            }
+        except Exception:
+            engines_health[name] = {"reachable": False}
+    out["engines_health"] = engines_health
+    # Back-compatible 19A fields (the 19A E2E asserts these exact keys).
+    out["liodon_engine"] = engines_health.get("liodon", {"reachable": False})
+    out["status"] = (
+        "ok" if all(e.get("reachable") for e in engines_health.values()) else "degraded"
+    )
     return out
 
 
@@ -229,11 +297,13 @@ def analyze(payload: AnalyzeRequest, x_orchestrator_secret: str | None = Header(
                 f"!= {payload.image_sha256}"
             )
 
-        # 6. route to the engine
+        # 6. route to the engine (Phase 19B: per-engine URL + payload —
+        #    mesh engines receive mesh bytes, image engines receive image
+        #    bytes; the fetched object bytes are the same either way)
         try:
-            r = _engine_http().post(
+            r = _engine_client(payload.engine).post(
                 "/infer",
-                json={"image": _b64(image_bytes), "annotate": True},
+                json=_engine_payload(payload.engine, image_bytes, payload.image_key),
             )
         except httpx.HTTPError as exc:
             raise _JobFail(f"engine unreachable: {exc}") from exc
@@ -242,10 +312,9 @@ def analyze(payload: AnalyzeRequest, x_orchestrator_secret: str | None = Header(
             raise _JobFail(f"engine returned HTTP {r.status_code}: {detail}")
         engine_body = r.json()
 
-        # 7. validate the result (schema + checksum + stand-in guard)
-        validated = validate_liodon_response(
-            engine_body, expected_checksum=engine["model_checksum"]
-        )
+        # 7. validate the result (schema + checksum + stand-in guard —
+        #    per engine, since result shapes differ: findings vs segments)
+        validated = _validate_engine_response(payload.engine, engine_body)
 
         # 8. persist AI outputs as SEPARATE objects (original untouched)
         raw_key, annotated_key = ai_output_keys(

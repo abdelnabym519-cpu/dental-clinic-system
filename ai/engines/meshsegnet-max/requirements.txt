@@ -1,0 +1,10 @@
+# MeshSegNet-Max engine service — Phase 19B.
+#
+# CPU-only PyTorch inference. Dependency surface follows the validated lab
+# (ai-validation/meshsegnet: torch + numpy 1.26.4 + vedo) plus the web
+# server. No CUDA, no GPU providers, no cloud calls.
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+torch==2.6.0            # CPU; validated on torch 2.0.1 and 2.14.0 (provenance §6)
+numpy==1.26.4           # the lab's numpy
+vedo==2026.6.1          # mesh loading/decimation — the validated stack (provenance §6)

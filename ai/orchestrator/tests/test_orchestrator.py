@@ -12,7 +12,11 @@ import hashlib
 import httpx
 import pytest
 
-from tests.conftest import HOSPITAL, IMAGE_KEY, JOB, PATIENT, STUDY, _default_engine_response
+from app import main
+
+from tests.conftest import (
+    HOSPITAL, IMAGE_KEY, MESH_KEY, JOB, PATIENT, STUDY, _default_engine_response,
+)
 
 SECRET = "test-secret"
 H = {"X-Orchestrator-Secret": SECRET}
@@ -57,8 +61,11 @@ def test_health(harness):
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
-    assert body["orchestrator_version"] == "19A.0.0"
-    assert body["engines"] == ["liodon"]
+    assert body["orchestrator_version"] == "19B.0.0"
+    assert body["engines"] == ["liodon", "meshsegnet-man", "meshsegnet-max"]
+    # Phase 19B: per-engine reachability block + back-compatible liodon key
+    assert set(body["engines_health"]) == {"liodon", "meshsegnet-man", "meshsegnet-max"}
+    assert body["liodon_engine"] == body["engines_health"]["liodon"]
 
 
 def test_engines_lists_registry(harness):
@@ -71,6 +78,16 @@ def test_engines_lists_registry(harness):
     assert liodon["model_license"] == "CC-BY-NC-4.0"
     assert liodon["device"] == "cpu"
     assert liodon["supported_modalities"] == ["PANORAMIC"]
+    assert liodon["result_kind"] == "findings"
+    # Phase 19B: both MeshSegNet jaws registered with their pinned artifacts.
+    mx = next(e for e in engines if e["name"] == "meshsegnet-max")
+    assert mx["model_checksum"] == "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+    assert mx["supported_modalities"] == ["THREE_D_SCAN", "CBCT"]
+    assert mx["result_kind"] == "segments"
+    assert mx["classes"] == {str(i): n for i, n in
+                             enumerate(["Gingiva"] + [f"Tooth_{i}" for i in range(1, 15)])}
+    mn = next(e for e in engines if e["name"] == "meshsegnet-man")
+    assert mn["model_checksum"] == "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf"
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +158,7 @@ def test_analyze_success_end_to_end(harness):
     assert p["model_checksum"] == CHECKSUM
     assert p["model_checksum_expected"] == CHECKSUM
     assert p["image_sha256"] == real_sha
-    assert p["orchestrator_version"] == "19A.0.0"
+    assert p["orchestrator_version"] == "19B.0.0"
     assert p["device"] == "cpu"
     assert p["processing_time_ms"] == 423
     assert p["raw_output_key"] == f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/liodon/result.json"
@@ -160,7 +177,7 @@ def test_analyze_success_end_to_end(harness):
     # provenance persisted as a first-class column (D9 / section 13)
     assert job["provenance"]["model_checksum"] == CHECKSUM
     assert job["provenance"]["image_sha256"] == real_sha
-    assert job["provenance"]["orchestrator_version"] == "19A.0.0"
+    assert job["provenance"]["orchestrator_version"] == "19B.0.0"
 
     # study progressed UPLOADED -> ANALYZED
     assert db.studies[STUDY]["status"] == "ANALYZED"
@@ -298,3 +315,198 @@ def test_put_png_decodes_hex_not_base64(monkeypatch):
     store.put_png("k/annotated.png", "89504e470d0a1a0a")
     assert captured["data"] == b"\x89PNG\r\n\x1a\n"
     assert captured["content_type"] == "image/png"
+
+
+# ---------------------------------------------------------------------------
+# Phase 19B — MeshSegNet routing + validation (D4 gate)
+# ---------------------------------------------------------------------------
+
+MESH_CHECKSUM_MAX = "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d"
+MESH_CHECKSUM_MAN = "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf"
+
+
+def _mesh_harness(monkeypatch, engine_name="meshsegnet-max", response=None):
+    """Harness variant: mesh object key + per-engine fake clients (distinct
+    instances so a routing test can prove WHICH engine was dialed)."""
+    import hashlib
+
+    from tests.conftest import (
+        FakeEngine, FakeJobStore, FakeStorage,
+        MESH_KEY, _default_meshsegnet_response,
+    )
+
+    mesh_bytes = b"fake-obj-mesh-bytes-" + b"0" * 32
+    real_sha = hashlib.sha256(mesh_bytes).hexdigest()
+
+    db = FakeJobStore()
+    storage = FakeStorage(mesh_bytes, key=MESH_KEY)
+    resp = response if response is not None else _default_meshsegnet_response(engine_name)
+    clients = {name: FakeEngine(response=resp) for name in main.ENGINE_URLS}
+
+    monkeypatch.setattr(main, "_state", {
+        "db": db, "storage": storage, "engine_http": None,
+        "engine_clients": clients,
+    })
+    from fastapi.testclient import TestClient
+    return TestClient(main.app), db, storage, clients, real_sha
+
+
+def _mesh_payload(real_sha: str, **over) -> dict:
+    base = {
+        "job_id": JOB,
+        "study_id": STUDY,
+        "hospital_id": HOSPITAL,
+        "image_key": MESH_KEY,
+        "image_sha256": real_sha,
+        "engine": "meshsegnet-max",
+        "modality": "THREE_D_SCAN",
+        "requested_by": "user-1",
+    }
+    base.update(over)
+    return base
+
+
+def test_meshsegnet_routing_success(monkeypatch):
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    # findings are the 15-class segment histogram (3D — no bounding boxes)
+    assert body["status"] == "COMPLETED"
+    assert len(body["findings"]) == 3
+    assert body["findings"][0] == {"class_id": 0, "class_name": "Gingiva", "point_count": 412}
+    assert body["top_confidence"] is None
+
+    # provenance — the pinned real artifact identity, not a stand-in
+    p = body["provenance"]
+    assert p["engine"] == "meshsegnet-max"
+    assert p["model_checksum"] == MESH_CHECKSUM_MAX
+    assert p["model_checksum_expected"] == MESH_CHECKSUM_MAX
+    assert p["model_license"] == "MIT"
+    assert p["image_width"] is None  # 3D input — no image dimensions
+    assert p["image_sha256"] == real_sha
+
+    # job row + study progression + audit
+    assert db.jobs[JOB]["status"] == "COMPLETED"
+    assert db.jobs[JOB]["modelChecksum"] == MESH_CHECKSUM_MAX
+    assert db.jobs[JOB]["findings"][1]["class_name"] == "Tooth_3"
+    assert db.studies[STUDY]["status"] == "ANALYZED"
+    assert [e["action"] for e in db.audit_events] == ["AI_JOB_PROCESSING", "AI_JOB_COMPLETED"]
+
+    # storage: result.json persisted (no annotated.png for 3D)
+    keys = [k for k, _ in storage.puts]
+    assert keys == [f"{HOSPITAL}/imaging/{PATIENT}/{STUDY}/ai/meshsegnet-max/result.json"]
+
+    # the dialed engine got MESH bytes + the format from the key extension
+    call = clients["meshsegnet-max"].calls
+    assert len(call) == 1
+    sent = call[0]["json"]
+    assert "image" not in sent
+    assert base64.b64decode(sent["mesh"]) == storage.image_bytes
+    assert sent["format"] == "obj"
+    # the other engines were never dialed
+    assert clients["liodon"].calls == []
+    assert clients["meshsegnet-man"].calls == []
+
+
+def test_meshsegnet_man_routed_to_its_own_url(monkeypatch):
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, engine_name="meshsegnet-man")
+    r = client.post("/analyze", json=_mesh_payload(real_sha, engine="meshsegnet-man", modality="CBCT"), headers=H)
+    assert r.status_code == 200, r.text
+    assert r.json()["provenance"]["model_checksum"] == MESH_CHECKSUM_MAN
+    assert len(clients["meshsegnet-man"].calls) == 1
+    assert clients["meshsegnet-max"].calls == []
+
+
+def test_meshsegnet_rejects_panormic(monkeypatch):
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch)
+    r = client.post("/analyze", json=_mesh_payload(real_sha, modality="PANORAMIC"), headers=H)
+    assert r.status_code == 422
+    assert "does not support modality" in r.json()["detail"]
+    assert clients["meshsegnet-max"].calls == []
+
+
+def test_liodon_rejects_three_d_scan(monkeypatch):
+    """19A rule stays intact: only PANORAMIC goes to Liodon. (The 422 is
+    raised at the modality check, before any engine is dialed.)"""
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch)
+    r = client.post("/analyze", json=_mesh_payload(real_sha, engine="liodon", modality="THREE_D_SCAN"), headers=H)
+    assert r.status_code == 422
+    assert clients["liodon"].calls == []
+
+
+def test_meshsegnet_standin_results_never_stored(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_meshsegnet_response
+
+    resp = _default_meshsegnet_response()
+    resp = copy.deepcopy(resp)
+    resp["is_standin_not_meshsegnet"] = True
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "stand-in" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_meshsegnet_checksum_mismatch_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_meshsegnet_response
+
+    resp = _default_meshsegnet_response()
+    resp = copy.deepcopy(resp)
+    resp["model"]["model_sha256"] = "f" * 64
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    assert "checksum mismatch" in r.json()["detail"]
+    _assert_failed(db)
+
+
+def test_meshsegnet_segment_sum_mismatch_fails_job(monkeypatch):
+    import copy
+
+    from tests.conftest import _default_meshsegnet_response
+
+    resp = _default_meshsegnet_response()
+    resp = copy.deepcopy(resp)
+    resp["segments"][0]["point_count"] = 999  # 999+355+233 != 1000
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    _assert_failed(db)
+
+
+def test_meshsegnet_wrong_class_name_fails_job(monkeypatch):
+    """A speculative tooth name (e.g. 'upper_canine') must be rejected — the
+    registry pins the neutral names (no official label-to-tooth map)."""
+    import copy
+
+    from tests.conftest import _default_meshsegnet_response
+
+    resp = _default_meshsegnet_response()
+    resp = copy.deepcopy(resp)
+    resp["segments"][2] = {"class_id": 11, "class_name": "lower_canine", "point_count": 233}
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    _assert_failed(db)
+
+
+def test_meshsegnet_cell_cap_enforced(monkeypatch):
+    """> 10,000 cells means the official decimation rule was not run."""
+    import copy
+
+    from tests.conftest import _default_meshsegnet_response
+
+    resp = _default_meshsegnet_response()
+    resp = copy.deepcopy(resp)
+    resp["num_points_total"] = 12000
+    resp["segments"][0]["point_count"] = 11555
+    client, db, storage, clients, real_sha = _mesh_harness(monkeypatch, response=resp)
+    r = client.post("/analyze", json=_mesh_payload(real_sha), headers=H)
+    assert r.status_code == 502
+    _assert_failed(db)
