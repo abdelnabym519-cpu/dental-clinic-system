@@ -24,6 +24,7 @@ and `xtcocotools` breaks on NumPy 2.x, and setuptools ≥ 81 removed `pkg_resour
 | `setuptools<81` | `mmengine.utils.package_utils.get_installed_path` imports `pkg_resources` |
 | `numpy==1.26.4` | `xtcocotools` is built against NumPy 1.x (`numpy.dtype size changed` on 2.x) |
 | allow-listed `add_safe_globals` + strict `weights_only=True` | loads an mmpose-1.0 checkpoint on torch 2.6 **without** disabling the guard |
+| bounded allow-list additions (AUDIT.md §10) | the real checkpoint's own two globals (`HistoryBuffer`, `getattr` — used once, as `getattr(Class, 'min')`) + torch 2.6's storage reader, each resolved from the pinned runtime with recorded evidence; `weights_only=False` never used |
 | `opencv-python-headless` (Linux only) | `xtcocotools` pulls full `opencv-python`, whose wheel needs `libGL.so.1` |
 
 ## Files
@@ -32,11 +33,13 @@ and `xtcocotools` breaks on NumPy 2.x, and setuptools ≥ 81 removed `pkg_resour
 | --- | --- |
 | `AUDIT.md` | the 10-step audit: repository, dataset constraint, checkpoint, input provenance, dependency matrix, findings, evidence, runtime plan |
 | `scripts/check_environment.py` | verifies the stack against the fork's own declared ranges (12 checks) |
-| `scripts/inspect_checkpoint.py` | reads the checkpoint's pickle globals **without executing anything**; exits non-zero on an unexpected global or an identity mismatch |
+| `scripts/inspect_checkpoint.py` | reads the checkpoint's pickle globals **without executing anything** (`--context` prints each reference's usage context); exits non-zero on an unexpected global or an identity mismatch |
+| `scripts/pickle_scan.py` | the canonical non-executing scanner (protocol 0–5, stack/memo-faithful — no phantom globals); shared by the two scripts above |
+| `scripts/diagnose_globals.py` | the AUDIT.md §10 mandated sequence on a structurally-equivalent probe (needs the ML venv) |
 | `scripts/extract_input.py` | turns the organisers' `stack1.mha` into a real cephalogram PNG, with provenance and hashes |
 | `scripts/run_inference.py` | the real CPU inference: gate → allow-list → `init_model` → real image → landmarks → JSON report + overlay |
-| `tests/test_engine6_contract.py` | 26 tests, runnable with a bare Python 3 (no torch needed) |
-| `reports/` | environment checks, checkpoint-globals output, the control run, and this engine's validation report |
+| `tests/test_engine6_contract.py` | 32 tests, runnable with a bare Python 3 (no torch needed) |
+| `reports/` | environment checks, the §10 diagnostics record, the control run, and this engine's validation report |
 
 ## Run it (Windows, from this folder)
 
@@ -45,7 +48,11 @@ and `xtcocotools` breaks on NumPy 2.x, and setuptools ≥ 81 removed `pkg_resour
 python -m pip install "setuptools<81" "numpy==1.26.4" "mmcv-lite==2.1.0"
 
 python scripts\check_environment.py --repo CLdetection2023
-python scripts\inspect_checkpoint.py --checkpoint model\model_pretrained_on_train_and_val.pth
+# identity + security gate; --context prints the usage context of every global
+# (AUDIT.md §10: confirm getattr is used as getattr(<object>, '<literal>') and
+# HistoryBuffer as a plain value — STOP and send the JSON if anything differs)
+python scripts\inspect_checkpoint.py --checkpoint model\model_pretrained_on_train_and_val.pth `
+    --context --json-out reports\checkpoint_globals.json
 
 python scripts\extract_input.py --stack CL-Detection2023\step5_docker_and_upload\test\stack1.mha `
     --index 1 --out input\ceph_stack1_image1.png
@@ -76,6 +83,13 @@ Exit codes from `run_inference.py`: `0` inference completed, `6` checkpoint iden
   prove the mechanism has **random weights** — the real 268,846,952-byte file is not in the
   validation environment and its distribution route is unreachable from it. Landmark quality,
   accuracy and clinical usefulness are **untested**, and the run above says nothing about them.
+- **Proven here (AUDIT.md §10, 2026-09-28):** the loading gate now accepts the real file's
+  global signature — a structurally-equivalent probe (same model, same 1,969-tensor contract,
+  same `torch.save`) enumerates *exactly* the two globals the operator's scan flagged, is
+  refused by the pre-repair policy, and loads under the repaired one with `weights_only=True`
+  through both the direct `torch.load` and the engine's own `init_model` path, with structure
+  verified intact (`reports/diagnostics_globals.json`). What remains is the operator's real
+  run (§9 of the audit) — the same sequence, on the real bytes.
 
 **Functional inference ≠ clinical accuracy.** No diagnostic claim is made, and none may be
 inferred from a successful run.

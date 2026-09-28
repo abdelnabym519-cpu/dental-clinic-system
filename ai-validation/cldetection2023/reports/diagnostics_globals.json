@@ -1,0 +1,40 @@
+{
+  "A_historybuffer_globals": [
+    "mmengine.logging.history_buffer.HistoryBuffer",
+    "numpy.core.multiarray._reconstruct",
+    "numpy.ndarray"
+  ],
+  "B_getattr_carrier": "functools.partial(getattr)",
+  "C1_globals": [
+    "__builtin__.bytes",
+    "__builtin__.getattr",
+    "_codecs.encode",
+    "collections.OrderedDict",
+    "mmengine.logging.history_buffer.HistoryBuffer",
+    "numpy.core.multiarray._reconstruct",
+    "numpy.dtype",
+    "numpy.ndarray",
+    "torch.FloatStorage",
+    "torch.LongStorage",
+    "torch._utils._rebuild_tensor_v2"
+  ],
+  "C1_unexplained": [],
+  "C1_attr_refs": [],
+  "C2_pre_repair_unexplained": [
+    "__builtin__.getattr",
+    "mmengine.logging.history_buffer.HistoryBuffer"
+  ],
+  "C2_pre_repair_refused": true,
+  "C3_loaded": true,
+  "C3b_engine_path_loaded": true,
+  "C4_negative_control": true,
+  "_context": {
+    "what_this_is": "Engine #6 mandated-sequence diagnostics executed in the validation sandbox (2026-09-28). The REAL checkpoint (sha256 fb1a781a\u2026, 268,846,952 B) is on the operator's machine \u2014 its official distribution route (Google Drive, per the repository README) is egress-blocked here. The probe is a structurally-equivalent checkpoint (same model built from the pinned repo config, 1969 tensors + meta with a real mmengine 0.10.7 HistoryBuffer instance) written with the same torch.save() as the real file.",
+    "C1": "globals enumerated from the probe by the engine's (repaired) scanner",
+    "C2": "what the PRE-REPAIR allow-list would have refused (fail-closed proof; matches the operator's real-file finding exactly)",
+    "C3": "extended allow-list (3 bounded entries + torch 2.6 storage reader) loads the probe under weights_only=True with structure intact",
+    "C3b": "the engine's own init_model(checkpoint=\u2026) path loads the probe (66,816,510 parameters)",
+    "C4": "negative control: a payload naming builtins.eval is refused by the gate",
+    "getattr_usage_provenance": "raw-opcode trace of /tmp/engine6_probe.pth \u2192 data.pkl offset 317225: GLOBAL '__builtin__ getattr' + REDUCE with (memo 17558 = the memoised HistoryBuffer class, 'min') \u2014 getattr is used exactly ONCE in the stream, to re-fetch class methods for the statistics_methods dict; under weights_only=True both operands are themselves gated (the class via its registered GLOBAL, the name is a protocol literal)"
+  }
+}

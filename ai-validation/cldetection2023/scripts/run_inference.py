@@ -48,6 +48,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pickle_scan import scan_file as _scan_file  # noqa: E402
+
 # --------------------------------------------------------------------------
 # the allow-list: exactly what may be registered for weights_only=True
 # --------------------------------------------------------------------------
@@ -85,6 +88,18 @@ SAFE_GLOBAL_NAMES = (
     "pathlib.PosixPath",
     "pathlib.WindowsPath",
     "pathlib.PurePath",
+    # torch 2.6 zip pickling: storages are rebuilt from the archive's data
+    # files by this reader — pure data, no code from the checkpoint runs.
+    "torch.storage._load_from_bytes",
+    # The two globals the audited real checkpoint names beyond the set
+    # above (operator's scan; resolution + evidence in AUDIT.md §10).
+    # HistoryBuffer = mmengine 0.10.7 log-history data container (reconstruction
+    # is the default __setstate__ — no code from the checkpoint runs);
+    # getattr = attribute READ only, not a code-execution primitive (see
+    # FORBIDDEN_BUILTINS in inspect_checkpoint.py — deliberately unchanged).
+    "mmengine.logging.history_buffer.HistoryBuffer",
+    "builtins.getattr",
+    "__builtin__.getattr",
 )
 
 
@@ -165,21 +180,13 @@ def register_safe_globals(globals_found):
 
 
 def enumerate_globals(path: Path):
-    """Non-executing scan of the checkpoint's pickle globals (no torch needed)."""
-    import pickletools
-    import zipfile
-    found = set()
-    try:
-        with zipfile.ZipFile(path) as archive:
-            payloads = [archive.read(n) for n in archive.namelist() if n.endswith(".pkl")]
-    except zipfile.BadZipFile:
-        payloads = [path.read_bytes()]
-    for payload in payloads:
-        for opcode, arg, _ in pickletools.genops(payload):
-            if opcode.name == "GLOBAL":
-                module, _, name = str(arg).partition(" ")
-                found.add(f"{module}.{name}")
-    return sorted(found)
+    """Non-executing scan of the checkpoint's pickle globals (no torch needed).
+
+    Protocol-correct: captures GLOBAL (protocol 0) and STACK_GLOBAL
+    (protocol 2+, what torch.save writes) with faithful stack/memo tracking,
+    so memoised-object STACK_GLOBALs (attribute reads on constructed objects)
+    are not misreported as phantom globals. See pickle_scan.py."""
+    return _scan_file(Path(path))["globals"]
 
 
 def peak_ram_gb():

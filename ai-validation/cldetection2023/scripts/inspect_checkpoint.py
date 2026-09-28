@@ -4,9 +4,16 @@ inspect_checkpoint.py — look inside a PyTorch checkpoint **without executing i
 
 A `.pth` file is a pickle. Loading it with `torch.load` runs whatever the pickle
 says to run. This script reads the same bytes the unpickler would read — the zip
-container and every GLOBAL in every pickle member — and **never constructs an
-object**. It imports no torch, no numpy, no ultralytics, no mmpose: `pickletools`
-only decodes.
+container and every GLOBAL / STACK_GLOBAL reference in every pickle member
+(protocol-2+ streams, i.e. what `torch.save` writes, reference globals with
+STACK_GLOBAL; see scripts/pickle_scan.py for the full algorithm and why the
+earlier GLOBAL-only scan was a blind spot) — and **never constructs an object**.
+It imports no torch, no numpy, no ultralytics, no mmpose: `pickletools` only
+decodes.
+
+`--context` prints the opcodes that follow each reference: the usage evidence
+(bare value vs REDUCE callable) that must be captured on the real checkpoint
+before the first real load (AUDIT.md §10).
 
 Why this engine needs it more than most: from PyTorch 2.6, `torch.load` defaults
 to `weights_only=True`, and `mmengine 0.10.7` calls `torch.load(filename,
@@ -41,6 +48,9 @@ import pickletools
 import sys
 import zipfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pickle_scan import scan_payload  # noqa: E402
 
 # --------------------------------------------------------------------------
 # the checkpoint this engine audits
@@ -90,6 +100,23 @@ SAFE_GLOBALS = {
     "pathlib.PosixPath": "path object (cross-platform hint)",
     "pathlib.WindowsPath": "path object (cross-platform hint)",
     "pathlib.PurePath": "path object",
+    # torch 2.6 zip pickling: storages are rebuilt from the archive's data
+    # files by this reader — pure data, no code from the checkpoint runs.
+    "torch.storage._load_from_bytes": "storage bytes reader (torch 2.6 zip layout)",
+    # --- the two globals the audited real checkpoint names beyond the set
+    # above (operator's scan; resolution + evidence in AUDIT.md §10) ------
+    "mmengine.logging.history_buffer.HistoryBuffer":
+        "mmengine 0.10.7 log-history data container (int + two numpy arrays + "
+        "dict of class method refs); reconstruction is the default __setstate__ "
+        "- no code from the checkpoint runs (sandbox probe: scripts/"
+        "diagnose_globals.py)",
+    "builtins.getattr":
+        "attribute READ only; deliberately not a FORBIDDEN_BUILTINS (that list "
+        "excludes code-execution primitives); the object graph it can touch is "
+        "itself restricted to registered safe globals; verify usage context "
+        "with --context before the real load",
+    "__builtin__.getattr":
+        "same as builtins.getattr (pre-3 module spelling)",
     # numpy dtype *classes* (numpy >= 1.25 exposes them under numpy.dtypes)
     **{f"numpy.dtypes.{name}": "numpy scalar type object"
        for name in (
@@ -163,6 +190,7 @@ def inspect(path: Path, expect_sha256=None, expect_size=None) -> dict:
         "sha256_matches_expected": None,
         "container": None,
         "globals": [],
+        "object_attribute_refs": [],
         "verdicts": {},
         "not_executed": ("this tool never unpickles: no object is constructed and no code "
                          "from the checkpoint runs"),
@@ -181,22 +209,26 @@ def inspect(path: Path, expect_sha256=None, expect_size=None) -> dict:
     members, container = pickle_members(path)
     report["container"] = container
     counts = collections.Counter()
+    attr_refs_all: set = set()
     for member, payload in members:
         try:
-            for opcode, arg, _pos in pickletools.genops(payload):
-                if opcode.name != "GLOBAL":
-                    continue
-                module, _, name = str(arg).partition(" ")
-                verdict, reason = classify(module, name)
-                counts[verdict] += 1
-                report["globals"].append({"member": member, "module": module,
-                                          "name": name, "verdict": verdict,
-                                          "reason": reason})
+            globals_found, attr_refs, context = scan_payload(payload)
         except Exception as exc:                       # malformed stream
             report["globals"].append({"member": member, "module": None, "name": None,
                                       "verdict": "unknown",
                                       "reason": f"stream did not parse: {exc}"})
+            continue
+        attr_refs_all.update(attr_refs)
+        for full in globals_found:
+            module, _, name = full.rpartition(".")
+            verdict, reason = classify(module, name)
+            counts[verdict] += 1
+            report["globals"].append({"member": member, "module": module,
+                                      "name": name, "verdict": verdict,
+                                      "reason": reason,
+                                      "context": context.get(full, [])})
     report["verdicts"] = dict(counts)
+    report["object_attribute_refs"] = sorted(attr_refs_all)
     # unique view for readability
     report["unique_globals"] = sorted({f"{g['module']}.{g['name']}"
                                         for g in report["globals"] if g["module"]})
@@ -223,6 +255,10 @@ def main() -> int:
     parser.add_argument("--checkpoint", required=True, help="Path to the .pth (never modified)")
     parser.add_argument("--expect-sha256", default=EXPECTED_SHA256)
     parser.add_argument("--expect-size", type=int, default=EXPECTED_SIZE)
+    parser.add_argument("--context", action="store_true",
+                        help="print the opcodes following each global reference "
+                             "(usage context: bare value vs REDUCE callable) — "
+                             "required evidence before the first real load")
     parser.add_argument("--json-out", default=None)
     args = parser.parse_args()
 
@@ -242,6 +278,11 @@ def main() -> int:
         for entry in report["globals"]:
             marker = {"safe": "  ok", "forbidden": "STOP", "unknown": "????"}[entry["verdict"]]
             print(f"    [{marker}] {entry['module']}.{entry['name']}  — {entry['reason']}")
+            if args.context and entry.get("context"):
+                print(f"             context: {' → '.join(entry['context'])}")
+        if report["object_attribute_refs"]:
+            print(f"  attr-refs : {report['object_attribute_refs']} (attribute reads on "
+                  f"constructed objects — no import, not gate-relevant)")
         print(f"\n  verdicts    : {report['verdicts']}")
         print(f"  unique      : {len(report['unique_globals'])} global name(s)")
     code = exit_code(report)

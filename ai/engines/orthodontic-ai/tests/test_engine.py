@@ -112,6 +112,62 @@ def test_real_checkpoint_globals_are_allowlisted():
     assert safeload.unexplained_globals(found) == []
 
 
+def test_audited_checkpoint_additions_are_bounded_and_named():
+    """The E2E-repair additions are exactly the audited checkpoint's two
+    unexplained globals (operator's scan) plus torch 2.6's storage reader
+    (probe evidence) — no host/code-execution modules (AUDIT.md §10)."""
+    from app import safeload
+
+    names = safeload.allow_list_names()
+    for expected in (
+        "mmengine.logging.history_buffer.HistoryBuffer",
+        "builtins.getattr",
+        "__builtin__.getattr",
+        "torch.storage._load_from_bytes",
+    ):
+        assert expected in names, expected
+    for host in ("os", "posix", "nt", "subprocess", "socket", "shutil",
+                 "ctypes", "pickle", "marshal", "importlib"):
+        assert not any(n.startswith(host + ".") for n in names), host
+
+
+def test_scan_detailed_separates_object_attribute_refs(tmp_path):
+    """A STACK_GLOBAL whose module slot is a memoised object is an attribute
+    read on a constructed object — reported as an object-attribute ref, never
+    as a (phantom) global. Stream: GLOBAL collections.OrderedDict (memo 0),
+    BINGET 0, 'min', STACK_GLOBAL."""
+    from app import safeload
+
+    payload = (b"\x80\x05"
+               + b"c" + b"collections\nOrderedDict\n"
+               + b"\x94"          # MEMOIZE
+               + b"h\x00"         # BINGET 0
+               + b"\x8c\x03min"   # SHORT_BINUNICODE 'min'
+               + b"\x93"          # STACK_GLOBAL
+               + b".")
+    p = tmp_path / "attrref.pth"
+    p.write_bytes(payload)
+    detail = safeload.scan_detailed(p)
+    assert detail["globals"] == ["collections.OrderedDict"]
+    assert detail["object_attribute_refs"] == ["min"]
+
+
+def test_stack_global_references_are_scanned(tmp_path):
+    """Protocol-2+ STACK_GLOBAL (what torch.save writes) is captured — the
+    GLOBAL-only scan was the documented blind spot."""
+    from app import safeload
+
+    payload = (b"\x80\x05"
+               + b"\x8c\x1fmmengine.logging.history_buffer"
+               + b"\x8c\x0dHistoryBuffer"
+               + b"\x93"
+               + b".")
+    p = tmp_path / "sg.pth"
+    p.write_bytes(payload)
+    found = safeload.enumerate_globals(p)
+    assert found == ["mmengine.logging.history_buffer.HistoryBuffer"]
+
+
 # ---------------------------------------------------------------------------
 # /health
 # ---------------------------------------------------------------------------

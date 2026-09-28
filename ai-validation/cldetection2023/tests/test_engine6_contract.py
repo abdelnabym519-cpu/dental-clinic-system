@@ -55,6 +55,96 @@ def _torch_zip(path: Path, payload: bytes) -> Path:
     return path
 
 
+def _short_str(value: str) -> bytes:
+    # SHORT_BINUNICODE: \x8c + ONE-byte length + utf-8
+    assert len(value) <= 255
+    return b"\x8c" + bytes([len(value)]) + value.encode()
+
+
+def _stack_global(module: str, name: str) -> bytes:
+    """Protocol-2+ STACK_GLOBAL: push module, push name, \\x93."""
+    return _short_str(module) + _short_str(name) + b"\x93"
+
+
+class TestScannerProtocolCorrectness(unittest.TestCase):
+    """The scan must see protocol-2+ (torch.save) references, and must not
+    fabricate phantom globals from memoised objects (AUDIT.md §10)."""
+
+    def test_stack_global_references_are_captured(self):
+        payload = (b"\x80\x05"
+                   + _stack_global("mmengine.logging.history_buffer", "HistoryBuffer")
+                   + b"." )
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(Path(tmp) / "c.pth", payload)
+            found = ri.enumerate_globals(target)
+        self.assertIn("mmengine.logging.history_buffer.HistoryBuffer", found)
+        self.assertEqual(len(found), 1)
+
+    def test_memoised_object_stack_global_is_not_a_global(self):
+        # GLOBAL copyreg._reconstructor (memoised), then BINGET 0 + name +
+        # STACK_GLOBAL: an attribute read on the constructed object. It must
+        # surface as an object-attribute ref — never as a global, never as a
+        # phantom "<stale>.<name>" pairing.
+        payload = (b"\x80\x05"
+                   + b"c" + b"copyreg\n_reconstructor\n"
+                   + b"\x94"            # MEMOIZE (slot 0)
+                   + b"h\x00"         # BINGET 0 (ASCII h)
+                   + _short_str("HistoryBuffer.min")
+                   + b"\x93"            # STACK_GLOBAL
+                   + b".")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(Path(tmp) / "c.pth", payload)
+            found = ri.enumerate_globals(target)
+            from pickle_scan import scan_payload
+            globals_found, attr_refs, _ = scan_payload(
+                zipfile.ZipFile(target).read("archive/data.pkl"))
+        self.assertEqual(found, ["copyreg._reconstructor"])
+        self.assertEqual(globals_found, ["copyreg._reconstructor"])
+        self.assertEqual(attr_refs, ["HistoryBuffer.min"])
+
+    def test_scan_records_usage_context(self):
+        payload = (b"\x80\x05"
+                   + b"c" + b"copyreg\n_reconstructor\n"
+                   + b"\x94"
+                   + b"h\x00"
+                   + _short_str("min")
+                   + b"\x93"
+                   + b"." )
+        from pickle_scan import scan_payload
+        globals_found, attr_refs, context = scan_payload(payload)
+        self.assertEqual(globals_found, ["copyreg._reconstructor"])
+        self.assertEqual(attr_refs, ["min"])
+        self.assertIn("MEMOIZE", context["copyreg._reconstructor"])
+
+    def test_inspector_json_carries_context_and_attribute_refs(self):
+        # collections.OrderedDict is allow-listed, so the run exits 0; the
+        # attribute ref (BINGET 0 + 'min' + STACK_GLOBAL) must be reported
+        # separately from the globals.
+        payload = (b"\x80\x05"
+                   + b"c" + b"collections\nOrderedDict\n"
+                   + b"\x94"
+                   + b"h\x00"
+                   + _short_str("min")
+                   + b"\x93"
+                   + b".")
+        with tempfile.TemporaryDirectory() as tmp:
+            target = _torch_zip(Path(tmp) / "c.pth", payload)
+            out = Path(tmp) / "g.json"
+            argv = ["inspect_checkpoint.py", "--checkpoint", str(target),
+                    "--context",
+                    "--expect-sha256", ic.sha256_of(target),
+                    "--expect-size", str(target.stat().st_size),
+                    "--json-out", str(out)]
+            import unittest.mock
+            with unittest.mock.patch.object(sys, "argv", argv):
+                with redirect_stdout(io.StringIO()):
+                    code = ic.main()
+            self.assertEqual(code, 0)
+            data = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(data["object_attribute_refs"], ["min"])
+        self.assertTrue(data["globals"][0]["context"])
+
+
 class TestCheckpointInspectorPolicy(unittest.TestCase):
     """The inspector never executes, and stops on anything unexpected."""
 
@@ -174,6 +264,29 @@ class TestInferenceAllowListPolicy(unittest.TestCase):
                   "numpy.core.multiarray._reconstruct", "numpy.ndarray", "numpy.dtype",
                   "_codecs.encode", "__builtin__.bytes", "__builtin__.set"]
         self.assertEqual(ri.unexplained_globals(normal), [])
+
+    def test_the_audited_real_checkpoint_globals_are_allow_listed(self):
+        # The operator's scan of the real 268,846,952-byte checkpoint found
+        # exactly two unexplained globals beyond this set; the bounded
+        # resolution (AUDIT.md §10) added them — plus torch 2.6's storage
+        # reader, which the probe run showed torch.save() references.
+        names = ri.allow_list_names()
+        for expected in ("mmengine.logging.history_buffer.HistoryBuffer",
+                         "builtins.getattr", "__builtin__.getattr",
+                         "torch.storage._load_from_bytes"):
+            self.assertIn(expected, names, expected)
+        # still bounded: no code-execution or host module slipped in
+        for host in ("os", "posix", "nt", "subprocess", "socket", "shutil",
+                     "ctypes", "pickle", "marshal", "importlib"):
+            self.assertFalse(any(n.startswith(host + ".") for n in names), host)
+
+    def test_forbidden_builtins_list_is_unchanged_and_getattr_is_not_on_it(self):
+        # getattr is an attribute READ, not a code-execution primitive; the
+        # hard-stop list must stay exactly the executing builtins.
+        self.assertEqual(ic.FORBIDDEN_BUILTINS, {
+            "eval", "exec", "compile", "open", "__import__", "input",
+            "breakpoint", "globals", "locals", "vars", "help", "exit", "quit"})
+        self.assertNotIn("getattr", ic.FORBIDDEN_BUILTINS)
 
     def test_unknown_globals_are_returned_sorted(self):
         self.assertEqual(ri.unexplained_globals(["os.system", "__builtin__.eval", "torch.Size"]),

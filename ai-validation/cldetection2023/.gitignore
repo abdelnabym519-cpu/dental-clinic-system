@@ -17,6 +17,7 @@ reports/*
 !reports/engine6_validation_report.md
 !reports/engine6_control_run.json
 !reports/environment_checks.json
+!reports/diagnostics_globals.json
 
 # Python
 __pycache__/

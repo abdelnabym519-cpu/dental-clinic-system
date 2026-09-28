@@ -26,8 +26,8 @@
 | **exit_code** | 0 (`run_inference.py`), 0 (`step1_test_mmpose.py`), 12/12 environment checks |
 | **functional_inference** | **mechanism proven; real-weight inference not yet run** |
 | **clinical_validation** | **NOT VALIDATED** |
-| **status** | **⚪ BLOCKED (for the engine's acceptance criterion)** — environment: 🟡 OPERATIONAL WITH WORKAROUND |
-| **failure_reasons** | the real checkpoint is not present in the validation environment, and its distribution route (Google Drive, as given in the repository README) is unreachable from it — so no real-weight landmark output exists yet |
+| **status** | **⚪ BLOCKED (for the engine's acceptance criterion)** — environment: 🟡 OPERATIONAL WITH WORKAROUND; the loading gate is now repaired (AUDIT.md §10) |
+| **failure_reasons** | the real checkpoint is not present in the validation environment, and its distribution route (Google Drive, as given in the repository README) is unreachable from it — so no real-weight landmark output exists yet. The two checkpoint globals the operator's scan flagged (`__builtin__.getattr`, `mmengine.logging.history_buffer.HistoryBuffer`) are now resolved and allow-listed with evidence (AUDIT.md §10); the gate's acceptance path for the real file's global signature is proven on a structurally-equivalent probe (`reports/diagnostics_globals.json`) |
 | **workarounds** | ① `mmcv-lite 2.1.0` instead of a full `mmcv` source build; ② `setuptools < 81` for `pkg_resources`; ③ `numpy 1.26.4` for the `xtcocotools` ABI; ④ `opencv-python-headless` on Linux; ⑤ `torch.serialization.add_safe_globals` with a bounded allow-list so torch 2.6 keeps `weights_only=True`; ⑥ CWD-independent dataset-metainfo resolution |
 
 ## Evidence
@@ -36,7 +36,8 @@
 | --- | --- |
 | `reports/environment_checks.json` | **12/12 checks pass**: torch, MMCV window, MMEngine window, mmpose 1.0.0, NumPy 1.x ABI, `xtcocotools` import, `pkg_resources`, mmpose inference API + `SRPoseHead` + `MSRAHeatmap`, config present, version ranges cross-checked against the fork's own `__init__.py` |
 | `reports/engine6_control_run.json` | the control run: 38 landmarks, 20.38 s, 1.82 GB, CPU-only — **random weights**, so coordinates are withheld |
-| `reports/checkpoint_globals.json` | *(to be produced on the operator's machine)* the real checkpoint's pickle globals + sha256/size gate |
+| `reports/diagnostics_globals.json` | **the §10 mandated sequence**: C1 enumeration (the probe's unexplained set = exactly the operator's two globals), C2 pre-repair refusal, C3 `weights_only=True` load with intact structure, C3b the engine's own `init_model` path, C4 negative control |
+| `reports/checkpoint_globals.json` | *(to be produced on the operator's machine)* the real checkpoint's pickle globals + sha256/size gate (+ `--context` usage evidence per AUDIT.md §10) |
 | `reports/engine6_run.json` | *(to be produced on the operator's machine)* the real run with the supplied weights |
 
 ## Why this is not 🟢
@@ -74,3 +75,12 @@ allow-list registration is judged unnecessary, which it is not on torch ≥ 2.6.
 4. **The pretrained backbone URL is never fetched.** `mmpose.apis.init_model` nulls
    `config.model.backbone.init_cfg` itself, so no download from `download.openmmlab.com`
    happens; the checkpoint supplies all weights.
+5. **Both checkpoint scanners had a blind spot** (fixed in the E2E-repair commit,
+   §10): the lab's scan saw only protocol-0 `GLOBAL` (a torch.save() checkpoint is
+   protocol 2+ `STACK_GLOBAL`), and the engine's stack tracking fabricated phantom
+   globals from memoised operands. `scripts/pickle_scan.py` is the canonical
+   protocol-correct scanner; the engine carries a kept-in-step copy
+   (`safeload.scan_detailed`). The probe run also showed why `__builtin__.getattr`
+   sits in the real stream: torch's pickler stores the `statistics_methods` dict's
+   class-method values as `REDUCE(getattr, (Class, 'name'))` — one gated attribute
+   read, proven safe in §10.

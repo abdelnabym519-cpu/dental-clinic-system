@@ -246,7 +246,12 @@ python scripts\check_environment.py --repo CLdetection2023 --json-out reports\en
 python CLdetection2023\step1_test_mmpose.py
 
 # 2) identity + security gate on the real checkpoint (reads, never executes)
+#    --context prints the opcodes following each global reference — the
+#    usage evidence §10 requires before the real load: confirm getattr is
+#    used as getattr(<constructed object>, '<literal>') and HistoryBuffer as
+#    a plain value. If anything else appears, STOP and send the JSON.
 python scripts\inspect_checkpoint.py --checkpoint model\model_pretrained_on_train_and_val.pth `
+    --context `
     --json-out reports\checkpoint_globals.json
 
 # 3) get the real input image (Apache-2.0, from the challenge organisers)
@@ -269,7 +274,94 @@ Comparing the prediction against it is a *sanity* measure on one image — it is
 challenge metric (that needs the gated 400-image validation set, and MRE in mm needs the
 per-image pixel spacing, which the test stack does not carry).
 
-## 10. Boundaries
+## 10. Checkpoint-global resolution (mandated sequence, executed 2026-09-28)
+
+The operator's scan of the real checkpoint (sha256 `fb1a781a…`, 268,846,952 B)
+found exactly two globals the bounded allow-list did not name:
+`__builtin__.getattr` and `mmengine.logging.history_buffer.HistoryBuffer`.
+The mandated sequence — enumerate → identify → resolve from the installed
+runtime → `weights_only=True` load → inspect structure → **only then** decide
+a bounded allow-list change — was executed as follows. `weights_only=False`
+and blanket registration were never used; the fail-closed gate stays.
+
+**What the sandbox could and could not do.** The real file is on the
+operator's machine; its official distribution route (Google Drive, per the
+repository README) is egress-blocked here and no mirror exists (checked).
+So the sequence ran on a **structurally-equivalent probe**: the real model
+built from the pinned repository config (HRNet-W48 + SRPoseHead, 38 joints,
+1,969 tensors), plus `meta` carrying a real mmengine 0.10.7 `HistoryBuffer`
+instance — the contract the operator's scan establishes for the real file —
+written with the same `torch.save()`.
+
+**The probe reproduced the real file's global signature exactly.**
+`scripts/diagnose_globals.py` (record: `reports/diagnostics_globals.json`):
+
+| step | result |
+| --- | --- |
+| C1 — enumerate (engine scanner) | 11 globals; unexplained by the **pre-repair** policy: exactly `['__builtin__.getattr', 'mmengine.logging.history_buffer.HistoryBuffer']` — the operator's two, and nothing else |
+| C2 — pre-repair gate | refuses (fail-closed proof) |
+| C3 — extended gate + `torch.load(weights_only=True)` | loads; 1,969/1,969 tensors intact and finite; `meta['history']` reconstructs as a real `HistoryBuffer` instance |
+| C3b — the engine's own path `init_model(checkpoint=…)` | loads, 66,816,510 parameters |
+| C4 — negative control | a payload naming `builtins.eval` is refused by the gate |
+
+**`mmengine.logging.history_buffer.HistoryBuffer` — resolved and proven.**
+From the pinned mmengine 0.10.7 install (Part A of the diagnostic): the
+pickled instance state is `(int, two numpy arrays, a dict mapping
+'min'/'max'/'current'/'mean' to class method references)`. Reconstruction is
+the default `__setstate__` (dict update) — no code from the checkpoint runs.
+Its four dotted method names are STACK_GLOBAL attribute reads on the
+memoised class object — no import, no `find_class` gate (Part A raw-opcode
+trace). Registering the real class from the installed runtime is therefore
+sufficient and safe.
+
+**`__builtin__.getattr` — resolved and proven from the probe stream.**
+Raw-opcode trace of the probe's `data.pkl` (offset 317225):
+
+```
+GLOBAL 'mmengine.logging.history_buffer HistoryBuffer'   (gated; registered)
+…memoised as slot 17558…
+GLOBAL '__builtin__ getattr'                             (gated; registered)
+BINGET 17558                                             (the class object)
+'…min'  TUPLE2  REDUCE                                   → getattr(Class, 'min')
+```
+
+`getattr` appears in the stream **exactly once**, as a REDUCE callable
+re-fetching class methods for the `statistics_methods` dict. Under
+`weights_only=True` both operands are themselves gated (the class via its
+registered GLOBAL; the name is a protocol literal), so the only executable
+code the load admits is the C `getattr` itself — an attribute **read** on an
+object that was already constructed from allow-listed globals. `getattr` is
+deliberately not in `FORBIDDEN_BUILTINS` (that list is the code-execution
+primitives: `eval`/`exec`/`compile`/`open`/`__import__`/…); it was left there,
+unchanged.
+
+**The bounded change (identical in all three gate copies).**
+
+| addition | why |
+| --- | --- |
+| `mmengine.logging.history_buffer.HistoryBuffer` | the real checkpoint's `meta` carries one (operator's scan); pure data container (Part A) |
+| `builtins.getattr` / `__builtin__.getattr` | the real checkpoint names it once, as `getattr(Class, 'min')` (probe trace); attribute read only |
+| `torch.storage._load_from_bytes` | torch 2.6's zip pickling references this storage-bytes reader for every tensor (Part B); pure data |
+
+No other entry was added; nothing was removed; `FORBIDDEN_BUILTINS` and
+`FORBIDDEN_MODULES` are untouched. Final confirmation on the real file —
+that its `getattr` usage matches the probe's — is captured by step 2 of §9
+below (`--context` prints the opcodes following each reference); if it does
+not match, stop before step 4.
+
+**Scanner repair (same commit).** Both earlier scanners had blind spots:
+the lab's saw only protocol-0 `GLOBAL` (torch.save writes protocol 2+
+`STACK_GLOBAL` — it would have reported nothing in a real checkpoint), and
+the engine's stack tracking paired stale strings into phantom globals
+(`min.HistoryBuffer.min` and friends) whenever a STACK_GLOBAL's module
+operand came from a MEMO. `scripts/pickle_scan.py` now emulates the stack
+and memo table: string pushes are strings, everything else is a sentinel,
+and a STACK_GLOBAL over a memoised object is reported as an
+object-attribute reference, not a global. Engine copy:
+`ai/engines/orthodontic-ai/app/safeload.py::scan_detailed` (kept in step;
+regression tests in both suites).
+
+## 11. Boundaries
 
 - No training, fine-tuning, conversion, ONNX export or optimisation. The published
   checkpoint is used as-is.
