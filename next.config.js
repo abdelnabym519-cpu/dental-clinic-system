@@ -14,6 +14,14 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Next buffers the request body whenever middleware is in the path (this
+    // repo has auth middleware) and caps that buffer at 10MB by default. Any
+    // larger multipart upload is truncated and req.formData() fails with
+    // "TypeError: Failed to parse body as FormData", which the imaging route
+    // surfaces as a 400 "Expected multipart/form-data". The imaging upload
+    // route accepts 3D meshes up to 200MB, so the buffer must be at least
+    // that large. (Default: 10MB.)
+    proxyClientMaxBodySize: '200mb',
   },
   // Production optimizations
   poweredByHeader: false,

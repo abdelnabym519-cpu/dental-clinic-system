@@ -410,8 +410,14 @@ def validate_orthodontic_response(body: dict, expected_checksum: str | None = No
             score = None
         else:
             score = _finite(score_raw, f"landmarks[{i}].score")
-            if not 0.0 <= score <= 1.0:
+            # The pose estimator's per-joint confidence can overshoot 1.0 by a
+            # few percent (observed 1.038193 on a real run). Tolerate a small
+            # band and clamp to [0, 1] so one borderline landmark cannot fail
+            # the whole 38-point analysis; scores far outside the band are
+            # still garbage and stay rejected (fail closed).
+            if score < -0.05 or score > 1.05:
                 raise ValidationResultError(f"landmarks[{i}].score out of range: {score}")
+            score = min(max(score, 0.0), 1.0)
 
         landmarks.append({
             "landmark_id": lid,
