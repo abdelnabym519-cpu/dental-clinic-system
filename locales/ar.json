@@ -5511,5 +5511,14 @@
   "Invalid profile": "الملف غير صالح",
   "Invalid tooth number": "رقم السن غير صالح",
   "Context build failed": "فشل بناء السياق",
+  "source is required": "مصدر المعرفة مطلوب",
+  "source.sourceKey is required": "معرّف المصدر (source.sourceKey) مطلوب",
+  "content is required": "محتوى المصدر مطلوب",
+  "content exceeds the maximum allowed size": "حجم المحتوى يتجاوز الحد الأقصى المسموح",
+  "source.sourceType is invalid": "نوع المصدر (source.sourceType) غير صالح",
+  "source.authorityTier is invalid": "مستوى موثوقية المصدر (source.authorityTier) غير صالح",
+  "source.domain must be a known dental knowledge domain": "يجب أن يكون مجال المصدر (source.domain) من مجالات المعرفة الطبية المعتمدة",
+  "source.language must be \"en\" or \"ar\"": "يجب أن تكون لغة المصدر \"en\" أو \"ar\"",
+  "source.scope is invalid": "نطاق المصدر (source.scope) غير صالح",
   "section.aiChat.messageRequired": "الرسالة مطلوبة"
 }

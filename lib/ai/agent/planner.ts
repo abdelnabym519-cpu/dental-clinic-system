@@ -23,6 +23,8 @@ export interface PlanContext {
   operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | null
   /** Extra validated inputs for the operational tool (e.g. today's date). */
   operationalInput: Record<string, unknown>
+  /** Phase 4 — the user's original message (for the knowledge query). */
+  message: string
   limit: AgentLimits
 }
 
@@ -45,6 +47,17 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
   }
 
   const profileTool = task.contextProfile ? toolNamesByProfile(task.contextProfile) : null
+  const knowledge = task.knowledge?.needed ? task.knowledge : null
+
+  /** Phase 4 — the bounded knowledge tool (server-resolved scope). */
+  const addKnowledge = () => {
+    if (!knowledge) return
+    add('retrieve_dental_knowledge', {
+      question: ctx.message,
+      ...(knowledge.domain ? { domain: knowledge.domain } : {}),
+      maxResults: 5,
+    }, 'retrieve dental knowledge')
+  }
 
   switch (task.taskType) {
     case 'OUT_OF_DOMAIN':
@@ -53,9 +66,18 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
 
     case 'INFORMATIONAL':
     case 'CLINICAL_ANALYSIS':
-    case 'IMAGING_ANALYSIS': {
+    case 'IMAGING_ANALYSIS':
+    case 'KNOWLEDGE': {
+      // Phase 4 — pure knowledge question (no patient involved): knowledge
+      // only; no patient context is fetched and none is fabricated.
+      if (knowledge && !ctx.hasPatient) {
+        addKnowledge()
+        return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'knowledge_plan_failed' }
+      }
       if (!ctx.hasPatient) return { plan: null, reason: 'patient_required' }
       if (profileTool && !ctx.hasContext) add(profileTool, {}, 'retrieve context')
+      // Phase 4 — hybrid: patient facts AND dental knowledge (kept separate).
+      addKnowledge()
       return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'context_already_retrieved' }
     }
 
@@ -79,6 +101,9 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
         const tool = task.taskType === 'MULTI_STEP' && task.contextProfile === 'FULL_360' ? 'get_patient_360' : profileTool
         if (tool) add(tool, {}, 'retrieve context')
       }
+      // Phase 4 — hybrid knowledge alongside an action (e.g. "book a
+      // follow-up and explain the periodontitis guidelines").
+      addKnowledge()
       // The action step is only SCHEDULED when parameters are complete —
       // otherwise the SAFETY stage proposes it (DRAFT) without execution.
       if (ctx.actionTool && ctx.actionParamsComplete) {

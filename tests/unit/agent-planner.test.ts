@@ -25,7 +25,8 @@ const task = (over = {}): AgentTask => ({
 const ctx = (over = {}) => ({
   task: task(), hasPatient: true, hasContext: false,
   actionIntent: null, actionTool: null, actionParams: {},
-  actionParamsComplete: false, operationalTopic: null, limit: LIMITS,
+  actionParamsComplete: false, operationalTopic: null,
+  message: 'test question about the patient', limit: LIMITS,
   ...over,
 })
 

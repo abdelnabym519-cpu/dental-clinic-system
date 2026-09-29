@@ -108,6 +108,7 @@ model Hospital {
   aiSkillExecutions   AISkillExecution[]
   aiInsights          AIInsight[]
   aiActionApprovals   AIActionApproval[] // Phase 1 — AI action safety ledger
+  knowledgeSources    KnowledgeSource[]  // Phase 4 — dental knowledge layer (TENANT scope only)
   patientRiskScores   PatientRiskScore[]
   patientPortalEnabled Boolean   @default(false)
 
@@ -3417,4 +3418,86 @@ model AIAnalysisJob {
   @@index([studyId])
   @@index([status])
   @@index([hospitalId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 — Dental Knowledge Layer (additive). Three new tables, no existing
+// table/column/index altered. Knowledge is GENERAL dental information —
+// patient-specific data is never indexed here (§8 patient separation).
+// ---------------------------------------------------------------------------
+
+model KnowledgeSource {
+  id            String   @id @default(cuid())
+  sourceKey     String // stable identity: publisher-slug or URL
+  title         String
+  publisher     String
+  authors       String?
+  publicationDate DateTime?
+  lastUpdated   DateTime?
+  reference     String? // URL / citation string — stored only, server-authoritative
+  sourceType    String // GUIDELINE | TEXTBOOK | JOURNAL_ARTICLE | CONSENSUS_STATEMENT | REGULATORY | SYSTEMATIC_REVIEW | EDUCATIONAL | OTHER
+  authorityTier String // TIER_1..TIER_4
+  domain        String // primary taxonomy domain (top level)
+  subtopic      String? // finer taxonomy category, if known
+  jurisdiction  String? // country / organization — null = UNKNOWN (never inferred)
+  language      String // ISO 639-1 of the original content
+  version       String? // known version label — null = UNKNOWN
+  license       String? // usage metadata, if known
+  scope         String   @default("GLOBAL") // GLOBAL | TENANT (private clinic knowledge)
+  hospitalId    String? // set only for TENANT scope
+  status        String   @default("PUBLISHED") // PUBLISHED | RETIRED | REJECTED
+  rejectReason  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  documents KnowledgeDocument[]
+  hospital  Hospital?    @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceKey, version])
+  @@index([status, domain, authorityTier])
+  @@index([hospitalId])
+}
+
+model KnowledgeDocument {
+  id          String   @id @default(cuid())
+  sourceId    String
+  version     String // document version label ("1" when source.version unknown)
+  title       String
+  contentText String   @db.LongText // normalized content — stored as DATA only
+  contentHash String // sha256 of normalized content
+  language    String
+  wordCount   Int
+  status      String   @default("PUBLISHED") // PUBLISHED | SUPERSEDED | REJECTED
+  ingestedAt  DateTime @default(now())
+  ingestion   Json? // per-stage pipeline observability (no content)
+  supersededByKnowledgeDocumentId String?
+
+  source   KnowledgeSource    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chunks   KnowledgeChunk[]
+  supersededBy KnowledgeDocument? @relation("KnowledgeVersionChain", fields: [supersededByKnowledgeDocumentId], references: [id], onDelete: SetNull)
+  supersededFrom KnowledgeDocument[] @relation("KnowledgeVersionChain")
+
+  @@unique([sourceId, version])
+  @@unique([contentHash])
+  @@index([status])
+}
+
+model KnowledgeChunk {
+  id         String  @id @default(cuid())
+  documentId String
+  sourceId   String // denormalized for cheap tenant/domain filtering
+  domain     String // primary domain
+  subtopic   String? // refined category when detected
+  section    String? // heading path (semantic boundary)
+  position   Int // order within document
+  text       String // chunk text — DATA only, never instructions
+  tokenCount Int
+  checksum   String // sha256 of chunk text
+  language   String
+
+  document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, position])
+  @@index([sourceId, domain])
+  @@index([checksum])
 }

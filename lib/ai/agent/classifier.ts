@@ -13,7 +13,8 @@
  */
 
 import { isValidFdi } from '@/lib/ai/context/fdi'
-import type { AgentTask, AgentTaskType, AgentDomain, ContextProfileRef } from './types'
+import { detectDomains } from '@/lib/ai/knowledge/taxonomy'
+import type { AgentTask, AgentTaskType, AgentDomain, ContextProfileRef, KnowledgeSignal } from './types'
 
 // ---------------------------------------------------------------------------
 // Domain vocabulary (dental + clinic operations only)
@@ -30,6 +31,7 @@ const DENTAL_TERMS = [
   'orthodont', 'cavity', 'caries', 'filling', 'scale', 'scaling', 'cleaning',
   'anesthesia', 'anesthetic', 'pain', 'gum', 'gums', 'wisdom', 'denture', 'bridge',
   'implant', 'implants', 'veneer', 'whitening', 'periodont', 'pulp', 'caries',
+  'dry socket', 'alveolar', 'extraction site',
   'queue', 'waiting', 'check-in', 'checkin', 'overdue', 'schedule', 'staff',
   'inventory', 'stock', 'revenue', 'referral', 'odontogram', 'chart', 'finding',
   'findings', 'diagnosis', 'symptom', 'symptoms', 'complaint',
@@ -241,6 +243,53 @@ const SIGNALS = {
 const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين']
 
 // ---------------------------------------------------------------------------
+// Phase 4 — knowledge (RAG) intent: general dental knowledge questions
+// (guidelines / criteria / protocols / definitions), as opposed to "show me
+// this patient's records". The domain gate already guarantees dental context.
+// ---------------------------------------------------------------------------
+
+/**
+ * Knowledge intent. The STRONG subset is clinically specific ("guidelines",
+ * "criteria", "protocol", …) — a strong intent may pass the dental domain
+ * gate even when no known dental term is present, because the knowledge
+ * base is dentistry-only and non-matching questions return a typed
+ * NO_RESULTS. WEAK intents ("what is …", "definition", …) additionally
+ * require a dental term, so general questions ("what is the weather")
+ * remain OUT_OF_DOMAIN (Phase 3 contract).
+ */
+const KNOWLEDGE_INTENT_STRONG = [
+  'guideline', 'guidelines', 'criteria', 'criterion', 'protocol', 'standard of care',
+  'evidence-based', 'evidence based', 'causes of', 'complications of',
+  'differential diagnosis', 'diagnostic criteria', 'indications',
+  'contraindications', 'contraindicated', 'prevention of', 'prognosis of',
+  // AR
+  'معايير', 'معايير التشخيص', 'بروتوكول', 'التوصيات',
+  'كيف يعالج', 'أسباب', 'الوقاية من', 'موانع', 'ما هو', 'ما هي',
+]
+const KNOWLEDGE_INTENT = [
+  ...KNOWLEDGE_INTENT_STRONG,
+  'definition', 'define ', 'what is ', 'what are ',
+  'why does ', 'why do ', 'how is ', 'how does ', 'differentials',
+  'لماذا', 'ماذا أفعل',
+]
+
+const EDUCATIONAL_INTENT = [
+  'for patients', 'patient education', 'home care', 'aftercare', 'what should i do',
+  'brush', 'cleaning tips', 'daily care', 'نصائح', 'الرعاية المنزلية', 'ماذا أفعل',
+]
+
+export function detectKnowledgeSignal(m: string, patientInvolved: boolean): KnowledgeSignal | null {
+  const hit = KNOWLEDGE_INTENT.some((t) => m.includes(t))
+  if (!hit) return null
+  return {
+    needed: true,
+    hybrid: patientInvolved,
+    useCase: EDUCATIONAL_INTENT.some((t) => m.includes(t)) ? 'educational' : 'clinical',
+    domain: null, // filled by the taxonomy detection below
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main classifier
 // ---------------------------------------------------------------------------
 
@@ -299,8 +348,17 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   // First-person reference = the speaker's own record (self-scope downstream).
   const firstPerson = /\bmy\b|\bme\b|^أنا\s|أنا\b|(^|\s)لي(\s|$)/.test(m)
 
-  // 1 — Domain gate.
-  if (!isInDentalDomain(input.message, hasMetadata)) {
+  // 1 — Domain gate. A STRONG knowledge intent (guidelines/criteria/
+  // protocol/…) passes the gate even without a known dental term: the
+  // knowledge base is dentistry-only, so a non-matching question returns a
+  // typed NO_RESULTS instead of a fabricated answer. Weak intents
+  // ("what is …") still require a dental term (Phase 3 contract: general
+  // questions stay OUT_OF_DOMAIN).
+  const strongKnowledgeIntent = KNOWLEDGE_INTENT_STRONG.some((t) => m.includes(t))
+  if (
+    !isInDentalDomain(input.message, hasMetadata) &&
+    !(detectKnowledgeSignal(m, false) !== null && strongKnowledgeIntent)
+  ) {
     return {
       task: baseTask({ taskType: 'OUT_OF_DOMAIN', confidence: 0.95 }),
       action: null, teeth, patientName: null, needsClarification: null,
@@ -320,7 +378,26 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   }
   const conjunctionCount = CONJUNCTIONS.filter((c) => m.includes(c)).length
 
-  const patientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson
+  const rawPatientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson
+
+  // Phase 4 — knowledge (RAG) intent: general dental knowledge question?
+  // (The domain gate above already guarantees dental context.) A domain
+  // filter is only applied when detection is unambiguous (≥2 hits) — a wrong
+  // domain guess hurts recall more than it helps.
+  const knowledgeDetected = detectKnowledgeSignal(m, rawPatientInvolved)
+  // A knowledge question is hybrid ONLY when the patient is explicitly in
+  // scope (id, FDI, case, treatment, first person, or a client name hint).
+  // A name merely extracted from the question text ("criteria for
+  // periodontitis") is a lookup hint — not a patient scope.
+  const explicitPatientScope =
+    input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null ||
+    firstPerson || input.patientNameHint !== null
+  const patientInvolved = knowledgeDetected && !explicitPatientScope ? false : rawPatientInvolved
+  const knowledge = knowledgeDetected ? detectKnowledgeSignal(m, patientInvolved) : null
+  if (knowledge) {
+    const detected = detectDomains(input.message)
+    knowledge.domain = detected.length && detected[0].hits >= 2 ? detected[0].domain : null
+  }
 
   // 3 — MULTI_STEP: action + ANOTHER substantive topic (the action's own
   //    object doesn't count), or ≥2 topics with a conjunction.
@@ -416,6 +493,19 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       confidence: 0.75,
       missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
+  } else if (knowledge) {
+    // Phase 4 — general dental knowledge question (RAG). No patient context
+    // is fabricated; PATIENT_OVERVIEW is attached only for a hybrid
+    // (explicitly patient-scoped) question.
+    task = baseTask({
+      taskType: 'KNOWLEDGE',
+      // Agent-level domain is always 'knowledge'; the finer-grained taxonomy
+      // domain (knowledge.domain) is carried on the signal for retrieval.
+      domains: ['knowledge'],
+      contextProfile: patientInvolved ? 'PATIENT_OVERVIEW' : null,
+      patientInvolved,
+      confidence: 0.8,
+    })
   } else {
     // In-domain but ambiguous — UNKNOWN (LLM fallback or clarification).
     task = baseTask({
@@ -425,6 +515,9 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : ['what exactly is being requested'],
     })
   }
+
+  // Phase 4 — attach the knowledge signal to whatever task was chosen.
+  if (knowledge) task = { ...task, knowledge }
 
   // Structural scope always wins when the client pinned a resource (a pin is
   // stronger than a vague phrase) — except for action/multi-step plans.
@@ -496,7 +589,7 @@ function pickProfile(
 // LLM fallback (enum-constrained) — only for in-domain UNKNOWN
 // ---------------------------------------------------------------------------
 
-const TASK_ENUM_JSON = `{"taskType":"INFORMATIONAL|CLINICAL_ANALYSIS|IMAGING_ANALYSIS|OPERATIONAL|ACTION_REQUEST|MULTI_STEP|OUT_OF_DOMAIN","patientInvolved":true|false,"toothInvolved":true|false,"confidence":0.0-1.0}`
+const TASK_ENUM_JSON = `{"taskType":"INFORMATIONAL|CLINICAL_ANALYSIS|IMAGING_ANALYSIS|OPERATIONAL|ACTION_REQUEST|MULTI_STEP|KNOWLEDGE|OUT_OF_DOMAIN","patientInvolved":true|false,"toothInvolved":true|false,"confidence":0.0-1.0}`
 
 export function llmClassifyPrompt(message: string, taskEnum: string): { role: 'system' | 'user'; content: string }[] {
   return [

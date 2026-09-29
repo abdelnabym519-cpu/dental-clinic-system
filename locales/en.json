@@ -5511,5 +5511,14 @@
   "Invalid profile": "Invalid profile",
   "Invalid tooth number": "Invalid tooth number",
   "Context build failed": "Context build failed",
+  "source is required": "source is required",
+  "source.sourceKey is required": "source.sourceKey is required",
+  "content is required": "content is required",
+  "content exceeds the maximum allowed size": "content exceeds the maximum allowed size",
+  "source.sourceType is invalid": "source.sourceType is invalid",
+  "source.authorityTier is invalid": "source.authorityTier is invalid",
+  "source.domain must be a known dental knowledge domain": "source.domain must be a known dental knowledge domain",
+  "source.language must be \"en\" or \"ar\"": "source.language must be \"en\" or \"ar\"",
+  "source.scope is invalid": "source.scope is invalid",
   "section.aiChat.messageRequired": "message is required"
 }

@@ -56,6 +56,7 @@ export const AGENT_TASK_TYPES = [
   'OPERATIONAL',
   'ACTION_REQUEST',
   'MULTI_STEP',
+  'KNOWLEDGE',
   'OUT_OF_DOMAIN',
   'UNKNOWN',
 ] as const
@@ -63,7 +64,7 @@ export type AgentTaskType = (typeof AGENT_TASK_TYPES)[number]
 
 export const AGENT_DOMAINS = [
   'patient', 'dental', 'clinical', 'imaging', 'treatment', 'prescription',
-  'billing', 'scheduling', 'staff', 'inventory', 'lab',
+  'billing', 'scheduling', 'staff', 'inventory', 'lab', 'knowledge',
 ] as const
 export type AgentDomain = (typeof AGENT_DOMAINS)[number]
 
@@ -91,6 +92,22 @@ export interface AgentTask {
   classifiedBy: 'deterministic' | 'llm'
   /** What is missing to answer precisely (drives clarification). */
   missingInfo: string[]
+  /**
+   * Phase 4 — dental knowledge (RAG) signal. `needed` when the question
+   * asks for general dental knowledge (guidelines/criteria/protocols), not
+   * only the patient's records. `hybrid` = patient facts + knowledge in one
+   * answer (kept visibly separate in the response). Server decides the use
+   * case tiers; the LLM/client cannot.
+   */
+  knowledge?: KnowledgeSignal | null
+}
+
+export interface KnowledgeSignal {
+  needed: boolean
+  hybrid: boolean
+  useCase: 'clinical' | 'educational'
+  /** Taxonomy domain detected for the question (validated or null). */
+  domain: import('../knowledge/taxonomy').KnowledgeDomain | null
 }
 
 /** Indirection so the agent package does not import Phase 2 types eagerly. */
@@ -280,6 +297,19 @@ export interface AgentState {
   uncertainty: string[]
   missingInfo: string[]
   warnings: string[]
+  /** Phase 4 — last successful knowledge package (for ANALYZE). */
+  knowledgePackage?: import('../knowledge/types').KnowledgeEvidencePackage | null
+  /** Phase 4 — knowledge observability (no content, no CoT). */
+  knowledge?: {
+    queryId: string
+    ok: boolean
+    failureCode: string | null
+    candidateCount: number
+    selectedCount: number
+    sourceCount: number
+    retrievalMs: number
+    citationCount: number
+  } | null
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +324,17 @@ export interface AgentTrace {
   totalMs: number
   modelCalls: number
   modelLatencyMs: number
+  /** Phase 4 — knowledge retrieval observability (no content, no CoT). */
+  knowledge?: {
+    queryId: string
+    ok: boolean
+    failureCode: string | null
+    candidateCount: number
+    selectedCount: number
+    sourceCount: number
+    retrievalMs: number
+    citationCount: number
+  } | null
   toolCalls: {
     index: number
     tool: string
@@ -336,6 +377,29 @@ export interface AgentResponse {
   warnings: string[]
   limitHits: string[]
   trace: AgentTrace
+  /** Phase 4 — structured dental-knowledge evidence (null when not used). */
+  evidence?: AgentEvidenceSummary | null
+  /** Phase 4 — deterministic grounding check of the answer's citations. */
+  grounding?: GroundingSummary | null
+}
+
+/** Phase 4 — evidence summary in the response (contract-safe subset). */
+export interface AgentEvidenceSummary {
+  ok: boolean
+  queryId: string
+  resultCount: number
+  sourceCount: number
+  failureCode?: string | null
+  emptyReason?: string | null
+  conflicts: Array<{ topic: string; sourceIds: string[]; note: string }>
+  citations: import('../knowledge/types').KnowledgeCitation[]
+}
+
+/** Phase 4 — grounding (deterministic, no LLM). */
+export interface GroundingSummary {
+  citedIds: string[]
+  unsupportedCitations: string[]
+  factClass: 'KNOWN_FROM_SOURCE' | 'KNOWN_FROM_PATIENT_RECORD' | 'MODEL_INTERPRETATION' | 'UNKNOWN'
 }
 
 // ---------------------------------------------------------------------------
@@ -382,4 +446,6 @@ export interface AgentDeps {
   limits: AgentLimits
   /** Injectable clock (deterministic tests). */
   now: () => Date
+  /** Phase 4 — knowledge store (injectable for tests; defaults to Prisma). */
+  knowledgeStore?: import('../knowledge/types').KnowledgeStore
 }

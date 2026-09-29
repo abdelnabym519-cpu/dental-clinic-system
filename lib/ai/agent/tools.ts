@@ -18,6 +18,10 @@
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
+import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
+import { createPrismaKnowledgeStore } from '@/lib/ai/knowledge/store'
+import { isKnowledgeDomain } from '@/lib/ai/knowledge/taxonomy'
+import type { KnowledgeEvidencePackage, KnowledgeStore } from '@/lib/ai/knowledge/types'
 import type { AgentToolDefinition, AgentToolResult, AgentDomain, RiskLevel } from './types'
 
 export interface ToolRuntime {
@@ -32,6 +36,8 @@ export interface ToolRuntime {
   studyId: string | null
   treatmentNo: string | null
   now: Date
+  /** Phase 4 — knowledge store (injectable for tests; defaults to Prisma). */
+  knowledgeStore?: KnowledgeStore
   /** Phase 1 pipeline entry point (the ONLY write path). */
   runAction: (intent: string, params: Record<string, string>) => Promise<{
     status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
@@ -83,6 +89,33 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
   get_followup_context: contextTool('get_followup_context', 'Follow-up context: due follow-ups, notes, appointments', 'clinical', 'FOLLOW_UP'),
   get_patient_timeline: contextTool('get_patient_timeline', 'Unified clinical timeline (bounded, deterministic order)', 'clinical', 'TIMELINE'),
   get_patient_360: contextTool('get_patient_360', 'Complex case review: all bounded sections including timeline', 'patient', 'FULL_360'),
+
+  // ── Phase 4 — Dental knowledge (RAG) ──────────────────────────────────
+  retrieve_dental_knowledge: {
+    name: 'retrieve_dental_knowledge',
+    description: 'Bounded retrieval of structured dental knowledge evidence (guidelines/textbooks/education) with machine-readable citations. Clinical use is limited to TIER_1+TIER_2 sources; patient data is never indexed or returned.',
+    domain: 'knowledge',
+    writeClass: 'READ',
+    riskLevel: 'NONE',
+    requiredRoles: [...STAFF, 'PATIENT'],
+    requiresPatient: false,
+    viaActionPipeline: false,
+    validateInput: (i) =>
+      typeof i.question !== 'string' || !i.question.trim()
+        ? 'question is required'
+        : i.question.length > 300
+          ? 'question too long (max 300 chars)'
+          : i.domain !== undefined && !isKnowledgeDomain(i.domain)
+            ? 'unknown knowledge domain'
+            : i.maxResults !== undefined && (typeof i.maxResults !== 'number' || !Number.isInteger(i.maxResults) || i.maxResults < 1 || i.maxResults > 10)
+              ? 'maxResults must be an integer 1..10'
+              : i.language !== undefined && i.language !== 'en' && i.language !== 'ar'
+                ? 'language must be en or ar'
+                : OK(),
+    timeoutMs: 8000,
+    maxRetries: 0,
+    idempotent: true,
+  },
 
   // ── Clinic operations (bounded read-only, tenant-scoped) ──────────────
   get_appointments: {
@@ -313,6 +346,10 @@ export async function executeTool(
           sources: extractSources(ctx),
         }
       }
+      // Phase 4 — dental knowledge (bounded, tenant-scoped, citations server-built).
+      if (name === 'retrieve_dental_knowledge') {
+        return await knowledgeTool(input, rt)
+      }
       // Clinic read tools (bounded, tenant-scoped).
       return await clinicTool(name, input, rt)
     }
@@ -368,6 +405,32 @@ function apptView(a: ApptRow) {
     doctorName: a.doctor ? `${a.doctor.firstName} ${a.doctor.lastName}` : null,
     chiefComplaint: a.chiefComplaint, // PATIENT_REPORTED
   }
+}
+
+/**
+ * Phase 4 — dental knowledge retrieval. Bounded, tenant-scoped, READ-only.
+ * The scope (tenant + tier eligibility + use case) is resolved SERVER-side
+ * from the session — never from tool parameters (§27). Returns a structured
+ * evidence package with machine-readable, server-built citations.
+ */
+async function knowledgeTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+  const store: KnowledgeStore = rt.knowledgeStore ?? createPrismaKnowledgeStore(rt.client)
+  // Server-authoritative: clinical staff get TIER_1+TIER_2; the patient
+  // portal gets the educational set (TIER_1..TIER_3). Never a parameter.
+  const useCase: 'clinical' | 'educational' = rt.role === 'PATIENT' ? 'educational' : 'clinical'
+  const pkg: KnowledgeEvidencePackage = await retrieveKnowledge(
+    {
+      question: String(input.question).trim(),
+      domain: typeof input.domain === 'string' ? input.domain : null,
+      language: typeof input.language === 'string' ? input.language : null,
+      maxResults: typeof input.maxResults === 'number' ? input.maxResults : 5,
+      useCase,
+      hospitalId: rt.hospitalId,
+    },
+    store,
+    { now: () => rt.now }
+  )
+  return { kind: 'knowledge' as const, package: pkg }
 }
 
 async function clinicTool(name: string, input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {

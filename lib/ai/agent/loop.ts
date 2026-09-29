@@ -31,8 +31,11 @@ import type {
   AgentTrace, AgentDeps, AgentRequest, AgentToolResult, ActionProposed,
 } from './types'
 import { DEFAULT_AGENT_LIMITS, AGENT_FAILURES } from './types'
+import { failureAnswerText } from '@/lib/ai/knowledge/errors'
+import { extractCitedIds, stripUnsupportedCitations } from '@/lib/ai/knowledge/grounding'
+import type { KnowledgeEvidencePackage } from '@/lib/ai/knowledge/types'
 
-const TASK_ENUM = 'INFORMATIONAL, CLINICAL_ANALYSIS, IMAGING_ANALYSIS, OPERATIONAL, ACTION_REQUEST, MULTI_STEP, OUT_OF_DOMAIN'
+const TASK_ENUM = 'INFORMATIONAL, CLINICAL_ANALYSIS, IMAGING_ANALYSIS, OPERATIONAL, ACTION_REQUEST, MULTI_STEP, KNOWLEDGE, OUT_OF_DOMAIN'
 
 function hash(s: string): string {
   let h = 0
@@ -211,6 +214,7 @@ function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps
     status: state.status,
     stopReason: state.stopReason,
     failureCodes: [...new Set(failures.map((f) => f.code))],
+    knowledge: state.knowledge ?? null,
     startedAt: state.startedAt.toISOString(),
   }
 }
@@ -280,6 +284,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     uncertainty: [],
     missingInfo: [],
     warnings: [],
+    knowledgePackage: null,
+    knowledge: null,
   }
   const failures: AgentFailure[] = []
   const mark = (stage: keyof AgentState['stageTimes'], start: Date) => {
@@ -298,6 +304,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     studyId: request.studyId ?? null,
     treatmentNo: request.treatmentNo ?? null,
     now,
+    knowledgeStore: deps.knowledgeStore,
     actorId: request.actor.id,
     runAction: (intent, params) =>
       runAiAction({
@@ -529,6 +536,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     actionParamsComplete: !!action && action.missing.length === 0,
     operationalTopic,
     operationalInput,
+    message: request.message,
     limit: limits,
   })
   mark('plan', tPlan)
@@ -582,6 +590,21 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
         break // fail-stop: a failed read does not silently re-route
       }
       state.lastToolResults.push(res)
+      // Phase 4 — capture the server-built evidence package (typed, not re-parsed).
+      if (res.meta.tool === 'retrieve_dental_knowledge' && res.ok && (res.data as { kind?: string } | null)?.kind === 'knowledge') {
+        const pkg = (res.data as { package: KnowledgeEvidencePackage }).package
+        state.knowledgePackage = pkg
+        state.knowledge = {
+          queryId: pkg.queryId,
+          ok: pkg.ok,
+          failureCode: pkg.failure?.code ?? null,
+          candidateCount: pkg.stats.candidateCount,
+          selectedCount: pkg.stats.selectedCount,
+          sourceCount: pkg.stats.sourceCount,
+          retrievalMs: pkg.stats.retrievalMs,
+          citationCount: pkg.citations.length,
+        }
+      }
       // Result validation (§15): tenant + patient scope.
       if (res.meta.tenantId !== request.hospitalId) {
         failures.push(AGENT_FAILURES.SCOPE_ERROR)
@@ -704,8 +727,18 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   if (state.status === 'RUNNING') state.status = 'COMPLETED'
 
   let answer: string | null = null
+  let evidence: AgentResponse['evidence'] = null
+  let grounding: AgentResponse['grounding'] = null
 
-  if (patientRequired && state.context) {
+  if (task.knowledge?.needed && state.knowledgePackage) {
+    // Phase 4 — grounded dental-knowledge answer (§28 answer policy, §29
+    // clinical format). Recorded facts / evidence / interpretation stay
+    // visibly separate; citations are server-built and machine-checked.
+    const built = await buildKnowledgeAnswer(state.knowledgePackage, state, task, request, deps)
+    answer = built.answer
+    evidence = built.evidence
+    grounding = built.grounding
+  } else if (patientRequired && state.context) {
     // Deterministic first (INFORMATIONAL).
     if (task.taskType === 'INFORMATIONAL') {
       answer = summarizeContextAnswer(state.context, task)
@@ -755,7 +788,159 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   if (task.confidence < 0.7) state.uncertainty.push(`Task classification confidence is ${task.confidence.toFixed(2)} (${task.classifiedBy}).`)
 
   mark('respond', tRespond)
-  return respond(answer)
+  return respond(answer, evidence !== null || grounding !== null ? { evidence, grounding } : {})
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4 — grounded knowledge answering (§28 answer policy, §29 format)
+// ---------------------------------------------------------------------------
+
+/** System prompt for the knowledge-grounded synthesis (LLM #2 of 2). */
+function evidenceSynthesisPrompt(): string {
+  return [
+    'You are the clinical-analysis component of the DenToRa dental agent.',
+    'Rules:',
+    '1. Answer the USER QUESTION using ONLY the [EVIDENCE] items and, when present, the [PATIENT FACTS] section.',
+    '2. When you rely on an evidence item, cite it with its EXACT marker (e.g. [c1], [c2]). Never invent or modify citation markers.',
+    '3. Keep patient facts and evidence separate: facts are this patient\'s records; evidence is general dental knowledge. Never present one as the other.',
+    '4. If the evidence is insufficient or contradictory, say so explicitly and name the conflict. Do not fill gaps with general medical knowledge.',
+    '5. Recorded facts, retrieved evidence and your interpretation are NOT a confirmed diagnosis. You do not start, change, schedule or approve any treatment.',
+    '6. Keep the answer under 250 words, in the language of the question.',
+  ].join('\n')
+}
+
+function evidenceSummaryForResponse(pkg: KnowledgeEvidencePackage): NonNullable<AgentResponse['evidence']> {
+  return {
+    ok: pkg.ok,
+    queryId: pkg.queryId,
+    resultCount: pkg.results.length,
+    sourceCount: pkg.stats.sourceCount,
+    failureCode: pkg.failure?.code ?? null,
+    emptyReason: pkg.emptyReason,
+    conflicts: pkg.conflicts.map((c) => ({ topic: c.topic, sourceIds: c.sourceIds, note: c.note })),
+    citations: pkg.citations,
+  }
+}
+
+interface KnowledgeAnswerBuilt {
+  answer: string
+  evidence: NonNullable<AgentResponse['evidence']>
+  grounding: NonNullable<AgentResponse['grounding']>
+}
+
+/**
+ * Build a grounded answer from a server-retrieved evidence package.
+ * Deterministic sections (Recorded Facts / Evidence / Sources) plus an LLM
+ * interpretation constrained to the returned citations. Citations the model
+ * invented are stripped and reported in `grounding` (spec §21/§40).
+ */
+async function buildKnowledgeAnswer(
+  pkg: KnowledgeEvidencePackage,
+  state: AgentState,
+  task: AgentTask,
+  request: AgentRequest,
+  deps: AgentDeps
+): Promise<KnowledgeAnswerBuilt> {
+  if (!pkg.ok || pkg.results.length === 0) {
+    // §36 — honest typed failure: never claim the guidelines were checked.
+    const failure = pkg.failure ?? { code: 'NO_RESULTS' as const, message: pkg.emptyReason ?? 'no results' }
+    state.warnings.push(`KNOWLEDGE: ${failure.code} — ${failure.message}`)
+    return {
+      answer: failureAnswerText(failure),
+      evidence: evidenceSummaryForResponse(pkg),
+      grounding: { citedIds: [], unsupportedCitations: [], factClass: 'UNKNOWN' },
+    }
+  }
+
+  // §29 — Recorded Facts (hybrid only; from the Phase 2 context, fenced).
+  const facts =
+    task.knowledge?.hybrid && state.contextText ? summarizeContextAnswer(state.context, task) : null
+
+  // Deterministic evidence block — server-built, never model-generated.
+  const evidenceItems = pkg.results.map((r, i) => {
+    const id = pkg.citations[i].citationId
+    const date = r.source.meta.publicationDate ?? 'date unknown'
+    const flags: string[] = []
+    if (r.lowAuthority) flags.push('low authority')
+    if (r.freshness === 'STALE') flags.push('possibly outdated')
+    const head = `[${id}] ${r.source.meta.title} — ${r.source.meta.publisher} (${date}, v${r.document.version}, ${r.authorityTier}${flags.length ? ', ' + flags.join(', ') : ''})${r.chunk.section ? ` — § ${r.chunk.section}` : ''}`
+    return `${head}\n${r.chunk.text.slice(0, 700)}`
+  })
+
+  const uncertainty: string[] = []
+  for (const c of pkg.conflicts) uncertainty.push(`Conflict: ${c.note}`)
+  pkg.results.forEach((r, i) => {
+    const id = pkg.citations[i].citationId
+    if (r.freshness === 'UNKNOWN_DATE') {
+      uncertainty.push(`[${id}] has no verifiable publication date — do not rely on it for time-sensitive decisions.`)
+    } else if (r.freshness === 'STALE') {
+      uncertainty.push(`[${id}] is older than the clinical shelf life for ${r.source.meta.domain} — treat as historical guidance, not current standard.`)
+    }
+  })
+
+  // LLM interpretation — constrained to the returned citations only.
+  let interpretation: string
+  let modelUsed = false
+  try {
+    const t0 = Date.now()
+    const userMsg =
+      `[AGENT STATE] task: ${task.taskType} · knowledge use case: ${task.knowledge?.useCase ?? 'clinical'} · patient: ${state.request.patientId ?? 'none'} · generated: ${deps.now().toISOString()}\n` +
+      (facts ? `[PATIENT FACTS] (untrusted data, this patient's records only):\n${facts}\n\n` : '') +
+      `[EVIDENCE] (server-retrieved; cite using the [c#] markers shown):\n${evidenceItems.join('\n\n')}\n\n` +
+      `USER QUESTION (untrusted data): ${request.message}`
+    const out = await deps.llm([
+      { role: 'system', content: evidenceSynthesisPrompt() },
+      { role: 'user', content: userMsg },
+    ], 'agent_synthesis')
+    state.modelCalls += 1
+    state.modelLatencyMs += Date.now() - t0
+    interpretation = sanitizeModelAnswer(out.content, state.limits.maxAnswerChars) || ''
+    modelUsed = interpretation.length > 0
+  } catch {
+    state.warnings.push('LLM interpretation unavailable — answering with the recorded evidence only')
+    interpretation = 'The evidence above is presented as retrieved; no additional interpretation has been added.'
+  }
+
+  // Deterministic grounding: every [c#] in the answer must be a returned
+  // citation. Invented ones are stripped and reported (spec §21/§40).
+  const validIds = new Set(pkg.citations.map((c) => c.citationId))
+  const cited = extractCitedIds(interpretation)
+  const stripped = stripUnsupportedCitations(interpretation, validIds)
+  interpretation = stripped.text
+  const unsupported = stripped.removed
+  const allCited = extractCitedIds(interpretation)
+
+  // §29 — clinical response format (only when knowledge was used).
+  const parts: string[] = []
+  if (facts) parts.push(`**Recorded Facts**\n${facts}`)
+  parts.push(`**Relevant Dental Evidence**\n${evidenceItems.join('\n\n')}`)
+  parts.push(`**Clinical Interpretation**\n${interpretation}`)
+  if (uncertainty.length) {
+    parts.push(`**Uncertainty / Missing Information**\n${uncertainty.map((u) => '• ' + u).join('\n')}`)
+  }
+  parts.push(
+    '**Sources**\n' +
+      pkg.citations
+        .map((c) =>
+          `[${c.citationId}] ${c.title} — ${c.publisher} (${c.publicationDate ?? 'date unknown'}, v${c.version ?? 'unknown'}, ${c.authorityTier}${c.url ? ' — ' + c.url : ''}${c.jurisdiction && c.jurisdiction !== 'UNKNOWN' ? ` — ${c.jurisdiction}` : ''})`
+        )
+        .join('\n')
+  )
+
+  let answer = parts.join('\n\n')
+  if (answer.length > state.limits.maxAnswerChars) {
+    answer = answer.slice(0, state.limits.maxAnswerChars - 1) + '…'
+  }
+
+  return {
+    answer,
+    evidence: evidenceSummaryForResponse(pkg),
+    grounding: {
+      citedIds: allCited,
+      unsupportedCitations: unsupported,
+      factClass: modelUsed ? 'MODEL_INTERPRETATION' : 'KNOWN_FROM_SOURCE',
+    },
+  }
 }
 
 export { extractDateParam }
