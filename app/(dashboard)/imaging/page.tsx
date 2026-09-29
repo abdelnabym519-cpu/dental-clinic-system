@@ -48,7 +48,7 @@ interface StudyRow {
   latestJob: { id: string; status: string; engine: string } | null
 }
 
-const MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO'] as const
+const MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO', 'CEPHALOMETRIC'] as const
 
 export default function ImagingStudiesPage() {
   const { t } = useLanguage()
@@ -211,7 +211,9 @@ export default function ImagingStudiesPage() {
                               ? t('CBCT')
                               : m === 'THREE_D_SCAN'
                                 ? t('3D Scan')
-                                : t('Photo')}
+                                : m === 'CEPHALOMETRIC'
+                                  ? t('imaging.modality.CEPHALOMETRIC')
+                                  : t('Photo')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -312,7 +314,9 @@ export default function ImagingStudiesPage() {
                                 ? t('3D Scan')
                                 : s.modality === 'PHOTO'
                                   ? t('Photo')
-                                  : s.modality}
+                                  : s.modality === 'CEPHALOMETRIC'
+                                    ? t('imaging.modality.CEPHALOMETRIC')
+                                    : s.modality}
                     </TableCell>
                     <TableCell>{statusBadge(s.status)}</TableCell>
                     <TableCell>{jobBadge(s.latestJob)}</TableCell>

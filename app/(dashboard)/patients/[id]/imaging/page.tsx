@@ -297,15 +297,28 @@ export default function PatientImagingPage({ params }: { params: Promise<{ id: s
                 </CardContent>
               </Card>
 
-              {/* Image + overlays */}
-              <FindingsViewer
-                imageUrl={detail.originalUrl}
-                annotatedUrl={detail.annotatedUrl}
-                findings={findings}
-                readonly={reviewed}
-                selectedFinding={selectedFinding}
-                onFindingClick={setSelectedFinding}
-              />
+              {/* Image + overlays. Phase 20B: 3D studies store a mesh file,
+                  not an image — the viewer's <img> would be broken, so show
+                  a file card instead (findings + review render below either
+                  way). */}
+              {detail.modality === 'THREE_D_SCAN' || detail.modality === 'CBCT' ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center gap-1 p-10 text-center">
+                    <Camera className="h-6 w-6 text-muted-foreground" />
+                    <p className="text-sm font-medium">{t('imaging.3d_analysis')}</p>
+                    <p className="text-xs text-muted-foreground">{t('imaging.mesh_file')}</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <FindingsViewer
+                  imageUrl={detail.originalUrl}
+                  annotatedUrl={detail.annotatedUrl}
+                  findings={findings}
+                  readonly={reviewed}
+                  selectedFinding={selectedFinding}
+                  onFindingClick={setSelectedFinding}
+                />
+              )}
 
               {/* Findings + review */}
               {job && findings.length > 0 && (

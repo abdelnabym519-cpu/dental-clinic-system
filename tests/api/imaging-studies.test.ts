@@ -353,25 +353,6 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(prisma.aIAnalysisJob.create).not.toHaveBeenCalled()
   })
 
-  it('refuses AI for 3D modalities on this image path (THREE_D_SCAN) with an explicit 422', async () => {
-    // The MeshSegNet engines need surface-mesh uploads, which this
-    // image-based upload path deliberately does not accept (19B D14).
-    prisma.imagingStudy.create.mockResolvedValue({
-      id: 'study-7',
-      status: 'UPLOADED',
-      modality: 'THREE_D_SCAN',
-    })
-    prisma.auditLog.create.mockResolvedValue({})
-
-    const res = await POST(makeUploadForm({ modality: 'THREE_D_SCAN', analyze: 'true' }))
-    const body = await res.json()
-
-    expect(res.status).toBe(422)
-    expect(body.error).toBe('AI analysis is not supported for this modality')
-    expect(body.modality).toBe('THREE_D_SCAN')
-    expect(mockOrchestrator.requestOrchestratorAnalyze).not.toHaveBeenCalled()
-  })
-
   it('creates PENDING job, audits, calls orchestrator, returns COMPLETED + findings', async () => {
     const studyRow = { id: 'study-3', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
@@ -452,6 +433,221 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
     expect(upd.data.errorMessage).toContain('unreachable')
 
     const actions = prisma.auditLog.create.mock.calls.map((c) => c[0].data.action)
+    expect(actions).toContain('AI_JOB_FAILED')
+  })
+})
+
+// ──────────────────── 3D mesh upload (Phase 20B: MeshSegNet) ───────────────
+
+const MESH_BYTES = Buffer.from('v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n')
+
+function makeMeshForm(over: Record<string, any> = {}) {
+  const file = {
+    name: over.fileName ?? 'jaw.obj',
+    type: over.fileType ?? 'application/octet-stream',
+    size: over.size ?? MESH_BYTES.length,
+    arrayBuffer: vi.fn().mockResolvedValue(new Uint8Array(MESH_BYTES).buffer),
+  }
+  const data = new Map<string, any>()
+  data.set('file', file)
+  data.set('patientId', PATIENT.id)
+  data.set('modality', over.modality ?? 'CBCT')
+  for (const [k, v] of Object.entries(over)) {
+    if (!['fileName', 'fileType', 'size', 'modality'].includes(k)) data.set(k, v)
+  }
+  return {
+    formData: vi.fn().mockResolvedValue({
+      get: (key: string) => data.get(key) ?? null,
+    }),
+  } as any
+}
+
+function mockMeshStudy(id: string, modality: string) {
+  prisma.imagingStudy.create.mockResolvedValue({ id, hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality })
+  prisma.auditLog.create.mockResolvedValue({})
+}
+
+describe('POST /api/imaging/studies — 3D mesh upload (Phase 20B)', () => {
+  it('CBCT .obj with no jaw → meshsegnet-max, tenant key keeps the real extension', async () => {
+    mockMeshStudy('study-m1', 'CBCT')
+    prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-m1' })
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-m1', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-m1',
+      status: 'COMPLETED',
+      findings: [{ class_id: 0, class_name: 'Gingiva', point_count: 1234 }],
+      top_confidence: null,
+      provenance: { engine: 'meshsegnet-max', model_version: '1.0.0', model_checksum: '727cd3c5'.padEnd(64, '0') },
+      processing_time_ms: 8000,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-m1/ai/meshsegnet-max/result.json`,
+      annotated_image_key: null,
+    })
+
+    const res = await POST(makeMeshForm({ analyze: 'true' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(201)
+    expect(body.job.status).toBe('COMPLETED')
+
+    const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
+    expect(jobData.engine).toBe('meshsegnet-max')
+    expect(jobData.hospitalId).toBe(HOSPITAL)
+
+    // Storage key carries the mesh extension — the orchestrator derives the
+    // engine container format from it.
+    const [key, , opts] = mockStorage.put.mock.calls[0]
+    expect(key).toMatch(/^hosp-1\/imaging\/pat-1\/.+\/original\.obj$/)
+    expect(opts.contentType).toBe('application/octet-stream')
+    expect(prisma.imagingStudy.create.mock.calls[0][0].data.mimeType).toBe('application/octet-stream')
+
+    const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
+    expect(params.engine).toBe('meshsegnet-max')
+    expect(params.modality).toBe('CBCT')
+
+    // The study audit records the jaw (default 'max' for an absent field).
+    const audit = prisma.auditLog.create.mock.calls[0][0].data
+    expect(JSON.parse(audit.newValues).jaw).toBe('max')
+  })
+
+  it('THREE_D_SCAN .stl + jaw=man → meshsegnet-man, jaw recorded in the audit', async () => {
+    mockMeshStudy('study-m2', 'THREE_D_SCAN')
+    prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-m2' })
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-m2', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-m2',
+      status: 'COMPLETED',
+      findings: [{ class_id: 1, class_name: 'Tooth_1', point_count: 456 }],
+      top_confidence: null,
+      provenance: { engine: 'meshsegnet-man', model_version: '1.0.0', model_checksum: 'd74c87e0'.padEnd(64, '0') },
+      processing_time_ms: 9000,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-m2/ai/meshsegnet-man/result.json`,
+      annotated_image_key: null,
+    })
+
+    const res = await POST(makeMeshForm({ modality: 'THREE_D_SCAN', fileName: 'mandible.stl', jaw: 'man', analyze: 'true' }))
+
+    expect(res.status).toBe(201)
+    const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
+    expect(jobData.engine).toBe('meshsegnet-man')
+    expect(mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0].engine).toBe('meshsegnet-man')
+
+    const [key] = mockStorage.put.mock.calls[0]
+    expect(key).toMatch(/original\.stl$/)
+
+    const audit = prisma.auditLog.create.mock.calls[0][0].data
+    expect(audit.action).toBe('IMAGING_STUDY_UPLOADED')
+    expect(JSON.parse(audit.newValues).jaw).toBe('man')
+  })
+
+  it('ignores the jaw field for 2D modalities (PANORAMIC stays on liodon)', async () => {
+    prisma.imagingStudy.create.mockResolvedValue({ id: 'study-m3', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' })
+    prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-m3' })
+    prisma.auditLog.create.mockResolvedValue({})
+    prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-m3', status: 'ANALYZED' })
+    mockOrchestrator.requestOrchestratorAnalyze.mockResolvedValue({
+      job_id: 'job-m3',
+      status: 'COMPLETED',
+      findings: [],
+      top_confidence: null,
+      provenance: { engine: 'liodon', model_version: '1.0.0', model_checksum: 'c'.repeat(64) },
+      processing_time_ms: 100,
+      raw_output_key: `${HOSPITAL}/imaging/pat-1/study-m3/ai/liodon/result.json`,
+    })
+
+    const res = await POST(makeUploadForm({ jaw: 'man', analyze: 'true' }))
+
+    expect(res.status).toBe(201)
+    expect(prisma.aIAnalysisJob.create.mock.calls[0][0].data.engine).toBe('liodon')
+  })
+
+  it('3D upload without analyze → 201 with job null (mesh stored, no AI)', async () => {
+    mockMeshStudy('study-m4', 'CBCT')
+
+    const res = await POST(makeMeshForm())
+    const body = await res.json()
+
+    expect(res.status).toBe(201)
+    expect(body.job).toBeNull()
+    expect(prisma.aIAnalysisJob.create).not.toHaveBeenCalled()
+    expect(mockOrchestrator.requestOrchestratorAnalyze).not.toHaveBeenCalled()
+    expect(mockStorage.put).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses .npy at upload time — the MeshSegNet engines take triangular meshes, not point clouds', async () => {
+    const res = await POST(makeMeshForm({ fileName: 'cloud.npy' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.error).toContain('3D mesh format')
+    expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
+    expect(mockStorage.put).not.toHaveBeenCalled()
+  })
+
+  it('refuses unknown extensions and odd MIME types for 3D modalities (no study, no storage)', async () => {
+    for (const over of [
+      { fileName: 'notes.txt' },
+      { fileName: 'jaw.xyz' },
+      { fileName: 'jaw.obj', fileType: 'application/x-something' },
+    ]) {
+      vi.clearAllMocks()
+      mockAuthed()
+      prisma.patient.findFirst.mockResolvedValue(PATIENT)
+      const res = await POST(makeMeshForm(over))
+      expect(res.status).toBe(400)
+      expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
+      expect(mockStorage.put).not.toHaveBeenCalled()
+    }
+  })
+
+  it('refuses meshes over 200MB (3D limit) before touching storage', async () => {
+    const res = await POST(makeMeshForm({ size: 201 * 1024 * 1024 }))
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.error).toContain('200MB')
+    expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
+    expect(mockStorage.put).not.toHaveBeenCalled()
+  })
+
+  it('keeps the modality↔file-type contract: image on 3D and mesh on 2D are both 400', async () => {
+    // Image file + 3D modality → the mesh gate refuses it.
+    const res3d = await POST(makeUploadForm({ modality: 'CBCT' }))
+    expect(res3d.status).toBe(400)
+    expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
+
+    // Mesh file + 2D modality → the image gate refuses it (MIME check).
+    vi.clearAllMocks()
+    mockAuthed()
+    prisma.patient.findFirst.mockResolvedValue(PATIENT)
+    const res2d = await POST(makeMeshForm({ modality: 'PANORAMIC' }))
+    expect(res2d.status).toBe(400)
+    expect(prisma.imagingStudy.create).not.toHaveBeenCalled()
+  })
+
+  it('marks the 3D job FAILED + audits when the orchestrator is unreachable (502, no fake success)', async () => {
+    mockMeshStudy('study-m5', 'CBCT')
+    prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-m5' })
+    prisma.aIAnalysisJob.findUnique.mockResolvedValue({ id: 'job-m5', status: 'PENDING' })
+    prisma.aIAnalysisJob.update.mockResolvedValue({})
+    mockOrchestrator.requestOrchestratorAnalyze.mockRejectedValue(
+      new mockOrchestrator.OrchestratorError(503, 'orchestrator unreachable: connection refused')
+    )
+
+    const res = await POST(makeMeshForm({ analyze: 'true' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(502)
+    expect(body.job.status).toBe('FAILED')
+    expect(body.error).toContain('unreachable')
+
+    const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
+    expect(upd.where.id).toBe('job-m5')
+    expect(upd.data.status).toBe('FAILED')
+    expect(upd.data.errorMessage).toContain('unreachable')
+
+    const actions = prisma.auditLog.create.mock.calls.map((c) => c[0].data.action)
+    expect(actions).toContain('IMAGING_STUDY_UPLOADED')
+    expect(actions).toContain('AI_JOB_REQUESTED')
     expect(actions).toContain('AI_JOB_FAILED')
   })
 })

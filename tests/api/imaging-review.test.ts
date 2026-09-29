@@ -108,6 +108,18 @@ describe('auth & validation', () => {
   })
 })
 
+const LANDMARKS = [
+  { landmark_id: 0, landmark_name: '0', x: 100, y: 150, score: 0.91, coordinate_space: 'cropped_original_image' },
+  { landmark_id: 1, landmark_name: '1', x: 220, y: 340, score: null, coordinate_space: 'cropped_original_image' },
+  { landmark_id: 2, landmark_name: '2', x: 431.5, y: 87, score: 0.77, coordinate_space: 'cropped_original_image' },
+]
+
+const SEGMENTS = [
+  { class_id: 0, class_name: 'Gingiva', point_count: 12345 },
+  { class_id: 1, class_name: 'Tooth_1', point_count: 4567 },
+  { class_id: 14, class_name: 'Tooth_14', point_count: 890 },
+]
+
 describe('review decisions (D11 + D12)', () => {
   it('ACCEPTED persists the AI findings as-is, moves study to REVIEWED, audits', async () => {
     prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
@@ -217,5 +229,87 @@ describe('review decisions (D11 + D12)', () => {
     expect(nv.studyId).toBe('study-1')
     expect(nv.engine).toBe('liodon')
     expect(nv.acceptedFindingCount).toBe(1)
+  })
+
+  // Phase 20B — the doctor-review gate must accept the 19B finding shapes
+  // (Orthodontic landmarks, MeshSegNet segments), not just 19A boxes.
+
+  it('MODIFIED with Orthodontic landmark findings (38-point shape) persists them', async () => {
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'orthodontic-ai', findings: LANDMARKS })
+    prisma.aIAnalysisJob.update.mockResolvedValue({
+      id: 'job-1',
+      status: 'COMPLETED',
+      reviewDecision: 'MODIFIED',
+      reviewedAt: new Date(),
+      reviewedById: USER.id,
+      acceptedFindings: LANDMARKS,
+    })
+    prisma.imagingStudy.update.mockResolvedValue({})
+    prisma.auditLog.create.mockResolvedValue({})
+
+    const { req, ctx } = makeReq('MODIFIED', { acceptedFindings: LANDMARKS })
+    const res = await POST(req, ctx)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.job.reviewDecision).toBe('MODIFIED')
+    expect(body.job.acceptedFindings).toHaveLength(3)
+    expect(body.job.acceptedFindings[0]).toMatchObject({ landmark_id: 0, x: 100, y: 150 })
+    expect(body.study.status).toBe('REVIEWED')
+  })
+
+  it('MODIFIED with MeshSegNet segment findings (15-class shape) persists them', async () => {
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'meshsegnet-max', findings: SEGMENTS })
+    prisma.aIAnalysisJob.update.mockResolvedValue({
+      id: 'job-1',
+      status: 'COMPLETED',
+      reviewDecision: 'MODIFIED',
+      reviewedAt: new Date(),
+      reviewedById: USER.id,
+      acceptedFindings: SEGMENTS,
+    })
+    prisma.imagingStudy.update.mockResolvedValue({})
+    prisma.auditLog.create.mockResolvedValue({})
+
+    const { req, ctx } = makeReq('MODIFIED', { acceptedFindings: SEGMENTS })
+    const res = await POST(req, ctx)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.job.acceptedFindings).toHaveLength(3)
+    expect(body.job.acceptedFindings[0]).toMatchObject({ class_id: 0, class_name: 'Gingiva', point_count: 12345 })
+  })
+
+  it('ACCEPTED on a MeshSegNet segment job stores the segments as-is', async () => {
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'meshsegnet-man', findings: SEGMENTS })
+    prisma.aIAnalysisJob.update.mockResolvedValue({
+      id: 'job-1',
+      status: 'COMPLETED',
+      reviewDecision: 'ACCEPTED',
+      reviewedAt: new Date(),
+      reviewedById: USER.id,
+      acceptedFindings: SEGMENTS,
+    })
+    prisma.imagingStudy.update.mockResolvedValue({})
+    prisma.auditLog.create.mockResolvedValue({})
+
+    const { req, ctx } = makeReq('ACCEPTED')
+    const res = await POST(req, ctx)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.job.acceptedFindings).toHaveLength(3)
+  })
+
+  it('rejects malformed landmark findings (out-of-range landmark_id) with 400', async () => {
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'orthodontic-ai', findings: LANDMARKS })
+
+    const { req, ctx } = makeReq('MODIFIED', {
+      acceptedFindings: [{ landmark_id: 38, landmark_name: 'x', x: 1, y: 2, score: null }],
+    })
+    const res = await POST(req, ctx)
+
+    expect(res.status).toBe(400)
+    expect(prisma.aIAnalysisJob.update).not.toHaveBeenCalled()
   })
 })

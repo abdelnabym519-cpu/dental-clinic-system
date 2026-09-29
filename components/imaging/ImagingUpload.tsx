@@ -17,15 +17,18 @@ import {
 } from '@/components/ui/select'
 
 // Phase 20 (D3) — X-ray upload with automatic AI trigger.
+// Phase 20B — 3D mesh uploads (.obj/.stl/.vtk/.ply) for THREE_D_SCAN/CBCT
+// with a jaw selector (max → meshsegnet-max, man → meshsegnet-man), plus
+// CEPHALOMETRIC image uploads to the orthodontic engine.
 //
 // The 19A upload endpoint is synchronous for PANORAMIC (Liodon runs during
 // the POST), so the common path resolves with the findings already on the
 // wire. The polling below still implements the contract for the async edge
 // (a PENDING/PROCESSING job) — spec D4: GET .../status every 2s.
 //
-// Non-PANORAMIC studies never trigger AI (19A D10.1). The UI mirrors the
-// server rule proactively: the analyze switch locks off for other modalities,
-// and the 422 branch remains the authoritative backstop.
+// PHOTO never triggers AI (no model exists). The UI mirrors the server rule
+// proactively: the analyze switch locks off for PHOTO, and the 422 branch
+// remains the authoritative backstop.
 
 interface ImagingUploadProps {
   patientId: string
@@ -53,10 +56,25 @@ const MODALITIES = [
   'CEPHALOMETRIC',
 ] as const
 
-// Phase 19B (D14) — the modalities this image upload path can analyze
-// (same map as the studies route; 3D modalities need mesh uploads, which
-// this path does not offer).
-const AI_ANALYZABLE_MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CEPHALOMETRIC'] as const
+// Phase 19B (D14) + Phase 20B — every modality the upload path can analyze
+// (same map as the studies route; the 3D modalities analyze mesh uploads).
+// Only PHOTO has no engine.
+const AI_ANALYZABLE_MODALITIES = [
+  'PANORAMIC',
+  'PERIAPICAL',
+  'BITEWING',
+  'CEPHALOMETRIC',
+  'THREE_D_SCAN',
+  'CBCT',
+] as const
+
+// Phase 20B — surface-mesh uploads for the 3D modalities (MeshSegNet engine
+// formats — the engine parser is the final authority; .npy is refused because
+// the engines take triangular meshes, not point clouds).
+const MESH_MODALITIES = ['THREE_D_SCAN', 'CBCT'] as const
+const MESH_EXTENSIONS = ['.obj', '.stl', '.vtk', '.ply'] as const
+const MESH_ACCEPT = '.obj,.stl,.vtk,.ply'
+const MAX_MESH_SIZE = 200 * 1024 * 1024 // 200 MB
 
 export function ImagingUpload({ patientId, appointmentId = null, onUploadComplete }: ImagingUploadProps) {
   const { t } = useLanguage()
@@ -65,11 +83,14 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
   const [file, setFile] = useState<File | null>(null)
   const [modality, setModality] = useState<string>('PANORAMIC')
   const [analyze, setAnalyze] = useState(true)
+  // Phase 20B — jaw of a 3D scan (max → meshsegnet-max, man → meshsegnet-man).
+  const [jaw, setJaw] = useState<'max' | 'man'>('max')
   const [dragOver, setDragOver] = useState(false)
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
   const inputRef = useRef<HTMLInputElement>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const isMesh = (MESH_MODALITIES as readonly string[]).includes(modality)
   const analyzingLocked = !AI_ANALYZABLE_MODALITIES.includes(modality as (typeof AI_ANALYZABLE_MODALITIES)[number])
 
   const stopPolling = useCallback(() => {
@@ -84,27 +105,48 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
   const pickFile = useCallback(
     (candidate: File | null) => {
       if (!candidate) return
-      if (!ACCEPTED_TYPES.includes(candidate.type)) {
-        toast({
-          variant: 'destructive',
-          title: t('imaging.unsupported_type'),
-          description: t('imaging.drop_zone'),
-        })
-        return
-      }
-      if (candidate.size > MAX_SIZE) {
-        toast({
-          variant: 'destructive',
-          title: '50MB',
-          description: t('Image exceeds 50MB limit'),
-        })
-        return
+      const name = candidate.name.toLowerCase()
+      if (isMesh) {
+        // Phase 20B — 3D modalities take surface meshes, not images.
+        if (!MESH_EXTENSIONS.some((e) => name.endsWith(e))) {
+          toast({
+            variant: 'destructive',
+            title: t('imaging.invalid_3d_format'),
+            description: t('imaging.drop_zone'),
+          })
+          return
+        }
+        if (candidate.size > MAX_MESH_SIZE) {
+          toast({
+            variant: 'destructive',
+            title: '200MB',
+            description: t('imaging.mesh_too_large'),
+          })
+          return
+        }
+      } else {
+        if (!ACCEPTED_TYPES.includes(candidate.type)) {
+          toast({
+            variant: 'destructive',
+            title: t('imaging.unsupported_type'),
+            description: t('imaging.drop_zone'),
+          })
+          return
+        }
+        if (candidate.size > MAX_SIZE) {
+          toast({
+            variant: 'destructive',
+            title: '50MB',
+            description: t('Image exceeds 50MB limit'),
+          })
+          return
+        }
       }
       stopPolling()
       setFile(candidate)
       setPhase({ kind: 'idle' })
     },
-    [toast, t, stopPolling]
+    [toast, t, stopPolling, isMesh]
   )
 
   const startPolling = useCallback(
@@ -142,6 +184,8 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
       form.append('patientId', patientId)
       form.append('modality', modality)
       if (appointmentId) form.append('appointmentId', appointmentId)
+      // Phase 20B — the jaw travels only with 3D scans (2D engines ignore it).
+      if (isMesh) form.append('jaw', jaw)
       form.append('analyze', analyze ? 'true' : 'false')
 
       setPhase({ kind: 'uploading', progress: 0 })
@@ -208,7 +252,7 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
       }
       xhr.send(form)
     },
-    [patientId, appointmentId, modality, analyze, onUploadComplete, startPolling, t, toast]
+    [patientId, appointmentId, modality, analyze, jaw, isMesh, onUploadComplete, startPolling, t, toast]
   )
 
   const reset = () => {
@@ -262,7 +306,7 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
             <input
               ref={inputRef}
               type="file"
-              accept={ACCEPTED_TYPES.join(',')}
+              accept={isMesh ? MESH_ACCEPT : ACCEPTED_TYPES.join(',')}
               className="hidden"
               onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
             />
@@ -276,6 +320,16 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
                 <Select
                 value={modality}
                 onValueChange={(v) => {
+                  // Phase 20B: a file valid for one family (image / mesh) is
+                  // invalid for the other — drop it when the family changes.
+                  const wasMesh = (MESH_MODALITIES as readonly string[]).includes(modality)
+                  const nowMesh = (MESH_MODALITIES as readonly string[]).includes(v)
+                  if (wasMesh !== nowMesh) {
+                    stopPolling()
+                    setFile(null)
+                    setPhase({ kind: 'idle' })
+                    if (inputRef.current) inputRef.current.value = ''
+                  }
                   setModality(v)
                   if (!AI_ANALYZABLE_MODALITIES.includes(v as (typeof AI_ANALYZABLE_MODALITIES)[number])) {
                     setAnalyze(false)
@@ -294,6 +348,24 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
                   </SelectContent>
                 </Select>
               </div>
+              {/* Phase 20B — jaw selector, 3D modalities only (MeshSegNet
+                  runs one jaw model at a time: max → meshsegnet-max,
+                  man → meshsegnet-man). */}
+              {isMesh && (
+                <div>
+                  <label className="mb-1 block text-xs text-muted-foreground">{t('imaging.jaw_selection')}</label>
+                  <Select value={jaw} onValueChange={(v) => setJaw(v as 'max' | 'man')}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="max">{t('imaging.jaw_maxilla')}</SelectItem>
+                      <SelectItem value="man">{t('imaging.jaw_mandible')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">{t('imaging.jaw_hint')}</p>
+                </div>
+              )}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

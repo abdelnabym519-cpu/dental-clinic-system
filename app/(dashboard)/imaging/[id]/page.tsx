@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   isBoxFinding,
   isLandmarkFinding,
+  isSegmentFinding,
   type ImagingFinding as Finding,
 } from '@/components/imaging/types'
 
@@ -110,26 +111,47 @@ function FindingsTable({ findings, t }: { findings: Finding[]; t: Translate }) {
       </Table>
     )
   }
-  if (first && !isBoxFinding(first)) {
+  if (first && !isBoxFinding(first) && !isLandmarkFinding(first)) {
+    // Phase 20B (D6) — MeshSegNet's 15-class segment histogram: a table with
+    // a per-class share bar + the total point count (3D input — no image
+    // overlay, no bounding boxes).
+    const segs = findings.filter(isSegmentFinding)
+    const total = segs.reduce((sum, f) => sum + f.point_count, 0)
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('imaging.segment_table.class')}</TableHead>
-            <TableHead>{t('imaging.segment_table.cells')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {findings.map((f, i) =>
-            !isBoxFinding(f) && !isLandmarkFinding(f) ? (
-              <TableRow key={i}>
-                <TableCell className="font-medium">{f.class_name}</TableCell>
-                <TableCell>{f.point_count}</TableCell>
-              </TableRow>
-            ) : null
-          )}
-        </TableBody>
-      </Table>
+      <div>
+        <p className="mb-2 text-sm font-medium">{t('imaging.3d_analysis')}</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          {t('imaging.segment_classes')}: {segs.length} · {t('imaging.total_points', { count: total })}
+        </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('imaging.segment_table.class')}</TableHead>
+              <TableHead>{t('imaging.segment_table.cells')}</TableHead>
+              <TableHead>{t('imaging.segment_table.share')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {segs.map((f, i) => {
+              const pct = total > 0 ? (f.point_count / total) * 100 : 0
+              return (
+                <TableRow key={i}>
+                  <TableCell className="font-medium">{f.class_name}</TableCell>
+                  <TableCell className="font-mono text-xs">{f.point_count}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-24 overflow-hidden rounded bg-muted">
+                        <div className="h-full bg-primary" style={{ width: `${pct.toFixed(1)}%` }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+      </div>
     )
   }
   return (
@@ -251,6 +273,14 @@ export default function ImagingStudyDetailPage() {
       <Badge className="bg-muted text-muted-foreground">{t('Uploaded')}</Badge>
     )
 
+  // Phase 20B — 3D studies store a surface mesh, not an image: no <img>, no
+  // overlay — a file card with a download link instead.
+  const isMesh = study.modality === 'THREE_D_SCAN' || study.modality === 'CBCT'
+
+  // Modality label through the dictionary (falls back to the raw value).
+  const modalityKey = `imaging.modality.${study.modality}`
+  const modalityLabel = t(modalityKey) === modalityKey ? study.modality : t(modalityKey)
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -266,7 +296,7 @@ export default function ImagingStudyDetailPage() {
             {study.patient ? `${study.patient.firstName} ${study.patient.lastName}` : study.patientId}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {study.modality === 'PANORAMIC' ? t('Panoramic') : study.modality} · {study.id}
+            {modalityLabel} · {study.id}
           </p>
         </div>
         {statusBadge}
@@ -281,7 +311,23 @@ export default function ImagingStudyDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {study.originalUrl ? (
+            {isMesh ? (
+              // Phase 20B — a 3D study's original is a mesh file (obj/stl/
+              // vtk/ply); there is nothing to render as an image.
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{t('imaging.mesh_file')}</p>
+                <p className="break-all font-mono text-xs text-muted-foreground">
+                  {study.originalKey.split('/').pop()} · {study.originalSize} bytes
+                </p>
+                <a
+                  href={study.originalUrl}
+                  download
+                  className="text-sm text-primary underline underline-offset-2"
+                >
+                  {t('imaging.download_original')}
+                </a>
+              </div>
+            ) : study.originalUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={study.originalUrl}
