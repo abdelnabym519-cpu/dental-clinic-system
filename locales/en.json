@@ -5510,5 +5510,6 @@
   "patientId is required": "patientId is required",
   "Invalid profile": "Invalid profile",
   "Invalid tooth number": "Invalid tooth number",
-  "Context build failed": "Context build failed"
+  "Context build failed": "Context build failed",
+  "section.aiChat.messageRequired": "message is required"
 }

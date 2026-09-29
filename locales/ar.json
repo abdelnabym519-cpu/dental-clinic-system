@@ -5510,5 +5510,6 @@
   "patientId is required": "حقل patientId مطلوب",
   "Invalid profile": "الملف غير صالح",
   "Invalid tooth number": "رقم السن غير صالح",
-  "Context build failed": "فشل بناء السياق"
+  "Context build failed": "فشل بناء السياق",
+  "section.aiChat.messageRequired": "الرسالة مطلوبة"
 }

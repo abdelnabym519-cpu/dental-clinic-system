@@ -70,7 +70,7 @@ const toothEntry = z.object({
 
 export const CONTEXT_CONTRACT = z.object({
   meta: z.object({
-    profile: z.enum(['MINIMAL', 'PATIENT_OVERVIEW', 'CLINICAL', 'TOOTH', 'CASE', 'IMAGING', 'TREATMENT', 'FOLLOW_UP', 'FULL_360']),
+    profile: z.enum(['MINIMAL', 'PATIENT_OVERVIEW', 'CLINICAL', 'TOOTH', 'CASE', 'IMAGING', 'TREATMENT', 'FOLLOW_UP', 'TIMELINE', 'FULL_360']),
     tenantId: z.string().min(1),
     patient: z.object({
       found: z.boolean(),

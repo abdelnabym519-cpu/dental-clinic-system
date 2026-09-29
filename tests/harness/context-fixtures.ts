@@ -330,6 +330,16 @@ function matchesWhere(row: Row, where: Record<string, unknown> | undefined): boo
         const b = new Date(cond.gte as string).getTime()
         if (!(a >= b)) return false
       }
+      if ('lt' in cond) {
+        const a = new Date(row[k] as string).getTime()
+        const b = new Date(cond.lt as string).getTime()
+        if (!(a < b)) return false
+      }
+      if ('lte' in cond) {
+        const a = new Date(row[k] as string).getTime()
+        const b = new Date(cond.lte as string).getTime()
+        if (!(a <= b)) return false
+      }
       if ('not' in cond) {
         if (row[k] === cond.not) return false
       }

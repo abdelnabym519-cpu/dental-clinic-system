@@ -127,6 +127,22 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
     },
     defaultBudget: B(10, 300),
   },
+  TIMELINE: {
+    // Bounded unified timeline: enough clinical surface to build events,
+    // without financial/risk internals (added in Phase 3 for the agent's
+    // timeline tool — additive, no other profile changes).
+    sections: ['identity', 'dental', 'appointments', 'clinical', 'cases', 'treatments', 'imaging', 'timeline'],
+    budgets: {
+      dental: B(32, 150),
+      appointments: B(12, 200, 730),
+      clinical: B(15, 600, 730),
+      cases: B(5, 200),
+      treatments: B(10, 300, 730),
+      imaging: B(4, 200),
+      timeline: B(30, 200, 730),
+    },
+    defaultBudget: B(10, 300),
+  },
   FULL_360: {
     sections: [
       'identity', 'medical', 'dental', 'appointments', 'clinical', 'cases',

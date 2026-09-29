@@ -30,6 +30,7 @@ export const CONTEXT_PROFILES = [
   'IMAGING',
   'TREATMENT',
   'FOLLOW_UP',
+  'TIMELINE',
   'FULL_360',
 ] as const
 export type ContextProfile = (typeof CONTEXT_PROFILES)[number]
