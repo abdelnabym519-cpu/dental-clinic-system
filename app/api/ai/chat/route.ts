@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { buildContext, serializeContext } from '@/lib/ai/context-builder'
 import { complete, extractJSON, streamResponse } from '@/lib/ai/openrouter'
 import { getModelByTier } from '@/lib/ai/models'
-import { executeIntent } from '@/lib/ai/command-executors'
+import { runAiAction } from '@/lib/ai/action-pipeline'
 import type { ChatMessage } from '@/lib/ai/openrouter'
 
 // ---------------------------------------------------------------------------
@@ -73,6 +73,9 @@ Rules:
 - For create_patient, you MUST have at least firstName, lastName, and phone — ask the user if missing
 - Gender values: MALE, FEMALE, OTHER
 - Blood group values: A_POSITIVE, A_NEGATIVE, B_POSITIVE, B_NEGATIVE, AB_POSITIVE, AB_NEGATIVE, O_POSITIVE, O_NEGATIVE
+- Some actions require a human approval before they run. Never claim such an
+  action happened; when the ACTION RESULT shows APPROVAL_REQUIRED or BLOCKED,
+  tell the user the exact state (pending approval / not permitted / blocked).
 
 ALSO classify the COMPLEXITY of the user's latest message for cost-optimized model routing:
 - "simple" = greetings, yes/no answers, short factual lookups, confirmations, thanks, basic show/search commands
@@ -80,6 +83,50 @@ ALSO classify the COMPLEXITY of the user's latest message for cost-optimized mod
 
 Respond ONLY with JSON:
 {"action": "<name>", "params": {…}, "complexity": "simple"|"complex"}`
+
+/**
+ * Phase 1 — render the pipeline outcome for the model. The text is
+ * deliberately unambiguous: the model must never present a pending, blocked
+ * or failed action as completed.
+ */
+function formatActionResult(action: string, result: {
+  status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
+  success: boolean
+  message: string
+  approvalId?: string
+  result?: any
+  verification?: { verified: boolean; detail: string }
+}): string {
+  if (result.status === 'EXECUTED' && result.success) {
+    return `
+--- ACTION RESULT ---
+Action: ${action}
+Status: EXECUTED
+${JSON.stringify(result.result ?? {}, null, 2)}
+---
+IMPORTANT: The above action was ACTUALLY executed in the database. Report the real result to the user. Do NOT invent different details.`
+  }
+  if (result.status === 'APPROVAL_REQUIRED') {
+    return `
+--- ACTION RESULT ---
+Action: ${action}
+Status: APPROVAL_REQUIRED
+Reference: ${result.approvalId ?? 'n/a'}
+Message: ${result.message}
+---
+IMPORTANT: The action was NOT executed. It is waiting for a human approval.
+Tell the user it is pending approval (reference ${result.approvalId ?? 'n/a'}) and that an authorized staff member must approve it before anything happens. Do NOT say it was done.`
+  }
+  return `
+--- ACTION RESULT ---
+Action: ${action}
+Status: NOT_EXECUTED
+Message: ${result.message}
+---
+IMPORTANT: The action was NOT executed. Tell the user, honestly, that it could
+not be performed and why (permission, missing data, blocked for safety, or
+duplicate). Do NOT claim it happened and do NOT retry it in the same reply.`
+}
 
 export async function POST(req: Request) {
   const { error, user, hospitalId } = await requireAuthAndRole()
@@ -173,6 +220,8 @@ IMPORTANT RULES:
 - You MUST NOT share patient data across hospitals
 - Be concise and professional
 - NEVER claim you performed an action unless you see an ACTION RESULT below confirming it
+- An ACTION RESULT with Status APPROVAL_REQUIRED means the action is pending human approval — report it as pending, never as done
+- An ACTION RESULT with Status NOT_EXECUTED means the action did not happen — report the given reason honestly
 - You CAN create patients, book appointments, create treatments, invoices, payments, lab orders, prescriptions, and manage inventory through actions
 - When creating a patient, you MUST collect at minimum: firstName, lastName, and phone number before triggering the action
 - If the user provides incomplete information for any action, ask for the missing required fields before proceeding
@@ -203,6 +252,25 @@ ${contextStr}`
     // Intent detection (runs on Flash for cost savings — ~10x cheaper)
     // Also classifies complexity to decide if the response needs a bigger model
     // -----------------------------------------------------------------------
+    // Conversation persistence first (awaited) so the action ledger can link
+    // the exact conversation that triggered it (graph: conversation → action).
+    // A logging failure must never break the chat — fall back to null.
+    let conversationId: string | null = null
+    try {
+      const conv = await prisma.aIConversation.create({
+        data: {
+          hospitalId,
+          userId: user.id,
+          sessionType: skillName ? 'COMMAND' : 'CHAT',
+          messages: messages as any,
+          context: context as any,
+        },
+      })
+      conversationId = conv.id
+    } catch (e: any) {
+      console.error('AI conversation log failed:', e.message)
+    }
+
     let actionContext = ''
     let messageComplexity: 'simple' | 'complex' = 'simple'
     try {
@@ -236,13 +304,18 @@ ${contextStr}`
           messageComplexity = 'complex'
         }
         // For all other actions, keep the complexity from intent detection (defaults to "simple")
-        const result = await executeIntent(parsed.action, parsed.params || {}, hospitalId)
+        // Phase 1 — every action goes through the server-side policy pipeline
+        // (policy → RBAC → validation → patient scope → approval → transaction
+        // → executor → verification → audit). The LLM never executes directly.
+        const result = await runAiAction({
+          action: parsed.action,
+          params: parsed.params || {},
+          actor: { id: user.id, name: user.name || 'User', role: user.role },
+          hospitalId,
+          conversationId,
+        })
         if (result) {
-          actionContext = `\n\n--- ACTION RESULT ---
-Action: ${parsed.action}
-${JSON.stringify(result, null, 2)}
----
-IMPORTANT: The above action was ACTUALLY executed in the database. Report the real result to the user. Do NOT invent different details.`
+          actionContext = formatActionResult(parsed.action, result)
         }
       }
     } catch {
@@ -255,18 +328,6 @@ IMPORTANT: The above action was ACTUALLY executed in the database. Report the re
     ]
 
     // Log interaction (non-blocking — don't let logging failures break the response)
-    prisma.aIConversation
-      .create({
-        data: {
-          hospitalId,
-          userId: user.id,
-          sessionType: skillName ? 'COMMAND' : 'CHAT',
-          messages: messages as any,
-          context: context as any,
-        },
-      })
-      .catch((e: any) => console.error('AI conversation log failed:', e.message))
-
     prisma.auditLog
       .create({
         data: {

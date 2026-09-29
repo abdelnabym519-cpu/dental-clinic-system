@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { buildContext, serializeContext } from '@/lib/ai/context-builder'
 import { complete, extractJSON } from '@/lib/ai/openrouter'
 import { getModelByTier } from '@/lib/ai/models'
-import { executeIntent } from '@/lib/ai/command-executors'
+import { runAiAction } from '@/lib/ai/action-pipeline'
 
 // ---------------------------------------------------------------------------
 // Intent definitions — the AI outputs one of these intents
@@ -167,14 +167,41 @@ export async function POST(req: Request) {
     parsed = { intent: 'general', params: {} }
   }
 
-  // Step 2 — execute
+  // Step 2 — execute (Phase 1: every non-general intent goes through the
+  // server-side policy pipeline — policy → RBAC → validation → patient scope
+  // → approval → transaction → executor → verification → audit).
   let result: any
+  let actionStatus: string | null = null
   try {
     if (parsed.intent === 'general') {
       result = await execGeneral(command, contextStr, hospital?.name || 'Hospital')
     } else {
-      result = await executeIntent(parsed.intent, parsed.params, hospitalId)
-      if (!result) result = await execGeneral(command, contextStr, hospital?.name || 'Hospital')
+      const pipelineResult = await runAiAction({
+        action: parsed.intent,
+        params: parsed.params || {},
+        actor: { id: user.id, name: user.name || 'User', role: user.role },
+        hospitalId,
+        requestReason: parsed.summary,
+      })
+      actionStatus = pipelineResult.status
+      if (pipelineResult.blockCode === 'UNKNOWN_ACTION') {
+        // Unknown/hallucinated intent → plain conversational answer (no action)
+        result = await execGeneral(command, contextStr, hospital?.name || 'Hospital')
+      } else {
+        // Keep the historical result shape (summary/items/invoices at top
+        // level — the command bar renders those) and add the pipeline's
+        // security metadata alongside it.
+        result = {
+          ...((typeof pipelineResult.result === 'object' && pipelineResult.result) || {}),
+          success: pipelineResult.success,
+          message:
+            (typeof pipelineResult.result === 'object' && pipelineResult.result?.message) ||
+            pipelineResult.message,
+          status: pipelineResult.status,
+          approvalId: pipelineResult.approvalId,
+          verification: pipelineResult.verification,
+        }
+      }
     }
   } catch (err) {
     result = { success: false, message: err instanceof Error ? err.message : 'Execution error' }
@@ -198,7 +225,10 @@ export async function POST(req: Request) {
   return NextResponse.json({
     intent: parsed.intent,
     summary: parsed.summary,
-    requiresApproval: parsed.requiresApproval || false,
+    // Phase 1: server-computed — the LLM's own `requiresApproval` guess is
+    // no longer part of the security decision (policy registry decides).
+    status: actionStatus ?? (parsed.intent === 'general' ? 'EXECUTED' : 'ERROR'),
+    requiresApproval: actionStatus === 'APPROVAL_REQUIRED',
     result,
   })
 }

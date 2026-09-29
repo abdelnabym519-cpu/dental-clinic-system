@@ -10,8 +10,10 @@ import { prisma } from '@/lib/prisma'
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Find a patient by name, ID, or phone */
-async function findPatient(hospitalId: string, query: string) {
+/** Find a patient by name, ID, or phone (tenant-scoped).
+ *  Exported so the Phase 1 action pipeline can resolve patient scope
+ *  with the exact same semantics as the executors. */
+export async function findPatient(hospitalId: string, query: string) {
   return prisma.patient.findFirst({
     where: {
       hospitalId,
@@ -49,7 +51,11 @@ async function nextNumber(hospitalId: string, model: string, prefix: string) {
 // 1. PATIENT MANAGEMENT
 // ---------------------------------------------------------------------------
 
-export async function execCreatePatient(params: Record<string, string>, hospitalId: string) {
+export async function execCreatePatient(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   if (!params.firstName || !params.lastName) {
     return { success: false, message: 'First name and last name are required to create a patient.' }
   }
@@ -58,7 +64,7 @@ export async function execCreatePatient(params: Record<string, string>, hospital
   }
 
   // Check for duplicates
-  const existing = await prisma.patient.findFirst({
+  const existing = await client.patient.findFirst({
     where: {
       hospitalId,
       firstName: { contains: params.firstName },
@@ -75,7 +81,7 @@ export async function execCreatePatient(params: Record<string, string>, hospital
 
   const patientId = await nextNumber(hospitalId, 'patient', 'PAT')
 
-  const patient = await prisma.patient.create({
+  const patient = await client.patient.create({
     data: {
       hospitalId,
       patientId,
@@ -99,7 +105,11 @@ export async function execCreatePatient(params: Record<string, string>, hospital
   }
 }
 
-export async function execUpdatePatient(params: Record<string, string>, hospitalId: string) {
+export async function execUpdatePatient(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.query)
   if (!patient) return { success: false, message: `Patient "${params.query}" not found.` }
 
@@ -118,7 +128,7 @@ export async function execUpdatePatient(params: Record<string, string>, hospital
     return { success: false, message: 'No fields provided to update.' }
   }
 
-  await prisma.patient.update({ where: { id: patient.id }, data })
+  await client.patient.update({ where: { id: patient.id }, data })
 
   return {
     success: true,
@@ -170,7 +180,11 @@ export async function execSearchPatients(params: Record<string, string>, hospita
 // 2. APPOINTMENT MANAGEMENT
 // ---------------------------------------------------------------------------
 
-export async function execBookAppointment(params: Record<string, string>, hospitalId: string) {
+export async function execBookAppointment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.patientName)
   if (!patient)
     return {
@@ -190,7 +204,7 @@ export async function execBookAppointment(params: Record<string, string>, hospit
   const date = params.date || new Date().toISOString().split('T')[0]
   const time = params.time || '10:00'
 
-  const conflict = await prisma.appointment.findFirst({
+  const conflict = await client.appointment.findFirst({
     where: {
       hospitalId,
       doctorId: doctor.id,
@@ -208,7 +222,7 @@ export async function execBookAppointment(params: Record<string, string>, hospit
 
   const appointmentNo = await nextNumber(hospitalId, 'appointment', 'APT')
 
-  await prisma.appointment.create({
+  await client.appointment.create({
     data: {
       hospitalId,
       appointmentNo,
@@ -227,13 +241,18 @@ export async function execBookAppointment(params: Record<string, string>, hospit
   return {
     success: true,
     message: `Appointment ${appointmentNo} booked for ${patient.firstName} ${patient.lastName} with Dr. ${doctor.firstName} on ${date} at ${time}.`,
+    appointmentNo,
   }
 }
 
-export async function execCancelAppointment(params: Record<string, string>, hospitalId: string) {
+export async function execCancelAppointment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   let appointment
   if (params.appointmentNo) {
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: {
         hospitalId,
         appointmentNo: params.appointmentNo,
@@ -247,7 +266,7 @@ export async function execCancelAppointment(params: Record<string, string>, hosp
   } else if (params.patientName) {
     const patient = await findPatient(hospitalId, params.patientName)
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['SCHEDULED', 'CONFIRMED'] } },
       include: {
         patient: { select: { firstName: true, lastName: true } },
@@ -258,7 +277,7 @@ export async function execCancelAppointment(params: Record<string, string>, hosp
   }
   if (!appointment) return { success: false, message: 'No upcoming appointment found to cancel.' }
 
-  await prisma.appointment.update({
+  await client.appointment.update({
     where: { id: appointment.id },
     data: {
       status: 'CANCELLED',
@@ -275,7 +294,8 @@ export async function execCancelAppointment(params: Record<string, string>, hosp
 
 export async function execRescheduleAppointment(
   params: Record<string, string>,
-  hospitalId: string
+  hospitalId: string,
+  client: any = prisma
 ) {
   if (!params.newDate && !params.newTime) {
     return { success: false, message: 'Provide a new date and/or time to reschedule.' }
@@ -283,7 +303,7 @@ export async function execRescheduleAppointment(
 
   let appointment
   if (params.appointmentNo) {
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: {
         hospitalId,
         appointmentNo: params.appointmentNo,
@@ -297,7 +317,7 @@ export async function execRescheduleAppointment(
   } else if (params.patientName) {
     const patient = await findPatient(hospitalId, params.patientName)
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['SCHEDULED', 'CONFIRMED'] } },
       include: {
         patient: { select: { firstName: true, lastName: true } },
@@ -313,7 +333,7 @@ export async function execRescheduleAppointment(
   const newTime = params.newTime || appointment.scheduledTime
 
   // Check conflict on new slot
-  const conflict = await prisma.appointment.findFirst({
+  const conflict = await client.appointment.findFirst({
     where: {
       hospitalId,
       doctorId: appointment.doctor.id,
@@ -330,7 +350,7 @@ export async function execRescheduleAppointment(
     }
   }
 
-  await prisma.appointment.update({
+  await client.appointment.update({
     where: { id: appointment.id },
     data: {
       scheduledDate: new Date(newDate + 'T00:00:00'),
@@ -345,10 +365,14 @@ export async function execRescheduleAppointment(
   }
 }
 
-export async function execCompleteAppointment(params: Record<string, string>, hospitalId: string) {
+export async function execCompleteAppointment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   let appointment
   if (params.appointmentNo) {
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: {
         hospitalId,
         appointmentNo: params.appointmentNo,
@@ -359,7 +383,7 @@ export async function execCompleteAppointment(params: Record<string, string>, ho
   } else if (params.patientName) {
     const patient = await findPatient(hospitalId, params.patientName)
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
-    appointment = await prisma.appointment.findFirst({
+    appointment = await client.appointment.findFirst({
       where: {
         hospitalId,
         patientId: patient.id,
@@ -371,7 +395,7 @@ export async function execCompleteAppointment(params: Record<string, string>, ho
   }
   if (!appointment) return { success: false, message: 'No active appointment found to complete.' }
 
-  await prisma.appointment.update({
+  await client.appointment.update({
     where: { id: appointment.id },
     data: { status: 'COMPLETED', checkedOutAt: new Date() },
   })
@@ -418,11 +442,15 @@ export async function execShowAppointments(params: Record<string, string>, hospi
 // 3. TREATMENT & CLINICAL
 // ---------------------------------------------------------------------------
 
-export async function execCreateTreatment(params: Record<string, string>, hospitalId: string) {
+export async function execCreateTreatment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.patientName)
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
-  const procedure = await prisma.procedure.findFirst({
+  const procedure = await client.procedure.findFirst({
     where: {
       hospitalId,
       isActive: true,
@@ -446,7 +474,7 @@ export async function execCreateTreatment(params: Record<string, string>, hospit
 
   const treatmentNo = await nextNumber(hospitalId, 'treatment', 'TRT')
 
-  const treatment = await prisma.treatment.create({
+  const treatment = await client.treatment.create({
     data: {
       hospitalId,
       treatmentNo,
@@ -464,13 +492,18 @@ export async function execCreateTreatment(params: Record<string, string>, hospit
   return {
     success: true,
     message: `Treatment ${treatment.treatmentNo} created: ${procedure.name} for ${patient.firstName} ${patient.lastName} by Dr. ${doctor.firstName}. Cost: EGP ${Number(treatment.cost).toLocaleString('en-EG')}.`,
+    treatmentNo: treatment.treatmentNo,
   }
 }
 
-export async function execCompleteTreatment(params: Record<string, string>, hospitalId: string) {
+export async function execCompleteTreatment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   let treatment
   if (params.treatmentNo) {
-    treatment = await prisma.treatment.findFirst({
+    treatment = await client.treatment.findFirst({
       where: {
         hospitalId,
         treatmentNo: params.treatmentNo,
@@ -484,7 +517,7 @@ export async function execCompleteTreatment(params: Record<string, string>, hosp
   } else if (params.patientName) {
     const patient = await findPatient(hospitalId, params.patientName)
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
-    treatment = await prisma.treatment.findFirst({
+    treatment = await client.treatment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['PLANNED', 'IN_PROGRESS'] } },
       include: {
         patient: { select: { firstName: true, lastName: true } },
@@ -495,7 +528,7 @@ export async function execCompleteTreatment(params: Record<string, string>, hosp
   }
   if (!treatment) return { success: false, message: 'No active treatment found to complete.' }
 
-  await prisma.treatment.update({
+  await client.treatment.update({
     where: { id: treatment.id },
     data: {
       status: 'COMPLETED',
@@ -550,12 +583,16 @@ export async function execShowTreatments(params: Record<string, string>, hospita
 // 4. BILLING & PAYMENTS
 // ---------------------------------------------------------------------------
 
-export async function execCreateInvoice(params: Record<string, string>, hospitalId: string) {
+export async function execCreateInvoice(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.query || params.patientName)
   if (!patient)
     return { success: false, message: `Patient "${params.query || params.patientName}" not found.` }
 
-  const unbilled = await prisma.treatment.findMany({
+  const unbilled = await client.treatment.findMany({
     where: { hospitalId, patientId: patient.id, status: 'COMPLETED', invoiceItems: { none: {} } },
     include: { procedure: { select: { name: true } } },
   })
@@ -576,7 +613,7 @@ export async function execCreateInvoice(params: Record<string, string>, hospital
 
   const invoiceNo = await nextNumber(hospitalId, 'invoice', 'INV')
 
-  const invoice = await prisma.invoice.create({
+  const invoice = await client.invoice.create({
     data: {
       hospitalId,
       invoiceNo,
@@ -605,17 +642,22 @@ export async function execCreateInvoice(params: Record<string, string>, hospital
     success: true,
     message: `Invoice ${invoice.invoiceNo} created for ${patient.firstName} ${patient.lastName}. Subtotal: EGP ${subtotal.toLocaleString('en-EG')}, VAT: EGP ${(cgstAmount + sgstAmount).toFixed(2)}, Total: EGP ${totalAmount.toFixed(2)}. Includes ${unbilled.length} treatment(s).`,
     invoiceNo: invoice.invoiceNo,
+    totalAmount,
   }
 }
 
-export async function execRecordPayment(params: Record<string, string>, hospitalId: string) {
+export async function execRecordPayment(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   if (!params.invoiceNo && !params.patientName) {
     return { success: false, message: 'Provide an invoice number or patient name.' }
   }
 
   let invoice
   if (params.invoiceNo) {
-    invoice = await prisma.invoice.findFirst({
+    invoice = await client.invoice.findFirst({
       where: {
         hospitalId,
         invoiceNo: params.invoiceNo,
@@ -626,7 +668,7 @@ export async function execRecordPayment(params: Record<string, string>, hospital
   } else {
     const patient = await findPatient(hospitalId, params.patientName)
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
-    invoice = await prisma.invoice.findFirst({
+    invoice = await client.invoice.findFirst({
       where: {
         hospitalId,
         patientId: patient.id,
@@ -650,7 +692,7 @@ export async function execRecordPayment(params: Record<string, string>, hospital
   const paymentNo = await nextNumber(hospitalId, 'payment', 'PAY')
   const method = (params.method?.toUpperCase() || 'CASH') as any
 
-  await prisma.payment.create({
+  await client.payment.create({
     data: {
       hospitalId,
       paymentNo,
@@ -664,7 +706,7 @@ export async function execRecordPayment(params: Record<string, string>, hospital
   const newPaid = Number(invoice.paidAmount) + amount
   const newBalance = Number(invoice.totalAmount) - newPaid
 
-  await prisma.invoice.update({
+  await client.invoice.update({
     where: { id: invoice.id },
     data: {
       paidAmount: newPaid,
@@ -676,6 +718,9 @@ export async function execRecordPayment(params: Record<string, string>, hospital
   return {
     success: true,
     message: `Payment ${paymentNo} of EGP ${amount.toLocaleString('en-EG')} recorded for invoice ${invoice.invoiceNo} (${invoice.patient.firstName} ${invoice.patient.lastName}). ${newBalance <= 0 ? 'Invoice fully paid.' : `Remaining balance: EGP ${newBalance.toFixed(2)}.`}`,
+    paymentNo,
+    invoiceNo: invoice.invoiceNo,
+    amount,
   }
 }
 
@@ -812,10 +857,14 @@ export async function execLowStock(hospitalId: string) {
   }
 }
 
-export async function execAddInventoryItem(params: Record<string, string>, hospitalId: string) {
+export async function execAddInventoryItem(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   if (!params.name) return { success: false, message: 'Item name is required.' }
 
-  const existing = await prisma.inventoryItem.findFirst({
+  const existing = await client.inventoryItem.findFirst({
     where: { hospitalId, name: { contains: params.name } },
   })
   if (existing) {
@@ -825,10 +874,10 @@ export async function execAddInventoryItem(params: Record<string, string>, hospi
     }
   }
 
-  const count = await prisma.inventoryItem.count({ where: { hospitalId } })
+  const count = await client.inventoryItem.count({ where: { hospitalId } })
   const sku = params.sku || `ITM-${String(count + 1).padStart(5, '0')}`
 
-  const item = await prisma.inventoryItem.create({
+  const item = await client.inventoryItem.create({
     data: {
       hospitalId,
       sku,
@@ -847,8 +896,12 @@ export async function execAddInventoryItem(params: Record<string, string>, hospi
   }
 }
 
-export async function execUpdateStock(params: Record<string, string>, hospitalId: string) {
-  const item = await prisma.inventoryItem.findFirst({
+export async function execUpdateStock(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
+  const item = await client.inventoryItem.findFirst({
     where: { hospitalId, OR: [{ name: { contains: params.itemName } }, { sku: params.itemName }] },
   })
   if (!item) return { success: false, message: `Item "${params.itemName}" not found.` }
@@ -865,12 +918,12 @@ export async function execUpdateStock(params: Record<string, string>, hospitalId
   if (newStock < 0)
     return { success: false, message: `Cannot remove ${qty} — only ${previousStock} in stock.` }
 
-  await prisma.inventoryItem.update({
+  await client.inventoryItem.update({
     where: { id: item.id },
     data: { currentStock: newStock },
   })
 
-  await prisma.stockTransaction.create({
+  await client.stockTransaction.create({
     data: {
       hospitalId,
       itemId: item.id,
@@ -885,6 +938,8 @@ export async function execUpdateStock(params: Record<string, string>, hospitalId
   return {
     success: true,
     message: `${item.name}: ${previousStock} → ${newStock} ${item.unit} (${type === 'remove' || type === 'subtract' ? 'removed' : 'added'} ${qty}).`,
+    itemName: item.name,
+    newStock,
   }
 }
 
@@ -892,11 +947,15 @@ export async function execUpdateStock(params: Record<string, string>, hospitalId
 // 6. LAB ORDERS
 // ---------------------------------------------------------------------------
 
-export async function execCreateLabOrder(params: Record<string, string>, hospitalId: string) {
+export async function execCreateLabOrder(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.patientName)
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
-  const vendor = await prisma.labVendor.findFirst({
+  const vendor = await client.labVendor.findFirst({
     where: { hospitalId, isActive: true, OR: [{ name: { contains: params.labName || '' } }] },
   })
   if (!vendor)
@@ -909,7 +968,7 @@ export async function execCreateLabOrder(params: Record<string, string>, hospita
 
   const orderNumber = await nextNumber(hospitalId, 'labOrder', 'LAB')
 
-  const order = await prisma.labOrder.create({
+  const order = await client.labOrder.create({
     data: {
       hospitalId,
       orderNumber,
@@ -927,11 +986,16 @@ export async function execCreateLabOrder(params: Record<string, string>, hospita
   return {
     success: true,
     message: `Lab order ${order.orderNumber} created: ${params.workType || 'CROWN'} for ${patient.firstName} ${patient.lastName}, sent to ${vendor.name}.`,
+    orderNumber: order.orderNumber,
   }
 }
 
-export async function execUpdateLabOrder(params: Record<string, string>, hospitalId: string) {
-  const order = await prisma.labOrder.findFirst({
+export async function execUpdateLabOrder(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
+  const order = await client.labOrder.findFirst({
     where: { hospitalId, orderNumber: params.orderNumber },
     include: { patient: { select: { firstName: true, lastName: true } } },
   })
@@ -961,7 +1025,7 @@ export async function execUpdateLabOrder(params: Record<string, string>, hospita
   }
   if (params.notes) data.notes = params.notes
 
-  await prisma.labOrder.update({ where: { id: order.id }, data })
+  await client.labOrder.update({ where: { id: order.id }, data })
 
   return {
     success: true,
@@ -1005,7 +1069,11 @@ export async function execShowLabOrders(params: Record<string, string>, hospital
 // 7. PRESCRIPTIONS
 // ---------------------------------------------------------------------------
 
-export async function execCreatePrescription(params: Record<string, string>, hospitalId: string) {
+export async function execCreatePrescription(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   const patient = await findPatient(hospitalId, params.patientName)
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
@@ -1036,7 +1104,7 @@ export async function execCreatePrescription(params: Record<string, string>, hos
     }
   })
 
-  const prescription = await prisma.prescription.create({
+  const prescription = await client.prescription.create({
     data: {
       hospitalId,
       prescriptionNo,
@@ -1051,6 +1119,7 @@ export async function execCreatePrescription(params: Record<string, string>, hos
   return {
     success: true,
     message: `Prescription ${prescription.prescriptionNo} created for ${patient.firstName} ${patient.lastName} by Dr. ${doctor.firstName}. ${medications.length} medication(s) prescribed.`,
+    prescriptionNo: prescription.prescriptionNo,
   }
 }
 
@@ -1058,10 +1127,14 @@ export async function execCreatePrescription(params: Record<string, string>, hos
 // 7b. MEDICATIONS (Drug Catalog)
 // ---------------------------------------------------------------------------
 
-export async function execAddMedication(params: Record<string, string>, hospitalId: string) {
+export async function execAddMedication(
+  params: Record<string, string>,
+  hospitalId: string,
+  client: any = prisma
+) {
   if (!params.name) return { success: false, message: 'Medication name is required.' }
 
-  const existing = await prisma.medication.findFirst({
+  const existing = await client.medication.findFirst({
     where: { hospitalId, name: { contains: params.name } },
   })
   if (existing) {
@@ -1071,7 +1144,7 @@ export async function execAddMedication(params: Record<string, string>, hospital
     }
   }
 
-  const medication = await prisma.medication.create({
+  const medication = await client.medication.create({
     data: {
       hospitalId,
       name: params.name,

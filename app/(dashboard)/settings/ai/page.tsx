@@ -131,6 +131,15 @@ export default function AISettingsPage() {
         </div>
       </div>
 
+      {/* Phase 1 — pending AI action approvals */}
+      <a
+        href="/ai-approvals"
+        className="block rounded-lg border p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
+      >
+        <p className="text-sm font-semibold">{t('aiApprovals.title')}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t('aiApprovals.subtitle')}</p>
+      </a>
+
       {/* Master toggle */}
       <section>
         <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">

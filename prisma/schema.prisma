@@ -107,6 +107,7 @@ model Hospital {
   aiConversations     AIConversation[]
   aiSkillExecutions   AISkillExecution[]
   aiInsights          AIInsight[]
+  aiActionApprovals   AIActionApproval[] // Phase 1 — AI action safety ledger
   patientRiskScores   PatientRiskScore[]
   patientPortalEnabled Boolean   @default(false)
 
@@ -281,6 +282,8 @@ model User {
   imagingStudiesUploaded ImagingStudy[]   // Phase 19A
   aiAnalysisJobsRequested AIAnalysisJob[] @relation("AIJobRequestedBy") // Phase 19A
   aiAnalysisJobsReviewed  AIAnalysisJob[] @relation("AIJobReviewedBy") // Phase 19A (reviewedById)
+  aiActionRequests        AIActionApproval[] @relation("AIActionRequestedBy") // Phase 1
+  aiActionApprovalsDone   AIActionApproval[] @relation("AIActionApprovedBy")  // Phase 1
 
   @@index([email])
   @@index([role])
@@ -565,6 +568,7 @@ model Patient {
   invoicePayments Payment[]           @relation("PatientInvoicePayments") // Phase 12
   videoConsultations VideoConsultation[]
   imagingStudies   ImagingStudy[]  // Phase 19A
+  aiActionApprovals AIActionApproval[] // Phase 1 — AI actions scoped to this patient
 
   @@unique([hospitalId, patientId])
   @@index([hospitalId])
@@ -2551,6 +2555,64 @@ model AIInsight {
   @@index([severity])
   @@index([dismissed])
   @@index([createdAt])
+}
+
+// Phase 1 — AI action safety. Durable ledger for AI-requested sensitive
+// actions: approval records AND the execution/idempotency ledger in one
+// place. An approval binds to (tenant, actor, action, validated params,
+// policy version) via `fingerprint`; execution always re-reads the stored
+// validated params — the client can never supply them at execute time.
+enum AIActionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  EXPIRED
+  EXECUTED
+  BLOCKED
+}
+
+model AIActionApproval {
+  id               String         @id @default(cuid())
+  hospitalId       String
+
+  // Request chain: actor → tenant → patient → action → approval → execution → audit
+  requestedById    String
+  conversationId   String? // AIConversation that triggered it (chat path)
+  patientId        String? // tenant-resolved patient the action operates on
+  action           String // intent name, e.g. "record_payment"
+  params           Json // validated, canonical parameters (the binding target)
+  fingerprint      String // sha256(hospitalId|action|patientId|policyVersion|canonical params)
+  riskLevel        String // READ | WRITE | CLINICAL_WRITE | FINANCIAL | EXTERNAL
+  amount           Decimal?       @db.Decimal(12, 2) // financial amount when applicable
+  requiresApproval Boolean        @default(true)
+  policyVersion    Int
+  status           AIActionStatus @default(PENDING)
+  blockReason      String? // set when status = BLOCKED (rbac/validation/idempotency/duplicate)
+  requestReason    String? // human-readable reason (AI summary, never a prompt)
+  expiresAt        DateTime // PENDING auto-expires at this time
+
+  approvedById     String?
+  approvedAt       DateTime?
+  decidedNote      String?
+
+  executedAt       DateTime?
+  result           Json? // verified execution result (read-back included)
+  error            String?      @db.Text
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  hospital    Hospital     @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  requestedBy User         @relation("AIActionRequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
+  approvedBy  User?        @relation("AIActionApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  patient     Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([hospitalId, status])
+  @@index([fingerprint])
+  @@index([requestedById])
+  @@index([patientId])
+  @@index([expiresAt])
 }
 
 model PatientRiskScore {

@@ -321,6 +321,18 @@ const mockPrismaClient = {
     count: vi.fn(),
   },
 
+  // AIActionApproval — Phase 1 AI action safety ledger / approvals
+  aIActionApproval: {
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    delete: vi.fn(),
+    count: vi.fn(),
+  },
+
   // PatientRiskScore
   patientRiskScore: {
     findUnique: vi.fn(),
@@ -918,6 +930,7 @@ mockPrismaClient.sMSLog = mockPrismaClient.smsLog
 mockPrismaClient.aiConversation = mockPrismaClient.aIConversation
 mockPrismaClient.aiSkillExecution = mockPrismaClient.aISkillExecution
 mockPrismaClient.aiInsight = mockPrismaClient.aIInsight
+mockPrismaClient.aiActionApproval = mockPrismaClient.aIActionApproval
 
 export const prisma = mockPrismaClient
 
