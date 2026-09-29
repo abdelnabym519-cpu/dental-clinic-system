@@ -278,6 +278,26 @@ const EDUCATIONAL_INTENT = [
   'brush', 'cleaning tips', 'daily care', 'نصائح', 'الرعاية المنزلية', 'ماذا أفعل',
 ]
 
+// ---------------------------------------------------------------------------
+// Phase 5 — local AI capability intent: the user asks what the dental AI can
+// analyze (engines/modalities/evidence state) — answered from the trusted
+// capability matrix. NOT a request to analyze a specific study: when a study
+// is pinned the imaging flow owns the request and this flag stays off.
+// The tool is READ-only and the classifier never picks an ENGINE from the
+// text — only whether the capability VIEW is wanted.
+// ---------------------------------------------------------------------------
+const LOCAL_AI_CAPABILITY_INTENT = [
+  'ai analysis', 'ai can', 'can ai', 'ai capabilities', 'dental ai', 'local ai',
+  'offline ai', 'ai detect', 'ai detection', 'detect caries', 'caries detection',
+  'x-ray analysis', 'xray analysis', 'radiograph analysis', 'cephalometric ai',
+  'landmark detection', 'mesh segmentation', 'tooth segmentation',
+  'which ai', 'which model', 'which models', 'which engine', 'which engines',
+  'ai engine', 'ai engines', 'ai model', 'ai models',
+  // AR
+  'الذكاء الاصطناعي', 'تحليل الأشعة', 'قدرات الذكاء', 'أي نماذج',
+  'ما الذي يمكن للذكاء', 'كشف التسوس',
+]
+
 export function detectKnowledgeSignal(m: string, patientInvolved: boolean): KnowledgeSignal | null {
   const hit = KNOWLEDGE_INTENT.some((t) => m.includes(t))
   if (!hit) return null
@@ -518,6 +538,12 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
 
   // Phase 4 — attach the knowledge signal to whatever task was chosen.
   if (knowledge) task = { ...task, knowledge }
+
+  // Phase 5 — local AI capability question (no study pinned; a pinned study
+  // is an imaging-flow request, not a capability question).
+  if (!input.studyId && LOCAL_AI_CAPABILITY_INTENT.some((t) => m.includes(t))) {
+    task = { ...task, localAiCapability: true }
+  }
 
   // Structural scope always wins when the client pinned a resource (a pin is
   // stronger than a vague phrase) — except for action/multi-step plans.

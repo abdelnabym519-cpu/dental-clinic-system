@@ -72,6 +72,7 @@ export async function POST(req: Request) {
     const { DEFAULT_AGENT_LIMITS } = await import('@/lib/ai/agent/types')
     const { complete } = await import('@/lib/ai/openrouter')
     const { getModelByTier } = await import('@/lib/ai/models')
+    const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
 
     const result = await runAgent(
       request,
@@ -86,6 +87,9 @@ export async function POST(req: Request) {
         },
         limits: { ...DEFAULT_AGENT_LIMITS },
         now: () => new Date(),
+        // Phase 5 — local AI capability view (live orchestrator when
+        // configured; the tool reports honest unavailability otherwise).
+        localAiCapabilities: createOrchestratorCapabilitySource(),
       }
     )
 

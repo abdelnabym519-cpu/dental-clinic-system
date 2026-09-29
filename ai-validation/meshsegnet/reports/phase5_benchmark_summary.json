@@ -1,0 +1,76 @@
+{
+  "kind": "phase5_local_ai_benchmark_summary",
+  "generated_at": "2026-09-29T23:14:55.952Z",
+  "source": [
+    "ai-validation/meshsegnet/reports/phase5_real_inference_max.json",
+    "ai-validation/meshsegnet/reports/phase5_real_inference_man.json"
+  ],
+  "scope": "INFRASTRUCTURE BASELINE ONLY",
+  "disclaimers": [
+    "Numbers were measured in the Phase 5 validation sandbox (2 vCPU / ~4 GB RAM), NOT on the target Windows i9-13900H / 16 GB machine.",
+    "Latency is an infrastructure characteristic of this model + hardware pair. It implies NOTHING about clinical accuracy (§27: accuracy is a separate, not-yet-validated axis).",
+    "Clinical accuracy requires an evaluation dataset with reference annotations — out of scope for Phase 5 (deferred)."
+  ],
+  "engines": [
+    {
+      "engine": "meshsegnet-max",
+      "engine_code": "ai/engines/meshsegnet-max",
+      "model": {
+        "parameter_count": 1799140,
+        "model_load_time_ms": 74,
+        "checksum_verified": true
+      },
+      "performance_ms": {
+        "cold_first_inference": 12495.7,
+        "warm": {
+          "n": 5,
+          "min": 11246.5,
+          "median": 11347.9,
+          "p95": 11577.7,
+          "max": 11607
+        },
+        "decimated_cells": 9999,
+        "original_cells": 328581
+      },
+      "memory_mb": {
+        "engine_process_peak_rss": 1844.2
+      },
+      "determinism": {
+        "labels_identical_cold_vs_warm": true,
+        "segments_identical_cold_vs_warm": true
+      },
+      "hardware": "Linux 6.1.158+ (Phase 5 validation sandbox, 2 vCPU)",
+      "execution_provider": "CPU (no GPU present; torch.cuda.is_available() false)"
+    },
+    {
+      "engine": "meshsegnet-man",
+      "engine_code": "ai/engines/meshsegnet-man",
+      "model": {
+        "parameter_count": 1799140,
+        "model_load_time_ms": 255,
+        "checksum_verified": true
+      },
+      "performance_ms": {
+        "cold_first_inference": 16261.9,
+        "warm": {
+          "n": 5,
+          "min": 9441.5,
+          "median": 9609,
+          "p95": 9824.6,
+          "max": 9865.1
+        },
+        "decimated_cells": 10000,
+        "original_cells": 178421
+      },
+      "memory_mb": {
+        "engine_process_peak_rss": 1737.1
+      },
+      "determinism": {
+        "labels_identical_cold_vs_warm": true,
+        "segments_identical_cold_vs_warm": true
+      },
+      "hardware": "Linux 6.1.158+ (Phase 5 validation sandbox, 2 vCPU)",
+      "execution_provider": "CPU (no GPU present; torch.cuda.is_available() false)"
+    }
+  ]
+}

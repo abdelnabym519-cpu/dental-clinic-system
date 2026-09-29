@@ -68,6 +68,14 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
     case 'CLINICAL_ANALYSIS':
     case 'IMAGING_ANALYSIS':
     case 'KNOWLEDGE': {
+      // Phase 5 — local AI capability question: answered from the trusted
+      // capability matrix (read-only tool). No patient context, no imaging
+      // access, no engine invocation — the agent never selects an engine
+      // from text here; it only reports what is registered and evidenced.
+      if (task.localAiCapability) {
+        add('local_ai_capabilities', {}, 'list local AI capabilities')
+        return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'local_ai_capability_plan_failed' }
+      }
       // Phase 4 — pure knowledge question (no patient involved): knowledge
       // only; no patient context is fetched and none is fabricated.
       if (knowledge && !ctx.hasPatient) {

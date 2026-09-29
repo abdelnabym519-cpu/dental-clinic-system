@@ -100,6 +100,14 @@ export interface AgentTask {
    * case tiers; the LLM/client cannot.
    */
   knowledge?: KnowledgeSignal | null
+  /**
+   * Phase 5 — local AI capability question: the user asks what the dental
+   * AI can analyze (engines/modalities/evidence state), not for an analysis
+   * of a specific study. Answered from the trusted capability matrix via the
+   * read-only `local_ai_capabilities` tool — no patient context, no engine
+   * invocation, never selected from engine names in the text.
+   */
+  localAiCapability?: boolean
 }
 
 export interface KnowledgeSignal {
@@ -448,4 +456,6 @@ export interface AgentDeps {
   now: () => Date
   /** Phase 4 — knowledge store (injectable for tests; defaults to Prisma). */
   knowledgeStore?: import('../knowledge/types').KnowledgeStore
+  /** Phase 5 — local AI capability source (orchestrator view; tests inject fakes). */
+  localAiCapabilities?: import('../engines/types').LocalAiCapabilitySource | null
 }

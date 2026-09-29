@@ -35,6 +35,8 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from .db import JobError, JobStore
+from .capability_matrix import public_view as capability_public_view
+from .lifecycle import derive_lifecycle
 from .provenance import build_provenance
 from .registry import ORCHESTRATOR_VERSION, registry
 from .storage import ObjectStorage, StorageError, ai_output_keys
@@ -230,6 +232,12 @@ def health():
             }
         except Exception:
             engines_health[name] = {"reachable": False}
+        # Phase 5 — lifecycle is re-derived from the live evidence (never
+        # cached, never optimistic): see app/lifecycle.py.
+        reg = registry.get(name)
+        lifecycle = derive_lifecycle(reg, engines_health[name])
+        engines_health[name]["lifecycle_status"] = lifecycle["status"]
+        engines_health[name]["lifecycle_reason"] = lifecycle["reason"]
     out["engines_health"] = engines_health
     # Back-compatible 19A fields (the 19A E2E asserts these exact keys).
     out["liodon_engine"] = engines_health.get("liodon", {"reachable": False})
@@ -241,7 +249,25 @@ def health():
 
 @app.get("/engines")
 def engines():
-    return {"orchestrator_version": ORCHESTRATOR_VERSION, "engines": registry.public_view()}
+    # Phase 5 — additive fields: per-engine lifecycle (derived from the last
+    # health observation is NOT used here — /engines is static registry data,
+    # so lifecycle is reported as REGISTERED with its registry evidence; the
+    # LIVE state is /health's per-engine lifecycle_status) + the capability
+    # matrix (audit data, see app/capability_matrix.py).
+    engines_view = []
+    for e in registry.public_view():
+        entry = dict(e)
+        entry["lifecycle_status"] = "REGISTERED"
+        entry["lifecycle_note"] = (
+            "code-pinned registry entry; live state (AVAILABLE/DEGRADED/BLOCKED) "
+            "is derived per /health observation — see /health engines_health"
+        )
+        engines_view.append(entry)
+    return {
+        "orchestrator_version": ORCHESTRATOR_VERSION,
+        "engines": engines_view,
+        "capability_matrix": capability_public_view(),
+    }
 
 
 @app.post("/analyze")

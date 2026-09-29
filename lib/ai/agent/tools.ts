@@ -21,6 +21,7 @@ import type { ContextProfile } from '@/lib/ai/context/types'
 import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
 import { createPrismaKnowledgeStore } from '@/lib/ai/knowledge/store'
 import { isKnowledgeDomain } from '@/lib/ai/knowledge/taxonomy'
+import { CAPABILITY_TASK_IDS } from '@/lib/ai/engines/capability-matrix'
 import type { KnowledgeEvidencePackage, KnowledgeStore } from '@/lib/ai/knowledge/types'
 import type { AgentToolDefinition, AgentToolResult, AgentDomain, RiskLevel } from './types'
 
@@ -38,6 +39,8 @@ export interface ToolRuntime {
   now: Date
   /** Phase 4 — knowledge store (injectable for tests; defaults to Prisma). */
   knowledgeStore?: KnowledgeStore
+  /** Phase 5 — local AI capability source (orchestrator view; null = static matrix only). */
+  localAiCapabilities?: import('../engines/types').LocalAiCapabilitySource | null
   /** Phase 1 pipeline entry point (the ONLY write path). */
   runAction: (intent: string, params: Record<string, string>) => Promise<{
     status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
@@ -113,6 +116,26 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
                 ? 'language must be en or ar'
                 : OK(),
     timeoutMs: 8000,
+    maxRetries: 0,
+    idempotent: true,
+  },
+
+  // ── Phase 5 — Local AI capabilities (bounded read-only) ───────────────
+  local_ai_capabilities: {
+    name: 'local_ai_capabilities',
+    description:
+      'Dental AI analysis capabilities: which dental tasks have a verified local engine, its modality, output type and evidence state. Decision support only — every AI finding requires clinician review. Engine selection is deterministic from the task/modality, never from free text.',
+    domain: 'imaging',
+    writeClass: 'READ',
+    riskLevel: 'NONE',
+    requiredRoles: [...STAFF, 'PATIENT'],
+    requiresPatient: false,
+    viaActionPipeline: false,
+    validateInput: (i) =>
+      i.task !== undefined && (typeof i.task !== 'string' || !CAPABILITY_TASK_IDS.includes(i.task))
+        ? 'unknown capability task'
+        : OK(),
+    timeoutMs: 5000,
     maxRetries: 0,
     idempotent: true,
   },
@@ -350,6 +373,10 @@ export async function executeTool(
       if (name === 'retrieve_dental_knowledge') {
         return await knowledgeTool(input, rt)
       }
+      // Phase 5 — local AI capability view (trusted matrix + live engine state).
+      if (name === 'local_ai_capabilities') {
+        return await localAiCapabilitiesTool(input, rt)
+      }
       // Clinic read tools (bounded, tenant-scoped).
       return await clinicTool(name, input, rt)
     }
@@ -380,6 +407,34 @@ export async function executeTool(
     if (err instanceof Error && err.message === 'TOOL_TIMEOUT') return fail('TOOL_TIMEOUT')
     return fail(`TOOL_FAILURE: ${err instanceof Error ? err.message : 'unknown'}`)
   }
+}
+
+/**
+ * Phase 5 — local AI capability view. READ-only, no patient scope, no
+ * engine invocation: the matrix is trusted policy data and the live engine
+ * state comes from the orchestrator (honest unavailability when it is not
+ * configured/reachable). Engine selection never happens from this tool —
+ * that is the imaging flow / LocalAIService job.
+ */
+async function localAiCapabilitiesTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+  const { LocalAIService } = await import('../engines/local-ai-service')
+  const { resolveCapability } = await import('../engines/capability-matrix')
+  const service = new LocalAIService(rt.localAiCapabilities ?? null, null, () => rt.now)
+  const view = await service.capabilityView()
+  const out: Record<string, unknown> = {
+    kind: 'local_ai_capabilities',
+    reviewRequired: true, // decision support — always clinician-reviewed
+    matrix: view.matrix,
+    runtime: view.runtime,
+    generatedAt: view.generatedAt,
+  }
+  if (typeof input.task === 'string') {
+    const res = resolveCapability(input.task)
+    out.resolution = res.ok
+      ? { task: res.task, resolvable: res.resolvable, reason: res.reason }
+      : { error: res.error }
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------

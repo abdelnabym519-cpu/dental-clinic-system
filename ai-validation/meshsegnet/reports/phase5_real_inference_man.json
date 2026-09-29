@@ -1,0 +1,180 @@
+{
+  "evidence": "phase5_real_local_inference",
+  "generated_at": "2026-09-29T22:29:31.079874+00:00",
+  "engine": "meshsegnet-man",
+  "engine_code": "ai/engines/meshsegnet-man",
+  "engine_modified": false,
+  "model": {
+    "filename": "MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip",
+    "sha256": "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf",
+    "size_bytes": 28866886,
+    "source": "https://github.com/Tai-Hsien/MeshSegNet (official repository, MIT)",
+    "checksum_verified_by": "download_artifacts.py + engine /health model_checksum_verified"
+  },
+  "input": {
+    "filename": "0EJBIPTC_lower.obj",
+    "sha256": "b824f6822f4a6ada296eef6869e9341fa1e69ad6cd14862b53572198ae5e7a76",
+    "size_bytes": 11543252,
+    "source": "abenhamadou/3DTeethSeg22_challenge @ main (reference algorithm test set)",
+    "format": "obj (triangular surface mesh, mm)",
+    "note": "challenge-published test mesh; geometry NOT committed, SHA recorded only"
+  },
+  "runtime": {
+    "python": "3.11.2",
+    "torch": "2.14.0+cu130",
+    "execution_provider": "CPU (no GPU present; torch.cuda.is_available() false)",
+    "cuda_available": false,
+    "host": "Linux 6.1.158+ (Phase 5 validation sandbox, 2 vCPU)"
+  },
+  "health_gate": {
+    "status": "ok",
+    "model_loaded": true,
+    "model_checksum": "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf",
+    "model_checksum_expected": "d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf",
+    "model_checksum_verified": true,
+    "model_load_time_ms": 255,
+    "parameter_count": 1799140,
+    "is_standin": false
+  },
+  "preprocessing": {
+    "official_max_cells": 10000,
+    "cells_original": 178421,
+    "downsampled_to_official_cap": true,
+    "inference_cells": 10000,
+    "probabilities_shape": [
+      1,
+      10000,
+      15
+    ],
+    "engine_processing_time_ms": 14213
+  },
+  "output": {
+    "schema": "per-cell 15-class labels -> class histogram (neutral names)",
+    "total_cells": 10000,
+    "segments": [
+      {
+        "class_id": 0,
+        "class_name": "Gingiva",
+        "point_count": 5827
+      },
+      {
+        "class_id": 1,
+        "class_name": "Tooth_1",
+        "point_count": 50
+      },
+      {
+        "class_id": 2,
+        "class_name": "Tooth_2",
+        "point_count": 442
+      },
+      {
+        "class_id": 3,
+        "class_name": "Tooth_3",
+        "point_count": 373
+      },
+      {
+        "class_id": 4,
+        "class_name": "Tooth_4",
+        "point_count": 361
+      },
+      {
+        "class_id": 5,
+        "class_name": "Tooth_5",
+        "point_count": 338
+      },
+      {
+        "class_id": 6,
+        "class_name": "Tooth_6",
+        "point_count": 219
+      },
+      {
+        "class_id": 7,
+        "class_name": "Tooth_7",
+        "point_count": 183
+      },
+      {
+        "class_id": 8,
+        "class_name": "Tooth_8",
+        "point_count": 144
+      },
+      {
+        "class_id": 9,
+        "class_name": "Tooth_9",
+        "point_count": 492
+      },
+      {
+        "class_id": 10,
+        "class_name": "Tooth_10",
+        "point_count": 789
+      },
+      {
+        "class_id": 11,
+        "class_name": "Tooth_11",
+        "point_count": 571
+      },
+      {
+        "class_id": 12,
+        "class_name": "Tooth_12",
+        "point_count": 163
+      },
+      {
+        "class_id": 13,
+        "class_name": "Tooth_13",
+        "point_count": 34
+      },
+      {
+        "class_id": 14,
+        "class_name": "Tooth_14",
+        "point_count": 14
+      }
+    ],
+    "top_classes": [
+      {
+        "class_id": 0,
+        "class_name": "Gingiva",
+        "point_count": 5827
+      },
+      {
+        "class_id": 10,
+        "class_name": "Tooth_10",
+        "point_count": 789
+      },
+      {
+        "class_id": 11,
+        "class_name": "Tooth_11",
+        "point_count": 571
+      },
+      {
+        "class_id": 9,
+        "class_name": "Tooth_9",
+        "point_count": 492
+      },
+      {
+        "class_id": 2,
+        "class_name": "Tooth_2",
+        "point_count": 442
+      }
+    ]
+  },
+  "performance_ms": {
+    "cold_first_inference": 16261.9,
+    "warm_median_of_5": 9609.0,
+    "warm_all": [
+      9441.5,
+      9563.6,
+      9609.0,
+      9662.8,
+      9865.1
+    ],
+    "note": "sandbox hardware (2 vCPU / ~4 GB RAM), NOT the target Windows machine; infrastructure baseline only \u2014 no accuracy implied"
+  },
+  "memory": {
+    "engine_process_peak_rss_mb": 1737.1
+  },
+  "determinism_check": {
+    "labels_identical_cold_vs_warm": true,
+    "segments_identical_cold_vs_warm": true
+  },
+  "status": "REAL_INFERENCE_VERIFIED",
+  "engine_tail_log": "2026-09-29 22:28:24,686 INFO meshsegnet-man model loaded (CPU, torch 2.14.0+cu130) in 255 ms\n"
+}

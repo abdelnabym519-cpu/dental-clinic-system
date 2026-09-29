@@ -156,6 +156,31 @@ function answerFromToolData(task: AgentTask, data: unknown): string | null {
     case 'followups':
       if (!d.followups.length) return `No follow-ups due within ${d.withinDays} days.`
       return `${d.count} follow-up(s) due: ` + d.followups.map((f: any) => `${f.patientName ?? '?'} (treatment ${f.treatmentNo}, due ${f.dueAt?.slice(0, 10) ?? 'n/a'})`).join('; ')
+    case 'local_ai_capabilities': {
+      // Phase 5 — deterministic capability summary (no LLM, no PHI).
+      const rows: any[] = Array.isArray(d.matrix) ? d.matrix : []
+      const supported = rows.filter((r) => r.overall === 'SUPPORTED').map((r) => r.task)
+      const partial = rows.filter((r) => r.overall === 'PARTIAL').map((r) => r.task)
+      let out = 'Dental AI analysis is decision support only — every AI finding requires clinician review.'
+      if (supported.length) out += ` Verified local capabilities: ${supported.join(', ')}.`
+      if (partial.length) out += ` Partial (production path exists, some evidence not verifiable in this environment): ${partial.join(', ')}.`
+      if (d.runtime && d.runtime.source === 'orchestrator') {
+        const live: any[] = Array.isArray(d.runtime.health) ? d.runtime.health : []
+        const up = live.filter((h) => h.lifecycleStatus === 'AVAILABLE').map((h) => h.name)
+        const down = live.filter((h) => h.lifecycleStatus !== 'AVAILABLE' && h.lifecycleStatus !== 'RETIRED').map((h) => h.name)
+        if (up.length) out += ` Engines currently available: ${up.join(', ')}.`
+        if (down.length) out += ` Not available in this deployment: ${down.join(', ')} (weights not present or engine down).`
+      } else if (d.runtime) {
+        out += ` Engine runtime state: unavailable — ${d.runtime.reason}.`
+      }
+      if (d.resolution) {
+        const r = d.resolution
+        if (r.error) out += ` Requested task: ${r.error}.`
+        else if (r.resolvable) out += ` Task '${r.task.task}' is served by engine '${r.task.engine}' (modality ${r.task.modality}); output: ${r.task.outputType}.`
+        else out += ` Task '${r.task.task}' has no engine: ${r.reason}.`
+      }
+      return out
+    }
     default:
       return null
   }
@@ -305,6 +330,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     treatmentNo: request.treatmentNo ?? null,
     now,
     knowledgeStore: deps.knowledgeStore,
+    localAiCapabilities: deps.localAiCapabilities,
     actorId: request.actor.id,
     runAction: (intent, params) =>
       runAiAction({
@@ -439,7 +465,11 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
 
   // Patient resolution (server-side, tenant-verified, never guessed).
   // PATIENT portal users are ALWAYS self-scoped — their context is their own.
-  const patientRequired = task.patientInvolved || request.actor.role === 'PATIENT'
+  // Phase 5 — a local-AI capability question is patient-free registry
+  // information: no patient is resolved and no patient data is fetched,
+  // even for PATIENT actors or when the message embeds an engine name
+  // (§32: engine selection never comes from user text).
+  const patientRequired = (task.patientInvolved || request.actor.role === 'PATIENT') && !task.localAiCapability
   if (patientRequired) {
     const res = await resolvePatient(rt, request, cls.patientName)
     if (res.status === 'resolved') {
