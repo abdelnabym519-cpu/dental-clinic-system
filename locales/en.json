@@ -5505,5 +5505,10 @@
   "aiApprovals.status.cancelled": "Cancelled",
   "aiApprovals.status.expired": "Expired",
   "aiApprovals.status.executed": "Executed",
-  "aiApprovals.status.blocked": "Blocked"
+  "aiApprovals.status.blocked": "Blocked",
+  "Context inspector is only available in development": "Context inspector is only available in development",
+  "patientId is required": "patientId is required",
+  "Invalid profile": "Invalid profile",
+  "Invalid tooth number": "Invalid tooth number",
+  "Context build failed": "Context build failed"
 }

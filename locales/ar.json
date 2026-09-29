@@ -5505,5 +5505,10 @@
   "aiApprovals.status.cancelled": "ملغاة",
   "aiApprovals.status.expired": "منتهية الصلاحية",
   "aiApprovals.status.executed": "تم التنفيذ",
-  "aiApprovals.status.blocked": "محظور"
+  "aiApprovals.status.blocked": "محظور",
+  "Context inspector is only available in development": "فحص السياق متاح فقط في وضع التطوير",
+  "patientId is required": "حقل patientId مطلوب",
+  "Invalid profile": "الملف غير صالح",
+  "Invalid tooth number": "رقم السن غير صالح",
+  "Context build failed": "فشل بناء السياق"
 }
