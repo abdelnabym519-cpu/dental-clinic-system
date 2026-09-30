@@ -1,0 +1,281 @@
+{
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "cases": [
+    {
+      "caseId": "CLN-001",
+      "category": "CLINICAL",
+      "domain": "ENDODONTICS",
+      "language": "en",
+      "title": "Endodontics question retrieves cited, grounded evidence",
+      "description": "The suite seeds a synthetic endodontics source. The answer must present cited evidence and pass deterministic grounding. This asserts RETRIEVAL BEHAVIOR, not clinical accuracy.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the indications for a root canal treatment?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "patientInvolved": false,
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMin": 1,
+          "failureCode": null
+        },
+        "grounding": {
+          "ok": true,
+          "unsupportedMax": 0
+        },
+        "mustContain": [
+          "Relevant Dental Evidence"
+        ]
+      },
+      "tags": [
+        "retrieval",
+        "grounding",
+        "bilingual-parity-base"
+      ]
+    },
+    {
+      "caseId": "CLN-002",
+      "category": "CLINICAL",
+      "domain": "PERIODONTOLOGY",
+      "language": "en",
+      "title": "Periodontology diagnostic criteria question: TIER_1 evidence, grounded",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the diagnostic criteria for periodontitis?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMin": 1,
+          "failureCode": null
+        },
+        "grounding": {
+          "ok": true,
+          "unsupportedMax": 0
+        }
+      },
+      "tags": [
+        "retrieval",
+        "grounding"
+      ]
+    },
+    {
+      "caseId": "CLN-003",
+      "category": "CLINICAL",
+      "domain": "ENDODONTICS",
+      "language": "ar",
+      "title": "Arabic endodontics question: bilingual retrieval parity",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "ما هي معايير علاج قناة الجذر؟"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "patientInvolved": false,
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMin": 1,
+          "failureCode": null
+        },
+        "grounding": {
+          "ok": true,
+          "unsupportedMax": 0
+        }
+      },
+      "tags": [
+        "retrieval",
+        "bilingual"
+      ]
+    },
+    {
+      "caseId": "CLN-004",
+      "category": "CLINICAL",
+      "domain": "ORTHODONTICS",
+      "language": "ar",
+      "title": "Arabic orthodontics indications: bilingual retrieval parity",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "ما هي دواعي تقويم الأسنان؟"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "patientInvolved": false,
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMin": 1,
+          "failureCode": null
+        },
+        "grounding": {
+          "ok": true,
+          "unsupportedMax": 0
+        }
+      },
+      "tags": [
+        "retrieval",
+        "bilingual"
+      ]
+    },
+    {
+      "caseId": "CLN-005",
+      "category": "CLINICAL",
+      "domain": "RESTORATIVE",
+      "language": "en",
+      "title": "Restorative question: cited evidence without medical certainty claims",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the contraindications for laser treatment of cavities? What does the evidence say about composite restorations?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": [
+          "KNOWLEDGE"
+        ],
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMax": 5
+        },
+        "mustNotContain": [
+          "proven cure",
+          "cures cavities",
+          "guaranteed cure",
+          "100% effective"
+        ]
+      },
+      "tags": [
+        "no-certainty",
+        "retrieval"
+      ]
+    },
+    {
+      "caseId": "CLN-006",
+      "category": "CLINICAL",
+      "domain": "PEDIATRIC_SPECIAL_CARE",
+      "language": "en",
+      "title": "No matching evidence: honest NO_RESULTS, never fabricated",
+      "description": "The seeded set has no fluoride-varnish source. The answer must state no matching evidence and carry zero citations.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the guidelines for fluoride varnish application?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMax": 0
+        },
+        "mustContain": [
+          "no matching evidence"
+        ]
+      },
+      "tags": [
+        "no-evidence",
+        "honesty"
+      ]
+    },
+    {
+      "caseId": "CLN-007",
+      "category": "CLINICAL",
+      "domain": "IMPLANTOLOGY",
+      "language": "en",
+      "title": "Implantology question with no seeded source: no-evidence honesty",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the guidelines for osseointegration in implant dentistry?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMax": 0
+        },
+        "mustContain": [
+          "no matching evidence"
+        ],
+        "mustNotContain": [
+          "diagnosis"
+        ]
+      },
+      "tags": [
+        "no-evidence",
+        "honesty"
+      ]
+    },
+    {
+      "caseId": "CLN-008",
+      "category": "CLINICAL",
+      "domain": "SURGERY",
+      "language": "en",
+      "title": "Surgery question with no seeded source: no-evidence honesty",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What is the standard protocol for managing dry socket after extraction?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": [
+          "KNOWLEDGE"
+        ],
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "evidence": {
+          "citationsMax": 0
+        },
+        "mustContain": [
+          "no matching evidence"
+        ]
+      },
+      "tags": [
+        "no-evidence",
+        "honesty"
+      ]
+    }
+  ]
+}

@@ -318,6 +318,18 @@ export interface AgentState {
   uncertainty: string[]
   missingInfo: string[]
   warnings: string[]
+  /** Phase 7 — safe attachment identity for evaluation traces
+   *  (opaque ids + class only — never names, keys, or content). */
+  attachmentRefs?: { id: string; fileClass: string }[]
+  /** Phase 7 — safe engine identity per attachment tool call
+   *  (engine name / job id / modality / model version — never output). */
+  engineRuns?: {
+    tool: string
+    engine: string | null
+    jobId: string | null
+    modality: string | null
+    modelVersion: string | null
+  }[]
   /** Phase 4 — last successful knowledge package (for ANALYZE). */
   knowledgePackage?: import('../knowledge/types').KnowledgeEvidencePackage | null
   /** Phase 4 — knowledge observability (no content, no CoT). */
@@ -375,6 +387,18 @@ export interface AgentTrace {
   stopReason: string | null
   failureCodes: string[]
   startedAt: string
+  /** Phase 7 — evaluation observability: safe attachment identity
+   *  (opaque ids + class only — never names, keys, or content). */
+  attachments?: { id: string; fileClass: string }[]
+  /** Phase 7 — safe engine identity per attachment tool call
+   *  (engine name / job id / modality / model version — never output). */
+  engines?: {
+    tool: string
+    engine: string | null
+    jobId: string | null
+    modality: string | null
+    modelVersion: string | null
+  }[]
 }
 
 // ---------------------------------------------------------------------------

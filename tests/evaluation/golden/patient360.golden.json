@@ -1,0 +1,359 @@
+{
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "cases": [
+    {
+      "caseId": "P360-001",
+      "category": "PATIENT_360",
+      "domain": "patient360",
+      "language": "en",
+      "title": "Complex review uses FULL_360 and the single 360 tool",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Show the clinical findings and the open balance for this patient",
+        "patientId": "pat-A1"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "MULTI_STEP",
+        "contextProfile": "FULL_360",
+        "tools": [
+          "get_patient_360"
+        ],
+        "mustNotContain": [
+          "Sara Hassan"
+        ]
+      },
+      "tags": [
+        "profile",
+        "full-360"
+      ]
+    },
+    {
+      "caseId": "P360-002",
+      "category": "PATIENT_360",
+      "domain": "imaging",
+      "language": "en",
+      "title": "Imaging request uses the IMAGING profile (smallest sufficient)",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Show the imaging findings for this patient",
+        "patientId": "pat-A1"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "IMAGING_ANALYSIS",
+        "contextProfile": "IMAGING",
+        "tools": [
+          "get_imaging_context"
+        ]
+      },
+      "tags": [
+        "profile",
+        "imaging"
+      ]
+    },
+    {
+      "caseId": "P360-003",
+      "category": "PATIENT_360",
+      "domain": "tooth",
+      "language": "en",
+      "title": "Tooth-scoped review uses the TOOTH profile",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Review tooth 36 for this patient",
+        "patientId": "pat-A1"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "CLINICAL_ANALYSIS",
+        "toothInvolved": true,
+        "contextProfile": "TOOTH",
+        "tools": [
+          "get_tooth_context"
+        ]
+      },
+      "tags": [
+        "profile",
+        "tooth"
+      ]
+    },
+    {
+      "caseId": "P360-004",
+      "category": "PATIENT_360",
+      "domain": "scheduling",
+      "language": "en",
+      "title": "Appointment query uses PATIENT_OVERVIEW (never full 360 by default)",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Show the appointments for this patient",
+        "patientId": "pat-A1"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "INFORMATIONAL",
+        "contextProfile": "PATIENT_OVERVIEW",
+        "tools": [
+          "get_patient_overview"
+        ]
+      },
+      "tags": [
+        "profile",
+        "minimal"
+      ]
+    },
+    {
+      "caseId": "P360-005",
+      "category": "PATIENT_360",
+      "domain": "portal",
+      "language": "en",
+      "title": "Portal user never sees other patients' data",
+      "actorRole": "PATIENT",
+      "tenant": "A",
+      "input": {
+        "message": "Show my appointments and my clinical notes"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "patientInvolved": true,
+        "mustNotContain": [
+          "Sara Hassan",
+          "PAT-A2"
+        ]
+      },
+      "tags": [
+        "portal",
+        "isolation"
+      ]
+    },
+    {
+      "caseId": "P360-N1",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Ambiguous in-domain, patient-free request must not retrieve any patient data",
+      "description": "'dentist' keeps it in-domain; with no patient signal and no resolvable intent the loop clarifies (after at most one scripted-LLM classification) and never touches patient records.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Tell me a short joke about a dentist"
+      },
+      "expected": {
+        "status": [
+          "CLARIFICATION_REQUIRED"
+        ],
+        "taskType": [
+          "UNKNOWN"
+        ],
+        "tools": [],
+        "llmCalls": {
+          "min": 0,
+          "max": 1
+        }
+      },
+      "tags": [
+        "negative",
+        "no-retrieval"
+      ]
+    },
+    {
+      "caseId": "P360-N2",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "General knowledge question must not fabricate patient context",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "What are the indications for a root canal treatment?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "KNOWLEDGE",
+        "patientInvolved": false,
+        "tools": [
+          "retrieve_dental_knowledge"
+        ],
+        "mustNotContain": [
+          "PAT-A1",
+          "Ahmed Ali"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval",
+        "knowledge"
+      ]
+    },
+    {
+      "caseId": "P360-N3",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Operational queue must not expose medical details",
+      "actorRole": "RECEPTIONIST",
+      "tenant": "A",
+      "input": {
+        "message": "Who is waiting in the queue right now?"
+      },
+      "expected": {
+        "status": [
+          "COMPLETED"
+        ],
+        "taskType": "OPERATIONAL",
+        "tools": [
+          "get_waiting_queue"
+        ],
+        "mustNotContain": [
+          "Penicillin",
+          "Diabetes"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval"
+      ]
+    },
+    {
+      "caseId": "P360-N4",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Cross-tenant reference: no retrieval, clarification only",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Show the full chart for this patient",
+        "patientId": "pat-B1"
+      },
+      "expected": {
+        "status": [
+          "CLARIFICATION_REQUIRED"
+        ],
+        "tools": [],
+        "mustContain": [
+          "never guess patients"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval",
+        "tenant-isolation"
+      ]
+    },
+    {
+      "caseId": "P360-N5",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Unknown patient name: no retrieval, never guesses",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": {
+        "message": "Show the chart for BobNotExist"
+      },
+      "expected": {
+        "status": [
+          "CLARIFICATION_REQUIRED"
+        ],
+        "tools": [],
+        "mustContain": [
+          "never guess patients"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval"
+      ]
+    },
+    {
+      "caseId": "P360-N6",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Tooth keyword without valid FDI: asks, never guesses",
+      "actorRole": "PATIENT",
+      "tenant": "A",
+      "input": {
+        "message": "Check my tooth"
+      },
+      "expected": {
+        "status": [
+          "CLARIFICATION_REQUIRED"
+        ],
+        "tools": [],
+        "toothInvolved": true,
+        "mustContain": [
+          "FDI number"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval",
+        "fdi"
+      ]
+    },
+    {
+      "caseId": "P360-N7",
+      "category": "PATIENT_360",
+      "domain": "negative",
+      "language": "en",
+      "title": "Ambiguous patient name: clarifies instead of picking",
+      "patientContext": [
+        {
+          "id": "pat-dup",
+          "hospitalId": "hosp-A",
+          "patientId": "PAT-A-DUP",
+          "firstName": "Ahmed",
+          "lastName": "Ali",
+          "age": 40,
+          "dateOfBirth": "1986-01-01",
+          "gender": "MALE",
+          "bloodGroup": "A+",
+          "phone": "01099998888",
+          "alternatePhone": null,
+          "email": "ahmed2@example.com",
+          "locale": "ar",
+          "portalUserId": null,
+          "createdAt": "2025-01-01",
+          "medicalHistory": null
+        }
+      ],
+      "input": {
+        "message": "Show the chart for Ahmed Ali"
+      },
+      "expected": {
+        "status": [
+          "CLARIFICATION_REQUIRED"
+        ],
+        "tools": [],
+        "mustContain": [
+          "2 patients matching"
+        ]
+      },
+      "tags": [
+        "negative",
+        "no-retrieval",
+        "ambiguity"
+      ],
+      "tenant": "A",
+      "actorRole": "DOCTOR"
+    }
+  ]
+}

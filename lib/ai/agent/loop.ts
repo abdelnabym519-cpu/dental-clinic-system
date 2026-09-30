@@ -329,6 +329,8 @@ function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps
     stopReason: state.stopReason,
     failureCodes: [...new Set(failures.map((f) => f.code))],
     knowledge: state.knowledge ?? null,
+    attachments: state.attachmentRefs ?? [],
+    engines: state.engineRuns ?? [],
     startedAt: state.startedAt.toISOString(),
   }
 }
@@ -592,6 +594,11 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       rt.patientName = `${p.firstName} ${p.lastName}`
       attachmentPatientResolved = true
     }
+    // Phase 7 — safe identity for evaluation traces (ids + class only).
+    state.attachmentRefs = resolvedAttachments.map((r) => ({
+      id: r.id,
+      fileClass: r.record.fileClass,
+    }))
     // Deterministic task override — attachments are facts, not phrasing.
     task = {
       ...task,
@@ -823,6 +830,37 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
           sourceCount: pkg.stats.sourceCount,
           retrievalMs: pkg.stats.retrievalMs,
           citationCount: pkg.citations.length,
+        }
+      }
+      // Phase 7 — safe engine identity for evaluation traces: names, ids,
+      // modality and model version only — never findings or output content.
+      if (res.ok && res.data && typeof res.data === 'object') {
+        const d = res.data as {
+          kind?: string
+          engine?: string
+          jobId?: string
+          attachment?: { dentalModality: string | null }
+          envelope?: { provenance?: { modelVersion?: string } }
+          envelopeA?: { engine?: string; provenance?: { modelVersion?: string } }
+        }
+        if (d.kind === 'attachment_analysis' && typeof d.engine === 'string') {
+          state.engineRuns = state.engineRuns ?? []
+          state.engineRuns.push({
+            tool: res.meta.tool,
+            engine: d.engine,
+            jobId: typeof d.jobId === 'string' ? d.jobId : null,
+            modality: d.attachment?.dentalModality ?? null,
+            modelVersion: d.envelope?.provenance?.modelVersion ?? null,
+          })
+        } else if (d.kind === 'attachment_comparison' && d.envelopeA?.engine) {
+          state.engineRuns = state.engineRuns ?? []
+          state.engineRuns.push({
+            tool: res.meta.tool,
+            engine: d.envelopeA.engine,
+            jobId: null,
+            modality: null,
+            modelVersion: d.envelopeA.provenance?.modelVersion ?? null,
+          })
         }
       }
       // Result validation (§15): tenant + patient scope.
