@@ -15,6 +15,7 @@ import {
   TrendingUp,
   MessageSquare,
   BotMessageSquare,
+  AudioLines,
   Sparkles,
   Pill,
   ClipboardList,
@@ -61,6 +62,11 @@ export const navigation: NavSection[] = [
         title: 'AI Chat',
         href: '/chat',
         icon: BotMessageSquare,
+      },
+      {
+        title: 'AI Companion',
+        href: '/ai-companion',
+        icon: AudioLines,
       },
       {
         title: 'Dashboard',

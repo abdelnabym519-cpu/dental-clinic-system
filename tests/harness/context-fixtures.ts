@@ -319,7 +319,16 @@ const tables: Record<string, Row[]> = {
 // ---------------------------------------------------------------------------
 
 function matchesWhere(row: Row, where: Record<string, unknown> | undefined): boolean {
+  // Phase 10 (additive): top-level OR/AND — production Prisma semantics the
+  // harness header already promises. Existing operator behavior unchanged.
+  if (where && Array.isArray(where.OR)) {
+    if (!(where.OR as Record<string, unknown>[]).some((sub) => matchesWhere(row, sub))) return false
+  }
+  if (where && Array.isArray(where.AND)) {
+    if (!(where.AND as Record<string, unknown>[]).every((sub) => matchesWhere(row, sub))) return false
+  }
   for (const [k, v] of Object.entries(where ?? {})) {
+    if (k === 'OR' || k === 'AND') continue
     if (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
       const cond = v as Record<string, unknown>
       if ('in' in cond) {
@@ -342,6 +351,19 @@ function matchesWhere(row: Row, where: Record<string, unknown> | undefined): boo
       }
       if ('not' in cond) {
         if (row[k] === cond.not) return false
+      }
+      // Phase 10 (additive): contains/equals/startsWith — string filters the
+      // voice entity resolver (and general Prisma code) relies on.
+      if ('contains' in cond) {
+        const hay = String(row[k] ?? '').toLowerCase()
+        const needle = String(cond.contains ?? '').toLowerCase()
+        if (!hay.includes(needle)) return false
+      }
+      if ('equals' in cond) {
+        if (row[k] !== cond.equals) return false
+      }
+      if ('startsWith' in cond) {
+        if (!String(row[k] ?? '').toLowerCase().startsWith(String(cond.startsWith ?? '').toLowerCase())) return false
       }
     } else if (v instanceof Date || (typeof row[k] === 'object' && row[k] !== null && row[k] instanceof Date)) {
       if (new Date(row[k] as string).getTime() !== new Date(v as string).getTime()) return false

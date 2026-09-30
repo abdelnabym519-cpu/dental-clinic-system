@@ -74,6 +74,9 @@ export const EVAL_FAILURE_CODES = [
   // Framework
   'EVAL_DATASET_INVALID',
   'EVAL_CONTRACT_MISMATCH',
+  // Phase 10 — voice replay extension (same vocabulary, additive)
+  'EVAL_VOICE_BEHAVIOR_MISMATCH',
+  'EVAL_VOICE_TEXT_MISMATCH',
 ] as const
 export type EvalFailureCode = (typeof EVAL_FAILURE_CODES)[number]
 

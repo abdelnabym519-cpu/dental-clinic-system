@@ -1,0 +1,10 @@
+#JSGF V1.0;
+grammar dentora;
+// DenToRa Phase 10 — bounded local voice-command grammar (example fixture).
+// Used ONLY by the optional local engine boundary (pocketsphinx JSGF mode).
+public <cmd> = <analyze> | <show> | <book> | <followup>;
+<analyze> = [please] (analyze | review) [the] (x ray | cbct | panoramic) [of <name>];
+<show> = [please] show [me] [the] (patient | case | appointments | schedule) [<name>];
+<book> = [please] book [an] appointment for patient <name> [(today | tomorrow)];
+<followup> = [please] prepare [a] follow up for <name>;
+<name> = ahmed | sara | mohamed | mona;

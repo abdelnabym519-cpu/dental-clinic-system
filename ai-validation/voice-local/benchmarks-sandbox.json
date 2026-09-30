@@ -1,0 +1,238 @@
+{
+  "kind": "phase10_voice_robot_benchmark",
+  "envLabel": "SANDBOX",
+  "generatedAt": "2026-09-30T20:53:02.324Z",
+  "scope": "VOICE/ROBOT INTERFACE HOT PATH (SANDBOX INFRASTRUCTURE ONLY)",
+  "disclaimers": [
+    "Measured in the Arena sandbox (shared vCPU), NOT on the target machine — implies nothing about production latency.",
+    "Agent numbers use the replay boundary (deterministic fake services), so they isolate the VOICE LAYER cost, not LLM latency.",
+    "No raw audio or transcript content is persisted by this benchmark."
+  ],
+  "records": [
+    {
+      "name": "voice_transcript_trust",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.016285,
+      "maxMs": 0.102097,
+      "meanMs": 0.03,
+      "medianMs": 0.03,
+      "p95Ms": 0.08,
+      "coldMs": 0.86,
+      "failures": 0,
+      "notes": "sanitize+normalize per final transcript"
+    },
+    {
+      "name": "voice_normalize",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.017881,
+      "maxMs": 0.078731,
+      "meanMs": 0.03,
+      "medianMs": 0.02,
+      "p95Ms": 0.04,
+      "coldMs": 0.07,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_prepare_agent_message",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.003736,
+      "maxMs": 0.009368,
+      "meanMs": 0.01,
+      "medianMs": 0.01,
+      "p95Ms": 0.01,
+      "coldMs": 0.11,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_tooth_resolution",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.043851,
+      "maxMs": 0.192227,
+      "meanMs": 0.07,
+      "medianMs": 0.05,
+      "p95Ms": 0.14,
+      "coldMs": 0.92,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_duplicate_assessment",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.003695,
+      "maxMs": 0.089367,
+      "meanMs": 0.02,
+      "medianMs": 0.01,
+      "p95Ms": 0.08,
+      "coldMs": 0.31,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_speakable_shaping",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.006157,
+      "maxMs": 0.022396,
+      "meanMs": 0.01,
+      "medianMs": 0.01,
+      "p95Ms": 0.02,
+      "coldMs": 0.64,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_turn_informational_e2e",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 2,
+        "samples": 8
+      },
+      "minMs": 0.332184,
+      "maxMs": 0.731181,
+      "meanMs": 0.5,
+      "medianMs": 0.45,
+      "p95Ms": 0.73,
+      "coldMs": 6.34,
+      "failures": 0,
+      "notes": "runVoiceTurn incl. real runAgent over replay deps"
+    },
+    {
+      "name": "voice_turn_duplicate_suppressed",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 1,
+        "samples": 6
+      },
+      "minMs": 0.053425,
+      "maxMs": 0.20898,
+      "meanMs": 0.09,
+      "medianMs": 0.06,
+      "p95Ms": 0.21,
+      "coldMs": 0.19,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_session_ops",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.003245,
+      "maxMs": 0.067444,
+      "meanMs": 0.01,
+      "medianMs": 0,
+      "p95Ms": 0.02,
+      "coldMs": 0.11,
+      "failures": 0,
+      "notes": null
+    }
+  ]
+}

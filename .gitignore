@@ -75,3 +75,6 @@ tools/preview/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Phase 10 local voice verification marker (never commit machine-local state)
+.voice-local-check

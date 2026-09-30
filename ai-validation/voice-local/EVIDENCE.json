@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-09-30T20:21:06.620506+00:00",
+  "environment": "SANDBOX",
+  "hosts": {
+    "huggingface.co": "UNREACHABLE",
+    "alphacephei.com": "UNREACHABLE",
+    "pypi.org": "REACHABLE"
+  },
+  "stt": {
+    "pocketsphinx": {
+      "status": "REAL_INFERENCE_VERIFIED",
+      "result": {
+        "text": "show they should come and",
+        "confidence": 0.0,
+        "isFinal": true,
+        "engine": "pocketsphinx",
+        "model": "en-us (bundled)",
+        "decodeMs": 574.1,
+        "loadMs": 297.9
+      },
+      "grammarModeResult": {
+        "text": "show patient ahmed",
+        "confidence": 0.0,
+        "isFinal": true,
+        "engine": "pocketsphinx",
+        "model": "en-us (bundled)",
+        "decodeMs": 28.9,
+        "loadMs": 447.2
+      },
+      "note": "open-dictation (LM) mode has HIGH WER on the generic bundled model; JSGF grammar-constrained command mode is the recommended local fallback (see grammarModeResult)"
+    },
+    "vosk": {
+      "status": "BLOCKED",
+      "blocker": "alphacephei.com + huggingface.co unreachable"
+    },
+    "whisper.cpp": {
+      "status": "BLOCKED",
+      "blocker": "huggingface.co unreachable"
+    },
+    "faster-whisper": {
+      "status": "BLOCKED",
+      "blocker": "huggingface.co unreachable"
+    }
+  },
+  "tts": {
+    "mespeak": {
+      "status": "REAL_INFERENCE_VERIFIED"
+    },
+    "piper": {
+      "status": "BLOCKED",
+      "blocker": "huggingface.co unreachable"
+    },
+    "espeak-ng": {
+      "status": "UNAVAILABLE",
+      "blocker": "deb.debian.org unreachable + no root; wasm data hosts unreachable"
+    }
+  }
+}

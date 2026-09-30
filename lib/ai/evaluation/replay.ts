@@ -31,7 +31,7 @@ import type {
 // Fixture identity mapping (synthetic only)
 // ---------------------------------------------------------------------------
 
-const ACTOR_FOR_ROLE: Record<GoldenCase['actorRole'], { id: string; name: string; role: string }> = {
+export const ACTOR_FOR_ROLE: Record<GoldenCase['actorRole'], { id: string; name: string; role: string }> = {
   SUPER_ADMIN: { id: 'staff-super-1', name: 'Super A', role: 'SUPER_ADMIN' },
   ADMIN: { id: 'staff-admin-1', name: 'Admin A', role: 'ADMIN' },
   DOCTOR: { id: 'staff-doctor-1', name: 'Hana Shalaby', role: 'DOCTOR' },
@@ -291,17 +291,20 @@ export function buildRequest(c: GoldenCase, overrides: { requestId?: string } = 
   }
 }
 
-export async function replayAgentCase(
+/**
+ * Phase 10 (additive) — build the SAME replay AgentDeps without running the
+ * case, so the Voice replay drives the REAL agent through the IDENTICAL
+ * fake boundary (one harness, no second evaluation framework).
+ */
+export async function buildReplayAgentDeps(
   c: GoldenCase,
   overrides: ReplayOverrides = {},
-  mode: ReplayMode = 'UNIT_REPLAY',
-): Promise<ReplayOutcome> {
+  llmLog: LlmCallLog = { calls: [] },
+): Promise<AgentDeps> {
   const hospitalId = tenantFor(c.tenant)
   const records: Record<string, Record<string, unknown>> = {}
   for (const a of c.attachments ?? []) {
     const rec = materializeAttachment(a, hospitalId)
-    // Document attachments: write the (synthetic) extracted text to the
-    // temp storage root so read_document_attachment reads a real file.
     if (rec.extractedTextKey && a.extractedText && overrides.uploadDir) {
       const key = rec.extractedTextKey as string
       const dir = path.join(overrides.uploadDir, ...key.split('/').slice(0, -1))
@@ -310,38 +313,37 @@ export async function replayAgentCase(
     }
     records[a.id] = rec
   }
+  return {
+    client: writableClient(
+      createAgentFakePrisma({
+        ...(c.patientContext ? { patient: c.patientContext } : {}),
+        ...(overrides.extraRows ?? {}),
+      }) as unknown as Record<string, unknown>,
+    ),
+    llm: makeScriptedLlm(overrides.llm ?? {}, llmLog),
+    limits: { ...DEFAULT_AGENT_LIMITS },
+    now: () => new Date(NOW),
+    knowledgeStore: overrides.knowledgeStore ?? undefined,
+    attachments: overrides.attachments
+      ?? (c.input.attachments?.length || c.attachments?.length
+        ? fakeAttachmentService(records)
+        : null),
+    localAiService: overrides.localAiService ?? makeFakeLocalAiService(),
+    localAiCapabilities: overrides.capabilities ?? null,
+    memory: overrides.memory ?? null,
+  } as unknown as AgentDeps
+}
+
+export async function replayAgentCase(
+  c: GoldenCase,
+  overrides: ReplayOverrides = {},
+  mode: ReplayMode = 'UNIT_REPLAY',
+): Promise<ReplayOutcome> {
   const llmLog: LlmCallLog = { calls: [] }
   const request = buildRequest(c)
   const response = await runAgent(
     request,
-    {
-      client: writableClient(
-        createAgentFakePrisma({
-          ...(c.patientContext ? { patient: c.patientContext } : {}),
-          ...(overrides.extraRows ?? {}),
-        }) as unknown as Record<string, unknown>,
-      ),
-      llm: makeScriptedLlm(overrides.llm ?? {}, llmLog),
-      limits: { ...DEFAULT_AGENT_LIMITS },
-      now: () => new Date(NOW),
-      // undefined (not null) — AgentDeps.knowledgeStore is `KnowledgeStore | undefined`;
-      // null and undefined both mean "no store" to the loop's falsy checks.
-      knowledgeStore: overrides.knowledgeStore ?? undefined,
-      // If the request references attachment ids, the service EXISTS and the
-      // ids are resolved against it (unknown id → ATTACHMENTS_UNRESOLVED).
-      // A null service means the deployment has no attachment capability at
-      // all (only reached when the request carries no attachment ids).
-      attachments: overrides.attachments
-        ?? (c.input.attachments?.length || c.attachments?.length
-          ? fakeAttachmentService(records)
-          : null),
-      localAiService: overrides.localAiService ?? makeFakeLocalAiService(),
-      localAiCapabilities: overrides.capabilities ?? null,
-      memory: overrides.memory ?? null,
-    } as unknown as AgentDeps,
-    // The loop types its deps strictly; the fakes above satisfy the
-    // structural surface the loop actually calls (same boundary the Phase
-    // 3/6 suites use).
+    await buildReplayAgentDeps(c, overrides, llmLog),
   )
   return { request, response, observed: observe(response), llmLog, mode }
 }
