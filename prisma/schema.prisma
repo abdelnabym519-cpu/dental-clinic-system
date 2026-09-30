@@ -138,6 +138,7 @@ model Hospital {
   multimodalAttachments MultimodalAttachment[] // Phase 6
   aiMemoryItems     AiMemoryItem[]            // Phase 8 — canonical memory
   aiMemoryEvents    AiMemoryEvent[]           // Phase 8 — memory audit trail
+  aiWorkflowRuns    AiWorkflowRun[]           // Phase 9 — bounded workflow runs
 
   @@index([slug])
   @@index([plan])
@@ -2604,6 +2605,52 @@ model AiMemoryEvent {
 
   @@index([hospitalId, memoryId])
   @@index([hospitalId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 9 — Bounded agentic workflow runs (additive).
+//
+// One table for persisted workflow-run state: the validated state machine
+// (status), the bounded step log (JSON — replay + audit, never PHI dumps),
+// retry attempts, approval hand-off (approvalId) and expiry. The typed
+// state machine and the allowed-step program live in lib/ai/workflows
+// (definitions.ts / types.ts); this row is the durable observation of one
+// run. `patientId`/`caseId`/`actorId`/`approvalId` are plain indexed
+// strings (no FKs), matching the Phase 6 / Phase 8 additive convention.
+// `status` is a documented String column (no native ENUM — same convention
+// as Phase 4/6/8); the TS layer is the typed source of truth.
+model AiWorkflowRun {
+  id          String    @id @default(cuid())
+  hospitalId  String
+  workflowId  String // canonical workflow id (lib/ai/workflows/definitions)
+  version     Int // definition version that ran
+  // PENDING | RUNNING | WAITING_APPROVAL | COMPLETED | FAILED | CANCELLED | EXPIRED
+  status      String    @default("PENDING")
+  patientId   String? // tenant-resolved patient (null for clinic workflows)
+  caseId      String? // Treatment id when case-scoped
+  actorId     String // who triggered it (RBAC checked at trigger time)
+  actorRole   String
+  currentStep String?
+  // Bounded StepResult[] (replay + audit)
+  stepLog     Json
+  // set when the run parked in WAITING_APPROVAL via the action pipeline
+  approvalId  String?
+  // bounded run context (attachment ids etc. — no PHI payloads)
+  context     Json
+  // terminal result summary (steps/toolCalls or failedStep/error)
+  result      Json?
+  attempts    Int       @default(1)
+  startedAt   DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([hospitalId, status])
+  @@index([hospitalId, patientId])
+  @@index([hospitalId, workflowId, status])
 }
 
 model AISkillExecution {

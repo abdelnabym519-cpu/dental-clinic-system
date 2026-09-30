@@ -419,6 +419,12 @@ export function createFakePrisma(extraRows?: Record<string, Row[]>) {
   for (const [name, rows] of Object.entries(tables)) {
     all[name] = [...rows, ...(extraRows?.[name] ?? [])]
   }
+  // Additive (Phase 9): extraRows may ALSO declare tables that are not part
+  // of the base fixture set (e.g. aiAnalysisJob, aiMemoryItem, aiInsight).
+  // They get their own delegate with the same where/orderBy/take semantics.
+  for (const [name, rows] of Object.entries(extraRows ?? {})) {
+    if (!all[name]) all[name] = rows
+  }
   const delegates: Record<string, ReturnType<typeof makeDelegate>> = {}
   for (const name of Object.keys(all)) delegates[name] = makeDelegate(all[name])
   return {

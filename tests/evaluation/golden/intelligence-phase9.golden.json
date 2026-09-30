@@ -1,0 +1,244 @@
+{
+  "datasetVersion": "1.0.0",
+  "phase": 9,
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "description": "Synthetic goldens for the Phase 9 deterministic intelligence surface (case graph, dental brain, patient AI, clinic brain, proactive alerts, bounded workflows). Every case runs the REAL modules over the shared synthetic harness; expectations are typed and fail-closed. No real patient data (SYNTHETIC_ONLY).",
+  "cases": [
+    {
+      "caseId": "INT9-CG-001",
+      "module": "case-graph",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "title": "Canonical graph: FDI teeth, trust-preserved nodes, full provenance, bounded size",
+      "aiJobs": [
+        { "id": "job-g1", "engine": "clm", "status": "COMPLETED", "reviewDecision": "ACCEPTED", "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [{ "condition": "caries", "tooth_number": 36 }], "modelVersion": "v1.2.0", "modelChecksum": "c0ffee" }
+      ],
+      "expect": {
+        "teeth": [36, 46],
+        "nodeKinds": ["PATIENT", "CASE", "TREATMENT", "FINDING", "IMAGING", "AI_FINDING", "APPOINTMENT", "FOLLOW_UP", "TOOTH"],
+        "allEdgesHaveProvenance": true,
+        "maxNodes": 120,
+        "forbiddenSubstrings": ["hosp-B", "pat-B1", "pat-A2", "Omar", "Sara"]
+      }
+    },
+    {
+      "caseId": "INT9-CG-002",
+      "module": "case-graph",
+      "tenant": "B",
+      "patientId": "pat-B1",
+      "title": "Tenant-B graph is tenant-pinned: tenant-A data never crosses over",
+      "aiJobs": [],
+      "expect": {
+        "teeth": [36, 46],
+        "forbiddenSubstrings": ["hosp-A", "pat-A1", "Ahmed", "Sara", "plan-A1", "TRT-A-701"]
+      }
+    },
+    {
+      "caseId": "INT9-CG-003",
+      "module": "case-graph",
+      "tenant": "A",
+      "patientId": "pat-FORGED",
+      "title": "Forged patient id fails closed with a typed error (no graph, no data)",
+      "aiJobs": [],
+      "expect": { "expectedError": "INT_PATIENT_NOT_FOUND" }
+    },
+    {
+      "caseId": "INT9-CG-004",
+      "module": "case-graph",
+      "tenant": "A",
+      "patientId": "pat-B1",
+      "title": "Cross-tenant patient id under tenant-A session → INT_SCOPE_MISMATCH",
+      "aiJobs": [],
+      "expect": { "expectedError": "INT_SCOPE_MISMATCH" }
+    },
+    {
+      "caseId": "INT9-DB-001",
+      "module": "dental-brain",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "title": "Case understanding: teeth, findings, AI-vs-confirmed, no missing info on a rich record",
+      "aiJobs": [
+        { "id": "job-g2", "engine": "clm", "status": "COMPLETED", "reviewDecision": "ACCEPTED", "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [{ "condition": "caries", "tooth_number": 36 }], "modelVersion": "v1.2.0", "modelChecksum": "c0ffee" }
+      ],
+      "expect": {
+        "affectedTeeth": [36, 46],
+        "clinicianConfirmedMin": 1,
+        "domainsInclude": ["RESTORATIVE"],
+        "missingInformationEmpty": true
+      }
+    },
+    {
+      "caseId": "INT9-DB-002",
+      "module": "dental-brain",
+      "tenant": "A",
+      "patientId": "pat-empty",
+      "emptyPatient": true,
+      "title": "Empty record: explicit missingInformation, NOT_AVAILABLE sections — nothing invented",
+      "aiJobs": [],
+      "expect": {
+        "missingInformationIncludes": ["chief_complaint", "imaging", "findings"],
+        "summarySections": 16,
+        "noDiagnosisFabrication": true
+      }
+    },
+    {
+      "caseId": "INT9-DB-003",
+      "module": "dental-brain",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "title": "Differential support is CDS only: stance fixed, candidates present, never a confirmed diagnosis",
+      "aiJobs": [
+        { "id": "job-g3", "engine": "clm", "status": "COMPLETED", "reviewDecision": "ACCEPTED", "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [{ "condition": "caries", "tooth_number": 36 }], "modelVersion": "v1", "modelChecksum": "c" }
+      ],
+      "expect": {
+        "differentialStance": "clinical_decision_support",
+        "differentialCandidatesMin": 1,
+        "noDiagnosisFabrication": true
+      }
+    },
+    {
+      "caseId": "INT9-PA-001",
+      "module": "patient-ai",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "title": "Patient AI: bounded deterministic timeline; accepted AI finding is FACT, pending is AI_INTERPRETATION",
+      "aiJobs": [
+        { "id": "job-g4", "engine": "clm", "status": "COMPLETED", "reviewDecision": "ACCEPTED", "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [{ "condition": "caries", "tooth_number": 36 }], "modelVersion": "v1", "modelChecksum": "c" },
+        { "id": "job-g5", "engine": "clm", "status": "COMPLETED", "reviewDecision": null, "findings": [{ "condition": "periapical", "tooth_number": 46 }], "acceptedFindings": [], "modelVersion": "v1", "modelChecksum": "c" }
+      ],
+      "expect": {
+        "timelineSortedDesc": true,
+        "timelineKinds": ["APPOINTMENT", "TREATMENT", "IMAGING", "AI_FINDING", "AI_REVIEW", "FOLLOW_UP", "OUTCOME", "CASE", "MEMORY"],
+        "aiEventFact": "job-g4",
+        "aiEventNotFact": "job-g5",
+        "currentTreatmentsIncludeRef": "TRT-A-701",
+        "timelineLimit": 50
+      }
+    },
+    {
+      "caseId": "INT9-PA-002",
+      "module": "patient-ai",
+      "tenant": "A",
+      "patientId": "pat-empty",
+      "emptyPatient": true,
+      "title": "Empty patient: unknown stays unknown — empty timelines, explicit unknown areas, no invented events",
+      "aiJobs": [],
+      "expect": {
+        "timelineEmpty": true,
+        "activeCasesEmpty": true,
+        "unresolvedIssuesMin": 0
+      }
+    },
+    {
+      "caseId": "INT9-CB-001",
+      "module": "clinic-brain",
+      "tenant": "A",
+      "actorRole": "RECEPTIONIST",
+      "title": "Empty day: total 0, utilization NULL (never a fake 0%), financials NOT_AVAILABLE for RECEPTIONIST",
+      "aiJobs": [],
+      "expect": {
+        "todayTotal": 0,
+        "utilization": null,
+        "financialState": "NOT_AVAILABLE",
+        "commandCenterSectionsMin": 10,
+        "delayedNotMeasured": true
+      }
+    },
+    {
+      "caseId": "INT9-CB-002",
+      "module": "clinic-brain",
+      "tenant": "A",
+      "actorRole": "ACCOUNTANT",
+      "todayAppointments": [
+        { "status": "COMPLETED" }, { "status": "COMPLETED" }, { "status": "IN_PROGRESS" },
+        { "status": "CHECKED_IN" }, { "status": "CHECKED_IN" }, { "status": "CHECKED_IN" },
+        { "status": "CHECKED_IN" }, { "status": "NO_SHOW" }, { "status": "CANCELLED" }, { "status": "SCHEDULED" }
+      ],
+      "title": "Rich day: exact by-status totals, deterministic utilization, QUEUE_BACKLOG, financials AVAILABLE for ACCOUNTANT",
+      "aiJobs": [],
+      "expect": {
+        "todayTotal": 10,
+        "utilization": 0.3,
+        "bottleneckCodes": ["QUEUE_BACKLOG"],
+        "financialState": "AVAILABLE"
+      }
+    },
+    {
+      "caseId": "INT9-WF-001",
+      "module": "workflows",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "workflowId": "case_review",
+      "actorRole": "DOCTOR",
+      "title": "case_review: 9 canonical steps, COMPLETED, deterministic replay (identical steps + result)",
+      "aiJobs": [
+        { "id": "job-g6", "engine": "clm", "status": "COMPLETED", "reviewDecision": "ACCEPTED", "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [{ "condition": "caries", "tooth_number": 36 }], "modelVersion": "v1", "modelChecksum": "c" }
+      ],
+      "expect": {
+        "status": "COMPLETED",
+        "steps": 9,
+        "replayDeterministic": true
+      }
+    },
+    {
+      "caseId": "INT9-WF-002",
+      "module": "workflows",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "workflowId": "follow_up",
+      "actorRole": "DOCTOR",
+      "pipeline": "APPROVAL_REQUIRED",
+      "title": "follow_up: sensitive step parks in WAITING_APPROVAL through the action pipeline; never executed directly",
+      "aiJobs": [],
+      "expect": {
+        "status": "WAITING_APPROVAL",
+        "outputKeysInclude": ["wf.out.actionPendingApproval"],
+        "noExecutedAction": true
+      }
+    },
+    {
+      "caseId": "INT9-WF-003",
+      "module": "workflows",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "workflowId": "imaging_review",
+      "actorRole": "LAB_TECH",
+      "title": "imaging_review: review package built (CDS), then create_finding FAILS CLOSED (no pipeline policy)",
+      "aiJobs": [
+        { "id": "job-g7", "engine": "clm", "status": "COMPLETED", "reviewDecision": null, "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [], "modelVersion": "v1", "modelChecksum": "c" }
+      ],
+      "expect": {
+        "status": "FAILED",
+        "failedStep": "create_finding",
+        "outputKeysInclude": ["wf.out.reviewPackage"],
+        "noExecutedAction": true
+      }
+    },
+    {
+      "caseId": "INT9-WF-004",
+      "module": "workflows",
+      "tenant": "A",
+      "patientId": "pat-A1",
+      "workflowId": "case_review",
+      "actorRole": "PATIENT",
+      "title": "privilege escalation: PATIENT is not in any workflow allowedRoles → INT_WORKFLOW_ROLE_DENIED",
+      "aiJobs": [],
+      "expect": { "expectedError": "INT_WORKFLOW_ROLE_DENIED" }
+    },
+    {
+      "caseId": "INT9-AL-001",
+      "module": "alerts",
+      "tenant": "A",
+      "title": "proactive sweep: unreviewed job → WARNING signal; idempotent re-run; action ALWAYS null",
+      "aiJobs": [
+        { "id": "job-g8", "engine": "clm", "status": "COMPLETED", "reviewDecision": null, "findings": [{ "condition": "caries", "tooth_number": 36 }], "acceptedFindings": [], "modelVersion": "v1", "modelChecksum": "c" }
+      ],
+      "expect": {
+        "created": 1,
+        "reRunCreated": 0,
+        "reRunDeduplicated": 1,
+        "signalOnly": true
+      }
+    }
+  ]
+}
