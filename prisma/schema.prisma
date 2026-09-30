@@ -135,6 +135,7 @@ model Hospital {
   dataImportJobs      DataImportJob[]
   imagingStudies    ImagingStudy[]
   aiAnalysisJobs    AIAnalysisJob[]
+  multimodalAttachments MultimodalAttachment[] // Phase 6
 
   @@index([slug])
   @@index([plan])
@@ -569,6 +570,7 @@ model Patient {
   invoicePayments Payment[]           @relation("PatientInvoicePayments") // Phase 12
   videoConsultations VideoConsultation[]
   imagingStudies   ImagingStudy[]  // Phase 19A
+  multimodalAttachments MultimodalAttachment[] // Phase 6
   aiActionApprovals AIActionApproval[] // Phase 1 — AI actions scoped to this patient
 
   @@unique([hospitalId, patientId])
@@ -3418,6 +3420,81 @@ model AIAnalysisJob {
   @@index([studyId])
   @@index([status])
   @@index([hospitalId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 6 — Multimodal Dental AI (additive). ONE canonical chat-attachment
+// contract. Every descriptive field is server-derived (magic-byte MIME,
+// computed SHA-256, sanitized display name, tenant-prefixed storage key);
+// client MIME/extension/patient/case claims are never trusted. A
+// patient-attributed attachment with an established modality also owns an
+// ImagingStudy row (reused, not duplicated) — this table holds the
+// chat-specific context. `studyId`/`caseId` are intentionally plain indexed
+// strings (no FK), matching the additive migration exactly.
+model MultimodalAttachment {
+  id            String    @id
+  hospitalId    String
+  patientId     String?
+  caseId        String?
+  conversationId String?
+
+  originalName  String
+  fileName      String
+  mediaType     String
+  fileClass     MultimodalFileClass
+  dentalModality String?
+  modalityOrigin String    @default("NONE")
+  dentalImageState String?
+
+  size          Int
+  sha256        String
+  storageKey    String    @unique
+  source        MultimodalSource @default(CHAT_UPLOAD)
+  status        MultimodalStatus @default(RECEIVED)
+  failureCode   String?
+
+  width         Int?
+  height        Int?
+  pixelCount    Int?
+  pageCount     Int?
+  extractedTextKey String?
+
+  studyId       String?
+
+  provenance    Json?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  hospital      Hospital  @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  patient       Patient?  @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([hospitalId])
+  @@index([hospitalId, patientId])
+  @@index([conversationId])
+  @@index([studyId])
+}
+
+enum MultimodalFileClass {
+  IMAGE_2D
+  MESH_3D
+  DOCUMENT_PDF
+  DOCUMENT_TEXT
+  VOLUME_DICOM
+  UNKNOWN
+}
+
+enum MultimodalSource {
+  CHAT_UPLOAD
+  CLINIC_DOCUMENT
+  SYSTEM
+}
+
+enum MultimodalStatus {
+  RECEIVED
+  VALIDATED
+  PROCESSED
+  FAILED
 }
 
 // ---------------------------------------------------------------------------

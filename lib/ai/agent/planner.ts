@@ -25,6 +25,10 @@ export interface PlanContext {
   operationalInput: Record<string, unknown>
   /** Phase 4 — the user's original message (for the knowledge query). */
   message: string
+  /** Phase 6 — resolved attachment metadata (server facts, tenant-scoped). */
+  attachmentRefs?: { id: string; fileClass: string; dentalModality: string | null; patientId: string | null }[] | null
+  /** Phase 6 — deterministic tooth focus (FDI) when exactly one was named. */
+  toothFdi?: number | null
   limit: AgentLimits
 }
 
@@ -87,6 +91,52 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       // Phase 4 — hybrid: patient facts AND dental knowledge (kept separate).
       addKnowledge()
       return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'context_already_retrieved' }
+    }
+
+    case 'ATTACHMENT_ANALYSIS': {
+      // Phase 6 — attachment plan: template-only, ids are the server-
+      // resolved attachment ids (never client text), engine selection is
+      // the tool's job via the Phase 5 registry (§17/§32).
+      const atts = ctx.attachmentRefs ?? []
+      if (!atts.length) return { plan: null, reason: 'no_attachments' }
+      // §11/§18 — an unclassified 2D image (dentalModality null) is NOT
+      // scheduled for analysis: no engine can be selected without a modality,
+      // and guessing is forbidden. MESH_3D always resolves to THREE_D_SCAN.
+      const analyzable = atts.filter(
+        (a) => a.fileClass === 'MESH_3D' || (a.fileClass === 'IMAGE_2D' && a.dentalModality != null),
+      )
+      const documents = atts.filter(
+        (a) => a.fileClass === 'DOCUMENT_PDF' || a.fileClass === 'DOCUMENT_TEXT',
+      )
+      const compare = task.attachmentTask?.compare === true && analyzable.length >= 2
+      if (compare) {
+        // §15 — one paired comparison; extras are analyzed individually.
+        add(
+          'compare_attachments',
+          { attachmentIdA: analyzable[0].id, attachmentIdB: analyzable[1].id },
+          'safe before/after comparison (observed + model differences)',
+        )
+        for (const a of analyzable.slice(2)) {
+          add('analyze_attachment', { attachmentId: a.id }, 'analyze extra attachment individually')
+        }
+      } else {
+        for (const a of analyzable) {
+          add(
+            'analyze_attachment',
+            typeof ctx.toothFdi === 'number' ? { attachmentId: a.id, toothFdi: ctx.toothFdi } : { attachmentId: a.id },
+            'run verified local AI analysis on the attachment',
+          )
+        }
+      }
+      for (const d of documents) {
+        add('read_document_attachment', { attachmentId: d.id }, 'read document attachment as untrusted data')
+      }
+      if (!steps.length) {
+        // DICOM volumes / unknown files only: no engine step — the answer
+        // states the honest ingestion-only state from the attachment block.
+        return { plan: null, reason: 'no_analyzable_attachments' }
+      }
+      return { plan: finalize(steps, task), reason: null }
     }
 
     case 'OPERATIONAL': {

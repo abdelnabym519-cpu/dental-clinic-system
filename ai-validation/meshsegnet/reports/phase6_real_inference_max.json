@@ -1,0 +1,166 @@
+{
+  "evidence": "phase6_real_local_inference_rerun",
+  "generated_at": "2026-09-30T02:58:22.020507+00:00",
+  "engine": "meshsegnet-max",
+  "engine_code": "ai/engines/meshsegnet-max",
+  "engine_modified": false,
+  "model": {
+    "filename": "MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip",
+    "sha256": "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2",
+    "size_bytes": 28860102,
+    "source": "https://github.com/Tai-Hsien/MeshSegNet (official repository, MIT)",
+    "checksum_verified_by": "download_artifacts.py + engine /health model_checksum_verified"
+  },
+  "input": {
+    "filename": "ZOUIF2W4_upper.obj",
+    "sha256": "581b9a026e2ce734f6335f34aa900e8114dc33e2a83541ebd6bb26536382545e",
+    "size_bytes": 18769177,
+    "source": "HuayuanSong/TeethSegFront @ main (test set, published with the dataset)",
+    "format": "obj (triangular surface mesh, mm)",
+    "note": "challenge-published test mesh; geometry NOT committed, SHA recorded only"
+  },
+  "runtime": {
+    "python": "3.11.2",
+    "torch": "2.6.0+cu124",
+    "execution_provider": "CPU (no GPU present; torch.cuda.is_available() false)",
+    "cuda_available": false,
+    "host": "Linux 6.1.158+ (Phase 5 validation sandbox, 2 vCPU)"
+  },
+  "health_gate": {
+    "status": "ok",
+    "model_loaded": true,
+    "model_checksum": "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2",
+    "model_checksum_expected": "727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2",
+    "model_checksum_verified": true,
+    "model_load_time_ms": 130,
+    "parameter_count": 1799140,
+    "is_standin": false
+  },
+  "preprocessing": {
+    "official_max_cells": 10000,
+    "cells_original": 328581,
+    "downsampled_to_official_cap": true,
+    "inference_cells": 9999,
+    "probabilities_shape": [
+      1,
+      9999,
+      15
+    ],
+    "engine_processing_time_ms": 12435
+  },
+  "output": {
+    "schema": "per-cell 15-class labels -> class histogram (neutral names)",
+    "total_cells": 9999,
+    "segments": [
+      {
+        "class_id": 0,
+        "class_name": "Gingiva",
+        "point_count": 6938
+      },
+      {
+        "class_id": 1,
+        "class_name": "Tooth_1",
+        "point_count": 75
+      },
+      {
+        "class_id": 2,
+        "class_name": "Tooth_2",
+        "point_count": 1136
+      },
+      {
+        "class_id": 3,
+        "class_name": "Tooth_3",
+        "point_count": 103
+      },
+      {
+        "class_id": 6,
+        "class_name": "Tooth_6",
+        "point_count": 33
+      },
+      {
+        "class_id": 8,
+        "class_name": "Tooth_8",
+        "point_count": 81
+      },
+      {
+        "class_id": 9,
+        "class_name": "Tooth_9",
+        "point_count": 285
+      },
+      {
+        "class_id": 12,
+        "class_name": "Tooth_12",
+        "point_count": 189
+      },
+      {
+        "class_id": 13,
+        "class_name": "Tooth_13",
+        "point_count": 1112
+      },
+      {
+        "class_id": 14,
+        "class_name": "Tooth_14",
+        "point_count": 47
+      }
+    ],
+    "top_classes": [
+      {
+        "class_id": 0,
+        "class_name": "Gingiva",
+        "point_count": 6938
+      },
+      {
+        "class_id": 2,
+        "class_name": "Tooth_2",
+        "point_count": 1136
+      },
+      {
+        "class_id": 13,
+        "class_name": "Tooth_13",
+        "point_count": 1112
+      },
+      {
+        "class_id": 9,
+        "class_name": "Tooth_9",
+        "point_count": 285
+      },
+      {
+        "class_id": 12,
+        "class_name": "Tooth_12",
+        "point_count": 189
+      }
+    ]
+  },
+  "performance_ms": {
+    "cold_first_inference": 14012.4,
+    "warm_median_of_5": 13246.4,
+    "warm_all": [
+      12880.9,
+      13156.6,
+      13246.4,
+      13335.4,
+      13831.9
+    ],
+    "note": "sandbox hardware (2 vCPU / ~4 GB RAM), NOT the target Windows machine; infrastructure baseline only \u2014 no accuracy implied"
+  },
+  "memory": {
+    "engine_process_peak_rss_mb": 1889.5
+  },
+  "determinism_check": {
+    "labels_identical_cold_vs_warm": true,
+    "segments_identical_cold_vs_warm": true
+  },
+  "status": "REAL_INFERENCE_VERIFIED",
+  "engine_tail_log": "2026-09-30 02:56:58,994 INFO meshsegnet-max model loaded (CPU, torch 2.6.0+cu124) in 130 ms\n",
+  "phase6_context": {
+    "why_this_report": "Phase 6 (multimodal dental AI) analyzes 3D mesh attachments via the Phase 5 capability registry: analyze_attachment tool -> LocalAIService -> orchestrator registry -> meshsegnet engine service. The sandbox that produced the Phase 5 evidence lost its weights/meshes/venv; this re-run re-verifies the exact engine code the Phase 6 critical path calls, with re-acquired SHA-256-verified weights.",
+    "phase6_critical_path": [
+      "chat upload -> POST /api/ai/attachments (magic-byte classification, SHA-256, tenant storage)",
+      "agent loop -> analyze_attachment tool (typed contract, server-resolved attachment id)",
+      "LocalAIService.resolveEngine (modality[, jaw] -> registry; engine names never from user text)",
+      "orchestrator /analyze (job state machine, task->engine routing)",
+      "meshsegnet-{max,man} engine /infer (THIS EVIDENCE: real local CPU inference)"
+    ],
+    "evidence_level": "engine terminal re-verified on the rebuilt sandbox; orchestrator routing/registry covered by its pytest suite (66 tests); Node transport covered by the Phase 5/6 integration tests. MySQL is unavailable in this sandbox, so orchestrator job-row writes are not re-exercised here (no DB; see report limitations)."
+  }
+}

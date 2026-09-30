@@ -5520,5 +5520,22 @@
   "source.domain must be a known dental knowledge domain": "يجب أن يكون مجال المصدر (source.domain) من مجالات المعرفة الطبية المعتمدة",
   "source.language must be \"en\" or \"ar\"": "يجب أن تكون لغة المصدر \"en\" أو \"ar\"",
   "source.scope is invalid": "نطاق المصدر (source.scope) غير صالح",
-  "section.aiChat.messageRequired": "الرسالة مطلوبة"
+  "section.aiChat.messageRequired": "الرسالة مطلوبة",
+  "Attachment not found": "المرفق غير موجود",
+  "Invalid file": "ملف غير صالح",
+  "File is too large": "حجم الملف كبير جدًا",
+  "Unsupported file type for AI analysis": "نوع الملف غير مدعوم للتحليل بالذكاء الاصطناعي",
+  "The file name is not allowed": "اسم الملف غير مسموح به",
+  "File type does not match its contents": "نوع الملف لا يتطابق مع محتوياته",
+  "This attachment belongs to a different patient": "هذا المرفق يخص مريضًا آخر",
+  "This attachment does not belong to your clinic": "هذا المرفق لا يخص عيادتك",
+  "This feature is not available": "هذه الميزة غير متاحة",
+  "No AI engine is available for this file type": "لا يتوفر محرك ذكاء اصطناعي لهذا نوع الملف",
+  "The AI service is temporarily unavailable": "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا",
+  "The file could not be prepared for analysis": "تعذر تجهيز الملف للتحليل",
+  "Analysis could not be completed": "تعذر إكمال التحليل",
+  "A clinician must review this result": "يجب على طبيب مراجعة هذا الناتج",
+  "The document text could not be extracted": "تعذر استخراج نص المستند",
+  "conversationId is required": "حقل conversationId مطلوب",
+  "This attachment is referenced by an imaging study": "هذا المرفق مستخدم في دراسة تصويرية"
 }

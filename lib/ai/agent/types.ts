@@ -40,6 +40,10 @@ export interface AgentRequest {
    *  NEVER for authorization, approval, action results, identity, tenant or
    *  patient ownership (server state is authoritative — Phase 9 boundary). */
   history?: { role: 'user' | 'assistant'; content: string }[]
+  /** Phase 6 — attachment IDS only. Every id is re-resolved server-side
+   *  (tenant + ownership); unknown ids are dropped with a warning. The
+   *  client can never reference bytes, paths, or engines. */
+  attachments?: string[] | null
   page?: string | null
   timestamp?: string
   source?: string
@@ -57,6 +61,7 @@ export const AGENT_TASK_TYPES = [
   'ACTION_REQUEST',
   'MULTI_STEP',
   'KNOWLEDGE',
+  'ATTACHMENT_ANALYSIS',
   'OUT_OF_DOMAIN',
   'UNKNOWN',
 ] as const
@@ -108,6 +113,14 @@ export interface AgentTask {
    * invocation, never selected from engine names in the text.
    */
   localAiCapability?: boolean
+  /**
+   * Phase 6 — multimodal attachment task: the request carries server-
+   * resolved attachments (or asks to analyze/compare them). `compare` = a
+   * before/after or side-by-side comparison was requested (§15). Analysis
+   * is routed through the Phase 5 capability registry — never by engine
+   * names in the text.
+   */
+  attachmentTask?: { compare: boolean } | null
 }
 
 export interface KnowledgeSignal {
@@ -458,4 +471,8 @@ export interface AgentDeps {
   knowledgeStore?: import('../knowledge/types').KnowledgeStore
   /** Phase 5 — local AI capability source (orchestrator view; tests inject fakes). */
   localAiCapabilities?: import('../engines/types').LocalAiCapabilitySource | null
+  /** Phase 6 — attachment service (server-resolved, tenant-scoped). */
+  attachments?: import('../multimodal/attachments').AttachmentService | null
+  /** Phase 6 — local AI service WITH orchestrator transport (real inference path). */
+  localAiService?: import('../engines/local-ai-service').LocalAIService | null
 }

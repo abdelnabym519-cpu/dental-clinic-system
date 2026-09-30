@@ -58,7 +58,7 @@ export interface LocalAiCapabilityView {
   generatedAt: string
 }
 
-interface OrchestratorAnalyzeResponse {
+export interface OrchestratorAnalyzeResponse {
   job_id: string
   status: 'COMPLETED'
   findings: Record<string, unknown>[]
@@ -293,6 +293,31 @@ function normalizeFindings(
       confidence,
     }
   })
+}
+
+/**
+ * Human-readable display label for a normalized finding. The normalized
+ * envelope is a FLAT map (engine-native fields under `detail`); different
+ * engines name the class differently (`class_name` for mesh + detection,
+ * `condition` for detection, numeric `class_id`). This centralizes the
+ * display mapping so no caller re-derives (or mislabels) a finding.
+ */
+export function findingLabel(f: NormalizedFinding): string {
+  const d = f.detail ?? {}
+  const pick = (...keys: string[]): string | null => {
+    for (const k of keys) {
+      const v = d[k]
+      if (typeof v === 'string' && v.trim()) return v
+    }
+    return null
+  }
+  const named = pick('class_name', 'condition', 'label', 'name')
+  if (named) return named
+  const cid = d.class_id ?? d.class ?? d.cls
+  if (typeof cid === 'number' || (typeof cid === 'string' && /^\d+$/.test(cid))) {
+    return `class_${cid}`
+  }
+  return f.id
 }
 
 function buildWarnings(res: OrchestratorAnalyzeResponse): string[] {

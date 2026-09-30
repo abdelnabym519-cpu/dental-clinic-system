@@ -63,6 +63,14 @@ export async function POST(req: Request) {
     page: str(body.page),
     timestamp: new Date().toISOString(),
     source: str(body.source) ?? 'agent-api',
+    // Phase 6 — attachment ids ONLY (server re-resolves every id against
+    // the tenant; names/paths/URLs are never accepted from the client).
+    attachments: Array.isArray(body.attachments)
+      ? [...new Set(
+          (body.attachments as unknown[])
+            .filter((a): a is string => typeof a === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(a))
+        )].slice(0, 4)
+      : null,
   }
 
   try {
@@ -73,6 +81,14 @@ export async function POST(req: Request) {
     const { complete } = await import('@/lib/ai/openrouter')
     const { getModelByTier } = await import('@/lib/ai/models')
     const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
+    // Phase 6 — real-inference path: attachment service + LocalAIService
+    // wired to the existing orchestrator transport (the single inference
+    // boundary — no second pipeline, no engine selection from text).
+    const { createAttachmentService } = await import('@/lib/ai/multimodal/attachments')
+    const { LocalAIService } = await import('@/lib/ai/engines/local-ai-service')
+    const { requestOrchestratorAnalyze } = await import('@/lib/ai-orchestrator')
+
+    const capabilitySource = createOrchestratorCapabilitySource()
 
     const result = await runAgent(
       request,
@@ -89,7 +105,21 @@ export async function POST(req: Request) {
         now: () => new Date(),
         // Phase 5 — local AI capability view (live orchestrator when
         // configured; the tool reports honest unavailability otherwise).
-        localAiCapabilities: createOrchestratorCapabilitySource(),
+        localAiCapabilities: capabilitySource,
+        // Phase 6 — attachment service (tenant-scoped, server-resolved).
+        attachments: createAttachmentService(prisma),
+        // Phase 6 — LocalAIService WITH transport: integrity-checked real
+        // inference through the orchestrator (stand-in refusal, checksum
+        // verification, job identity check). The cast preserves runtime
+        // is_standin_* fields that AnalyzeResult does not declare.
+        localAiService: new LocalAIService(
+          capabilitySource,
+          (p) =>
+            requestOrchestratorAnalyze(p).then(
+              (r) =>
+                r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse,
+            ),
+        ),
       }
     )
 

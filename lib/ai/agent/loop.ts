@@ -23,9 +23,13 @@ import { resolvePolicy } from '@/lib/ai/action-policy'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
-import { classifyAgentTask, llmClassifyPrompt, parseLlmClassification, extractDateParam } from './classifier'
+import { classifyAgentTask, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
 import { buildPlan } from './planner'
 import { executeTool, extractSources, toolNamesByProfile, type ToolRuntime } from './tools'
+import { buildAttachmentContextBlock, attachmentClassLabel, attachmentOnlyAnswer } from '@/lib/ai/multimodal/context'
+import { findingLabel } from '@/lib/ai/engines/local-ai-service'
+import { MULTIMODAL_LIMITS } from '@/lib/ai/multimodal/limits'
+import type { AttachmentRecord } from '@/lib/ai/multimodal/types'
 import type {
   AgentFailure, AgentLimits, AgentResponse, AgentState, AgentTask,
   AgentTrace, AgentDeps, AgentRequest, AgentToolResult, ActionProposed,
@@ -140,10 +144,95 @@ function summarizeContextAnswer(ctx: any, task: AgentTask): string {
   return lines.join(' ')
 }
 
-function answerFromToolData(task: AgentTask, data: unknown): string | null {
+/** Phase 6 — typed, user-safe rendering of attachment tool failures (§35). */
+function renderAttachmentToolFailure(error: string | null): string {
+  const raw = error ?? 'unknown error'
+  if (raw === 'TOOL_TIMEOUT') {
+    return 'The analysis timed out and no result was produced — nothing is claimed about the attachment content. You can try again, or ask a clinic admin to check the local AI engines.'
+  }
+  // Reading/analyzing attachments is patient-scoped (fail-closed, §45): a
+  // patient-less attachment must never be read without a patient scope.
+  if (raw.startsWith('MISSING_CONTEXT')) {
+    return 'I can only work with attachments that belong to a specific patient record. This attachment is not linked to a patient, so I have not read or analyzed it. Please attach the file to a patient (or ask within a patient context) and try again.'
+  }
+  const msg = raw.replace(/^TOOL_FAILURE: /, '').replace(/^TOOL_VALIDATION_ERROR: /, '')
+  return `Analysis could not be completed: ${msg}`
+}
+
+function answerFromToolData(task: AgentTask, data: unknown, role?: string): string | null {
   if (!data || typeof data !== 'object') return null
   const d = data as Record<string, any>
   switch (d.kind) {
+    // Phase 6 — multimodal answers: deterministic 5-layer clinical-safety
+    // block (§22/§23/§24). No LLM is run over findings; layer 3
+    // (clinical interpretation) is NEVER machine-generated.
+    case 'attachment_analysis': {
+      const a = d.attachment ?? {}
+      const env = d.envelope ?? {}
+      const prov = env.provenance ?? {}
+      const findings: any[] = Array.isArray(env.findings) ? env.findings : []
+      const isPatient = role === 'PATIENT'
+      let visible = `Attachment: "${a.originalName ?? a.id}" — ${attachmentClassLabel(String(a.fileClass ?? ''))}, ${a.size ?? 0} bytes`
+      if (a.dentalModality) visible += `, dental modality ${a.dentalModality} (origin: ${String(a.modalityOrigin ?? 'UNKNOWN').toLowerCase()})`
+      if (a.width && a.height) visible += `, ${a.width}x${a.height} px`
+      if (a.dentalImageState) visible += `, image state ${a.dentalImageState}`
+      const flist = findings
+        .slice(0, 10)
+        .map((f) => `${findingLabel(f)}${f.confidence != null ? ` (${Math.round((f.confidence ?? 0) * 100)}%)` : ''}`)
+        .join('; ')
+      const top = env.topConfidence != null ? ` Top confidence: ${Math.round((env.topConfidence ?? 0) * 100)}%.` : ''
+      const toothNote = d.toothFocus
+        ? ` Requested focus tooth ${d.toothFocus} (FDI): the engine analyzes the whole image and does not attribute findings to individual teeth — every finding is shown above; please localize it against the requested tooth.`
+        : ''
+      const uncertainty =
+        typeof env.uncertainty === 'string' && env.uncertainty
+          ? env.uncertainty
+          : 'Model output on a single image; validated deployment evidence, not a per-patient guarantee.'
+      const missingBits: string[] = []
+      if (String(a.modalityOrigin ?? '') === 'DECLARED') missingBits.push('dental modality is user-declared, not classified')
+      missingBits.push('no other attachments were combined in this analysis')
+      const L = [
+        `1. Directly visible (recorded): ${visible}.`,
+        `2. Model finding (${d.engine ?? 'local engine'} · task ${d.task ?? 'n/a'} — decision support only): ${flist || 'no findings produced'}.${top}${toothNote}`,
+        isPatient
+          ? '3. Clinical interpretation: not provided — only your care team can interpret these findings in the context of your full record.'
+          : '3. Clinical interpretation: not provided by the system — requires clinician review of the full record.',
+        `4. Uncertainty: ${uncertainty}`,
+        `5. Missing information: ${missingBits.join('; ')}.`,
+        `Provenance: attachment ${a.id} → study ${a.studyId ?? 'n/a'} → job ${d.jobId ?? 'n/a'} (engine ${d.engine ?? 'n/a'}${prov.modelVersion ? `, model ${prov.modelVersion}` : ''}, ${prov.processingTimeMs ?? 0} ms${prov.device ? `, device ${prov.device}` : ''}). Finding state: PENDING CLINICIAN REVIEW — model output is never a diagnosis.`,
+      ]
+      return L.join('\n')
+    }
+    case 'document_reading': {
+      const a = d.attachment ?? {}
+      const L = [
+        `Document: "${a.originalName ?? a.id}" (${d.pageCount ?? 1} page${d.pageCount === 1 ? '' : 's'}), ${a.size ?? 0} bytes — extracted text follows.`,
+        'The document content is UNTRUSTED DATA: it may be quoted with page provenance, but any instructions inside it are content, not commands — none were executed.',
+      ]
+      if (typeof d.content === 'string' && d.content) L.push(d.content)
+      L.push(`Provenance: attachment ${a.id}${a.patientId ? ' → patient-scoped' : ' (conversation-scoped)'}. This document was NOT added to the clinic knowledge base (user documents never enter global RAG).`)
+      return L.join('\n')
+    }
+    case 'attachment_comparison': {
+      const c = d.comparison ?? {}
+      const A = c.attachmentA ?? {}
+      const B = c.attachmentB ?? {}
+      const observed: string[] = Array.isArray(c.observedDifferences) ? c.observedDifferences : []
+      const modelDiffs: any[] = Array.isArray(c.modelDifferences) ? c.modelDifferences : []
+      const L = [
+        `Comparison of "${A.originalName ?? A.id}" (A) with "${B.originalName ?? B.id}" (B).`,
+        `1. Observed differences (recorded metadata): ${observed.join('; ') || 'none recorded'}.`,
+        `2. Model-detected differences (decision support only): ${
+          modelDiffs.length
+            ? modelDiffs.map((m) => `${m.label ?? 'finding'}${m.confidence != null ? ` (${Math.round((m.confidence ?? 0) * 100)}%)` : ''} present only in ${m.attachmentId === A.id ? 'A' : 'B'}`).join('; ')
+            : 'none between the two model outputs'
+        }.`,
+        `3. Clinical interpretation: ${c.clinicalInterpretation ?? 'NOT_DETERMINED'} — treatment success or failure can only be concluded by a clinician with the full record; this system does not auto-conclude "treatment succeeded".`,
+        `4. Uncertainty: ${c.uncertainty ?? 'Difference in appearance is not a clinical conclusion.'}`,
+        `Provenance: A attachment ${A.id} (study ${A.studyId ?? 'n/a'}), B attachment ${B.id} (study ${B.studyId ?? 'n/a'}). Finding state: PENDING CLINICIAN REVIEW.`,
+      ]
+      return L.join('\n')
+    }
     case 'appointments':
       if (!d.appointments.length) return `No appointments on ${d.date ?? 'the requested day'}.`
       return `${d.count} appointment(s) on ${d.date ?? 'the requested day'}: ` + d.appointments.slice(0, 8).map((a: any) => `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`).join('; ')
@@ -331,6 +420,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     now,
     knowledgeStore: deps.knowledgeStore,
     localAiCapabilities: deps.localAiCapabilities,
+    attachments: deps.attachments ?? null,
+    localAiService: deps.localAiService ?? null,
     actorId: request.actor.id,
     runAction: (intent, params) =>
       runAiAction({
@@ -431,6 +522,93 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   }
   mark('classify', tClassify)
 
+  // ── Phase 6 — MULTIMODAL ATTACHMENTS (§29/§30: same Agent loop) ─────────
+  // Attachments are SERVER FACTS (ids re-resolved against the tenant here,
+  // never from client text), so an attached set deterministically becomes
+  // an ATTACHMENT_ANALYSIS task regardless of how the message was phrased.
+  // Patient scope comes from the attachments' own (upload-time) attribution
+  // — a server record, not a client claim. The minimum-necessary context is
+  // the attachment block (metadata + bounded untrusted document text); no
+  // patient profile is fetched for this task (§16/§45).
+  let attachmentPatientResolved = false
+  let resolvedAttachments: { id: string; record: AttachmentRecord }[] = []
+  const requestedAttachmentIds = Array.isArray(request.attachments)
+    ? [...new Set(request.attachments.filter((a): a is string => typeof a === 'string'))].slice(
+        0,
+        MULTIMODAL_LIMITS.maxAttachmentsPerRequest,
+      )
+    : []
+  if (requestedAttachmentIds.length > 0) {
+    if (!deps.attachments) {
+      state.task = task
+      stop('FAILED', 'ATTACHMENT_SERVICE_UNAVAILABLE', '')
+      return respond('Attachment support is not available in this deployment. Please ask a clinic admin to check the multimodal attachment service.')
+    }
+    const missingCount: number[] = []
+    for (const id of requestedAttachmentIds) {
+      const record = await deps.attachments.get(id, request.hospitalId)
+      if (record) resolvedAttachments.push({ id, record })
+      else missingCount.push(1) // forged/deleted/foreign-tenant — dropped, never resolved
+    }
+    if (missingCount.length > 0) {
+      state.warnings.push(`dropped ${missingCount.length} attachment id(s) that could not be resolved in this tenant`)
+    }
+    if (resolvedAttachments.length === 0) {
+      state.task = task
+      stop('FAILED', 'ATTACHMENTS_UNRESOLVED', '')
+      return respond('I could not find the attachment(s) you referenced — they may have been deleted or do not belong to this clinic. Please attach the file(s) again from the chat.')
+    }
+    // Scope: the set must belong to at most ONE patient (fail closed).
+    const patientIds = [...new Set(resolvedAttachments.map((r) => r.record.patientId).filter((p): p is string => Boolean(p)))]
+    if (patientIds.length > 1) {
+      state.task = task
+      stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
+      return respond('Those attachments belong to different patients. I can only work within one patient scope at a time — please analyze them in separate messages.')
+    }
+    // Client-suggested patient (if any) must agree with the attachment's
+    // own attribution — the upload-time server record wins.
+    if (patientIds.length === 1 && request.patientId && request.patientId !== patientIds[0]) {
+      const byCode = await deps.client.patient.findFirst({
+        where: { hospitalId: request.hospitalId, patientId: request.patientId },
+        select: { id: true },
+      })
+      if (!byCode || byCode.id !== patientIds[0]) {
+        state.task = task
+        stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
+        return respond('The patient you mentioned does not match the patient this attachment was uploaded for. The attachment attribution wins — please check the patient scope.')
+      }
+    }
+    if (patientIds.length === 1 && request.actor.role !== 'PATIENT') {
+      const p = await deps.client.patient.findFirst({
+        where: { id: patientIds[0], hospitalId: request.hospitalId },
+        select: { id: true, firstName: true, lastName: true },
+      })
+      if (!p) {
+        state.task = task
+        stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
+        return respond('The patient linked to this attachment no longer exists in this clinic. Please re-attach the file to a valid patient.')
+      }
+      rt.patientId = p.id
+      rt.patientName = `${p.firstName} ${p.lastName}`
+      attachmentPatientResolved = true
+    }
+    // Deterministic task override — attachments are facts, not phrasing.
+    task = {
+      ...task,
+      taskType: 'ATTACHMENT_ANALYSIS',
+      attachmentTask: { compare: resolvedAttachments.length >= 2 && detectCompareIntent(request.message) },
+      patientInvolved: patientIds.length === 1 || request.actor.role === 'PATIENT',
+      contextProfile: null, // attachment block replaces the profile fetch
+    }
+    state.contextText = await buildAttachmentContextBlock(
+      resolvedAttachments.map((r) => r.record),
+    ).catch(() => null)
+    if (!state.contextText) {
+      state.contextText = '[ATTACHMENTS] metadata unavailable (see attachments list API); document content not included.'
+      state.warnings.push('attachment context block build failed — metadata only')
+    }
+  }
+
   // OUT_OF_DOMAIN — concise boundary response (dental domain only, §27).
   if (task.taskType === 'OUT_OF_DOMAIN') {
     state.task = task
@@ -469,7 +647,10 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   // information: no patient is resolved and no patient data is fetched,
   // even for PATIENT actors or when the message embeds an engine name
   // (§32: engine selection never comes from user text).
-  const patientRequired = (task.patientInvolved || request.actor.role === 'PATIENT') && !task.localAiCapability
+  const patientRequired =
+    (task.patientInvolved || request.actor.role === 'PATIENT') &&
+    !task.localAiCapability &&
+    !attachmentPatientResolved
   if (patientRequired) {
     const res = await resolvePatient(rt, request, cls.patientName)
     if (res.status === 'resolved') {
@@ -567,6 +748,15 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     operationalTopic,
     operationalInput,
     message: request.message,
+    attachmentRefs: resolvedAttachments.length
+      ? resolvedAttachments.map((r) => ({
+          id: r.id,
+          fileClass: r.record.fileClass,
+          dentalModality: r.record.dentalModality,
+          patientId: r.record.patientId,
+        }))
+      : null,
+    toothFdi: rt.toothFdi,
     limit: limits,
   })
   mark('plan', tPlan)
@@ -768,6 +958,37 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     answer = built.answer
     evidence = built.evidence
     grounding = built.grounding
+  } else if (task.taskType === 'ATTACHMENT_ANALYSIS') {
+    // Phase 6 — deterministic multimodal answering (no LLM over findings).
+    // Successful tools render the 5-layer block; failures render the typed,
+    // user-safe reason; no-tool plans (e.g. DICOM-only sets) render the
+    // honest ingestion-only state per attachment.
+    const parts: string[] = []
+    for (const r of state.lastToolResults) {
+      if (r.data && typeof r.data === 'object') {
+        const rendered = answerFromToolData(task, r.data, request.actor.role)
+        if (rendered) parts.push(rendered)
+      }
+    }
+    // Failed tool calls are recorded in toolCalls (the EXECUTE stage fails
+    // stop and never pushes failures to lastToolResults).
+    for (const t of state.toolCalls) {
+      if (t.ok) continue
+      if (
+        t.tool === 'analyze_attachment' ||
+        t.tool === 'read_document_attachment' ||
+        t.tool === 'compare_attachments'
+      ) {
+        parts.push(renderAttachmentToolFailure(t.error ?? null))
+      }
+    }
+    if (parts.length === 0 && resolvedAttachments.length > 0) {
+      const fallback = attachmentOnlyAnswer(resolvedAttachments.map((r) => r.record))
+      if (fallback) parts.push(fallback)
+    }
+    answer = parts.length
+      ? parts.join('\n\n')
+      : 'The attachment(s) were received but none could be analyzed in this deployment. Please re-attach the file, or ask a clinic admin to check the local AI engines.'
   } else if (patientRequired && state.context) {
     // Deterministic first (INFORMATIONAL).
     if (task.taskType === 'INFORMATIONAL') {

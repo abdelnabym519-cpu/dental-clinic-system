@@ -655,3 +655,30 @@ export function parseLlmClassification(raw: string): {
     return null
   }
 }
+
+// ---------------------------------------------------------------------------
+// Phase 6 — multimodal attachment intents (deterministic, EN + AR)
+//
+// Attachments themselves are SERVER FACTS (ids re-resolved in the loop);
+// these phrase lists only refine HOW the attached set is used (comparison
+// vs per-item analysis). They never select engines or modalities.
+// ---------------------------------------------------------------------------
+
+const COMPARE_INTENT = [
+  'compare',
+  'comparison',
+  'before and after',
+  'before/after',
+  'difference between',
+  'which one changed',
+  'قارن',
+  'مقارنة',
+  'قبل وبعد',
+  'الفرق بين',
+]
+
+/** Deterministic before/after (side-by-side) comparison intent. */
+export function detectCompareIntent(message: string): boolean {
+  const m = message.toLowerCase()
+  return COMPARE_INTENT.some((t) => m.includes(t))
+}

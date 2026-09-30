@@ -5520,5 +5520,22 @@
   "source.domain must be a known dental knowledge domain": "source.domain must be a known dental knowledge domain",
   "source.language must be \"en\" or \"ar\"": "source.language must be \"en\" or \"ar\"",
   "source.scope is invalid": "source.scope is invalid",
-  "section.aiChat.messageRequired": "message is required"
+  "section.aiChat.messageRequired": "message is required",
+  "Attachment not found": "Attachment not found",
+  "Invalid file": "Invalid file",
+  "File is too large": "File is too large",
+  "Unsupported file type for AI analysis": "Unsupported file type for AI analysis",
+  "The file name is not allowed": "The file name is not allowed",
+  "File type does not match its contents": "File type does not match its contents",
+  "This attachment belongs to a different patient": "This attachment belongs to a different patient",
+  "This attachment does not belong to your clinic": "This attachment does not belong to your clinic",
+  "This feature is not available": "This feature is not available",
+  "No AI engine is available for this file type": "No AI engine is available for this file type",
+  "The AI service is temporarily unavailable": "The AI service is temporarily unavailable",
+  "The file could not be prepared for analysis": "The file could not be prepared for analysis",
+  "Analysis could not be completed": "Analysis could not be completed",
+  "A clinician must review this result": "A clinician must review this result",
+  "The document text could not be extracted": "The document text could not be extracted",
+  "conversationId is required": "conversationId is required",
+  "This attachment is referenced by an imaging study": "This attachment is referenced by an imaging study"
 }
