@@ -18,7 +18,7 @@ vi.mock('@/lib/prisma', () => {
   }
   for (const n of [
     'aIActionApproval', 'setting', 'invoice', 'payment', 'patient', 'treatment',
-    'user', 'auditLog', 'hospital',
+    'user', 'auditLog', 'hospital', 'procedure', 'staff',
   ]) {
     client[n] = {
       create: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(),
@@ -525,5 +525,119 @@ describe('pipeline — approval lifecycle', () => {
     })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('NOT_FOUND')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Phase 8 — F-1: server-resolved patientId is authoritative
+// ---------------------------------------------------------------------------
+describe('pipeline — F-1 patient-scope resolution (Phase 8)', () => {
+  beforeEach(resetDb)
+
+  function setupTreatmentWorld(patients: any[]) {
+    // findPatient's resolved-id path (authoritative) + name path fallback.
+    prisma.patient.findUnique.mockImplementation(async ({ where }: any) =>
+      patients.find((p) => p.id === where.id) ?? null
+    )
+    prisma.patient.findFirst.mockImplementation(async ({ where }: any) => {
+      if (!where.hospitalId) return null
+      const q = where.OR?.[0]?.patientId
+      return patients.find((p) => p.hospitalId === where.hospitalId &&
+        (p.patientId === q || p.firstName?.includes(q) || p.lastName?.includes(q) || p.phone?.includes(q))) ?? null
+    })
+    prisma.procedure.findFirst.mockResolvedValue({ id: 'proc-1', name: 'Filling', code: 'FILL', isActive: true, basePrice: 500 })
+    prisma.staff.findFirst.mockResolvedValue({ id: 'staff-1', firstName: 'Dr', lastName: 'A', hospitalId: TENANT })
+    let trtNo = 0
+    prisma.treatment.create.mockImplementation(async ({ data }: any) => {
+      trtNo += 1
+      return { ...data, id: `trt-${trtNo}`, status: 'IN_PROGRESS', cost: Number(data.cost) }
+    })
+    prisma.treatment.findUnique.mockImplementation(async ({ where }: any) => {
+      const n = Number((where.treatmentNo ?? '').split('-')[1])
+      return n > 0 ? { treatmentNo: where.treatmentNo, hospitalId: TENANT, status: 'IN_PROGRESS' } : null
+    })
+  }
+
+  it('server-resolved patientId wins over the full name (happy path EXECUTED)', async () => {
+    setupTreatmentWorld([{ id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' }])
+    // Full name would NEVER match the single-field name search — before the
+    // Phase 8 fix this action failed closed with PATIENT_NOT_FOUND.
+    const res = await runAiAction({
+      action: 'create_treatment',
+      params: { patientId: 'pat-1', patientName: 'Ahmed Ali', procedureName: 'Filling' },
+      actor: DOCTOR, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('EXECUTED')
+    expect(res.success).toBe(true)
+    expect(res.verification?.verified).toBe(true)
+  })
+
+  it('cross-tenant patientId fails closed (no tenant bypass)', async () => {
+    setupTreatmentWorld([
+      { id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' },
+      { id: 'pat-foreign', hospitalId: 'h-2', patientId: 'PAT-9', firstName: 'X', lastName: 'Y', phone: '0199' },
+    ])
+    const res = await runAiAction({
+      action: 'create_treatment',
+      params: { patientId: 'pat-foreign', patientName: 'X Y', procedureName: 'Filling' },
+      actor: DOCTOR, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('BLOCKED')
+    expect(res.blockCode).toBe('PATIENT_NOT_FOUND')
+    expect(prisma.treatment.create).not.toHaveBeenCalled()
+  })
+
+  it('nonexistent patientId fails closed (no name fallback after a bad id)', async () => {
+    setupTreatmentWorld([{ id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' }])
+    const res = await runAiAction({
+      action: 'create_treatment',
+      params: { patientId: 'pat-ghost', patientName: 'Ahmed Ali', procedureName: 'Filling' },
+      actor: DOCTOR, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('BLOCKED')
+    expect(res.blockCode).toBe('PATIENT_NOT_FOUND')
+    expect(prisma.treatment.create).not.toHaveBeenCalled()
+  })
+
+  it('name-only (no patientId) still resolves exactly as before (single token)', async () => {
+    setupTreatmentWorld([{ id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' }])
+    const res = await runAiAction({
+      action: 'create_treatment',
+      params: { patientName: 'Ahmed', procedureName: 'Filling' },
+      actor: DOCTOR, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('EXECUTED')
+    expect(res.verification?.verified).toBe(true)
+  })
+
+  it('client-injected __resolvedPatientId is stripped (pipeline re-injects only its own)', async () => {
+    setupTreatmentWorld([
+      { id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' },
+      { id: 'pat-evil', hospitalId: TENANT, patientId: 'PAT-666', firstName: 'Evil', lastName: 'One', phone: '0177' },
+    ])
+    // The model's tool input tries to smuggle a different patient id in.
+    const res = await runAiAction({
+      action: 'create_treatment',
+      params: { patientId: 'pat-1', patientName: 'Ahmed Ali', procedureName: 'Filling', __resolvedPatientId: 'pat-evil' },
+      actor: DOCTOR, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('EXECUTED')
+    // The treatment was created for the VALIDATED patient (pat-1), never pat-evil.
+    const created = (prisma.treatment.create as any).mock.calls[0][0].data
+    expect(created.patientId).toBe('pat-1')
+  })
+
+  it('record_payment: patientId + foreign invoice patient fails closed', async () => {
+    setupTreatmentWorld([{ id: 'pat-1', hospitalId: TENANT, patientId: 'PAT-00001', firstName: 'Ahmed', lastName: 'Ali', phone: '0100' }])
+    prisma.invoice.findFirst.mockResolvedValue({ id: 'inv-9', invoiceNo: 'INV-9', hospitalId: TENANT, patientId: 'pat-other', balanceAmount: 100, status: 'PENDING' })
+    allowFinancial(100000, null)
+    const res = await runAiAction({
+      action: 'record_payment',
+      params: { patientId: 'pat-1', invoiceNo: 'INV-9', amount: '100' },
+      actor: ACCOUNTANT, hospitalId: TENANT,
+    })
+    expect(res.status).toBe('BLOCKED')
+    expect(res.blockCode).toBe('PATIENT_NOT_FOUND')
+    expect(prisma.payment.create).not.toHaveBeenCalled()
   })
 })

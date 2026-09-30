@@ -1,0 +1,110 @@
+{
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "cases": [
+    {
+      "caseId": "MEM-001",
+      "category": "MEMORY",
+      "domain": "dental",
+      "language": "en",
+      "title": "memory-intent message retrieves the patient's provenance-labeled memory into context",
+      "description": "Phase 8 §22: a memory-intent message (deterministic trigger) with a server-resolved patient retrieves the PATIENT-domain memory. The block is bounded, provenance-labeled, and injected as a distinct section — never flattened into the structured record.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "retrieval", "provenance"]
+    },
+    {
+      "caseId": "MEM-002",
+      "category": "MEMORY",
+      "domain": "dental",
+      "language": "en",
+      "title": "AI_DERIVED conversation candidate is included only with an explicit UNVERIFIED label",
+      "description": "Phase 8 §17: conversation-scoped candidates (AI_DERIVED) are allowed when a conversation exists, but are ALWAYS rendered with the UNVERIFIED candidate label — never silently promoted to verified fact.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "candidate", "trust"]
+    },
+    {
+      "caseId": "MEM-003",
+      "category": "MEMORY",
+      "domain": "operational",
+      "language": "en",
+      "title": "no memory trigger → no memory retrieval (smallest-sufficient-context)",
+      "description": "Phase 8 §9: without a memory-intent signal or a case-level profile, the loop never queries memory — no retrieval, no block in context.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Show today's appointment queue" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "no-trigger"]
+    },
+    {
+      "caseId": "MEM-004",
+      "category": "MEMORY",
+      "domain": "patient",
+      "language": "en",
+      "title": "explicit patient preference statement → deterministic USER_PROVIDED write (scope = own patient)",
+      "description": "Phase 8 §20: an explicit preference statement from a PATIENT actor writes ONE deterministic pref.* memory (USER_PROVIDED, patient scope = the session-resolved patient, retention applied). The LLM never chooses trust/class/scope.",
+      "actorRole": "PATIENT",
+      "tenant": "A",
+      "input": { "message": "Please remember I prefer the morning slot for my dental visits." },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "write", "preference"]
+    },
+    {
+      "caseId": "MEM-005",
+      "category": "MEMORY",
+      "domain": "dental",
+      "language": "en",
+      "title": "memory disabled (service absent) → run completes without any memory stage",
+      "description": "Phase 8 §9/§25: memory is an optional enhancement. Without a memory service the loop runs exactly as before (no retrieval, no update, no error).",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "degraded"]
+    },
+    {
+      "caseId": "MEM-006",
+      "category": "MEMORY",
+      "domain": "security",
+      "language": "en",
+      "title": "injection embedded in a stored memory value stays inert labeled data",
+      "description": "Phase 8 §21: untrusted/poisoned text stored in memory is rendered ONLY as a provenance-labeled data line. The deterministic agent does not follow instructions embedded in memory content (no cross-patient tools, no other patient's data in the answer).",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "adversarial", "poisoning"]
+    },
+    {
+      "caseId": "MEM-007",
+      "category": "MEMORY",
+      "domain": "security",
+      "language": "en",
+      "title": "cross-tenant memory rows are never retrieved (tenant is part of every query)",
+      "description": "Phase 8 §15: memory queries are ALWAYS tenant-pinned. A tenant-B patient memory must never appear for a tenant-A actor, even when the message has a memory trigger.",
+      "actorRole": "DOCTOR",
+      "tenant": "A",
+      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "tenant-isolation"]
+    },
+    {
+      "caseId": "MEM-008",
+      "category": "MEMORY",
+      "domain": "patient",
+      "language": "en",
+      "title": "implicit preference (no explicit statement) → NO memory write (deterministic gate)",
+      "description": "Phase 8 §20: only EXPLICIT preference statements write memory. Implicit/vague phrasing produces no write — the agent must not guess durable facts.",
+      "actorRole": "PATIENT",
+      "tenant": "A",
+      "input": { "message": "I kind of like mornings for my dental visits. What do you think?" },
+      "expected": { "status": ["COMPLETED"] },
+      "tags": ["memory", "write-gate"]
+    }
+  ]
+}

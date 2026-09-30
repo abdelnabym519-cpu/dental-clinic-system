@@ -329,6 +329,7 @@ function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps
     stopReason: state.stopReason,
     failureCodes: [...new Set(failures.map((f) => f.code))],
     knowledge: state.knowledge ?? null,
+    memory: state.memoryMeta ?? null,
     attachments: state.attachmentRefs ?? [],
     engines: state.engineRuns ?? [],
     startedAt: state.startedAt.toISOString(),
@@ -730,6 +731,107 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     mark('retrieve', tRetrieve)
   }
 
+  // ── PHASE 8 — RETRIEVE MEMORY (bounded, provenance-labeled, distinct ──
+  // from the structured record). Deterministic-first: only when a memory
+  // intent or a case-level profile fires. Failures degrade to "no memory"
+  // (never break the run, never leak).
+  let resolvedDoctorId: string | null = null
+  const updateMemorySafely = async (): Promise<void> => {
+    if (!deps.memory || state.memoryUpdateDone) return
+    state.memoryUpdateDone = true
+    try {
+      const { extractUserPreferenceStatement } = await import('../memory/orchestrator')
+      const pref = extractUserPreferenceStatement(request.message, request.actor.role)
+      const res = await deps.memory.update({
+        hospitalId: request.hospitalId,
+        conversationId: request.conversationId ?? null,
+        actor: { id: request.actor.id, name: request.actor.name, role: request.actor.role },
+        patientId: rt.patientId,
+        doctorId: resolvedDoctorId,
+        caseId: rt.caseId,
+        actionsExecuted: state.actionsExecuted.map((a) => ({
+          action: a.action,
+          executed: a.executed && a.verified,
+          approvalId: state.approvalState?.approvalId ?? null,
+          reference: (a.result as { invoiceNo?: string; appointmentNo?: string; treatmentNo?: string; paymentNo?: string } | null)
+            ?.invoiceNo ??
+            (a.result as { appointmentNo?: string } | null)?.appointmentNo ??
+            (a.result as { treatmentNo?: string } | null)?.treatmentNo ??
+            (a.result as { paymentNo?: string } | null)?.paymentNo ??
+            null,
+        })),
+        // Only runs with a resolved engine name are recorded as memory —
+        // an engine-less run has no provable identity (fail closed).
+        engineRuns: (state.engineRuns ?? [])
+          .filter((e): e is typeof e & { engine: string } => typeof e.engine === 'string')
+          .map((e) => ({ engine: e.engine, jobId: e.jobId, modality: e.modality })),
+        userPreferenceStatements: pref ? [pref] : [],
+        now: deps.now(),
+      })
+      state.memoryWritten = res.written
+      if (state.memoryMeta) state.memoryMeta.written = res.written
+      if (res.failures.length > 0) {
+        state.warnings.push(`memory: ${res.failures.length} write(s) rejected by policy (fail-closed)`)
+      }
+    } catch {
+      state.warnings.push('memory update unavailable (degraded — no durable memory written)')
+    }
+  }
+  if (deps.memory) {
+    const tMemory = deps.now()
+    const memT0 = Date.now()
+    try {
+      // Doctor identity (Staff id) for the DOCTOR domain — one bounded
+      // server query, only for doctor actors.
+      if (request.actor.role === 'DOCTOR') {
+        try {
+          const staff = await deps.client.staff.findFirst({
+            where: { hospitalId: request.hospitalId, userId: request.actor.id, isActive: true },
+            select: { id: true },
+          })
+          resolvedDoctorId = staff?.id ?? null
+        } catch {
+          resolvedDoctorId = null
+        }
+      }
+      const mem = await deps.memory.prepare({
+        hospitalId: request.hospitalId,
+        conversationId: request.conversationId ?? null,
+        actor: { id: request.actor.id, name: request.actor.name, role: request.actor.role },
+        message: request.message,
+        patientId: rt.patientId,
+        doctorId: resolvedDoctorId,
+        caseId: rt.caseId,
+        taskType: task.taskType,
+        contextProfile: (task.contextProfile as ContextProfile | null) ?? null,
+        now: deps.now(),
+        maxItems: limits.maxMemoryItems,
+        maxChars: limits.maxMemoryChars,
+      })
+      if (mem) {
+        state.memoryBlock = mem.block
+        if (state.contextText) {
+          state.contextText = `${state.contextText}\n\n${mem.serialized}`
+        } else {
+          state.contextText = mem.serialized
+        }
+      }
+      state.memoryMeta = {
+        items: mem?.block.items.length ?? 0,
+        domains: mem?.domains ?? [],
+        truncated: mem?.block.truncated ?? false,
+        candidates: mem?.block.candidateCount ?? 0,
+        retrievalMs: Date.now() - memT0,
+        written: 0,
+      }
+    } catch {
+      // Memory is an enhancement — a failure degrades to no-memory,
+      // recorded as a warning, never a run failure (fail closed, not open).
+      state.warnings.push('memory retrieval unavailable (degraded to no-memory)')
+    }
+    mark('memory', tMemory)
+  }
+
   // ── PLAN (bounded templates) ───────────────────────────────────────────
   const tPlan = deps.now()
   const action = cls.action
@@ -973,12 +1075,17 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       return respond(`The action ran but VERIFICATION FAILED: ${actionResult.verification?.detail ?? 'no verification detail'}. Do not treat it as complete — contact the clinic admin.`)
     }
     stop('COMPLETED', 'EXECUTED_VERIFIED', '')
+    // Phase 8 — Update eligible memory (deterministic, fail-soft).
+    await updateMemorySafely()
     if (task.taskType !== 'MULTI_STEP') {
       return respond(`${actionResult.message ?? 'Action executed.'} Verified: ${actionResult.verification?.detail ?? 'verified by pipeline'}.`)
     }
     // MULTI_STEP: fall through to ANALYZE — one combined response
     // (analysis + verified action confirmation).
   }
+
+  // Phase 8 — Update eligible memory (engine runs / explicit statements).
+  await updateMemorySafely()
 
   // ── ANALYZE / RESPOND ──────────────────────────────────────────────────
   const tRespond = deps.now()

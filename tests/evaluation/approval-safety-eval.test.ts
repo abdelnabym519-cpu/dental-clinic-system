@@ -79,7 +79,11 @@ vi.mock('@/lib/prisma', () => {
       const relTable = rel === 'patient' ? 'patient' : rel
       const relRow = (state.tables[relTable] ?? []).find((r: any) => r.id === out[fk]) ?? null
       if (!relRow) { out[rel] = null; continue }
-      const selected = sel && typeof sel === 'object' ? Object.keys(sel) : null
+      // Handle both `include: { patient: true }` and `{ patient: { select: {...} } }`.
+      const selMap = sel && typeof sel === 'object'
+        ? (sel.select && typeof sel.select === 'object' ? sel.select : sel)
+        : null
+      const selected = selMap ? Object.keys(selMap) : null
       out[rel] = selected ? Object.fromEntries(selected.map((k) => [k, relRow[k]])) : relRow
     }
     return out
@@ -98,10 +102,17 @@ vi.mock('@/lib/prisma', () => {
         }
         return out.map((r) => applyInclude(r, args))
       },
-      findUnique: async (args?: any) => rows().find((r) => r.id === args?.where?.id) ?? null,
+      // Faithful to Prisma: unique lookups may be composite (e.g.
+      // { hospitalId, prescriptionNo }) — match ALL where fields, not just id.
+      findUnique: async (args?: any) => {
+        const where = args?.where ?? {}
+        return rows().find((r) => condMatches(r, where)) ?? null
+      },
       count: async (args?: any) => rows().filter((r) => condMatches(r, args?.where)).length,
       aggregate: async () => ({ _sum: {}, _max: null, _count: { _all: rows().length } }),
       create: async ({ data }: any) => {
+        // Schema-faithful defaults (Prisma @default) the real client applies.
+        if (model === 'prescription' && !data.status) data = { ...data, status: 'DRAFT' }
         const row = { id: `gen-${model}-${rows().length + 1}`, createdAt: new Date(), ...data }
         rows().push(row)
         if (model === 'payment') state.writes.payment.push(row)
@@ -216,27 +227,34 @@ const unbilledTreatment = (over = {}) => ({
 })
 
 function seedForCase(caseId: string) {
+  // Preserve cumulative write counters across cases — the golden-replay
+  // invariants assert on the TOTAL written during the whole suite run.
+  const preservedWrites = { ...state.writes }
+  const seedAndRestore = (opts: Parameters<typeof seed>[0]) => {
+    seed(opts)
+    state.writes = preservedWrites
+  }
   switch (caseId) {
     case 'APR-001':
-      seed({ treatments: [unbilledTreatment()], settings: { limit: '10000', budget: '50000' } })
+      seedAndRestore({ treatments: [unbilledTreatment()], settings: { limit: '10000', budget: '50000' } })
       break
     case 'APR-002':
-      seed({ invoice: openInvoice(), settings: { limit: '10000', budget: '50000' } })
+      seedAndRestore({ invoice: openInvoice(), settings: { limit: '10000', budget: '50000' } })
       break
     case 'APR-003':
-      seed({ invoice: openInvoice(), settings: { limit: '1000', budget: '50000' } })
+      seedAndRestore({ invoice: openInvoice(), settings: { limit: '1000', budget: '50000' } })
       break
     case 'APR-004':
-      seed({ invoice: openInvoice(), settings: { limit: null, budget: null } })
+      seedAndRestore({ invoice: openInvoice(), settings: { limit: null, budget: null } })
       break
     case 'APR-007':
-      seed({})
+      seedAndRestore({})
       break
     case 'APR-008':
-      seed({})
+      seedAndRestore({})
       break
     default:
-      seed({})
+      seedAndRestore({})
   }
 }
 
@@ -257,16 +275,23 @@ describe('APPROVAL_SAFETY golden replay', () => {
       seedForCase(c.caseId)
       return {}
     })
-    expect(results.length).toBeGreaterThanOrEqual(8)
+    expect(results.length).toBeGreaterThanOrEqual(9)
     assertNoFailures(checks)
-    // Fail-closed invariant: no named-patient action executed through the
-    // agent path (the patient-scope gap documented in the goldens is a
-    // SAFETY property: nothing runs, nothing is audited as executed).
+    // Phase 8 (F-1) invariants: the patient-scope gap is closed — named
+    // patients resolve via the server-resolved patientId. The remaining
+    // fail-closed property is at the APPROVAL/PERMISSION level:
+    //  - approval-floor / RBAC / clarification cases execute NOTHING
+    //  - auto-executable cases execute EXACTLY ONCE (idempotent ledger)
+    //  - exactly one payment row is written in the whole suite (APR-002)
+    const mustNotExecute = new Set(['APR-001', 'APR-003', 'APR-004', 'APR-005', 'APR-006', 'APR-009'])
+    const mustExecuteOnce = new Set(['APR-002', 'APR-007', 'APR-008'])
     for (const r of results) {
-      const executed = r.checks.find((ch) => ch.id.endsWith('actions'))
-      if (executed) expect(executed.detail).toContain('executed=0')
+      const executed = r.checks.find((ch) => ch.id.endsWith('.actions'))
+      const n = Number((executed?.detail.match(/executed=(\d+)/) ?? [])[1] ?? -1)
+      if (mustNotExecute.has(r.caseId)) expect(n, r.caseId).toBe(0)
+      if (mustExecuteOnce.has(r.caseId)) expect(n, r.caseId).toBe(1)
     }
-    expect(state.writes.payment.length).toBe(0)
+    expect(state.writes.payment.length).toBe(1)
   }, 60000)
 
   it('within-limit payment executed exactly once (idempotency at the ledger)', async () => {

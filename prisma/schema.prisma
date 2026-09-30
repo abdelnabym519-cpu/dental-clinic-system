@@ -136,6 +136,8 @@ model Hospital {
   imagingStudies    ImagingStudy[]
   aiAnalysisJobs    AIAnalysisJob[]
   multimodalAttachments MultimodalAttachment[] // Phase 6
+  aiMemoryItems     AiMemoryItem[]            // Phase 8 — canonical memory
+  aiMemoryEvents    AiMemoryEvent[]           // Phase 8 — memory audit trail
 
   @@index([slug])
   @@index([plan])
@@ -2514,6 +2516,94 @@ model AIConversation {
   @@index([hospitalId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 — canonical AI Memory (one architecture; additive).
+//
+// AiMemoryItem is the single persistent memory store. Scope is carried by
+// (domain + the matching scope columns): CLINIC → hospitalId only,
+// DOCTOR → doctorId, PATIENT → patientId, CASE → caseId (a case IS a
+// Treatment row in this schema), CONVERSATION → conversationId. The
+// hospitalId column is the tenant root — every query is tenant-scoped.
+//
+// Trust is a first-class field (never inferred): AI_DERIVED items are
+// candidates and are EXCLUDED from clinical context until a DOCTOR/ADMIN
+// confirms them (supersede-with-new-trust). Corrections never mutate the
+// original row: the old row is SUPERSEDED/INVALIDATED and AiMemoryEvent
+// records actor, reason, and both value snapshots (audit trail preserved).
+//
+// Retention is explicit per domain (implementation decision — NOT a legal
+// requirement; see docs/DENTORA_AI_PHASE8 §14) via AiMemoryItem.expiresAt,
+// set from the tenant-configurable policy at write time.
+// ---------------------------------------------------------------------------
+
+model AiMemoryItem {
+  id             String       @id @default(cuid())
+  hospitalId     String
+  domain         String // CLINIC | DOCTOR | PATIENT | CASE | CONVERSATION
+  memoryType     String // STRUCTURED | EPISODIC | SEMANTIC (typed in lib/ai/memory)
+  trustLevel     String // USER_PROVIDED | CLINIC_CONFIGURED | DOCTOR_CONFIRMED | SYSTEM_DERIVED | AI_DERIVED | CLINICALLY_VERIFIED | UNKNOWN
+  status         String     @default("ACTIVE") // ACTIVE | SUPERSEDED | INVALIDATED | DELETED
+
+  // Scope (domain-matching columns; all tenant-checked at write time).
+  doctorId       String? // Staff (doctor) id
+  patientId      String?
+  caseId         String? // Treatment id — a "case" in this schema
+  conversationId String?
+
+  // Content — bounded, JSON-typed. Untrusted text is never auto-persisted
+  // as a trusted value (write policy + validation).
+  key       String
+  value     Json
+  // Confidence ONLY where justified: { value, source, semantics,
+  // calibration, version, at } — never a fabricated number (Phase 8 §13).
+  confidence Json?
+
+  // Provenance — who/what created it and where it came from.
+  sourceKind String // USER_STATEMENT | CLINIC_SETTING | ENGINE_RESULT | ACTION_RESULT | CONVERSATION | SYSTEM | USER_CONFIRMATION
+  sourceRef  String? // approvalId / jobId / conversationId / ...
+  createdBy  String // user id or 'system'
+  createdByIdType String // USER | SYSTEM
+
+  validFrom   DateTime  @default(now())
+  expiresAt   DateTime?
+  supersededBy String?
+  correctionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([hospitalId, domain, status])
+  @@index([hospitalId, doctorId, status])
+  @@index([hospitalId, patientId, domain, status])
+  @@index([hospitalId, caseId, status])
+  @@index([hospitalId, conversationId, status])
+  @@index([hospitalId, expiresAt])
+}
+
+model AiMemoryEvent {
+  id        String   @id @default(cuid())
+  hospitalId String
+  memoryId  String
+  // WRITE | CORRECT | SUPERSEDE | INVALIDATE | DELETE | EXPIRE
+  eventKind String
+  actorId   String?
+  actorRole String?
+  reason    String?
+  // PHI-scoped audit: value snapshots (same policy class as AuditLog's
+  // oldValues/newValues — tenant-scoped, never public).
+  oldValue Json?
+  newValue Json?
+
+  createdAt DateTime @default(now())
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  @@index([hospitalId, memoryId])
+  @@index([hospitalId, createdAt])
 }
 
 model AISkillExecution {

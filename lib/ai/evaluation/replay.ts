@@ -66,6 +66,9 @@ export interface ReplayOverrides {
   capabilities?: { getHealth: () => Promise<unknown> } | null
   /** Phase 4 — knowledge store (injectable for RAG-backed cases). */
   knowledgeStore?: import('@/lib/ai/knowledge/types').KnowledgeStore | null
+  /** Phase 8 — memory service (injectable for memory-backed cases; null =
+   *  memory disabled for this replay — same as production without memory). */
+  memory?: import('@/lib/ai/memory/orchestrator').MemoryService | null
   /** Temp dir for document attachments (storage service root). The suite
    *  must also set process.env.UPLOAD_DIR to the same directory. */
   uploadDir?: string | null
@@ -334,6 +337,7 @@ export async function replayAgentCase(
           : null),
       localAiService: overrides.localAiService ?? makeFakeLocalAiService(),
       localAiCapabilities: overrides.capabilities ?? null,
+      memory: overrides.memory ?? null,
     } as unknown as AgentDeps,
     // The loop types its deps strictly; the fakes above satisfy the
     // structural surface the loop actually calls (same boundary the Phase
@@ -372,6 +376,8 @@ export function observe(response: AgentResponse): ObservedBehavior {
     attachmentsResolved: (t.attachments ?? []).length,
     attachmentIds: (t.attachments ?? []).map((a) => a.id),
     engines: (t.engines ?? []).map((e) => ({ tool: e.tool, engine: e.engine, jobId: e.jobId })),
+    // Phase 8 — memory observability (COUNTS only — never content).
+    memory: t.memory ?? null,
   }
 }
 

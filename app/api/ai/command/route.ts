@@ -176,9 +176,16 @@ export async function POST(req: Request) {
     if (parsed.intent === 'general') {
       result = await execGeneral(command, contextStr, hospital?.name || 'Hospital')
     } else {
+      // Phase 8 (F-1): `parsed.params` is LLM-EMITTED (untrusted model
+      // output). Reserved server-privilege keys are stripped here —
+      // patientId is only authoritative when SERVER-resolved (the agent
+      // loop injects it from its tenant-scoped resolution; LLM text can
+      // never grant a patient scope on this path).
+      const rawParams = (parsed.params || {}) as Record<string, string>
+      const { patientId: _untrustedPatientId, __resolvedPatientId: _untrustedReserved, ...sanitizedParams } = rawParams
       const pipelineResult = await runAiAction({
         action: parsed.intent,
-        params: parsed.params || {},
+        params: sanitizedParams,
         actor: { id: user.id, name: user.name || 'User', role: user.role },
         hospitalId,
         requestReason: parsed.summary,

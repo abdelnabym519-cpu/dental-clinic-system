@@ -126,6 +126,31 @@ async function resolvePatientForAction(
   params: Record<string, string>,
   hospitalId: string
 ): Promise<string | null> {
+  // Phase 8 (F-1) — the server-resolved patient id is authoritative when the
+  // agent supplies one (tools.ts sets params.patientId from rt.patientId,
+  // which is always tenant-scoped server-side — the client can never set it).
+  // Resolution is tenant-scoped: a foreign-tenant or nonexistent id fails
+  // closed exactly like a bad name.
+  if (params.patientId) {
+    const patient = await prisma.patient.findUnique({
+      where: { id: params.patientId },
+      select: { id: true, hospitalId: true },
+    })
+    if (patient && patient.hospitalId === hospitalId) {
+      // Phase 8 (F-1) — record_payment binds money to an invoice; the
+      // patient scope and the invoice's own patient must AGREE, else fail
+      // closed (no cross-patient payment via a mixed scope).
+      if (policy.action === 'record_payment' && params.invoiceNo) {
+        const inv = await prisma.invoice.findFirst({
+          where: { hospitalId, invoiceNo: params.invoiceNo },
+          select: { patientId: true },
+        })
+        if (!inv || inv.patientId !== patient.id) return null
+      }
+      return patient.id
+    }
+    return null // exists elsewhere or not at all → fail closed
+  }
   const ref = params.patientName || params.query || ''
   if (ref) {
     const patient = await findPatient(hospitalId, ref)
@@ -207,40 +232,48 @@ async function dispatchExecutor(
   action: string,
   params: Record<string, string>,
   hospitalId: string,
-  tx?: PrismaClientLike
+  tx?: PrismaClientLike,
+  resolvedPatientId?: string | null
 ): Promise<any> {
+  // Phase 8 (F-1) — inject the SERVER-RESOLVED patient id (authoritative,
+  // tenant-validated, fingerprint-bound) for the executor's patient lookup.
+  // The reserved key is never accepted from the client (stripped in
+  // runAiAction / stored rows never contain it).
+  const execParams = resolvedPatientId
+    ? { ...params, __resolvedPatientId: resolvedPatientId }
+    : params
   switch (action) {
-    case 'search_patients': return execSearchPatients(params, hospitalId)
-    case 'check_patient': return execCheckPatient(params, hospitalId)
-    case 'show_appointments': return execShowAppointments(params, hospitalId)
-    case 'show_treatments': return execShowTreatments(params, hospitalId)
-    case 'show_invoices': return execShowInvoices(params, hospitalId)
+    case 'search_patients': return execSearchPatients(execParams, hospitalId)
+    case 'check_patient': return execCheckPatient(execParams, hospitalId)
+    case 'show_appointments': return execShowAppointments(execParams, hospitalId)
+    case 'show_treatments': return execShowTreatments(execParams, hospitalId)
+    case 'show_invoices': return execShowInvoices(execParams, hospitalId)
     case 'check_overdue': return execCheckOverdue(hospitalId)
-    case 'show_revenue': return execShowRevenue(params, hospitalId)
-    case 'check_stock': return execCheckStock(params, hospitalId)
+    case 'show_revenue': return execShowRevenue(execParams, hospitalId)
+    case 'check_stock': return execCheckStock(execParams, hospitalId)
     case 'low_stock': return execLowStock(hospitalId)
-    case 'show_lab_orders': return execShowLabOrders(params, hospitalId)
-    case 'show_prescriptions': return execShowPrescriptions(params, hospitalId)
-    case 'search_medications': return execSearchMedications(params, hospitalId)
+    case 'show_lab_orders': return execShowLabOrders(execParams, hospitalId)
+    case 'show_prescriptions': return execShowPrescriptions(execParams, hospitalId)
+    case 'search_medications': return execSearchMedications(execParams, hospitalId)
     case 'show_staff': return execShowStaff(hospitalId)
     case 'daily_summary': return execDailySummary(hospitalId)
-    case 'create_patient': return tx ? execCreatePatient(params, hospitalId, tx) : execCreatePatient(params, hospitalId)
-    case 'update_patient': return tx ? execUpdatePatient(params, hospitalId, tx) : execUpdatePatient(params, hospitalId)
-    case 'book_appointment': return tx ? execBookAppointment(params, hospitalId, tx) : execBookAppointment(params, hospitalId)
-    case 'cancel_appointment': return tx ? execCancelAppointment(params, hospitalId, tx) : execCancelAppointment(params, hospitalId)
-    case 'reschedule_appointment': return tx ? execRescheduleAppointment(params, hospitalId, tx) : execRescheduleAppointment(params, hospitalId)
-    case 'complete_appointment': return tx ? execCompleteAppointment(params, hospitalId, tx) : execCompleteAppointment(params, hospitalId)
-    case 'create_treatment': return tx ? execCreateTreatment(params, hospitalId, tx) : execCreateTreatment(params, hospitalId)
-    case 'complete_treatment': return tx ? execCompleteTreatment(params, hospitalId, tx) : execCompleteTreatment(params, hospitalId)
+    case 'create_patient': return tx ? execCreatePatient(execParams, hospitalId, tx) : execCreatePatient(execParams, hospitalId)
+    case 'update_patient': return tx ? execUpdatePatient(execParams, hospitalId, tx) : execUpdatePatient(execParams, hospitalId)
+    case 'book_appointment': return tx ? execBookAppointment(execParams, hospitalId, tx) : execBookAppointment(execParams, hospitalId)
+    case 'cancel_appointment': return tx ? execCancelAppointment(execParams, hospitalId, tx) : execCancelAppointment(execParams, hospitalId)
+    case 'reschedule_appointment': return tx ? execRescheduleAppointment(execParams, hospitalId, tx) : execRescheduleAppointment(execParams, hospitalId)
+    case 'complete_appointment': return tx ? execCompleteAppointment(execParams, hospitalId, tx) : execCompleteAppointment(execParams, hospitalId)
+    case 'create_treatment': return tx ? execCreateTreatment(execParams, hospitalId, tx) : execCreateTreatment(execParams, hospitalId)
+    case 'complete_treatment': return tx ? execCompleteTreatment(execParams, hospitalId, tx) : execCompleteTreatment(execParams, hospitalId)
     case 'create_invoice':
-    case 'generate_invoice': return tx ? execCreateInvoice(params, hospitalId, tx) : execCreateInvoice(params, hospitalId)
-    case 'record_payment': return tx ? execRecordPayment(params, hospitalId, tx) : execRecordPayment(params, hospitalId)
-    case 'add_inventory_item': return tx ? execAddInventoryItem(params, hospitalId, tx) : execAddInventoryItem(params, hospitalId)
-    case 'update_stock': return tx ? execUpdateStock(params, hospitalId, tx) : execUpdateStock(params, hospitalId)
-    case 'create_lab_order': return tx ? execCreateLabOrder(params, hospitalId, tx) : execCreateLabOrder(params, hospitalId)
-    case 'update_lab_order': return tx ? execUpdateLabOrder(params, hospitalId, tx) : execUpdateLabOrder(params, hospitalId)
-    case 'create_prescription': return tx ? execCreatePrescription(params, hospitalId, tx) : execCreatePrescription(params, hospitalId)
-    case 'add_medication': return tx ? execAddMedication(params, hospitalId, tx) : execAddMedication(params, hospitalId)
+    case 'generate_invoice': return tx ? execCreateInvoice(execParams, hospitalId, tx) : execCreateInvoice(execParams, hospitalId)
+    case 'record_payment': return tx ? execRecordPayment(execParams, hospitalId, tx) : execRecordPayment(execParams, hospitalId)
+    case 'add_inventory_item': return tx ? execAddInventoryItem(execParams, hospitalId, tx) : execAddInventoryItem(execParams, hospitalId)
+    case 'update_stock': return tx ? execUpdateStock(execParams, hospitalId, tx) : execUpdateStock(execParams, hospitalId)
+    case 'create_lab_order': return tx ? execCreateLabOrder(execParams, hospitalId, tx) : execCreateLabOrder(execParams, hospitalId)
+    case 'update_lab_order': return tx ? execUpdateLabOrder(execParams, hospitalId, tx) : execUpdateLabOrder(execParams, hospitalId)
+    case 'create_prescription': return tx ? execCreatePrescription(execParams, hospitalId, tx) : execCreatePrescription(execParams, hospitalId)
+    case 'add_medication': return tx ? execAddMedication(execParams, hospitalId, tx) : execAddMedication(execParams, hospitalId)
     default: return null
   }
 }
@@ -382,7 +415,12 @@ export interface RunAiActionArgs {
  */
 export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult> {
   const { action, params, actor, hospitalId, conversationId, requestReason } = args
-  const normalized = (params ?? {}) as Record<string, string>
+  // Phase 8 (F-1) — the reserved patient-id channel is PIPELINE-ONLY. A
+  // model/client that puts __resolvedPatientId into the tool input is
+  // stripped here; only the tenant-validated resolution re-injects it at
+  // dispatch time (see dispatchExecutor).
+  const normalized = { ...(params ?? {}) } as Record<string, string>
+  delete normalized.__resolvedPatientId
 
   // 1 — Resolve action policy. Unknown action → fail closed.
   const policy = resolvePolicy(action)
@@ -479,8 +517,8 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
   let result: any
   try {
     result = policy.transactionRequired
-      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(policy.action, normalized, hospitalId, tx))
-      : await dispatchExecutor(policy.action, normalized, hospitalId)
+      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(policy.action, normalized, hospitalId, tx, patientId))
+      : await dispatchExecutor(policy.action, normalized, hospitalId, undefined, patientId)
   } catch (err) {
     if (sensitive) {
       await markExecutionError(ledgerId!, err instanceof Error ? err.message : 'executor threw')
@@ -595,11 +633,12 @@ export async function approveAndExecute(args: {
   if (dup.blocked) return { ok: false, code: 'DUPLICATE', message: MSG.duplicate }
 
   // Execute + verify + audit, exactly like the auto path.
+  // Phase 8 (F-1) — the row's fingerprint-bound patientId is authoritative.
   let result: any
   try {
     result = policy.transactionRequired
-      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(row.action, row.params, row.hospitalId, tx))
-      : await dispatchExecutor(row.action, row.params, row.hospitalId)
+      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(row.action, row.params, row.hospitalId, tx, row.patientId))
+      : await dispatchExecutor(row.action, row.params, row.hospitalId, undefined, row.patientId)
   } catch (err) {
     await markExecutionError(row.id, err instanceof Error ? err.message : 'executor threw')
     return { ok: false, code: 'EXECUTION_ERROR', message: MSG.executionFailed }

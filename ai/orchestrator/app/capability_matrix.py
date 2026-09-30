@@ -210,6 +210,50 @@ CAPABILITY_MATRIX: list[dict[str, Any]] = [
         "Honest gap (spec §9: do not claim unsupported capabilities). Deferred work — "
         "see docs/DENTORA_AI_PHASE5_LOCAL_AI_MODEL_STRATEGY.md §18/§19.",
     ),
+    # ── Phase 8 engine-scope rows (2026-09-30 re-audit) ──────────────────
+    _task(
+        "implant_detection", "PERIAPICAL", "implant-ai",
+        "JPEG/PNG periapical (or bitewing) radiograph",
+        "findings (instance masks; class: Implant — checkpoint class id 3, "
+        "label read from the checkpoint bytes)",
+        "none — honest unavailable; implant PLANNING is not claimed (clinician planning)",
+        _levels(),
+        "REQUIRED",
+        "Phase 8 re-evaluation: the audited 8024.pt checkpoint (SHA e7cc1377...) "
+        "detects implants among 8 radiograph classes; weights remain HF-only "
+        "(unreachable from the validation environment). Same evidence class as "
+        "periapical_lesion_detection.",
+    ),
+    _task(
+        "intraoral_photography_analysis", "PHOTO", None,
+        "JPEG/PNG intraoral photograph",
+        "none — no verified dental intraoral model is registered",
+        "none — UNAVAILABLE; generic CV is deliberately NOT claimed as dental capability",
+        dict(capability_declared=False, model_exists=False, weights_verified=False,
+             local_inference_verified=False, cpu_inference_verified=False,
+             production_integrated=False),
+        "REQUIRED",
+        "Phase 8 investigation (2026-09-30): no CPU/offline pretrained "
+        "intraoral-dental model with verifiable weights was found in reachable "
+        "sources; generic image models are excluded by policy (dental relevance "
+        "+ real evidence required).",
+    ),
+    _task(
+        "dental_vlm_image_qa", "PHOTO", None,
+        "JPEG/PNG dental image + question",
+        "none — candidate only (no registered engine)",
+        "none — UNAVAILABLE until the candidate is verified on target hardware",
+        dict(capability_declared=False, model_exists=False, weights_verified=False,
+             local_inference_verified=False, cpu_inference_verified=False,
+             production_integrated=False),
+        "REQUIRED",
+        "Phase 8 dental-VLM investigation: candidate DentalGemma 1.5 4B IT "
+        "(MedGemma dental fine-tune, llama.cpp CPU) — lab prepared "
+        "(ai-validation/dentalgemma: provenance, runner, report schema), status "
+        "UNKNOWN; GGUF weights (3.47 GiB, git-ignored) absent and Hugging Face "
+        "unreachable → RESOURCE_BLOCKED, not registered. A generic VLM is NOT "
+        "classified as a dental VLM without this evidence.",
+    ),
 ]
 
 

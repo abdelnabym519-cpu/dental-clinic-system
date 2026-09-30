@@ -333,9 +333,16 @@ ${contextStr}`
         // Phase 1 — every action goes through the server-side policy pipeline
         // (policy → RBAC → validation → patient scope → approval → transaction
         // → executor → verification → audit). The LLM never executes directly.
+        // Phase 8 (F-1): `parsed.params` is LLM-EMITTED (untrusted model
+        // output). Reserved server-privilege keys are stripped here —
+        // patientId is only authoritative when SERVER-resolved (the agent
+        // loop injects it from its tenant-scoped resolution; LLM text can
+        // never grant a patient scope on this path).
+        const rawParams = (parsed.params || {}) as Record<string, string>
+        const { patientId: _untrustedPatientId, __resolvedPatientId: _untrustedReserved, ...sanitizedParams } = rawParams
         const result = await runAiAction({
           action: parsed.action,
-          params: parsed.params || {},
+          params: sanitizedParams,
           actor: { id: user.id, name: user.name || 'User', role: user.role },
           hospitalId,
           conversationId,

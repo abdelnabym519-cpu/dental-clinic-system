@@ -102,6 +102,8 @@ export const EVAL_CATEGORIES = [
   'MULTIMODAL',
   'LOCAL_AI',
   'ADVERSARIAL',
+  // Phase 8 — memory contract cases (synthetic-only, Gate B extension).
+  'MEMORY',
 ] as const
 export type EvalCategory = (typeof EVAL_CATEGORIES)[number]
 
@@ -248,6 +250,15 @@ export interface ObservedBehavior {
   attachmentsResolved: number
   attachmentIds: string[]
   engines: { tool: string; engine: string | null; jobId: string | null }[]
+  /** Phase 8 — memory observability (COUNTS ONLY — no memory content, no PHI). */
+  memory?: {
+    items: number
+    domains: string[]
+    truncated: boolean
+    candidates: number
+    retrievalMs: number
+    written: number
+  } | null
 }
 
 /**

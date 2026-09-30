@@ -5537,5 +5537,11 @@
   "A clinician must review this result": "يجب على طبيب مراجعة هذا الناتج",
   "The document text could not be extracted": "تعذر استخراج نص المستند",
   "conversationId is required": "حقل conversationId مطلوب",
-  "This attachment is referenced by an imaging study": "هذا المرفق مستخدم في دراسة تصويرية"
+  "This attachment is referenced by an imaging study": "هذا المرفق مستخدم في دراسة تصويرية",
+  "aiMemory.section": "الذاكرة",
+  "aiMemory.error.unauthorized": "لا تملك الصلاحية لتنفيذ هذا الإجراء على الذاكرة.",
+  "aiMemory.error.scopeNotFound": "لم يتم العثور على نطاق الذاكرة في هذه العيادة.",
+  "aiMemory.error.notFound": "لم يتم العثور على عنصر الذاكرة.",
+  "aiMemory.error.invalid": "طلب الذاكرة غير صالح.",
+  "aiMemory.error.conflict": "توجد ذاكرة نشطة لهذا المفتاح بالفعل — صحّحها بدلاً من إضافة جديدة."
 }

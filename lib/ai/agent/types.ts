@@ -318,6 +318,21 @@ export interface AgentState {
   uncertainty: string[]
   missingInfo: string[]
   warnings: string[]
+  /** Phase 8 — memory block retrieved for this run (bounded, provenance-labeled). */
+  memoryBlock?: import('../memory/types').MemoryBlock | null
+  /** Phase 8 — memory observability (counts only — never content). */
+  memoryMeta?: {
+    items: number
+    domains: string[]
+    truncated: boolean
+    candidates: number
+    retrievalMs: number
+    written: number
+  } | null
+  /** Phase 8 — memory update stage ran exactly once (idempotent guard). */
+  memoryUpdateDone?: boolean
+  /** Phase 8 — durable memory rows written this run. */
+  memoryWritten?: number
   /** Phase 7 — safe attachment identity for evaluation traces
    *  (opaque ids + class only — never names, keys, or content). */
   attachmentRefs?: { id: string; fileClass: string }[]
@@ -387,6 +402,16 @@ export interface AgentTrace {
   stopReason: string | null
   failureCodes: string[]
   startedAt: string
+  /** Phase 8 — memory observability (COUNTS only — never keys, values,
+   *  names, or content: the memory block itself carries PHI-scoped data). */
+  memory?: {
+    items: number
+    domains: string[]
+    truncated: boolean
+    candidates: number
+    retrievalMs: number
+    written: number
+  } | null
   /** Phase 7 — evaluation observability: safe attachment identity
    *  (opaque ids + class only — never names, keys, or content). */
   attachments?: { id: string; fileClass: string }[]
@@ -461,6 +486,9 @@ export interface AgentLimits {
   maxAnswerChars: number
   /** LLM calls per request (classification fallback + synthesis). */
   maxLlmCalls: number
+  /** Phase 8 — memory retrieval bounds (loop engineering §25). */
+  maxMemoryItems: number
+  maxMemoryChars: number
 }
 
 export const DEFAULT_AGENT_LIMITS: AgentLimits = {
@@ -472,6 +500,8 @@ export const DEFAULT_AGENT_LIMITS: AgentLimits = {
   maxContextChars: 60000,
   maxAnswerChars: 4000,
   maxLlmCalls: 1,
+  maxMemoryItems: 10,
+  maxMemoryChars: 2000,
 }
 
 // ---------------------------------------------------------------------------
@@ -499,4 +529,7 @@ export interface AgentDeps {
   attachments?: import('../multimodal/attachments').AttachmentService | null
   /** Phase 6 — local AI service WITH orchestrator transport (real inference path). */
   localAiService?: import('../engines/local-ai-service').LocalAIService | null
+  /** Phase 8 — canonical memory service (injectable; null = memory disabled).
+   *  The ONLY path the loop uses to read/write memory — never raw store. */
+  memory?: import('../memory/orchestrator').MemoryService | null
 }

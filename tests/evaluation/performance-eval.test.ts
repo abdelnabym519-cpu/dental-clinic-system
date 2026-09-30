@@ -80,6 +80,60 @@ describe('PERFORMANCE (Gate K): environment-labeled metrics', () => {
     expect(record.minMs).toBeLessThanOrEqual(record.maxMs)
   }, 120000)
 
+  // Phase 8 — memory architecture: retrieval (prepare) + update (write)
+  // latency, same environment-label contract as every other gate.
+  it('memory ops benchmark (prepare + write): labeled record, zero failures', async () => {
+    const { MemoryOrchestrator } = await import('@/lib/ai/memory/orchestrator')
+    const { InMemoryMemoryStore } = await import('@/lib/ai/memory/store')
+    const now = new Date('2026-09-30T12:00:00Z')
+    const store = new InMemoryMemoryStore(now)
+    const memory = new MemoryOrchestrator(store)
+    const actor = { id: 'staff-doctor-1', name: 'Dr. T', role: 'DOCTOR' }
+    const scope = { hospitalId: HOSP, domain: 'PATIENT' as const, doctorId: null, patientId: 'pat-A1', caseId: null, conversationId: null }
+    let n = 0
+    const record = await benchmark('memory_prepare_update', async () => {
+      // One bounded write (USER_PROVIDED preference) + one bounded retrieval
+      // against a growing but capped store — the hot path of the agent loop.
+      await store.write(
+        {
+          scope,
+          key: `perf.pref.${n++}`,
+          value: { summary: 'Synthetic performance probe.' },
+          memoryType: 'EPISODIC',
+          writeClass: 'USER_CONFIRMED',
+          trustLevel: 'USER_PROVIDED',
+          sourceKind: 'USER_STATEMENT',
+          sourceRef: null,
+          confidence: null,
+          expiresAt: null,
+          actor,
+        } as never,
+        now
+      )
+      const mem = await memory.prepare({
+        hospitalId: HOSP,
+        conversationId: null,
+        actor,
+        message: 'Previously, what did we discuss?',
+        patientId: 'pat-A1',
+        doctorId: 'staff-doctor-1',
+        caseId: null,
+        taskType: 'CLINICAL_ANALYSIS',
+        contextProfile: 'CLINICAL',
+        now,
+        maxItems: 10,
+        maxChars: 4000,
+      })
+      return (mem?.items ?? 0) + store.items.length
+    }, { warmup: 2, samples: 7 })
+    expect(record.env.label).toBe(envLabel)
+    expect(assertLabeled(record.env)).toBeNull()
+    expect(record.runs.samples).toBe(7)
+    expect(record.failures).toBe(0)
+    expect(record.medianMs).toBeGreaterThanOrEqual(0)
+    expect(record.p95Ms).toBeGreaterThanOrEqual(record.medianMs)
+  }, 120000)
+
   it('an unlabeled environment is rejected (no unlabeled performance)', () => {
     const bad = { ...environmentFacts(), label: 'MAGIC_MACHINE' } as never
     expect(isEnvLabel(bad.label)).toBe(false)

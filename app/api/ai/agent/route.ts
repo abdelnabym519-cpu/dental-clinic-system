@@ -87,6 +87,9 @@ export async function POST(req: Request) {
     const { createAttachmentService } = await import('@/lib/ai/multimodal/attachments')
     const { LocalAIService } = await import('@/lib/ai/engines/local-ai-service')
     const { requestOrchestratorAnalyze } = await import('@/lib/ai-orchestrator')
+    // Phase 8 — canonical memory (one architecture; Prisma-backed store).
+    const { MemoryOrchestrator } = await import('@/lib/ai/memory/orchestrator')
+    const { PrismaMemoryStore } = await import('@/lib/ai/memory/store')
 
     const capabilitySource = createOrchestratorCapabilitySource()
 
@@ -120,6 +123,8 @@ export async function POST(req: Request) {
                 r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse,
             ),
         ),
+        // Phase 8 — canonical memory service (the loop's only memory path).
+        memory: new MemoryOrchestrator(new PrismaMemoryStore(prisma)),
       }
     )
 

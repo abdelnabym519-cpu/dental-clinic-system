@@ -13,6 +13,7 @@ vi.mock('@/lib/prisma', () => ({
     patient: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       update: vi.fn(),
       count: vi.fn(),
     },

@@ -5537,5 +5537,11 @@
   "A clinician must review this result": "A clinician must review this result",
   "The document text could not be extracted": "The document text could not be extracted",
   "conversationId is required": "conversationId is required",
-  "This attachment is referenced by an imaging study": "This attachment is referenced by an imaging study"
+  "This attachment is referenced by an imaging study": "This attachment is referenced by an imaging study",
+  "aiMemory.section": "Memory",
+  "aiMemory.error.unauthorized": "You are not allowed to perform this memory operation.",
+  "aiMemory.error.scopeNotFound": "The memory scope was not found in this clinic.",
+  "aiMemory.error.notFound": "The memory item was not found.",
+  "aiMemory.error.invalid": "The memory request was invalid.",
+  "aiMemory.error.conflict": "An active memory already exists for this key — correct it instead."
 }
