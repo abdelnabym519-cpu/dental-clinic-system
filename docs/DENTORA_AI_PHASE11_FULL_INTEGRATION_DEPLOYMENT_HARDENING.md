@@ -457,7 +457,9 @@ output, HEALTHCHECK on `/api/health`, no secrets baked (env at runtime),
 explicit volumes (mysql-data, uploads), explicit network. **Kept as-is**
 (§52: do not blindly rewrite). The two fixes that make builds reproducible
 (font vendoring §52-note; resvg devDependency) reduce image-build fragility
-without touching the Dockerfile.
+without touching the Dockerfile. The vendored Inter files ship with their
+SIL-OFL license text (`app/fonts/OFL-INTER-LICENSE.txt`) to keep the image
+redistribution-compliant.
 
 ## 46. Network
 
@@ -520,7 +522,12 @@ no fabricated transcript), TTS unavailable (text remains), missing secret
 (preflight throw), duplicate sensitive job (agent invoked once),
 cross-tenant fingerprint non-collision, expired approval binding (inert),
 storage-key tenant/traversal denials. **Found & fixed:** the pipeline
-boundary throw (§15).
+boundary throw (§15); and (post-gate verification re-runs) an uncaught
+`EPIPE` in the command STT/TTS providers when a local engine exits before
+reading stdin — fast-fail engines now surface the typed
+`COMMAND_STT_EXIT_n`/`COMMAND_TTS_EXIT_n` instead of an uncaught exception
+(stdin error handler; regression-verified: integration runs go 1 unhandled
+error → 0 across repeated runs).
 
 ## 53. Recovery
 
@@ -605,9 +612,22 @@ datasets remain committed for byte-stable replays.
 | config-env + platform contracts | — | 30 | green |
 | Phase 7 eval gates (regression) | 4/4 | — | 4/4 |
 | voice gates (regression) | 14/14 + 4 | — | green |
+| Playwright E2E (§67) | not run | — | **BLOCKED** (see below) |
 
 No unrelated regression. Baseline numbers are from the actual pre-phase run
 (`git stash`-free: measured at 8bd8d87 and after; never fabricated).
+
+**Playwright E2E attempt (§82 discipline):** the config drives 53 spec files
+(~480 cases, 6 browser projects) against a live `localhost:3000` server.
+Attempted `npx playwright install chromium` — the browser download failed
+with `Client network socket disconnected before secure TLS connection was
+established` against `https://cdn.playwright.dev` (3 internal retries;
+environment-bound TLS block, same class as binaries.prisma.sh). Additionally
+the suite's `webServer` requires a MySQL-backed Next server, and this sandbox
+has no MySQL daemon. Standing in: component-level smoke suite
+(`tests/smoke/`, green), API route contract tests, and the integration
+suites. Target machine command to close: `npx playwright install chromium &&
+npm run test:e2e` (with MySQL provisioned).
 
 ## 61. Security Scan Results
 
@@ -667,6 +687,12 @@ No unrelated regression. Baseline numbers are from the actual pre-phase run
 4. 12 dependency findings require major upgrades (deferred deliberately).
 5. Voice session store remains single-node (documented Phase 10 decision).
 6. Arabic local STT/TTS models remain blocked (network hosts).
+7. Playwright browsers cannot download in this sandbox (§60 attempt
+   documented); E2E remains a target-machine gate.
+8. (Post-gate polish, follow-up commit) the vendored Inter woff2 files now
+   carry their SIL-OFL license text (`app/fonts/OFL-INTER-LICENSE.txt` —
+   required for redistribution), and the new Phase 11 variables are
+   documented in `.env.example` / `.env.production.example`.
 
 ## 65. Blockers
 
@@ -676,6 +702,7 @@ No unrelated regression. Baseline numbers are from the actual pre-phase run
 | Docker daemon absent | no `docker` socket in sandbox | target: `./scripts/deploy.sh` |
 | fonts.googleapis.com unreachable | direct fetch probe fails | FIXED (self-hosted Inter) |
 | binaries for Arabic AI models | huggingface/alphacephei unreachable | FIXED path: command boundary; validate on networked machine |
+| Playwright browser download | cdn.playwright.dev TLS-refused (3 retries, `npx playwright install chromium`) | target machine: `npx playwright install chromium && npm run test:e2e` |
 
 ## 66. Phase 12 Interfaces
 

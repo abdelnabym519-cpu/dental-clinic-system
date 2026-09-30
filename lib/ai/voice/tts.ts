@@ -99,7 +99,10 @@ export class CommandTtsProvider implements TtsProvider {
       if (stderr.length < 8 * 1024) stderr += c.toString('utf8')
     })
     // Feed stdin BEFORE awaiting exit — engines read until EOF; ending the
-    // pipe after close would deadlock the synthesizer.
+    // pipe after close would deadlock the synthesizer. Engines that exit
+    // early close stdin first: swallow that EPIPE — the close handler below
+    // surfaces the typed COMMAND_TTS_EXIT_n.
+    child.stdin.on('error', () => {})
     child.stdin.end(input.text, 'utf8')
     await new Promise<void>((resolve, reject) => {
       child.on('error', reject)

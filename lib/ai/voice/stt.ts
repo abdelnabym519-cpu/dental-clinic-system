@@ -131,7 +131,10 @@ export class CommandSttProvider implements SttProvider {
       if (stderr.length < 8 * 1024) stderr += c.toString('utf8')
     })
     // Feed stdin BEFORE awaiting exit — engines read until EOF; ending the
-    // pipe after close would deadlock bounded-command decoders.
+    // pipe after close would deadlock bounded-command decoders. Engines that
+    // exit early (bad args, fast fail) close stdin first: swallow that EPIPE
+    // here — the close handler below surfaces the typed COMMAND_STT_EXIT_n.
+    child.stdin.on('error', () => {})
     child.stdin.end(wavBytes)
     await new Promise<void>((resolve, reject) => {
       child.on('error', reject)
