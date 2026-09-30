@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import { cookies } from 'next/headers'
 import './globals.css'
 import { Toaster } from '@/components/ui/toaster'
@@ -8,7 +8,22 @@ import { LanguageProvider } from '@/components/providers/language-provider'
 import { directionFor, translateText } from '@/lib/i18n/dictionary'
 import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/config'
 
-const inter = Inter({ subsets: ['latin'] })
+// Phase 11 (§52/§69): Inter is SELF-HOSTED (next/font/local, OFL-licensed
+// files vendored from @fontsource/inter 5.3.0). The previous next/font/google
+// binding made every production build require fonts.googleapis.com — an
+// external fetch at build time that broke reproducibility and failed entirely
+// in offline/proxied environments. Same family, same subsets behavior, same
+// CSS variable wiring — no visual change intended.
+const inter = localFont({
+  src: [
+    { path: './fonts/inter-latin-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/inter-latin-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: './fonts/inter-latin-600-normal.woff2', weight: '600', style: 'normal' },
+    { path: './fonts/inter-latin-700-normal.woff2', weight: '700', style: 'normal' },
+  ],
+  display: 'swap',
+  variable: '--font-inter',
+})
 
 export async function generateMetadata(): Promise<Metadata> {
   // Browser-tab title and social previews follow the selected locale exactly

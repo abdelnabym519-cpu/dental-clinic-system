@@ -298,6 +298,8 @@ const tables: Record<string, Row[]> = {
     },
   ],
 
+  // Phase 11 (additive): AI analysis jobs (clinic brain metrics surface).
+  aiAnalysisJob: [],
   invoice: [
     {
       id: 'inv-A1', hospitalId: HOSP_A, patientId: PAT_A1, invoiceNo: 'INV-A-9001',

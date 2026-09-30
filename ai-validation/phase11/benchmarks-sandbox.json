@@ -1,0 +1,112 @@
+{
+  "kind": "phase11_integration_benchmark",
+  "envLabel": "SANDBOX",
+  "generatedAt": "2026-09-30T21:18:56.214Z",
+  "scope": "INTEGRATED HOT PATHS (SANDBOX INFRASTRUCTURE ONLY — replay boundary isolates app cost from LLM/network)",
+  "disclaimers": [
+    "Not measured on the target machine; implies nothing about production latency.",
+    "No raw audio, transcripts, or PHI persisted by this benchmark."
+  ],
+  "records": [
+    {
+      "name": "api_health_handler",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "minMs": 0.033226,
+      "maxMs": 0.316187,
+      "meanMs": 0.09,
+      "medianMs": 0.07,
+      "p95Ms": 0.3,
+      "coldMs": 2.44,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "voice_e2e_patient_review",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 2,
+        "samples": 8
+      },
+      "minMs": 0.856758,
+      "maxMs": 2.579529,
+      "meanMs": 1.24,
+      "medianMs": 0.96,
+      "p95Ms": 2.58,
+      "coldMs": 13.82,
+      "failures": 0,
+      "notes": "includes sanitize/normalize/entity-resolution/runAgent/finish mapping"
+    },
+    {
+      "name": "agent_request_replay",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 2,
+        "samples": 8
+      },
+      "minMs": 0.320746,
+      "maxMs": 3.748459,
+      "meanMs": 0.84,
+      "medianMs": 0.42,
+      "p95Ms": 3.75,
+      "coldMs": 0.76,
+      "failures": 0,
+      "notes": null
+    },
+    {
+      "name": "clinic_brain_metrics",
+      "env": {
+        "label": "SANDBOX",
+        "node": "v22.22.3",
+        "platform": "Linux 6.1.158+",
+        "arch": "x64",
+        "cpuCount": 2,
+        "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+        "totalMemGb": 3.8,
+        "labelSource": "heuristic"
+      },
+      "runs": {
+        "warmup": 2,
+        "samples": 10
+      },
+      "minMs": 0.030024,
+      "maxMs": 0.255201,
+      "meanMs": 0.09,
+      "medianMs": 0.06,
+      "p95Ms": 0.26,
+      "coldMs": 0.81,
+      "failures": 0,
+      "notes": null
+    }
+  ]
+}

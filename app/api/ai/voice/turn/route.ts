@@ -59,13 +59,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Rate limit exceeded. Try again shortly.' }, { status: 429 })
   }
 
+  const sessions = voiceSessions()
+  // Phase 11 (§24): expired sessions are garbage-collected on the hot path —
+  // bounded memory even if no new sessions are ever created again.
+  sessions.sweep(new Date())
+
   const transcript = isVoiceTranscript(body.transcript) ? body.transcript : undefined
   if (op === 'SPEAK' && !transcript) {
     return NextResponse.json({ error: 'transcript is required for SPEAK turns' }, { status: 400 })
   }
 
   const deps: VoiceTurnDeps = {
-    sessions: voiceSessions(),
+    sessions,
     // NOTE: the sandbox's prisma client generation is engine-blocked, so the
     // generated type lacks delegates (pre-existing, see docs). Runtime has
     // the full surface; the pipeline keeps its own minimal typed view.

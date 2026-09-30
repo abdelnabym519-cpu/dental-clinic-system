@@ -46,19 +46,33 @@ const nextConfig = {
   },
   // CORS for mobile app
   async headers() {
+    // Phase 11 (§27): CORS is env-driven. Canonical logic lives in
+    // lib/config/cors.ts (unit-tested); this config-time copy applies it to
+    // static headers. CORS_ALLOWED_ORIGINS set → strict allowlist with
+    // credentials; unset → legacy wildcard WITHOUT the credentials claim
+    // (browsers rejected that combination anyway; now the contract is honest).
+    const allowlist = (process.env.CORS_ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((s) => s.trim().replace(/\/$/, ''))
+      .filter(Boolean)
+    const corsHeaders = allowlist.length
+      ? [
+          { key: 'Access-Control-Allow-Origin', value: allowlist[0] },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, Cookie, X-CSRF-Token' },
+          { key: 'Access-Control-Allow-Credentials', value: 'true' },
+          { key: 'Vary', value: 'Origin' },
+        ]
+      : [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, Cookie, X-CSRF-Token' },
+        ]
     return [
       {
         // CORS headers for API routes (mobile app access)
         source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS' },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, Cookie, X-CSRF-Token',
-          },
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-        ],
+        headers: corsHeaders,
       },
       {
         // Security headers for all routes
@@ -69,6 +83,11 @@ const nextConfig = {
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(self), geolocation=()' },
+          // Phase 11 (§27): HSTS — only meaningful over TLS; harmless on
+          // plain-HTTP local/staging. One year, includeSubDomains. Preload is
+          // deliberately NOT set (a self-hosted clinic domain must opt into
+          // the preload list explicitly).
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
         ],
       },
     ]

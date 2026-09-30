@@ -386,15 +386,33 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     // ى→ي / أ→ا, and the hint must be comparable to the STORED name forms
     // (the resolver itself normalizes both sides before comparing).
     const hint = extractPatientNameHint(safetyOriginal)
-    const resolved = await resolvePatientReference(deps.client as Parameters<typeof resolvePatientReference>[0], working.tenantId, hint)
-    if (resolved.status === 'RESOLVED' && resolved.patientId) {
-      patientId = resolved.patientId
-      working = {
-        ...working,
-        patientScope: { patientId: resolved.patientId, displayName: resolved.displayName ?? resolved.patientId },
+    // Phase 11 (§59): a dependency failure (database unreachable) is a SAFE
+    // typed failure — it never throws past the pipeline boundary and never
+    // degrades into a guessed answer.
+    try {
+      const resolved = await resolvePatientReference(deps.client as Parameters<typeof resolvePatientReference>[0], working.tenantId, hint)
+      if (resolved.status === 'RESOLVED' && resolved.patientId) {
+        patientId = resolved.patientId
+        working = {
+          ...working,
+          patientScope: { patientId: resolved.patientId, displayName: resolved.displayName ?? resolved.patientId },
+        }
+      } else if (resolved.status === 'AMBIGUOUS' || resolved.status === 'NOT_FOUND') {
+        clarification = patientClarification(resolved)
       }
-    } else if (resolved.status === 'AMBIGUOUS' || resolved.status === 'NOT_FOUND') {
-      clarification = patientClarification(resolved)
+    } catch {
+      // Mirror the agent-catch contract: persist ERROR on the session so the
+      // next turn starts from a typed, recoverable state.
+      // working is in UNDERSTANDING here; UNDERSTANDING→ERROR is legal.
+      const failed = transitionSession(working, 'ERROR', { now: t0 })
+      sessions.save(failed)
+      const spoken = 'حصلت مشكلة مؤقتة في الوصول للبيانات. جرّب تاني بعد شوية.'
+      return respond(failed, 'SPEAK', {
+        speakableText: spoken,
+        displayText: 'A temporary data-access problem occurred. Please try again shortly.',
+        error: { code: 'VOICE_DEPENDENCY_ERROR', message: 'Patient data store unavailable' },
+        telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, entityResolutionMs: deps.now().getTime() - entityStart, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_DEPENDENCY_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+      })
     }
   }
   const entityResolutionMs = deps.now().getTime() - entityStart
