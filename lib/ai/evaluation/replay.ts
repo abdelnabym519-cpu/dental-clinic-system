@@ -15,10 +15,9 @@
  * The golden dataset never carries bytes, paths, secrets, or PHI — only
  * synthetic identities and expected structured behavior.
  */
-import { mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
+import { Buffer } from 'node:buffer'
 import { runAgent } from '@/lib/ai/agent/loop'
-import { resetStorage } from '@/lib/storage'
+import { getStorage, setStorage, LocalStorageDriver } from '@/lib/storage'
 import { DEFAULT_AGENT_LIMITS } from '@/lib/ai/agent/types'
 import type { AgentDeps, AgentRequest, AgentResponse } from '@/lib/ai/agent/types'
 import { createAgentFakePrisma, HOSP_A, HOSP_B, NOW } from '@/tests/harness/agent-fixtures'
@@ -304,34 +303,36 @@ export async function buildReplayAgentDeps(
 ): Promise<AgentDeps> {
   const hospitalId = tenantFor(c.tenant)
   if (overrides.uploadDir) {
-    // MM-002/ADV-003 root cause (Phase 12 verification): the production
-    // document tools read extracted text back through the module-global
-    // storage driver (getStorage()), which roots itself at UPLOAD_DIR at
-    // FIRST construction and is then cached for the process. This harness
-    // writes the materialized files into overrides.uploadDir directly, so
-    // the two must be the SAME directory. Relying on the host to have set
-    // UPLOAD_DIR before the cache was built is fragile (a dev shell with
-    // UPLOAD_DIR exported, a cache built by an earlier suite in the same
-    // registry, watch/--no-isolate reruns): the tool read then misses, the
-    // loop fail-stops, and the honest failure answer silently loses the
-    // UNTRUSTED-DATA security framing while status stays COMPLETED.
-    // Bind the seam explicitly instead: point UPLOAD_DIR at the replay
-    // directory and drop any stale cache so the driver the tool reads from
-    // is constructed — lazily, at read time — over exactly this directory.
-    // resetStorage() is the documented test seam; replay is the evaluation
-    // harness. No production behavior changes (callers without uploadDir
-    // never enter this branch).
+    // MM-002/ADV-003 root cause (Phase 12 verification, second iteration):
+    // the production document tools read extracted text back through the
+    // module-global storage driver (getStorage()). Binding only UPLOAD_DIR
+    // (+ resetStorage) is NOT enough: createStorage() picks the driver KIND
+    // from the host's STORAGE_DRIVER env. On a Windows dev host configured
+    // for MinIO/S3 (STORAGE_DRIVER=s3, S3_* set), the replay read went to
+    // the remote bucket instead of the materialized local file → tool read
+    // failed → the honest failure answer lost the UNTRUSTED-DATA framing
+    // while status stayed COMPLETED (the same reason tests/unit/
+    // agent-attachment-loop.test.ts passes there: its beforeEach pins
+    // STORAGE_DRIVER='local'). Bind the WHOLE seam explicitly instead:
+    // driver kind, root, and the exact driver INSTANCE used for both the
+    // materialization write below and the tool's read (getStorage() returns
+    // the installed instance). No production behavior changes: callers
+    // without uploadDir never enter this branch.
+    process.env.STORAGE_DRIVER = 'local'
     process.env.UPLOAD_DIR = overrides.uploadDir
-    resetStorage()
+    setStorage(new LocalStorageDriver({ root: overrides.uploadDir }))
   }
   const records: Record<string, Record<string, unknown>> = {}
   for (const a of c.attachments ?? []) {
     const rec = materializeAttachment(a, hospitalId)
     if (rec.extractedTextKey && a.extractedText && overrides.uploadDir) {
       const key = rec.extractedTextKey as string
-      const dir = path.join(overrides.uploadDir, ...key.split('/').slice(0, -1))
-      await mkdir(dir, { recursive: true })
-      await writeFile(path.join(overrides.uploadDir, key), a.extractedText, 'utf8')
+      // Write through the SAME storage seam the tool reads from — the
+      // driver's canonical-key resolution (toStorageKey + path.resolve over
+      // the root) places the bytes exactly where resolvePath() will look,
+      // on Windows and Linux alike. Raw fs path arithmetic here was the
+      // original fragility: it can only agree with the driver by convention.
+      await getStorage().put(key, Buffer.from(a.extractedText, 'utf8'))
     }
     records[a.id] = rec
   }

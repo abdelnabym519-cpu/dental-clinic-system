@@ -79,3 +79,14 @@ export function getStorage(): StorageDriver {
 export function resetStorage(): void {
   cached = null
 }
+
+/**
+ * Test/evaluation seam: install a specific driver instance outright (e.g. a
+ * LocalStorageDriver rooted at a replay upload directory). Unlike
+ * {@link resetStorage} this pins both the driver kind and its configuration,
+ * so a host's STORAGE_DRIVER/S3_* environment can never leak into the
+ * component under test. Nothing in the application should need this.
+ */
+export function setStorage(driver: StorageDriver): void {
+  cached = driver
+}
