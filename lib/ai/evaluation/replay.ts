@@ -18,6 +18,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { runAgent } from '@/lib/ai/agent/loop'
+import { resetStorage } from '@/lib/storage'
 import { DEFAULT_AGENT_LIMITS } from '@/lib/ai/agent/types'
 import type { AgentDeps, AgentRequest, AgentResponse } from '@/lib/ai/agent/types'
 import { createAgentFakePrisma, HOSP_A, HOSP_B, NOW } from '@/tests/harness/agent-fixtures'
@@ -302,6 +303,27 @@ export async function buildReplayAgentDeps(
   llmLog: LlmCallLog = { calls: [] },
 ): Promise<AgentDeps> {
   const hospitalId = tenantFor(c.tenant)
+  if (overrides.uploadDir) {
+    // MM-002/ADV-003 root cause (Phase 12 verification): the production
+    // document tools read extracted text back through the module-global
+    // storage driver (getStorage()), which roots itself at UPLOAD_DIR at
+    // FIRST construction and is then cached for the process. This harness
+    // writes the materialized files into overrides.uploadDir directly, so
+    // the two must be the SAME directory. Relying on the host to have set
+    // UPLOAD_DIR before the cache was built is fragile (a dev shell with
+    // UPLOAD_DIR exported, a cache built by an earlier suite in the same
+    // registry, watch/--no-isolate reruns): the tool read then misses, the
+    // loop fail-stops, and the honest failure answer silently loses the
+    // UNTRUSTED-DATA security framing while status stays COMPLETED.
+    // Bind the seam explicitly instead: point UPLOAD_DIR at the replay
+    // directory and drop any stale cache so the driver the tool reads from
+    // is constructed — lazily, at read time — over exactly this directory.
+    // resetStorage() is the documented test seam; replay is the evaluation
+    // harness. No production behavior changes (callers without uploadDir
+    // never enter this branch).
+    process.env.UPLOAD_DIR = overrides.uploadDir
+    resetStorage()
+  }
   const records: Record<string, Record<string, unknown>> = {}
   for (const a of c.attachments ?? []) {
     const rec = materializeAttachment(a, hospitalId)
