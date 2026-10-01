@@ -14,6 +14,15 @@ import { runAgent } from '@/lib/ai/agent/loop'
 import type { VoiceTurnDeps } from '@/lib/ai/voice/pipeline'
 import { keyBelongsToHospital, toStorageKey } from '@/lib/storage/keys'
 import { validateWrite, CLASS_TO_TRUST, CLASS_TO_ROLES } from '@/lib/ai/memory/validation'
+import os from 'node:os'
+
+// Windows portability (Phase 12): the forged-JSON provider fixture needs a
+// command that echoes non-JSON on stdout. POSIX keeps /bin/echo; win32 uses
+// node itself. Semantics identical on both platforms.
+const IS_WIN = process.platform === 'win32'
+const ECHO_STT = IS_WIN
+  ? { command: process.execPath, argsTemplate: ['-e', 'console.log(process.argv.slice(1).join(" "))', 'not-json-at-all'], baseDir: os.tmpdir() }
+  : { command: '/bin/echo', argsTemplate: ['not-json-at-all'], baseDir: '/tmp' }
 
 const t0 = new Date('2026-09-30T10:00:00Z')
 let seq = 0
@@ -232,7 +241,7 @@ describe('workflow → privilege escalation (§48/§65)', () => {
 describe('local AI → forged artifact (§13/§65)', () => {
   it('provider command output that is not valid JSON is rejected (no fabricated transcript)', async () => {
     const { CommandSttProvider } = await import('@/lib/ai/voice/stt')
-    const p = new CommandSttProvider({ command: '/bin/echo', argsTemplate: ['not-json-at-all'], baseDir: '/tmp' })
+    const p = new CommandSttProvider(ECHO_STT)
     await expect(p.transcribeBytes(Buffer.alloc(4), {})).rejects.toThrow('COMMAND_STT_BAD_OUTPUT')
   })
 })

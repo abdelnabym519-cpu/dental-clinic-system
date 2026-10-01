@@ -41,19 +41,33 @@ describe('browser Web Speech boundary (§8)', () => {
   })
 })
 
+import os from 'node:os'
+
+// Windows portability (Phase 12): identical provider SEMANTICS on every
+// platform, with the POSIX path byte-identical to before. The command
+// providers wire wav bytes (STT) / text (TTS) through STDIN and read the
+// engine reply from STDOUT, so on win32 node itself plays the passthrough/
+// echo role — no shell, no POSIX-only binaries.
+const IS_WIN = process.platform === 'win32'
+const CAT_CMD = IS_WIN ? process.execPath : '/bin/cat'
+const CAT_ARGS = IS_WIN ? ['-e', 'process.stdin.pipe(process.stdout)'] : []
+const ECHO_CMD = IS_WIN ? process.execPath : '/bin/echo'
+const ECHO_ARGS = IS_WIN ? ['-e', 'console.log(process.argv.slice(1).join(" "))', '--'] : []
+const TMP = os.tmpdir()
+
 describe('command STT provider (opt-in local engine boundary)', () => {
   it('rejects oversized WAV bytes (10 MB cap)', async () => {
-    const p = new CommandSttProvider({ command: '/bin/cat', argsTemplate: [], baseDir: '/tmp' })
+    const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
     await expect(p.transcribeBytes(Buffer.alloc(10 * 1024 * 1024 + 1), {})).rejects.toThrow('AUDIO_TOO_LARGE')
   })
 
   it('surfaces non-JSON engine output honestly (COMMAND_STT_BAD_OUTPUT)', async () => {
-    const p = new CommandSttProvider({ command: '/bin/cat', argsTemplate: [], baseDir: '/tmp' })
+    const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
     await expect(p.transcribeBytes(Buffer.from('not json'), {})).rejects.toThrow('COMMAND_STT_BAD_OUTPUT')
   })
 
   it('parses JSON engine output (real local engine contract)', async () => {
-    const p = new CommandSttProvider({ command: '/bin/cat', argsTemplate: [], baseDir: '/tmp' })
+    const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
     const r = await p.transcribeBytes(
       Buffer.from(JSON.stringify({ text: 'show the queue', confidence: 0.8, isFinal: true })),
       {},
@@ -65,7 +79,7 @@ describe('command STT provider (opt-in local engine boundary)', () => {
 
   it('appends the grammar flag when a grammar is supplied (JSGF path)', async () => {
     let seen: string[] = []
-    const p = new CommandSttProvider({ command: '/bin/echo', argsTemplate: [], baseDir: '/tmp' })
+    const p = new CommandSttProvider({ command: ECHO_CMD, argsTemplate: ECHO_ARGS, baseDir: TMP })
     // /bin/echo prints its args (not JSON) → BAD_OUTPUT proves the grammar
     // flag reached the engine argv.
     await p.transcribeBytes(Buffer.alloc(0), { grammar: 'commands.jsgf' }).catch((e) => {
@@ -77,7 +91,7 @@ describe('command STT provider (opt-in local engine boundary)', () => {
 
 describe('command TTS provider (§12)', () => {
   it('synthesizes via the configured binary and reports the exact spoken text', async () => {
-    const tts = new CommandTtsProvider({ command: '/bin/cat', args: [] })
+    const tts = new CommandTtsProvider({ command: CAT_CMD, args: CAT_ARGS })
     const r = await tts.synthesize({ text: 'مرحبا', locale: 'ar-EG' })
     expect(r.spokenText).toBe('مرحبا') // TTS never rewrites
     expect(r.wavBytes?.toString('utf8')).toBe('مرحبا')
