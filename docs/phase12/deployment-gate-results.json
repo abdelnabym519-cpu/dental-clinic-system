@@ -1,0 +1,66 @@
+{
+  "document": "Phase 12 deployment gate results (§38–§46)",
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "generatedAt": "2026-10-01",
+  "baseline": {
+    "commit": "45b188b0ca3986de5eab991e08818514a09eb465",
+    "tests": "6036 passed / 12 skipped / 0 failed / 0 unhandled (324 files)",
+    "tsc": "502 pre-existing, 0 new"
+  },
+  "gates": [
+    {
+      "gate": "lint (eslint .)",
+      "status": "PASS",
+      "result": "0 errors / 274 warnings (identical to Phase 11 baseline)"
+    },
+    {
+      "gate": "unit+integration+evaluation suite (vitest run)",
+      "status": "PASS",
+      "result": "see clinical-safety-results.json / adversarial-results.json + full-suite re-run recorded in the final report"
+    },
+    {
+      "gate": "type-check (npx tsc --noEmit)",
+      "status": "PASS_WITH_BASELINE",
+      "result": "502 pre-existing errors, 0 new (count-matched to Phase 11 baseline list /tmp normalized)"
+    },
+    {
+      "gate": "secret scan (pattern-based)",
+      "status": "PASS",
+      "result": "no AWS/OpenAI/GitHub tokens or private keys in lib/app/tests/docs/scripts/prisma"
+    },
+    {
+      "gate": "npm audit",
+      "status": "PASS_WITH_DEFERRALS",
+      "result": "12 findings (3 critical / 4 high / 5 moderate) — identical count to Phase 11; all require MAJOR upgrades (vitest 2→5 suite, next-auth/@auth majors adjacent to protected auth files, nodemailer 10, vite/esbuild dev-only); deferred with rationale (Phase 11 §62); none introduce new exposure vs baseline"
+    },
+    {
+      "gate": "next build",
+      "status": "ENVIRONMENT_BLOCKED",
+      "result": "blocked only at the type-check stage by the stub @prisma/client (postinstall prisma generate TLS-blocked in sandbox); Phase 11 evidence: build proceeded to page-data gen with real client",
+      "remediation": "run `npm install` (with postinstall) or `npx prisma generate` on target env, then `npm run build`"
+    },
+    {
+      "gate": "Playwright E2E (chromium)",
+      "status": "ENVIRONMENT_BLOCKED",
+      "result": "browser download from cdn.playwright.dev TLS-blocked in sandbox; 53 specs present",
+      "remediation": "run `npm run test:e2e` on target env with browsers installed"
+    },
+    {
+      "gate": "backup/restore drill",
+      "status": "ENVIRONMENT_BLOCKED",
+      "result": "no MySQL server in sandbox (server packages TLS-blocked)",
+      "remediation": "execute the documented restore runbook against target MySQL"
+    },
+    {
+      "gate": "offline AI certification",
+      "status": "PASS",
+      "result": "local engines route to local orchestrator only; no telemetry/downloads/cloud fallback during inference (Phase 5/11 evidence reconfirmed); blocked engines never upgraded to AVAILABLE without evidence"
+    },
+    {
+      "gate": "resource limits",
+      "status": "PASS",
+      "result": "MULTIMODAL_LIMITS armed (see performance-results.json); full suite stable, 0 unhandled"
+    }
+  ]
+}

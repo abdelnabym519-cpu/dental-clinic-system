@@ -1,0 +1,56 @@
+{
+  "document": "Phase 12 performance evidence (§45) — SANDBOX-labeled; NOT target-machine performance",
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "generatedAt": "2026-10-01",
+  "environment": {
+    "label": "SANDBOX",
+    "node": "v22.22.3",
+    "platform": "Linux 6.1.158+",
+    "arch": "x64",
+    "cpuCount": 2,
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.60GHz",
+    "totalMemGb": 3.8,
+    "labelSource": "heuristic"
+  },
+  "disclaimers": [
+    "Not measured on the target machine; implies nothing about production latency.",
+    "Replay boundary isolates app cost from LLM/network; no raw audio, transcripts, or PHI persisted."
+  ],
+  "source": "ai-validation/phase11/benchmarks-sandbox.json (refreshed this phase via DENTORA_WRITE_BENCH=1 run of tests/evaluation/integration-perf.test.ts)",
+  "records": [
+    {
+      "name": "api_health_handler",
+      "medianMs": 0.07,
+      "p95Ms": 0.3,
+      "minMs": 0.033226,
+      "maxMs": 0.316187
+    },
+    {
+      "name": "voice_e2e_patient_review",
+      "medianMs": 0.96,
+      "p95Ms": 2.58,
+      "minMs": 0.856758,
+      "maxMs": 2.579529
+    },
+    {
+      "name": "agent_request_replay",
+      "medianMs": 0.42,
+      "p95Ms": 3.75,
+      "minMs": 0.320746,
+      "maxMs": 3.748459
+    },
+    {
+      "name": "clinic_brain_metrics",
+      "medianMs": 0.06,
+      "p95Ms": 0.26,
+      "minMs": 0.030024,
+      "maxMs": 0.255201
+    }
+  ],
+  "resourceLimits": {
+    "testProcess": "vitest full suite (324 files) completes within sandbox limits; no OOM/leak signals (0 unhandled).",
+    "multimodalLimits": "MULTIMODAL_LIMITS enforced (50MB IMAGE_2D / 200MB MESH_3D / 20MB PDF / 1MB text / 40MP pixels / 200 PDF pages / 8k agent-context chars per attachment)."
+  },
+  "label": "SANDBOX"
+}

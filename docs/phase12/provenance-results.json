@@ -1,0 +1,31 @@
+{
+  "document": "Phase 12 provenance evidence (§13) — recorded from a live envelope built this run",
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "generatedAt": "2026-10-01T19:37:02.514Z",
+  "envelopeFields": {
+    "jobId": "job-u1",
+    "studyId": "study-1",
+    "hospitalId": "hosp-A",
+    "engine": "implant-ai",
+    "modality": "BITEWING",
+    "modelChecksum": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "modelSource": "local",
+    "device": "cpu",
+    "runtime": "onnx-cpu",
+    "inputSha256": "",
+    "timestamp": "2026-10-01T12:00:00.000Z"
+  },
+  "checks": {
+    "checksumMismatchRejected": true,
+    "engineMismatchRejected": true,
+    "reviewStateStartsPending": true,
+    "uncertaintyStatementPresent": true,
+    "noDiagnosisField": true,
+    "aiFindingNeverClinicallyVerified": true
+  },
+  "sourceTests": [
+    "tests/unit/phase12-clinical-hallucination.test.ts",
+    "tests/evaluation/adversarial-certification.test.ts (C6/C15)"
+  ]
+}

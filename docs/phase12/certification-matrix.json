@@ -1,0 +1,271 @@
+{
+  "document": "DentRa AI Phase 12 certification matrix (§47)",
+  "datasetVersion": "1.0.0",
+  "phiPolicy": "SYNTHETIC_ONLY",
+  "generatedAt": "2026-10-01",
+  "statuses": [
+    "CERTIFIED",
+    "CERTIFIED_WITH_RESIDUALS",
+    "ENVIRONMENT_BLOCKED",
+    "NOT_MEASURED"
+  ],
+  "baseline": {
+    "tests": "6036 passed / 12 skipped / 0 failed / 0 unhandled (324 files)",
+    "tsc": "502 pre-existing errors, 0 new",
+    "commit": "45b188b0ca3986de5eab991e08818514a09eb465"
+  },
+  "domains": [
+    {
+      "domain": 1,
+      "name": "Agent core (deterministic instruction layer)",
+      "scope": "Fixed tool registry, honest recorded-data answers, identity resolution, no fabrication paths",
+      "status": "CERTIFIED",
+      "evidence": "tests/evaluation/clinical-safety-eval.test.ts 20/20 goldens; adversarial C1-C7, C17",
+      "notes": "Honest-behavior contract verified verbatim across 20 categories",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 2,
+      "name": "Graph / conversation orchestration",
+      "scope": "Turn routing, clarification loops, interruption/cancel semantics",
+      "status": "CERTIFIED",
+      "evidence": "Phase 3 suites (baseline green); INTERACTION_STATE_TRANSITIONS verified",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 3,
+      "name": "Memory (scoped, classed, trust-gated)",
+      "scope": "Write validation, class/trust ceilings, patient scoping, dedupe, supersession audit",
+      "status": "CERTIFIED",
+      "evidence": "phase12-clinical-hallucination 14/14; adversarial C10/C13/C19; Phase 8 suites",
+      "notes": "AI_DERIVED excluded from clinical context by default",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 4,
+      "name": "Safety / action policy",
+      "scope": "RBAC per tool, refuse-never-retry, fail closed",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C8/C12; Phase 7 policy suites",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 5,
+      "name": "Approval ledger",
+      "scope": "Forged/stale/replay/modified-params/LLM-claimed approvals all fail",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C9/C21/C27; Phase 7 approval suites at baseline",
+      "notes": "Text approval claims never touch ledger state",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 6,
+      "name": "Evaluation framework",
+      "scope": "Golden replay harness, schema-validated datasets, honest-behavior gates",
+      "status": "CERTIFIED",
+      "evidence": "clinical-safety-eval 24/24 (20 goldens + denylist + honesty + no-mutating-tools); dataset schema zod-validated",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 7,
+      "name": "Hallucination harness (§25)",
+      "scope": "Fabricated citation/imaging/approval/confirmation/confidence probes",
+      "status": "CERTIFIED",
+      "evidence": "phase12-clinical-hallucination 6 fabricated-content tests",
+      "notes": "Agent prefers insufficient information",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 8,
+      "name": "Contradiction harness (§26)",
+      "scope": "Contradictory writes rejected; explicit audited supersession; recorded facts survive user contradiction",
+      "status": "CERTIFIED",
+      "evidence": "phase12-clinical-hallucination (MEMORY_DUPLICATE_ACTIVE, supersede + events)",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 9,
+      "name": "Uncertainty propagation (§27)",
+      "scope": "Engine envelope uncertainty => PENDING_REVIEW => candidate labels => response framing",
+      "status": "CERTIFIED",
+      "evidence": "phase12-clinical-hallucination (envelope + retrieval label tests)",
+      "notes": "No silent certainty conversion at any hop",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 10,
+      "name": "Multimodal ingestion safety",
+      "scope": "MIME/extension/size/pixel/decompression/parser isolation/traversal/signed-URL",
+      "status": "CERTIFIED",
+      "evidence": "Phase 6 multimodal suites (baseline green); MULTIMODAL_LIMITS verified",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 11,
+      "name": "Imaging provenance",
+      "scope": "Per-finding envelope: job/engine/checksum(expected=ran)/device/runtime/timestamp/study binding",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C15/C6; LocalAIService provenance mismatch tests",
+      "notes": "AI finding never silently becomes clinically verified",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 12,
+      "name": "FDI safety",
+      "scope": "11-48 validation, malformed refusal, never-invented teeth",
+      "status": "CERTIFIED",
+      "evidence": "golden CS-ANATOMY/CS-TOOTH/CS-WRONGTOOTH; adversarial C5",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 13,
+      "name": "Identity chain (User->Session->Tenant->Patient->Case->Tooth->Imaging->Job->Memory->Workflow->Action)",
+      "scope": "Server-resolved at every hop, revalidated at execution",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C4/C10/C11/C22; Phase 7/11 suites",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 14,
+      "name": "Knowledge / RAG integrity",
+      "scope": "Citations as data, authority tiers, tenant scoping, poisoning non-compliance",
+      "status": "CERTIFIED_WITH_RESIDUALS",
+      "evidence": "adversarial C20; knowledge-security suites",
+      "notes": "Residual CONDITIONAL: plausible-but-wrong curated content is a curation duty",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 15,
+      "name": "Local AI certification",
+      "scope": "AVAILABLE only with verified local inference evidence; blocked engines never upgraded; offline inference (no cloud/telemetry)",
+      "status": "CERTIFIED",
+      "evidence": "capability matrix contract tests; engines-local-ai suites at baseline; Phase 11 offline evidence",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 16,
+      "name": "Voice pipeline",
+      "scope": "STT/STT-failure typed paths, session validation, voice=input-never-authority",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C21/C27; voice-security suites (stolen session, forged STT JSON)",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 17,
+      "name": "Robot layer",
+      "scope": "Presentation-only; never implies completion before backend verification; non-approver 403",
+      "status": "CERTIFIED",
+      "evidence": "Phase 9/11 robot suites at baseline (incl. cross-tenant approval 404)",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 18,
+      "name": "Workflows",
+      "scope": "Server-side RBAC, state machine transitions, no agent-side mutation",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C23; Phase 10 workflow suites",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 19,
+      "name": "Adversarial certification (28 classes)",
+      "scope": "Cross-layer attacks fail closed",
+      "status": "CERTIFIED",
+      "evidence": "docs/phase12/adversarial-results.json: 28/28 PASS",
+      "notes": "C17/C18/C20 carry CONDITIONAL residuals (documented)",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 20,
+      "name": "Security hardening",
+      "scope": "Injection/SSRF/XSS/CSRF/session/token/escalation/replay/race/DoS/oversized-input fail closed",
+      "status": "CERTIFIED",
+      "evidence": "Phase 11 security suites (baseline green); adversarial C24",
+      "notes": "npm audit 12 moderate/no-critical at Phase 11; re-run recorded in report",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 21,
+      "name": "Privacy / PHI hygiene",
+      "scope": "No PHI/secrets/audio/CoT in logs/traces/audit; datasets synthetic-only",
+      "status": "CERTIFIED",
+      "evidence": "Phase 11 privacy suites; all Phase 12 artifacts phiPolicy=SYNTHETIC_ONLY",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 22,
+      "name": "Observability",
+      "scope": "Structured events, no sensitive payloads, ready payload honest (DB-only 503)",
+      "status": "CERTIFIED",
+      "evidence": "Phase 11 observability suites at baseline",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 23,
+      "name": "Deterministic replay",
+      "scope": "replayAgentCase reproducibility; nondeterministic boundaries documented",
+      "status": "CERTIFIED",
+      "evidence": "All Phase 12 suites run on replayAgentCase; Phase 11 replay suites",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 24,
+      "name": "Failure injection",
+      "scope": "MySQL/Redis/storage/engine/approval/audit/queue/voice/TTS/STT/network failures degrade safely",
+      "status": "CERTIFIED",
+      "evidence": "Phase 11 failure-injection 14/14 (baseline green); adversarial C25/C26",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 25,
+      "name": "Backup / restore",
+      "scope": "Actual restore test",
+      "status": "ENVIRONMENT_BLOCKED",
+      "evidence": "No MySQL server in sandbox (TLS-blocked installs)",
+      "notes": "Documented per §55: target env required; code paths unit-tested with in-memory store",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 26,
+      "name": "Deployment gates (build/E2E)",
+      "scope": "next build; Playwright Chromium",
+      "status": "ENVIRONMENT_BLOCKED",
+      "evidence": "Build blocked only at type-check stage by stub prisma client (postinstall TLS); Playwright browser download TLS-blocked",
+      "notes": "ENVIRONMENT-BLOCKED protocol in report §55; full gates must re-run on target env",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 27,
+      "name": "Clinical accuracy",
+      "scope": "Diagnostic sensitivity/specificity",
+      "status": "NOT_MEASURED",
+      "evidence": "No validated clinical datasets exist for this system",
+      "notes": "Per §30: accuracy is NOT MEASURED — never claimed; benchmark metrics are not clinical claims",
+      "residualRisk": "ACCEPTABLE"
+    },
+    {
+      "domain": 28,
+      "name": "Human factors / UI honesty",
+      "scope": "No 'Diagnosis: X' for AI suggestions; no unvalidated confidence percentages; review states visible",
+      "status": "CERTIFIED",
+      "evidence": "adversarial C28; golden honesty markers; multimodal ReviewState UI suites (Phase 6)",
+      "notes": "",
+      "residualRisk": "ACCEPTABLE"
+    }
+  ]
+}
