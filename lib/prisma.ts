@@ -15,6 +15,12 @@ type PrismaClient = {
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
+  // The fallback flag MUST live next to the cached client: in dev bundlers
+  // each route chunk gets its own module instance of this file, but they all
+  // share globalThis — a module-scoped flag is invisible to chunks that only
+  // ever see the globally cached client (readiness reported 'ok' with no
+  // database exactly because of that split).
+  prismaFallback: boolean | undefined
 }
 
 /**
@@ -66,17 +72,15 @@ try {
  * client unavailable" — before this flag, a stale `@prisma/client` after a
  * `migrate reset` produced silent, misleading "Invalid email or password".
  */
-let usingFallbackClient = false
-
 export function isPrismaFallback(): boolean {
-  return usingFallbackClient
+  return globalForPrisma.prismaFallback ?? false
 }
 
 function warnFallback(reason: string) {
   // Loud, once: every query resolves to null in this mode, so anything that
   // looks up a user (login!) fails without an obvious cause.
-  if (usingFallbackClient) return
-  usingFallbackClient = true
+  if (globalForPrisma.prismaFallback) return
+  globalForPrisma.prismaFallback = true
   console.error(
     `[dentora] Prisma client unavailable (${reason}). Running in fallback mode: ` +
       `ALL database queries resolve to null — login and every data page will fail. ` +
