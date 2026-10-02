@@ -561,6 +561,80 @@ async function main() {
     }
   }
 
+  // ── Group P — stale-pin precedence (round-2 deferred defect) ────────────
+  // A verified pin never silences an explicit name in the current turn:
+  // unique in-tenant name → re-scope; explicit marker name not found →
+  // clarify (never the pinned answer); pronoun/possessive turns (no name)
+  // keep the pin. All through the real pipeline.
+  {
+    const MN = {
+      id: 'pat-mn', hospitalId: HOSP_A, patientId: 'PAT-MN',
+      firstName: 'محمد', lastName: 'النبي', age: 40, dateOfBirth: new Date('1986-02-01'),
+      gender: 'MALE', bloodGroup: null, phone: '01000000001', alternatePhone: null,
+      email: null, locale: 'ar', portalUserId: null, createdAt: dA.now(),
+    }
+    const MONA = {
+      id: 'pat-mona', hospitalId: HOSP_A, patientId: 'PAT-MONA',
+      firstName: 'منى', lastName: 'سمارة', age: 30, dateOfBirth: new Date('1996-03-01'),
+      gender: 'FEMALE', bloodGroup: null, phone: '01000000002', alternatePhone: null,
+      email: null, locale: 'ar', portalUserId: null, createdAt: dA.now(),
+    }
+    const dP = await realDeps({ client: createFakePrisma({ patient: [MN, MONA], appointment: [] }) })
+    const fresh = async () => {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dP)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      return { vdeps, s }
+    }
+    const pinned2 = async (t2: string) => {
+      const { vdeps, s } = await fresh()
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي.'), actor })
+      return runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr(t2), actor })
+    }
+    // P1 — explicit اسم marker for ANOTHER stored patient re-scopes
+    {
+      const t = await pinned2('هات حالة اسم منى سمارة.')
+      row('P', 'P1', 'pin محمد النبي → هات حالة اسم منى سمارة.', 'explicit name replaces the stale pin — answers منى سمارة, NEVER the pinned one',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'COMPLETED' && (t.displayText ?? '').includes('منى سمارة') && !(t.displayText ?? '').includes('محمد النبي'))
+    }
+    // P2 — bare identity marker completes/re-runs the ORIGINAL task for the new patient
+    {
+      const t = await pinned2('اسمه منى سمارة.')
+      row('P', 'P2', 'pin محمد النبي → اسمه منى سمارة.', 'identity marker re-scopes the pending task to the named patient',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'COMPLETED' && (t.displayText ?? '').includes('منى سمارة') && !(t.displayText ?? '').includes('محمد النبي'))
+    }
+    // P3 — explicit marker name that does NOT exist → clarify, never the pin
+    {
+      const t = await pinned2('هات حالة اسم سامي حداد.')
+      row('P', 'P3', 'pin محمد النبي → هات حالة اسم سامي حداد.', 'not-found explicit name → clarification (the pinned patient never answers)',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'CLARIFICATION_REQUIRED' && !(t.displayText ?? '').includes('محمد النبي'))
+    }
+    // P4 — control: possessive turn (no name) keeps the pin (continuity)
+    {
+      const t = await pinned2('قولي المواعيد بتاعه بكرة.')
+      row('P', 'P4', 'pin محمد النبي → قولي المواعيد بتاعه بكرة.', 'possessive continuation keeps the pin — continuity preserved',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'COMPLETED' && (t.displayText ?? '').includes('محمد النبي') && !(t.displayText ?? '').includes('Ahmed Ali'))
+    }
+    // P5 — ambiguous explicit name → clarify, never a silent pick (nor the pin)
+    {
+      const MALL1 = { ...MN, id: 'pat-mall1', patientId: 'PAT-MALL1', firstName: 'محمد', lastName: 'علي', phone: '01000000009' }
+      const MALL2 = { ...MALL1, id: 'pat-mall2', patientId: 'PAT-MALL2', phone: '01000000010' }
+      const dP2 = await realDeps({ client: createFakePrisma({ patient: [MN, MALL1, MALL2], appointment: [] }) })
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dP2)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي.'), actor })
+      const t = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('هات حالة اسم محمد علي.'), actor })
+      row('P', 'P5', 'pin محمد النبي → هات حالة اسم محمد علي. (محمد علي ×2)', 'ambiguous explicit name → clarification listing candidates, never a silent pick',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'CLARIFICATION_REQUIRED' && !(t.displayText ?? '').includes('محمد النبي'))
+    }
+  }
+
   // ── Report ─────────────────────────────────────────────────────────────
   const failed = ROWS.filter((r) => !r.pass)
   let md = '# DenToRa Robot — Runtime Validation Results\n\n'

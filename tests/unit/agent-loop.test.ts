@@ -28,7 +28,7 @@ vi.mock('@/lib/ai/action-pipeline', () => ({
 
 import { runAgent } from '@/lib/ai/agent/loop'
 import { DEFAULT_AGENT_LIMITS } from '@/lib/ai/agent/types'
-import { createAgentFakePrisma, HOSP_A, HOSP_B, PAT_A1, NOW } from '@/tests/harness/agent-fixtures'
+import { createAgentFakePrisma, HOSP_A, HOSP_B, PAT_A1, PAT_A2, NOW } from '@/tests/harness/agent-fixtures'
 
 const doctor = { id: 'staff-doctor-1', name: 'Hana Shalaby', role: 'DOCTOR' }
 const accountant = { id: 'staff-acc-1', name: 'Acc A', role: 'ACCOUNTANT' }
@@ -172,6 +172,36 @@ describe('reads — profiles & deterministic answers (§7/§28)', () => {
     const r = await runAgent(req('Show appointments for Ahmed Ali'), d)
     expect(r.status).toBe('CLARIFICATION_REQUIRED')
     expect(r.answer).toContain('2 patients')
+  })
+
+  // ── Stale-pin precedence (round-2 deferred defect) ──────────────────────
+  // A verified pin NEVER silences an explicit name in the current turn:
+  // a unique in-tenant name replaces the pin; an explicit marker name that
+  // is not found clarifies (never the pinned patient); a foreign id refuses
+  // exactly as before regardless of any name in the message; pronoun /
+  // possessive turns (no name) keep the pin — continuity.
+  it('stale-pin rule: explicit in-tenant name in the message replaces a verified pin', async () => {
+    const r = await runAgent(req('هات حالة اسم أحمد علي', { patientId: PAT_A2 }), deps())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.resolvedPatient?.displayName).toBe('Ahmed Ali')
+  })
+
+  it('stale-pin rule: explicit marker name that is not found clarifies — never the pinned patient', async () => {
+    const r = await runAgent(req('هات حالة اسم سامي حداد', { patientId: PAT_A1 }), deps())
+    expect(r.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r.answer).toContain('مش قادر أحدد المريض')
+  })
+
+  it('stale-pin rule: foreign id refuses even when the message names an in-tenant patient', async () => {
+    const r = await runAgent(req('افتح بيانات المريض sara', { patientId: 'pat-B1' }), deps())
+    expect(r.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r.toolsUsed).toEqual([])
+  })
+
+  it('stale-pin rule: pronoun turn (no name) keeps the pin — continuity', async () => {
+    const r = await runAgent(req('هاتلي حالته', { patientId: PAT_A1 }), deps())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.resolvedPatient?.displayName).toBe('Ahmed Ali')
   })
 
   it('unknown patient → clarification', async () => {

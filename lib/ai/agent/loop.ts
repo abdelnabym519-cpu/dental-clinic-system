@@ -58,6 +58,64 @@ export type PatientResolution =
   | { status: 'ambiguous'; candidates: number; names: string[] }
   | { status: 'notfound' }
 
+/**
+ * Name resolution (exact → unique contains → ambiguous → notfound), shared
+ * by the id-first path and the plain name path. The hint is a QUERY, never
+ * an identity: a non-unique or missing match clarifies instead of guessing.
+ * Matching is normalization-aware (Arabic spoken name ↔ Latin-stored rows
+ * probe; bounded dictionary; ambiguity still clarifies — never a guess).
+ */
+type NameLookupClient = {
+  patient: {
+    findMany(args: {
+      where: { hospitalId: string }
+      take: number
+      select: { id: true; patientId: true; firstName: true; lastName: true }
+    }): Promise<{ id: string; patientId: string; firstName: string; lastName: string }[]>
+  }
+}
+
+async function resolvePatientByName(
+  client: NameLookupClient,
+  hospitalId: string,
+  nameHint: string,
+): Promise<PatientResolution> {
+  const select = { id: true, patientId: true, firstName: true, lastName: true } as const
+  const nameOf = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p.lastName}`
+  const want = nameHint.trim().toLowerCase()
+  if (!want) return { status: 'notfound' }
+  const rows = (await client.patient.findMany({
+    where: { hospitalId }, take: 100, select,
+  })) as { id: string; patientId: string; firstName: string; lastName: string }[]
+  // Egyptian records: Arabic spoken name ↔ Latin-stored rows probe
+  // (bounded dictionary; ambiguity still clarifies — never a guess).
+  const wantMatches = (storedLower: string): boolean => nameContainsForm(storedLower, want)
+  const exact = rows.filter((r) => nameOf(r).toLowerCase() === want)
+  const pick = exact.length === 1
+    ? exact
+    : rows.filter((r) => wantMatches(nameOf(r).toLowerCase()))
+  if (pick.length === 1) return { status: 'resolved', id: pick[0].id, name: nameOf(pick[0]) }
+  if (pick.length > 1) {
+    // Candidates carry the patient CODE — identical display names
+    // ('Ahmed Ali' ×2) must still be distinguishable.
+    return { status: 'ambiguous', candidates: pick.length, names: pick.slice(0, 5).map((p) => `${nameOf(p)} (${p.patientId})`) }
+  }
+  return { status: 'notfound' }
+}
+
+/**
+ * True when the CURRENT message performs an EXPLICIT naming act — a
+ * correction-cue name ('قصدي سامي حداد') or an identity marker ('المريض
+ * …', 'اسمه …', 'اسم …'). Only an explicit act may upgrade a not-found
+ * name into a clarification against a verified pin; implicit extractions
+ * (English 'this patient.' residue, possessive fragments like 'حالته')
+ * fall back to the pin so continuity never breaks on extraction noise.
+ */
+function explicitNameMention(message: string): boolean {
+  if (extractCorrectedPatientName(message)) return true
+  return /(?:^|\s)(?:المريض|اسمه|اسمها|اسم)\s/.test(message)
+}
+
 async function resolvePatient(
   rt: ToolRuntime & { actorId: string },
   request: AgentRequest,
@@ -68,11 +126,26 @@ async function resolvePatient(
   const nameOf = (p: { firstName: string; lastName: string }) => `${p.firstName} ${p.lastName}`
 
   // 1) Explicit id (client-suggested → re-verified against the tenant).
+  //    STALE-PIN RULE: a verified pin never silences an explicit name in
+  //    the current turn. When the message names a patient and that name
+  //    resolves uniquely in THIS tenant, it REPLACES the pin — §17
+  //    symmetric to correction cues. Ambiguous → clarify (never silently
+  //    select). Not-found clarifies ONLY for an explicit naming act
+  //    (explicitNameMention) — implicit extraction noise falls back to the
+  //    verified pin so pronoun/temporal continuity never breaks. The id is
+  //    re-verified FIRST: a foreign/cross-tenant id refuses exactly as
+  //    before, regardless of any name in the message.
   if (request.patientId) {
     const byId = await client.patient.findFirst({ where: { hospitalId, id: request.patientId }, select })
     const byCode = byId ? byId : await client.patient.findFirst({ where: { hospitalId, patientId: request.patientId }, select })
-    if (byId || byCode) return { status: 'resolved', id: (byId ?? byCode).id, name: nameOf(byId ?? byCode) }
-    return { status: 'notfound' }
+    const pinned = byId ?? byCode
+    if (!pinned) return { status: 'notfound' }
+    if (nameHint) {
+      const named = await resolvePatientByName(client as NameLookupClient, hospitalId, nameHint)
+      if (named.status === 'resolved' || named.status === 'ambiguous') return named
+      if (named.status === 'notfound' && explicitNameMention(request.message)) return named
+    }
+    return { status: 'resolved', id: pinned.id, name: nameOf(pinned) }
   }
 
   // 2) PATIENT role — self-scope only (context engine re-enforces).
@@ -81,29 +154,9 @@ async function resolvePatient(
     return self ? { status: 'resolved', id: self.id, name: nameOf(self) } : { status: 'notfound' }
   }
 
-  // 3) Name lookup — bounded fetch, exact-first, then unique contains.
-  //    The hint (client field or message extraction) is a QUERY, never an
-  //    identity: a non-unique or missing match clarifies instead of guessing.
+  // 3) Name lookup — delegated to the shared helper.
   if (nameHint) {
-    const want = nameHint.trim().toLowerCase()
-    if (!want) return { status: 'notfound' }
-    const rows = (await client.patient.findMany({
-      where: { hospitalId }, take: 100, select,
-    })) as { id: string; patientId: string; firstName: string; lastName: string }[]
-    // Egyptian records: Arabic spoken name ↔ Latin-stored rows probe
-    // (bounded dictionary; ambiguity still clarifies — never a guess).
-    const wantMatches = (storedLower: string): boolean => nameContainsForm(storedLower, want)
-    const exact = rows.filter((r) => nameOf(r).toLowerCase() === want)
-    const pick = exact.length === 1
-      ? exact
-      : rows.filter((r) => wantMatches(nameOf(r).toLowerCase()))
-    if (pick.length === 1) return { status: 'resolved', id: pick[0].id, name: nameOf(pick[0]) }
-    if (pick.length > 1) {
-      // Candidates carry the patient CODE — identical display names
-      // ('Ahmed Ali' ×2) must still be distinguishable.
-      return { status: 'ambiguous', candidates: pick.length, names: pick.slice(0, 5).map((p) => `${nameOf(p)} (${p.patientId})`) }
-    }
-    return { status: 'notfound' }
+    return resolvePatientByName(client as NameLookupClient, hospitalId, nameHint)
   }
 
   return { status: 'notfound' }

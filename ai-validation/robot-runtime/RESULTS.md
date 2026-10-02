@@ -1,8 +1,8 @@
 # DenToRa Robot — Runtime Validation Results
 
-- Date: 2026-10-02T22:16:09.384Z
+- Date: 2026-10-02T22:37:21.138Z
 - Path: real pipeline (runVoiceTurn → session → entity resolution → runAgent → tools) over the safe test dataset
-- Rows: 65 — PASS: 65 — FAIL: 0
+- Rows: 70 — PASS: 70 — FAIL: 0
 
 | Group | Row | Input | Expected | Actual | Verdict |
 |---|---|---|---|---|---|
@@ -71,3 +71,8 @@
 | O | O6 | مواعيد محمد النبي الأسبوع الجاي. → استنى، قصدي الأسبوع ده. | temporal constraint UPDATED to THIS week (deterministic range) | status=COMPLETED ans="مواعيد محمد النبي من 2026-09-29 إلى 2026-10-05: • 2026-10-02 12:00 — APPT-O-1 (SCHEDULED)" | PASS |
 | O | O7 | محمد علي NOT_FOUND + empty transcript | ENTITY_RESOLUTION_FAILURE on the clarify; ASR_FAILURE on the unusable text | layer1=ENTITY_RESOLUTION_FAILURE layer2=ASR_FAILURE | PASS |
 | O | O8 | وريني مواعيد محمد علي. (محمد النبي + محمد علي stored) | ambiguous/partial collision → clarify or exact-answer, NEVER the wrong patient | status=COMPLETED ans="مفيش مواعيد مسجلة للمريض محمد علي في النظام." | PASS |
+| P | P1 | pin محمد النبي → هات حالة اسم منى سمارة. | explicit name replaces the stale pin — answers منى سمارة, NEVER the pinned one | status=COMPLETED ans="البيانات: منى سمارة (PAT-MONA). المالية: رصيد مستحق 0.00 جني" | PASS |
+| P | P2 | pin محمد النبي → اسمه منى سمارة. | identity marker re-scopes the pending task to the named patient | status=COMPLETED ans="البيانات: منى سمارة (PAT-MONA). المالية: رصيد مستحق 0.00 جني" | PASS |
+| P | P3 | pin محمد النبي → هات حالة اسم سامي حداد. | not-found explicit name → clarification (the pinned patient never answers) | status=CLARIFICATION_REQUIRED ans="مش قادر أحدد المريض في العيادة دي. اكتب اسم المريض أو الرقم " | PASS |
+| P | P4 | pin محمد النبي → قولي المواعيد بتاعه بكرة. | possessive continuation keeps the pin — continuity preserved | status=COMPLETED ans="مفيش مواعيد ليوم 2026-09-30 مسجلة للمريض محمد النبي في النظا" | PASS |
+| P | P5 | pin محمد النبي → هات حالة اسم محمد علي. (محمد علي ×2) | ambiguous explicit name → clarification listing candidates, never a silent pick | status=CLARIFICATION_REQUIRED ans="لقيت 2 مريض بالاسم ده: محمد علي (PAT-MALL1) ولا محمد علي (PA" | PASS |

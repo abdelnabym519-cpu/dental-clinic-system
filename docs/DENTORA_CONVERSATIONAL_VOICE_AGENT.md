@@ -72,6 +72,17 @@ resolution — nothing new is stored twice.
 - Continuation gate ordering: **continuation check BEFORE off-domain
   rejection**, only when an active unresolved patient task exists — otherwise
   off-domain routing is untouched.
+- **Stale-pin precedence** (round-2 deferred defect, now fixed in
+  `resolvePatient`): a verified pin never silences an explicit name in the
+  current turn. The client-suggested id is re-verified against the tenant
+  FIRST (a foreign id refuses exactly as before — isolation unaffected);
+  then an explicit name in the message is re-resolved server-side: unique
+  in-tenant → it REPLACES the pin (§17 symmetric to correction cues);
+  ambiguous → clarify (never a silent pick); not-found → clarify ONLY for
+  an explicit naming act (`اسم/اسمه/المريض …`, correction-cue name) —
+  implicit extraction noise (English 'this patient.' residue, possessive
+  fragments) falls back to the pin so pronoun/temporal continuity never
+  breaks. Driver Group P + agent-loop unit tests lock all five behaviors.
 - Multi-word names never match on one token; classifier is HIGH(execute)/
   MEDIUM(confirm)/LOW(ask); the DB always determines the patient (no name→id
   mapping anywhere).
@@ -104,13 +115,13 @@ re-identifying.
   safety, natural continuation, interruption + temporal correction, pronoun,
   ambiguous identity), failure-layer trio, turn-manager units. Validates
   **state transitions**, not just strings.
-- **Driver** `npx tsx ai-validation/robot-runtime/validate.mts` — **65/65**
-  (Groups A–N preserved + new Group O: turn-taking/barge-in — partial
-  buffering, combined turns, held-incomplete, pure-interruption ack, pinned
-  pronoun continuation, this-week correction, failure codes, no-wrong-patient).
-- **Full suite** 6152 passed / 12 skipped / **0 failed** (round-2 baseline
-  6138/12/0 preserved; +14 new harness tests). **tsc** 504 (parity, no new
-  errors). **eslint** 0 errors on changed files.
+- **Driver** `npx tsx ai-validation/robot-runtime/validate.mts` — **70/70**
+  (Groups A–N preserved + Group O: turn-taking/barge-in + Group P: stale-pin
+  precedence — re-scope on explicit name, clarify on not-found marker name,
+  ambiguous clarify, possessive continuity control).
+- **Full suite** 6156 passed / 12 skipped / **0 failed** (round-2 baseline
+  6138/12/0 preserved; +14 harness tests, +4 stale-pin unit tests).
+  **tsc** 504 (parity, no new errors). **eslint** 0 errors on changed files.
 
 ## 9. Runtime validation — BLOCKED (environment)
 
@@ -125,9 +136,9 @@ npx prisma generate
 # 2. schema (NEVER reset; apply migrations only)
 npx prisma migrate deploy
 # 3. full gates
-npm test -- --run          # expect 6152 passed / 12 skipped / 0 failed
+npm test -- --run          # expect 6156 passed / 12 skipped / 0 failed
 npx tsc --noEmit           # expect 504 (baseline parity)
-npx tsx ai-validation/robot-runtime/validate.mts   # expect ROWS=65 PASS=65
+npx tsx ai-validation/robot-runtime/validate.mts   # expect ROWS=70 PASS=70
 # 4. app
 npm run dev                # open the dashboard, use the voice button (Chrome, mic granted)
 #   - say: وريني مواعيد محمد النبي بتاع… (pause) بكرة   → ONE request, tomorrow filter
@@ -137,11 +148,14 @@ npm run dev                # open the dashboard, use the voice button (Chrome, m
 
 ## 10. Known limitations
 
-- Deferred round-2 defect: stale-pin precedence — with a pin AND an explicit
-  `اسم X` cue, the pinned patient still answers (pin wins); queued for a
-  follow-up round.
+- ~~Deferred round-2 defect: stale-pin precedence~~ **FIXED** — see §5
+  (stale-pin rule) and driver Group P.
 - `علي/على` collision documented in §2: preposition-final utterances are not
   held.
+- English naming acts have no marker form in `explicitNameMention`: an
+  English explicit name that is NOT found falls back to the pinned patient
+  instead of clarifying (resolved English names still re-scope; conservative
+  by design to protect extraction-noise flows).
 - Turn-manager hold windows are tuned for Egyptian Arabic; English mixes work
   but long English prepositional tails may split turns.
 - Live ASR/TTS provider latency characteristics are untested here
