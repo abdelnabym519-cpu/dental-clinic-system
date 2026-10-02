@@ -1,7 +1,13 @@
 -- Phase 9 — Bounded agentic workflow runs (additive).
 --
 -- ONE new table (AiWorkflowRun). No existing table, column, index or row is
--- altered or dropped. No native ENUM types — status is a documented String
+-- altered or dropped.
+--
+-- COLLATION (repair note): the table carries the project-wide table option
+-- `DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` (the same
+-- option every earlier migration sets). Without it it inherits the SERVER
+-- default (utf8mb4_0900_ai_ci on mysql:8.4) and drifts from the canonical
+-- tenant tables — any future FK to Hospital/Patient would fail with 3780. No native ENUM types — status is a documented String
 -- column (same convention as Phase 4 knowledge, Phase 6 multimodal and
 -- Phase 8 memory migrations); the TS layer (lib/ai/workflows) is the typed
 -- source of truth and validates every transition.
@@ -41,7 +47,7 @@ CREATE TABLE `AiWorkflowRun` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     CONSTRAINT `AiWorkflowRun_pkey` PRIMARY KEY (`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE INDEX `AiWorkflowRun_hospitalId_status_idx` ON `AiWorkflowRun`(`hospitalId`, `status`);
 CREATE INDEX `AiWorkflowRun_hospitalId_patientId_idx` ON `AiWorkflowRun`(`hospitalId`, `patientId`);
