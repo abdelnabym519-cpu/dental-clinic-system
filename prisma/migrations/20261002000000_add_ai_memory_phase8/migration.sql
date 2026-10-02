@@ -1,7 +1,13 @@
 -- Phase 8 — Canonical AI Memory (additive).
 --
 -- Two new tables (AiMemoryItem, AiMemoryEvent). No existing table, column,
--- index or row is altered or dropped. No native ENUM types — union values
+-- index or row is altered or dropped.
+--
+-- COLLATION (repair note): both tables carry the project-wide table option
+-- `DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` (the same
+-- option every earlier migration sets). Without it they inherit the SERVER
+-- default (utf8mb4_0900_ai_ci on mysql:8.4) and their FKs to Hospital.id
+-- fail with MySQL 3780 — the canonical tenant key's collation wins. No native ENUM types — union values
 -- are documented String columns (same convention as Phase 4 knowledge and
 -- Phase 6 multimodal migrations); the TS layer (lib/ai/memory) is the typed
 -- source of truth and validates every write.
@@ -52,7 +58,7 @@ CREATE TABLE `AiMemoryItem` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     CONSTRAINT `AiMemoryItem_pkey` PRIMARY KEY (`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE INDEX `AiMemoryItem_hospitalId_domain_status_idx` ON `AiMemoryItem`(`hospitalId`, `domain`, `status`);
 CREATE INDEX `AiMemoryItem_hospitalId_doctorId_status_idx` ON `AiMemoryItem`(`hospitalId`, `doctorId`, `status`);
@@ -73,7 +79,7 @@ CREATE TABLE `AiMemoryEvent` (
     `newValue` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT `AiMemoryEvent_pkey` PRIMARY KEY (`id`)
-);
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE INDEX `AiMemoryEvent_hospitalId_memoryId_idx` ON `AiMemoryEvent`(`hospitalId`, `memoryId`);
 CREATE INDEX `AiMemoryEvent_hospitalId_createdAt_idx` ON `AiMemoryEvent`(`hospitalId`, `createdAt`);
