@@ -23,7 +23,7 @@ import { resolvePolicy } from '@/lib/ai/action-policy'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
-import { classifyAgentTask, extractBareNameCandidate, extractCorrectedPatientName, extractPatientName, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
+import { classifyAgentTask, extractBareNameCandidate, extractCorrectedPatientName, extractPatientName, hasCorrectionCue, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
 import { nameContainsForm } from '@/lib/ai/entity/name-matching'
 import { detectInputLanguage } from '@/lib/ai/voice/language'
 import { buildPlan } from './planner'
@@ -206,15 +206,16 @@ function renderAttachmentToolFailure(error: string | null): string {
  * stays a bare name).
  */
 function resumePendingPatientTask(
-  request: { message: string; history?: { role: 'user' | 'assistant'; content: string }[]; patientName?: string | null },
+  request: { message: string; history?: { role: 'user' | 'assistant'; content: string }[]; patientName?: string | null; patientId?: string | null },
   now: Date,
-): { pendingMessage: string; nameHint: string } | null {
+): { pendingMessage: string; nameHint: string | null } | null {
   if (request.patientName) return null
   // The current turn must SUPPLY an identity — by correction cue ('قصدي …',
   // 'لا، …'), a patient marker ('المريض …', 'اسمه …', 'اسم …'), or a bare
-  // filtered name. Anything else is not a continuation.
+  // filtered name — UNLESS the session pin already satisfies the identity
+  // (a pinned temporal correction re-scopes, it does not re-identify).
   const name = extractCorrectedPatientName(request.message) ?? extractPatientName(request.message) ?? extractBareNameCandidate(request.message)
-  if (!name) return null
+  if (!name && request.patientId == null) return null
   // Find the PENDING patient task: walk the bounded history NEWEST→OLDEST.
   // Identity-only turns ('اسم محمد النبي', 'محمد النبي') classify
   // OUT_OF_DOMAIN and are SKIPPED, so a correction chain still finds the
@@ -229,7 +230,7 @@ function resumePendingPatientTask(
     if (!turn || turn.role !== 'user' || !turn.content.trim()) continue
     const pending = classifyAgentTask({
       message: turn.content,
-      hasPatientId: false,
+      hasPatientId: request.patientId != null,
       patientNameHint: null,
       patientToothFdi: null,
       caseId: null,
@@ -238,10 +239,14 @@ function resumePendingPatientTask(
       now,
     })
     if (pending.task.taskType === 'OUT_OF_DOMAIN' || pending.task.taskType === 'UNKNOWN') continue
-    const needsIdentity =
+    // An active patient task continues when its identity is still unresolved
+    // (no pin yet) OR already pinned server-side (the pin satisfies it — an
+    // interrupted temporal correction keeps the pin and just re-scopes).
+    const activePatientTask =
       pending.task.patientInvolved &&
-      (pending.task.missingInfo ?? []).some((x) => /patient identity/i.test(x))
-    if (!needsIdentity) return null
+      (request.patientId != null ||
+        (pending.task.missingInfo ?? []).some((x) => /patient identity/i.test(x)))
+    if (!activePatientTask) return null
     return { pendingMessage: turn.content, nameHint: name }
   }
   return null
@@ -669,23 +674,31 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   // server-verifiable name hint. A bare name with NO pending task is never
   // promoted into a patient query.
   let continuationResumed = false
-  let resumedPending: { pendingMessage: string; nameHint: string } | null = null
+  let resumedPending: { pendingMessage: string; nameHint: string | null } | null = null
   // Correction cues ('قصدي …', 'لا، …') also continue a pending task: a
   // correction turn carries no intent of its own, only a replacement
   // identity (the pipeline passes it explicitly only when a pin existed —
   // after a FAILED lookup there is no pin, so the pending task from the
   // history is the only intent the turn can belong to).
+  // A correction cue ('قصدي …', 'لا، …') marks an intent-less turn even when
+  // it carries no NAME ('قصدي الأسبوع ده' re-scopes TIME, not identity) —
+  // the pending task from the history is what it corrects.
   const standaloneIdentityTurn =
     cls.task.taskType === 'OUT_OF_DOMAIN' ||
     cls.task.taskType === 'UNKNOWN' ||
-    (!request.patientName && extractCorrectedPatientName(request.message) !== null)
-  if (standaloneIdentityTurn && !request.patientId) {
+    (!request.patientName && hasCorrectionCue(request.message))
+  // A pinned request whose turn carries a correction cue but NO new name
+  // (the pipeline kept the pin) is intent-less too — the pending task from
+  // the history is what the doctor is re-scoping. A correction that DID
+  // carry a new name (request.patientName) keeps the §17 re-pin path.
+  const gateOpen = !request.patientId || request.patientName == null
+  if (standaloneIdentityTurn && gateOpen) {
     const resumed = resumePendingPatientTask(request, now)
     if (resumed) {
       resumedPending = resumed
       cls = classifyAgentTask({
         message: resumed.pendingMessage,
-        hasPatientId: false,
+        hasPatientId: request.patientId != null,
         patientNameHint: resumed.nameHint,
         patientToothFdi: null,
         caseId: null,
@@ -946,7 +959,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   // The message carrying the task's INTENT: the request itself, or the
   // pending task's message when this turn only completed it (its temporal
   // constraints live there — 'مواعيد المريض النهاردة' stays 'today').
-  const intentMessage = continuationResumed && resumedPending ? resumedPending.pendingMessage : request.message
+  const intentMessage = continuationResumed && resumedPending
+    ? `${resumedPending.pendingMessage} ${request.message}`
+    : request.message
 
   // ── RETRIEVE (smallest task-specific profile — never FULL_360 by default) ─
   if (task.contextProfile && patientRequired) {
@@ -1493,23 +1508,51 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       // context, filtered to the intent's day (deterministic temporal layer
       // — never an LLM-invented date). Empty → honest empty state.
       const t0 = deps.now()
-      const wantsToday = /النهارده|النهاردة|اليوم|\btoday\b/i.test(intentMessage)
-      const wantsTomorrow = /بكرة|بكره|\btomorrow\b/i.test(intentMessage) && !/بعد\s+بكرة|بعد\s+بكره/.test(intentMessage)
-      const wantsDayAfter = /بعد\s+بكرة|بعد\s+بكره/.test(intentMessage)
-      const wantsYesterday = /امبارح|امس|أمس|\byesterday\b/i.test(intentMessage)
+      // Temporal correction inside the turn ('استنى، قصدي الأسبوع ده' after
+      // 'الأسبوع الجاي'): the constraint AFTER the LAST correction cue wins
+      // — deterministic split, never an LLM-chosen date.
+      const cueSplit = intentMessage.split(/(?:استنى|استني|قصدي|مقصدي|أقصد|اقصد|لا،)/).filter((s) => s.trim())
+      const temporalScope = cueSplit.length > 1 ? cueSplit[cueSplit.length - 1]! : intentMessage
+      const wantsToday = /النهارده|النهاردة|اليوم|\btoday\b/i.test(temporalScope)
+      const wantsTomorrow = /بكرة|بكره|\btomorrow\b/i.test(temporalScope) && !/بعد\s+بكرة|بعد\s+بكره/.test(temporalScope)
+      const wantsDayAfter = /بعد\s+بكرة|بعد\s+بكره/.test(temporalScope)
+      const wantsYesterday = /امبارح|امس|أمس|\byesterday\b/i.test(temporalScope)
       const dayOffset = wantsDayAfter ? 2 * 86400000 : wantsYesterday ? -86400000 : wantsTomorrow ? 86400000 : 0
       const dayIso = wantsToday || wantsTomorrow || wantsDayAfter || wantsYesterday
         ? new Date(t0.getTime() + dayOffset).toISOString().slice(0, 10)
         : null
+      // Week/month references resolve deterministically as RANGES (rolling
+      // clinic weeks; calendar month for الشهر الجاي) — never fuzzy.
+      const iso = (d: Date) => d.toISOString().slice(0, 10)
+      let rangeFrom: string | null = null
+      let rangeTo: string | null = null
+      if (/اسبوع ده|الأسبوع ده|الاسبوع ده|this week/i.test(temporalScope)) {
+        rangeFrom = iso(t0); rangeTo = iso(new Date(t0.getTime() + 6 * 86400000))
+      } else if (/اسبوع الجاي|الأسبوع الجاي|الاسبوع الجاي|next week/i.test(temporalScope)) {
+        rangeFrom = iso(new Date(t0.getTime() + 1 * 86400000)); rangeTo = iso(new Date(t0.getTime() + 7 * 86400000))
+      } else if (/اسبوع اللي فات|الأسبوع اللي فات|الاسبوع اللي فات|last week/i.test(temporalScope)) {
+        rangeFrom = iso(new Date(t0.getTime() - 7 * 86400000)); rangeTo = iso(new Date(t0.getTime() - 1 * 86400000))
+      } else if (/شهر الجاي|الشهر الجاي|next month/i.test(temporalScope)) {
+        const nxt = new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth() + 1, 1))
+        rangeFrom = iso(nxt); rangeTo = iso(new Date(Date.UTC(t0.getUTCFullYear(), t0.getUTCMonth() + 2, 0)))
+      }
       const rows: any[] = apptSec.status === 'included'
         ? [...(apptSec.data?.upcoming ?? []), ...(apptSec.data?.recent ?? []), ...(apptSec.data?.cancelled ?? []), ...(apptSec.data?.missed ?? [])]
         : []
-      const dayRows = dayIso ? rows.filter((a: any) => String(a.scheduledAt ?? '').slice(0, 10) === dayIso) : rows
+      const inRange = (a: any) => {
+        const day = String(a.scheduledAt ?? '').slice(0, 10)
+        if (dayIso) return day === dayIso
+        if (rangeFrom && rangeTo) return day >= rangeFrom && day <= rangeTo
+        return true
+      }
+      const dayRows = rows.filter(inRange)
       const name = (state.context as any)?.meta?.patient?.name ?? ''
+      const scopeAr = dayIso ? ` ليوم ${dayIso}` : rangeFrom && rangeTo ? ` من ${rangeFrom} إلى ${rangeTo}` : ''
+      const scopeEn = dayIso ? ` on ${dayIso}` : rangeFrom && rangeTo ? ` from ${rangeFrom} to ${rangeTo}` : ''
       if (dayRows.length === 0) {
         answer = byLang(ansLang,
-          `مفيش مواعيد${dayIso ? ` ليوم ${dayIso}` : ''} مسجلة للمريض ${name} في النظام.`,
-          `No appointments${dayIso ? ` on ${dayIso}` : ''} are recorded for ${name}.`)
+          `مفيش مواعيد${scopeAr} مسجلة للمريض ${name} في النظام.`,
+          `No appointments${scopeEn} are recorded for ${name}.`)
       } else {
         const lines = dayRows
           .sort((a: any, b: any) => String(a.scheduledAt ?? '').localeCompare(String(b.scheduledAt ?? '')))
@@ -1521,8 +1564,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
             return `• ${when} —${no}${st}`
           })
         answer = byLang(ansLang,
-          `مواعيد ${name}${dayIso ? ` ليوم ${dayIso}` : ''}:\n${lines.join('\n')}`,
-          `Appointments for ${name}${dayIso ? ` on ${dayIso}` : ''}:\n${lines.join('\n')}`)
+          `مواعيد ${name}${scopeAr}:\n${lines.join('\n')}`,
+          `Appointments for ${name}${scopeEn}:\n${lines.join('\n')}`)
       }
     } else if (task.taskType === 'INFORMATIONAL') {
       answer = summarizeContextAnswer(state.context, task, ansLang)

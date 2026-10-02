@@ -116,6 +116,21 @@ export interface VoiceSession {
   history: { role: 'user' | 'assistant'; content: string }[]
   /** Expiry (idle TTL) — expired sessions fail closed. */
   expiresAt: string
+  /**
+   * Turn-taking state (§5/§6 — the turn manager owns the semantics).
+   * Optional for backward compatibility with pre-existing session fixtures;
+   * the pipeline normalizes on access (a missing value = fresh LISTENING).
+   */
+  turn?: {
+    phase: 'LISTENING' | 'POSSIBLE_END' | 'CONFIRMED_END' | 'PROCESSING' | 'RESPONDING'
+    bufferedTranscript: string | null
+    holds: number
+    lastCompletionReason:
+      | 'FINAL_COMPLETE' | 'COMBINED' | 'PARTIAL_BUFFERED' | 'HELD_INCOMPLETE'
+      | 'FORCED_AFTER_MAX_HOLDS' | 'BARGE_IN' | null
+    /** Trailing buffer chars sourced from the LATEST interim (replace-semantics). */
+    partialChars?: number
+  }
 }
 
 export const VOICE_SESSION_TTL_MS = 15 * 60 * 1000
@@ -277,6 +292,21 @@ export interface VoiceTurnTelemetry {
   error: VoiceErrorCode | null
   /** Performance environment label (§43) — never hardware claims. */
   env: 'SANDBOX' | 'TARGET_MACHINE' | 'CI'
+  /** Turn-taking diagnostics (§5/§6/§20). */
+  turnPhase?: 'LISTENING' | 'POSSIBLE_END' | 'CONFIRMED_END' | 'PROCESSING' | 'RESPONDING'
+  turnCompletionReason?: 'FINAL_COMPLETE' | 'COMBINED' | 'PARTIAL_BUFFERED' | 'HELD_INCOMPLETE' | 'FORCED_AFTER_MAX_HOLDS' | 'BARGE_IN' | null
+  /** Characters currently held in the partial/fragment buffer. */
+  bufferedChars?: number
+  /** True when this turn BARGE-INTO active speech (user speech during TTS). */
+  bargeIn?: boolean
+  /**
+   * Failure-layer attribution (§14): WHERE the turn degraded — answers
+   * "did the robot misunderstand me, or did ASR misunderstand me?".
+   * TTS failures are client-side (browser synthesis) and surface as
+   * STT_/TTS_ UI errors, not server telemetry — the server cannot
+   * observe them, and none are fabricated.
+   */
+  failureLayer?: 'NONE' | 'ASR_FAILURE' | 'TURN_DETECTION_FAILURE' | 'ENTITY_RESOLUTION_FAILURE' | 'AGENT_REASONING_FAILURE' | 'TOOL_FAILURE' | 'TTS_FAILURE'
 }
 
 // ---------------------------------------------------------------------------

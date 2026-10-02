@@ -59,6 +59,37 @@ function matchesAny(normalized: string, patterns: string[]): boolean {
  * CONFIRM here is only a candidate — real confirmation binding is enforced
  * in security.ts (session state + freshness + single pending approval).
  */
+/**
+ * The content AFTER a leading control phrase, when the utterance is an
+ * INTERRUPTION WITH CONTENT ('استنى، قصدي الأسبوع ده' → 'قصدي الأسبوع ده').
+ * Deterministic: the utterance must START with a control word (punctuation
+ * between the word and the rest is tolerated — 'استنى، …'), the leading
+ * control words + connectors are stripped, and a non-empty remainder means
+ * the doctor SAID something after the stop — capture it as the real turn.
+ * A pure control utterance returns null (bare stop → ack path).
+ */
+export function remainderAfterControlPhrase(normalizedText: string): string | null {
+  const strip = new Set([...INTERRUPT_PATTERNS, ...CANCEL_PATTERNS, 'يا'])
+  const clean = (w: string) => w.replace(/[،,.:;!?؟]+/g, '')
+  let words = normalizedText.trim().split(/\s+/).filter(Boolean)
+  // first word (punctuation-stripped) must be a control word
+  if (!words.length || !strip.has(clean(words[0]!))) return null
+  let anyRemoved = false
+  while (words.length) {
+    const c = clean(words[0]!)
+    if (strip.has(c)) {
+      anyRemoved = true
+      words = words.slice(1)
+      continue
+    }
+    break
+  }
+  // drop separators glued to the control words
+  words = words.map((w) => w.replace(/^[،,]+\s*/, ''))
+  const remainder = words.join(' ').trim()
+  return anyRemoved && remainder ? remainder : null
+}
+
 export function matchControlPhrase(text: string): ControlPhraseKind {
   // Normalize defensively so callers may pass raw STT text (hamza/ى folding
   // must not hide control words like أسكت / أكد).
@@ -187,7 +218,7 @@ const AR_NON_NAME = new Set([
   'النهاردة', 'النهارده', 'اليوم', 'بكرة', 'بكده', 'امبارح', 'امس',
   // possessive pronouns + identity-clause scaffolding name a RELATION,
   // never a patient ('المواعيد بتاعه' = his appointments).
-  'بتاعه', 'بتاعها', 'بتاعهم', 'بتاعتها', 'اللي', 'الذي', 'التي', 'اسمه', 'اسمها', 'اسم', 'الاسم',
+  'بتاعه', 'بتاعها', 'بتاعهم', 'بتاعتها', 'بتاعته', 'اللي', 'الذي', 'التي', 'اسمه', 'اسمها', 'اسم', 'الاسم',
 ])
 
 export function extractPatientNameHint(text: string): PatientNameHint | null {

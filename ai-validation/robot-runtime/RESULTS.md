@@ -1,8 +1,8 @@
 # DenToRa Robot — Runtime Validation Results
 
-- Date: 2026-10-02T17:19:40.944Z
+- Date: 2026-10-02T22:16:09.384Z
 - Path: real pipeline (runVoiceTurn → session → entity resolution → runAgent → tools) over the safe test dataset
-- Rows: 57 — PASS: 57 — FAIL: 0
+- Rows: 65 — PASS: 65 — FAIL: 0
 
 | Group | Row | Input | Expected | Actual | Verdict |
 |---|---|---|---|---|---|
@@ -49,7 +49,7 @@
 | K | K1 | db down: وريني مواعيد المرضى النهارده | FAILED + honest failure (never fake-empty) | status=FAILED ans="حصلت مشكلة في الوصول لبيانات العيادة دلوقتي — جرّب تاني بعد شوية. مفيش أي نتيجة اتجابت، ومش هخمّن." | PASS |
 | K | K2 | مواعيد بكرة (no rows) | honest empty state | status=COMPLETED ans="مفيش مواعيد يوم 2026-09-30." | PASS |
 | L | L1 | سجل دفعة 5000 جنيه للمريض أحمد (×2 same session) | second identical sensitive command suppressed | dup2=true state2=SPEAKING | PASS |
-| L | L2 | هات أحمد محمد → هاتلي حالته (voice) | pinned patient reused on the next voice turn | pins=["pat-A1","pat-A1"] status2=COMPLETED | PASS |
+| L | L2 | هات أحمد علي → هاتلي حالته (voice) | pinned patient reused on the next voice turn | pins=["pat-A1","pat-A1"] status2=COMPLETED | PASS |
 | M | M1 | وريني مواعيد المريض النهاردة. → اسمه أحمد. | T1 asks which patient; T2 COMPLETES the ORIGINAL appointment intent with النهاردة intact | statuses=["CLARIFICATION_REQUIRED","COMPLETED"] pinned=pat-A1 | PASS |
 | M | M2 | answer text of T2 | appointment answer is DAY-scoped (النهاردة survived), not a generic overview | ans="مواعيد Ahmed Ali ليوم 2026-09-29: • 2026-09-29 11:00 — APPT-A-3001 (CHECKED_IN) • 2026-09-29 15:00 — APPT-A-3003 (SCHEDULED)" | PASS |
 | M | M3 | هات حالة أحمد. → آخر زيارة كانت امتى؟ | last-visit question answered FROM the pinned context (never the identity line) | statuses=["COMPLETED","COMPLETED"] | PASS |
@@ -63,3 +63,11 @@
 | N | N5 | قولي المواعيد بتاعه بكرة. | بتاعه with no patient → identity clarification (never مفيش مواعيد يوم …) | status=CLARIFICATION_REQUIRED | PASS |
 | N | N6 | محمد علي NOT_FOUND → اسم سامي حداد → اسم محمد النبي | wrong correction stays recoverable; next valid name completes the ORIGINAL task | statuses=["CLARIFICATION_REQUIRED","COMPLETED"] ans3="مواعيد محمد النبي: • 2026-09-29 11:00 — APPT-MN-1 (COMPLETED) • 2026-09-30 12:00 — APPT-MN" | PASS |
 | N | N7 | اسم محمد النبي (fresh session) | OUT_OF_DOMAIN refusal; NO patient pin, NO invented task | taskType=OUT_OF_DOMAIN pinned=null | PASS |
+| O | O1 | interim: وريني مواعيد محمد (isFinal=false) | buffered — no agent run, no audio, PARTIAL_BUFFERED | reason=PARTIAL_BUFFERED speakable=true | PASS |
+| O | O2 | وريني مواعيد محمد (partial) + النبي بكرة. | ONE combined turn → COMPLETED appointment answer for tomorrow | reason=COMBINED status=COMPLETED ans="مفيش مواعيد ليوم 2026-09-30 مسجلة للمريض محمد النبي في النظام." | PASS |
+| O | O3 | وريني مواعيد محمد النبي بتاع … (pause) … بكرة بالليل | fragment HELD (POSSIBLE_END), then ONE combined dispatch | held=true reason2=COMBINED status2=COMPLETED | PASS |
+| O | O4 | مواعيد محمد النبي. → (while speaking) استنى | TTS cancelled (interrupted), session INTERRUPTED, no answer spoken | state=INTERRUPTED interrupted=true | PASS |
+| O | O5 | مواعيد محمد النبي. → (while speaking) استنى، قصدي الأشعة بتاعته. | interruption WITH content: pronoun resolves to the pinned patient, agent continues | interrupted=true status=COMPLETED ans="مواعيد محمد النبي: • 2026-10-02 12:00 — APPT-O-1 (SCHEDULED) • 2026-10-07 12:00 " | PASS |
+| O | O6 | مواعيد محمد النبي الأسبوع الجاي. → استنى، قصدي الأسبوع ده. | temporal constraint UPDATED to THIS week (deterministic range) | status=COMPLETED ans="مواعيد محمد النبي من 2026-09-29 إلى 2026-10-05: • 2026-10-02 12:00 — APPT-O-1 (SCHEDULED)" | PASS |
+| O | O7 | محمد علي NOT_FOUND + empty transcript | ENTITY_RESOLUTION_FAILURE on the clarify; ASR_FAILURE on the unusable text | layer1=ENTITY_RESOLUTION_FAILURE layer2=ASR_FAILURE | PASS |
+| O | O8 | وريني مواعيد محمد علي. (محمد النبي + محمد علي stored) | ambiguous/partial collision → clarify or exact-answer, NEVER the wrong patient | status=COMPLETED ans="مفيش مواعيد مسجلة للمريض محمد علي في النظام." | PASS |

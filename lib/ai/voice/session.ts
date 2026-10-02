@@ -67,6 +67,7 @@ export class InMemoryVoiceSessionStore implements VoiceSessionStore {
       interruptionCount: 0,
       retryCount: 0,
       turnCount: 0,
+      turn: { phase: 'LISTENING', bufferedTranscript: null, holds: 0, lastCompletionReason: null },
       expiresAt: new Date(input.now.getTime() + VOICE_SESSION_TTL_MS).toISOString(),
     }
     this.map.set(session.voiceSessionId, session)

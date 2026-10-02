@@ -28,12 +28,14 @@ import {
   resolvePatientReference,
   resolveToothReference,
   toothClarification,
+  remainderAfterControlPhrase,
 } from './entity-resolution'
 import { extractCorrectedPatientName } from '@/lib/ai/agent/classifier'
 import { speakableFromResponse } from './tts'
 import { prepareAgentMessage } from './normalize'
 import { detectInputLanguage } from './language'
-import { assessDuplicate, assessVoiceConfirmation, transcriptFingerprint, validateTranscriptSafety, type DuplicateWindowEntry } from './security'
+import { assessDuplicate, assessVoiceConfirmation, normalizePartialTranscript, transcriptFingerprint, validateTranscriptSafety, type DuplicateWindowEntry } from './security'
+import { assessTurnCompletion, combineBuffer, initialTurnState, isPartialTranscript, mergePartial, VOICE_TURN_MAX_HOLDS, type TurnCompletionReason, type VoiceTurnState } from './turn-manager'
 import { isSessionExpired, transitionSession, type VoiceSessionStore } from './session'
 import {
   VOICE_CONFIRM_WINDOW_MS,
@@ -161,7 +163,17 @@ function baseTelemetry(session: VoiceSession, turnIndex: number): VoiceTurnTelem
     approvalRequired: false,
     error: null,
     env: 'SANDBOX',
+    turnPhase: (session.turn ?? initialTurnState()).phase,
+    turnCompletionReason: (session.turn ?? initialTurnState()).lastCompletionReason,
+    bufferedChars: (session.turn ?? initialTurnState()).bufferedTranscript?.length ?? 0,
+    bargeIn: false,
+    failureLayer: 'NONE',
   }
+}
+
+/** Normalized turn state for sessions created before the turn manager existed. */
+function turnStateOf(session: VoiceSession): VoiceTurnState {
+  return session.turn ?? initialTurnState()
 }
 
 function approvalViewFromAgent(agent: import('@/lib/ai/agent/types').AgentResponse): VoiceApprovalView | null {
@@ -257,32 +269,141 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     return respond(next, 'CANCEL', { telemetry: baseTelemetry(next, next.turnCount) })
   }
 
-  // ---- 3. SPEAK: typed transcript validation ------------------------------
+  // ---- 3. SPEAK: TURN MANAGEMENT first (§5/§6) -----------------------------
+  // A fragment the turn manager has not confirmed as a COMPLETE turn NEVER
+  // reaches the agent: ASR interims buffer, finalized fragments that end
+  // mid-thought HOLD, and a confirmed fragment COMBINES with the buffer into
+  // ONE dispatch. Barge-in (speech during active speech) enters here too —
+  // the interruption preserves pins/history/pending approvals.
   const transcript: VoiceTranscript | undefined = call.transcript
   if (!transcript) {
     return rejected(session.voiceSessionId, 'VOICE_TRANSCRIPT_EMPTY', 'transcript is required for SPEAK', deps.env ?? 'SANDBOX')
   }
+  const turn = turnStateOf(session)
+  const arrivingDuringSpeech = session.state === 'SPEAKING' || session.state === 'WAITING_APPROVAL'
+
+  // 3a. ASR INTERIM (isFinal=false) → BUFFER ONLY, never acted on (§6). The
+  // provider may still revise it; the buffer accumulates until a final
+  // fragment arrives.
+  if (isPartialTranscript(transcript)) {
+    const p = normalizePartialTranscript(transcript)
+    if (!p.ok) {
+      const err: VoiceErrorCode = p.code ?? 'VOICE_TRANSCRIPT_UNSAFE'
+      const rej = rejected(session.voiceSessionId, err, 'Partial transcript rejected', deps.env ?? 'SANDBOX')
+      rej.telemetry = { ...rej.telemetry, failureLayer: 'ASR_FAILURE' }
+      return rej
+    }
+    if (!p.normalized.trim()) {
+      const rej = rejected(session.voiceSessionId, 'VOICE_TRANSCRIPT_EMPTY', 'Partial transcript rejected', deps.env ?? 'SANDBOX')
+      rej.telemetry = { ...rej.telemetry, failureLayer: 'ASR_FAILURE' }
+      return rej
+    }
+    const merged = mergePartial(turn.bufferedTranscript, turn.partialChars ?? 0, p.normalized)
+    const buffered = merged.text
+    let next = session
+    try {
+      next = session.state === 'LISTENING' ? session : transitionSession(session, 'LISTENING', { now: t0 })
+    } catch {
+      next = session
+    }
+    next.turn = { phase: 'LISTENING', bufferedTranscript: buffered, holds: turn.holds, lastCompletionReason: 'PARTIAL_BUFFERED', partialChars: merged.partialChars }
+    sessions.save(next)
+    return respond(next, 'SPEAK', {
+      language: { detected: p.language === 'mixed' ? 'ar' : p.language, mixed: p.language === 'mixed', session: next.locale },
+      speakableText: null,
+      displayText: null,
+      telemetry: { ...baseTelemetry(next, next.turnCount), turnCompletionReason: 'PARTIAL_BUFFERED', bufferedChars: buffered.length, totalMs: deps.now().getTime() - nowMs },
+    })
+  }
+
+  // 3b. FINAL fragment: typed validation (fail closed on unsafe text).
   const safety = validateTranscriptSafety(transcript)
   if (!safety.ok) {
     const err: VoiceErrorCode = safety.code ?? 'VOICE_TRANSCRIPT_UNSAFE'
-    return rejected(session.voiceSessionId, err, 'Transcript rejected', deps.env ?? 'SANDBOX')
+    const rej = rejected(session.voiceSessionId, err, 'Transcript rejected', deps.env ?? 'SANDBOX')
+    // The turn text itself was unusable — that is the ASR layer, not the
+    // agent (§14: telemetry answers "who misunderstood whom").
+    rej.telemetry = { ...rej.telemetry, failureLayer: 'ASR_FAILURE' }
+    return rej
   }
-  const normalized = safety.normalized
+
+  // 3c. End-of-turn assessment on the NORMALIZED fragment: a fragment that
+  // ends mid-thought is HELD (POSSIBLE_END — mic stays open, nothing
+  // executes) until a complete fragment arrives, or the hold bound is hit.
+  const completion = assessTurnCompletion(safety.normalized)
+  if (!completion.complete && turn.holds < VOICE_TURN_MAX_HOLDS) {
+    const buffered = combineBuffer(turn.bufferedTranscript, safety.normalized)
+    let next = session
+    try {
+      next = session.state === 'LISTENING' ? session : transitionSession(session, 'LISTENING', { now: t0 })
+    } catch {
+      next = session
+    }
+    next.turn = { phase: 'POSSIBLE_END', bufferedTranscript: buffered, holds: turn.holds + 1, lastCompletionReason: 'HELD_INCOMPLETE', partialChars: 0 }
+    sessions.save(next)
+    return respond(next, 'SPEAK', {
+      language: { detected: safety.language === 'mixed' ? 'ar' : safety.language, mixed: safety.language === 'mixed', session: next.locale },
+      speakableText: null,
+      displayText: null,
+      telemetry: { ...baseTelemetry(next, next.turnCount), turnPhase: 'POSSIBLE_END', turnCompletionReason: 'HELD_INCOMPLETE', bufferedChars: buffered.length, totalMs: deps.now().getTime() - nowMs },
+    })
+  }
+
+  // 3d. DISPATCH: the confirmed fragment — combined with any held fragments
+  // into ONE user turn (§5-B: 'وريني مواعيد محمد النبي بتاع…' + 'بكرة' is
+  // ONE request for tomorrow's appointments).
+  const dispatched = turn.bufferedTranscript
+    ? combineBuffer(turn.bufferedTranscript, safety.normalized)
+    : safety.normalized
+  const dispatchReason: TurnCompletionReason = turn.bufferedTranscript
+    ? (completion.complete ? 'COMBINED' : 'FORCED_AFTER_MAX_HOLDS')
+    : 'FINAL_COMPLETE'
+
+  let normalized = dispatched
   // The agent sees sanitized natural text (digit-folded, control-stripped) —
   // NOT the entity-resolution normalization (which folds Arabic letters and
-  // would break the agent's own Arabic routing).
-  const agentMessage = prepareAgentMessage(transcript.text)
-  const safetyOriginal = agentMessage
+  // would break the agent's own Arabic routing). On a combined turn the
+  // buffer is already normalized; the resolver normalizes both sides anyway.
+  let agentMessage = turn.bufferedTranscript ? prepareAgentMessage(dispatched) : prepareAgentMessage(transcript.text)
+  let safetyOriginal = agentMessage
+
+  // 3e. BARGE-IN: the user speaks while the robot is speaking or waiting on
+  // an approval prompt. The interaction state walks SPEAKING/WAITING_APPROVAL
+  // →INTERRUPTED→LISTENING (legal edges) so the turn enters the graph
+  // WITHOUT destroying state; the client cancels TTS on the interrupted
+  // flag. An approval PENDING stays pending — only an explicit confirm
+  // binds it.
+  let working = session
+  let bargeIn = false
+  if (arrivingDuringSpeech) {
+    bargeIn = true
+    try {
+      const interruptedState = transitionSession(session, 'INTERRUPTED', { now: t0 })
+      interruptedState.interruptionCount += 1
+      working = transitionSession(interruptedState, 'LISTENING', { now: t0 })
+      working.turn = { ...turn, phase: 'CONFIRMED_END', bufferedTranscript: null, holds: 0, lastCompletionReason: 'BARGE_IN', partialChars: 0 }
+    } catch {
+      working = session
+    }
+  }
 
   // LISTENING → UNDERSTANDING (double-submit keeps previous legal state)
-  let working = session
   try {
-    working = transitionSession(session, 'UNDERSTANDING', { now: t0 })
+    working = transitionSession(working, 'UNDERSTANDING', { now: t0 })
   } catch {
-    working = session
+    working = working
   }
   working.turnCount += 1
+  working.turn = {
+    ...turnStateOf(working),
+    phase: 'PROCESSING',
+    bufferedTranscript: null,
+    holds: 0,
+    lastCompletionReason: bargeIn ? 'BARGE_IN' : dispatchReason,
+    partialChars: 0,
+  }
   const turnIndex = working.turnCount
+  const bufferedCharsAtDispatch = turn.bufferedTranscript?.length ?? 0
 
   // ---- Language context (Robot consolidation §10/§11) --------------------
   // The response language follows the ACTUAL conversation: detect the
@@ -298,15 +419,41 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   const languageContext = { detected: detected.lang, mixed: detected.mixed, session: working.locale }
 
   // ---- 4. Control phrases BEFORE the agent (§16) --------------------------
+  // An interruption WITH content ('استنى، قصدي الأسبوع ده') is NOT a bare
+  // stop: the control prefix cancels TTS (interrupted:true) and the
+  // REMAINDER is captured as the doctor's real turn — classified by the
+  // agent as correction / continuation / new task (§7). Only a PURE control
+  // utterance takes the ack-and-stop path.
   const control = matchControlPhrase(normalized)
-  if (control === 'INTERRUPT' || control === 'CANCEL') {
+  const interruptionRemainder = remainderAfterControlPhrase(normalized)
+  const applyInterruptionRemainder = () => {
+    // interruption WITH content: the control prefix stops TTS; the remainder
+    // is the doctor's real turn (§7 — capture, classify, resume)
+    normalized = interruptionRemainder!
+    agentMessage = prepareAgentMessage(normalized)
+    safetyOriginal = agentMessage
+    bargeIn = true
+    working.turn = { ...turnStateOf(working), lastCompletionReason: 'BARGE_IN' }
+  }
+  if (interruptionRemainder) {
+    // content AFTER the control words → capture it as the real turn
+    applyInterruptionRemainder()
+  }
+  if ((control === 'INTERRUPT' || control === 'CANCEL') && !interruptionRemainder) {
+    // Walk to INTERRUPTED along LEGAL edges from wherever the turn manager
+    // left the state (a barge-in turn re-entered via LISTENING/UNDERSTANDING).
     let next = working
     try {
       next = transitionSession(working, 'INTERRUPTED', { now: t0 })
-      next.interruptionCount += 1
     } catch {
-      next = working
+      try {
+        const relistened = transitionSession(working, 'LISTENING', { now: t0 })
+        next = transitionSession(relistened, 'INTERRUPTED', { now: t0 })
+      } catch {
+        next = working
+      }
     }
+    next.interruptionCount += 1
     if (control === 'CANCEL') {
       next.pendingApprovalId = null
       next.pendingApprovalExpiresAt = null
@@ -356,7 +503,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
           speakableText: spoken,
           displayText: spoken,
           error: { code: 'VOICE_AGENT_ERROR', message: 'Agent invocation failed' },
-          telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+          telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', failureLayer: 'AGENT_REASONING_FAILURE', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
         })
       }
       const agentMs = deps.now().getTime() - agentMsStart
@@ -368,6 +515,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
         entityResolutionMs: 0,
         confirmedApprovalId: approvalId,
         language: languageContext,
+        bargeIn,
       })
     }
     // A bare confirmation with nothing pending falls through as normal
@@ -455,7 +603,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
         speakableText: spoken,
         displayText: 'A temporary data-access problem occurred. Please try again shortly.',
         error: { code: 'VOICE_DEPENDENCY_ERROR', message: 'Patient data store unavailable' },
-        telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, entityResolutionMs: deps.now().getTime() - entityStart, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_DEPENDENCY_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+        telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, entityResolutionMs: deps.now().getTime() - entityStart, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_DEPENDENCY_ERROR', failureLayer: 'TOOL_FAILURE', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
       })
     }
   }
@@ -472,7 +620,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
       speakableText: spoken,
       displayText: spoken,
       clarification,
-      telemetry: { ...baseTelemetry(next, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, state: 'LISTENING', transcriptFingerprint: fingerprintOf(normalized, next.tenantId, next.userId) },
+      telemetry: { ...baseTelemetry(next, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, state: 'LISTENING', transcriptFingerprint: fingerprintOf(normalized, next.tenantId, next.userId), turnCompletionReason: turnStateOf(next).lastCompletionReason, bargeIn, failureLayer: 'ENTITY_RESOLUTION_FAILURE' },
     })
   }
 
@@ -498,7 +646,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
       speakableText: spoken,
       displayText: spoken,
       error: { code: 'VOICE_AGENT_ERROR', message: 'Agent invocation failed' },
-      telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+      telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', failureLayer: 'AGENT_REASONING_FAILURE', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
     })
   }
   const agentMs = deps.now().getTime() - agentMsStart
@@ -507,6 +655,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     deps, call, t0, nowMs, turnIndex, normalized, safety, transcript,
     session: processing, agent, agentMs, entityResolutionMs, confirmedApprovalId: null,
     language: languageContext,
+    bargeIn,
   })
 }
 
@@ -529,6 +678,8 @@ interface FinishArgs {
   entityResolutionMs: number
   confirmedApprovalId: string | null
   language: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
+  /** True when this turn barge-interrupted active speech (§7). */
+  bargeIn?: boolean
 }
 
 function finishAgentTurn(
@@ -555,6 +706,7 @@ function finishAgentTurn(
     ended.pendingApprovalId = approval.approvalId
     ended.pendingApprovalExpiresAt = new Date(nowMs + VOICE_CONFIRM_WINDOW_MS).toISOString()
   }
+  ended.turn = { ...(ended.turn ?? initialTurnState()), phase: 'RESPONDING' }
   // §4 Remember — context for the NEXT turn: (a) pin the server-verified
   // patient the AGENT resolved this turn ('هات حالة أحمد' → follow-up
   // 'آخر زيارة كانت إمتى؟' keeps context); (b) append the bounded transcript
@@ -580,6 +732,16 @@ function finishAgentTurn(
   })
 
   const speakable = speakableFromResponse(agent.answer ?? '')
+  // Failure-layer attribution (§14): WHERE the turn degraded. A turn that
+  // needed a patient and got a clarification = ENTITY_RESOLUTION layer; a
+  // FAILED agent status = the TOOL layer; a thrown agent = REASONING. The
+  // user-facing answer stays natural — this is telemetry only.
+  const failureLayer: NonNullable<VoiceTurnTelemetry['failureLayer']> =
+    agent.status === 'FAILED'
+      ? 'TOOL_FAILURE'
+      : agent.status === 'CLARIFICATION_REQUIRED' && agent.missingInfo?.some((x) => /patient identity/i.test(x))
+        ? 'ENTITY_RESOLUTION_FAILURE'
+        : 'NONE'
   const telemetry: VoiceTurnTelemetry = {
     ...baseTelemetry(ended, turnIndex),
     transcriptChars: normalized.length,
@@ -593,12 +755,16 @@ function finishAgentTurn(
     approvalRequired: endState === 'WAITING_APPROVAL',
     state: ended.state,
     transcriptFingerprint: fingerprintOf(normalized, ended.tenantId, ended.userId),
+    turnCompletionReason: (ended.turn ?? initialTurnState()).lastCompletionReason,
+    bargeIn: a.bargeIn === true,
+    failureLayer,
   }
 
   if (endState === 'WAITING_APPROVAL') {
     const prompt = approvalPromptText(ended)
     return respond(ended, 'SPEAK', {
       language: languageContext,
+      interrupted: a.bargeIn === true,
       speakableText: `${speakable ? speakable + ' ' : ''}${prompt}`,
       displayText: agent.answer ?? '',
       approval,
@@ -611,6 +777,7 @@ function finishAgentTurn(
     const spoken = agent.answer || (ended.locale === 'ar-EG' ? 'ممكن توضح أكتر؟' : 'Could you clarify?')
     return respond(ended, 'SPEAK', {
       language: languageContext,
+      interrupted: a.bargeIn === true,
       speakableText: spoken,
       displayText: agent.answer ?? '',
       agentStatus: agent.status,
@@ -627,6 +794,7 @@ function finishAgentTurn(
     const spoken = typedFailureAnswer.length > 0 ? typedFailureAnswer : agentErrorText(ended)
     return respond(ended, 'SPEAK', {
       language: languageContext,
+      interrupted: a.bargeIn === true,
       speakableText: spoken,
       displayText: agent.answer ?? null,
       agentStatus: agent.status,
@@ -637,6 +805,7 @@ function finishAgentTurn(
   }
   return respond(ended, 'SPEAK', {
     language: languageContext,
+    interrupted: a.bargeIn === true,
     speakableText: speakable,
     displayText: agent.answer ?? '',
     agentStatus: agent.status,

@@ -292,7 +292,7 @@ async function main() {
     // context survives across voice turns (pinned patient reused)
     const dL2 = await realDeps()
     const chain = await voiceChain(dL2, ['هات أحمد علي', 'هاتلي حالته'])
-    row('L', 'L2', 'هات أحمد محمد → هاتلي حالته (voice)', 'pinned patient reused on the next voice turn', `pins=${JSON.stringify(chain.map((c) => c.pinned))} status2=${chain[1].status}`,
+    row('L', 'L2', 'هات أحمد علي → هاتلي حالته (voice)', 'pinned patient reused on the next voice turn', `pins=${JSON.stringify(chain.map((c) => c.pinned))} status2=${chain[1].status}`,
       chain[0].pinned === PAT_A1 && chain[1].pinned === PAT_A1 && chain[1].status === 'COMPLETED')
   }
 
@@ -440,6 +440,124 @@ async function main() {
       row('N', 'N7', 'اسم محمد النبي (fresh session)', 'OUT_OF_DOMAIN refusal; NO patient pin, NO invented task',
         `taskType=${t1.taskType} pinned=${after?.patientScope?.patientId ?? null}`,
         t1.taskType === 'OUT_OF_DOMAIN' && (after?.patientScope?.patientId ?? null) === null)
+    }
+  }
+
+  // ── Group O — conversational voice upgrade: turn-taking + barge-in ──────
+  // Turn manager (partials buffer / incomplete finals hold / combination),
+  // barge-in (speech during TTS preserves state), interruption-with-content,
+  // temporal correction, and failure-layer attribution — ALL through the
+  // real pipeline.
+  {
+    const MN = {
+      id: 'pat-mn', hospitalId: HOSP_A, patientId: 'PAT-MN',
+      firstName: 'محمد', lastName: 'النبي', age: 40, dateOfBirth: new Date('1986-02-01'),
+      gender: 'MALE', bloodGroup: null, phone: '01000000001', alternatePhone: null,
+      email: null, locale: 'ar', portalUserId: null, createdAt: dA.now(),
+    }
+    const apptO = (id: string, no: string, at: Date) => ({
+      id, hospitalId: HOSP_A, patientId: 'pat-mn', appointmentNo: no,
+      appointmentType: 'CONSULTATION', status: 'SCHEDULED', scheduledDate: at,
+      chiefComplaint: null, doctor: { firstName: 'Hana', lastName: 'Shalaby' },
+      patient: { firstName: 'محمد', lastName: 'النبي' }, createdAt: dA.now(),
+    })
+    const inWeek = new Date(dA.now().getTime() + 3 * 86400000)   // this week only
+    const nextWeek = new Date(dA.now().getTime() + 8 * 86400000) // next week only
+    const dO = await realDeps({ client: createFakePrisma({
+      patient: [MN],
+      appointment: [apptO('appt-o1', 'APPT-O-1', inWeek), apptO('appt-o2', 'APPT-O-2', nextWeek)],
+    }) })
+    const fresh = async () => {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dO)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      return { vdeps, s }
+    }
+    // O1 — an ASR interim is BUFFERED and never executed
+    {
+      const { vdeps, s } = await fresh()
+      const r = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي'), actor: { ...actor }, })
+      void r
+      const t = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: { text: 'وريني مواعيد محمد', confidence: 0.4, isFinal: false, providerId: 'rt', locale: 'ar-EG' }, actor })
+      row('O', 'O1', 'interim: وريني مواعيد محمد (isFinal=false)', 'buffered — no agent run, no audio, PARTIAL_BUFFERED',
+        `reason=${t.telemetry.turnCompletionReason} speakable=${t.speakableText === null}`,
+        t.telemetry.turnCompletionReason === 'PARTIAL_BUFFERED' && t.speakableText === null && t.agentStatus === null)
+    }
+    // O2 — pause-split fragments form ONE turn (partial → final continuation)
+    {
+      const { vdeps, s } = await fresh()
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: { text: 'وريني مواعيد محمد', confidence: 0.5, isFinal: false, providerId: 'rt', locale: 'ar-EG' }, actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('النبي بكرة.'), actor })
+      const ans = t2.displayText ?? ''
+      row('O', 'O2', 'وريني مواعيد محمد (partial) + النبي بكرة.', 'ONE combined turn → COMPLETED appointment answer for tomorrow',
+        `reason=${t2.telemetry.turnCompletionReason} status=${t2.agentStatus} ans="${cut(ans, 90)}"`,
+        t2.telemetry.turnCompletionReason === 'COMBINED' && t2.agentStatus === 'COMPLETED' && ans.includes(new Date(dA.now().getTime() + 86400000).toISOString().slice(0, 10)))
+    }
+    // O3 — an incomplete final is HELD (never executed), then combined
+    {
+      const { vdeps, s } = await fresh()
+      const t1 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي بتاع'), actor })
+      const after1 = vdeps.sessions.get(s.voiceSessionId, actor.userId, actor.tenantId)
+      const held = t1.speakableText === null && t1.telemetry.turnCompletionReason === 'HELD_INCOMPLETE' && (after1?.turn?.bufferedTranscript ?? '').length > 0
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('بكرة بالليل'), actor })
+      row('O', 'O3', 'وريني مواعيد محمد النبي بتاع … (pause) … بكرة بالليل', 'fragment HELD (POSSIBLE_END), then ONE combined dispatch',
+        `held=${held} reason2=${t2.telemetry.turnCompletionReason} status2=${t2.agentStatus}`,
+        held && t2.telemetry.turnCompletionReason === 'COMBINED' && t2.agentStatus === 'COMPLETED')
+    }
+    // O4 — pure barge-in during SPEAKING → INTERRUPTED, listens again
+    {
+      const { vdeps, s } = await fresh()
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('استنى'), actor })
+      row('O', 'O4', 'مواعيد محمد النبي. → (while speaking) استنى', 'TTS cancelled (interrupted), session INTERRUPTED, no answer spoken',
+        `state=${t2.state} interrupted=${t2.interrupted}`,
+        t2.interrupted === true && t2.state === 'INTERRUPTED')
+    }
+    // O5 — barge-in WITH content: the correction is captured, the task resumes
+    {
+      const { vdeps, s } = await fresh()
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('استنى، قصدي الأشعة بتاعته.'), actor })
+      const ans = t2.displayText ?? ''
+      row('O', 'O5', 'مواعيد محمد النبي. → (while speaking) استنى، قصدي الأشعة بتاعته.', 'interruption WITH content: pronoun resolves to the pinned patient, agent continues',
+        `interrupted=${t2.interrupted} status=${t2.agentStatus} ans="${cut(ans, 80)}"`,
+        t2.interrupted === true && t2.agentStatus === 'COMPLETED')
+    }
+    // O6 — temporal CORRECTION via interruption: week الجاي → week ده
+    {
+      const { vdeps, s } = await fresh()
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد النبي الأسبوع الجاي.'), actor })
+      const t1ans = ''
+      void t1ans
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('استنى، قصدي الأسبوع ده.'), actor })
+      const ans = t2.displayText ?? ''
+      const weekFrom = dA.now().toISOString().slice(0, 10)
+      const weekTo = new Date(dA.now().getTime() + 6 * 86400000).toISOString().slice(0, 10)
+      row('O', 'O6', 'مواعيد محمد النبي الأسبوع الجاي. → استنى، قصدي الأسبوع ده.', 'temporal constraint UPDATED to THIS week (deterministic range)',
+        `status=${t2.agentStatus} ans="${cut(ans, 100)}"`,
+        t2.agentStatus === 'COMPLETED' && ans.includes(weekFrom) && ans.includes(weekTo) && !ans.includes(nextWeek.toISOString().slice(0, 10)))
+    }
+    // O7 — failure-layer attribution
+    {
+      const { vdeps, s } = await fresh()
+      const t1 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد المريض اللي اسمه محمد علي.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('', true), actor })
+      row('O', 'O7', 'محمد علي NOT_FOUND + empty transcript', 'ENTITY_RESOLUTION_FAILURE on the clarify; ASR_FAILURE on the unusable text',
+        `layer1=${t1.telemetry.failureLayer} layer2=${t2.telemetry.failureLayer}`,
+        t1.telemetry.failureLayer === 'ENTITY_RESOLUTION_FAILURE' && t2.telemetry.failureLayer === 'ASR_FAILURE')
+    }
+    // O8 — fuzzy collision clarifies / never silently picks
+    {
+      const MALL2 = { ...MN, id: 'pat-mall', patientId: 'PAT-MALL', lastName: 'علي', phone: '01000000009' }
+      const dO2 = await realDeps({ client: createFakePrisma({ patient: [MN, MALL2], appointment: [] }) })
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dO2)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      const t = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد محمد علي.'), actor })
+      const safe = t.agentStatus === 'CLARIFICATION_REQUIRED' || (t.displayText ?? '').includes('محمد علي')
+      row('O', 'O8', 'وريني مواعيد محمد علي. (محمد النبي + محمد علي stored)', 'ambiguous/partial collision → clarify or exact-answer, NEVER the wrong patient',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 80)}"`,
+        safe && !(t.displayText ?? '').includes('محمد النبي'))
     }
   }
 
