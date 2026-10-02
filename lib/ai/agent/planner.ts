@@ -20,7 +20,7 @@ export interface PlanContext {
   actionTool: string | null
   actionParams: Record<string, string>
   actionParamsComplete: boolean
-  operationalTopic?: 'appointments' | 'queue' | 'schedule' | 'followups' | 'billing' | null
+  operationalTopic?: 'appointments' | 'queue' | 'schedule' | 'followups' | 'billing' | 'command_center' | null
   /** Extra validated inputs for the operational tool (e.g. today's date). */
   operationalInput: Record<string, unknown>
   /** Phase 4 — the user's original message (for the knowledge query). */
@@ -145,6 +145,7 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
         queue: ['get_waiting_queue', 'list waiting queue'],
         schedule: ['get_doctor_schedule', 'list schedule'],
         followups: ['get_followup_due', 'list due follow-ups'],
+        command_center: ['get_command_center', 'clinic daily command center (digital twin metrics, honest data states)'],
       }
       const t = ctx.operationalTopic ?? 'appointments'
       if (t === 'billing') {

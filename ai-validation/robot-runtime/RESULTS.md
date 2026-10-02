@@ -1,8 +1,8 @@
 # DenToRa Robot — Runtime Validation Results
 
-- Date: 2026-10-02T22:37:21.138Z
+- Date: 2026-10-02T23:07:34.906Z
 - Path: real pipeline (runVoiceTurn → session → entity resolution → runAgent → tools) over the safe test dataset
-- Rows: 70 — PASS: 70 — FAIL: 0
+- Rows: 73 — PASS: 73 — FAIL: 0
 
 | Group | Row | Input | Expected | Actual | Verdict |
 |---|---|---|---|---|---|
@@ -76,3 +76,6 @@
 | P | P3 | pin محمد النبي → هات حالة اسم سامي حداد. | not-found explicit name → clarification (the pinned patient never answers) | status=CLARIFICATION_REQUIRED ans="مش قادر أحدد المريض في العيادة دي. اكتب اسم المريض أو الرقم " | PASS |
 | P | P4 | pin محمد النبي → قولي المواعيد بتاعه بكرة. | possessive continuation keeps the pin — continuity preserved | status=COMPLETED ans="مفيش مواعيد ليوم 2026-09-30 مسجلة للمريض محمد النبي في النظا" | PASS |
 | P | P5 | pin محمد النبي → هات حالة اسم محمد علي. (محمد علي ×2) | ambiguous explicit name → clarification listing candidates, never a silent pick | status=CLARIFICATION_REQUIRED ans="لقيت 2 مريض بالاسم ده: محمد علي (PAT-MALL1) ولا محمد علي (PA" | PASS |
+| Q | Q1 | جهزلي حالات بكرة. | mission → get_command_center for TOMORROW, honest counts (no fabricated rows) | status=COMPLETED ans="مركز قيادة العيادة ليوم 2026-09-30: 0 مواعيد. الانتظار دلوقت" | PASS |
+| Q | Q2 | جهزلي حالات النهاردة. | today twin: 2 appointments + queue + overdue follow-ups + AI-review pending, all from tools | status=COMPLETED ans="مركز قيادة العيادة ليوم 2026-09-29: 2 مواعيد (CHECKED_IN 1، SCHEDULED 1) — نسبة " | PASS |
+| Q | Q3 | (PATIENT) جهزلي حالات بكرة. | clinic-wide mission NEVER reaches a PATIENT — no command-center content on any channel | status=null ans="" | PASS |

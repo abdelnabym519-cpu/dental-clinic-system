@@ -635,6 +635,59 @@ async function main() {
     }
   }
 
+  // ── Group Q — mission mode / clinic digital twin through the agent ──────
+  // 'جهزلي حالات بكرة.' is a MISSION, not a database query: the canonical
+  // agent plans get_command_center over the SAME digital twin the
+  // command-center API serves, honors the §9-resolved day (بكرة → tomorrow),
+  // and renders honest data states (§21/§34).
+  {
+    const apptQ = (id: string, no: string, at: Date, status: string) => ({
+      id, hospitalId: HOSP_A, patientId: PAT_A1, appointmentNo: no,
+      appointmentType: 'CONSULTATION', status, scheduledDate: at,
+      chiefComplaint: null, doctor: { firstName: 'Hana', lastName: 'Shalaby' },
+      patient: { firstName: 'Ahmed', lastName: 'Ali' }, createdAt: dA.now(),
+    })
+    const todayAppts = [
+      apptQ('appt-q1', 'APPT-Q-1', new Date(dA.now().getTime() - 3600000), 'CHECKED_IN'),
+      apptQ('appt-q2', 'APPT-Q-2', new Date(dA.now().getTime() + 3600000), 'SCHEDULED'),
+    ]
+    const dQ = await realDeps({ client: createFakePrisma({ appointment: todayAppts }) })
+    const mission = async (msg: string, role = 'DOCTOR' as string) => {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dQ)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      const act = role === 'PATIENT' ? { ...actor, userId: 'user-pat-A', role: 'PATIENT' } : actor
+      return runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr(msg), actor: act })
+    }
+    // Q1 — the mission phrase becomes a command-center mission (tomorrow)
+    {
+      const t = await mission('جهزلي حالات بكرة.')
+      const tomorrow = new Date(new Date(dA.now().getTime() + 86400000)).toISOString().slice(0, 10)
+      row('Q', 'Q1', 'جهزلي حالات بكرة.', 'mission → get_command_center for TOMORROW, honest counts (no fabricated rows)',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 60)}"`,
+        t.agentStatus === 'COMPLETED' && (t.displayText ?? '').includes(`ليوم ${tomorrow}`) && (t.displayText ?? '').includes('مركز قيادة العيادة'))
+    }
+    // Q2 — today's twin: appointments, queue, overdue follow-ups, AI review
+    {
+      const t = await mission('جهزلي حالات النهاردة.')
+      const ans = t.displayText ?? ''
+      row('Q', 'Q2', 'جهزلي حالات النهاردة.', 'today twin: 2 appointments + queue + overdue follow-ups + AI-review pending, all from tools',
+        `status=${t.agentStatus} ans="${cut(ans, 80)}"`,
+        t.agentStatus === 'COMPLETED' && ans.includes('2 مواعيد') && ans.includes('الانتظار') && ans.includes('متابعات متأخرة') && ans.includes('نتائج AI محتاجة مراجعة دكتور'))
+    }
+    // Q3 — PATIENT role is refused at the canonical loop (RBAC, no leak)
+    {
+      const t = await mission('جهزلي حالات بكرة.', 'PATIENT')
+      // The voice boundary stops the PATIENT before the agent (no session
+      // answer) — the property under test: NO clinic-wide content can reach
+      // a PATIENT actor through ANY channel. (The loop-level RBAC refusal
+      // itself is unit-locked in tests/unit/agent-loop.test.ts.)
+      row('Q', 'Q3', '(PATIENT) جهزلي حالات بكرة.', 'clinic-wide mission NEVER reaches a PATIENT — no command-center content on any channel',
+        `status=${t.agentStatus} ans="${cut(t.displayText, 50)}"`,
+        t.agentStatus !== 'COMPLETED' && !(t.displayText ?? '').includes('مركز قيادة') && !(t.displayText ?? '').includes('مواعيد'))
+    }
+  }
+
   // ── Report ─────────────────────────────────────────────────────────────
   const failed = ROWS.filter((r) => !r.pass)
   let md = '# DenToRa Robot — Runtime Validation Results\n\n'

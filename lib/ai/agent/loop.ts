@@ -394,6 +394,42 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       ]
       return L.join('\n')
     }
+    case 'command_center': {
+      // §25/§26 — mission/command-center briefing rendered from the digital
+      // twin's OWN data states. Counts are FACTS from the tools; bottlenecks
+      // are labeled derived insights; NOT_MEASURED sections are named as
+      // unmeasured, never estimated (§21/§34).
+      const cc = d.commandCenter ?? {}
+      const m = cc.metrics ?? {}
+      const day = d.date ?? (cc.generatedAt ? String(cc.generatedAt).slice(0, 10) : null)
+      const appts = m.todayAppointments ?? {}
+      const queue = m.queue ?? {}
+      const byStatus = appts.byStatus ?? {}
+      const statusStr = Object.entries(byStatus).map(([k, v]) => `${k} ${v}`).join('، ')
+      const bottlenecks = (m.bottlenecks?.rows ?? []) as { code: string; detail: string }[]
+      const aiPending = m.aiReviewRequired?.count ?? 0
+      const overdue = m.overdueFollowUps?.count ?? 0
+      const pending = m.pendingTreatments?.count ?? 0
+      const ar: string[] = []
+      const en: string[] = []
+      ar.push(`مركز قيادة العيادة${day ? ` ليوم ${day}` : ''}: ${appts.total ?? 0} مواعيد${statusStr ? ` (${statusStr})` : ''}${appts.utilization != null ? ` — نسبة الإنجاز ${appts.utilization}` : ''}.`)
+      en.push(`Clinic command center${day ? ` for ${day}` : ''}: ${appts.total ?? 0} appointment(s)${statusStr ? ` (${Object.entries(byStatus).map(([k, v]) => `${k} ${v}`).join(', ')})` : ''}${appts.utilization != null ? ` — completion ${appts.utilization}` : ''}.`)
+      ar.push(`الانتظار دلوقتي: ${queue.waiting ?? 0}، جاري علاجه: ${queue.inProgress ?? 0}. متابعات متأخرة: ${overdue}. علاجات مخططة/جارية: ${pending}. نتائج AI محتاجة مراجعة دكتور: ${aiPending}.`)
+      en.push(`Waiting now: ${queue.waiting ?? 0}, in progress: ${queue.inProgress ?? 0}. Overdue follow-ups: ${overdue}. Planned/in-progress treatments: ${pending}. AI findings awaiting doctor review: ${aiPending}.`)
+      if (bottlenecks.length) {
+        ar.push(`ملاحظات تشغيلية (استنتاج من البيانات): ${bottlenecks.map((b) => b.detail).join('؛ ')}.`)
+        en.push(`Operational bottlenecks (derived from data): ${bottlenecks.map((b) => b.detail).join('; ')}.`)
+      }
+      if ((m.bottlenecks?.state ?? '') === 'NOT_MEASURED' || !bottlenecks.length) {
+        ar.push('تأخير الكراسي مش مقاس — محتاج تيليمتري مباشر، ومش هنقدّر.')
+        en.push('Chair-time delays are not measured — live telemetry required; not estimated.')
+      }
+      if (m.financialItems?.state !== 'AVAILABLE') {
+        ar.push('الأرقام المالية مش متاحة لدورك الحالي (مقصودة — صلاحيات المحاسب/الأدمن فقط).')
+        en.push('Financial figures are not available for your role (by design — accountant/admin only).')
+      }
+      return (lang === 'ar' ? ar : en).join('\n')
+    }
     case 'appointments': {
       if (!d.appointments.length) {
         // No concrete date resolved → say NOTHING date-specific (never a
@@ -1177,17 +1213,18 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   const action = cls.action
   const billingReadIntent =
     !patientRequired && /فاتورة|فواتير|invoice|فواتير متأخرة|overdue invoice|تحصيل/i.test(request.message)
-  const operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | 'billing' | null =
+  const operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | 'billing' | 'command_center' | null =
     billingReadIntent
       ? 'billing' // honest capability boundary below — never misroute billing to another list
       : task.taskType === 'OPERATIONAL' || (task.taskType === 'INFORMATIONAL' && !patientRequired)
-      ? (/waiting|queue|قائمة|انتظار|مستني|مستنيين/.test(request.message) ? 'queue'
+      ? (/جهزلي|جهز الحالات|تجهيز الحالات|حالات بكرة|حالات النهارده|حالات النهاردة|وضع العيادة|حالة العيادة|command center|end-of-day|end of day/.test(request.message) ? 'command_center'
+        : /waiting|queue|قائمة|انتظار|مستني|مستنيين/.test(request.message) ? 'queue'
         : /schedule|doctor|جدول|طبيب|أجندة|اجندة/.test(request.message) ? 'schedule'
           : /due|overdue|follow-?up|review|recheck|متابعة|متابعات|متأخر|مراجعة|مراجعات|يرجع|ترجع|يرجعوا|يعود|تعود|come back|return visit/.test(request.message) ? 'followups'
             : 'appointments')
       : null
   const operationalInput: Record<string, unknown> = {}
-  if (operationalTopic === 'appointments' || operationalTopic === 'schedule') {
+  if (operationalTopic === 'appointments' || operationalTopic === 'schedule' || operationalTopic === 'command_center') {
     // The deterministic date layer (§9) decides the day — 'جدول بكرة' must
     // query (and label) TOMORROW, never silently today. No date words → the
     // tool's documented default (today) applies.

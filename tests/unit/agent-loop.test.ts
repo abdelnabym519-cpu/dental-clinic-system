@@ -204,6 +204,32 @@ describe('reads — profiles & deterministic answers (§7/§28)', () => {
     expect(r.resolvedPatient?.displayName).toBe('Ahmed Ali')
   })
 
+  // ── Mission mode / clinic digital twin (§25/§26) ────────────────────────
+  // The canonical agent serves the SAME command center the API does (one
+  // twin, no parallel metrics). The §9 date layer re-scopes the day.
+  it('mission: جهزلي حالات بكرة plans the command-center tool for TOMORROW', async () => {
+    const r = await runAgent(req('جهزلي حالات بكرة.'), deps())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.toolsUsed).toContain('get_command_center')
+    expect(r.answer ?? '').toContain('مركز قيادة العيادة ليوم 2026-09-30')
+    // honest empty state for tomorrow (fixtures are today) — no fabricated rows
+    expect(r.answer ?? '').toContain('0 مواعيد')
+  })
+
+  it('mission: clinic status renders twin metrics with honest data states', async () => {
+    const r = await runAgent(req('جهزلي حالات النهاردة.'), deps())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.toolsUsed).toContain('get_command_center')
+    expect(r.answer ?? '').toContain('متابعات متأخرة')
+    expect(r.answer ?? '').toContain('نتائج AI محتاجة مراجعة دكتور')
+  })
+
+  it('mission: PATIENT role never reaches the clinic command center', async () => {
+    const r = await runAgent(req('جهزلي حالات بكرة.', { actor: patientPortal }), deps())
+    expect(r.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r.toolsUsed).toEqual([])
+  })
+
   it('unknown patient → clarification', async () => {
     const r = await runAgent(req('Show appointments for Zed Nobody'), deps())
     expect(r.status).toBe('CLARIFICATION_REQUIRED')
