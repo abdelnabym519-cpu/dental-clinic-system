@@ -69,10 +69,15 @@ export function detectInputLanguage(text: string): LanguageDetection {
 
 /**
  * TTS voice selection for a piece of RESPONSE text: the voice must match the
- * language actually being spoken. Arabic-script content → ar-EG; otherwise
- * en-US. (Mixed answer text follows its dominant script — same rule as the
- * input policy.)
+ * language actually being spoken. Any Arabic script → ar-EG; otherwise en-US.
+ * (NOT word-level dominance: Arabic answers embed untranslated Latin data
+ * tokens — names, IDs, dates — which must not flip the voice to English.)
  */
 export function ttsLangForText(text: string): 'ar-EG' | 'en-US' {
-  return detectInputLanguage(text ?? '').lang === 'ar' ? 'ar-EG' : 'en-US'
+  // Word-level dominance is wrong for ANSWER text: Arabic answers embed
+  // untranslated Latin data tokens (patient names, treatment IDs, dates),
+  // which can numerically out-vote the Arabic sentence skeleton. An Arabic
+  // sentence must be spoken by the Arabic voice regardless of its embedded
+  // data tokens — any Arabic script means Arabic content.
+  return arabicChars(text ?? '') > 0 ? 'ar-EG' : 'en-US'
 }

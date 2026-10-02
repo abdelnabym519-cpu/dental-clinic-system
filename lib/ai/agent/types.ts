@@ -29,6 +29,14 @@ export interface AgentRequest {
   hospitalId: string
   /** The user's message (DATA — untrusted). */
   message: string
+  /**
+   * Conversation language for THIS turn ('ar' | 'en'), resolved server-side
+   * (voice: session language after this turn's detection; REST: input
+   * detection). Drives language-aware fallbacks/clarifications and the
+   * deterministic operational answer templates. Never client-trusted for
+   * anything but phrasing.
+   */
+  language?: 'ar' | 'en'
   /** Client-suggested entities — ALWAYS re-validated server-side. */
   patientId?: string | null
   patientName?: string | null

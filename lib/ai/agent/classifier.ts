@@ -42,6 +42,12 @@ const DENTAL_TERMS = [
   'رصيد', 'طبيب', 'عيادة', 'مستشفى', 'تخدير', 'ألم', 'لثة',
   'محاسب', 'تأمين', 'معمل', 'تشخيص', 'أعراض', 'شكوى', 'تسوس',
   'تلميع', 'تبييض', 'عصب', 'قناة جذر', 'نظافة',
+  // AR clinic-workflow vocabulary (Robot consolidation root-cause fix):
+  // natural Egyptian/MSA clinic questions use these; their absence made the
+  // domain gate reject legitimate clinical/clinic requests as OUT_OF_DOMAIN.
+  'مراجعة', 'مراجعات', 'حالة', 'حالات', 'علاج', 'علاجات', 'كشف', 'كشوف',
+  'حجز', 'متابعات', 'بيانات المريض', 'ملف المريض', 'الملف', 'بيانات',
+  'النهارده', 'النهاردة', 'الليلة', 'المريض',
 ]
 
 /** True when the message carries dental-domain signal (or trusted metadata does). */
@@ -74,9 +80,22 @@ const NAME_STOP = new Set([
   'approved', 'admin', 'director',
 ])
 
-const AR_NAME_STOP = new Set(['اليوم', 'غداً', 'غدا', 'الأسبوع', 'الشهر', 'القادم', 'متابعة', 'موعد', 'مواعيد', 'دفع', 'دفعة', 'فاتورة', 'الحالة', 'المريض', 'مريض', 'عيادة', 'طبيب', 'الطبيب', 'مستشفى'])
+const AR_NAME_STOP = new Set(['اليوم', 'غداً', 'غدا', 'الأسبوع', 'الشهر', 'القادم', 'متابعة', 'موعد', 'مواعيد', 'دفع', 'دفعة', 'فاتورة', 'الحالة', 'المريض', 'مريض', 'عيادة', 'العيادة', 'طبيب', 'الطبيب', 'مستشفى', 'المرضى', 'الحالات', 'الملف', 'بيانات', 'النهارده', 'النهاردة', 'دكتور', 'الدكتور', 'الدكتورة', 'سستم', 'السستم', 'الروبوت'])
 
 /** Candidate patient name from the message (EN + AR patterns), or null. */
+/**
+ * Explicit patient-lookup intent — a phrase that ASKS for a patient's
+ * record ('بيانات المريض أحمد', 'افتح patient record بتاع أحمد'). Phrase-level
+ * on purpose: a bare extracted name is NOT intent (knowledge questions like
+ * 'What is the protocol for baking bread?' yield junk names via the generic
+ * 'for/about/of' extractor and must keep routing to KNOWLEDGE).
+ */
+export function patientLookupIntent(m: string): boolean {
+  // '(?!s)' — 'show ALL patient RECORDS' (bulk dump demand, e.g. role
+  // spoofing) is NOT a single-record lookup.
+  return /patient record(?!s)|patient file(?!s)|patient info|patient overview|بيانات المريض|ملف المريض|سجل المريض|بيانات الحالة|بيانات الحالات|افتح ملف/.test(m)
+}
+
 export function extractPatientName(message: string): string | null {
   const m = message.trim()
   const en = m.match(/\b(?:for|about|of|patient)\s+([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,2})/i)
@@ -84,9 +103,16 @@ export function extractPatientName(message: string): string | null {
     const words = en[1].split(/\s+/).filter((w) => !NAME_STOP.has(w.toLowerCase()))
     if (words.length >= 1 && words.length <= 3) return words.join(' ')
   }
-  const ar = m.match(/\b(?:ل|لم)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
+  const ar = m.match(/[\u0600-\u06FF]\s+(?:ل|لم)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
   if (ar) {
     const words = ar[1].split(/\s+/).filter((w) => !AR_NAME_STOP.has(w))
+    if (words.length >= 1 && words.length <= 3) return words.join(' ')
+  }
+  // Explicit patient markers ('بيانات المريض أحمد', 'ملف المريض أحمد',
+  // '… بتاع أحمد'): the marker names the FOLLOWING words as the patient.
+  const marker = m.match(/(?:المريض|بتاع|بتاعت)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
+  if (marker) {
+    const words = marker[1].split(/\s+/).filter((w) => !AR_NAME_STOP.has(w) && w !== 'المريض' && w !== 'بتاع' && w !== 'بتاعت')
     if (words.length >= 1 && words.length <= 3) return words.join(' ')
   }
   return null
@@ -137,7 +163,7 @@ export interface ActionSignal {
 const ACTION_VERBS = [
   'schedule', 'book', 'create', 'make', 'record', 'pay', 'draft', 'prepare',
   'issue', 'add', 'write', 'execute', 'run', 'set up', 'set-up',
-  'احجز', 'أنشئ', 'انشاء', 'سجل', 'ادفع', 'جهز', 'رتب', 'اكتب', 'اصدر', 'أصدر',
+  'احجز', 'حجز', 'أنشئ', 'انشاء', 'سجل', 'ادفع', 'جهز', 'رتب', 'اكتب', 'اصدر', 'أصدر',
 ]
 
 /** ASCII verbs match on word boundaries (so "payments" ≠ "pay"); non-ASCII
@@ -164,7 +190,7 @@ export function extractDateParam(message: string, now: Date): string | null {
   }
   if (/(next week|اسبوع|أسبوع|الأسبوع المقبل|الاسبوع القادم)/.test(m)) return d(7)
   if (/(next month|الشهر القادم|الشهر المقبل|شهر)/.test(m)) return d(30)
-  if (/(tonday|today|الآن|اليوم|اليوم)/.test(m)) return d(0)
+  if (/(tonday|today|الآن|اليوم|النهارده|النهاردة)/.test(m)) return d(0)
   return null
 }
 
@@ -223,21 +249,34 @@ export function detectActionSignal(message: string, now: Date): ActionSignal | n
 // ---------------------------------------------------------------------------
 
 const IMAGING_TERMS = ['x-ray', 'xray', 'radiograph', 'panoramic', 'pano', 'periapical', 'cbct', 'imaging', 'radiology', 'ai finding', 'ai analysis', 'أشعة', 'اشعة', 'تصوير', 'panoram', 'panoramic']
-const CLINICAL_TERMS = ['diagnosis', 'diagnoses', 'findings', 'finding', 'symptom', 'symptoms', 'complaint', 'medical history', 'dental history', 'history', 'exam', 'examination', 'notes', 'chart', 'odontogram', 'تشخيص', 'أعراض', 'شكوى', 'سوابق', 'فحص', 'ملاحظات', 'مخطط']
-const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات']
-const FOLLOWUP_TERMS = ['follow-up', 'followup', 'follow up', 'متابعة', 'recheck', 'review visit']
-const CASE_TERMS = ['case', 'treatment plan', 'plan', 'حالة', 'خطة', 'مخطط']
+const CLINICAL_TERMS = ['diagnosis', 'diagnoses', 'findings', 'finding', 'symptom', 'symptoms', 'complaint', 'medical history', 'dental history', 'history', 'exam', 'examination', 'notes', 'chart', 'odontogram', 'تشخيص', 'أعراض', 'شكوى', 'سوابق', 'فحص', 'ملاحظات', 'مخطط', 'مراجعة', 'مراجعات', 'علاج', 'العلاج', 'علاجات', 'راجع']
+const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات', 'حالات اليوم', 'مرضى اليوم', 'الحالات اللي', 'اللي محتاجة', 'مواعيد النهارده', 'مواعيد النهاردة', 'عيادات النهارده']
+const FOLLOWUP_TERMS = ['follow-up', 'followup', 'follow up', 'متابعة', 'متابعات', 'recheck', 'review visit', 'مراجعة', 'مراجعات', 'المراجعات', 'محتاجة مراجعة', 'محتاجة مراجعات']
+const CASE_TERMS = ['case', 'treatment plan', 'plan', 'حالة', 'حالات', 'خطة', 'مخطط']
 const BILLING_TERMS = ['invoice', 'payment', 'balance', 'billing', 'overdue invoice', 'فاتورة', 'حساب', 'رصيد', 'دفعة']
-const APPT_TERMS = ['appointment', 'appointments', 'visit', 'visits', 'موعد', 'مواعيد', 'زيارات', 'زيارة']
+const APPT_TERMS = ['appointment', 'appointments', 'visit', 'visits', 'موعد', 'مواعيد', 'زيارات', 'زيارة', 'معاد', 'معاد الكشف']
+
+/**
+ * Term hit with WORD boundaries for pure-Latin terms ('late' must not fire
+ * inside 'latest', 'case' must not fire inside 'showcase'); a trailing
+ * plural 's' is allowed ('follow-ups', 'appointments'). Arabic terms
+ * keep plain substring semantics — JS \b is ASCII-only and never matches
+ * around Arabic letters.
+ */
+function termHit(m: string, t: string): boolean {
+  return /^[a-z0-9][a-z0-9 '-]*$/.test(t)
+    ? new RegExp(`(?:^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?(?:[^a-z0-9]|$)`).test(m)
+    : m.includes(t)
+}
 
 const SIGNALS = {
-  imaging: (m: string) => IMAGING_TERMS.some((t) => m.includes(t)),
-  clinical: (m: string) => CLINICAL_TERMS.some((t) => m.includes(t)),
-  operational: (m: string) => OPERATIONAL_TERMS.some((t) => m.includes(t)),
-  followup: (m: string) => FOLLOWUP_TERMS.some((t) => m.includes(t)),
-  case: (m: string) => CASE_TERMS.some((t) => m.includes(t)),
-  billing: (m: string) => BILLING_TERMS.some((t) => m.includes(t)),
-  appt: (m: string) => APPT_TERMS.some((t) => m.includes(t)),
+  imaging: (m: string) => IMAGING_TERMS.some((t) => termHit(m, t)),
+  clinical: (m: string) => CLINICAL_TERMS.some((t) => termHit(m, t)),
+  operational: (m: string) => OPERATIONAL_TERMS.some((t) => termHit(m, t)),
+  followup: (m: string) => FOLLOWUP_TERMS.some((t) => termHit(m, t)),
+  case: (m: string) => CASE_TERMS.some((t) => termHit(m, t)),
+  billing: (m: string) => BILLING_TERMS.some((t) => termHit(m, t)),
+  appt: (m: string) => APPT_TERMS.some((t) => termHit(m, t)),
 }
 
 const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين']
@@ -484,6 +523,33 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       confidence: 0.85,
       missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
+  } else if (knowledge !== null && !patientInvolved && strongKnowledgeIntent) {
+    // General dental-knowledge question with NO patient in scope and a
+    // STRONG knowledge intent — answered from the knowledge base even when
+    // clinical-flavored words appear ('ما هي معايير علاج قناة الجذر؟' stays
+    // KNOWLEDGE, not a patient-required clinical plan). Weak 'what is …'
+    // signals over patient context ('findings for this patient') keep the
+    // clinical branch.
+    task = baseTask({
+      taskType: 'KNOWLEDGE',
+      // Agent-level domain is always 'knowledge'; the finer-grained taxonomy
+      // domain (knowledge.domain) is carried on the signal for retrieval.
+      domains: ['knowledge'],
+      contextProfile: null,
+      confidence: 0.85,
+    })
+  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup) && !signals.imaging) {
+    // No patient in scope → clinic-level operational query. Checked BEFORE
+    // the clinical branch: clinic-wide review/follow-up questions ('إيه
+    // الحالات اللي محتاجة مراجعة النهارده', 'review today's follow-up
+    // patients') carry clinical-flavored words but are OPERATIONAL requests
+    // for clinic lists — a patient-required clinical plan would dead-end.
+    task = baseTask({
+      taskType: 'OPERATIONAL',
+      domains: ['scheduling'],
+      contextProfile: null,
+      confidence: 0.8,
+    })
   } else if (signals.clinical || (signals.followup && patientInvolved) || (toothFdi !== null && !signals.operational)) {
     task = baseTask({
       taskType: 'CLINICAL_ANALYSIS',
@@ -495,15 +561,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       confidence: 0.8,
       missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
-  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup)) {
-    // No patient in scope → clinic-level operational query.
-    task = baseTask({
-      taskType: 'OPERATIONAL',
-      domains: ['scheduling'],
-      contextProfile: null,
-      confidence: 0.8,
-    })
-  } else if (signals.appt || signals.billing || hasMetadata) {
+  } else if (signals.appt || signals.billing || hasMetadata || patientLookupIntent(m)) {
     task = baseTask({
       taskType: 'INFORMATIONAL',
       domains: pickDomains(signals, patientInvolved),

@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import type { AgentRequest } from '@/lib/ai/agent/types'
+import { detectInputLanguage } from '@/lib/ai/voice/language'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
     actor: { id: user.id, name: user.name || 'User', role: user.role },
     hospitalId,
     message,
+    language: detectInputLanguage(message).lang,
     patientId: str(body.patientId),
     patientName: str(body.patientName),
     toothFdi: typeof body.toothFdi === 'number' ? body.toothFdi : null,

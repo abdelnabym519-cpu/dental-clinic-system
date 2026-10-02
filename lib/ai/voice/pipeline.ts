@@ -190,6 +190,10 @@ function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: Voi
     history: undefined,
     timestamp: now.toISOString(),
     source: 'voice',
+    // Robot language policy (§10): the response language follows the
+    // conversation — the session locale AFTER this turn's language context
+    // update (confident non-mixed turns flip it; mixed keep it).
+    language: session.locale === 'ar-EG' ? 'ar' : 'en',
   }
 }
 

@@ -24,6 +24,7 @@ import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
 import { classifyAgentTask, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
+import { detectInputLanguage } from '@/lib/ai/voice/language'
 import { buildPlan } from './planner'
 import { executeTool, extractSources, toolNamesByProfile, type ToolRuntime } from './tools'
 import { buildAttachmentContextBlock, attachmentClassLabel, attachmentOnlyAnswer } from '@/lib/ai/multimodal/context'
@@ -159,7 +160,23 @@ function renderAttachmentToolFailure(error: string | null): string {
   return `Analysis could not be completed: ${msg}`
 }
 
-function answerFromToolData(task: AgentTask, data: unknown, role?: string): string | null {
+
+/**
+ * Robot language policy (§6/§7): every user-facing fallback, clarification
+ * and deterministic summary follows the CONVERSATION language — resolved
+ * from the server-side per-turn `request.language` when present (voice
+ * pipeline), else detected from the message itself. Never English-only.
+ */
+function conversationLang(request: { language?: 'ar' | 'en'; message: string }): 'ar' | 'en' {
+  return request.language ?? detectInputLanguage(request.message).lang
+}
+
+/** Pick the text in the conversation language ('ar' first, then 'en'). */
+function byLang(lang: 'ar' | 'en', ar: string, en: string): string {
+  return lang === 'ar' ? ar : en
+}
+
+function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang: 'ar' | 'en' = 'en'): string | null {
   if (!data || typeof data !== 'object') return null
   const d = data as Record<string, any>
   switch (d.kind) {
@@ -233,18 +250,56 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string): stri
       ]
       return L.join('\n')
     }
-    case 'appointments':
-      if (!d.appointments.length) return `No appointments on ${d.date ?? 'the requested day'}.`
-      return `${d.count} appointment(s) on ${d.date ?? 'the requested day'}: ` + d.appointments.slice(0, 8).map((a: any) => `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`).join('; ')
-    case 'queue':
-      if (!d.queue.length) return 'The waiting queue is empty.'
-      return `${d.count} patient(s) waiting: ` + d.queue.map((q: any) => `${q.appointmentNo} ${q.patientName ?? '?'} (${q.doctorName ?? 'unassigned'})`).join('; ')
-    case 'schedule':
-      if (!d.appointments.length) return `No scheduled appointments found${d.date ? ` for ${d.date}` : ''}.`
-      return `${d.count} appointment(s): ` + d.appointments.slice(0, 10).map((a: any) => `${a.appointmentNo} ${a.scheduledAt.slice(11, 16)} ${a.patientName ?? '?'}`).join('; ')
-    case 'followups':
-      if (!d.followups.length) return `No follow-ups due within ${d.withinDays} days.`
-      return `${d.count} follow-up(s) due: ` + d.followups.map((f: any) => `${f.patientName ?? '?'} (treatment ${f.treatmentNo}, due ${f.dueAt?.slice(0, 10) ?? 'n/a'})`).join('; ')
+    case 'appointments': {
+      if (!d.appointments.length) {
+        return lang === 'ar'
+          ? `مفيش مواعيد يوم ${d.date ?? 'اليوم المطلوب'}.`
+          : `No appointments on ${d.date ?? 'the requested day'}.`
+      }
+      const rows = d.appointments.slice(0, 8).map((a: any) =>
+        lang === 'ar'
+          ? `${a.appointmentNo} ${a.patientName ?? '?'} مع ${a.doctorName ?? 'بدون طبيب'} الساعة ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`
+          : `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`,
+      )
+      return lang === 'ar'
+        ? `${d.count} موعد يوم ${d.date ?? 'اليوم المطلوب'}: ` + rows.join('؛ ')
+        : `${d.count} appointment(s) on ${d.date ?? 'the requested day'}: ` + rows.join('; ')
+    }
+    case 'queue': {
+      if (!d.queue.length) {
+        return lang === 'ar' ? 'قائمة الانتظار فاضية.' : 'The waiting queue is empty.'
+      }
+      const rows = d.queue.map((q: any) => `${q.appointmentNo} ${q.patientName ?? '?'} (${q.doctorName ?? 'بدون طبيب'})`)
+      return lang === 'ar'
+        ? `${d.count} مريض في الانتظار: ` + rows.join('؛ ')
+        : `${d.count} patient(s) waiting: ` + rows.join('; ')
+    }
+    case 'schedule': {
+      if (!d.appointments.length) {
+        return lang === 'ar'
+          ? `مفيش مواعيد مجدولة${d.date ? ` يوم ${d.date}` : ''}.`
+          : `No scheduled appointments found${d.date ? ` for ${d.date}` : ''}.`
+      }
+      const rows = d.appointments.slice(0, 10).map((a: any) => `${a.appointmentNo} ${a.scheduledAt.slice(11, 16)} ${a.patientName ?? '?'}`)
+      return lang === 'ar'
+        ? `${d.count} موعد: ` + rows.join('؛ ')
+        : `${d.count} appointment(s): ` + rows.join('; ')
+    }
+    case 'followups': {
+      if (!d.followups.length) {
+        return lang === 'ar'
+          ? `مفيش متابعات مستحقة خلال ${d.withinDays} يوم.`
+          : `No follow-ups due within ${d.withinDays} days.`
+      }
+      const rows = d.followups.map((f: any) =>
+        lang === 'ar'
+          ? `${f.patientName ?? '?'} (العلاج ${f.treatmentNo}، الاستحقاق ${f.dueAt?.slice(0, 10) ?? 'غير مسجل'})`
+          : `${f.patientName ?? '?'} (treatment ${f.treatmentNo}, due ${f.dueAt?.slice(0, 10) ?? 'n/a'})`,
+      )
+      return lang === 'ar'
+        ? `${d.count} متابعة مستحقة: ` + rows.join('؛ ')
+        : `${d.count} follow-up(s) due: ` + rows.join('; ')
+    }
     case 'local_ai_capabilities': {
       // Phase 5 — deterministic capability summary (no LLM, no PHI).
       const rows: any[] = Array.isArray(d.matrix) ? d.matrix : []
@@ -481,6 +536,11 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   }
   mark('observe', tObserve)
 
+  // Robot language policy (§6): one resolved conversation language for the
+  // whole turn — deterministic answers, fallbacks and clarifications all
+  // follow it (never English-only for an Arabic doctor).
+  const ansLang: 'ar' | 'en' = conversationLang(request)
+
   // ── UNDERSTAND (entities) + CLASSIFY (deterministic first) ─────────────
   const tClassify = deps.now()
   const cls = classifyAgentTask({
@@ -621,8 +681,13 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   if (task.taskType === 'OUT_OF_DOMAIN') {
     state.task = task
     stop('COMPLETED', 'OUT_OF_DOMAIN', '')
+    const lg = conversationLang(request)
     return respond(
-      'I only help with dental and clinic matters (patients, appointments, treatments, imaging, billing). Please ask about the clinic, or use another channel for general questions.'
+      byLang(
+        lg,
+        'أنا أساعد في شؤون الأسنان والعيادة فقط (المرضى، المواعيد، العلاجات، الأشعة، الفواتير). اسألني عن أي حاجة في العيادة، أو استخدم قناة أخرى للأسئلة العامة.',
+        'I only help with dental and clinic matters (patients, appointments, treatments, imaging, billing). Please ask about the clinic, or use another channel for general questions.',
+      ),
     )
   }
 
@@ -632,21 +697,42 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   if (task.toothInvolved && rt.toothFdi === null) {
     state.task = task
     stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
-    return respond('Which tooth do you mean? Please give the FDI number (11–48).')
+    const lg = conversationLang(request)
+    return respond(
+      byLang(
+        lg,
+        'قصدك أنهي سن؟ اكتب رقم السن بالترقيم العالمي (11–48).',
+        'Which tooth do you mean? Please give the FDI number (11–48).',
+      ),
+    )
   }
 
   // Unknown after fallback → safe clarification, no tools.
   if (task.taskType === 'UNKNOWN') {
     state.task = task
     stop('CLARIFICATION_REQUIRED', 'UNKNOWN_TASK', '')
-    return respond('I could not safely determine what you need. Could you rephrase — for example: "show patient X appointments", "review tooth 36", "book a follow-up for patient Y on <date>"?')
+    const lg = conversationLang(request)
+    return respond(
+      byLang(
+        lg,
+        'مش قادر أحدد طلبك بدقة. ممكن توضح — مثلًا: «مواعيد المريض فلان»، «مراجعة السن 36»، «حجز متابعة للمريض فلان يوم <تاريخ>»؟',
+        'I could not safely determine what you need. Could you rephrase — for example: "show patient X appointments", "review tooth 36", "book a follow-up for patient Y on <date>"?',
+      ),
+    )
   }
 
   // PATIENT portal users cannot run clinic-level operational queries.
   if (task.taskType === 'OPERATIONAL' && request.actor.role === 'PATIENT') {
     state.task = task
     stop('CLARIFICATION_REQUIRED', 'UNAUTHORIZED', '')
-    return respond('You can only view your own records. For clinic-wide lists, please ask a staff member.')
+    const lg = conversationLang(request)
+    return respond(
+      byLang(
+        lg,
+        'تقدر تشوف بياناتك الشخصية فقط. لقوائم العيادة الكاملة، اسأل أحد الموظفين.',
+        'You can only view your own records. For clinic-wide lists, please ask a staff member.',
+      ),
+    )
   }
 
   // Patient resolution (server-side, tenant-verified, never guessed).
@@ -671,7 +757,14 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     } else {
       state.task = task
       stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
-      return respond('I could not identify the patient in this clinic. Please provide the patient name or ID — I never guess patients.')
+      const lg = conversationLang(request)
+      return respond(
+        byLang(
+          lg,
+          'مش قادر أحدد المريض في العيادة دي. اكتب اسم المريض أو الرقم — أنا عمر ما أخمن المرضى.',
+          'I could not identify the patient in this clinic. Please provide the patient name or ID — I never guess patients.',
+        ),
+      )
     }
   }
   state.task = task
@@ -837,13 +930,13 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   const action = cls.action
   const operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | null =
     task.taskType === 'OPERATIONAL' || (task.taskType === 'INFORMATIONAL' && !patientRequired)
-      ? (/waiting|queue|قائمة/.test(request.message) ? 'queue'
-        : /schedule|doctor|جدول/.test(request.message) ? 'schedule'
-          : /due|overdue|متابعة|متأخر/.test(request.message) ? 'followups'
+      ? (/waiting|queue|قائمة|انتظار/.test(request.message) ? 'queue'
+        : /schedule|doctor|جدول|طبيب/.test(request.message) ? 'schedule'
+          : /due|overdue|follow-?up|review|متابعة|متابعات|متأخر|مراجعة|مراجعات/.test(request.message) ? 'followups'
             : 'appointments')
       : null
   const operationalInput: Record<string, unknown> = {}
-  if (operationalTopic === 'appointments' && /today|اليوم|الآن/.test(request.message)) {
+  if (operationalTopic === 'appointments' && /today|اليوم|الآن|النهارده|النهاردة/.test(request.message)) {
     operationalInput.date = deps.now().toISOString().split('T')[0]
   }
   const planResult = buildPlan({
@@ -1111,7 +1204,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     const parts: string[] = []
     for (const r of state.lastToolResults) {
       if (r.data && typeof r.data === 'object') {
-        const rendered = answerFromToolData(task, r.data, request.actor.role)
+        const rendered = answerFromToolData(task, r.data, request.actor.role, ansLang)
         if (rendered) parts.push(rendered)
       }
     }
@@ -1165,8 +1258,14 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     }
   } else {
     // OPERATIONAL — deterministic from tool data (no LLM needed, §28).
-    for (const r of state.lastToolResults) answer = answerFromToolData(task, r.data) ?? answer
-    if (!answer) answer = 'I checked, but no matching records were found.'
+    for (const r of state.lastToolResults) answer = answerFromToolData(task, r.data, undefined, ansLang) ?? answer
+    if (!answer) {
+      answer = byLang(
+        ansLang,
+        'دورت، ومفيش سجلات مطابقة لطلبك. جرّب توضح المريض أو الموضوع — مثلًا «مواعيد النهارده» أو «مراجعة السن 36».',
+        'I checked, but no matching records were found.',
+      )
+    }
   }
 
   // Uncertainty + missing info + warnings.
