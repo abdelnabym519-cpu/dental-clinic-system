@@ -20,7 +20,7 @@ export interface PlanContext {
   actionTool: string | null
   actionParams: Record<string, string>
   actionParamsComplete: boolean
-  operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | null
+  operationalTopic?: 'appointments' | 'queue' | 'schedule' | 'followups' | 'billing' | null
   /** Extra validated inputs for the operational tool (e.g. today's date). */
   operationalInput: Record<string, unknown>
   /** Phase 4 — the user's original message (for the knowledge query). */
@@ -147,6 +147,12 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
         followups: ['get_followup_due', 'list due follow-ups'],
       }
       const t = ctx.operationalTopic ?? 'appointments'
+      if (t === 'billing') {
+        // No clinic-level invoice-read tool exists in the registry — plan
+        // nothing rather than misroute (the loop answers the honest
+        // capability boundary).
+        return { plan: null, reason: 'no_billing_read_tool' }
+      }
       add(map[t][0], { ...(ctx.operationalInput ?? {}) }, map[t][1])
       return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'no_operational_tool' }
     }
