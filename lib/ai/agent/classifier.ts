@@ -127,7 +127,7 @@ export function extractPatientName(message: string): string | null {
   }
   // Explicit patient markers ('بيانات المريض أحمد', 'ملف المريض أحمد',
   // '… بتاع أحمد'): the marker names the FOLLOWING words as the patient.
-  const marker = m.match(/(?:للمريض|المريض|لمريض|بتاعت|بتاع)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
+  const marker = m.match(/(?:للمريض|المريض|لمريض|بتاعت|بتاع|اسمه|اسمها)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
   if (marker) {
     const words = marker[1].split(/\s+/).filter((w) => !AR_NAME_STOP.has(w) && w !== 'المريض' && w !== 'بتاع' && w !== 'بتاعت')
     if (words.length >= 1 && words.length <= 3) return words.join(' ')
@@ -612,7 +612,12 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
     // never open-ended) as a conjunction.
     (m.match(/(?:^|\s)و(?=(?:افتح|اعرض|اعرضلي|وريني|هات|هاتلي|قولي|احجز|سجل|ادفع|الغي|ألغي|حدث|بين|بينلي|شوف|راجع|رتب|جهز|صمم|دور|آخر|اخر|كل|الأشعة|أشعة|اشعة|العلاجات|العلاج|الخطط|خطة|المواعيد|المتابعات|الفاتورة))/g)?.length ?? 0)
 
-  const rawPatientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson
+  // A SINGULAR definite patient reference with no name ('مواعيد المريض
+  // النهاردة') scopes the request to ONE still-unidentified patient —
+  // identity is required. The plural ('المرضى') is a distinct word and
+  // never matches: clinic-level requests keep flowing without a patient.
+  const singularPatientRef = /(?<![\u0600-\u06FF])(?:المريض|المريضة)(?![\u0600-\u06FF])/.test(input.message)
+  const rawPatientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson || singularPatientRef
 
   // Phase 4 — knowledge (RAG) intent: general dental knowledge question?
   // (The domain gate above already guarantees dental context.) A domain

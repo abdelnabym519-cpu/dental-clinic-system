@@ -19,6 +19,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { replayAgentCase, buildReplayAgentDeps } from '@/lib/ai/evaluation/replay'
+import { replayVoiceCase } from '@/lib/ai/evaluation/voice-replay'
 import type { GoldenCase } from '@/lib/ai/evaluation'
 import { runAgent } from '@/lib/ai/agent/loop'
 import { classifyAgentTask } from '@/lib/ai/agent/classifier'
@@ -538,5 +539,79 @@ describe('Robot intelligence — §15.H tool failures report the actual state', 
     const s = sessions.create({ userId: 'u2', tenantId: 't1', locale: 'ar-EG', now: new Date(1_000) })
     const r = await runVoiceTurn(deps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: { text: 'مين في الانتظار؟', confidence: 0.95, isFinal: true, providerId: 'x', locale: 'ar-EG' }, actor })
     expect(r.error?.code).toBe('VOICE_AGENT_ERROR')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// §15.M — conversation continuity across patient clarification (the runtime
+// failure round): the pending INTENT must survive an identity clarification,
+// a bare name must never self-execute, and isolation/adversarial gates hold.
+// Every row replays a REAL multi-turn voice case through the REAL pipeline
+// + REAL agent (replayVoiceCase — the same harness as the voice goldens).
+// ---------------------------------------------------------------------------
+describe('Robot intelligence — §15.M continuity across patient clarification (real pipeline)', () => {
+  function vcase(caseId: string, turns: string[], over: Record<string, unknown> = {}) {
+    return {
+      caseId, domain: 'dental', language: 'ar' as const, title: 'continuity',
+      actorRole: 'DOCTOR', tenant: 'A' as const, locale: 'ar-EG' as const,
+      turns: turns.map((text, i) => ({ text, op: 'SPEAK' as const, confidence: 0.95, afterMs: 60 + i })),
+      expected: {},
+      ...over,
+    }
+  }
+
+  it('T1+T2: clarification asks WHO, then the name answer resumes the ORIGINAL intent (appointments, same day)', async () => {
+    const out = await replayVoiceCase(vcase('RI-CONT-1', [
+      'وريني مواعيد المريض النهاردة.',
+      'اسمه أحمد.',
+    ]) as never)
+    const [t1, t2] = out.observations
+    expect(t1!.agentStatus).toBe('CLARIFICATION_REQUIRED')
+    expect(t1!.display).toMatch(/المريض/) // asks which patient — no guessing
+    expect(t2!.agentStatus).toBe('COMPLETED')
+    expect(t2!.display).toMatch(/مواعيد/) // the ORIGINAL intent, not a generic overview
+    expect(t2!.display).toMatch(/ليوم/) // ...with the النهاردة constraint intact
+  })
+
+  it('T3: a follow-up on the pinned patient answers the question from context (last visit)', async () => {
+    const out = await replayVoiceCase(vcase('RI-CONT-2', [
+      'هات حالة أحمد.',
+      'آخر زيارة كانت امتى؟',
+    ]) as never)
+    const [t1, t2] = out.observations
+    expect(t1!.agentStatus).toBe('COMPLETED')
+    expect(t2!.agentStatus).toBe('COMPLETED')
+    expect(t2!.display).toMatch(/آخر زيارة مسجلة|مفيش زيارات/) // the ANSWER, never the identity line
+  })
+
+  it('session isolation: a NEW session never inherits the pin — there, last-visit asks WHO', async () => {
+    const out = await replayVoiceCase(vcase('RI-CONT-3', [
+      'هات حالة أحمد.',
+      'آخر زيارة كانت امتى؟',
+    ], { sessionIsolationProbe: true }) as never)
+    // same-shaped conversation in a FRESH case (fresh session, fresh store):
+    // turn 1 must resolve, and a fresh-session last-visit must ask for identity
+    const fresh = await replayVoiceCase(vcase('RI-CONT-3B', ['آخر زيارة كانت امتى؟']) as never)
+    expect(fresh.observations[0]!.display).not.toMatch(/آخر زيارة مسجلة/)
+    expect(fresh.observations[0]!.display).toMatch(/المريض/)
+    expect(out.observations[0]!.agentStatus).toBe('COMPLETED')
+  })
+
+  it('adversarial: an off-domain question never opens a pending patient task — a name answer stays refused', async () => {
+    const out = await replayVoiceCase(vcase('RI-CONT-4', [
+      'ما اسم أطول نهر في العالم؟',
+      'اسمه محمد النبي.',
+    ]) as never)
+    for (const o of out.observations) {
+      expect(o.taskType).toBe('OUT_OF_DOMAIN') // no patient task ever classified/executed
+      expect(o.display).toMatch(/^أنا أساعد/) // the WHOLE answer is the refusal
+    }
+  })
+
+  it('a bare patient name alone in a FRESH session never self-executes a patient query', async () => {
+    const out = await replayVoiceCase(vcase('RI-CONT-5', ['محمد النبي']) as never)
+    const o = out.observations[0]!
+    expect(o.taskType).toBe('OUT_OF_DOMAIN') // no patient query executed
+    expect(o.display).toMatch(/^أنا أساعد/) // refusal, not a lookup answer
   })
 })

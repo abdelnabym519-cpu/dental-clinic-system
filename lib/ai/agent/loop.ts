@@ -23,7 +23,7 @@ import { resolvePolicy } from '@/lib/ai/action-policy'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
-import { classifyAgentTask, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
+import { classifyAgentTask, extractCorrectedPatientName, extractPatientName, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
 import { nameContainsForm } from '@/lib/ai/entity/name-matching'
 import { detectInputLanguage } from '@/lib/ai/voice/language'
 import { buildPlan } from './planner'
@@ -191,6 +191,55 @@ function renderAttachmentToolFailure(error: string | null): string {
   return `Analysis could not be completed: ${msg}`
 }
 
+
+/**
+ * Conversational continuation — detect a PENDING patient task in the bounded
+ * conversation history and an identity supplied by the current turn.
+ *
+ * The previous user turn classified to a patient-dependent task whose
+ * identity was never resolved (the assistant asked for it) — the current
+ * turn provides the missing name ('اسمه محمد النبي', 'قصدي محمد النبي', a
+ * bare name) instead of a request of its own. Returns the PENDING message
+ * (its temporal constraints ride along — they are part of its text) and the
+ * name hint for server-verified resolution. Never invents a patient and
+ * never fires without a real pending task (a bare name in a fresh session
+ * stays a bare name).
+ */
+function resumePendingPatientTask(
+  request: { message: string; history?: { role: 'user' | 'assistant'; content: string }[]; patientName?: string | null },
+  now: Date,
+): { pendingMessage: string; nameHint: string } | null {
+  if (request.patientName) return null
+  const history = request.history ?? []
+  let lastUser: string | null = null
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i]!.role === 'user') {
+      lastUser = history[i]!.content
+      break
+    }
+  }
+  if (!lastUser || !lastUser.trim()) return null
+  const pending = classifyAgentTask({
+    message: lastUser,
+    hasPatientId: false,
+    patientNameHint: null,
+    patientToothFdi: null,
+    caseId: null,
+    studyId: null,
+    treatmentNo: null,
+    now,
+  })
+  const needsIdentity =
+    pending.task.patientInvolved &&
+    (pending.task.missingInfo ?? []).some((x) => /patient identity/i.test(x))
+  if (!needsIdentity) return null
+  // The current turn must SUPPLY an identity — by marker ('اسمه …'),
+  // correction ('قصدي …'), or a bare filtered name. Anything else is not a
+  // continuation.
+  const name = extractCorrectedPatientName(request.message) ?? extractPatientName(request.message)
+  if (!name) return null
+  return { pendingMessage: lastUser, nameHint: name }
+}
 
 /**
  * Robot language policy (§6/§7): every user-facing fallback, clarification
@@ -584,7 +633,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
 
   // ── UNDERSTAND (entities) + CLASSIFY (deterministic first) ─────────────
   const tClassify = deps.now()
-  const cls = classifyAgentTask({
+  let cls = classifyAgentTask({
     message: request.message,
     hasPatientId: !!request.patientId,
     patientNameHint: request.patientName ?? null,
@@ -594,6 +643,42 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     treatmentNo: request.treatmentNo ?? null,
     now,
   })
+
+  // ── Conversational continuation (pending patient task) ─────────────────
+  // A turn that only SUPPLIES the missing patient identity ('اسمه محمد
+  // النبي', 'قصدي محمد', a bare name) is not a standalone request: it
+  // completes the PENDING patient task from the previous turn. The pending
+  // task is re-derived deterministically from the bounded conversation
+  // history (the history IS the state — no parallel session store), and the
+  // identity supplied this turn becomes the name hint. Temporal constraints
+  // survive the clarification structurally: they live inside the pending
+  // message text ('مواعيد المريض النهاردة' → today), which is what gets
+  // re-classified. Gated THREE ways: (1) the standalone classification
+  // found no request at all (OUT_OF_DOMAIN/UNKNOWN) — a turn with its own
+  // intent is never hijacked; (2) a patient-dependent, identity-missing
+  // task actually exists in the history; (3) this turn yields a
+  // server-verifiable name hint. A bare name with NO pending task is never
+  // promoted into a patient query.
+  let continuationResumed = false
+  let resumedPending: { pendingMessage: string; nameHint: string } | null = null
+  if ((cls.task.taskType === 'OUT_OF_DOMAIN' || cls.task.taskType === 'UNKNOWN') && !request.patientId) {
+    const resumed = resumePendingPatientTask(request, now)
+    if (resumed) {
+      resumedPending = resumed
+      cls = classifyAgentTask({
+        message: resumed.pendingMessage,
+        hasPatientId: false,
+        patientNameHint: resumed.nameHint,
+        patientToothFdi: null,
+        caseId: null,
+        studyId: null,
+        treatmentNo: null,
+        now,
+      })
+      continuationResumed = true
+      state.warnings.push('continuation: identity supplied this turn resumed the pending patient task from the conversation history')
+    }
+  }
   let task: AgentTask = cls.task
 
   // LLM fallback ONLY for in-domain UNKNOWN (enum-constrained output).
@@ -839,6 +924,11 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       'Tell me the patient’s name or ID so I can continue — I never guess patients.',
     ))
   }
+
+  // The message carrying the task's INTENT: the request itself, or the
+  // pending task's message when this turn only completed it (its temporal
+  // constraints live there — 'مواعيد المريض النهاردة' stays 'today').
+  const intentMessage = continuationResumed && resumedPending ? resumedPending.pendingMessage : request.message
 
   // ── RETRIEVE (smallest task-specific profile — never FULL_360 by default) ─
   if (task.contextProfile && patientRequired) {
@@ -1357,11 +1447,17 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
           `آخر أشعة مسجلة: ${latest.studyType || latest.modality} بتاريخ ${String(latest.studyDate).slice(0, 10)}` + (aiCount > 0 ? ` — وعليها ${aiCount} تحليل AI (MODEL_FINDING، محتاج مراجعة دكتور).` : '.'),
           `Latest recorded imaging: ${latest.studyType || latest.modality} on ${String(latest.studyDate).slice(0, 10)}` + (aiCount > 0 ? ` — with ${aiCount} AI analysis (MODEL_FINDING, pending doctor review).` : '.'))
       }
-    } else if (lastVisitIntent && task.taskType !== 'MULTI_STEP' && apptSec?.status === 'included') {
+    } else if (lastVisitIntent && task.taskType !== 'MULTI_STEP' && apptSec && apptSec.status !== 'excluded') {
+      // The section is 'missing' when the patient has NO appointment rows —
+      // that is an honest empty state, never a reason to fall back to the
+      // generic overview (the doctor asked ONE question: when was the last
+      // visit?).
       const nowIso = deps.now().toISOString()
-      const past = [...(apptSec.data?.recent ?? [])]
-        .filter((a: any) => a.scheduledAt && a.scheduledAt <= nowIso)
-        .sort((a: any, b: any) => String(b.scheduledAt).localeCompare(String(a.scheduledAt)))
+      const past = apptSec.status === 'included'
+        ? [...(apptSec.data?.recent ?? [])]
+            .filter((a: any) => a.scheduledAt && a.scheduledAt <= nowIso)
+            .sort((a: any, b: any) => String(b.scheduledAt).localeCompare(String(a.scheduledAt)))
+        : []
       answer = past[0]
         ? byLang(ansLang,
             `آخر زيارة مسجلة: ${String(past[0].scheduledAt).slice(0, 16).replace('T', ' ')}.`,
@@ -1369,6 +1465,44 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
         : byLang(ansLang,
             'مفيش زيارات سابقة مسجلة للمريض ده في النظام.',
             'No previous visits are recorded for this patient.')
+    } else if (
+      task.taskType !== 'MULTI_STEP' && rt.patientId &&
+      /مواعيد|معاد|\bappointments?\b/i.test(intentMessage) &&
+      apptSec && apptSec.status !== 'excluded'
+    ) {
+      // Patient-scoped appointment-list intent ('مواعيد المريض النهاردة' —
+      // including its resumed form): answer with THE LIST from the canonical
+      // context, filtered to the intent's day (deterministic temporal layer
+      // — never an LLM-invented date). Empty → honest empty state.
+      const t0 = deps.now()
+      const wantsToday = /النهارده|النهاردة|اليوم|\btoday\b/i.test(intentMessage)
+      const wantsTomorrow = /بكرة|بكره|\btomorrow\b/i.test(intentMessage)
+      const dayIso = wantsToday || wantsTomorrow
+        ? new Date(t0.getTime() + (wantsTomorrow ? 86400000 : 0)).toISOString().slice(0, 10)
+        : null
+      const rows: any[] = apptSec.status === 'included'
+        ? [...(apptSec.data?.upcoming ?? []), ...(apptSec.data?.recent ?? []), ...(apptSec.data?.cancelled ?? []), ...(apptSec.data?.missed ?? [])]
+        : []
+      const dayRows = dayIso ? rows.filter((a: any) => String(a.scheduledAt ?? '').slice(0, 10) === dayIso) : rows
+      const name = (state.context as any)?.meta?.patient?.name ?? ''
+      if (dayRows.length === 0) {
+        answer = byLang(ansLang,
+          `مفيش مواعيد${dayIso ? ` ليوم ${dayIso}` : ''} مسجلة للمريض ${name} في النظام.`,
+          `No appointments${dayIso ? ` on ${dayIso}` : ''} are recorded for ${name}.`)
+      } else {
+        const lines = dayRows
+          .sort((a: any, b: any) => String(a.scheduledAt ?? '').localeCompare(String(b.scheduledAt ?? '')))
+          .slice(0, 10)
+          .map((a: any) => {
+            const when = String(a.scheduledAt ?? '').slice(0, 16).replace('T', ' ')
+            const no = a.appointmentNo ? ` ${a.appointmentNo}` : ''
+            const st = a.status ? ` (${a.status})` : ''
+            return `• ${when} —${no}${st}`
+          })
+        answer = byLang(ansLang,
+          `مواعيد ${name}${dayIso ? ` ليوم ${dayIso}` : ''}:\n${lines.join('\n')}`,
+          `Appointments for ${name}${dayIso ? ` on ${dayIso}` : ''}:\n${lines.join('\n')}`)
+      }
     } else if (task.taskType === 'INFORMATIONAL') {
       answer = summarizeContextAnswer(state.context, task, ansLang)
     } else {
@@ -1385,7 +1519,10 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
               `[TOOL CONTRACT] Context below is server-validated; a section marked missing means no data.\n` +
               `${state.contextText}\n` +
               conversationBlock(request.history) +
-              `USER QUESTION (untrusted data): ${request.message}`,
+              // On a resumed continuation the QUESTION is the pending intent
+              // ('مواعيد المريض النهاردة') — the current turn only supplied
+              // the identity ('اسمه أحمد') and must not become the topic.
+              `USER QUESTION (untrusted data): ${intentMessage}`,
           },
         ], 'agent_synthesis')
         state.modelCalls += 1

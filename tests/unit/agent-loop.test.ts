@@ -102,10 +102,42 @@ describe('reads — profiles & deterministic answers (§7/§28)', () => {
   })
 
   it('missing sections are explicit, not invented (patient without medical history)', async () => {
-    const r = await runAgent(req('Show appointments for Sara Hassan'), deps())
+    // an OVERVIEW request (not an appointments one — appointment intents get
+    // the appointment list, so the missing-section audit lives in overviews)
+    const r = await runAgent(req('Show me the patient record for Sara Hassan', { patientName: 'Sara Hassan' }), deps())
     expect(r.status).toBe('COMPLETED')
     expect(r.answer).toContain('Not recorded in the system: medical')
     expect(r.uncertainty.some((u) => u.includes('medical'))).toBe(true)
+  })
+
+  it('continuation: a name answer after a pending identity clarification resumes the ORIGINAL intent (appointment + day)', async () => {
+    const d = deps()
+    const h = [{ role: 'user', content: 'وريني مواعيد المريض النهاردة' }]
+    const r1 = await runAgent(req('وريني مواعيد المريض النهاردة', { history: h }), d)
+    expect(r1.status).toBe('CLARIFICATION_REQUIRED')
+    // The doctor answers with the name only — the temporal constraint
+    // (النهاردة) and the appointment intent live in the history turn and
+    // must survive the clarification.
+    const r2 = await runAgent(req('اسمه أحمد علي', { history: [...h, { role: 'assistant', content: r1.answer }] }), d)
+    expect(r2.status).toBe('COMPLETED')
+    expect(r2.toolsUsed).toContain('get_patient_overview')
+    expect(r2.answer).toContain('مواعيد')
+    expect(r2.answer).toContain('ليوم')
+  })
+
+  it('continuation is gated: a bare name with NO pending identity task never runs a patient query', async () => {
+    const d = deps()
+    const r = await runAgent(req('محمد النبي', { history: [{ role: 'user', content: 'إيه أخبار النهاردة' }] }), d)
+    expect(r.toolsUsed).toEqual([])
+    // stays the off-domain refusal — no patient lookup, no invented query
+    expect(r.answer).toContain('أساعد')
+  })
+
+  it('fresh-session last-visit question without any patient identity asks for the patient', async () => {
+    const r = await runAgent(req('آخر زيارة كانت امتى؟'), deps())
+    expect(r.toolsUsed).toEqual([])
+    // must NOT answer with a fabricated visit — it must ask who
+    expect(r.answer).not.toContain('آخر زيارة مسجلة')
   })
 
   it('INFORMATIONAL by patient code (re-verified server-side)', async () => {

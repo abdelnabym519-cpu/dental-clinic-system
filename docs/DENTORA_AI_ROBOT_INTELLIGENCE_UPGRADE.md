@@ -136,3 +136,36 @@ Prior-phase residual "deterministic summaries echo an injected allergy string ve
 - Browser/E2E and build gates remain ENVIRONMENT-BLOCKED exactly as in Phase 12 §31.
 - Clinical accuracy remains NOT MEASURED (no validated datasets exist).
 - The canonical Arabic greeting remains FROZEN verbatim (asserted in-suite).
+
+## 12. Conversation-continuity round (2026-10-02) — the robot forgot the question it asked
+
+**User-reported runtime failure (exact transcript, real browser on the user's healthy local runtime):**
+
+1. `وريني مواعيد المريض النهاردة.` → the robot asked-then-stalled (`مقدرتش ألاقي المريض ده…`) — it never asked WHICH patient, and the request died.
+2. `اسمه محمد النبي.` → answered with the off-domain refusal (`أنا أساعد في شؤون الأسنان والعيادة فقط…`).
+3. `آخر زيارة كانت امتى؟` → refused again instead of answering from the pinned patient.
+
+**Root cause (reproduced in-sandbox first, on the REAL `runVoiceTurn → runAgent` pipeline — 3 independent defects):**
+
+1. **Temporal-hint poisoning** (`lib/ai/voice/entity-resolution.ts`): the hint extractor captured `النهاردة` (a DATE) as the patient's NAME → bogus `NOT_FOUND` probe → the identity clarification fired with the wrong text and the real intent was never recorded as pending.
+2. **Singular patient reference invisible to the classifier** (`lib/ai/agent/classifier.ts`): `مواعيد المريض النهاردة` matched no patient scoping signal — `المريض` appeared only inside name-marker/first-person patterns, so the request was misrouted clinic-level; `اسمه/اسمها` ("his/her name is …") was not an identity marker at all.
+3. **No continuation contract** (`lib/ai/agent/loop.ts`): when the robot asked for a patient identity, the pending INTENT existed nowhere. The next turn (`اسمه محمد النبي.`) classified standalone → OUT_OF_DOMAIN refusal. Nothing derived the pending task from the bounded conversation history.
+4. **Answer-shaping gap**: even once the intent resumed, an appointment question fell through to the PATIENT_OVERVIEW identity summary; a last-visit question on a patient with an EMPTY appointments section (`missing` status) fell to the same overview instead of the honest "no visits recorded" answer.
+
+**Repair (architectural, smallest-surface — no phrase hardcoding, no `محمد النبي`/`آخر زيارة` special cases):**
+
+1. `AR_NON_NAME` += temporal words (`النهاردة/النهارده/اليوم/بكرة/بكده/امبارح/امس`) — date constraints are never probed as names.
+2. Classifier: `اسمه|اسمها` join the explicit patient markers; a SINGULAR definite reference (`المريض/المريضة` with Arabic-letter lookarounds — the plural `المرضى` structurally cannot match) marks the request patient-dependent, so the robot asks WHO instead of answering for the whole clinic.
+3. NEW `resumePendingPatientTask()` continuation contract in the agent loop: the LAST user turn from the bounded history is re-classified; if it was patient-dependent with `patient identity` in `missingInfo`, and the current turn yields a server-verifiable name hint (`extractCorrectedPatientName ?? extractPatientName` — markers, corrections, or a filtered bare name), the pending message is re-classified with that hint. Triple-gated: only when the standalone turn has NO intent of its own (OUT_OF_DOMAIN/UNKNOWN) and no patientId. A bare name with NO pending task is never promoted; an off-domain turn never opens a pending task. `intentMessage` (= the pending message on a resumed turn) drives retrieval intent, deterministic answer branches, and the LLM synthesis question line — temporal constraints survive because they live inside the pending message text itself.
+4. Honest answer shaping: last-visit answers from a `missing` (empty) appointments section with "مفيش زيارات سابقة مسجلة…"; a patient-scoped appointment intent answers with THE day-filtered LIST from the canonical context (deterministic temporal layer — never an LLM-invented date), or the honest empty state.
+
+**Verification (all real pipeline, no mocked agents):**
+
+- Exact transcript reproduced end-to-end on the REAL pipeline: T1 → `CLARIFICATION_REQUIRED` asking for the patient; T2 → `COMPLETED` "مواعيد … ليوم <today>" (day-filtered list); T3 → "آخر زيارة مسجلة: <date>" (or honest empty state).
+- New tests: `§15.M` (5 real-pipeline rows in `tests/evaluation/robot-intelligence-eval.test.ts` via `replayVoiceCase`), 4 deterministic continuation/gating rows in `tests/unit/agent-loop.test.ts` (resume-with-day, bare-name gate, fresh-session last-visit asks identity).
+- Acceptance driver extended with **Group M** (5 rows): `ai-validation/robot-runtime/validate.mts` → **ROWS=49 PASS=49 FAIL=0** (`ai-validation/robot-runtime/RESULTS.md`).
+- Full suite **6124 passed / 12 skipped / 0 failed** (baseline 6116/12/0 preserved-or-improved); tsc **504** (baseline parity, no new errors); eslint **0 errors** on changed files.
+
+**Isolation/adversarial guarantees (asserted, not claimed):** session B never inherits a pin (fresh-session last-visit asks WHO); `وريني مواعيد المرضى النهارده` stays clinic-level (Group A row); bare `محمد النبي` in a fresh session → OUT_OF_DOMAIN refusal, NO patient pin; `ما اسم أطول نهر في العالم؟` → refused, and a following name answer stays refused (no pending task was opened); correction chains (`هات أحمد` → `لا، قصدي محمد` → `آخر أشعة ليه؟`) still pass (Group E).
+
+**Final status: FAIL — RUNTIME VALIDATION BLOCKED** — every code-path gate passes in-sandbox (real pipeline over the safe dataset), but the REAL-browser + REAL-MySQL doctor conversation cannot execute in this sandbox (no MySQL server, no browser binaries — environment-blocked, labeled honestly per §11). User-side check (local runtime already healthy after the migration repair, ~2 minutes): `npm run dev` → doctor login → speak/type exactly: `وريني مواعيد المريض النهاردة.` → expect "which patient" → answer `اسمه محمد النبي.` → expect محمد النبي's TODAY appointment list → `آخر زيارة كانت امتى؟` → expect the last recorded visit (or "no previous visits recorded").

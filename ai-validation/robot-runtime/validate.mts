@@ -296,6 +296,52 @@ async function main() {
       chain[0].pinned === PAT_A1 && chain[1].pinned === PAT_A1 && chain[1].status === 'COMPLETED')
   }
 
+  // ── Group M — conversation continuity across patient clarification ──────
+  // The reported runtime failure: T1 asks-then-stalls, the name answer was
+  // refused off-domain, follow-ups lost the pinned context. The pending
+  // INTENT must survive the identity clarification (with its temporal
+  // constraint), bare names must never self-execute, and off-domain turns
+  // must never open a pending patient task.
+  {
+    const dM = await realDeps()
+    // M1 — clarify → name answer resumes the ORIGINAL intent (day intact)
+    const m1 = await voiceChain(dM, ['وريني مواعيد المريض النهاردة.', 'اسمه أحمد.'])
+    row('M', 'M1', m1.map((c) => c.text).join(' → '), 'T1 asks which patient; T2 COMPLETES the ORIGINAL appointment intent with النهاردة intact',
+      `statuses=${JSON.stringify(m1.map((c) => c.status))} pinned=${m1[1].pinned}`,
+      m1[0].status === 'CLARIFICATION_REQUIRED' && m1[1].status === 'COMPLETED' && m1[1].pinned != null)
+    // M2 — temporal constraint survived: the answer is the DAY-filtered list
+    {
+      const vdeps = voiceDeps(dM)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد المريض النهاردة.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسمه أحمد.'), actor })
+      const ans = t2.displayText ?? ''
+      const dayScoped = /مواعيد.+ليوم|ليوم.+مواعيد/.test(ans) || /مفيش مواعيد.*ليوم|مواعيد.*:\n•/.test(ans)
+      row('M', 'M2', 'answer text of T2', 'appointment answer is DAY-scoped (النهاردة survived), not a generic overview',
+        `ans="${cut(ans, 140)}"`, dayScoped)
+    }
+    // M3 — follow-up on the pinned patient answers the question from context
+    const m3 = await voiceChain(dM, ['هات حالة أحمد.', 'آخر زيارة كانت امتى؟'])
+    row('M', 'M3', m3.map((c) => c.text).join(' → '), 'last-visit question answered FROM the pinned context (never the identity line)',
+      `statuses=${JSON.stringify(m3.map((c) => c.status))}`,
+      m3[1].status === 'COMPLETED' && m3[0].pinned != null && m3[1].pinned === m3[0].pinned)
+    // M4 — bare name in a FRESH session never self-executes a patient query
+    {
+      const vdeps = voiceDeps(dM)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      const r = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('محمد النبي'), actor })
+      const after = vdeps.sessions.get(s.voiceSessionId, actor.userId, actor.tenantId)
+      row('M', 'M4', 'محمد النبي (fresh session)', 'off-domain refusal; NO patient pin created',
+        `taskType=${r.taskType} pinned=${after?.patientScope?.patientId ?? null}`,
+        r.taskType === 'OUT_OF_DOMAIN' && (after?.patientScope?.patientId ?? null) === null)
+    }
+    // M5 — an off-domain turn never opens a pending task: name answer stays refused
+    const m5 = await voiceChain(dM, ['ما اسم أطول نهر في العالم؟', 'اسمه محمد النبي.'])
+    row('M', 'M5', m5.map((c) => c.text).join(' → '), 'both turns refused — the off-domain question opened NO pending patient task',
+      `taskTypes=${JSON.stringify(m5.map((c) => c.taskType))}`,
+      m5[0].taskType === 'OUT_OF_DOMAIN' && m5[1].taskType === 'OUT_OF_DOMAIN')
+  }
+
   // ── Report ─────────────────────────────────────────────────────────────
   const failed = ROWS.filter((r) => !r.pass)
   let md = '# DenToRa Robot — Runtime Validation Results\n\n'

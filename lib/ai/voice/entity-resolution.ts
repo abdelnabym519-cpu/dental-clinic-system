@@ -180,6 +180,11 @@ function cleanHintToken(t: string | null | undefined): string | null {
 const AR_NON_NAME = new Set([
   'عنده', 'عندها', 'عندهم', 'عند', 'في', 'من', 'الي', 'الى',
   'ده', 'دي', 'اللي', 'مع', 'عن', 'الذي', 'التي', 'لا', 'ما',
+  // temporal words directly after 'المريض' are DATE constraints, not the
+  // patient's name ('مواعيد المريض النهاردة' = the patient's appointments
+  // TODAY — probing 'النهاردة' as a name produced a bogus NOT_FOUND that
+  // interrupted the request before the agent could ask for the identity).
+  'النهاردة', 'النهارده', 'اليوم', 'بكرة', 'بكده', 'امبارح', 'امس',
 ])
 
 export function extractPatientNameHint(text: string): PatientNameHint | null {
