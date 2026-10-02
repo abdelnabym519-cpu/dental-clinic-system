@@ -185,6 +185,9 @@ const AR_NON_NAME = new Set([
   // TODAY — probing 'النهاردة' as a name produced a bogus NOT_FOUND that
   // interrupted the request before the agent could ask for the identity).
   'النهاردة', 'النهارده', 'اليوم', 'بكرة', 'بكده', 'امبارح', 'امس',
+  // possessive pronouns + identity-clause scaffolding name a RELATION,
+  // never a patient ('المواعيد بتاعه' = his appointments).
+  'بتاعه', 'بتاعها', 'بتاعهم', 'بتاعتها', 'اللي', 'الذي', 'التي', 'اسمه', 'اسمها', 'اسم', 'الاسم',
 ])
 
 export function extractPatientNameHint(text: string): PatientNameHint | null {

@@ -60,6 +60,40 @@ const AR_TO_LATIN: Record<string, string[]> = {
   'عبد الله': ['abdallah', 'abdullah'],
 }
 
+/**
+ * Bounded Arabic SURNAME renderings used in Egyptian records (the spoken
+ * family name often reaches the record in Latin). Same class as the
+ * first-name dictionary — bounded renderings, never open transliteration;
+ * the DB still decides, uniqueness and ambiguity rules unchanged.
+ */
+const AR_SURNAME_TO_LATIN: Record<string, string[]> = {
+  'النبي': ['alnaby', 'alnabi', 'elnaby', 'elnabi', 'naby', 'nabi'],
+  'سعيد': ['said', 'saeed', 'sayed', 'saeed'],
+  'سالم': ['salem', 'salim'],
+  'حسن': ['hassan', 'hasan', 'hassen'],
+  'حسين': ['hussein', 'hussien', 'hussin'],
+  'شعبان': ['shaaban', 'shaban', 'shaaban'],
+  'عبد الله': ['abdallah', 'abdullah', 'abdalla'],
+  'فتحي': ['fathy', 'fathi'],
+  'إبراهيم': ['ibrahim', 'ibrahim'],
+  'مصطفى': ['mostafa', 'mustafa', 'moustafa'],
+  'السيد': ['elsayed', 'elsaid', 'elsyed', 'alsayed'],
+  'محمد': ['mohamed', 'mohammed', 'muhammad', 'mohamad'],
+  'أحمد': ['ahmed', 'ahmad'],
+  'علي': ['ali', 'aly'],
+  'حسان': ['hassan', 'hasan'],
+  'زكي': ['zaki'],
+  'فتحى': ['fathy', 'fathi'],
+  'رمضان': ['ramadan', 'ramadан'.replace('ан', 'an')],
+  'طلعت': ['talat', 'talaat'],
+  'صفوت': ['safwat', 'safouat'],
+  'سليمان': ['soliman', 'suleiman', 'suliman'],
+  'عوض': ['awad', 'ewida'],
+  'الشريف': ['elsherif', 'alsherif', 'sherif'],
+  'الديب': ['eldeeb', 'eldeib', 'deeb'],
+  'غالي': ['ghaly', 'ghali'],
+}
+
 export interface NameMatchForms {
   /** Original hint as spoken/typed. */
   hint: string
@@ -75,15 +109,46 @@ export interface NameMatchForms {
 export function latinFormsFor(hint: string | null | undefined): string[] {
   if (!hint) return []
   const key = hint.trim().replace(/\s+/g, ' ')
-  return AR_TO_LATIN[key] ?? AR_TO_LATIN[key.toLowerCase()] ?? []
+  return AR_TO_LATIN[key] ?? AR_TO_LATIN[key.toLowerCase()] ?? AR_SURNAME_TO_LATIN[key] ?? AR_SURNAME_TO_LATIN[key.toLowerCase()] ?? []
+}
+
+/** Hamza/ta-marbuta/alef-maksura folding so 'أحمد'/'احمد' compare equal. */
+function foldAr(w: string): string {
+  return w.replace(/[\u0623\u0625\u0622]/g, '\u0627').replace(/\u0629/g, '\u0647').replace(/\u0649/g, '\u064A')
 }
 
 /**
- * True when a stored (lowercased) full name contains the Arabic hint OR any
- * of its known Latin renderings. Both sides must already be lowercase.
+ * True when a stored (lowercased) full name matches the spoken/typed hint.
+ * Both sides must already be lowercase.
+ *
+ * Single-word hints: substring OR any bounded Latin rendering ('أحمد' →
+ * 'ahmed').
+ *
+ * MULTI-word hints are a FULL spoken name: EVERY spoken word must be
+ * satisfied by some stored word (folded exact/substring, or a bounded
+ * rendering). A partial overlap is a DIFFERENT person — two people share
+ * single name parts ('محمد علي' must never ride 'محمد النبي' or 'Ahmed
+ * Ali' on one shared word). A non-match stays a recoverable NOT_FOUND
+ * clarification; the DB decides, never a guess.
  */
 export function nameContainsForm(storedLower: string, hintLower: string): boolean {
-  if (storedLower.includes(hintLower)) return true
-  const forms = [hintLower, ...hintLower.split(/\s+/)]
-  return forms.some((h) => latinFormsFor(h).some((f) => storedLower.includes(f)))
+  if (storedLower.includes(hintLower) || foldAr(storedLower).includes(foldAr(hintLower))) return true
+  const hintWords = hintLower.split(/\s+/).filter(Boolean)
+  if (hintWords.length <= 1) {
+    return latinFormsFor(hintLower).some((f) => storedLower.includes(f))
+  }
+  const storedWords = foldAr(storedLower).split(/\s+/).filter(Boolean)
+  const wordSatisfied = (w: string): boolean => {
+    const fw = foldAr(w)
+    if (storedWords.some((sw) => sw === fw || (sw.includes(fw) && fw.length >= 3) || (fw.includes(sw) && sw.length >= 3))) return true
+    return latinFormsFor(w).some((f) => storedWords.some((sw) => sw === f || sw.includes(f)))
+  }
+  // 'عبد الله …' — the first TWO spoken words may be ONE stored first name.
+  if (hintWords.length >= 2) {
+    const compound = hintWords.slice(0, 2).join(' ')
+    if (latinFormsFor(compound)?.length && storedLower.includes(latinFormsFor(compound)[0]!)) {
+      return hintWords.slice(2).every(wordSatisfied)
+    }
+  }
+  return hintWords.every(wordSatisfied)
 }

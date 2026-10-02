@@ -23,7 +23,7 @@ import { resolvePolicy } from '@/lib/ai/action-policy'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
-import { classifyAgentTask, extractCorrectedPatientName, extractPatientName, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
+import { classifyAgentTask, extractBareNameCandidate, extractCorrectedPatientName, extractPatientName, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
 import { nameContainsForm } from '@/lib/ai/entity/name-matching'
 import { detectInputLanguage } from '@/lib/ai/voice/language'
 import { buildPlan } from './planner'
@@ -210,35 +210,41 @@ function resumePendingPatientTask(
   now: Date,
 ): { pendingMessage: string; nameHint: string } | null {
   if (request.patientName) return null
-  const history = request.history ?? []
-  let lastUser: string | null = null
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i]!.role === 'user') {
-      lastUser = history[i]!.content
-      break
-    }
-  }
-  if (!lastUser || !lastUser.trim()) return null
-  const pending = classifyAgentTask({
-    message: lastUser,
-    hasPatientId: false,
-    patientNameHint: null,
-    patientToothFdi: null,
-    caseId: null,
-    studyId: null,
-    treatmentNo: null,
-    now,
-  })
-  const needsIdentity =
-    pending.task.patientInvolved &&
-    (pending.task.missingInfo ?? []).some((x) => /patient identity/i.test(x))
-  if (!needsIdentity) return null
-  // The current turn must SUPPLY an identity — by marker ('اسمه …'),
-  // correction ('قصدي …'), or a bare filtered name. Anything else is not a
-  // continuation.
-  const name = extractCorrectedPatientName(request.message) ?? extractPatientName(request.message)
+  // The current turn must SUPPLY an identity — by correction cue ('قصدي …',
+  // 'لا، …'), a patient marker ('المريض …', 'اسمه …', 'اسم …'), or a bare
+  // filtered name. Anything else is not a continuation.
+  const name = extractCorrectedPatientName(request.message) ?? extractPatientName(request.message) ?? extractBareNameCandidate(request.message)
   if (!name) return null
-  return { pendingMessage: lastUser, nameHint: name }
+  // Find the PENDING patient task: walk the bounded history NEWEST→OLDEST.
+  // Identity-only turns ('اسم محمد النبي', 'محمد النبي') classify
+  // OUT_OF_DOMAIN and are SKIPPED, so a correction chain still finds the
+  // original intent turn. The first turn with a real intent decides: it
+  // must be patient-dependent with its identity still unresolved (missing
+  // OR previously attempted and NOT_FOUND — the classifier marks identity
+  // unresolved whenever no patientId is bound). A completed/other task
+  // blocks the continuation.
+  const history = request.history ?? []
+  for (let i = history.length - 1; i >= 0; i--) {
+    const turn = history[i]
+    if (!turn || turn.role !== 'user' || !turn.content.trim()) continue
+    const pending = classifyAgentTask({
+      message: turn.content,
+      hasPatientId: false,
+      patientNameHint: null,
+      patientToothFdi: null,
+      caseId: null,
+      studyId: null,
+      treatmentNo: null,
+      now,
+    })
+    if (pending.task.taskType === 'OUT_OF_DOMAIN' || pending.task.taskType === 'UNKNOWN') continue
+    const needsIdentity =
+      pending.task.patientInvolved &&
+      (pending.task.missingInfo ?? []).some((x) => /patient identity/i.test(x))
+    if (!needsIdentity) return null
+    return { pendingMessage: turn.content, nameHint: name }
+  }
+  return null
 }
 
 /**
@@ -332,9 +338,12 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
     }
     case 'appointments': {
       if (!d.appointments.length) {
+        // No concrete date resolved → say NOTHING date-specific (never a
+        // placeholder like 'يوم اليوم' — an empty answer must carry the
+        // ACTUAL resolved date or no date claim at all).
         return lang === 'ar'
-          ? `مفيش مواعيد يوم ${d.date ?? 'اليوم'}.`
-          : `No appointments on ${d.date ?? 'the requested day'}.`
+          ? d.date ? `مفيش مواعيد يوم ${d.date}.` : 'مفيش مواعيد مسجلة في النطاق المطلوب.'
+          : d.date ? `No appointments on ${d.date}.` : 'No appointments recorded for the requested range.'
       }
       const rows = d.appointments.slice(0, 8).map((a: any) =>
         lang === 'ar'
@@ -342,8 +351,8 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
           : `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`,
       )
       return lang === 'ar'
-        ? `${d.count} موعد يوم ${d.date ?? 'اليوم'}: ` + rows.join('؛ ')
-        : `${d.count} appointment(s) on ${d.date ?? 'the requested day'}: ` + rows.join('; ')
+        ? `${d.count} موعد${d.date ? ` يوم ${d.date}` : ''}: ` + rows.join('؛ ')
+        : `${d.count} appointment(s)${d.date ? ` on ${d.date}` : ''}: ` + rows.join('; ')
     }
     case 'queue': {
       if (!d.queue.length) {
@@ -362,8 +371,8 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       }
       const rows = d.appointments.slice(0, 10).map((a: any) => `${a.appointmentNo} ${a.scheduledAt.slice(11, 16)} ${a.patientName ?? '?'}`)
       return lang === 'ar'
-        ? `${d.count} موعد يوم ${d.date ?? 'اليوم'}: ` + rows.join('؛ ')
-        : `${d.count} appointment(s) on ${d.date ?? 'today'}: ` + rows.join('; ')
+        ? `${d.count} موعد${d.date ? ` يوم ${d.date}` : ''}: ` + rows.join('؛ ')
+        : `${d.count} appointment(s)${d.date ? ` on ${d.date}` : ''}: ` + rows.join('; ')
     }
     case 'followups': {
       if (!d.followups.length) {
@@ -661,7 +670,16 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   // promoted into a patient query.
   let continuationResumed = false
   let resumedPending: { pendingMessage: string; nameHint: string } | null = null
-  if ((cls.task.taskType === 'OUT_OF_DOMAIN' || cls.task.taskType === 'UNKNOWN') && !request.patientId) {
+  // Correction cues ('قصدي …', 'لا، …') also continue a pending task: a
+  // correction turn carries no intent of its own, only a replacement
+  // identity (the pipeline passes it explicitly only when a pin existed —
+  // after a FAILED lookup there is no pin, so the pending task from the
+  // history is the only intent the turn can belong to).
+  const standaloneIdentityTurn =
+    cls.task.taskType === 'OUT_OF_DOMAIN' ||
+    cls.task.taskType === 'UNKNOWN' ||
+    (!request.patientName && extractCorrectedPatientName(request.message) !== null)
+  if (standaloneIdentityTurn && !request.patientId) {
     const resumed = resumePendingPatientTask(request, now)
     if (resumed) {
       resumedPending = resumed
@@ -1476,9 +1494,12 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       // — never an LLM-invented date). Empty → honest empty state.
       const t0 = deps.now()
       const wantsToday = /النهارده|النهاردة|اليوم|\btoday\b/i.test(intentMessage)
-      const wantsTomorrow = /بكرة|بكره|\btomorrow\b/i.test(intentMessage)
-      const dayIso = wantsToday || wantsTomorrow
-        ? new Date(t0.getTime() + (wantsTomorrow ? 86400000 : 0)).toISOString().slice(0, 10)
+      const wantsTomorrow = /بكرة|بكره|\btomorrow\b/i.test(intentMessage) && !/بعد\s+بكرة|بعد\s+بكره/.test(intentMessage)
+      const wantsDayAfter = /بعد\s+بكرة|بعد\s+بكره/.test(intentMessage)
+      const wantsYesterday = /امبارح|امس|أمس|\byesterday\b/i.test(intentMessage)
+      const dayOffset = wantsDayAfter ? 2 * 86400000 : wantsYesterday ? -86400000 : wantsTomorrow ? 86400000 : 0
+      const dayIso = wantsToday || wantsTomorrow || wantsDayAfter || wantsYesterday
+        ? new Date(t0.getTime() + dayOffset).toISOString().slice(0, 10)
         : null
       const rows: any[] = apptSec.status === 'included'
         ? [...(apptSec.data?.upcoming ?? []), ...(apptSec.data?.recent ?? []), ...(apptSec.data?.cancelled ?? []), ...(apptSec.data?.missed ?? [])]

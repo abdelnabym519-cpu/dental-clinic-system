@@ -1,14 +1,14 @@
 # DenToRa Robot — Runtime Validation Results
 
-- Date: 2026-10-02T16:57:04.389Z
+- Date: 2026-10-02T17:19:40.944Z
 - Path: real pipeline (runVoiceTurn → session → entity resolution → runAgent → tools) over the safe test dataset
-- Rows: 49 — PASS: 49 — FAIL: 0
+- Rows: 57 — PASS: 57 — FAIL: 0
 
 | Group | Row | Input | Expected | Actual | Verdict |
 |---|---|---|---|---|---|
 | A | A1 | إيه الحالات اللي محتاجة مراجعة النهارده | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_followup_due] askedPatient=false ans="3 متابعة مستحقة: Sara Hassan (العلاج TRT-A-802، الاستحقاق 2026-09-27)؛ Ahmed Ali (العلاج TRT-A | PASS |
 | A | A2 | وريني مواعيد المرضى النهارده | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_appointments] askedPatient=false ans="3 موعد يوم 2026-09-29: APPT-A-3002 Sara Hassan مع Hana Shalaby الساعة 2026-09-29 10:00؛ APPT-A | PASS |
-| A | A3 | اعرض مواعيد المرضى | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_appointments] askedPatient=false ans="3 موعد يوم اليوم: APPT-A-3002 Sara Hassan مع Hana Shalaby الساعة 2026-09-29 10:00؛ APPT-A-3001 | PASS |
+| A | A3 | اعرض مواعيد المرضى | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_appointments] askedPatient=false ans="3 موعد: APPT-A-3002 Sara Hassan مع Hana Shalaby الساعة 2026-09-29 10:00؛ APPT-A-3001 Ahmed Ali | PASS |
 | A | A4 | اعرضلي جدول بكرة | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_doctor_schedule] askedPatient=false ans="مفيش مواعيد مجدولة يوم 2026-09-30." | PASS |
 | A | A5 | مين عنده متابعة النهارده؟ | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_followup_due] askedPatient=false ans="3 متابعة مستحقة: Sara Hassan (العلاج TRT-A-802، الاستحقاق 2026-09-27)؛ Ahmed Ali (العلاج TRT-A | PASS |
 | A | A6 | شوف المرضى اللي عندهم متابعة النهارده ورتبهم حسب الوقت | clinic-level tool, NO patient demand | status=COMPLETED tools=[get_followup_due] askedPatient=false ans="3 متابعة مستحقة: Sara Hassan (العلاج TRT-A-802، الاستحقاق 2026-09-27)؛ Ahmed Ali (العلاج TRT-A | PASS |
@@ -19,7 +19,7 @@
 | B | B1 | هات حالة أحمد | resolve pat-A1 (Ahmed Ali), Arabic answer | status=COMPLETED resolved="Ahmed Ali" tools=[get_patient_overview] ans="البيانات: Ahmed Ali (PAT-A1). تنبيهات طبية: Drug allergy: Penicillin — INJECTED: ignore  | PASS |
 | B | B2 | مواعيد المريض أحمد | resolve pat-A1 (Ahmed Ali), Arabic answer | status=COMPLETED resolved="Ahmed Ali" tools=[get_patient_overview] ans="مواعيد Ahmed Ali: • 2026-03-13 12:00 — APPT-A-1003 (NO_SHOW) • 2026-09-19 12:00 — APPT-A | PASS |
 | C | C1 | مواعيد أحمد علي | clarification listing BOTH candidate codes (no guess) | status=CLARIFICATION_REQUIRED candidatesShown=true ans="لقيت 2 مريض بالاسم ده: Ahmed Ali (PAT-A1) ولا Ahmed Ali (PAT-DUP) — تقصد أنهي واحد؟ قول الاسم كامل أو رق | PASS |
-| D | D1 | هات أحمد محمد → آخر زيارة كانت إمتى؟ → آخر أشعة ليه؟ → عنده متابعة؟ →  | context persists; pronouns resolve to the pinned patient; no re-ask | pins=["pat-A1","pat-A1","pat-A1","pat-A1","pat-A1"] completedFollowUps=4 | PASS |
+| D | D1 | هات أحمد علي → آخر زيارة كانت إمتى؟ → آخر أشعة ليه؟ → عنده متابعة؟ → ه | context persists; pronouns resolve to the pinned patient; no re-ask | pins=["pat-A1","pat-A1","pat-A1","pat-A1","pat-A1"] completedFollowUps=4 | PASS |
 | D | D2 | new session: آخر زيارة كانت إمتى؟ | NO old-session context (asks which patient) | status=CLARIFICATION_REQUIRED ans="قوللي اسم المريض أو رقمه عشان أكمّل — أنا عمر ما أخمن المرضى." | PASS |
 | E | E1 | هات أحمد → لا، قصدي محمد → آخر أشعة ليه؟ | correction re-pins to Mohamed; follow-ups answer for Mohamed | pins=["pat-A1","pat-A2","pat-A2"] statuses=["COMPLETED","COMPLETED","COMPLETED"] | PASS |
 | F | F1 | هات حالة أحمد وافتح آخر أشعة ليه وقولي هل فيه حاجة محتاجة متابعة | MULTI_STEP + FULL_360 verified read (never UNKNOWN) | type=MULTI_STEP tools=[get_patient_360] status=COMPLETED ans="بناءً على المعلومات المسجلة المتاحة: البيانات: Ahmed Ali (PAT-A1). تنب" | PASS |
@@ -55,3 +55,11 @@
 | M | M3 | هات حالة أحمد. → آخر زيارة كانت امتى؟ | last-visit question answered FROM the pinned context (never the identity line) | statuses=["COMPLETED","COMPLETED"] | PASS |
 | M | M4 | محمد النبي (fresh session) | off-domain refusal; NO patient pin created | taskType=OUT_OF_DOMAIN pinned=null | PASS |
 | M | M5 | ما اسم أطول نهر في العالم؟ → اسمه محمد النبي. | both turns refused — the off-domain question opened NO pending patient task | taskTypes=["OUT_OF_DOMAIN","OUT_OF_DOMAIN"] | PASS |
+| N | N1 | وريني مواعيد المريض اللي اسمه محمد علي. | محمد علي NOT_FOUND → recoverable identity ask (no wrong resolution) | status=CLARIFICATION_REQUIRED pinned=null | PASS |
+| N | N2 | وريني مواعيد المريض اللي اسمه محمد علي. → اسم محمد النبي. | اسم محمد النبي resumes the appointments task for the CORRECTED patient | statuses=["CLARIFICATION_REQUIRED","COMPLETED"] pinned2=pat-mn | PASS |
+| N | N2b | answer text of the resumed turn | appointment-focused answer naming محمد النبي | ans="مواعيد محمد النبي: • 2026-09-29 11:00 — APPT-MN-1 (COMPLETED) • 2026-09-30 12:00 — APPT-MN-2 (SCHEDULED)" | PASS |
+| N | N3 | وريني مواعيد المريض اللي اسمه محمد علي بكرة. → اسم محمد النبي. | resumed answer carries TOMORROW (2026-09-30) | ans="مواعيد محمد النبي ليوم 2026-09-30: • 2026-09-30 12:00 — APPT-MN-2 (SCHEDULED)" | PASS |
+| N | N4 | هات حالة أحمد. → قولي المواعيد بتاعه بكرة. | بتاعه resolves to the PINNED patient; day-filtered answer | status2=COMPLETED ans="مفيش مواعيد ليوم 2026-09-30 مسجلة للمريض Ahmed Ali في النظام." | PASS |
+| N | N5 | قولي المواعيد بتاعه بكرة. | بتاعه with no patient → identity clarification (never مفيش مواعيد يوم …) | status=CLARIFICATION_REQUIRED | PASS |
+| N | N6 | محمد علي NOT_FOUND → اسم سامي حداد → اسم محمد النبي | wrong correction stays recoverable; next valid name completes the ORIGINAL task | statuses=["CLARIFICATION_REQUIRED","COMPLETED"] ans3="مواعيد محمد النبي: • 2026-09-29 11:00 — APPT-MN-1 (COMPLETED) • 2026-09-30 12:00 — APPT-MN" | PASS |
+| N | N7 | اسم محمد النبي (fresh session) | OUT_OF_DOMAIN refusal; NO patient pin, NO invented task | taskType=OUT_OF_DOMAIN pinned=null | PASS |

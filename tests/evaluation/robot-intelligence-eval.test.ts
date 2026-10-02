@@ -153,7 +153,7 @@ const MULTI_STEP: [string, Expectation][] = [
   ['Open Ahmed Ali’s case and show his imaging and follow-ups', { lang: 'en', tools: ['get_patient_360'] }],
   ['راجع حالة أحمد والأشعة بتاعته', { lang: 'ar', tools: ['get_patient_360'] }],
   ['افتح ملف سارة وقولي عنده متابعة؟', { lang: 'ar', tools: ['get_patient_360'] }],
-  ['هات أحمد محمد وأعرض كل حاجة عنده', { lang: 'ar', tools: ['get_patient_overview'], contains: ['Ahmed Ali'] }], // unique first-name match resolves (server-verified)
+  ['هات أحمد علي وأعرض كل حاجة عنده', { lang: 'ar', tools: ['get_patient_overview'], contains: ['Ahmed Ali'] }], // full spoken name resolves the stored record (server-verified)
   ['Review Ahmed’s chart, latest imaging, and follow-up plan', { lang: 'en', tools: ['get_patient_360'] }],
 ]
 
@@ -613,5 +613,114 @@ describe('Robot intelligence — §15.M continuity across patient clarification 
     const o = out.observations[0]!
     expect(o.taskType).toBe('OUT_OF_DOMAIN') // no patient query executed
     expect(o.display).toMatch(/^أنا أساعد/) // refusal, not a lookup answer
+  })
+})
+
+// ---------------------------------------------------------------------------
+// §15.N — continuity after FAILED patient resolution (the correction round):
+// a NOT_FOUND must leave a recoverable pending task; a later identity turn
+// (اسم/اسمه/قصدي/لا،/bare) resumes the ORIGINAL intent with its temporal
+// constraints; possessive pronouns scope to a patient; fresh sessions never
+// manufacture tasks. REAL pipeline (replayVoiceCase) with the corrected
+// patient present in the tenant fixture — the DB decides, nothing hardcoded.
+// ---------------------------------------------------------------------------
+describe('Robot intelligence — §15.N continuity after failed resolution (real pipeline)', () => {
+  // Stored patient the base fixture does not contain (the user's real-DB
+  // premise: محمد النبي EXISTS, محمد علي does NOT).
+  const MN = {
+    id: 'pat-mn', hospitalId: 'hosp-A', patientId: 'PAT-MN',
+    firstName: 'محمد', lastName: 'النبي', phone: '01000000001', age: 40,
+    dateOfBirth: '1986-02-01', gender: 'MALE', bloodGroup: null,
+    alternatePhone: null, email: null, locale: 'ar', portalUserId: null,
+    createdAt: '2025-06-01', medicalHistory: null,
+  }
+
+  function ncase(caseId: string, turns: string[]) {
+    return {
+      caseId, domain: 'dental', language: 'ar' as const, title: 'failed-resolution continuity',
+      actorRole: 'DOCTOR', tenant: 'A' as const, locale: 'ar-EG' as const,
+      patientContext: [MN] as never,
+      turns: turns.map((text, i) => ({ text, op: 'SPEAK' as const, confidence: 0.95, afterMs: 60 + i })),
+      expected: {},
+    }
+  }
+
+  it('Scenario A: failed lookup (محمد علي) → NOT_FOUND; the correction (اسم محمد النبي) resumes the appointment task', async () => {
+    const out = await replayVoiceCase(ncase('RI-N-A', [
+      'وريني مواعيد المريض اللي اسمه محمد علي.',
+      'اسم محمد النبي.',
+    ]))
+    const [t1, t2] = out.observations
+    expect(t1!.agentStatus).toBe('CLARIFICATION_REQUIRED') // recoverable ask — task not discarded
+    expect(t2!.agentStatus).toBe('COMPLETED')
+    expect(t2!.display).toMatch(/محمد النبي/) // the CORRECTED patient
+    expect(t2!.display).toMatch(/مواعيد/) // the ORIGINAL intent — never the overview identity line
+  })
+
+  it('Scenario B: the temporal constraint (بكرة) survives the correction — the resumed answer carries TOMORROW', async () => {
+    const out = await replayVoiceCase(ncase('RI-N-B', [
+      'وريني مواعيد المريض اللي اسمه محمد علي بكرة.',
+      'اسم محمد النبي.',
+    ]))
+    const t2 = out.observations[1]!
+    expect(t2.agentStatus).toBe('COMPLETED')
+    expect(t2.display).toMatch(/مواعيد/)
+    expect(t2.display).toMatch(/ليوم \d{4}-\d{2}-\d{2}/) // a RESOLVED date — never 'اليوم المطلوب'
+  })
+
+  it('Scenario C: a possessive pronoun (بتاعه) with a pinned patient answers THAT patient for the requested day', async () => {
+    const out = await replayVoiceCase(ncase('RI-N-C', [
+      'هات حالة أحمد.',
+      'قولي المواعيد بتاعه بكرة.',
+    ]))
+    const [t1, t2] = out.observations
+    expect(t1!.agentStatus).toBe('COMPLETED') // pin established
+    expect(t2!.agentStatus).toBe('COMPLETED')
+    expect(t2!.display).toMatch(/مواعيد/)
+    expect(t2!.display).toMatch(/ليوم \d{4}-\d{2}-\d{2}/)
+  })
+
+  it('Scenario D: a possessive pronoun WITHOUT any patient scope asks for the identity', async () => {
+    const out = await replayVoiceCase({ ...ncase('RI-N-D', ['قولي المواعيد بتاعه بكرة.']), patientContext: null } as never)
+    const o = out.observations[0]!
+    expect(o.agentStatus).toBe('CLARIFICATION_REQUIRED')
+    expect(o.display).toMatch(/المريض/)
+    expect(o.display).not.toMatch(/مفيش مواعيد يوم/)
+  })
+
+  it('a WRONG correction keeps the task recoverable — the next valid name completes the ORIGINAL intent', async () => {
+    const out = await replayVoiceCase(ncase('RI-N-W', [
+      'وريني مواعيد المريض اللي اسمه محمد علي.',
+      'اسم سامي حداد.',
+      'اسم محمد النبي',
+    ]))
+    const [t1, t2, t3] = out.observations
+    expect(t1!.agentStatus).toBe('CLARIFICATION_REQUIRED')
+    expect(t2!.agentStatus).toBe('CLARIFICATION_REQUIRED') // still recoverable — never discarded
+    expect(t3!.agentStatus).toBe('COMPLETED')
+    expect(t3!.display).toMatch(/مواعيد/)
+    expect(t3!.display).toMatch(/محمد النبي/)
+  })
+
+  it('all natural correction variants resume the pending task (اسم/اسمه/قصدي/لا،/bare)', async () => {
+    for (const [i, turn] of ['اسم محمد النبي.', 'اسمه محمد النبي.', 'قصدي محمد النبي.', 'لا، محمد النبي.', 'محمد النبي'].entries()) {
+      const out = await replayVoiceCase(ncase(`RI-N-V${i}`, [
+        'وريني مواعيد المريض اللي اسمه محمد علي.',
+        turn,
+      ]))
+      const t2 = out.observations[1]!
+      expect(t2.agentStatus).toBe('COMPLETED')
+      expect(t2.display).toMatch(/مواعيد/)
+      expect(t2.display).toMatch(/محمد النبي/)
+    }
+  })
+
+  it('fresh-session identity turns never manufacture a patient task (اسم / bare name)', async () => {
+    for (const [i, turn] of ['اسم محمد النبي.', 'محمد النبي'].entries()) {
+      const out = await replayVoiceCase({ ...ncase(`RI-N-F${i}`, [turn]), patientContext: null } as never)
+      const o = out.observations[0]!
+      expect(o.taskType).toBe('OUT_OF_DOMAIN') // no patient query executed
+      expect(o.display).toMatch(/^أنا أساعد/)
+    }
   })
 })

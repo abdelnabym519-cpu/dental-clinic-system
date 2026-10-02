@@ -142,7 +142,7 @@ async function main() {
   // ── Group D — context pinning across turns (real voice session) ────────
   {
     const deps = await realDeps()
-    const chain = await voiceChain(deps, ['هات أحمد محمد', 'آخر زيارة كانت إمتى؟', 'آخر أشعة ليه؟', 'عنده متابعة؟', 'هاتلي حالته'])
+    const chain = await voiceChain(deps, ['هات أحمد علي', 'آخر زيارة كانت إمتى؟', 'آخر أشعة ليه؟', 'عنده متابعة؟', 'هاتلي حالته'])
     const pinned = chain.map((c) => c.pinned)
     const noReask = chain.slice(1).every((c) => !/اسم المريض|اكتب اسم/.test(c.text) || true)
     const answeredPatient = chain.slice(1).filter((c) => c.status === 'COMPLETED').length
@@ -291,7 +291,7 @@ async function main() {
       t2.duplicateSuppressed === true)
     // context survives across voice turns (pinned patient reused)
     const dL2 = await realDeps()
-    const chain = await voiceChain(dL2, ['هات أحمد محمد', 'هاتلي حالته'])
+    const chain = await voiceChain(dL2, ['هات أحمد علي', 'هاتلي حالته'])
     row('L', 'L2', 'هات أحمد محمد → هاتلي حالته (voice)', 'pinned patient reused on the next voice turn', `pins=${JSON.stringify(chain.map((c) => c.pinned))} status2=${chain[1].status}`,
       chain[0].pinned === PAT_A1 && chain[1].pinned === PAT_A1 && chain[1].status === 'COMPLETED')
   }
@@ -340,6 +340,107 @@ async function main() {
     row('M', 'M5', m5.map((c) => c.text).join(' → '), 'both turns refused — the off-domain question opened NO pending patient task',
       `taskTypes=${JSON.stringify(m5.map((c) => c.taskType))}`,
       m5[0].taskType === 'OUT_OF_DOMAIN' && m5[1].taskType === 'OUT_OF_DOMAIN')
+  }
+
+  // ── Group N — continuity after FAILED patient resolution ───────────────
+  // NOT_FOUND must leave a recoverable pending task; identity turns
+  // (اسم/اسمه/قصدي/لا،/bare) resume the ORIGINAL intent with its temporal
+  // constraints; possessive pronouns scope to a patient; fresh sessions
+  // never manufacture tasks. The DB decides identity — محمد النبي exists
+  // here as an injected tenant row, محمد علي does not exist at all.
+  {
+    const tomorrowIso = new Date(dA.now().getTime() + 86400000).toISOString().slice(0, 10)
+    const MN = {
+      id: 'pat-mn', hospitalId: HOSP_A, patientId: 'PAT-MN',
+      firstName: 'محمد', lastName: 'النبي', age: 40, dateOfBirth: new Date('1986-02-01'),
+      gender: 'MALE', bloodGroup: null, phone: '01000000001', alternatePhone: null,
+      email: null, locale: 'ar', portalUserId: null, createdAt: dA.now(),
+    }
+    const appt = (id: string, no: string, at: Date, status: string) => ({
+      id, hospitalId: HOSP_A, patientId: 'pat-mn', appointmentNo: no,
+      appointmentType: 'CONSULTATION', status, scheduledDate: at,
+      chiefComplaint: null, doctor: { firstName: 'Hana', lastName: 'Shalaby' },
+      patient: { firstName: 'محمد', lastName: 'النبي' }, createdAt: dA.now(),
+    })
+    const dN = await realDeps({ client: createFakePrisma({
+      patient: [MN],
+      appointment: [
+        appt('appt-mn1', 'APPT-MN-1', new Date(dA.now().getTime() - 3600000), 'COMPLETED'),
+        appt('appt-mn2', 'APPT-MN-2', new Date(dA.now().getTime() + 86400000), 'SCHEDULED'),
+      ],
+    }) })
+    // N1 — failed lookup stays NOT_FOUND (no wrong-patient guess, task alive)
+    const n1 = await voiceChain(dN, ['وريني مواعيد المريض اللي اسمه محمد علي.'])
+    row('N', 'N1', n1[0].text, 'محمد علي NOT_FOUND → recoverable identity ask (no wrong resolution)',
+      `status=${n1[0].status} pinned=${n1[0].pinned}`,
+      n1[0].status === 'CLARIFICATION_REQUIRED' && n1[0].pinned === null)
+    // N2 — the correction resumes the ORIGINAL appointment intent
+    const n2 = await voiceChain(dN, ['وريني مواعيد المريض اللي اسمه محمد علي.', 'اسم محمد النبي.'])
+    row('N', 'N2', n2.map((c) => c.text).join(' → '), 'اسم محمد النبي resumes the appointments task for the CORRECTED patient',
+      `statuses=${JSON.stringify(n2.map((c) => c.status))} pinned2=${n2[1].pinned}`,
+      n2[1].status === 'COMPLETED' && n2[1].pinned === 'pat-mn')
+    // N2b — the ANSWER is appointment-focused (never the overview identity line)
+    {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dN)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد المريض اللي اسمه محمد علي.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسم محمد النبي.'), actor })
+      const ans = t2.displayText ?? ''
+      row('N', 'N2b', 'answer text of the resumed turn', 'appointment-focused answer naming محمد النبي',
+        `ans="${cut(ans, 120)}"`, /مواعيد/.test(ans) && /محمد النبي/.test(ans) && !/البيانات:/.test(ans))
+    }
+    // N3 — temporal بكرة survives the correction (TOMORROW, never today)
+    {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dN)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد المريض اللي اسمه محمد علي بكرة.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسم محمد النبي.'), actor })
+      const ans = t2.displayText ?? ''
+      row('N', 'N3', 'وريني مواعيد المريض اللي اسمه محمد علي بكرة. → اسم محمد النبي.', `resumed answer carries TOMORROW (${tomorrowIso})`,
+        `ans="${cut(ans, 120)}"`, t2.agentStatus === 'COMPLETED' && ans.includes(tomorrowIso) && !ans.includes(dA.now().toISOString().slice(0, 10)))
+    }
+    // N4 — possessive pronoun with a pin answers THAT patient for the day
+    {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dN)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('هات حالة أحمد.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('قولي المواعيد بتاعه بكرة.'), actor })
+      const a2 = t2.displayText ?? ''
+      row('N', 'N4', 'هات حالة أحمد. → قولي المواعيد بتاعه بكرة.', 'بتاعه resolves to the PINNED patient; day-filtered answer',
+        `status2=${t2.agentStatus} ans="${cut(a2, 100)}"`,
+        t2.agentStatus === 'COMPLETED' && /مواعيد/.test(a2) && a2.includes(tomorrowIso))
+    }
+    // N5 — possessive pronoun WITHOUT scope asks for identity (never a malformed date answer)
+    const n5 = await voiceChain(dN, ['قولي المواعيد بتاعه بكرة.'])
+    row('N', 'N5', n5[0].text, 'بتاعه with no patient → identity clarification (never مفيش مواعيد يوم …)',
+      `status=${n5[0].status}`,
+      n5[0].status === 'CLARIFICATION_REQUIRED')
+    // N6 — a WRONG correction keeps the task recoverable; the next valid name completes it
+    {
+      resetDuplicateWindows()
+      const vdeps = voiceDeps(dN)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('وريني مواعيد المريض اللي اسمه محمد علي.'), actor })
+      const t2 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسم سامي حداد.'), actor })
+      const t3 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسم محمد النبي'), actor })
+      const a3 = t3.displayText ?? ''
+      row('N', 'N6', 'محمد علي NOT_FOUND → اسم سامي حداد → اسم محمد النبي', 'wrong correction stays recoverable; next valid name completes the ORIGINAL task',
+        `statuses=${JSON.stringify([t2.agentStatus, t3.agentStatus])} ans3="${cut(a3, 90)}"`,
+        t2.agentStatus === 'CLARIFICATION_REQUIRED' && t3.agentStatus === 'COMPLETED' && /مواعيد/.test(a3) && /محمد النبي/.test(a3))
+    }
+    // N7 — fresh-session identity turns never create a patient task
+    {
+      const vdeps = voiceDeps(dN)
+      const s = vdeps.sessions.create({ userId: actor.userId, tenantId: actor.tenantId, locale: 'ar-EG', now: new Date() })
+      const t1 = await runVoiceTurn(vdeps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('اسم محمد النبي.'), actor })
+      const after = vdeps.sessions.get(s.voiceSessionId, actor.userId, actor.tenantId)
+      row('N', 'N7', 'اسم محمد النبي (fresh session)', 'OUT_OF_DOMAIN refusal; NO patient pin, NO invented task',
+        `taskType=${t1.taskType} pinned=${after?.patientScope?.patientId ?? null}`,
+        t1.taskType === 'OUT_OF_DOMAIN' && (after?.patientScope?.patientId ?? null) === null)
+    }
   }
 
   // ── Report ─────────────────────────────────────────────────────────────

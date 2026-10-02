@@ -601,3 +601,100 @@ describe('security — untrusted data boundary', () => {
     expect(serialized).not.toContain('Cold sensitivity') // no PHI/free-text in the trace
   })
 })
+
+describe('continuation after FAILED patient resolution — NOT_FOUND keeps the task recoverable (§4/§10/§11)', () => {
+  // A stored patient the fixture DB does NOT otherwise contain: the DB
+  // decides identity — nothing about 'محمد النبي' is hardcoded anywhere in
+  // production code; this row simply gives the correction somewhere to land.
+  const MN = {
+    id: 'pat-mn', hospitalId: HOSP_A, patientId: 'PAT-MN',
+    firstName: 'محمد', lastName: 'النبي', age: 40, dateOfBirth: new Date('1986-02-01'),
+    gender: 'MALE', bloodGroup: null, phone: '01000000001', alternatePhone: null,
+    email: null, locale: 'ar', portalUserId: null, createdAt: NOW,
+  }
+  const appt = (id: string, no: string, at: Date, status: string) => ({
+    id, hospitalId: HOSP_A, patientId: 'pat-mn', appointmentNo: no,
+    appointmentType: 'CONSULTATION', status, scheduledDate: at,
+    chiefComplaint: null, doctor: { firstName: 'Hana', lastName: 'Shalaby' },
+    patient: { firstName: 'محمد', lastName: 'النبي' }, createdAt: NOW,
+  })
+  function depsMN() {
+    const client = createAgentFakePrisma({
+      patient: [MN],
+      appointment: [
+        appt('appt-mn1', 'APPT-MN-1', new Date(NOW.getTime() - 3600000), 'COMPLETED'),
+        appt('appt-mn2', 'APPT-MN-2', new Date(NOW.getTime() + 86400000), 'SCHEDULED'),
+      ],
+    })
+    return deps({ client })
+  }
+  const failedHistory = [
+    { role: 'user', content: 'وريني مواعيد المريض اللي اسمه محمد علي.' },
+    { role: 'assistant', content: 'مش قادر أحدد المريض في العيادة دي. اكتب اسم المريض أو الرقم — أنا عمر ما أخمن المرضى.' },
+  ]
+
+  it('a failed lookup (محمد علي) stays NOT_FOUND — never a wrong-patient guess', async () => {
+    const r = await runAgent(req('وريني مواعيد المريض اللي اسمه محمد علي.'), depsMN())
+    expect(r.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r.resolvedPatient).toBeNull()
+  })
+
+  it('correction variants resume the ORIGINAL appointment intent for the corrected patient', async () => {
+    for (const turn of ['اسم محمد النبي.', 'اسمه محمد النبي.', 'قصدي محمد النبي.', 'لا، محمد النبي.', 'محمد النبي']) {
+      const r = await runAgent(req(turn, { history: failedHistory }), depsMN())
+      expect(r.status).toBe('COMPLETED')
+      expect(r.resolvedPatient?.displayName).toContain('محمد')
+      // appointment-focused — the identity supplies an ENTITY, it does not
+      // replace the task (never the generic overview line)
+      expect(r.answer).toContain('مواعيد')
+      expect(r.answer).toContain('محمد النبي')
+    }
+  })
+
+  it('the temporal constraint (بكرة) survives the correction — the resumed query targets TOMORROW', async () => {
+    const history = [
+      { role: 'user', content: 'وريني مواعيد المريض اللي اسمه محمد علي بكرة.' },
+      { role: 'assistant', content: 'مش قادر أحدد المريض في العيادة دي.' },
+    ]
+    const tomorrowIso = new Date(NOW.getTime() + 86400000).toISOString().slice(0, 10)
+    const r = await runAgent(req('اسم محمد النبي.', { history }), depsMN())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.answer).toContain(tomorrowIso)
+    expect(r.answer).not.toContain(NOW.toISOString().slice(0, 10))
+  })
+
+  it('a WRONG correction keeps the task recoverable — the next valid name completes it', async () => {
+    const r1 = await runAgent(req('اسم سامي حداد.', { history: failedHistory }), depsMN())
+    expect(r1.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r1.resolvedPatient).toBeNull()
+    const h2 = [...failedHistory, { role: 'assistant', content: 'مش قادر أحدد المريض في العيادة دي.' }]
+    const r2 = await runAgent(req('اسم محمد النبي.', { history: h2 }), depsMN())
+    expect(r2.status).toBe('COMPLETED')
+    expect(r2.answer).toContain('مواعيد')
+    expect(r2.answer).toContain('محمد النبي')
+  })
+
+  it('possessive pronoun (بتاعه) without any patient scope asks for identity — never a malformed date answer', async () => {
+    const r = await runAgent(req('قولي المواعيد بتاعه بكرة.'), depsMN())
+    expect(r.status).toBe('CLARIFICATION_REQUIRED')
+    expect(r.answer).toMatch(/المريض/)
+    expect(r.answer).not.toContain('مفيش مواعيد يوم')
+  })
+
+  it('possessive pronoun with a pinned patient answers THAT patient for the requested day', async () => {
+    const tomorrowIso = new Date(NOW.getTime() + 86400000).toISOString().slice(0, 10)
+    const r = await runAgent(req('قولي المواعيد بتاعه بكرة.', { patientId: 'pat-mn' }), depsMN())
+    expect(r.status).toBe('COMPLETED')
+    expect(r.resolvedPatient?.id).toBe('pat-mn')
+    expect(r.answer).toContain(tomorrowIso)
+    expect(r.answer).toContain('مواعيد')
+  })
+
+  it('identity-only turns NEVER create a patient task in a fresh session (اسم / bare / correction cue)', async () => {
+    for (const turn of ['اسم محمد النبي.', 'محمد النبي']) {
+      const r = await runAgent(req(turn), depsMN())
+      expect(r.toolsUsed).toEqual([])
+      expect(r.resolvedPatient).toBeNull()
+    }
+  })
+})
