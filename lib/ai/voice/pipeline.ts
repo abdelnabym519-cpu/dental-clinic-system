@@ -31,6 +31,7 @@ import {
 } from './entity-resolution'
 import { speakableFromResponse } from './tts'
 import { prepareAgentMessage } from './normalize'
+import { detectInputLanguage } from './language'
 import { assessDuplicate, assessVoiceConfirmation, transcriptFingerprint, validateTranscriptSafety, type DuplicateWindowEntry } from './security'
 import { isSessionExpired, transitionSession, type VoiceSessionStore } from './session'
 import {
@@ -276,6 +277,19 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   working.turnCount += 1
   const turnIndex = working.turnCount
 
+  // ---- Language context (Robot consolidation §10/§11) --------------------
+  // The response language follows the ACTUAL conversation: detect the
+  // dominant script of this turn. A confident, NON-MIXED turn in the other
+  // language flips the session language (so copy + TTS track the doctor);
+  // mixed turns keep the current session language (no flip-flopping on one
+  // borrowed word). The UI locale only seeds the FIRST session.
+  const detected = detectInputLanguage(normalized)
+  const detectedSessionLocale: 'ar-EG' | 'en-US' = detected.lang === 'ar' ? 'ar-EG' : 'en-US'
+  if (!detected.mixed && working.locale !== detectedSessionLocale) {
+    working = { ...working, locale: detectedSessionLocale }
+  }
+  const languageContext = { detected: detected.lang, mixed: detected.mixed, session: working.locale }
+
   // ---- 4. Control phrases BEFORE the agent (§16) --------------------------
   const control = matchControlPhrase(normalized)
   if (control === 'INTERRUPT' || control === 'CANCEL') {
@@ -293,6 +307,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     sessions.save(next)
     const spoken = ackFor(control, next)
     return respond(next, 'SPEAK', {
+      language: languageContext,
       speakableText: spoken,
       displayText: spoken,
       interrupted: true,
@@ -330,6 +345,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
         sessions.save(failed)
         const spoken = agentErrorText(failed)
         return respond(failed, 'SPEAK', {
+          language: languageContext,
           speakableText: spoken,
           displayText: spoken,
           error: { code: 'VOICE_AGENT_ERROR', message: 'Agent invocation failed' },
@@ -344,6 +360,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
         session: next, agent, agentMs,
         entityResolutionMs: 0,
         confirmedApprovalId: approvalId,
+        language: languageContext,
       })
     }
     // A bare confirmation with nothing pending falls through as normal
@@ -364,6 +381,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     sessions.save(next)
     const spoken = duplicateNotice(next)
     return respond(next, 'SPEAK', {
+      language: languageContext,
       speakableText: spoken,
       displayText: spoken,
       duplicateSuppressed: true,
@@ -424,6 +442,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     window.push({ fingerprint: fingerprintOf(normalized, next.tenantId, next.userId), atMs: nowMs, ledToAction: false })
     const spoken = clarificationText(clarification, next)
     return respond(next, 'SPEAK', {
+      language: languageContext,
       speakableText: spoken,
       displayText: spoken,
       clarification,
@@ -461,6 +480,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   return finishAgentTurn(deps, {
     deps, call, t0, nowMs, turnIndex, normalized, safety, transcript,
     session: processing, agent, agentMs, entityResolutionMs, confirmedApprovalId: null,
+    language: languageContext,
   })
 }
 
@@ -482,6 +502,7 @@ interface FinishArgs {
   agentMs: number
   entityResolutionMs: number
   confirmedApprovalId: string | null
+  language: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
 }
 
 function finishAgentTurn(
@@ -489,6 +510,7 @@ function finishAgentTurn(
   a: FinishArgs,
 ): VoiceTurnResponse {
   const { call, t0, nowMs, turnIndex, normalized, transcript, session, agent, agentMs, entityResolutionMs } = a
+  const languageContext = a.language
   const approval = approvalViewFromAgent(agent)
   let endState: InteractionState
   if (agent.status === 'PENDING_APPROVAL') endState = 'WAITING_APPROVAL'
@@ -538,6 +560,7 @@ function finishAgentTurn(
   if (endState === 'WAITING_APPROVAL') {
     const prompt = approvalPromptText(ended)
     return respond(ended, 'SPEAK', {
+      language: languageContext,
       speakableText: `${speakable ? speakable + ' ' : ''}${prompt}`,
       displayText: agent.answer ?? '',
       approval,
@@ -549,6 +572,7 @@ function finishAgentTurn(
   if (endState === 'LISTENING') {
     const spoken = agent.answer || (ended.locale === 'ar-EG' ? 'ممكن توضح أكتر؟' : 'Could you clarify?')
     return respond(ended, 'SPEAK', {
+      language: languageContext,
       speakableText: spoken,
       displayText: agent.answer ?? '',
       agentStatus: agent.status,
@@ -559,6 +583,7 @@ function finishAgentTurn(
   if (endState === 'ERROR') {
     const spoken = agentErrorText(ended)
     return respond(ended, 'SPEAK', {
+      language: languageContext,
       speakableText: spoken,
       displayText: agent.answer ?? null,
       agentStatus: agent.status,
@@ -568,6 +593,7 @@ function finishAgentTurn(
     })
   }
   return respond(ended, 'SPEAK', {
+    language: languageContext,
     speakableText: speakable,
     displayText: agent.answer ?? '',
     agentStatus: agent.status,
@@ -598,11 +624,14 @@ interface RespondExtras {
   error?: { code: VoiceErrorCode; message: string } | null
 }
 
-function respond(session: VoiceSession, op: VoiceTurnInput['op'], extras: RespondExtras): VoiceTurnResponse {
+function respond(session: VoiceSession, op: VoiceTurnInput['op'], extras: RespondExtras & {
+  language?: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
+}): VoiceTurnResponse {
   return {
     voiceSessionId: session.voiceSessionId,
     state: session.state,
     op: op ?? 'SPEAK',
+    language: extras.language,
     speakableText: extras.speakableText ?? null,
     displayText: extras.displayText ?? null,
     clarification: extras.clarification ?? null,

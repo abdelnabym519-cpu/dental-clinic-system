@@ -165,8 +165,8 @@ export default function AISettingsPage() {
         {[
           {
             key: 'ai_chat_enabled' as const,
-            label: 'AI Chat Widget',
-            desc: t("Floating chat assistant on all pages"),
+            label: 'DenToRa Robot',
+            desc: t('The Robot — the unified AI assistant for the clinic'),
           },
           {
             key: 'ai_command_bar_enabled' as const,

@@ -34,11 +34,12 @@ describe('navigation config', () => {
     expect(titles).toContain('Administration')
   })
 
-  it('Overview section has Dashboard and AI Chat', () => {
+  it('Overview section has Dashboard and the unified Robot (no AI Chat)', () => {
     const overview = navigation.find((s) => s.title === 'Overview')!
     const titles = overview.items.map((i) => i.title)
     expect(titles).toContain('Dashboard')
-    expect(titles).toContain('AI Chat')
+    expect(titles).toContain('Robot')
+    expect(titles).not.toContain('AI Chat')
   })
 
   it('Dashboard has no role restriction', () => {

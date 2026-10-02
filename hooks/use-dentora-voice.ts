@@ -19,10 +19,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { InteractionState, VoiceTurnResponse } from '@/lib/ai/voice/types'
+import { robotGreeting } from '@/lib/ai/robot-identity'
+import { ttsLangForText } from '@/lib/ai/voice/language'
 
 // ---------------------------------------------------------------------------
 // Web Speech API (browser-native; typed locally — same approach as the
-// existing use-web-voice hook, which this hook coexists with unchanged)
+// text input uses the SAME session/pipeline (voice is never the only method).
 // ---------------------------------------------------------------------------
 
 interface SpeechRecognitionEventT extends Event {
@@ -82,6 +84,10 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   const sessionRef = useRef<string | null>(null)
   const recogRef = useRef<SpeechRecognitionInstanceT | null>(null)
   const busyRef = useRef(false)
+  // Late-bound speak() reference: speak is defined below ensureSession; the
+  // ref lets the session bootstrap trigger the greeting without TDZ/deps
+  // coupling (assigned on every render after speak exists).
+  const speakRef = useRef<(text: string) => void>(() => {})
   const ttsEnabledRef = useRef(ttsEnabled)
   useEffect(() => {
     ttsEnabledRef.current = ttsEnabled
@@ -103,6 +109,14 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
       if (!res.ok) return null
       const data = (await res.json()) as { session?: { voiceSessionId: string } }
       sessionRef.current = data.session?.voiceSessionId ?? null
+      if (sessionRef.current) {
+        // Canonical Robot opening greeting (hard product requirement) — shown
+        // (and spoken, when voice replies are on) exactly once, at new-session
+        // start, in the session language. Never prepended to other answers.
+        const greeting = robotGreeting(locale)
+        setTurns((t) => (t.length ? t : [...t, { role: 'assistant', content: greeting, at: new Date().toISOString() }]))
+        if (ttsEnabledRef.current) speakRef.current(greeting)
+      }
       return sessionRef.current
     } catch {
       return null
@@ -132,7 +146,10 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
       if (!ttsEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return
       stopSpeaking()
       const u = new SpeechSynthesisUtterance(text)
-      u.lang = locale
+      // Language consistency (§10/§14): the voice must match the language of
+      // the text actually being spoken — Arabic text speaks with an Arabic
+      // voice even mid-English-UI and vice versa.
+      u.lang = ttsLangForText(text)
       u.onend = () => {
         // Playback finished — server state SPEAKING → COMPLETED.
         const id = sessionRef.current
@@ -153,6 +170,9 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
     },
     [locale, stopSpeaking],
   )
+  useEffect(() => {
+    speakRef.current = speak
+  }, [speak])
 
   // ---- Turn posting --------------------------------------------------------
   const postTurn = useCallback(

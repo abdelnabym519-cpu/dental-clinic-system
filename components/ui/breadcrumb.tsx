@@ -21,7 +21,6 @@ const ROUTE_LABELS: Record<string, string> = {
   prescriptions: 'Prescriptions',
   medications: 'Drug Catalog',
   video: 'Video Consults',
-  chat: 'AI Chat',
   crm: 'CRM',
   sterilization: 'Sterilization',
   devices: 'Devices',

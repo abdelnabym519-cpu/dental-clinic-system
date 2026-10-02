@@ -5698,5 +5698,12 @@
   "nav.aiCompanion": "رفيق دِنتورا",
   "Voice session not found": "جلسة الصوت غير موجودة",
   "voiceSessionId is required": "معرّف جلسة الصوت مطلوب",
-  "transcript is required for SPEAK turns": "النص الصوتي مطلوب لعملية التحدث"
+  "transcript is required for SPEAK turns": "النص الصوتي مطلوب لعملية التحدث",
+  "Robot": "روبوت",
+  "DenToRa Robot": "روبوت دِنتورا",
+  "If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team.": "إذا واجهت صعوبة في أي خطوة، يمكنك سؤال الروبوت للحصول على مساعدة فورية، أو التواصل مع فريق الدعم.",
+  "The Robot — the unified AI assistant for the clinic": "الروبوت — مساعد الذكاء الاصطناعي الموحّد للعيادة",
+  "The Robot answers questions about patients, appointments, and billing — by voice or text": "الروبوت يجيب عن الأسئلة حول المرضى والمواعيد والفواتير — صوتًا أو نصًا",
+  "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance": "تفعيل ميزات الذكاء الاصطناعي مثل الروبوت واقتراحات الجدولة ومساعدة الفواتير",
+  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— الروبوت: مساعد الذكاء الاصطناعي الموحّد (صوت ونص) للعيادة كلها"
 }

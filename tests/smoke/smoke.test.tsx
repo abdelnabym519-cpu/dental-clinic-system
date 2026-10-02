@@ -123,33 +123,12 @@ vi.mock('@/components/ai/ai-provider', () => ({
   AIProvider: ({ children }: any) => <>{children}</>,
 }))
 
-vi.mock('@/hooks/use-web-voice', () => ({
-  useWebVoice: () => ({
-    isListening: false,
-    isSpeaking: false,
-    transcript: '',
-    startListening: vi.fn(),
-    stopListening: vi.fn(),
-    speak: vi.fn(),
-    stopSpeaking: vi.fn(),
-    isSupported: false,
-  }),
-}))
-
 vi.mock('@/components/ui/export-menu', () => ({
   ExportMenu: () => <button>Export</button>,
 }))
 
 vi.mock('@/components/ai/insights-panel', () => ({
   InsightsPanel: () => <div data-testid="insights-panel">Insights</div>,
-}))
-
-vi.mock('@/components/ai/voice-orb', () => ({
-  VoiceOrb: () => <div data-testid="voice-orb" />,
-}))
-
-vi.mock('@/components/ai/audio-waveform', () => ({
-  AudioWaveform: () => <div data-testid="audio-waveform" />,
 }))
 
 vi.mock('lucide-react', async (importOriginal) => {
@@ -440,12 +419,6 @@ describe('Smoke Tests — Pages render without crashing', () => {
     await waitFor(() => {
       expect(container.innerHTML.length).toBeGreaterThan(0)
     })
-  })
-
-  it('AI chat page loads', async () => {
-    const { default: ChatPage } = await import('@/app/(dashboard)/chat/page')
-    const container = await smokeRender(ChatPage)
-    expect(container.innerHTML).toBeTruthy()
   })
 
   it('Patient portal login page loads', async () => {

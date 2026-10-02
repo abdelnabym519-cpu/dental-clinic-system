@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Phase 10 — DenToRa Companion panel: Robot + Voice + transcript + approval.
+ * Robot panel — the unified AI interaction surface: voice + text + transcript + approval.
  *
  * Everything shown comes from the canonical typed APIs:
  *  - voice turns → /api/ai/voice/turn (server pipeline → agent)
@@ -64,7 +64,7 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
     >
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-foreground">{t('DenToRa AI Companion')}</h1>
+          <h1 className="text-lg font-bold text-foreground">{t('DenToRa Robot')}</h1>
           <p className="text-xs text-muted-foreground">
             {t('Voice and robot interface to the same DenToRa Agent')}
           </p>
@@ -91,7 +91,7 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         {/* Robot + voice controls */}
         <section
-          aria-label={t('DenToRa robot')}
+          aria-label={t('DenToRa Robot')}
           className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-gradient-to-b from-slate-50 to-slate-100 p-6 dark:from-slate-900 dark:to-slate-950"
         >
           <DentoraRobot

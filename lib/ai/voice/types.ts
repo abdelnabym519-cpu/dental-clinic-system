@@ -218,6 +218,13 @@ export interface VoiceTurnResponse {
   taskType: string | null
   duplicateSuppressed: boolean
   interrupted: boolean
+  /**
+   * Robot language context (Robot consolidation): the dominant language of
+   * THIS user turn ('ar' | 'en'), mixed-flag included. The session's
+   * authoritative language follows confident, non-mixed turns so response
+   * copy and TTS track the conversation instead of the UI locale alone.
+   */
+  language?: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
   telemetry: VoiceTurnTelemetry
   error: { code: VoiceErrorCode; message: string } | null
 }

@@ -58,9 +58,6 @@ vi.mock('@/components/ai/command-bar', () => ({
   CommandBar: () => <div data-testid="command-bar">CommandBar</div>,
 }))
 
-vi.mock('@/components/ai/chat-widget', () => ({
-  ChatWidget: () => <div data-testid="chat-widget">ChatWidget</div>,
-}))
 
 vi.mock('@/components/ui/breadcrumb', () => ({
   Breadcrumb: ({ className }: any) => (
@@ -155,15 +152,6 @@ describe('DashboardShell', () => {
       </DashboardShell>
     )
     expect(screen.getByTestId('command-bar')).toBeInTheDocument()
-  })
-
-  it('renders ChatWidget', () => {
-    render(
-      <DashboardShell user={defaultUser} hospital={defaultHospital}>
-        <p>Content</p>
-      </DashboardShell>
-    )
-    expect(screen.getByTestId('chat-widget')).toBeInTheDocument()
   })
 
   it('renders KeyboardShortcutHelp', () => {

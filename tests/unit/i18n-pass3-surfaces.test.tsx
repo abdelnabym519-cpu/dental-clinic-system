@@ -399,7 +399,7 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     // These five labels were already dictionary values; /settings/ai simply
     // rendered the raw English next to a translated description.
     const ai: Record<string, string> = {
-      'AI Chat Widget': 'أداة محادثة الذكاء الاصطناعي',
+      'DenToRa Robot': 'روبوت دِنتورا',
       'Command Bar (Ctrl+K)': 'شريط الأوامر (Ctrl+K)',
       'Auto Appointment Reminders': 'تذكيرات المواعيد التلقائية',
       'Morning Briefing': 'الملخص الصباحي',

@@ -5698,5 +5698,12 @@
   "nav.aiCompanion": "AI Companion",
   "Voice session not found": "Voice session not found",
   "voiceSessionId is required": "voiceSessionId is required",
-  "transcript is required for SPEAK turns": "transcript is required for SPEAK turns"
+  "transcript is required for SPEAK turns": "transcript is required for SPEAK turns",
+  "Robot": "Robot",
+  "DenToRa Robot": "DenToRa Robot",
+  "If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team.": "If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team.",
+  "The Robot — the unified AI assistant for the clinic": "The Robot — the unified AI assistant for the clinic",
+  "The Robot answers questions about patients, appointments, and billing — by voice or text": "The Robot answers questions about patients, appointments, and billing — by voice or text",
+  "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance": "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance",
+  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— Robot: The unified AI assistant (voice + text) for the whole clinic"
 }

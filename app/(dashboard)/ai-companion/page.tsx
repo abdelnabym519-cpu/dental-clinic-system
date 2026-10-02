@@ -2,12 +2,12 @@ import { RobotPanel } from '@/components/robot/robot-panel'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'DenToRa AI Companion',
-  description: 'Voice + robot interface to the DenToRa dental AI agent',
+  title: 'DenToRa Robot',
+  description: 'Robot — the unified AI interaction surface of DenToRa (voice + text)',
 }
 
 /**
- * Phase 10 — DenToRa Companion (Voice + Robot).
+ * Robot — the unified AI interaction surface (Voice + Text).
  *
  * Auth is enforced by the (dashboard) layout (redirect on missing session;
  * subscription gate + tenant resolution happen there — the single Node

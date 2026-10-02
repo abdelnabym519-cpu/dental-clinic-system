@@ -593,7 +593,7 @@ const setupSections: SetupSection[] = [
     id: 'ai',
     title: 'AI Assistant Setup',
     description:
-      'Enable AI-powered features like chat, scheduling suggestions, and billing assistance',
+      'Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance',
     icon: Sparkles,
     color: 'text-amber-600 bg-amber-50',
     priority: 'optional',
@@ -628,7 +628,7 @@ const setupSections: SetupSection[] = [
           'Go to Settings → AI Features',
           'Toggle the master "Enable AI" switch ON',
           'Enable/disable individual features:',
-          '  — AI Chat Widget: Floating assistant on every page',
+          '  — Robot: The unified AI assistant (voice + text) for the whole clinic',
           '  — Command Bar (Ctrl+K): Quick natural-language commands',
           '  — Auto Reminders: AI-triggered appointment reminders',
           '  — Morning Briefing: Daily summary for clinic admins',
@@ -639,7 +639,7 @@ const setupSections: SetupSection[] = [
         ],
         tips: [
           'Start with Economy model — it handles most tasks well',
-          'The chat widget can answer questions about patients, appointments, and billing',
+          'The Robot answers questions about patients, appointments, and billing — by voice or text',
           'Use Ctrl+K command bar for quick actions like "schedule appointment for Noura tomorrow"'
         ],
         link: { label: 'Go to AI Settings', href: '/settings/ai' },
@@ -1061,10 +1061,10 @@ export default function SetupGuidePage() {
           <div className="text-center">
             <h3 className="font-semibold mb-1">{t('Need More Help?')}</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              {t("If you're stuck on any step, feel free to use the AI Chat Assistant (bottom-right corner) for instant help, or contact our support team.")}
+              {t("If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team.")}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
-              <Link href="/chat">
+              <Link href="/ai-companion">
                 <Button variant="default" size="sm">
                   <MessageSquare className="w-4 h-4 mr-1" />
                   {t('Ask AI Assistant')}

@@ -14,7 +14,6 @@ import {
   Shield,
   TrendingUp,
   MessageSquare,
-  BotMessageSquare,
   AudioLines,
   Sparkles,
   Pill,
@@ -59,12 +58,7 @@ export const navigation: NavSection[] = [
     title: 'Overview',
     items: [
       {
-        title: 'AI Chat',
-        href: '/chat',
-        icon: BotMessageSquare,
-      },
-      {
-        title: 'AI Companion',
+        title: 'Robot',
         href: '/ai-companion',
         icon: AudioLines,
       },

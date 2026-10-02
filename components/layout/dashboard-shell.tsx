@@ -6,7 +6,6 @@ import { Header } from './header'
 import { SidebarProvider } from './sidebar-context'
 import { AIProvider } from '@/components/ai/ai-provider'
 import { CommandBar } from '@/components/ai/command-bar'
-import { ChatWidget } from '@/components/ai/chat-widget'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { KeyboardShortcutHelp } from '@/components/layout/keyboard-shortcut-help'
 
@@ -58,7 +57,6 @@ export function DashboardShell({ children, user, hospital }: DashboardShellProps
         </div>
       </SidebarProvider>
       <CommandBar />
-      <ChatWidget />
       <KeyboardShortcutHelp />
     </AIProvider>
   )
