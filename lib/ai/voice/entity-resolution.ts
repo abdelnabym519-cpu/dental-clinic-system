@@ -11,6 +11,7 @@
  */
 
 import { isValidFdi } from '@/lib/ai/context/fdi'
+import { latinFormsFor } from '@/lib/ai/entity/name-matching'
 import {
   extractToothCandidates,
   normalizeTranscript,
@@ -190,11 +191,17 @@ export function extractPatientNameHint(text: string): PatientNameHint | null {
   const ar = text.match(new RegExp('المريض\\s+(' + AR_NAME_CHARS + '+)(?:\\s+(' + AR_NAME_CHARS + '+))?'))
   if (ar) {
     const first = cleanHintToken(ar[1])
+    // The FIRST token must itself be a plausible name: 'المريض اللي عليه
+    // مراجعة النهارده' is a clinic-level relative clause — extracting 'اللي'
+    // would fail resolution and clarify BEFORE the agent ever sees that the
+    // request needs no patient at all.
     const second = cleanHintToken(ar[2])
-    // A second token is a last name ONLY when it is not a following
-    // preposition/verb ("المريض منى عنده..." → first=منى, last=null).
-    const last = second && !AR_NON_NAME.has(second) ? second : null
-    if (first) return { first, last }
+    if (first && !AR_NON_NAME.has(first) && first !== 'اللي' && first !== 'الذي' && first !== 'التي') {
+      // A second token is a last name ONLY when it is not a following
+      // preposition/verb ("المريض منى عنده..." → first=منى, last=null).
+      const last = second && !AR_NON_NAME.has(second) ? second : null
+      return { first, last }
+    }
   }
   return null
 }
@@ -237,12 +244,19 @@ export async function resolvePatientReference(
     select: { id: true, firstName: true, lastName: true },
   })
 
+  // Bounded Arabic→Latin renderings of the hint ('أحمد' → 'ahmed'): Egyptian
+  // records often store LATIN names while doctors speak Arabic. Same
+  // exact → unique-contains → ambiguous-clarify semantics; never a guess.
+  const latinFirst = latinFormsFor(hintFirst)
+  const matchesFirst = (nf: string): boolean => nf === hintFirst || latinFirst.includes(nf)
+  const containsFirst = (nf: string): boolean => nf.includes(hintFirst) || latinFirst.some((f) => nf.includes(f))
+
   // Normalization-aware verification of the DB-level candidates.
   const exact = rows.filter((p) => {
     const nf = norm(p.firstName)
     const nl = norm(p.lastName)
-    if (hintLast) return nf === hintFirst && nl === hintLast
-    return nf === hintFirst
+    if (hintLast) return matchesFirst(nf) && nl === norm(hintLast)
+    return matchesFirst(nf)
   })
   if (exact.length === 1) {
     const p = exact[0]!
@@ -260,8 +274,8 @@ export async function resolvePatientReference(
   const contains = rows.filter((p) => {
     const nf = norm(p.firstName)
     const nl = norm(p.lastName)
-    if (hintLast) return (nf.includes(hintFirst) || nl.includes(hintLast))
-    return nf.includes(hintFirst)
+    if (hintLast) return (containsFirst(nf) || nl.includes(norm(hintLast)))
+    return containsFirst(nf)
   })
   if (contains.length === 1) {
     const p = contains[0]!

@@ -68,7 +68,6 @@ export interface VoiceTurnDeps {
   // Minimal tenant-scoped read surface (Prisma-compatible). The pipeline
   // never writes and never sees any other table.
   client: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patient: { findMany(args: any): Promise<{ id: string; firstName: string | null; lastName: string | null }[]> }
   }
   agent: VoiceAgentRunner
@@ -187,7 +186,9 @@ function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: Voi
     message,
     patientId,
     toothFdi,
-    history: undefined,
+    // Bounded prior turns (§8): lets the agent resolve conversational
+    // references ('الحالة دي', 'آخر واحدة') within THIS session only.
+    history: (session.history ?? []).slice(-12),
     timestamp: now.toISOString(),
     source: 'voice',
     // Robot language policy (§10): the response language follows the
@@ -533,6 +534,18 @@ function finishAgentTurn(
     ended.pendingApprovalId = approval.approvalId
     ended.pendingApprovalExpiresAt = new Date(nowMs + VOICE_CONFIRM_WINDOW_MS).toISOString()
   }
+  // §4 Remember — context for the NEXT turn: (a) pin the server-verified
+  // patient the AGENT resolved this turn ('هات حالة أحمد' → follow-up
+  // 'آخر زيارة كانت إمتى؟' keeps context); (b) append the bounded transcript
+  // pair. Session-scoped, size-capped, never a new store.
+  if (agent.resolvedPatient) {
+    ended.patientScope = { patientId: agent.resolvedPatient.id, displayName: agent.resolvedPatient.displayName }
+  }
+  ended.history = [
+    ...(ended.history ?? []),
+    { role: 'user' as const, content: String(normalized).slice(0, 300) },
+    { role: 'assistant' as const, content: String(agent.answer ?? '').slice(0, 300) },
+  ].slice(-12)
   deps.sessions.save(ended)
   duplicateWindowFor(ended.voiceSessionId).push({
     fingerprint: fingerprintOf(normalized, ended.tenantId, ended.userId),
@@ -585,14 +598,19 @@ function finishAgentTurn(
     })
   }
   if (endState === 'ERROR') {
-    const spoken = agentErrorText(ended)
+    // §13 honesty — a TYPED agent refusal/failure (role not permitted,
+    // verification failed) is the actual answer to show/speak; the generic
+    // agent-error copy is only for agents that produced NO answer at all
+    // (a real crash). Never mask a typed refusal as a technical fault.
+    const typedFailureAnswer = (agent.answer ?? '').trim()
+    const spoken = typedFailureAnswer.length > 0 ? typedFailureAnswer : agentErrorText(ended)
     return respond(ended, 'SPEAK', {
       language: languageContext,
       speakableText: spoken,
       displayText: agent.answer ?? null,
       agentStatus: agent.status,
       taskType: agent.task?.taskType ?? null,
-      error: { code: 'VOICE_AGENT_ERROR', message: 'Agent reported failure' },
+      error: typedFailureAnswer.length > 0 ? null : { code: 'VOICE_AGENT_ERROR', message: 'Agent reported failure' },
       telemetry: { ...telemetry, state: 'ERROR', error: 'VOICE_AGENT_ERROR' },
     })
   }

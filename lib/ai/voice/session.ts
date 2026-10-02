@@ -60,6 +60,7 @@ export class InMemoryVoiceSessionStore implements VoiceSessionStore {
       lastActivityAt: input.now.toISOString(),
       conversationId: input.conversationId ?? null,
       patientScope: null,
+      history: [],
       caseScope: null,
       pendingApprovalId: null,
       pendingApprovalExpiresAt: null,

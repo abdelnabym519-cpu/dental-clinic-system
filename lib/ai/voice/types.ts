@@ -110,6 +110,10 @@ export interface VoiceSession {
   interruptionCount: number
   retryCount: number
   turnCount: number
+  /** Bounded prior-turn transcript for conversational references (§8) —
+   *  user+assistant pairs, newest last, capped (oldest dropped). Session-
+   *  scoped: never crosses users/tenants (the store is user+tenant keyed). */
+  history: { role: 'user' | 'assistant'; content: string }[]
   /** Expiry (idle TTL) — expired sessions fail closed. */
   expiresAt: string
 }
