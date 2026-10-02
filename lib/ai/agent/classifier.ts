@@ -37,7 +37,7 @@ const DENTAL_TERMS = [
   'schedule', 'agenda', 'جدول', 'أجندة', 'اجندة', 'جدولة',
   // waiting-room / queue vocabulary (the operationalTopic knows these — the
   // domain GATE must let them in: 'مين في الانتظار؟', 'who is waiting?').
-  'queue', 'waiting', 'انتظار', 'الانتظار', 'طابور', 'المرضى', 'مرضى', 'مستني', 'مستنية', 'مستنيين',
+  'queue', 'waiting', 'انتظار', 'الانتظار', 'طابور', 'المرضى', 'مرضى', 'مستني', 'مستنية', 'مستنيين', 'زيارة', 'الزيارة', 'زيارات', 'محجوز', 'محجوزة', 'محجوزين',
   // patient-record vocabulary ('Show me Ahmed Ali's overview', 'open the
   // file of Sara Hassan') — a patient-record lookup IS in-domain.
   'overview', 'record', 'records', 'file', 'chart', 'profile', 'recheck', 'rechecks', 'follow ups', 'followups',
@@ -112,7 +112,7 @@ export function extractPatientName(message: string): string | null {
   const m = message.trim()
   // Possessive clinical reference: "Show me Ahmed's latest x-ray" — the
   // possessor of a clinical object IS the patient reference.
-  const poss = m.match(/\b([A-Za-z][a-z]{1,15})(?:['’]s|s['’])\s+(?:(?:latest|last|next)\s+)?(?:x-?ray|imaging|scan|file|record|case|appointment|visit|follow-?up|treatment|overview|profile|chart)/i)
+  const poss = m.match(/(?<![A-Za-z\u0600-\u06FF])([A-Za-z][a-z]{1,15}|[\u0600-\u06FF]{2,})(?:['’]s|s['’])\s+(?:(?:latest|last|next)\s+)?(?:x-?ray|imaging|scan|file|record|case|appointment|visit|follow-?up|treatment|overview|profile|chart)/i)
   // 'today's appointments' is a TIME possessive — never a patient name.
   if (poss && !/^(today|tomorrow|yesterday|the|this|that|clinic|doctor|patient|he|she|it|there)$/i.test(poss[1])) return poss[1]
   const en = m.match(/\b(?:for|about|of|patient)\s+([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,2})/i)
@@ -220,6 +220,24 @@ const AR_NON_NAME_WORDS = new Set(['بتاع', 'بتاعت', 'اللي', 'الذ
   // weekday / temporal / imaging words are never names
   'الاحد', 'الأحد', 'الاثنين', 'الاتنين', 'الإثنين', 'التلات', 'الثلاثاء', 'الاربع', 'الاربعاء', 'الأربعاء', 'الخميس', 'الجمعة', 'الجمعه', 'السبت',
   'آخر', 'اخر', 'أشعة', 'اشعة', 'الأشعة', 'زيارة', 'الزيارة', 'الزيارات', 'الأول', 'الاول', 'كمان', 'برضه', 'برضو', 'بتاعة', 'بتاع', 'المريض', 'عندنا', 'عندى', 'لو', 'الآن', 'الان', 'دلوقتي', 'فورا', 'لسه', 'بسه', 'سمحت', 'لوسمحت', 'من', 'فضلك'])
+
+/**
+ * §17 — explicit patient CORRECTION ('لا، قصدي محمد', 'I meant Mohamed').
+ * Returns the corrected name ONLY when a correction cue precedes it (never a
+ * bare name, never a non-corrective sentence). Same hygiene as every other
+ * capture: punctuation stripped, stopwords/object-nouns/verbs rejected.
+ */
+export function extractCorrectedPatientName(message: string): string | null {
+  const m = message.trim()
+  const cue = /(?:^|\s)(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد)(?=[\s،,]|$)|\bi mean\b|\bi meant\b/i
+  if (!cue.test(m)) return null
+  const cap = m.match(/(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد|i mean|i meant)\s+([\u0600-\u06FF]{2,}|[A-Za-z][A-Za-z'-]{1,})/i)
+  if (!cap) return null
+  const w = cap[1].replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
+  if (w.length < 3) return null
+  if (AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w) || AR_OBJECT_NOUNS.has(w) || AR_READ_WRITE_VERBS.has(w)) return null
+  return w
+}
 
 /** Object nouns: the thing being asked about — never the patient's name. */
 const AR_OBJECT_NOUNS = new Set(['جدول', 'أجندة', 'اجندة', 'الأشعة', 'أشعة', 'اشعة', 'الفاتورة', 'فاتورة', 'مواعيد', 'موعد', 'الحالة', 'حالة', 'الملف', 'ملف', 'البيانات', 'بيانات', 'قائمة', 'الانتظار', 'انتظار', 'المتابعات', 'متابعة', 'الزيارات', 'زيارة', 'الخطط', 'خطة', 'العلاجات', 'علاج', 'السجل', 'سجل'])
@@ -395,7 +413,7 @@ export function detectActionSignal(message: string, now: Date): ActionSignal | n
 
 const IMAGING_TERMS = ['x-ray', 'xray', 'radiograph', 'panoramic', 'pano', 'periapical', 'cbct', 'imaging', 'radiology', 'ai finding', 'ai analysis', 'أشعة', 'اشعة', 'تصوير', 'panoram', 'panoramic']
 const CLINICAL_TERMS = ['diagnosis', 'diagnoses', 'findings', 'finding', 'symptom', 'symptoms', 'complaint', 'medical history', 'dental history', 'history', 'exam', 'examination', 'notes', 'chart', 'odontogram', 'treatment', 'treatments', 'تشخيص', 'أعراض', 'شكوى', 'سوابق', 'فحص', 'ملاحظات', 'مشاكل', 'المشاكل', 'مشكلة', 'مخطط', 'مراجعة', 'مراجعات', 'علاج', 'العلاج', 'علاجات', 'راجع']
-const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'schedule', 'انتظار', 'الانتظار', 'طابور', 'مين في', 'أجندة', 'اجندة', 'مستني', 'مستنيين', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات', 'حالات اليوم', 'مرضى اليوم', 'الحالات اللي', 'اللي محتاجة', 'مواعيد النهارده', 'مواعيد النهاردة', 'عيادات النهارده']
+const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'schedule', 'انتظار', 'الانتظار', 'طابور', 'مين في', 'أجندة', 'اجندة', 'مستني', 'مستنيين', 'محجوز', 'محجوزة', 'محجوزين', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات', 'حالات اليوم', 'مرضى اليوم', 'الحالات اللي', 'اللي محتاجة', 'مواعيد النهارده', 'مواعيد النهاردة', 'عيادات النهارده']
 const FOLLOWUP_TERMS = ['follow-up', 'followup', 'follow up', 'متابعة', 'متابعات', 'recheck', 'review visit', 'مراجعة', 'مراجعات', 'المراجعات', 'محتاجة مراجعة', 'محتاجة مراجعات', 'يرجع', 'ترجع', 'يرجعوا', 'يعود', 'تعود', 'return visit', 'come back']
 const CASE_TERMS = ['case', 'treatment plan', 'plan', 'حالة', 'حالات', 'خطة', 'مخطط', 'خطط', 'الخطط', 'بيانات', 'البيانات', 'ملف', 'الملف', 'سجل']
 const BILLING_TERMS = ['invoice', 'payment', 'balance', 'billing', 'overdue invoice', 'فاتورة', 'حساب', 'رصيد', 'دفعة']
@@ -424,7 +442,7 @@ const SIGNALS = {
   appt: (m: string) => APPT_TERMS.some((t) => termHit(m, t)),
 }
 
-const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين']
+const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين', 'كمان']
 
 // ---------------------------------------------------------------------------
 // Phase 4 — knowledge (RAG) intent: general dental knowledge questions
@@ -550,7 +568,9 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   // Patient-name lookup hint (client hint first, else message extraction).
   const patientName = input.patientNameHint || extractPatientName(input.message)
   // First-person reference = the speaker's own record (self-scope downstream).
-  const firstPerson = /\bmy\b|\bme\b|^أنا\s|أنا\b|(^|\s)لي(\s|$)/.test(m)
+  // 'Show me …' is a dative, not a patient scope — only possessives
+  // ('my appointments', 'حالتي', 'مواعيدي') put the DOCTOR's own scope first.
+  const firstPerson = /\bmy\b|\bmine\b|^أنا\s|أنا\b|(^|\s)لي(\s|$)/.test(m)
 
   // 1 — Domain gate. A STRONG knowledge intent (guidelines/criteria/
   // protocol/…) passes the gate even without a known dental term: the
@@ -562,7 +582,11 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   if (
     !isInDentalDomain(input.message, hasMetadata) &&
     !(detectKnowledgeSignal(m, false) !== null && strongKnowledgeIntent) &&
-    !(patientName !== null && /(?:^|\s)(?:هات|هاتلي|وريني|اعرض|اعرضلي|افتح)(?:\s|$)/.test(m))
+    !(patientName !== null && /(?:^|\s)(?:هات|هاتلي|وريني|اعرض|اعرضلي|افتح)(?:\s|$)/.test(m)) &&
+    // §17 — an explicit patient CORRECTION ('لا، قصدي محمد') is always
+    // in-domain clinical context even though the utterance carries no other
+    // request word.
+    extractCorrectedPatientName(input.message) === null
   ) {
     return {
       task: baseTask({ taskType: 'OUT_OF_DOMAIN', confidence: 0.95 }),
@@ -690,7 +714,11 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       confidence: 0.85,
     })
 
-  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup) && !signals.imaging) {
+  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup) && !signals.imaging &&
+    // 'آخر زيارة كانت إمتى؟' with NO patient scope is an anaphor needing the
+    // patient — never answered by a clinic-wide list (which would quietly
+    // answer a different question).
+    !(signals.appt && !signals.operational && /إمتى|امتى|\bwhen\b/i.test(m))) {
     // No patient in scope → clinic-level operational query. Checked BEFORE
     // the clinical branch: clinic-wide review/follow-up questions ('إيه
     // الحالات اللي محتاجة مراجعة النهارده', 'review today's follow-up
@@ -715,6 +743,17 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       taskType: imagingish ? 'IMAGING_ANALYSIS' : 'INFORMATIONAL',
       domains: [imagingish ? 'imaging' : 'patient'],
       contextProfile: imagingish ? 'IMAGING' : 'PATIENT_OVERVIEW',
+      patientInvolved: true,
+      confidence: 0.85,
+      missingInfo: input.hasPatientId ? [] : ['patient identity (resolve by name or id)'],
+    })
+  } else if (extractCorrectedPatientName(input.message) !== null) {
+    // §17 — correction turn: the corrected name re-resolves (hint carries
+    // it); the next anaphor turn ('آخر أشعة ليه؟') then uses the NEW pin.
+    task = baseTask({
+      taskType: 'INFORMATIONAL',
+      domains: ['patient'],
+      contextProfile: 'PATIENT_OVERVIEW',
       patientInvolved: true,
       confidence: 0.85,
       missingInfo: input.hasPatientId ? [] : ['patient identity (resolve by name or id)'],
@@ -745,7 +784,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       patientInvolved,
       toothInvolved: toothFdi !== null,
       confidence: 0.75,
-      missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
+      missingInfo: (patientInvolved || (signals.appt && /إمتى|امتى|\bwhen\b/i.test(m))) && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
   } else if (knowledge) {
     // Phase 4 — general dental knowledge question (RAG). No patient context

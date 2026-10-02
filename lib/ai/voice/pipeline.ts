@@ -29,6 +29,7 @@ import {
   resolveToothReference,
   toothClarification,
 } from './entity-resolution'
+import { extractCorrectedPatientName } from '@/lib/ai/agent/classifier'
 import { speakableFromResponse } from './tts'
 import { prepareAgentMessage } from './normalize'
 import { detectInputLanguage } from './language'
@@ -177,7 +178,7 @@ function approvalViewFromAgent(agent: import('@/lib/ai/agent/types').AgentRespon
   }
 }
 
-function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: VoiceTurnCall, message: string, patientId: string | null, toothFdi: number | null, now: Date): import('@/lib/ai/agent/types').AgentRequest {
+function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: VoiceTurnCall, message: string, patientId: string | null, toothFdi: number | null, now: Date, patientNameHint: string | null = null): import('@/lib/ai/agent/types').AgentRequest {
   return {
     requestId: `vturn-${session.voiceSessionId}-${session.turnCount}`,
     conversationId: session.conversationId,
@@ -185,6 +186,7 @@ function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: Voi
     hospitalId: actor.tenantId,
     message,
     patientId,
+    patientName: patientNameHint,
     toothFdi,
     // Bounded prior turns (§8): lets the agent resolve conversational
     // references ('الحالة دي', 'آخر واحدة') within THIS session only.
@@ -399,6 +401,8 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   let patientId: string | null = working.patientScope?.patientId ?? null
   let clarification: VoiceClarification | null = null
   let toothFdi: number | null = null
+  // §17 — set when the turn is an explicit patient CORRECTION with a name.
+  let correctionName: string | null = null
 
   const tooth = resolveToothReference(normalized)
   if (tooth.status === 'RESOLVED') toothFdi = tooth.fdi
@@ -409,12 +413,29 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     // ى→ي / أ→ا, and the hint must be comparable to the STORED name forms
     // (the resolver itself normalizes both sides before comparing).
     const hint = extractPatientNameHint(safetyOriginal)
+    // §17 — an explicit CORRECTION ('لا، قصدي محمد', 'I mean Mohamed') with a
+    // resolvable name RE-RESOLVES: the stale pin loses to the corrected name.
+    // The new identity is still server-verified by the agent (never guessed),
+    // and without BOTH a cue and a name the pinned scope persists untouched.
+    if (!hint?.first && working.patientScope?.patientId &&
+        /(?:^|\s)(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد|\bi mean\b|\bi meant\b)/i.test(safetyOriginal)) {
+      const corrected = extractCorrectedPatientName(safetyOriginal)
+      if (corrected) correctionName = corrected
+    }
     // Phase 11 (§59): a dependency failure (database unreachable) is a SAFE
     // typed failure — it never throws past the pipeline boundary and never
     // degrades into a guessed answer.
     try {
-      const resolved = await resolvePatientReference(deps.client as Parameters<typeof resolvePatientReference>[0], working.tenantId, hint)
-      if (resolved.status === 'RESOLVED' && resolved.patientId) {
+      if (correctionName) {
+        patientId = null
+        working = { ...working, patientScope: null }
+      }
+      const resolved = correctionName
+        ? { status: 'RESOLVED' as const, patientId: null, displayName: null, candidates: [] }
+        : await resolvePatientReference(deps.client as Parameters<typeof resolvePatientReference>[0], working.tenantId, hint)
+      if (correctionName) {
+        // the AGENT re-resolves the corrected name (server-verified)
+      } else if (resolved.status === 'RESOLVED' && resolved.patientId) {
         patientId = resolved.patientId
         working = {
           ...working,
@@ -467,7 +488,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   let agent: import('@/lib/ai/agent/types').AgentResponse
   try {
     agent = await deps.agent.runAgent(
-      agentRequest(processing, call.actor, call, agentMessage, patientId, toothFdi, t0),
+      agentRequest(processing, call.actor, call, agentMessage, patientId, toothFdi, t0, correctionName),
     )
   } catch {
     const failed = transitionSession(processing, 'ERROR', { now: t0 })

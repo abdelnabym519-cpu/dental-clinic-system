@@ -826,7 +826,10 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   if (
     !rt.patientId &&
     !(task as { localAiCapability?: boolean }).localAiCapability &&
-    (task.patientInvolved || task.taskType === 'MULTI_STEP' || task.taskType === 'ACTION_REQUEST') &&
+    // The CLASSIFIER decides when a patient is required — missingInfo is the
+    // contract (patient-level tasks, nameless compounds, and the bare
+    // 'آخر زيارة كانت إمتى؟' anaphor all land here). Capability questions
+    // are exempt (they never needed a patient).
     (task.missingInfo ?? []).some((x) => /patient identity/i.test(x))
   ) {
     stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
