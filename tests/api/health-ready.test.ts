@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import prisma from '@/tests/__mocks__/prisma'
 
-vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
+const isPrismaFallback = vi.fn(() => false)
+vi.mock('@/lib/prisma', () => ({ prisma, default: prisma, isPrismaFallback }))
 
 const health = await import('@/app/api/health/route')
 const ready = await import('@/app/api/ready/route')
@@ -69,6 +70,25 @@ describe('Liveness and readiness probes', () => {
       const body = await res.json()
       expect(body.status).toBe('not_ready')
       expect(body.checks.database).toBe('error')
+    })
+
+    it('returns 503 with database=fallback when running on the null-returning fallback client (never fake-ready)', async () => {
+      // Runtime-defect regression: the fallback client resolves $queryRaw to
+      // null WITHOUT throwing, so the round trip alone reported 'ready' with
+      // no database at all — a load balancer would route traffic to an
+      // instance that cannot read a single row.
+      isPrismaFallback.mockReturnValue(true)
+      try {
+        const res = await ready.GET()
+        expect(res.status).toBe(503)
+        const body = await res.json()
+        expect(body.status).toBe('not_ready')
+        expect(body.checks.database).toBe('fallback')
+        // the honesty gate fires BEFORE the (meaningless) round trip
+        expect(prisma.$queryRaw).not.toHaveBeenCalled()
+      } finally {
+        isPrismaFallback.mockReturnValue(false)
+      }
     })
 
     it('does not leak database connection details in the response', async () => {

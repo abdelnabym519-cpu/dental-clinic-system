@@ -118,6 +118,10 @@ const PATIENT_LEVEL: [string, Expectation][] = [
   ['مواعيد سارة', { lang: 'ar', tools: ['get_patient_overview'], contains: ['Sara Hassan'] }],
   ['هاتلي بيانات سارة', { lang: 'ar', tools: ['get_patient_overview'], contains: ['Sara Hassan'] }],
   ['حالة Sara Hassan', { lang: 'en', tools: ['get_patient_overview'], contains: ['Sara Hassan'] }], // mixed → EN-dominant per the established policy
+  ["Show me today's appointments.", { lang: 'en', tools: ['get_appointments'], noAr: true }], // 'me' is a dative — never first-person patient scope
+  ["Show me أحمد's latest x-ray.", { lang: 'en', tools: ['get_imaging_context'], contains: ['Latest recorded imaging'] }], // Arabic-possessive + EN frame
+  ['مين محجوز النهارده؟', { lang: 'ar', tools: ['get_appointments'], contains: ['موعد'] }], // 'محجوز' is a clinic-schedule goal
+  ['آخر زيارة كانت إمتى؟', { lang: 'ar', status: 'CLARIFICATION_REQUIRED', contains: ['اسم المريض'] }], // patient anaphor with NO scope asks for identity
   ['Open the file of Sara Hassan', { lang: 'en', tools: ['get_patient_overview'], contains: ['Sara Hassan'], noAr: true }],
   ['Show me Ahmed Ali’s overview', { lang: 'en', tools: ['get_patient_overview'], contains: ['Ahmed Ali'], noAr: true }],
   // clinical + imaging + billing objects over a named patient
@@ -310,6 +314,24 @@ describe('Robot intelligence — §15.C context across turns (real pipeline)', (
     expect(seen[1]!.patientId).toBeNull()
   })
 
+  it('explicit correction (لا، قصدي محمد) re-resolves — the stale pin loses (§17)', async () => {
+    const seen: AgentRequest[] = []
+    const deps = pipelineDeps(async (req) => {
+      seen.push(req)
+      const id = req.patientName === 'محمد' ? 'PAT-M1' : 'PAT-A1'
+      return { answer: 'تم.', resolvedPatient: { id, displayName: req.patientName === 'محمد' ? 'محمد سالم' : 'أحمد محمد' } }
+    })
+    const s = deps.sessions.create({ userId: 'u1', tenantId: 't1', locale: 'ar-EG', now: new Date(1_000) })
+    await runVoiceTurn(deps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('هات أحمد'), actor })
+    await runVoiceTurn(deps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('آخر زيارة كانت إمتى؟'), actor })
+    expect(seen[1]!.patientId).toBe('PAT-A1') // pinned context rides on the follow-up
+    await runVoiceTurn(deps, { voiceSessionId: s.voiceSessionId, op: 'SPEAK', transcript: tr('لا، قصدي محمد'), actor })
+    // the correction DROPS the pin and carries the corrected name for
+    // server-verified re-resolution — the agent never sees the stale id
+    expect(seen[2]!.patientId).toBeNull()
+    expect(seen[2]!.patientName).toBe('محمد')
+  })
+
   it('a foreign user can never read another user’s session (fail closed)', async () => {
     const deps = pipelineDeps(async () => ({ answer: 'تم.' }))
     const s = deps.sessions.create({ userId: 'u1', tenantId: 't1', locale: 'ar-EG', now: new Date(1_000) })
@@ -397,6 +419,7 @@ describe('Robot intelligence — §15.F multi-step decomposition (20 scenarios)'
       ['راجع حالة أحمد والأشعة بتاعته', ['get_patient_360']],
       ['افتح ملف سارة وقولي عنده متابعة؟', ['get_patient_360']],
       ['هات حالة أحمد وآخر أشعة ليها ومواعيده', ['get_patient_360']],
+      ['هات حالة أحمد كمان افتح آخر أشعة ليه', ['get_patient_360']],
       ['Review Ahmed’s chart, latest imaging, and follow-up plan', ['get_patient_360']],
     ]
     for (const [m, tools] of cases) {
