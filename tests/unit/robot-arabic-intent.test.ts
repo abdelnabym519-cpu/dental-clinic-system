@@ -68,19 +68,25 @@ describe('Arabic intent matrix', () => {
     expect(out.observed.answer ?? '').toMatch(AR_LETTER)
   })
 
-  it('patient lookup: افتح بيانات المريض أحمد → Arabic clarification (name does not resolve — never guessed)', async () => {
+  it('patient lookup: افتح بيانات المريض أحمد → resolves the unique Latin-stored match (transliteration), Arabic summary', async () => {
     const out = await run('افتح بيانات المريض أحمد')
-    expect(out.observed.status).toBe('CLARIFICATION_REQUIRED')
+    // 'أحمد' → 'ahmed' matches the single stored 'Ahmed Ali' — a UNIQUE
+    // server-verified match is resolution, not guessing; >1 would clarify.
+    expect(out.observed.status).toBe('COMPLETED')
+    expect(out.observed.toolNames).toContain('get_patient_overview')
     const a = out.observed.answer ?? ''
-    expect(a).toMatch(AR_LETTER)
-    expect(a).toContain('المريض')
+    expect(a).toContain('Ahmed Ali')
+    expect(a).toMatch(AR_LETTER) // Arabic doctor → Arabic summary
     expect(a).not.toMatch(/could not identify the patient in this clinic/)
   })
 
-  it('clinical review: راجع لي حالة أحمد → Arabic clarification, safety preserved', async () => {
+  it('clinical review: راجع لي حالة أحمد → resolved clinical path, Arabic, safety preserved', async () => {
     const out = await run('راجع لي حالة أحمد')
-    expect(out.observed.status).toBe('CLARIFICATION_REQUIRED')
-    expect(out.observed.answer ?? '').toMatch(AR_LETTER)
+    expect(out.observed.status).toBe('COMPLETED')
+    const a = out.observed.answer ?? ''
+    expect(a).toMatch(AR_LETTER)
+    expect(a).toContain('Ahmed Ali')
+    // review = READ — no action executed, nothing approved
     expect(out.observed.actionsExecuted).toBe(0)
   })
 
@@ -125,10 +131,12 @@ describe('English intent matrix (unchanged semantics)', () => {
 })
 
 describe('Mixed Arabic/English matrix', () => {
-  it('افتح patient record بتاع أحمد → patient-lookup attempt, Arabic clarification', async () => {
+  it('افتح patient record بتاع أحمد → resolves unique match, Arabic-dominant summary', async () => {
     const out = await run('افتح patient record بتاع أحمد')
-    expect(out.observed.status).toBe('CLARIFICATION_REQUIRED')
-    expect(out.observed.answer ?? '').toMatch(AR_LETTER) // Arabic-dominant → Arabic
+    expect(out.observed.status).toBe('COMPLETED')
+    const a = out.observed.answer ?? ''
+    expect(a).toContain('Ahmed Ali')
+    expect(a).toMatch(AR_LETTER) // Arabic-dominant → Arabic
   })
 
   it("وريني today's appointments - English-dominant mixed input follows the established dominance policy", async () => {
