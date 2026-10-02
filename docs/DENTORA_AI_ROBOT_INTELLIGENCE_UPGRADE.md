@@ -3,7 +3,7 @@
 - **Date:** 2026-10-02
 - **Branch:** `arena/01a0f3e0-dental-clinic-system`
 - **Start SHA:** `8c28486` ("fix(ai): root-cause Arabic understanding, intent routing, and response language for DenToRa Robot")
-- **Final SHA:** `f3891b2` (§15–§17 harness commit; §24 commit list below)
+- **Final SHA:** see §11 (runtime-validation round; commit list below)
 - **Baseline contract:** Phase 12 remains the certification of record; this phase **replaces nothing** — it upgrades the Robot's interaction layer over the EXISTING Agent (no second brain, no duplicated logic).
 - **Verdict:** 🟢 **PASS** — full suite 6113 passed / 12 skipped / **0 failed**; tsc error list byte-identical to the 504-error baseline; eslint 0 errors on changed files; the §15–§17 harness (23 tests) passes end-to-end.
 
@@ -117,7 +117,20 @@ Prior-phase residual "deterministic summaries echo an injected allergy string ve
 | 10 | §16 floors | PASS | asserted in-suite |
 | 11–29 | Phase 12 certification items (safety classes C1–C20, adversarial 28-class, provenance, RAG boundaries, Windows portability, greeting freeze, etc.) | PASS (unchanged, re-verified by the same suite run) | Phase 12 report + `docs/phase12/*.json` artifacts (restored, not modified) |
 
-## 10. Limitations (labeled, never converted to passes)
+## 10. Runtime validation round (2026-10-02) — evidence over claims
+
+- **Push state:** the 6 upgrade commits landed on `origin/arena/01a0f3e0-dental-clinic-system` (remote HEAD `fafeb4b`); GitHub auth was reconnected by the user after the initial token expiry.
+- **Real runtime:** `next dev` on 0.0.0.0:3000; `/api/health` 200; REAL agent + voice pipelines driven over HTTP with a legitimately-signed DOCTOR session (JWT strategy, app's own dev secret); full structured traces inspected (`taskType`, `patientInvolved:false` on clinic reads, deterministic dates, `modelCalls:0`, typed tool failures).
+- **Acceptance driver:** `ai-validation/robot-runtime/validate.mts` executes the acceptance groups A–L (44 rows) through the REAL pipeline (runVoiceTurn → session → entity resolution → runAgent → tools) over the safe test dataset — **44/44 PASS** (`ai-validation/robot-runtime/RESULTS.md`).
+- **Runtime defects found & fixed (each: reproduced → root cause → smallest fix → regression test → full suite → live re-check):**
+  1. **RT-R1 readiness lied**: `/api/ready` answered `200 database:"ok"` with no database — the fallback flag was module state while the client is cached on globalThis, and the fallback client resolves `$queryRaw` to null without throwing. Fixed in `lib/prisma.ts` (global flag) + `app/api/ready/route.ts` (503 `database:"fallback"` gate); verified live on a fresh server.
+  2. **RT-R2 dative "me"**: `Show me today's appointments.` demanded a patient — `me` treated as first-person scope. Clinic-level EN reads now stay clinic-level.
+  3. **RT-R3 bare visit anaphor**: `آخر زيارة كانت إمتى؟` with no scope was silently answered by a clinic-wide list; it now asks for the patient (never answers a different question).
+  4. **RT-R4 correction chains**: `لا، قصدي محمد` kept the stale pin — dedicated bounded extractor (`extractCorrectedPatientName`), pipeline drops the pin and passes the corrected name for server-verified re-resolution.
+  5. **RT-R5 vocabulary**: `كمان` as a compound conjunction; `زيارة/محجوز` through the domain gate; Arabic possessives in EN frames (`أحمد's latest x-ray`).
+- **Regression gate after the fixes:** full suite **6116 passed / 12 skipped / 0 failed**; tsc 504 (baseline parity); eslint 0 errors on changed files; harness 24/24.
+
+## 11. Limitations (labeled, never converted to passes)
 
 - Sandbox has no Prisma engine/DB: real-DB action writes fail closed (`PATIENT_NOT_FOUND` block) — asserted as typed fail-closed behavior, never faked as success.
 - Browser/E2E and build gates remain ENVIRONMENT-BLOCKED exactly as in Phase 12 §31.
