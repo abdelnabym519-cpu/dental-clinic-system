@@ -148,13 +148,22 @@ export default function NewTreatmentPlanPage() {
     const procedure = procedures.find((p) => p.id === selectedProcedureId)
     if (!procedure) return
 
+    // Issue 7 — manual prices: the cost must be typed by the dentist, never
+    // silently pulled from the procedures catalog. An empty cost blocks the
+    // add with a clear Arabic message instead of defaulting to basePrice.
+    const manualCost = parseFloat(itemCost)
+    if (itemCost.trim() === '' || Number.isNaN(manualCost) || manualCost < 0) {
+      setError(t('أدخل التكلفة التقديرية للإجراء قبل إضافته'))
+      return
+    }
+
     const newItem: PlanItem = {
       procedureId: procedure.id,
       procedureName: procedure.name,
       procedureCode: procedure.code,
       category: procedure.category,
       toothNumbers: itemToothNumbers,
-      estimatedCost: itemCost ? parseFloat(itemCost) : Number(procedure.basePrice),
+      estimatedCost: manualCost,
       notes: itemNotes,
     }
 
@@ -412,15 +421,16 @@ export default function NewTreatmentPlanPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('ui.estimated_cost')}</Label>
+                  <Label htmlFor="item-estimated-cost">{t('ui.estimated_cost')}</Label>
                   <Input
+                    id="item-estimated-cost"
                     type="number"
                     step="0.01"
                     value={itemCost}
                     onChange={(e) => setItemCost(e.target.value)}
                     placeholder={
                       selectedProcedureId
-                        ? t("Default: {v1}", { v1: formatCurrency(procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0, locale) })
+                        ? `${t("Enter cost")} — ${t("Default: {v1}", { v1: formatCurrency(procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0, locale) })}`
                         : t("Enter cost")
                     }
                   />

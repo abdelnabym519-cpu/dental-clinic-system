@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Progress } from '@/components/ui/progress'
@@ -107,6 +108,45 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
   const [actionLoading, setActionLoading] = useState(false)
   const [consentDialogOpen, setConsentDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  // Issue 7 — manual prices: per-item estimated cost is editable inline.
+  const [editingCosts, setEditingCosts] = useState<Record<string, string>>({})
+  const [savingCostFor, setSavingCostFor] = useState<string | null>(null)
+
+  const handleSaveItemCost = async (itemId: string) => {
+    if (!plan) return
+    const item = plan.items.find((i) => i.id === itemId)
+    if (!item) return
+    const value = parseFloat(editingCosts[itemId] ?? '')
+    if (Number.isNaN(value) || value < 0) return
+    try {
+      setSavingCostFor(itemId)
+      const response = await fetch(`/api/treatment-plans/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: plan.items.map((i) => ({
+            procedureId: i.procedure.id,
+            toothNumbers: i.toothNumbers,
+            priority: i.priority,
+            estimatedCost: i.id === itemId ? value : Number(i.estimatedCost),
+            notes: i.notes,
+            status: i.status,
+          })),
+        }),
+      })
+      if (!response.ok) throw new Error(t('Failed to update cost'))
+      setEditingCosts((prev) => {
+        const next = { ...prev }
+        delete next[itemId]
+        return next
+      })
+      fetchPlan()
+    } catch (err) {
+      console.error('Error updating item cost:', err)
+    } finally {
+      setSavingCostFor(null)
+    }
+  }
 
   const fetchPlan = async () => {
     try {
@@ -346,7 +386,41 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                         )}
                       </TableCell>
                       <TableCell>{item.toothNumbers || '-'}</TableCell>
-                      <TableCell>{formatCurrency(item.estimatedCost, locale)}</TableCell>
+                      <TableCell>
+                        {/* Issue 7 — manual prices: the estimated cost is typed
+                            here, never auto-pulled from the catalog. Only the
+                            plan total is recomputed (sum of item costs). */}
+                        <div className="flex items-center gap-1" data-testid={`plan-item-cost-${item.id}`}>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className="h-8 w-28 text-right"
+                            value={editingCosts[item.id] ?? String(item.estimatedCost)}
+                            onChange={(e) =>
+                              setEditingCosts((prev) => ({ ...prev, [item.id]: e.target.value }))
+                            }
+                            disabled={
+                              savingCostFor === item.id ||
+                              plan.status === 'COMPLETED' ||
+                              plan.status === 'CANCELLED'
+                            }
+                            aria-label={t('ui.estimated_cost')}
+                          />
+                          {editingCosts[item.id] !== undefined &&
+                            editingCosts[item.id] !== String(item.estimatedCost) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-2"
+                                disabled={savingCostFor === item.id}
+                                onClick={() => handleSaveItemCost(item.id)}
+                              >
+                                {savingCostFor === item.id ? t('جارٍ الحفظ…') : t('حفظ')}
+                              </Button>
+                            )}
+                        </div>
+                      </TableCell>
                       <TableCell>{getItemStatusBadge(item.status)}</TableCell>
                       <TableCell>
                         {item.status === 'PENDING' && plan.status === 'IN_PROGRESS' && (
