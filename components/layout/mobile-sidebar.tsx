@@ -85,7 +85,7 @@ export function MobileSidebar({ role, hospitalName, hospitalLogo }: MobileSideba
         </div>
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 h-[calc(100vh-3.5rem)]">
+        <ScrollArea className="h-[calc(100vh-3.5rem)] flex-1 supports-[height:100dvh]:h-[calc(100dvh-3.5rem)]">
           <nav className="flex flex-col gap-1 p-3">
             {navigation.map((section, sectionIndex) => (
               <div key={section.title} className={sectionIndex > 0 ? 'mt-4' : ''}>

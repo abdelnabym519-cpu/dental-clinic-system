@@ -17,7 +17,7 @@ export const metadata: Metadata = {
  */
 export default function AiCompanionPage() {
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-muted/20">
+    <div className="min-h-full bg-muted/20">
       <RobotPanel />
     </div>
   )

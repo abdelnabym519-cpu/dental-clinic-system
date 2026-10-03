@@ -228,18 +228,20 @@ describe('DashboardShell', () => {
     expect(cls).toContain('overflow-hidden')
   })
 
-  it('main scroll container contains its scroll (no chaining to the body)', () => {
+  it('main is the sole vertical scroll container and can shrink inside the shell', () => {
     const { container } = render(
       <DashboardShell user={defaultUser} hospital={defaultHospital}>
         <p>x</p>
       </DashboardShell>,
     )
     const main = container.querySelector('main')
-    expect(main?.className).toContain('overflow-auto')
+    expect(main?.className).toContain('overflow-y-auto')
+    expect(main?.className).toContain('overflow-x-hidden')
+    expect(main?.className).toContain('min-h-0')
     expect(main?.className).toContain('overscroll-contain')
   })
 
-  it('no dashboard page forces min-h-screen inside the clipped shell (static scan)', async () => {
+  it('no dashboard page creates a second viewport-sized scroll container (static scan)', async () => {
     const fs = await import('fs')
     const path = await import('path')
     const rootDir = path.resolve(process.cwd(), 'app/(dashboard)')
@@ -248,7 +250,12 @@ describe('DashboardShell', () => {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         const p = path.join(dir, e.name)
         if (e.isDirectory()) walk(p)
-        else if (e.name.endsWith('.tsx') && /min-h-screen|h-screen/.test(fs.readFileSync(p, 'utf-8'))) offenders.push(p)
+        else if (e.name.endsWith('.tsx')) {
+          const source = fs.readFileSync(p, 'utf-8')
+          const viewportSized = /min-h-screen|h-screen/.test(source)
+          const unclampedVh = /100vh/.test(source) && !source.includes('supports-[height:100dvh]')
+          if (viewportSized || unclampedVh) offenders.push(p)
+        }
       }
     }
     walk(rootDir)
