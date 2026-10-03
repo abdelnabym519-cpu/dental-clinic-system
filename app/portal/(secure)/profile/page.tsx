@@ -1,7 +1,5 @@
 import { redirect } from 'next/navigation'
 
-import { LanguagePreferenceCard } from '@/components/i18n/language-preference-card'
-import { locales } from '@/lib/i18n/config'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { getAuthenticatedPatient } from '@/lib/patient-auth'
 import { prisma } from '@/lib/prisma'
@@ -39,14 +37,13 @@ export default async function PortalProfilePage() {
         </p>
       </div>
 
-      <LanguagePreferenceCard
-        locale={patient.locale}
-        hospitalLocale={patient.hospital?.locale ?? null}
-        currency={patient.hospital?.currency ?? 'EGP'}
-        supportedLocales={locales}
-        endpoint="/api/patient-portal/profile"
-        description={t('Choose how dates and amounts are shown to you in the portal.')}
-      />
+      {/* ISSUE 6 — Arabic-only: the language selector was removed. */}
+      <div className="rounded-lg border p-4 space-y-1" data-testid="language-arabic-only">
+        <p className="text-sm font-medium">{t('لغة النظام')}</p>
+        <p className="text-sm text-muted-foreground">
+          {t('النظام يعمل باللغة العربية فقط (من اليمين إلى اليسار).')}
+        </p>
+      </div>
     </div>
   )
 }

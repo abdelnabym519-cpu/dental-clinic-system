@@ -363,7 +363,7 @@ describe('Clean-Room Odontogram Component Suite', () => {
     const onFilterChange = vi.fn()
     render(<OdontogramLegend activeFilter="ALL" onFilterChange={onFilterChange} />)
 
-    const cariesBtn = screen.getByRole('button', { name: /Caries/i })
+    const cariesBtn = screen.getByRole('button', { name: /تسوس/ })
     expect(cariesBtn).toBeInTheDocument()
     fireEvent.click(cariesBtn)
     expect(onFilterChange).toHaveBeenCalledWith('CARIES')

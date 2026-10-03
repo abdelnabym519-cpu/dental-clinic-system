@@ -32,14 +32,14 @@ describe('Appointment Utils - appointmentStatusConfig', () => {
   })
 
   it('should have correct labels', () => {
-    expect(appointmentStatusConfig.SCHEDULED.label).toBe('Scheduled')
-    expect(appointmentStatusConfig.CONFIRMED.label).toBe('Confirmed')
-    expect(appointmentStatusConfig.CHECKED_IN.label).toBe('Checked In')
-    expect(appointmentStatusConfig.IN_PROGRESS.label).toBe('In Progress')
-    expect(appointmentStatusConfig.COMPLETED.label).toBe('Completed')
-    expect(appointmentStatusConfig.CANCELLED.label).toBe('Cancelled')
-    expect(appointmentStatusConfig.NO_SHOW.label).toBe('No Show')
-    expect(appointmentStatusConfig.RESCHEDULED.label).toBe('Rescheduled')
+    expect(appointmentStatusConfig.SCHEDULED.label).toBe('مجدول')
+    expect(appointmentStatusConfig.CONFIRMED.label).toBe('مؤكد')
+    expect(appointmentStatusConfig.CHECKED_IN.label).toBe('تم الوصول')
+    expect(appointmentStatusConfig.IN_PROGRESS.label).toBe('جاري')
+    expect(appointmentStatusConfig.COMPLETED.label).toBe('مكتمل')
+    expect(appointmentStatusConfig.CANCELLED.label).toBe('ملغي')
+    expect(appointmentStatusConfig.NO_SHOW.label).toBe('لم يحضر')
+    expect(appointmentStatusConfig.RESCHEDULED.label).toBe('معاد جدولته')
   })
 
   it('should have proper Tailwind color classes', () => {
@@ -58,11 +58,11 @@ describe('Appointment Utils - appointmentTypeConfig', () => {
   })
 
   it('should have correct labels', () => {
-    expect(appointmentTypeConfig.CONSULTATION.label).toBe('Consultation')
-    expect(appointmentTypeConfig.PROCEDURE.label).toBe('Procedure')
-    expect(appointmentTypeConfig.FOLLOW_UP.label).toBe('Follow Up')
-    expect(appointmentTypeConfig.EMERGENCY.label).toBe('Emergency')
-    expect(appointmentTypeConfig.CHECK_UP.label).toBe('Check Up')
+    expect(appointmentTypeConfig.CONSULTATION.label).toBe('استشارة')
+    expect(appointmentTypeConfig.PROCEDURE.label).toBe('إجراء')
+    expect(appointmentTypeConfig.FOLLOW_UP.label).toBe('متابعة')
+    expect(appointmentTypeConfig.EMERGENCY.label).toBe('طوارئ')
+    expect(appointmentTypeConfig.CHECK_UP.label).toBe('فحص دوري')
   })
 })
 
@@ -76,35 +76,35 @@ describe('Appointment Utils - priorityConfig', () => {
   })
 
   it('should have correct labels', () => {
-    expect(priorityConfig.LOW.label).toBe('Low')
-    expect(priorityConfig.NORMAL.label).toBe('Normal')
-    expect(priorityConfig.HIGH.label).toBe('High')
-    expect(priorityConfig.URGENT.label).toBe('Urgent')
+    expect(priorityConfig.LOW.label).toBe('منخفض')
+    expect(priorityConfig.NORMAL.label).toBe('عادي')
+    expect(priorityConfig.HIGH.label).toBe('عالي')
+    expect(priorityConfig.URGENT.label).toBe('عاجل')
   })
 })
 
 describe('Appointment Utils - formatTime', () => {
   it('should convert 24h to 12h format - AM', () => {
-    expect(formatTime('09:00')).toBe('9:00 AM')
-    expect(formatTime('00:30')).toBe('12:30 AM')
-    expect(formatTime('11:45')).toBe('11:45 AM')
+    expect(formatTime('09:00')).toBe('9:00 ص')
+    expect(formatTime('00:30')).toBe('12:30 ص')
+    expect(formatTime('11:45')).toBe('11:45 ص')
   })
 
   it('should convert 24h to 12h format - PM', () => {
-    expect(formatTime('13:00')).toBe('1:00 PM')
-    expect(formatTime('12:00')).toBe('12:00 PM')
-    expect(formatTime('23:59')).toBe('11:59 PM')
-    expect(formatTime('18:30')).toBe('6:30 PM')
+    expect(formatTime('13:00')).toBe('1:00 م')
+    expect(formatTime('12:00')).toBe('12:00 م')
+    expect(formatTime('23:59')).toBe('11:59 م')
+    expect(formatTime('18:30')).toBe('6:30 م')
   })
 
   it('should handle midnight and noon', () => {
-    expect(formatTime('00:00')).toBe('12:00 AM')
-    expect(formatTime('12:00')).toBe('12:00 PM')
+    expect(formatTime('00:00')).toBe('12:00 ص')
+    expect(formatTime('12:00')).toBe('12:00 م')
   })
 
   it('should pad minutes correctly', () => {
-    expect(formatTime('09:05')).toBe('9:05 AM')
-    expect(formatTime('14:01')).toBe('2:01 PM')
+    expect(formatTime('09:05')).toBe('9:05 ص')
+    expect(formatTime('14:01')).toBe('2:01 م')
   })
 })
 
@@ -112,21 +112,21 @@ describe('Appointment Utils - formatDate', () => {
   it('should format Date object correctly', () => {
     const date = new Date('2024-06-15')
     const result = formatDate(date)
-    expect(result).toContain('15')
-    expect(result).toContain('2024')
+    expect(result).toContain('١٥')
+    expect(result).toContain('٢٠٢٤')
   })
 
   it('should format date string correctly', () => {
     const result = formatDate('2024-01-20')
-    expect(result).toContain('20')
-    expect(result).toContain('2024')
+    expect(result).toContain('٢٠')
+    expect(result).toContain('٢٠٢٤')
   })
 
-  it('should use Indian locale format', () => {
+  it('uses the Arabic (Egypt) locale format — Issue 6 Arabic-only', () => {
     const date = new Date('2024-06-15')
     const result = formatDate(date)
-    // Should contain month abbreviation
-    expect(result).toMatch(/Jun|june/i)
+    // Arabic month name (يونيو = June)
+    expect(result).toMatch(/يونيو/)
   })
 })
 
@@ -198,12 +198,12 @@ describe('Appointment Utils - getPatientName', () => {
 describe('Appointment Utils - getDoctorName', () => {
   it('should return doctor name with Dr. prefix', () => {
     const doctor = { firstName: 'Priya', lastName: 'Patel' }
-    expect(getDoctorName(doctor)).toBe('Dr. Priya Patel')
+    expect(getDoctorName(doctor)).toBe('د. Priya Patel')
   })
 
   it('should handle doctor with single name', () => {
     const doctor = { firstName: 'Anand', lastName: '' }
-    expect(getDoctorName(doctor)).toBe('Dr. Anand ')
+    expect(getDoctorName(doctor)).toBe('د. Anand ')
   })
 })
 

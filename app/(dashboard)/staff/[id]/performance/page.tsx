@@ -72,16 +72,16 @@ interface PerformanceData {
 }
 
 const categoryLabels: Record<string, string> = {
-  PREVENTIVE: 'Preventive',
-  RESTORATIVE: 'Restorative',
-  ENDODONTIC: 'Endodontic',
-  PERIODONTIC: 'Periodontic',
-  PROSTHODONTIC: 'Prosthodontic',
-  ORTHODONTIC: 'Orthodontic',
-  ORAL_SURGERY: 'Oral Surgery',
-  COSMETIC: 'Cosmetic',
-  DIAGNOSTIC: 'Diagnostic',
-  EMERGENCY: 'Emergency',
+  PREVENTIVE: 'وقائي',
+  RESTORATIVE: 'ترميمي',
+  ENDODONTIC: 'علاج الجذور',
+  PERIODONTIC: 'لثة ونسج داعمة',
+  PROSTHODONTIC: 'تعويضات سنية',
+  ORTHODONTIC: 'تقويم',
+  ORAL_SURGERY: 'جراحة الفم',
+  COSMETIC: 'تجميل',
+  DIAGNOSTIC: 'تشخيصي',
+  EMERGENCY: 'طوارئ',
 }
 
 export default function PerformancePage({ params }: { params: Promise<{ id: string }> }) {

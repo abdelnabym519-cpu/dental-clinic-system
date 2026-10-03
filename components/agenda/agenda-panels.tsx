@@ -442,14 +442,14 @@ function AnalyticsSummary() {
   }
 
   const stats: Array<{ label: string; value: string; hint?: string }> = [
-    { label: 'Appointments', value: String(data.total) },
-    { label: 'Completed', value: `${data.completed} (${data.completedRate}%)` },
-    { label: 'Cancelled', value: `${data.cancelled} (${data.cancellationRate}%)` },
-    { label: 'No-shows', value: `${data.noShow} (${data.noShowRate}%)` },
+    { label: 'المواعيد', value: String(data.total) },
+    { label: 'المكتملة', value: `${data.completed} (${data.completedRate}%)` },
+    { label: 'الملغاة', value: `${data.cancelled} (${data.cancellationRate}%)` },
+    { label: 'لم يحضروا', value: `${data.noShow} (${data.noShowRate}%)` },
     {
-      label: 'Clinic occupancy',
+      label: 'إشغال العيادة',
       value: `${data.clinic.occupancyPercent}%`,
-      hint: `${Math.round(data.bookedMinutes / 60)}h booked this period`,
+      hint: `${Math.round(data.bookedMinutes / 60)} ساعة محجوزة في هذه الفترة`,
     },
   ]
 

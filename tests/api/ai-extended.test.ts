@@ -156,14 +156,15 @@ describe('POST /api/ai/query', () => {
     expect(body.rowCount).toBe(1)
   })
 
-  it('returns 502 when AI service errors with OpenRouter message', async () => {
+  it('returns 400 PARSE_FAILED (Arabic guidance) when the LLM call errors — Issue 4 contract', async () => {
     mockAuth()
     mockComplete.mockRejectedValue(new Error('OpenRouter API rate limit exceeded'))
 
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'test query' }))
-    expect(res.status).toBe(502)
+    expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('AI service error')
+    expect(body.code).toBe('PARSE_FAILED')
+    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
   })
 
   it('returns 400 when AI response is unparseable', async () => {
@@ -174,7 +175,8 @@ describe('POST /api/ai/query', () => {
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'show patients' }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('Could not parse')
+    expect(body.code).toBe('PARSE_FAILED')
+    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
   })
 
   it('caps limit at 50', async () => {

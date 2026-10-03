@@ -68,20 +68,20 @@ const CONDITION_COLORS: Record<string, string> = {
 }
 
 const CONDITION_LABELS: Record<string, string> = {
-  HEALTHY: 'Healthy',
-  CARIES: 'Caries',
-  FILLED: 'Filled',
-  CROWN: 'Crown',
-  BRIDGE: 'Bridge',
-  IMPLANT: 'Implant',
-  ROOT_CANAL: 'Root Canal',
-  EXTRACTION: 'Extraction',
-  MISSING: 'Missing',
-  FRACTURED: 'Fractured',
-  SENSITIVE: 'Sensitive',
-  MOBILITY: 'Mobility',
-  ABSCESS: 'Abscess',
-  PERIODONTAL: 'Periodontal',
+  HEALTHY: 'سليم',
+  CARIES: 'تسوس',
+  FILLED: 'محشو',
+  CROWN: 'تاج',
+  BRIDGE: 'جسر',
+  IMPLANT: 'زراعة',
+  ROOT_CANAL: 'علاج عصب',
+  EXTRACTION: 'خلع',
+  MISSING: 'مفقود',
+  FRACTURED: 'مكسور',
+  SENSITIVE: 'حساس',
+  MOBILITY: 'تحرك',
+  ABSCESS: 'خُراج',
+  PERIODONTAL: 'لثة',
 }
 
 interface ToothData {

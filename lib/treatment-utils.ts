@@ -10,22 +10,22 @@ export const treatmentStatusConfig: Record<
   { label: string; color: string; bgColor: string }
 > = {
   PLANNED: {
-    label: 'Planned',
+    label: 'مخطط',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
   },
   IN_PROGRESS: {
-    label: 'In Progress',
+    label: 'جارٍ',
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
   },
   COMPLETED: {
-    label: 'Completed',
+    label: 'مكتمل',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
   },
   CANCELLED: {
-    label: 'Cancelled',
+    label: 'ملغي',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
@@ -37,32 +37,32 @@ export const treatmentPlanStatusConfig: Record<
   { label: string; color: string; bgColor: string }
 > = {
   DRAFT: {
-    label: 'Draft',
+    label: 'مسودة',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
   PROPOSED: {
-    label: 'Proposed',
+    label: 'مقترح',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
   },
   ACCEPTED: {
-    label: 'Accepted',
+    label: 'مقبول',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-100',
   },
   IN_PROGRESS: {
-    label: 'In Progress',
+    label: 'جارٍ',
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
   },
   COMPLETED: {
-    label: 'Completed',
+    label: 'مكتمل',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
   },
   CANCELLED: {
-    label: 'Cancelled',
+    label: 'ملغي',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
   },
@@ -74,27 +74,27 @@ export const treatmentPlanItemStatusConfig: Record<
   { label: string; color: string; bgColor: string }
 > = {
   PENDING: {
-    label: 'Pending',
+    label: 'قيد الانتظار',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
   SCHEDULED: {
-    label: 'Scheduled',
+    label: 'مجدول',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
   },
   IN_PROGRESS: {
-    label: 'In Progress',
+    label: 'جارٍ',
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
   },
   COMPLETED: {
-    label: 'Completed',
+    label: 'مكتمل',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
   },
   CANCELLED: {
-    label: 'Cancelled',
+    label: 'ملغي',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
   },
@@ -106,61 +106,61 @@ export const procedureCategoryConfig: Record<
   { label: string; color: string; bgColor: string; icon: string }
 > = {
   PREVENTIVE: {
-    label: 'Preventive',
+    label: 'وقائي',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
     icon: 'Shield',
   },
   RESTORATIVE: {
-    label: 'Restorative',
+    label: 'ترميمي',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
     icon: 'Wrench',
   },
   ENDODONTIC: {
-    label: 'Endodontic',
+    label: 'علاج الجذور',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
     icon: 'Target',
   },
   PERIODONTIC: {
-    label: 'Periodontic',
+    label: 'لثة ونسج داعمة',
     color: 'text-pink-700',
     bgColor: 'bg-pink-100',
     icon: 'Layers',
   },
   PROSTHODONTIC: {
-    label: 'Prosthodontic',
+    label: 'تعويضات سنية',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-100',
     icon: 'Crown',
   },
   ORTHODONTIC: {
-    label: 'Orthodontic',
+    label: 'تقويم',
     color: 'text-cyan-700',
     bgColor: 'bg-cyan-100',
     icon: 'AlignCenter',
   },
   ORAL_SURGERY: {
-    label: 'Oral Surgery',
+    label: 'جراحة الفم',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
     icon: 'Scissors',
   },
   COSMETIC: {
-    label: 'Cosmetic',
+    label: 'تجميل',
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
     icon: 'Sparkles',
   },
   DIAGNOSTIC: {
-    label: 'Diagnostic',
+    label: 'تشخيصي',
     color: 'text-teal-700',
     bgColor: 'bg-teal-100',
     icon: 'Search',
   },
   EMERGENCY: {
-    label: 'Emergency',
+    label: 'طوارئ',
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',
     icon: 'AlertTriangle',

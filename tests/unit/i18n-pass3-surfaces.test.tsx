@@ -47,9 +47,16 @@ vi.mock('next/headers', () => ({
   headers: async () => new Headers(),
 }))
 
-import { LanguageProvider } from '@/components/providers/language-provider'
-import { LanguagePreferenceCard } from '@/components/i18n/language-preference-card'
-import { LanguageToggle } from '@/components/i18n/language-toggle'
+import { LanguageProvider, useLanguage } from '@/components/providers/language-provider'
+
+/** Renders the live locale/dir so tests can assert the provider cannot switch. */
+function SwitchProbe() {
+  const { locale, dir, setLocale } = useLanguage()
+  setLocale('en-US')
+  return (
+    <span data-testid="probe" data-locale={locale} data-dir={dir} />
+  )
+}
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { Toaster } from '@/components/ui/toaster'
 import { toast } from '@/hooks/use-toast'
@@ -74,11 +81,13 @@ describe('profile settings page (Arabic mode)', () => {
     const text = container.textContent ?? ''
 
     // The sentences that were reported as still-English in the browser.
+    // ISSUE 6 — the language preference card was replaced by the static
+    // Arabic-only notice (the selector is gone from the product).
     expect(text).toContain(ar['profile.title'])
     expect(text).toContain(ar['profile.subtitle'])
-    expect(text).toContain(ar['profile.languageFormatting'])
-    expect(text).toContain(ar['profile.languageLabel'])
-    expect(text).toContain(ar['profile.save'])
+    expect(text).toContain('لغة النظام')
+    expect(text).toContain('النظام يعمل باللغة العربية فقط')
+    // the language save button left with the selector
 
     for (const english of [
       'My Profile',
@@ -100,86 +109,48 @@ describe('profile settings page (Arabic mode)', () => {
     expect(latin).toEqual([])
   })
 
-  it('renders the same page in English when the cookie says English', async () => {
+  // ISSUE 6 — Arabic-only regression lock: an English cookie preference can
+  // no longer render the page in English; the UI stays Arabic (RTL).
+  it('an en-EG cookie can no longer produce an English page (Arabic-only)', async () => {
     hoisted.locale = 'en-EG'
     const element = await ProfileSettingsPage()
     const { container } = render(
       <LanguageProvider initialLocale="en-EG">{element}</LanguageProvider>
     )
     const text = container.textContent ?? ''
-    expect(text).toContain(en['profile.title'])
-    expect(text).toContain(en['profile.languageFormatting'])
-    expect(text).toContain(en['profile.save'])
-    expect(text).toContain('Dr. Test')
-    // Grep the labels, not the formatted preview: the preview deliberately
-    // follows the *inherited* clinic locale (Arabic here), which is the point
-    // of the cascade — so Arabic-Indic digits are expected on this line.
-    expect(text).not.toContain(ar['profile.languageFormatting'])
-    expect(text).not.toContain(ar['profile.subtitle'])
-    expect(text).not.toContain(ar['profile.save'])
+    expect(text).toContain(ar['profile.title'])
+    expect(text).toContain('النظام يعمل باللغة العربية فقط')
+    expect(text).not.toContain(en['profile.title'])
+    expect(text).not.toContain('Language & Formatting')
   })
 })
 
-describe('language selector (names in the selected language)', () => {
-  const cardProps = {
-    hospitalLocale: 'ar-EG',
-    currency: 'EGP',
-    supportedLocales: ['ar-EG', 'en-EG', 'en-US'] as const,
-    endpoint: '/api/settings/profile',
-  }
-
-  it('shows Arabic names while the UI is Arabic', () => {
-    render(
-      <LanguageProvider initialLocale="ar-EG">
-        <LanguagePreferenceCard locale={null} {...cardProps} />
-      </LanguageProvider>
+// ISSUE 6 — Arabic-only: the language selector/toggle were REMOVED from the
+// product. The profile page now shows a static Arabic-only notice, and the
+// provider cannot be switched even programmatically.
+describe('Arabic-only language policy (selector removed)', () => {
+  it('the profile page shows the Arabic-only notice and no selector', async () => {
+    const element = await ProfileSettingsPage()
+    const { container } = render(
+      <LanguageProvider initialLocale="ar-EG">{element}</LanguageProvider>
     )
-    const trigger = document.getElementById('locale')
-    expect(trigger?.textContent).toContain('العربية (مصر)')
-    expect(screen.getByText(ar['profile.languageFormatting'])).toBeTruthy()
-    expect(screen.getByText(ar['profile.languageLabel'])).toBeTruthy()
-    expect(screen.getByRole('button', { name: ar['profile.save'] })).toBeTruthy()
-    expect(document.body.textContent).not.toContain('Arabic (Egypt)')
-    expect(document.body.textContent).not.toContain('Use clinic default')
+    const text = container.textContent ?? ''
+    expect(text).toContain('لغة النظام')
+    expect(text).toContain('النظام يعمل باللغة العربية فقط')
+    // the selector UI is gone (no locale listbox, no save-language button)
+    expect(document.getElementById('locale')).toBeNull()
+    expect(text).not.toContain('Arabic (Egypt)')
+    expect(text).not.toContain('Use clinic default')
   })
 
-  it('shows English names while the UI is English', () => {
-    render(
-      <LanguageProvider initialLocale="en-EG">
-        <LanguagePreferenceCard locale={null} {...cardProps} />
-      </LanguageProvider>
-    )
-    const trigger = document.getElementById('locale')
-    expect(trigger?.textContent).toContain('Arabic (Egypt)')
-    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
-  })
-
-  it('renders the stored preference in Arabic too', () => {
+  it('the provider cannot switch to English — setLocale is a no-op', () => {
     render(
       <LanguageProvider initialLocale="ar-EG">
-        <LanguagePreferenceCard locale="en-EG" {...cardProps} />
+        <SwitchProbe />
       </LanguageProvider>
     )
-    expect(document.getElementById('locale')?.textContent).toContain(ar['language.english'])
-  })
-
-  it('translates the toggle labels in both directions', () => {
-    const { unmount } = render(
-      <LanguageProvider initialLocale="ar-EG">
-        <LanguageToggle />
-      </LanguageProvider>
-    )
-    expect(document.querySelector('button[lang="ar"]')?.textContent).toBe(ar['language.arabic'])
-    expect(document.querySelector('button[lang="en"]')?.textContent).toBe(ar['language.english'])
-    unmount()
-
-    render(
-      <LanguageProvider initialLocale="en-EG">
-        <LanguageToggle />
-      </LanguageProvider>
-    )
-    expect(document.querySelector('button[lang="ar"]')?.textContent).toBe('Arabic')
-    expect(document.querySelector('button[lang="en"]')?.textContent).toBe('English')
+    expect(document.documentElement.lang).toBe('ar-EG')
+    expect(document.documentElement.dir).toBe('rtl')
   })
 })
 
@@ -204,7 +175,9 @@ describe('toast notifications', () => {
     expect(document.body.textContent).not.toContain('Language updated')
   })
 
-  it('keeps toast copy English in English mode', async () => {
+  // ISSUE 6 — Arabic-only: an English provider locale can no longer keep
+  // toast copy English; the toaster always localizes to Arabic.
+  it('an en-EG locale cannot keep toast copy English (Arabic-only lock)', async () => {
     function Raise() {
       React.useEffect(() => {
         toast({ title: 'Deleted successfully' })
@@ -219,7 +192,8 @@ describe('toast notifications', () => {
         </LanguageProvider>
       )
     })
-    expect(await screen.findByText('Deleted successfully')).toBeTruthy()
+    expect(await screen.findByText(ar['toast.deletedSuccessfully'])).toBeTruthy()
+    expect(document.body.textContent).not.toContain('Language updated')
   })
 })
 
@@ -248,15 +222,19 @@ describe('breadcrumbs', () => {
     expect(screen.getByRole('navigation').textContent).toContain(ar['breadcrumb.details'])
   })
 
-  it('falls back to English labels in English mode', () => {
+  // ISSUE 6 — Arabic-only: an en-EG provider locale can no longer fall back
+  // to English breadcrumb labels.
+  it('an en-EG locale cannot produce English breadcrumbs (Arabic-only lock)', () => {
     render(
       <LanguageProvider initialLocale="en-EG">
         <Breadcrumb />
       </LanguageProvider>
     )
     const nav = screen.getByRole('navigation')
-    expect(nav.textContent).toContain('Settings')
-    expect(nav.textContent).toContain('Profile')
+    expect(nav.textContent).toContain(ar['breadcrumb.settings'])
+    expect(nav.textContent).toContain(ar['breadcrumb.profile'])
+    expect(nav.textContent).not.toContain('Settings')
+    expect(nav.textContent).not.toContain('Profile')
   })
 })
 
@@ -285,14 +263,17 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(text).not.toContain('Setup guide')
   })
 
-  it('renders the breadcrumb in English for en-EG', () => {
+  // ISSUE 6 — Arabic-only: en-EG renders the setup-guide breadcrumb in Arabic.
+  it('an en-EG locale cannot render the setup-guide breadcrumb in English', () => {
     hoisted.path = '/settings/setup-guide'
     render(
       <LanguageProvider initialLocale="en-EG">
         <Breadcrumb />
       </LanguageProvider>
     )
-    expect(screen.getByRole('navigation').textContent).toContain('Setup Guide')
+    const nav = screen.getByRole('navigation')
+    expect(nav.textContent).toContain(ar['nav.setupGuide'])
+    expect(nav.textContent).not.toContain('Setup Guide')
   })
 
   it('has Arabic for every setup-guide duration label', () => {

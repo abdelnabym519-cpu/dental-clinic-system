@@ -105,12 +105,12 @@ function statusLabel(status: string): string {
   const labels: Record<string, string> = {
     DRAFT: 'Draft',
     PENDING: 'Pending',
-    ISSUED: 'Issued',
-    PARTIALLY_PAID: 'Partially Paid',
-    PAID: 'Paid',
-    OVERDUE: 'Overdue',
-    CANCELLED: 'Cancelled',
-    REFUNDED: 'Refunded',
+    ISSUED: 'صادرة',
+    PARTIALLY_PAID: 'مدفوعة جزئيًا',
+    PAID: 'مدفوعة',
+    OVERDUE: 'متأخرة',
+    CANCELLED: 'ملغاة',
+    REFUNDED: 'مستردة',
   }
   return labels[status] ?? status
 }

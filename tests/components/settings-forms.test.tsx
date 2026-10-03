@@ -189,7 +189,7 @@ describe('ClinicSettingsPage', () => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
             variant: 'destructive',
-            description: 'Failed to load clinic information',
+            description: 'تعذر تحميل بيانات العيادة',
           })
         )
       })
@@ -379,8 +379,8 @@ describe('ClinicSettingsPage', () => {
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
-            title: 'Success',
-            description: 'Clinic information saved successfully',
+            title: 'تم الحفظ',
+            description: 'تم حفظ بيانات العيادة بنجاح',
           })
         )
       })

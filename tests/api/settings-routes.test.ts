@@ -313,7 +313,7 @@ describe('POST /api/settings/clinic', () => {
     })
   })
 
-  it('returns 500 for validation error (missing name)', async () => {
+  it('returns 400 with a friendly Arabic line for validation error (missing name) — Issue 3 contract', async () => {
     mockAuth()
     const res = await clinicPOST(
       makeReq('/api/settings/clinic', 'POST', {
@@ -324,8 +324,10 @@ describe('POST /api/settings/clinic', () => {
         pincode: '400001',
       })
     )
-    // Zod validation error goes to catch block → 500
-    expect(res.status).toBe(500)
+    // Issue 3: ZodError is mapped to 400 + a single friendly Arabic line
+    expect(res.status).toBe(400)
+    const data = await res.json()
+    expect(data.error).toContain('اسم العيادة مطلوب')
   })
 
   it('converts empty optional strings to undefined', async () => {

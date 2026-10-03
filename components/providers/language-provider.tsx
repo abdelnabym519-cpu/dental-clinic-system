@@ -42,16 +42,18 @@ export function LanguageProvider({
   children: React.ReactNode
   initialLocale?: string | null
 }) {
-  const [locale, setLocaleState] = useState<Locale>(() =>
-    resolveLocale(initialLocale ?? defaultLocale)
-  )
+  // ISSUE 6 — Arabic-only product: the UI locale is ALWAYS the Arabic
+  // default. initialLocale (stored User.locale) and the locale cookie are
+  // read for compatibility but can no longer switch the UI; setLocale is a
+  // compatibility no-op. The English dictionaries remain in the codebase
+  // (translation architecture preserved) but are unreachable from the product.
+  void initialLocale
+  const [locale, setLocaleState] = useState<Locale>(() => defaultLocale)
 
   useEffect(() => {
-    const cookieLocale = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith(`${LOCALE_COOKIE}=`))
-      ?.split('=')[1]
-    if (cookieLocale) setLocaleState(resolveLocale(decodeURIComponent(cookieLocale)))
+    // Keep the cookie aligned with the frozen locale (stale 'en' cookies
+    // heal on first visit instead of resurfacing later).
+    document.cookie = `${LOCALE_COOKIE}=${encodeURIComponent(defaultLocale)}; path=/; max-age=31536000; samesite=lax`
   }, [])
 
   const apply = useCallback((next: Locale) => {
@@ -67,7 +69,11 @@ export function LanguageProvider({
     document.documentElement.dir = directionFor(locale)
   }, [locale])
 
-  const setLocale = useCallback((next: string) => apply(resolveLocale(next)), [apply])
+  // ISSUE 6 — Arabic-only: switching is disabled; kept as a no-op so
+  // existing call sites (and any future re-enable) keep compiling.
+  const setLocale = useCallback(() => {
+    apply(defaultLocale)
+  }, [apply])
 
   const value = useMemo<LanguageContextValue>(
     () => ({

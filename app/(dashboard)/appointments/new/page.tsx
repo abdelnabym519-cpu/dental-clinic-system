@@ -493,7 +493,7 @@ export default function NewAppointmentPage() {
                   <div className="md:col-span-3 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2" data-testid="video-consultation-box">
                     <Label className="flex items-center gap-2 text-blue-800">
                       <Video className="h-4 w-4" />
-                      {t('رابط الاجتماع التلفزيوني')}
+                      {t('رابط الاجتماع (معاينة)')}
                     </Label>
                     <Input readOnly value={`https://meet.jit.si/dentora-${selectedDate || '<التاريخ>'}`} className="bg-white text-left" dir="ltr" aria-readonly />
                     <p className="text-xs text-blue-700">

@@ -4,6 +4,9 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import React from 'react'
 
 import { LanguageProvider } from '@/components/providers/language-provider'
+import { translateText } from '@/lib/i18n/dictionary'
+// ISSUE 6 — Arabic-only: assertions resolve through the same translator.
+const tr = (s: string) => translateText('ar-EG', s)
 import { FindingsViewer } from '@/components/imaging/FindingsViewer'
 import { FindingCard } from '@/components/imaging/FindingCard'
 
@@ -29,7 +32,7 @@ const FINDINGS = [
 
 function renderViewer(props = {}) {
   return render(
-    <LanguageProvider initialLocale="en-US">
+    <LanguageProvider initialLocale="ar-EG">
       <FindingsViewer
         imageUrl="/api/uploads/hosp-1/study-1/original.jpg"
         findings={FINDINGS}
@@ -69,8 +72,8 @@ describe('FindingsViewer — bounding box overlay', () => {
   it('labels each box with the condition and confidence percentage', () => {
     const { container } = renderViewer()
     loadNaturalSize(container, 800, 600)
-    expect(screen.getByText('Caries (94%)')).toBeTruthy()
-    expect(screen.getByText('Impacted tooth (50%)')).toBeTruthy()
+    expect(screen.getByText('تسوس (94%)')).toBeTruthy()
+    expect(screen.getByText('سن مطمور (50%)')).toBeTruthy()
   })
 
   it('clicking a box reports its finding index', () => {
@@ -91,8 +94,8 @@ describe('FindingsViewer — bounding box overlay', () => {
     fireEvent.change(slider, { target: { value: '80' } })
     const rects = container.querySelectorAll('[data-testid="findings-overlay"] rect')
     expect(rects).toHaveLength(1)
-    expect(screen.queryByText('Impacted tooth (50%)')).toBeNull()
-    expect(screen.getByText('Caries (94%)')).toBeTruthy()
+    expect(screen.queryByText('سن مطمور (50%)')).toBeNull()
+    expect(screen.getByText('تسوس (94%)')).toBeTruthy()
   })
 
   it('can hide the overlays entirely', () => {
@@ -107,7 +110,7 @@ describe('FindingsViewer — bounding box overlay', () => {
     const { container } = renderViewer({ annotatedUrl: '/api/uploads/hosp-1/study-1/annotated.png' })
     const img = container.querySelector('img')
     expect(img.getAttribute('src')).toContain('original.jpg')
-    fireEvent.click(screen.getByText('AI annotated image'))
+    fireEvent.click(screen.getByText('الصورة المظللة بالذكاء الاصطناعي'))
     expect(img.getAttribute('src')).toContain('annotated.png')
   })
 
@@ -132,7 +135,7 @@ describe('FindingsViewer — bounding box overlay', () => {
 describe('FindingCard', () => {
   it('shows condition, confidence bar value and the accept checkbox in review mode', () => {
     render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard
           finding={FINDINGS[0]}
           index={0}
@@ -143,32 +146,32 @@ describe('FindingCard', () => {
         />
       </LanguageProvider>
     )
-    expect(screen.getByText('Caries')).toBeTruthy()
+    expect(screen.getByText('تسوس')).toBeTruthy()
     expect(screen.getByText('94%')).toBeTruthy()
     expect(screen.getByRole('checkbox')).toBeTruthy()
   })
 
   it('does not invent a severity or tooth number when the model emitted none', () => {
     const { container } = render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard finding={FINDINGS[1]} index={1} />
       </LanguageProvider>
     )
-    expect(screen.getByText('Impacted tooth')).toBeTruthy()
+    expect(screen.getByText('سن مطمور')).toBeTruthy()
     expect(container.textContent).not.toMatch(/High|Medium|Low/i)
     expect(container.textContent).not.toContain('Tooth')
   })
 
   it('shows the tooth number only when one is available', () => {
     render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard
           finding={{ ...FINDINGS[0], tooth_number: 16 }}
           index={0}
         />
       </LanguageProvider>
     )
-    expect(screen.getByText(/Tooth 16/)).toBeTruthy()
+    expect(screen.getByText(/السن 16/)).toBeTruthy()
   })
 })
 
@@ -214,7 +217,7 @@ describe('FindingsViewer — cephalometric landmark overlay (19B)', () => {
   it('legend shows the landmark set, not the box conditions', () => {
     const { container } = renderViewer({ findings: LANDMARKS })
     loadNaturalSize(container, 800, 600)
-    expect(screen.getByText('38 cephalometric landmarks')).toBeTruthy()
+    expect(screen.getByText('38 نقطة سيفالومترية')).toBeTruthy()
     expect(screen.queryByText('Caries (94%)')).toBeNull()
   })
 
@@ -237,38 +240,38 @@ describe('FindingsViewer — cephalometric landmark overlay (19B)', () => {
 describe('FindingCard — 19B result shapes', () => {
   it('landmark card: number, the model name + point, score bar', () => {
     render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard
           finding={{ landmark_id: 7, landmark_name: '7', x: 123.4, y: 456.7, score: 0.83, coordinate_space: 'cropped_original_image' }}
           index={7}
         />
       </LanguageProvider>
     )
-    expect(screen.getByText('Landmark 8')).toBeTruthy()
+    expect(screen.getByText('نقطة 8')).toBeTruthy()
     expect(screen.getByText('7 · (123, 457)')).toBeTruthy()
     expect(screen.getByText('83%')).toBeTruthy()
   })
 
   it('landmark card without a score never invents one', () => {
     render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard
           finding={{ landmark_id: 0, landmark_name: '0', x: 1, y: 2, score: null, coordinate_space: 'cropped_original_image' }}
           index={0}
         />
       </LanguageProvider>
     )
-    expect(screen.getByText('no confidence emitted by this model')).toBeTruthy()
+    expect(screen.getByText('هذا النموذج لا يُصدر مستوى ثقة')).toBeTruthy()
   })
 
   it('segment card: neutral class + cell count, no confidence bar', () => {
     render(
-      <LanguageProvider initialLocale="en-US">
+      <LanguageProvider initialLocale="ar-EG">
         <FindingCard finding={{ class_id: 3, class_name: 'Tooth_3', point_count: 355 }} index={0} />
       </LanguageProvider>
     )
     expect(screen.getByText('Tooth_3')).toBeTruthy()
-    expect(screen.getByText('355 cells')).toBeTruthy()
-    expect(screen.getByText('no confidence emitted by this model')).toBeTruthy()
+    expect(screen.getByText('355 خلية')).toBeTruthy()
+    expect(screen.getByText('هذا النموذج لا يُصدر مستوى ثقة')).toBeTruthy()
   })
 })

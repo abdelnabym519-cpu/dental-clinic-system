@@ -11,14 +11,20 @@ import { cookies } from 'next/headers'
 import { defaultLocale, LOCALE_COOKIE, resolveLocale, type Locale } from './config'
 import { translateText } from './dictionary'
 
-/** Locale for the current request, from the cookie, falling back to default. */
+/**
+ * Locale for the current request.
+ *
+ * ISSUE 6 — Arabic-only product: the cookie is read for compatibility but can
+ * no longer select a locale; server-rendered pages, PDFs and messages are
+ * always the Arabic default.
+ */
 export async function getServerLocale(): Promise<Locale> {
   try {
-    return resolveLocale((await cookies()).get(LOCALE_COOKIE)?.value)
+    void (await cookies()).get(LOCALE_COOKIE)?.value
   } catch {
     // Static rendering / no request scope — never fail a page over a label.
-    return defaultLocale
   }
+  return defaultLocale
 }
 
 /** `t()` for server components: keys and English labels both resolve. */

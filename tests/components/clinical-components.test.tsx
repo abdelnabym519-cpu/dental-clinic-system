@@ -257,12 +257,12 @@ describe('DentalChart', () => {
     render(<DentalChart patientId="p1" />)
     await waitFor(() => {
       // Condition labels appear in legend + tooltips, use getAllByText
-      expect(screen.getAllByText('Healthy').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Caries').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Filled').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Missing').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Crown').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Root Canal').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('سليم').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('تسوس').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('محشو').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('مفقود').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('تاج').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('علاج عصب').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -270,9 +270,9 @@ describe('DentalChart', () => {
     render(<DentalChart patientId="p1" />)
     await waitFor(() => {
       expect(screen.getByText('Present Teeth')).toBeInTheDocument()
-      expect(screen.getAllByText('Caries').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Filled').length).toBeGreaterThanOrEqual(1)
-      expect(screen.getAllByText('Missing').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('تسوس').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('محشو').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('مفقود').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -282,7 +282,7 @@ describe('DentalChart', () => {
       // Summary card "Present Teeth" should exist
       expect(screen.getByText('Present Teeth')).toBeInTheDocument()
       // Summary card "Caries" should exist
-      const cariesCards = screen.getAllByText('Caries')
+      const cariesCards = screen.getAllByText('تسوس')
       expect(cariesCards.length).toBeGreaterThanOrEqual(1) // legend + summary
     })
   })
@@ -549,8 +549,8 @@ describe('Dental3DViewer', () => {
     render(<Dental3DViewer patientId="p1" chartData={mockChartData} />)
     expect(screen.getByText('Legend')).toBeInTheDocument()
     // Condition names may appear in both legend and overview panel
-    expect(screen.getAllByText('Healthy').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Caries').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('سليم').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('تسوس').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows overview panel with present teeth count', () => {
@@ -585,7 +585,7 @@ describe('Dental3DViewer', () => {
   it('shows condition stats from chart data', () => {
     render(<Dental3DViewer patientId="p1" chartData={mockChartData} />)
     // Should show Missing count in overview
-    expect(screen.getAllByText('Missing').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('مفقود').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders card title for the viewer', () => {

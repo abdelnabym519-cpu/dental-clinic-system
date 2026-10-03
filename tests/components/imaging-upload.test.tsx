@@ -6,6 +6,12 @@ import React from 'react'
 import { LanguageProvider } from '@/components/providers/language-provider'
 import { Toaster } from '@/components/ui/toaster'
 import { ImagingUpload } from '@/components/imaging/ImagingUpload'
+import { translateText } from '@/lib/i18n/dictionary'
+
+// ISSUE 6 — Arabic-only: the product renders in Arabic; assertions resolve
+// the same English source strings through the SAME translator the component
+// uses (translateText('ar-EG', …)), so the contract under test is unchanged.
+const tr = (s: string) => translateText('ar-EG', s)
 
 // Phase 20 (D3) — upload component contract:
 //   - accepts JPEG/PNG/WebP up to 50MB (client pre-flight, server stays the gate)
@@ -40,7 +46,7 @@ class FakeXHR {
 
 function renderUpload(props = {}) {
   return render(
-    <LanguageProvider initialLocale="en-US">
+    <LanguageProvider initialLocale="ar-EG">
       <ImagingUpload patientId="pat-1" onUploadComplete={vi.fn()} {...props} />
       <Toaster />
     </LanguageProvider>
@@ -74,7 +80,7 @@ describe('ImagingUpload — file pre-flight', () => {
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
     expect(screen.getByText(/xray.png/)).toBeTruthy()
     // Upload button unlocks.
-    const uploadButton = screen.getAllByRole('button', { name: 'Upload X-ray' })[0]
+    const uploadButton = screen.getAllByRole('button', { name: tr('Upload X-ray') })[0]
     expect(uploadButton.disabled).toBe(false)
   })
 
@@ -86,7 +92,7 @@ describe('ImagingUpload — file pre-flight', () => {
 
     // 19B D14: PERIAPICAL routes to implant-ai, so analyze stays enabled.
     fireEvent.click(screen.getByRole('combobox'))
-    fireEvent.click(screen.getByRole('option', { name: 'Periapical' }))
+    fireEvent.click(screen.getByRole('option', { name: 'أبيكال' }))
     expect(switchInput.disabled).toBe(false)
   })
 
@@ -98,7 +104,7 @@ describe('ImagingUpload — file pre-flight', () => {
     // Phase 20B: CBCT/THREE_D_SCAN now analyze (MeshSegNet); PHOTO is the
     // only modality without an engine.
     fireEvent.click(screen.getByRole('combobox'))
-    fireEvent.click(screen.getByRole('option', { name: 'Clinical photo' }))
+    fireEvent.click(screen.getByRole('option', { name: 'صورة سريرية' }))
     expect(switchInput.checked).toBe(false)
     expect(switchInput.disabled).toBe(true)
   })
@@ -108,7 +114,7 @@ describe('ImagingUpload — file pre-flight', () => {
     const switchInput = document.querySelector('input[type="checkbox"]')
 
     fireEvent.click(screen.getByRole('combobox'))
-    fireEvent.click(screen.getByRole('option', { name: 'Cephalometric' }))
+    fireEvent.click(screen.getByRole('option', { name: 'سيفالومتري' }))
     expect(switchInput.disabled).toBe(false)
     expect(switchInput.checked).toBe(true)
   })
@@ -118,17 +124,17 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
   it('shows the jaw selector only for 3D modalities (default: maxilla)', () => {
     renderUpload()
     // Hidden for PANORAMIC.
-    expect(screen.queryByText('Jaw')).toBeNull()
+    expect(screen.queryByText('الفك العلوي')).toBeNull()
 
     // Visible for CBCT with both options, maxilla preselected.
     fireEvent.click(screen.getByRole('combobox'))
     fireEvent.click(screen.getByRole('option', { name: 'CBCT' }))
-    expect(screen.getByText('Jaw')).toBeTruthy()
+    expect(screen.getByText('الفك العلوي')).toBeTruthy()
     const comboboxes = screen.getAllByRole('combobox')
     fireEvent.click(comboboxes[1]) // the jaw selector
-    expect(screen.getByRole('option', { name: 'Maxilla (upper)' })).toBeTruthy()
-    expect(screen.getByRole('option', { name: 'Mandible (lower)' })).toBeTruthy()
-    expect(screen.getByText(/analyzes one jaw at a time/)).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'الفك العلوي' })).toBeTruthy()
+    expect(screen.getByRole('option', { name: 'الفك السفلي' })).toBeTruthy()
+    expect(screen.getByText('MeshSegNet يحلل فكاً واحداً في كل مرة — اختر الفك المطابق للمسح المرفوع')).toBeTruthy()
   })
 
   it('accepts a .obj mesh for CBCT and sends jaw=max by default', async () => {
@@ -139,7 +145,7 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
     setFile(new File(['mesh'], 'jaw.obj', { type: 'application/octet-stream' }))
     expect(screen.getByText(/jaw\.obj/)).toBeTruthy()
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     const form = FakeXHR.instances[0].sentForm
     expect(form.get('modality')).toBe('CBCT')
@@ -154,10 +160,10 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
 
     const comboboxes = screen.getAllByRole('combobox')
     fireEvent.click(comboboxes[1])
-    fireEvent.click(screen.getByRole('option', { name: 'Mandible (lower)' }))
+    fireEvent.click(screen.getByRole('option', { name: 'الفك السفلي' }))
 
     setFile(new File(['mesh'], 'mandible.stl', { type: 'application/octet-stream' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     expect(FakeXHR.instances[0].sentForm.get('jaw')).toBe('man')
   })
@@ -169,7 +175,7 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
 
     setFile(new File(['x'], 'cloud.npy', { type: 'application/octet-stream' }))
     expect(screen.queryByText(/cloud\.npy/)).toBeNull()
-    expect(screen.getByText('Unsupported 3D format. Use .obj, .stl, .vtk or .ply')).toBeTruthy()
+    expect(screen.getByText(tr('Unsupported 3D format. Use .obj, .stl, .vtk or .ply'))).toBeTruthy()
     expect(FakeXHR.instances).toHaveLength(0)
   })
 
@@ -179,7 +185,7 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
     fireEvent.click(screen.getByRole('option', { name: 'CBCT' }))
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
     expect(screen.queryByText(/xray\.png/)).toBeNull()
-    expect(screen.getByText('Unsupported 3D format. Use .obj, .stl, .vtk or .ply')).toBeTruthy()
+    expect(screen.getByText(tr('Unsupported 3D format. Use .obj, .stl, .vtk or .ply'))).toBeTruthy()
     expect(FakeXHR.instances).toHaveLength(0)
   })
 
@@ -199,7 +205,7 @@ describe('ImagingUpload — Phase 20B: 3D mesh upload + jaw selector', () => {
 
     const comboboxes = screen.getAllByRole('combobox')
     fireEvent.click(comboboxes[0])
-    fireEvent.click(screen.getByRole('option', { name: 'Panoramic' }))
+    fireEvent.click(screen.getByRole('option', { name: 'بانورامي' }))
     expect(screen.queryByText(/jaw\.obj/)).toBeNull()
   })
 })
@@ -210,25 +216,25 @@ describe('ImagingUpload — upload outcomes', () => {
     renderUpload({ onUploadComplete })
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     const xhr = FakeXHR.instances[0]
     expect(xhr.open.mock.calls[0][1]).toBe('/api/imaging/studies')
 
     xhr.complete(201, { study: { id: 'study-9' }, job: { id: 'job-9', status: 'COMPLETED' } })
     await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith('study-9'))
-    expect(screen.getByText('Analysis completed')).toBeTruthy()
+    expect(screen.getByText(tr('Analysis completed'))).toBeTruthy()
   })
 
   it('201 with a PENDING job → analyzing state + polls the status endpoint', async () => {
     const onUploadComplete = vi.fn()
     renderUpload({ onUploadComplete })
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     FakeXHR.instances[0].complete(201, { study: { id: 'study-9' }, job: { id: 'job-9', status: 'PENDING' } })
 
-    expect(screen.getByText('Analyzing...')).toBeTruthy()
+    expect(screen.getByText('جاري التحليل...')).toBeTruthy()
 
     // Fake the 2s poll (fetch, not XHR).
     const statusFetch = vi.fn().mockResolvedValue({
@@ -250,7 +256,7 @@ describe('ImagingUpload — upload outcomes', () => {
     // Uploads a PANORAMIC with analyze=true; the server-side 422 backstop
     // still governs modalities without an image engine regardless of the
     // client (19B D14: the message is a dictionary key + modality data).
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     FakeXHR.instances[0].complete(422, {
       study: { id: 'study-10' },
@@ -259,13 +265,13 @@ describe('ImagingUpload — upload outcomes', () => {
     })
     await waitFor(() => expect(onUploadComplete).toHaveBeenCalledWith('study-10'))
     // The dictionary key is translated, not shown raw.
-    expect(screen.getByText('AI analysis is not supported for this modality')).toBeTruthy()
+    expect(screen.getByText(tr('AI analysis is not supported for this modality'))).toBeTruthy()
   })
 
   it('upload progress is reported via XHR upload events', async () => {
     renderUpload()
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     const xhr = FakeXHR.instances[0]
     act(() => xhr.upload.onprogress({ lengthComputable: true, loaded: 25, total: 100 }))
@@ -278,11 +284,11 @@ describe('ImagingUpload — upload outcomes', () => {
   it('network error → retryable error state with the retry button', async () => {
     renderUpload()
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
-    fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: tr('Upload X-ray') })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
     act(() => FakeXHR.instances[0].onerror())
-    expect(screen.getByText('Network error')).toBeTruthy()
-    const retry = screen.getByRole('button', { name: 'Retry' })
+    expect(screen.getByText(tr('Network error'))).toBeTruthy()
+    const retry = screen.getByRole('button', { name: tr('Retry') })
     expect(retry).toBeTruthy()
   })
 })
