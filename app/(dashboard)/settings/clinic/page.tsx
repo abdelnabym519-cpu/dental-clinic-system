@@ -65,6 +65,36 @@ function serializeSchedule(schedule: WeekSchedule): string {
   return JSON.stringify(obj)
 }
 
+/**
+ * Issue 3 — user-facing validation errors must be friendly Arabic, never the
+ * raw Zod JSON array. The API now returns an Arabic message directly; this
+ * parser is defense-in-depth for any legacy/other payload shapes.
+ */
+function parseValidationError(error: unknown): string {
+  const raw = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((e: any) => {
+            if (typeof e?.message === 'string' && /[\u0600-\u06FF]/.test(e.message)) return e.message
+            if (e?.code === 'invalid_format' && e?.format === 'url') return 'رابط الموقع غير صحيح — يجب أن يبدأ بـ https://'
+            if (e?.code === 'too_small') return e?.path?.includes('pincode') ? `الرمز السري يجب أن يكون ${e.minimum} أرقام على الأقل` : `القيمة قصيرة جدًا — الحد الأدنى ${e.minimum}`
+            if (e?.code === 'invalid_string') return 'صيغة غير صحيحة'
+            return 'خطأ في البيانات'
+          })
+          .join('\n')
+      }
+    } catch {
+      // not JSON — fall through
+    }
+    // Already-friendly text passes through; anything else gets the generic line.
+    if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) return raw
+  }
+  return 'حدث خطأ في حفظ البيانات'
+}
+
 export default function ClinicSettingsPage() {
   const { t } = useLanguage()
   const { toast } = useToast()
@@ -137,8 +167,8 @@ export default function ClinicSettingsPage() {
       }
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: 'Failed to load clinic information',
+        title: 'خطأ',
+        description: 'تعذر تحميل بيانات العيادة',
         variant: 'destructive',
       })
     } finally {
@@ -224,16 +254,16 @@ export default function ClinicSettingsPage() {
 
       if (response.ok) {
         toast({
-          title: 'Success',
-          description: 'Clinic information saved successfully',
+          title: 'تم الحفظ',
+          description: 'تم حفظ بيانات العيادة بنجاح',
         })
       } else {
         throw new Error(result.error || 'Failed to save')
       }
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message,
+        title: 'خطأ في الحفظ',
+        description: parseValidationError(error?.message ?? error),
         variant: 'destructive',
       })
     } finally {
