@@ -78,15 +78,30 @@ describe('Staff Shifts API', () => {
 
       // $transaction mock already delegates to the callback with prisma
       ;(prisma.staffShift.deleteMany as any).mockResolvedValue({ count: 2 })
-      ;(prisma.staffShift.createMany as any).mockResolvedValue({ count: 2 })
+      ;(prisma.staffShift.createMany as any).mockResolvedValue({ count: 7 })
       ;(prisma.staffShift.findMany as any).mockResolvedValue(
-        newShifts.map((s, i) => ({ id: `s-new-${i}`, staffId: 'staff-1', ...s, isActive: true }))
+        Array.from({ length: 7 }, (_, dayOfWeek) => ({
+          id: `s-new-${dayOfWeek}`,
+          hospitalId: 'hospital-1',
+          staffId: 'staff-1',
+          dayOfWeek,
+          ...(newShifts.find((shift) => shift.dayOfWeek === dayOfWeek) ?? { startTime: '09:00', endTime: '17:00', isActive: false }),
+          ...((newShifts.find((shift) => shift.dayOfWeek === dayOfWeek) && { isActive: true }) ?? {}),
+        }))
       )
 
       const res = await shiftsModule.PUT(makeRequest('PUT', { shifts: newShifts }), ctx)
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.shifts).toHaveLength(2)
+      expect(body.shifts).toHaveLength(7)
+      expect(prisma.staffShift.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ dayOfWeek: 1, isActive: true }),
+          expect.objectContaining({ dayOfWeek: 3, isActive: true }),
+          expect.objectContaining({ dayOfWeek: 5, isActive: false }),
+          expect.objectContaining({ dayOfWeek: 0, isActive: false }),
+        ]),
+      })
     })
 
     it('returns 403 for non-ADMIN role', async () => {

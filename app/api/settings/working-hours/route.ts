@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { resolveDayWorkingWindow } from '@/lib/working-hours'
 
 // Issue 2 — doctor working-hours management (Egyptian work week).
 // GET  ?doctorId=… → that doctor's 7-day shift rows
@@ -28,19 +29,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'الطبيب غير موجود' }, { status: 404 })
     }
 
-    const shifts = await prisma.staffShift.findMany({
-      where: { staffId: doctorId },
-      orderBy: { dayOfWeek: 'asc' },
-    })
+    const [shifts, hospital] = await Promise.all([
+      prisma.staffShift.findMany({
+        where: { hospitalId, staffId: doctorId },
+        orderBy: { dayOfWeek: 'asc' },
+      }),
+      prisma.hospital.findUnique({ where: { id: hospitalId }, select: { workingHours: true } }),
+    ])
 
     return NextResponse.json({
       days: DAYS.map((dayOfWeek) => {
         const shift = shifts.find((s: { dayOfWeek: number }) => s.dayOfWeek === dayOfWeek)
+        const clinicDay = resolveDayWorkingWindow(hospital?.workingHours ?? null, dayOfWeek)
         return {
           dayOfWeek,
-          startTime: shift?.startTime ?? '09:00',
-          endTime: shift?.endTime ?? '17:00',
-          isActive: shift ? shift.isActive : false,
+          startTime: shift?.startTime ?? clinicDay.start,
+          endTime: shift?.endTime ?? clinicDay.end,
+          isActive: shift ? shift.isActive : !clinicDay.closed,
           configured: !!shift,
         }
       }),

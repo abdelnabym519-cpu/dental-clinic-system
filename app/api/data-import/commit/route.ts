@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { parseFile } from '@/lib/import/parsers'
 import { ENTITY_SCHEMAS, coerceValue } from '@/lib/import/schema-definitions'
 import bcrypt from 'bcryptjs'
+import { buildDefaultDoctorShifts } from '@/lib/working-hours'
 
 export async function POST(req: NextRequest) {
   const { error, session, hospitalId } = await requireAuthAndRole(['ADMIN'])
@@ -296,6 +297,10 @@ async function importStaff(
 ) {
   let successCount = 0,
     errorCount = 0
+  const hospital = await prisma.hospital.findUnique({
+    where: { id: hospitalId },
+    select: { workingHours: true },
+  })
 
   for (const row of rows) {
     try {
@@ -361,7 +366,7 @@ async function importStaff(
           },
         })
 
-        await tx.staff.create({
+        const staff = await tx.staff.create({
           data: {
             hospitalId,
             userId: user.id,
@@ -385,6 +390,11 @@ async function importStaff(
             panNumber: row.panNumber || undefined,
           },
         })
+        if (role === 'DOCTOR') {
+          await tx.staffShift.createMany({
+            data: buildDefaultDoctorShifts(hospitalId, staff.id, hospital?.workingHours ?? null),
+          })
+        }
       })
       successCount++
     } catch (err: any) {

@@ -60,26 +60,47 @@ describe('resolveDayWorkingWindow (both stored shapes, never throws)', () => {
     expect(w.lunchEnd).toBe('15:00')
   })
 
-  it('falls back to defaults on garbage JSON instead of 500-ing', () => {
+  it('uses the documented weekly defaults when nothing is configured', () => {
+    const monday = resolveDayWorkingWindow(null, 1)
+    const thursday = resolveDayWorkingWindow(undefined, 4)
+    const friday = resolveDayWorkingWindow('', 5)
+    const saturday = resolveDayWorkingWindow(null, 6)
+    const sunday = resolveDayWorkingWindow(null, 0)
+
+    expect(monday).toMatchObject({ source: 'default', start: '09:00', end: '17:00', closed: false })
+    expect(thursday).toMatchObject({ source: 'default', start: '09:00', end: '17:00', closed: false })
+    expect(friday).toMatchObject({ source: 'default', closed: true })
+    expect(saturday).toMatchObject({ source: 'default', start: '09:00', end: '14:00', closed: false })
+    expect(sunday).toMatchObject({ source: 'default', closed: true })
+  })
+
+  it('falls back to the day-specific defaults on garbage JSON instead of 500-ing', () => {
     for (const garbage of ['{not json', '["array"]', '"text"', 'null', '123']) {
       const w = resolveDayWorkingWindow(garbage, dayOfWeek(MONDAY))
       expect(w.source).toBe('default')
       expect(w.start).toBe('09:00')
-      expect(w.end).toBe('21:00')
+      expect(w.end).toBe('17:00')
     }
   })
 
-  it('falls back to defaults when nothing is stored', () => {
-    const w = resolveDayWorkingWindow(null, dayOfWeek(MONDAY))
-    expect(w.source).toBe('default')
-    expect(w.closed).toBe(false)
+  it('does not silently reopen an invalid or omitted configured day', () => {
+    const partial = JSON.stringify({ monday: { open: '09:00', close: '17:00' } })
+    expect(resolveDayWorkingWindow(partial, dayOfWeek(SUNDAY)).closed).toBe(true)
+
+    const invalid = JSON.stringify({ monday: { open: '09:99', close: '17:00' } })
+    expect(resolveDayWorkingWindow(invalid, dayOfWeek(MONDAY)).closed).toBe(true)
   })
 
-  it('repairs malformed individual times inside a valid shape', () => {
-    const broken = JSON.stringify({ start: 9, end: null })
-    const w = resolveDayWorkingWindow(broken, dayOfWeek(MONDAY))
-    expect(w.start).toBe('09:00')
-    expect(w.end).toBe('21:00')
+  it('builds explicit default doctor shifts that mirror the clinic work week', async () => {
+    const { buildDefaultDoctorShifts } = await import('@/lib/working-hours')
+    const shifts = buildDefaultDoctorShifts('hospital-1', 'doctor-1', null)
+    expect(shifts).toHaveLength(7)
+    expect(shifts.find((shift) => shift.dayOfWeek === 1)).toMatchObject({
+      hospitalId: 'hospital-1', staffId: 'doctor-1', startTime: '09:00', endTime: '17:00', isActive: true,
+    })
+    expect(shifts.find((shift) => shift.dayOfWeek === 5)?.isActive).toBe(false)
+    expect(shifts.find((shift) => shift.dayOfWeek === 6)).toMatchObject({ startTime: '09:00', endTime: '14:00', isActive: true })
+    expect(shifts.find((shift) => shift.dayOfWeek === 0)?.isActive).toBe(false)
   })
 })
 
@@ -99,9 +120,9 @@ describe('GET /api/appointments/slots (Issue 2 regression)', () => {
     vi.clearAllMocks()
     mockAuth.requireAuthAndRole.mockResolvedValue({ error: null, hospitalId: 'h1' })
     prisma.hospital.findUnique.mockResolvedValue({ workingHours: PER_DAY })
-    prisma.holiday.findFirst.mockResolvedValue(null)
+    prisma.holiday.findMany.mockResolvedValue([])
     prisma.staff.findFirst.mockResolvedValue({ id: 'doc-1' })
-    prisma.staffShift.findUnique.mockResolvedValue(null)
+    prisma.staffShift.findFirst.mockResolvedValue(null)
     prisma.appointment.findMany.mockResolvedValue([])
   })
 
@@ -120,24 +141,45 @@ describe('GET /api/appointments/slots (Issue 2 regression)', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.available).toBe(false)
-    expect(data.reason).toContain('مقفولة')
+    expect(data.reason).toContain('مغلقة')
     expect(data.slots).toEqual([])
   })
 
   it('an INACTIVE doctor shift closes the day even with hospital hours open', async () => {
-    prisma.staffShift.findUnique.mockResolvedValue({ startTime: '09:00', endTime: '17:00', isActive: false })
+    prisma.staffShift.findFirst.mockResolvedValue({ startTime: '09:00', endTime: '17:00', isActive: false })
     const res = await GET(slotsRequest(MONDAY))
     const data = await res.json()
     expect(data.available).toBe(false)
-    expect(data.reason).toContain('الطبيب مش متاح')
+    expect(data.reason).toContain('الطبيب غير متاح')
   })
 
-  it('an ACTIVE doctor shift narrows the window (overrides hospital hours)', async () => {
-    prisma.staffShift.findUnique.mockResolvedValue({ startTime: '09:00', endTime: '12:00', isActive: true })
+  it('an ACTIVE doctor shift narrows the window to clinic hours', async () => {
+    prisma.staffShift.findFirst.mockResolvedValue({ startTime: '09:00', endTime: '12:00', isActive: true })
     const res = await GET(slotsRequest(MONDAY))
     const data = await res.json()
     expect(data.available).toBe(true)
     expect(data.slots.length).toBe(6) // 09:00 → 11:30 half-hour slots
-    expect(data.workingHours).toEqual({ start: '09:00', end: '12:00' })
+    expect(data.workingHours).toEqual({ start: '09:00', end: '12:00', lunchStart: null, lunchEnd: null })
+  })
+
+  it('uses the documented default weekday and weekend schedule when unconfigured', async () => {
+    prisma.hospital.findUnique.mockResolvedValue({ workingHours: null })
+    prisma.staffShift.findFirst.mockResolvedValue(null)
+
+    const friday = await (await GET(slotsRequest('2027-03-12'))).json()
+    expect(friday.available).toBe(false)
+    expect(friday.slots).toEqual([])
+
+    const sunday = await (await GET(slotsRequest('2027-03-14'))).json()
+    expect(sunday.available).toBe(false)
+    expect(sunday.slots).toEqual([])
+
+    const saturday = await (await GET(new Request(
+      'http://localhost/api/appointments/slots?doctorId=doc-1&date=2027-03-13&duration=60'
+    ) as never)).json()
+    expect(saturday.available).toBe(true)
+    expect(saturday.slots.map((slot: any) => slot.time)).toEqual([
+      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00',
+    ])
   })
 })

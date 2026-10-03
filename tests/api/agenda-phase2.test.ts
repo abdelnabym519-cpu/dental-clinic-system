@@ -179,7 +179,28 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
     expect(prisma.appointment.create).not.toHaveBeenCalled()
   })
 
-  it('rejects a booking inside the default 13:00–14:00 lunch (DURING_BREAK)', async () => {
+  it('keeps default Friday closed and respects an explicitly inactive doctor shift', async () => {
+    const friday = await POST(post({
+      patientId: PATIENT, doctorId: DOCTOR, scheduledDate: '2027-06-18', scheduledTime: '10:00', duration: 30,
+    }))
+    expect(friday.status).toBe(409)
+    expect((await friday.json()).code).toBe('OUTSIDE_WORKING_HOURS')
+
+    prisma.staffShift.findFirst.mockResolvedValue({
+      hospitalId: HOSPITAL, staffId: DOCTOR, dayOfWeek: 2, startTime: '09:00', endTime: '17:00', isActive: false,
+    })
+    const inactive = await POST(post({
+      patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30,
+    }))
+    expect(inactive.status).toBe(409)
+    expect((await inactive.json()).code).toBe('OUTSIDE_WORKING_HOURS')
+    expect(prisma.appointment.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects a booking inside the configured 13:00–14:00 lunch (DURING_BREAK)', async () => {
+    prisma.hospital.findUnique.mockResolvedValue({
+      workingHours: JSON.stringify({ start: '09:00', end: '17:00', lunchStart: '13:00', lunchEnd: '14:00' }),
+    })
     const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '13:15', duration: 30 }))
     expect(res.status).toBe(409)
     const body = await res.json()
@@ -621,6 +642,14 @@ describe('Agenda Phase-2 — availability context endpoint (4A/4B/4C overlay)', 
     expect(body.windowsByDay[2]).toEqual({ startTime: '10:00', endTime: '18:00' })
     expect(Array.isArray(body.leaves)).toBe(true)
     expect(Array.isArray(body.holidays)).toBe(true)
+
+    prisma.staffShift.findMany.mockResolvedValue([
+      { dayOfWeek: 2, startTime: '10:00', endTime: '18:00', isActive: false },
+    ])
+    const inactive = await availabilityGET(
+      new NextRequest(`http://localhost/api/appointments/availability?doctorId=${DOCTOR}&date=${DAY}`)
+    )
+    expect((await inactive.json()).windowsByDay[2]).toBeNull()
 
     prisma.staff.findFirst.mockResolvedValue(null)
     const foreign = await availabilityGET(

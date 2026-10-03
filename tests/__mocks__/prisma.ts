@@ -553,6 +553,23 @@ const mockPrismaClient = {
     count: vi.fn(),
   },
 
+  // Scheduling availability constraints
+  doctorBreak: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  blockedSlot: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+
   // StaffInvite
   staffInvite: {
     findUnique: vi.fn(),

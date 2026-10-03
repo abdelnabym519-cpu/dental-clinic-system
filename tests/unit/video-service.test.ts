@@ -48,6 +48,17 @@ describe('Video Service', () => {
       )
     })
 
+    it('rejects incomplete or unsafe Daily room responses instead of returning a fake link', async () => {
+      vi.stubEnv('DAILY_API_KEY', 'test-api-key')
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ name: 'dental-room-1', url: 'http://not-secure.example/room' }),
+      })
+
+      const { createRoom } = await import('@/lib/services/video.service')
+      await expect(createRoom('consult-unsafe')).rejects.toThrow('unsafe room URL')
+    })
+
     it('creates a Jitsi room URL without API call', async () => {
       vi.stubEnv('DAILY_API_KEY', '')
       const { createRoom } = await import('@/lib/services/video.service')

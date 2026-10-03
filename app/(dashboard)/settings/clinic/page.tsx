@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { Building2, Save, Upload, Trash2, Loader2, Copy } from 'lucide-react'
 import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
+import { DEFAULT_CLINIC_WEEK } from '@/lib/working-hours'
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const DAY_LABELS: Record<string, string> = {
@@ -27,15 +28,12 @@ const DAY_LABELS: Record<string, string> = {
 type DaySchedule = { open: string; close: string; closed: boolean }
 type WeekSchedule = Record<string, DaySchedule>
 
-const DEFAULT_SCHEDULE: WeekSchedule = {
-  monday: { open: '09:00', close: '20:00', closed: false },
-  tuesday: { open: '09:00', close: '20:00', closed: false },
-  wednesday: { open: '09:00', close: '20:00', closed: false },
-  thursday: { open: '09:00', close: '20:00', closed: false },
-  friday: { open: '09:00', close: '20:00', closed: false },
-  saturday: { open: '09:00', close: '14:00', closed: false },
-  sunday: { open: '', close: '', closed: true },
-}
+const DEFAULT_SCHEDULE: WeekSchedule = Object.fromEntries(
+  DAYS.map((day) => {
+    const defaults = DEFAULT_CLINIC_WEEK[day]
+    return [day, { open: defaults.open ?? '', close: defaults.close ?? '', closed: defaults.closed }]
+  })
+)
 
 function parseSchedule(raw: string | null | undefined): WeekSchedule {
   if (!raw) return { ...DEFAULT_SCHEDULE }

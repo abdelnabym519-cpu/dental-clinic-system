@@ -299,7 +299,7 @@ describe('GET /api/appointments/slots', () => {
         lunchEnd: '14:00',
       }),
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
     vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
@@ -318,15 +318,17 @@ describe('GET /api/appointments/slots', () => {
     const { GET } = await import('@/app/api/appointments/slots/route')
 
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue({ name: 'Diwali' } as any)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([{
+      date: new Date('2026-03-16'), name: 'Diwali', isRecurring: false,
+    }] as any)
 
-    const req = makeRequest('http://localhost/api/appointments/slots?doctorId=d1&date=2026-03-15')
+    const req = makeRequest('http://localhost/api/appointments/slots?doctorId=d1&date=2026-03-16')
     const res = await GET(req)
     const data = await res.json()
 
     expect(res.status).toBe(200)
     expect(data.available).toBe(false)
-    expect(data.reason).toContain('Holiday')
+    expect(data.reason).toContain('Diwali')
     expect(data.slots).toHaveLength(0)
   })
 
@@ -345,7 +347,7 @@ describe('GET /api/appointments/slots', () => {
     const { GET } = await import('@/app/api/appointments/slots/route')
 
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue(null)
 
     const req = makeRequest('http://localhost/api/appointments/slots?doctorId=bad&date=2026-03-15')
@@ -365,7 +367,7 @@ describe('GET /api/appointments/slots', () => {
         lunchEnd: '14:00',
       }),
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
     vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([

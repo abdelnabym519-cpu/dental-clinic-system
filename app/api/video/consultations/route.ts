@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { createRoom } from '@/lib/services/video.service'
@@ -122,9 +123,10 @@ export async function POST(req: Request) {
     }
   }
 
-  // Create video room
-  const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const room = await createRoom(tempId)
+  // Use the appointment id for a stable room when linked; otherwise create a
+  // unique standalone consultation room reference.
+  const roomReference = appointmentId || `consultation-${randomUUID()}`
+  const room = await createRoom(roomReference)
 
   const consultation = await prisma.videoConsultation.create({
     data: {

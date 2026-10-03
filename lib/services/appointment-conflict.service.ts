@@ -180,27 +180,20 @@ export async function findAvailabilityViolation(
     return { code: 'SLOT_BLOCKED', message: `The requested time is blocked${reason}` }
   }
 
-  // 3. Working window: doctor shift → hospital week schedule / flat config →
-  //    built-in defaults. resolveDayWindow unifies the app's real per-day
-  //    `workingHours` JSON with the legacy flat shape.
+  // 3. Working window: one shared clinic-hours resolver plus an optional
+  //    doctor shift. Inactive shifts and clinic-closed days stay unavailable.
   const dayOfWeek = parseDateKey(dateKey).getDay()
   const [hospital, shift] = await Promise.all([
     prisma.hospital.findUnique({
       where: { id: hospitalId },
       select: { workingHours: true },
     }),
-    prisma.staffShift.findUnique({
-      where: { staffId_dayOfWeek: { staffId: doctorId, dayOfWeek } },
+    prisma.staffShift.findFirst({
+      where: { hospitalId, staffId: doctorId, dayOfWeek },
     }),
   ])
 
-  const resolved = resolveDayWindow(
-    dateKey,
-    hospital?.workingHours ?? null,
-    shift?.isActive && shift.startTime && shift.endTime
-      ? { startTime: shift.startTime, endTime: shift.endTime }
-      : null
-  )
+  const resolved = resolveDayWindow(dateKey, hospital?.workingHours ?? null, shift ?? null)
 
   if (!resolved.window) {
     return {

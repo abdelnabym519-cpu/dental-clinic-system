@@ -87,8 +87,16 @@ export async function createRoom(consultationId: string): Promise<CreateRoomResu
       }),
     })
 
+    if (typeof room?.url !== 'string' || typeof room?.name !== 'string' || !room.name.trim()) {
+      throw new Error('Daily.co did not return a valid room URL and name')
+    }
+    const roomUrl = new URL(room.url)
+    if (roomUrl.protocol !== 'https:' || !roomUrl.hostname) {
+      throw new Error('Daily.co returned an unsafe room URL')
+    }
+
     return {
-      roomUrl: room.url,
+      roomUrl: roomUrl.toString(),
       roomName: room.name,
       provider: 'daily',
     }

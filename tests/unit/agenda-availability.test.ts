@@ -10,6 +10,7 @@ import {
   roomOverlapExists,
   generateRecurrenceDateKeys,
   resolveDayWindow,
+  generateAvailableSlots,
   computeSchedulingAnalytics,
   computeDoctorUtilization,
   weeklyMinutesFromShifts,
@@ -20,11 +21,11 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('Agenda availability — working hours & breaks', () => {
-  it('exposes the documented default clinic hours (09:00–21:00, lunch 13:00–14:00)', () => {
+  it('exposes the documented weekday default clinic hours (09:00–17:00, no implied lunch)', () => {
     expect(DEFAULT_WORKING_HOURS.startTime).toBe('09:00')
-    expect(DEFAULT_WORKING_HOURS.endTime).toBe('21:00')
-    expect(DEFAULT_WORKING_HOURS.lunchStart).toBe('13:00')
-    expect(DEFAULT_WORKING_HOURS.lunchEnd).toBe('14:00')
+    expect(DEFAULT_WORKING_HOURS.endTime).toBe('17:00')
+    expect(DEFAULT_WORKING_HOURS.lunchStart).toBeUndefined()
+    expect(DEFAULT_WORKING_HOURS.lunchEnd).toBeUndefined()
   })
 
   it('accepts bookings inside the working window', () => {
@@ -129,15 +130,28 @@ describe('Agenda availability — recurrence expansion', () => {
 })
 
 describe('Agenda availability — resolveDayWindow (three sources of truth)', () => {
-  it('doctor shift wins over clinic config and drops the clinic lunch', () => {
+  it('narrows clinic hours to the active doctor shift and keeps the clinic break', () => {
     const resolved = resolveDayWindow(
       '2027-03-10',
-      JSON.stringify({ wednesday: { open: '09:00', close: '18:00', closed: false } }),
-      { startTime: '10:00', endTime: '16:00' }
+      JSON.stringify({
+        wednesday: { open: '09:00', close: '18:00', closed: false, lunchStart: '13:00', lunchEnd: '14:00' },
+      }),
+      { startTime: '10:00', endTime: '20:00', isActive: true }
     )
-    expect(resolved.window).toEqual({ startTime: '10:00', endTime: '16:00' })
-    expect(resolved.lunch).toBeNull()
+    expect(resolved.window).toEqual({ startTime: '10:00', endTime: '18:00' })
+    expect(resolved.lunch).toEqual({ start: '13:00', end: '14:00' })
     expect(resolved.fromShift).toBe(true)
+  })
+
+  it('does not let a doctor shift reopen an explicitly closed day or extend past clinic hours', () => {
+    const closedSchedule = JSON.stringify({ friday: { open: null, close: null, closed: true } })
+    const closed = resolveDayWindow('2027-03-12', closedSchedule, { startTime: '09:00', endTime: '17:00' })
+    expect(closed.window).toBeNull()
+
+    const inactive = resolveDayWindow('2027-03-10', null, {
+      startTime: '09:00', endTime: '17:00', isActive: false,
+    })
+    expect(inactive.window).toBeNull()
   })
 
   it('reads the app week-schedule shape (lowercase day keys, closed flag)', () => {
@@ -163,15 +177,45 @@ describe('Agenda availability — resolveDayWindow (three sources of truth)', ()
     expect(resolved.lunch).toEqual({ start: '12:30', end: '13:15' })
   })
 
-  it('falls back to the documented defaults when nothing is configured', () => {
-    const resolved = resolveDayWindow('2027-03-10', null, null)
-    expect(resolved.window).toEqual({ startTime: '09:00', endTime: '21:00' })
-    expect(resolved.lunch).toEqual({ start: '13:00', end: '14:00' })
+  it('uses the documented weekday defaults and keeps weekends closed', () => {
+    expect(resolveDayWindow('2027-03-10', null, null)).toMatchObject({
+      window: { startTime: '09:00', endTime: '17:00' }, lunch: null,
+    })
+    expect(resolveDayWindow('2027-03-13', null, null).window).toEqual({ startTime: '09:00', endTime: '14:00' }) // Saturday
+    expect(resolveDayWindow('2027-03-12', null, null).window).toBeNull() // Friday
+    expect(resolveDayWindow('2027-03-14', null, null).window).toBeNull() // Sunday
   })
 
-  it('treats unparseable JSON as unconfigured', () => {
-    const resolved = resolveDayWindow('2027-03-10', '{not json', null)
-    expect(resolved.window).toEqual({ startTime: '09:00', endTime: '21:00' })
+  it('treats unparseable JSON as the documented default schedule', () => {
+    expect(resolveDayWindow('2027-03-10', '{not json', null).window).toEqual({
+      startTime: '09:00', endTime: '17:00',
+    })
+    expect(resolveDayWindow('2027-03-12', '{not json', null).window).toBeNull()
+  })
+
+  it('shares booking slot generation rules for duration, breaks, and overlaps', () => {
+    const slots = generateAvailableSlots(
+      '2027-03-10',
+      { startTime: '12:00', endTime: '15:00' },
+      { start: '13:00', end: '14:00' },
+      60,
+      [{ scheduledTime: '14:00', duration: 30 }],
+      new Date(2027, 2, 9, 8, 0)
+    )
+    expect(slots.map((slot) => slot.time)).toEqual(['12:00', '12:30', '13:00', '13:30', '14:00'])
+    expect(slots.find((slot) => slot.time === '12:00')?.available).toBe(true)
+    expect(slots.find((slot) => slot.time === '12:30')?.available).toBe(false) // overlaps lunch
+    expect(slots.find((slot) => slot.time === '14:00')?.available).toBe(false) // overlaps a booking
+
+    const shortWindow = generateAvailableSlots(
+      '2027-03-10',
+      { startTime: '09:00', endTime: '10:00' },
+      null,
+      45,
+      [],
+      new Date(2027, 2, 9, 8, 0)
+    )
+    expect(shortWindow.map((slot) => slot.time)).toEqual(['09:00'])
   })
 })
 

@@ -134,10 +134,10 @@ export async function POST(
           .map((l) => ({ startDate: toDateKey(l.startDate), endDate: toDateKey(l.endDate), status: 'APPROVED' }))
         if (isOnApprovedLeave(dateKey, doctorLeaves)) continue
 
-        // Working window for this doctor/weekday: shift → clinic schedule →
-        // defaults (resolveDayWindow understands the app's week-schedule JSON).
+        // Use the same effective clinic/doctor window as ordinary booking;
+        // an explicitly inactive shift must not fall back to clinic hours.
         const shift = (shifts as Array<{ staffId: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }>).find(
-          (sh) => sh.staffId === doctor.id && sh.dayOfWeek === weekday && sh.isActive
+          (sh) => sh.staffId === doctor.id && sh.dayOfWeek === weekday
         )
         const resolved = resolveDayWindow(dateKey, hospital?.workingHours ?? null, shift ?? null)
         const window = resolved.window

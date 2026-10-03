@@ -79,9 +79,10 @@ describe('GET /api/public/[slug]/slots', () => {
       workingHours: null,
       patientPortalEnabled: true,
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue({
-      name: 'Republic Day',
-    } as any)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([{
+      date: new Date('2026-01-26'), name: 'Republic Day', isRecurring: false,
+    }] as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
 
     const res = await publicSlotsGET(
       makeReq('/api/public/test/slots?doctorId=d1&date=2026-01-26'),
@@ -101,7 +102,7 @@ describe('GET /api/public/[slug]/slots', () => {
       workingHours: null,
       patientPortalEnabled: true,
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue(null)
 
     const res = await publicSlotsGET(
@@ -122,15 +123,15 @@ describe('GET /api/public/[slug]/slots', () => {
       }),
       patientPortalEnabled: true,
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
-    vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null) // no shift, uses working hours
+    vi.mocked(prisma.staffShift.findFirst).mockResolvedValue(null) // no shift, uses working hours
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
       { scheduledTime: '10:00', duration: 30 },
     ] as any)
 
     const res = await publicSlotsGET(
-      makeReq('/api/public/test/slots?doctorId=d1&date=2026-03-15'),
+      makeReq('/api/public/test/slots?doctorId=d1&date=2027-03-14'),
       makeParams('test')
     )
     const body = await res.json()
@@ -148,22 +149,41 @@ describe('GET /api/public/[slug]/slots', () => {
     expect(freeSlot.available).toBe(true)
   })
 
+  it('keeps Friday closed in the public slot flow when clinic hours are unconfigured', async () => {
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({
+      id: 'h1', workingHours: null, patientPortalEnabled: true,
+    } as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
+    vi.mocked(prisma.staffShift.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
+
+    const res = await publicSlotsGET(
+      makeReq('/api/public/test/slots?doctorId=d1&date=2027-03-12'),
+      makeParams('test')
+    )
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.available).toBe(false)
+    expect(body.slots).toEqual([])
+  })
+
   it('uses doctor shift hours when available', async () => {
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({
       id: 'h1',
       workingHours: null,
       patientPortalEnabled: true,
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
-    vi.mocked(prisma.staffShift.findUnique).mockResolvedValue({
+    vi.mocked(prisma.staffShift.findFirst).mockResolvedValue({
       startTime: '10:00',
       endTime: '11:00',
+      isActive: true,
     } as any)
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
 
     const res = await publicSlotsGET(
-      makeReq('/api/public/test/slots?doctorId=d1&date=2026-03-15'),
+      makeReq('/api/public/test/slots?doctorId=d1&date=2027-03-15'),
       makeParams('test')
     )
     const body = await res.json()

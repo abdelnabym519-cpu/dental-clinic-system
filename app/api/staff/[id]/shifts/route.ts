@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { isValidTime } from '@/lib/agenda-utils'
 
 // GET - Get staff member's shifts
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const shifts = await prisma.staffShift.findMany({
-      where: { staffId: id },
+      where: { hospitalId, staffId: id },
       orderBy: { dayOfWeek: 'asc' },
     })
 
@@ -61,11 +62,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'shifts must be an array' }, { status: 400 })
     }
 
-    // Validate shifts
+    // Validate shifts before writing anything. Omitted days are treated as
+    // explicitly inactive, never as permission to fall back to clinic hours.
+    const byDay = new Map<number, any>()
     for (const shift of shifts) {
-      if (shift.dayOfWeek < 0 || shift.dayOfWeek > 6) {
+      const dayOfWeek = Number(shift?.dayOfWeek)
+      if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6 || byDay.has(dayOfWeek)) {
         return NextResponse.json(
-          { error: 'dayOfWeek must be between 0 (Sunday) and 6 (Saturday)' },
+          { error: 'dayOfWeek must be unique and between 0 (Sunday) and 6 (Saturday)' },
           { status: 400 }
         )
       }
@@ -75,32 +79,38 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           { status: 400 }
         )
       }
+      if (
+        shift.isActive !== false &&
+        (!isValidTime(shift.startTime) || !isValidTime(shift.endTime) || shift.startTime >= shift.endTime)
+      ) {
+        return NextResponse.json(
+          { error: 'Active shifts require valid increasing 24-hour times' },
+          { status: 400 }
+        )
+      }
+      byDay.set(dayOfWeek, shift)
     }
 
-    // Delete existing shifts and create new ones in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Delete all existing shifts for this staff
-      await tx.staffShift.deleteMany({
-        where: { staffId: id },
-      })
-
-      // Create new shifts
-      if (shifts.length > 0) {
-        await tx.staffShift.createMany({
-          data: shifts.map((shift: any) => ({
-            hospitalId,
-            staffId: id,
-            dayOfWeek: shift.dayOfWeek,
-            startTime: shift.startTime,
-            endTime: shift.endTime,
-            isActive: shift.isActive !== false,
-          })),
-        })
+    const normalizedShifts = Array.from({ length: 7 }, (_, dayOfWeek) => {
+      const shift = byDay.get(dayOfWeek)
+      return {
+        hospitalId,
+        staffId: id,
+        dayOfWeek,
+        startTime: shift?.startTime ?? '09:00',
+        endTime: shift?.endTime ?? '17:00',
+        isActive: shift ? shift.isActive !== false : false,
       }
+    })
 
-      // Fetch and return the new shifts
+    // Replace the complete weekly schedule atomically, including closed days.
+    const result = await prisma.$transaction(async (tx: any) => {
+      await tx.staffShift.deleteMany({
+        where: { hospitalId, staffId: id },
+      })
+      await tx.staffShift.createMany({ data: normalizedShifts })
       return await tx.staffShift.findMany({
-        where: { staffId: id },
+        where: { hospitalId, staffId: id },
         orderBy: { dayOfWeek: 'asc' },
       })
     })

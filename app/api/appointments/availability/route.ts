@@ -87,12 +87,12 @@ export async function GET(request: NextRequest) {
       dayDate.setDate(weekStart.getDate() + d)
       const dayKey = toDateKey(dayDate)
       const shift = (shifts as Array<{ dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }>).find(
-        (sh) => sh.dayOfWeek === d && sh.isActive
+        (sh) => sh.dayOfWeek === d
       )
       const resolved = resolveDayWindow(
         dayKey,
         hospital?.workingHours ?? null,
-        shift ? { startTime: shift.startTime, endTime: shift.endTime } : null
+        shift ?? null
       )
       windowsByDay[d] = resolved.window
         ? {

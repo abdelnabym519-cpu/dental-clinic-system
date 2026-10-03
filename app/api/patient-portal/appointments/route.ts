@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requirePatientAuth } from '@/lib/patient-auth'
 import { enqueueMessage } from '@/lib/messaging/service'
+import { isValidTime, parseDateKey, toDateKey } from '@/lib/agenda-utils'
+import { findAvailabilityViolation } from '@/lib/services/appointment-conflict.service'
 import {
   appointmentConfirmationPatient,
   appointmentConfirmationDoctor,
@@ -102,8 +104,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Doctor, date, and time are required' }, { status: 400 })
     }
 
-    const dateObj = new Date(date)
-    if (isNaN(dateObj.getTime()) || !/^\d{2}:\d{2}$/.test(time)) {
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !isValidTime(time)) {
+      return NextResponse.json({ error: 'Invalid date or time' }, { status: 400 })
+    }
+    let dateObj: Date
+    try {
+      dateObj = parseDateKey(date)
+    } catch {
+      return NextResponse.json({ error: 'Invalid date or time' }, { status: 400 })
+    }
+    if (toDateKey(dateObj) !== date) {
       return NextResponse.json({ error: 'Invalid date or time' }, { status: 400 })
     }
 
@@ -124,58 +134,42 @@ export async function POST(req: NextRequest) {
 
     const hospital = await prisma.hospital.findUnique({
       where: { id: patient!.hospitalId },
-      select: { name: true, address: true, phone: true, workingHours: true },
+      select: { name: true, address: true, phone: true },
     })
 
-    // 2. Future date (today only if the slot is still ahead of now)
+    // 2. Future date (same clinic-local date and slot rules as the availability API).
     const now = new Date()
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const isToday = dateObj.toDateString() === today.toDateString()
-    if (dateObj < today || (isToday && endMinutes <= now.getHours() * 60 + now.getMinutes())) {
-      return NextResponse.json({ error: 'The appointment must be in the future' }, { status: 400 })
+    const todayKey = toDateKey(now)
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    if (date < todayKey || (date === todayKey && startMinutes <= currentMinutes)) {
+      return NextResponse.json({ error: 'يجب اختيار موعد في المستقبل' }, { status: 400 })
     }
 
-    // 3. Working hours / shift (same source as the slots API)
-    let workingHours = { start: '09:00', end: '21:00', lunchStart: '13:00', lunchEnd: '14:00' }
-    if (hospital?.workingHours) {
-      try {
-        workingHours = JSON.parse(hospital.workingHours)
-      } catch {
-        /* defaults */
-      }
-    }
-    const doctorShift = await prisma.staffShift.findUnique({
-      where: {
-        staffId_dayOfWeek: { staffId: doctorId, dayOfWeek: dateObj.getDay() },
-      },
+    // 3. Use the same authoritative gate as staff-created bookings: clinic
+    // hours, doctor shifts, holidays, leave, breaks, and blocked slots.
+    const violation = await findAvailabilityViolation({
+      hospitalId: patient!.hospitalId,
+      doctorId,
+      scheduledDate: dateObj,
+      scheduledTime: time,
+      duration,
     })
-
-    const toMin = (t: string) => {
-      const [h, m] = t.split(':').map(Number)
-      return h * 60 + m
-    }
-    const whStart = toMin(doctorShift?.startTime || workingHours.start)
-    const whEnd = toMin(doctorShift?.endTime || workingHours.end)
-    const lunchStart = toMin(workingHours.lunchStart)
-    const lunchEnd = toMin(workingHours.lunchEnd)
-
-    if (startMinutes < whStart || endMinutes > whEnd) {
-      return NextResponse.json(
-        { error: "This time is outside the doctor's working hours" },
-        { status: 409 }
-      )
-    }
-    if (startMinutes < lunchEnd && endMinutes > lunchStart) {
-      return NextResponse.json(
-        { error: "This time is outside the doctor's working hours" },
-        { status: 409 }
-      )
+    if (violation) {
+      const message = violation.code === 'CLINIC_HOLIDAY'
+        ? 'العيادة مغلقة في هذا اليوم'
+        : violation.code === 'DOCTOR_ON_LEAVE'
+          ? 'الطبيب غير متاح في هذا اليوم'
+          : violation.code === 'DOCTOR_ON_BREAK' || violation.code === 'DURING_BREAK'
+            ? 'الوقت المختار يتعارض مع فترة استراحة الطبيب أو العيادة'
+            : violation.code === 'SLOT_BLOCKED'
+              ? 'الوقت المختار محجوب، يرجى اختيار وقت آخر'
+              : 'الوقت المختار خارج ساعات العمل'
+      return NextResponse.json({ error: message, code: violation.code }, { status: 409 })
     }
 
     // 4. Double-booking: doctor already has an overlapping appointment
     type DoctorApt = { scheduledTime: string; duration: number; patientId: string }
-const doctorAppointments = await prisma.appointment.findMany({
+    const doctorAppointments = await prisma.appointment.findMany({
       where: {
         hospitalId: patient!.hospitalId,
         doctorId,
@@ -241,7 +235,7 @@ const doctorAppointments = await prisma.appointment.findMany({
     })
 
     // WhatsApp confirmations (Phase 10 MessageQueue)
-    const dateLabel = dateObj.toISOString().slice(0, 10)
+    const dateLabel = toDateKey(dateObj)
     const patientName = `${patient!.firstName} ${patient!.lastName}`.trim()
 
     await enqueueMessage({

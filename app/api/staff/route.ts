@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole, checkStaffLimit } from '@/lib/api-helpers'
 import bcrypt from 'bcryptjs'
+import { buildDefaultDoctorShifts } from '@/lib/working-hours'
 
 // GET - List staff members
 export async function GET(request: NextRequest) {
@@ -176,9 +177,12 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
+    const hospitalHours = role === 'DOCTOR'
+      ? await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { workingHours: true } })
+      : null
 
-    // Create user and staff in transaction
-    const result = await prisma.$transaction(async (tx) => {
+    // Create user, staff, and default doctor shifts atomically.
+    const result = await prisma.$transaction(async (tx: any) => {
       // Create user account
       const user = await tx.user.create({
         data: {
@@ -233,6 +237,12 @@ export async function POST(request: NextRequest) {
           },
         },
       })
+
+      if (role === 'DOCTOR') {
+        await tx.staffShift.createMany({
+          data: buildDefaultDoctorShifts(hospitalId, staff.id, hospitalHours?.workingHours ?? null),
+        })
+      }
 
       return staff
     })

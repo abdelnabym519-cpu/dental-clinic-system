@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
+import { DEFAULT_CLINIC_WEEK } from '@/lib/working-hours'
 
 const onboardingSchema = z.object({
   tagline: z.string().optional(),
@@ -45,15 +46,7 @@ const onboardingSchema = z.object({
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>
 
-const defaultWorkingHours = {
-  monday: { open: '09:00', close: '18:00', closed: false },
-  tuesday: { open: '09:00', close: '18:00', closed: false },
-  wednesday: { open: '09:00', close: '18:00', closed: false },
-  thursday: { open: '09:00', close: '18:00', closed: false },
-  friday: { open: '09:00', close: '18:00', closed: false },
-  saturday: { open: '09:00', close: '14:00', closed: false },
-  sunday: { open: null, close: null, closed: true },
-}
+const defaultWorkingHours = DEFAULT_CLINIC_WEEK
 
 const steps = [
   { id: 1, title: 'Clinic Details', icon: Building2 },

@@ -51,6 +51,7 @@ import { GET, POST } from '@/app/api/staff/route'
 const mockPrisma = vi.mocked(prisma)
 const mockRequireAuth = vi.mocked(requireAuthAndRole)
 const mockCheckStaffLimit = vi.mocked(checkStaffLimit)
+const mockStaffShiftCreateMany = vi.fn()
 
 describe('Staff API - Comprehensive Tests', () => {
   const mockHospitalId = 'hospital-123'
@@ -216,6 +217,9 @@ describe('Staff API - Comprehensive Tests', () => {
               user: { id: 'new-user-id', role: 'DOCTOR' },
             }),
           },
+          staffShift: {
+            createMany: mockStaffShiftCreateMany,
+          },
         })
       })
     })
@@ -235,6 +239,14 @@ describe('Staff API - Comprehensive Tests', () => {
       const response = await POST(request)
 
       expect(response.status).toBe(201)
+      expect(mockStaffShiftCreateMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ hospitalId: mockHospitalId, staffId: 'new-staff-id', dayOfWeek: 1, startTime: '09:00', endTime: '17:00', isActive: true }),
+          expect.objectContaining({ hospitalId: mockHospitalId, staffId: 'new-staff-id', dayOfWeek: 5, isActive: false }),
+          expect.objectContaining({ hospitalId: mockHospitalId, staffId: 'new-staff-id', dayOfWeek: 6, startTime: '09:00', endTime: '14:00', isActive: true }),
+          expect.objectContaining({ hospitalId: mockHospitalId, staffId: 'new-staff-id', dayOfWeek: 0, isActive: false }),
+        ]),
+      })
     })
 
     it('should reject staff creation without required fields', async () => {

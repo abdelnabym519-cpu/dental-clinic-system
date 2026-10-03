@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Calendar, Clock, User, Search, Check, Loader2, Video } from 'lucide-react'
 import { formatTime } from '@/lib/appointment-utils'
+import { toDateKey } from '@/lib/agenda-utils'
 import { CHIEF_COMPLAINT_EXAMPLES, COMPLAINT_HINT } from '@/lib/egypt-governorates'
 
 interface Patient {
@@ -198,12 +199,12 @@ export default function NewAppointmentPage() {
         }),
       })
 
+      const data = await response.json()
       if (!response.ok) {
-        const data = await response.json()
         throw new Error(data.error || 'Failed to create appointment')
       }
 
-      router.push('/appointments')
+      router.push(`/appointments/${data.id}${data.videoSetupWarning ? '?videoSetup=failed' : ''}`)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -211,10 +212,7 @@ export default function NewAppointmentPage() {
     }
   }
 
-  const getMinDate = () => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  }
+  const getMinDate = () => toDateKey(new Date())
 
   if (loading) {
     return (
@@ -493,11 +491,10 @@ export default function NewAppointmentPage() {
                   <div className="md:col-span-3 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2" data-testid="video-consultation-box">
                     <Label className="flex items-center gap-2 text-blue-800">
                       <Video className="h-4 w-4" />
-                      {t('رابط الاجتماع (معاينة)')}
+                      رابط الاجتماع
                     </Label>
-                    <Input readOnly value={`https://meet.jit.si/dentora-${selectedDate || '<التاريخ>'}`} className="bg-white text-left" dir="ltr" aria-readonly />
-                    <p className="text-xs text-blue-700">
-                      {t('سيتم إنشاء رابط الاجتماع تلقائيًا عند حفظ الموعد، وسيظهر زر «انضم للاجتماع» في صفحة الموعد.')}
+                    <p className="text-sm text-blue-800">
+                      سيُنشأ رابط الغرفة بعد حفظ الموعد بنجاح من خلال مزود الفيديو المتاح، وسيظهر هنا في تفاصيل الموعد فقط بعد إنشاء الغرفة فعليًا.
                     </p>
                   </div>
                 )}

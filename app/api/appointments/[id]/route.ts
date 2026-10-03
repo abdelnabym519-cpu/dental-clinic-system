@@ -57,7 +57,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
 
-    return NextResponse.json(appointment)
+    const videoConsultation = appointment.videoConsultationId
+      ? await prisma.videoConsultation.findFirst({
+          where: {
+            id: appointment.videoConsultationId,
+            appointmentId: appointment.id,
+            hospitalId,
+          },
+          select: { id: true, roomUrl: true, roomName: true, status: true, scheduledAt: true },
+        })
+      : null
+
+    return NextResponse.json({ ...appointment, videoConsultation })
   } catch (error) {
     console.error('Error fetching appointment:', error)
     return NextResponse.json({ error: 'Failed to fetch appointment' }, { status: 500 })

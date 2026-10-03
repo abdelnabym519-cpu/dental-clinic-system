@@ -7,6 +7,7 @@
  * (see lib/agenda-utils.ts for the canonical conversion helpers).
  */
 import { isValidTime, timeToMinutes, timeRangesOverlap, addDays, toDateKey, parseDateKey } from '@/lib/agenda-utils'
+import { resolveDayWorkingWindow } from '@/lib/working-hours'
 
 export interface WorkingWindow {
   startTime: string
@@ -20,9 +21,7 @@ export interface ClinicWorkingHours extends WorkingWindow {
 
 export const DEFAULT_WORKING_HOURS: ClinicWorkingHours = {
   startTime: '09:00',
-  endTime: '21:00',
-  lunchStart: '13:00',
-  lunchEnd: '14:00',
+  endTime: '17:00',
 }
 
 export const RECURRENCE_PATTERNS = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'] as const
@@ -224,85 +223,127 @@ export function weeklyMinutesFromShifts(
 }
 
 /**
- * Resolve the effective working window for one date, unifying the three
- * sources of truth in this repo:
- *  1. doctor StaffShift row (wins) — no clinic lunch is layered on top;
- *  2. hospital `workingHours` JSON in the app's real shape — a per-day week
- *     schedule `{ monday: { open, close, closed }, ... }` (lowercase keys,
- *     as written by onboarding + settings/clinic);
- *  3. legacy/alt `{ startTime, endTime, lunchStart?, lunchEnd? }`, or
- *     unconfigured → DEFAULT_WORKING_HOURS (with its 13:00–14:00 lunch).
+ * Resolve one date through the same clinic-hours parser used by the booking
+ * slots API, optionally narrowing it to a doctor's shift. An explicitly
+ * inactive or invalid shift closes the day. A doctor shift can override an
+ * unconfigured fallback, but explicit clinic hours cap its effective window.
  */
 export interface ResolvedDayWindow {
-  /** Null when the clinic (or its schedule) marks the day closed. */
+  /** Null when the clinic or doctor's shift marks the day closed. */
   window: WorkingWindow | null
-  /** Lunch/break band — only when sourced from defaults or the alt shape. */
   lunch: { start: string; end: string } | null
-  /** True when resolved from a doctor shift rather than clinic config. */
   fromShift: boolean
 }
-
-const DAY_NAMES = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-] as const
 
 export function resolveDayWindow(
   dateKey: string,
   workingHoursRaw: string | null | undefined,
-  shift?: { startTime: string; endTime: string } | null
+  shift?: { startTime: string; endTime: string; isActive?: boolean } | null
 ): ResolvedDayWindow {
-  if (shift && isValidTime(shift.startTime) && isValidTime(shift.endTime)) {
-    return { window: { startTime: shift.startTime, endTime: shift.endTime }, lunch: null, fromShift: true }
-  }
-
-  let parsed: Record<string, unknown> | null = null
-  if (workingHoursRaw) {
-    try {
-      const value = JSON.parse(workingHoursRaw)
-      if (value && typeof value === 'object') parsed = value as Record<string, unknown>
-    } catch {
-      parsed = null
+  const clinic = resolveDayWorkingWindow(workingHoursRaw, parseDateKey(dateKey).getDay())
+  if (!shift) {
+    return {
+      window: clinic.closed ? null : { startTime: clinic.start, endTime: clinic.end },
+      lunch:
+        clinic.lunchStart && clinic.lunchEnd
+          ? { start: clinic.lunchStart, end: clinic.lunchEnd }
+          : null,
+      fromShift: false,
     }
   }
 
-  if (parsed) {
-    const dayName = DAY_NAMES[parseDateKey(dateKey).getDay()]
-    const dayConfig = parsed[dayName] as { open?: string | null; close?: string | null; closed?: boolean } | undefined
-    if (dayConfig && typeof dayConfig === 'object') {
-      if (dayConfig.closed || !dayConfig.open || !dayConfig.close) {
-        return { window: null, lunch: null, fromShift: false }
-      }
-      if (isValidTime(dayConfig.open) && isValidTime(dayConfig.close)) {
-        return { window: { startTime: dayConfig.open, endTime: dayConfig.close }, lunch: null, fromShift: false }
-      }
-      return { window: null, lunch: null, fromShift: false }
+  if (
+    shift.isActive === false ||
+    !isValidTime(shift.startTime) ||
+    !isValidTime(shift.endTime) ||
+    timeToMinutes(shift.startTime) >= timeToMinutes(shift.endTime) ||
+    (clinic.closed && clinic.source !== 'default')
+  ) {
+    return { window: null, lunch: null, fromShift: true }
+  }
+
+  // With no clinic schedule recorded, an explicit doctor shift is itself the
+  // configured window. Persisted per-day/flat clinic hours still cap it.
+  if (clinic.source === 'default') {
+    return {
+      window: { startTime: shift.startTime, endTime: shift.endTime },
+      lunch: clinic.lunchStart && clinic.lunchEnd
+        ? { start: clinic.lunchStart, end: clinic.lunchEnd }
+        : null,
+      fromShift: true,
     }
-    // Alt shape: flat start/end with optional lunch.
-    const startTime = (parsed as { startTime?: string }).startTime
-    const endTime = (parsed as { endTime?: string }).endTime
-    if (isValidTime(startTime) && isValidTime(endTime)) {
-      const lunchStart = (parsed as { lunchStart?: string }).lunchStart
-      const lunchEnd = (parsed as { lunchEnd?: string }).lunchEnd
-      const lunch =
-        lunchStart && lunchEnd && isValidTime(lunchStart) && isValidTime(lunchEnd)
-          ? { start: lunchStart, end: lunchEnd }
-          : null
-      return { window: { startTime, endTime }, lunch, fromShift: false }
-    }
+  }
+
+  const startTime =
+    timeToMinutes(shift.startTime) > timeToMinutes(clinic.start) ? shift.startTime : clinic.start
+  const endTime = timeToMinutes(shift.endTime) < timeToMinutes(clinic.end) ? shift.endTime : clinic.end
+  if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
+    return { window: null, lunch: null, fromShift: true }
   }
 
   return {
-    window: { startTime: DEFAULT_WORKING_HOURS.startTime, endTime: DEFAULT_WORKING_HOURS.endTime },
+    window: { startTime, endTime },
     lunch:
-      DEFAULT_WORKING_HOURS.lunchStart && DEFAULT_WORKING_HOURS.lunchEnd
-        ? { start: DEFAULT_WORKING_HOURS.lunchStart, end: DEFAULT_WORKING_HOURS.lunchEnd }
+      clinic.lunchStart && clinic.lunchEnd
+        ? { start: clinic.lunchStart, end: clinic.lunchEnd }
         : null,
-    fromShift: false,
+    fromShift: true,
   }
+}
+
+export interface AvailableSlot {
+  time: string
+  available: boolean
+}
+
+/**
+ * Generate one consistent 30-minute grid for internal, public, and patient
+ * portal booking. Every returned start fits the selected duration inside the
+ * effective window; break and appointment overlaps use half-open intervals.
+ */
+export function generateAvailableSlots(
+  dateKey: string,
+  window: WorkingWindow,
+  lunch: { start: string; end: string } | null,
+  duration: number,
+  existingAppointments: Array<{ scheduledTime: string; duration: number }>,
+  now = new Date()
+): AvailableSlot[] {
+  if (
+    !Number.isInteger(duration) ||
+    duration < 1 ||
+    !isValidTime(window.startTime) ||
+    !isValidTime(window.endTime)
+  ) {
+    return []
+  }
+
+  const start = timeToMinutes(window.startTime)
+  const end = timeToMinutes(window.endTime)
+  if (start >= end) return []
+
+  const todayKey = toDateKey(now)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const slots: AvailableSlot[] = []
+
+  for (let slotStart = start; slotStart + duration <= end; slotStart += 30) {
+    const time = `${String(Math.floor(slotStart / 60)).padStart(2, '0')}:${String(slotStart % 60).padStart(2, '0')}`
+    const isPast = dateKey < todayKey || (dateKey === todayKey && slotStart <= nowMinutes)
+    const overlapsAppointment = existingAppointments.some((appointment) => {
+      if (!isValidTime(appointment.scheduledTime) || !Number.isFinite(appointment.duration)) return false
+      return timeRangesOverlap(
+        slotStart,
+        duration,
+        timeToMinutes(appointment.scheduledTime),
+        appointment.duration
+      )
+    })
+    const overlapsLunch = lunch
+      ? overlapsBreak(time, duration, { lunchStart: lunch.start, lunchEnd: lunch.end })
+      : false
+
+    slots.push({ time, available: !isPast && !overlapsAppointment && !overlapsLunch })
+  }
+
+  return slots
 }

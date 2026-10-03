@@ -347,26 +347,43 @@ describe('GET /api/patient-portal/slots', () => {
   it('returns empty slots for holiday', async () => {
     mockPatientAuth()
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue({ name: 'Republic Day' } as any)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([{
+      date: new Date('2026-01-26'), name: 'Republic Day', isRecurring: false,
+    }] as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
 
     const res = await slotsGET(makeReq('/api/patient-portal/slots?doctorId=d1&date=2026-01-26'))
     const body = await res.json()
 
     expect(res.status).toBe(200)
     expect(body.available).toBe(false)
-    expect(body.reason).toContain('Holiday')
+    expect(body.reason).toContain('عطلة')
     expect(body.slots).toHaveLength(0)
   })
 
   it('returns 404 when doctor not found', async () => {
     mockPatientAuth()
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue(null)
 
     const res = await slotsGET(makeReq('/api/patient-portal/slots?doctorId=d-none&date=2026-03-15'))
 
     expect(res.status).toBe(404)
+  })
+
+  it('keeps Friday closed in the patient portal slot flow when clinic hours are unconfigured', async () => {
+    mockPatientAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ workingHours: null } as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
+    vi.mocked(prisma.staffShift.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
+
+    const res = await slotsGET(makeReq('/api/patient-portal/slots?doctorId=d1&date=2027-03-12'))
+    const body = await res.json()
+    expect(res.status).toBe(200)
+    expect(body.available).toBe(false)
+    expect(body.slots).toEqual([])
   })
 
   it('returns available time slots', async () => {
@@ -379,14 +396,14 @@ describe('GET /api/patient-portal/slots', () => {
         lunchEnd: '14:00',
       }),
     } as any)
-    vi.mocked(prisma.holiday.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.holiday.findMany).mockResolvedValue([])
     vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'd1' } as any)
-    vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null) // use working hours
+    vi.mocked(prisma.staffShift.findFirst).mockResolvedValue(null) // use working hours
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([
       { scheduledTime: '10:00', duration: 30 },
     ] as any)
 
-    const res = await slotsGET(makeReq('/api/patient-portal/slots?doctorId=d1&date=2026-03-15'))
+    const res = await slotsGET(makeReq('/api/patient-portal/slots?doctorId=d1&date=2027-03-14'))
     const body = await res.json()
 
     expect(res.status).toBe(200)

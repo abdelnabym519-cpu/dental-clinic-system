@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import bcrypt from 'bcryptjs'
+import { buildDefaultDoctorShifts } from '@/lib/working-hours'
 
 // GET - Get single staff member details
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -42,7 +43,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Staff not found' }, { status: 404 })
     }
 
-    return NextResponse.json(staff)
+    let responseStaff = staff
+    if (staff.user.role === 'DOCTOR') {
+      const hospital = await prisma.hospital.findUnique({
+        where: { id: hospitalId },
+        select: { workingHours: true },
+      })
+      const defaults = buildDefaultDoctorShifts(hospitalId, staff.id, hospital?.workingHours ?? null)
+      const existingByDay = new Map(staff.shifts.map((shift: any) => [shift.dayOfWeek, shift]))
+      responseStaff = {
+        ...staff,
+        shifts: defaults.map((shift) => existingByDay.get(shift.dayOfWeek) ?? shift),
+      }
+    }
+
+    return NextResponse.json(responseStaff)
   } catch (error) {
     console.error('Error fetching staff:', error)
     return NextResponse.json({ error: 'Failed to fetch staff details' }, { status: 500 })
@@ -101,7 +116,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     } = body
 
     // Update in transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Update user if role or password changed
       if (role || newPassword || isActive !== undefined) {
         const userUpdateData: any = {}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateAppointmentNo } from '@/lib/appointment-number'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { createRoom } from '@/lib/services/video.service'
+import { createRoom, deleteRoom } from '@/lib/services/video.service'
 import {
   findConflictingAppointment,
   findConflictingRoomBooking,
@@ -217,15 +217,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate duration (between 5 and 480 minutes / 8 hours max)
-    if (duration < 5 || duration > 480) {
+    if (!Number.isInteger(duration) || duration < 5 || duration > 480) {
       return NextResponse.json(
         { error: 'Duration must be between 5 and 480 minutes' },
         { status: 400 }
       )
     }
 
-    // Validate scheduled date is not in the past
-    const scheduledDateObj = new Date(scheduledDate)
+    // Validate a clinic-local YYYY-MM-DD key without UTC day shifting.
+    if (typeof scheduledDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+      return NextResponse.json({ error: 'Invalid scheduled date' }, { status: 400 })
+    }
+    let scheduledDateObj: Date
+    try {
+      scheduledDateObj = parseDateKey(scheduledDate)
+    } catch {
+      return NextResponse.json({ error: 'Invalid scheduled date' }, { status: 400 })
+    }
+    if (toDateKey(scheduledDateObj) !== scheduledDate) {
+      return NextResponse.json({ error: 'Invalid scheduled date' }, { status: 400 })
+    }
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     if (scheduledDateObj < today) {
@@ -261,7 +272,7 @@ export async function POST(request: NextRequest) {
 
     // Availability gate: working hours, lunch break, approved leave, clinic
     // holiday. Authoritative server-side scheduling rule.
-    const appointmentDate = new Date(scheduledDate)
+    const appointmentDate = scheduledDateObj
     const violation = await findAvailabilityViolation({
       hospitalId,
       doctorId,
@@ -308,9 +319,26 @@ export async function POST(request: NextRequest) {
           : null
     }
 
-    // Conflict + room-conflict checks for every occurrence
+    // Re-check hours, leave, holidays, breaks, blocked slots, and conflicts
+    // for every recurrence occurrence before writing any appointment.
     for (const dateKey of recurrenceDates) {
       const occurrenceDate = parseDateKey(dateKey)
+      if (dateKey !== toDateKey(appointmentDate)) {
+        const occurrenceViolation = await findAvailabilityViolation({
+          hospitalId,
+          doctorId,
+          scheduledDate: occurrenceDate,
+          scheduledTime,
+          duration,
+        })
+        if (occurrenceViolation) {
+          return NextResponse.json(
+            { error: `${occurrenceViolation.message} (${dateKey})`, code: occurrenceViolation.code },
+            { status: 409 }
+          )
+        }
+      }
+
       const conflict = await findConflictingAppointment({
         hospitalId,
         doctorId,
@@ -350,10 +378,11 @@ export async function POST(request: NextRequest) {
     // generateAppointmentNo reads the current max, so two concurrent bookings
     // can derive the same number (the unique constraint then rejects one).
     // Retry with a freshly generated number instead of failing the booking.
-    let appointment: { id: string } | null = null
+    let appointment: any = null
+    const createdAppointments: Array<{ id: string; scheduledDate: Date }> = []
     for (const dateKey of recurrenceDates) {
       const occurrenceDate = parseDateKey(dateKey)
-      let created: { id: string } | null = null
+      let created: any = null
       for (let attempt = 0; attempt < 3 && !created; attempt++) {
         const appointmentNo = await generateAppointmentNo(hospitalId)
         try {
@@ -374,7 +403,8 @@ export async function POST(request: NextRequest) {
               priority,
               chiefComplaint,
               notes,
-              isVirtual: !!isVirtual,
+              // Only mark virtual once a provider room and consultation row exist.
+              isVirtual: false,
               status: 'SCHEDULED',
             },
             include: {
@@ -408,40 +438,72 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         )
       }
+      createdAppointments.push({ id: created.id, scheduledDate: occurrenceDate })
     }
 
-    // Auto-create video consultation for virtual appointments
+    // Provision one real, stable room per virtual appointment occurrence.
+    // If provider setup fails, keep the booking but do not label it virtual or
+    // show a fabricated meeting URL; the response explicitly warns the user.
+    let primaryVideoConsultation: any = null
+    const videoSetupFailures: string[] = []
     if (isVirtual && appointment) {
-      try {
-        const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-        const room = await createRoom(tempId)
+      for (const bookedAppointment of createdAppointments) {
+        let provisionedRoomName: string | null = null
+        try {
+          const room = await createRoom(bookedAppointment.id)
+          provisionedRoomName = room.roomName
 
-        // Combine date + time into a scheduledAt DateTime
-        const [hours, minutes] = scheduledTime.split(':').map(Number)
-        const scheduledAt = new Date(scheduledDate)
-        scheduledAt.setHours(hours, minutes, 0, 0)
+          const [hours, minutes] = scheduledTime.split(':').map(Number)
+          const scheduledAt = new Date(bookedAppointment.scheduledDate)
+          scheduledAt.setHours(hours, minutes, 0, 0)
 
-        const consultation = await prisma.videoConsultation.create({
-          data: {
-            hospitalId,
-            appointmentId: appointment.id,
-            patientId,
-            doctorId,
-            roomUrl: room.roomUrl,
-            roomName: room.roomName,
-            scheduledAt,
-          },
-        })
+          const consultation: any = await prisma.$transaction(async (tx: any) => {
+            const createdConsultation = await tx.videoConsultation.create({
+              data: {
+                hospitalId,
+                appointmentId: bookedAppointment.id,
+                patientId,
+                doctorId,
+                roomUrl: room.roomUrl,
+                roomName: room.roomName,
+                scheduledAt,
+              },
+            })
+            await tx.appointment.update({
+              where: { id: bookedAppointment.id },
+              data: { isVirtual: true, videoConsultationId: createdConsultation.id },
+            })
+            return createdConsultation
+          })
+          provisionedRoomName = null
 
-        await prisma.appointment.update({
-          where: { id: appointment.id },
-          data: { videoConsultationId: consultation.id },
-        })
-      } catch (videoErr) {
-        console.error('Failed to create video consultation:', videoErr)
-        // Appointment is still created — video setup can be retried
+          if (bookedAppointment.id === appointment.id) {
+            primaryVideoConsultation = consultation
+            appointment = {
+              ...appointment,
+              isVirtual: true,
+              videoConsultationId: consultation.id,
+              videoConsultation: consultation,
+            }
+          }
+        } catch (videoErr) {
+          console.error(`Failed to create video consultation for ${bookedAppointment.id}:`, videoErr)
+          if (provisionedRoomName) {
+            try {
+              await deleteRoom(provisionedRoomName)
+            } catch (cleanupErr) {
+              console.error('Failed to clean up unlinked video room:', cleanupErr)
+            }
+          }
+          videoSetupFailures.push(bookedAppointment.id)
+        }
       }
     }
+    const videoSetupWarning = videoSetupFailures.length
+      ? primaryVideoConsultation
+        ? 'تم إنشاء غرفة الفيديو للموعد الأساسي، لكن تعذر إنشاء غرفة لواحد أو أكثر من المواعيد المتكررة.'
+        : 'تم حفظ الموعد دون رابط فيديو لأن مزود الخدمة لم ينشئ غرفة صالحة. لم يتم إنشاء أو عرض رابط تجريبي.'
+      : null
 
     // Messaging platform (3C/3D/3E/3J): queue patient confirmation, doctor
     // notification and the 24h/1h reminder pair. Failure-isolated — booking
@@ -476,7 +538,10 @@ export async function POST(request: NextRequest) {
       console.error('Failed to queue appointment messages (non-fatal):', msgErr)
     }
 
-    return NextResponse.json(appointment, { status: 201 })
+    return NextResponse.json(
+      { ...appointment, ...(videoSetupWarning ? { videoSetupWarning } : {}) },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Error creating appointment:', error)
     return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 })

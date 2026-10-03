@@ -2,21 +2,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const mockVideoService = vi.hoisted(() => ({ createRoom: vi.fn(), deleteRoom: vi.fn() }))
+
 // Mock modules with inline factories - these get hoisted
+vi.mock('@/lib/services/video.service', () => mockVideoService)
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     appointment: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
     },
     patient: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
     staff: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
+    videoConsultation: {
+      create: vi.fn(),
+    },
+    $transaction: vi.fn(),
     // Agenda Phase-2 availability models: benign defaults = no configured
     // shifts/hours, so the availability gate falls back to clinic defaults.
     staffShift: {
@@ -235,6 +245,72 @@ describe('Appointments API - POST /api/appointments', () => {
     const response = await POST(request)
 
     expect(response.status).toBe(201)
+  })
+
+  it('creates a stable provider room only after the appointment is saved', async () => {
+    vi.mocked(prisma.patient.findFirst).mockResolvedValue({ id: 'patient-1', hospitalId: 'hospital-1' } as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'doctor-1', hospitalId: 'hospital-1' } as any)
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
+    vi.mocked(prisma.appointment.create).mockResolvedValue({ id: 'virtual-apt-id', isVirtual: false } as any)
+    vi.mocked(prisma.appointment.update).mockResolvedValue({} as any)
+    vi.mocked(prisma.videoConsultation.create).mockResolvedValue({ id: 'video-1' } as any)
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback({
+      appointment: prisma.appointment,
+      videoConsultation: prisma.videoConsultation,
+    }))
+    mockVideoService.createRoom.mockResolvedValue({
+      roomUrl: 'https://meet.jit.si/DentalConsult-virtual-apt-id',
+      roomName: 'DentalConsult-virtual-apt-id',
+      provider: 'jitsi',
+    })
+
+    const request = new NextRequest('http://localhost:3000/api/appointments', {
+      method: 'POST',
+      body: JSON.stringify({
+        patientId: 'patient-1', doctorId: 'doctor-1', scheduledDate: '2030-06-15',
+        scheduledTime: '10:00', duration: 30, isVirtual: true,
+      }),
+    })
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(mockVideoService.createRoom).toHaveBeenCalledWith('virtual-apt-id')
+    expect(prisma.videoConsultation.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ appointmentId: 'virtual-apt-id', roomName: 'DentalConsult-virtual-apt-id' }),
+    })
+    expect(prisma.appointment.update).toHaveBeenCalledWith({
+      where: { id: 'virtual-apt-id' },
+      data: { isVirtual: true, videoConsultationId: 'video-1' },
+    })
+    expect(data).toMatchObject({ isVirtual: true, videoConsultationId: 'video-1' })
+    expect(data.videoSetupWarning).toBeUndefined()
+  })
+
+  it('does not claim a virtual visit or return a fake link when room setup fails', async () => {
+    vi.mocked(prisma.patient.findFirst).mockResolvedValue({ id: 'patient-1', hospitalId: 'hospital-1' } as any)
+    vi.mocked(prisma.staff.findFirst).mockResolvedValue({ id: 'doctor-1', hospitalId: 'hospital-1' } as any)
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
+    vi.mocked(prisma.appointment.create).mockResolvedValue({ id: 'virtual-apt-failed', isVirtual: false } as any)
+    mockVideoService.createRoom.mockRejectedValue(new Error('Video provider unavailable'))
+
+    const request = new NextRequest('http://localhost:3000/api/appointments', {
+      method: 'POST',
+      body: JSON.stringify({
+        patientId: 'patient-1', doctorId: 'doctor-1', scheduledDate: '2030-06-15',
+        scheduledTime: '10:00', duration: 30, isVirtual: true,
+      }),
+    })
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(data.isVirtual).toBe(false)
+    expect(data.videoConsultationId).toBeFalsy()
+    expect(data.videoSetupWarning).toContain('دون رابط فيديو')
+    expect(JSON.stringify(data)).not.toContain('meet.jit.si')
   })
 
   it('should return 400 for missing required fields', async () => {

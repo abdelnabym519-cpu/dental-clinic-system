@@ -135,6 +135,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
   const { t } = useLanguage()
   const { id } = use(params)
   const router = useRouter()
+  const [videoSetupFailed, setVideoSetupFailed] = useState(false)
   const [appointment, setAppointment] = useState<Appointment | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -184,6 +185,10 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setVideoSetupFailed(new URLSearchParams(window.location.search).get('videoSetup') === 'failed')
+  }, [])
 
   useEffect(() => {
     fetchAppointment()
@@ -322,6 +327,11 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
+      {(videoSetupFailed || (appointment.isVirtual && !appointment.videoConsultationId)) && (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          تعذر إنشاء غرفة الفيديو لهذا الموعد. تم حفظ الموعد دون رابط اجتماع، ولم يتم عرض رابط تجريبي. يرجى مراجعة إعدادات مزود الفيديو أو التواصل مع إدارة العيادة.
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
