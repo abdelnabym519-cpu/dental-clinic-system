@@ -26,6 +26,7 @@ interface QueryResult {
   rowCount?: number
   model?: string
   error?: string
+  code?: string
 }
 
 /**
@@ -33,6 +34,16 @@ interface QueryResult {
  * Sends queries to POST /api/ai/query (whitelisted builders) and renders
  * results as a dynamic table.  Supports exporting results as JSON.
  */
+// Issue 4 — pre-built reports run WITHOUT the language model (direct
+// whitelisted queries), so the reports page stays useful when the local
+// model/Ollama is not configured or unreachable.
+const PRESET_REPORTS = [
+  { label: 'تقرير المرضى الجدد هذا الشهر', preset: 'new_patients_monthly' },
+  { label: 'إيرادات هذا الشهر', preset: 'revenue_monthly' },
+  { label: 'المواعيد الملغاة', preset: 'cancelled_appointments' },
+  { label: 'أكثر الإجراءات طلباً', preset: 'top_procedures' },
+] as const
+
 export function ReportBuilder() {
   const { t } = useLanguage()
   const [query, setQuery] = useState('')
@@ -41,29 +52,34 @@ export function ReportBuilder() {
   const [history, setHistory] = useState<string[]>([])
 
   // ---------------------------------------------------------------
-  const execute = useCallback(async () => {
-    if (!query.trim() || loading) return
+  const runPayload = useCallback(async (payload: Record<string, unknown>) => {
     setLoading(true)
     setResult(null)
     try {
       const res = await fetch('/api/ai/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query.trim() }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (res.ok) {
         setResult({ success: true, ...data })
       } else {
-        setResult({ success: false, error: data.error || 'Query failed' })
+        setResult({ success: false, error: data.error || 'تعذر تنفيذ الاستعلام', code: data.code })
       }
-      setHistory((prev) => [query.trim(), ...prev.filter((h) => h !== query.trim())].slice(0, 10))
+      if (typeof payload.query === 'string') {
+        setHistory((prev) => [payload.query as string, ...prev.filter((h) => h !== payload.query)].slice(0, 10))
+      }
     } catch {
-      setResult({ success: false, error: 'Failed to execute query' })
+      setResult({ success: false, error: 'تعذر تنفيذ الاستعلام — تحقق من الاتصال' })
     } finally {
       setLoading(false)
     }
-  }, [query, loading])
+  }, [])
+
+  const execute = useCallback(() => runPayload({ query: query.trim() }), [runPayload, query])
+
+  const runPreset = useCallback((preset: string) => runPayload({ preset }), [runPayload])
 
   // ---------------------------------------------------------------
   const exportJSON = () => {
@@ -133,6 +149,21 @@ export function ReportBuilder() {
         ))}
       </div>
 
+      {/* Issue 4 — pre-built reports: direct DB queries, no LLM needed */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
+        <span className="text-xs font-medium text-muted-foreground px-1">{t('تقارير جاهزة (بدون ذكاء اصطناعي):')}</span>
+        {PRESET_REPORTS.map((pr) => (
+          <button
+            key={pr.preset}
+            onClick={() => runPreset(pr.preset)}
+            disabled={loading}
+            className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs hover:bg-primary/20 transition-colors disabled:opacity-40"
+          >
+            {pr.label}
+          </button>
+        ))}
+      </div>
+
       {/* recent history (shown when idle) */}
       {history.length > 0 && !result && !loading && (
         <div>
@@ -172,9 +203,16 @@ export function ReportBuilder() {
             </div>
           )}
 
-          {/* error */}
+          {/* error — friendly Arabic only, never a raw payload */}
           {!result.success && (
-            <div className="p-3 text-sm text-red-600">{result.error || t("Query failed")}</div>
+            <div className="p-3 text-sm text-red-600 space-y-1">
+              <p>{result.error || t("Query failed")}</p>
+              {result.code === 'AI_UNAVAILABLE' && (
+                <p className="text-xs text-muted-foreground">
+                  {t('للتفعيل: ثبّت نموذج الذكاء الاصطناعي المحلي أو أضف مفتاح OPENROUTER_API_KEY في ملف .env ثم أعد تشغيل النظام.')}
+                </p>
+              )}
+            </div>
           )}
 
           {/* data table */}
