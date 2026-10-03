@@ -23,17 +23,20 @@ import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 import { DEFAULT_CLINIC_WEEK } from '@/lib/working-hours'
+import {
+  clinicPincodeSchema,
+  optionalClinicPhoneSchema,
+  optionalWebsiteSchema,
+} from '@/lib/clinic-settings-validation'
 
 const onboardingSchema = z.object({
   tagline: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  pincode: z
-    .string()
-    .regex(/^[1-9]\d{4}$/, 'Postal code must be 5 digits (11111-99999)'),
-  alternatePhone: z.string().optional(),
-  website: z.string().optional(),
+  address: z.string().min(1, 'عنوان العيادة مطلوب.'),
+  city: z.string().min(1, 'المدينة مطلوبة.'),
+  state: z.string().min(1, 'المحافظة مطلوبة.'),
+  pincode: clinicPincodeSchema,
+  alternatePhone: optionalClinicPhoneSchema,
+  website: optionalWebsiteSchema,
   gstNumber: z.string().optional(),
   registrationNo: z.string().optional(),
   workingHours: z.string().optional(),
@@ -45,6 +48,23 @@ const onboardingSchema = z.object({
 })
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>
+
+function safeArabicMessage(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  const message = value.trim()
+  if (
+    !message ||
+    message.length > 280 ||
+    !/[\u0600-\u06FF]/.test(message) ||
+    /[{}]|\[|\]/.test(message) ||
+    /(?:Prisma|Zod|Error:|Exception|stack(?: trace)?|SQL|DATABASE|TypeError|SyntaxError|HTTP\/\d|status\s*[:=]?\s*[45]\d{2}|ENOTFOUND|ECONN\w*|ERR_[A-Z_]+|\bat\s+\w+\s*\()/i.test(
+      message
+    )
+  ) {
+    return fallback
+  }
+  return message
+}
 
 const defaultWorkingHours = DEFAULT_CLINIC_WEEK
 
@@ -134,27 +154,27 @@ export default function OnboardingPage() {
         }),
       })
 
-      const result = await response.json()
+      const result = await response.json().catch(() => null)
 
-      if (!response.ok) {
+      if (!response.ok || !result?.success) {
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: result.error || 'Something went wrong. Please try again.',
+          title: 'تعذر إكمال الإعداد',
+          description: safeArabicMessage(result?.error, 'تعذر إكمال إعداد العيادة. حاول مرة أخرى.'),
         })
         return
       }
 
       setCurrentStep(4)
       toast({
-        title: 'Setup complete!',
-        description: 'Your clinic is ready to use.',
+        title: 'اكتمل الإعداد',
+        description: 'أصبحت العيادة جاهزة للاستخدام.',
       })
     } catch {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Something went wrong. Please try again.',
+        title: 'تعذر إكمال الإعداد',
+        description: 'تعذر إكمال إعداد العيادة. حاول مرة أخرى.',
       })
     } finally {
       setIsLoading(false)
@@ -260,7 +280,7 @@ export default function OnboardingPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="pincode">{t("Postal Code *")}</Label>
-                      <Input id="pincode" placeholder="11513" {...register('pincode')} />
+                      <Input id="pincode" placeholder="115135" {...register('pincode')} />
                       {errors.pincode && (
                         <p className="text-sm text-destructive">{errors.pincode.message}</p>
                       )}
@@ -272,13 +292,19 @@ export default function OnboardingPage() {
                         placeholder="01012345678"
                         {...register('alternatePhone')}
                       />
+                      {errors.alternatePhone && (
+                        <p className="text-sm text-destructive">{errors.alternatePhone.message}</p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="website">{t('ui.website')}</Label>
-                      <Input id="website" placeholder="www.myclinic.com" {...register('website')} />
+                      <Input id="website" placeholder="https://www.myclinic.com" {...register('website')} />
+                      {errors.website && (
+                        <p className="text-sm text-destructive">{errors.website.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="gstNumber">{t('Tax ID')}</Label>

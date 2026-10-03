@@ -73,6 +73,44 @@ export function isPlausibleE164(value: string): boolean {
 }
 
 /**
+ * Normalize a clinic contact phone while rejecting letters and malformed
+ * punctuation before the general messaging normalizer strips formatting.
+ * Local Egyptian numbers use the existing +20 default; explicit international
+ * numbers remain international. The stored value is not rewritten unless a
+ * caller explicitly chooses to persist this normalized result.
+ */
+export function normalizeClinicPhone(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  const plusSigns = value.match(/\+/g) ?? []
+  if (
+    !value ||
+    !/^[+0-9\s().-]+$/.test(value) ||
+    !/\d/.test(value) ||
+    plusSigns.length > 1 ||
+    (plusSigns.length === 1 && !value.startsWith('+'))
+  ) {
+    return null
+  }
+
+  // Preserve explicit international country codes instead of relying on the
+  // default-country path. Parenthesized (0) is the conventional optional
+  // trunk prefix used in formats such as +44 (0)20 ...; it is not dialed
+  // after the country code.
+  if (value.startsWith('+') || value.startsWith('00')) {
+    const withoutOptionalTrunk = value
+      .replace(/^\+(\d{1,3})\s*\(0\)/, '+$1')
+      .replace(/^00(\d{1,3})\s*\(0\)/, '00$1')
+    const digits = withoutOptionalTrunk.replace(/\D/g, '')
+    const internationalDigits = value.startsWith('00') ? digits.replace(/^00/, '') : digits
+    const e164 = `+${internationalDigits}`
+    return isPlausibleE164(e164) ? e164 : null
+  }
+
+  return normalizeToE164(value)
+}
+
+/**
  * Egyptian mobile plausibility: +20 followed by 10 digits whose subscriber
  * part starts with a known mobile prefix (10/11/12/15). Accepts any E.164
  * number for non-Egypt flows (validation only warns at the edge).

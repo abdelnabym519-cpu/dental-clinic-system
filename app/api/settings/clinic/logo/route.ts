@@ -49,18 +49,21 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+      return NextResponse.json({ error: 'يرجى اختيار ملف للشعار.' }, { status: 400 })
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Only JPEG, PNG, WebP, GIF and SVG images are allowed' },
+        { error: 'نوع الملف غير مدعوم. استخدم صورة JPEG أو PNG أو WebP أو GIF أو SVG.' },
         { status: 400 }
       )
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File size exceeds 2 MB limit' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'حجم الملف أكبر من الحد المسموح وهو 2 ميجابايت.' },
+        { status: 400 }
+      )
     }
 
     // Remove any previous logo before writing the new one, so switching from
@@ -84,7 +87,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, logo: logoPath })
   } catch (err: any) {
     console.error('Logo upload error:', err)
-    return NextResponse.json({ error: err.message || 'Failed to upload logo' }, { status: 500 })
+    return NextResponse.json({ error: 'تعذر رفع شعار العيادة. حاول مرة أخرى.' }, { status: 500 })
   }
 }
 
@@ -107,6 +110,6 @@ export async function DELETE() {
     return NextResponse.json({ success: true })
   } catch (err: any) {
     console.error('Logo delete error:', err)
-    return NextResponse.json({ error: err.message || 'Failed to delete logo' }, { status: 500 })
+    return NextResponse.json({ error: 'تعذر حذف شعار العيادة. حاول مرة أخرى.' }, { status: 500 })
   }
 }

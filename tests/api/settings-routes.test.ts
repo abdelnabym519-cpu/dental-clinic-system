@@ -306,7 +306,7 @@ describe('POST /api/settings/clinic', () => {
 
     expect(res.status).toBe(200)
     expect(body.success).toBe(true)
-    expect(body.message).toBe('Clinic information saved successfully')
+    expect(body.message).toBe('تم حفظ بيانات العيادة بنجاح.')
     expect(prisma.hospital.update).toHaveBeenCalledWith({
       where: { id: 'h1' },
       data: expect.objectContaining({ name: 'Updated Clinic' }),

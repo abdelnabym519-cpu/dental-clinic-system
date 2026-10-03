@@ -2,8 +2,102 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { smsService } from '@/lib/services/sms.service'
 import { emailService } from '@/lib/services/email.service'
+import { prisma } from '@/lib/prisma'
+import { normalizeClinicPhone } from '@/lib/phone'
+import { getWhatsAppProvider } from '@/lib/messaging/factory'
 
-// POST - Test SMS or email connection
+async function testWhatsAppForClinic(hospitalId: string): Promise<NextResponse> {
+  try {
+    const clinic = await prisma.hospital.findUnique({
+      where: { id: hospitalId },
+      select: { phone: true },
+    })
+
+    if (!clinic) {
+      return NextResponse.json(
+        { success: false, code: 'CLINIC_NOT_FOUND', error: 'بيانات العيادة غير متاحة.' },
+        { status: 404 }
+      )
+    }
+
+    if (typeof clinic.phone !== 'string' || !clinic.phone.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'CLINIC_PHONE_MISSING',
+          error: 'لم يتم حفظ رقم هاتف للعيادة. أضف رقمًا صحيحًا واحفظه أولًا.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const phone = normalizeClinicPhone(clinic.phone)
+    if (!phone) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'CLINIC_PHONE_INVALID',
+          error: 'رقم هاتف العيادة المحفوظ غير صالح. حدّثه واحفظ رقمًا صحيحًا.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const provider = getWhatsAppProvider()
+    // Mock providers deliberately report success without contacting WhatsApp;
+    // never let that simulated result appear as a verified provider test.
+    if (provider.channel !== 'WHATSAPP' || provider.name.toLowerCase().startsWith('mock-')) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'PROVIDER_UNAVAILABLE',
+          error: 'خدمة واتساب غير متاحة حاليًا. تحقق من إعداد المزود أو حاول لاحقًا.',
+        },
+        { status: 503 }
+      )
+    }
+
+    const result = await provider.sendMessage(phone, {
+      text: 'هذه رسالة اختبار من إعدادات العيادة.',
+    })
+
+    if (!result.success) {
+      console.warn('WhatsApp clinic test was not accepted', {
+        provider: provider.name,
+        errorCode: result.errorCode,
+      })
+      const recipientUnavailable = result.errorCode === 131026
+      return NextResponse.json(
+        {
+          success: false,
+          code: recipientUnavailable ? 'CLINIC_PHONE_NOT_ON_WHATSAPP' : 'PROVIDER_UNAVAILABLE',
+          error: recipientUnavailable
+            ? 'رقم الهاتف المحفوظ غير مسجل على واتساب أو لا يستقبل الرسائل.'
+            : 'خدمة واتساب غير متاحة حاليًا. تحقق من إعداد المزود أو حاول لاحقًا.',
+        },
+        { status: recipientUnavailable ? 400 : 503 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      code: 'PROVIDER_ACCEPTED',
+      message: 'قبل مزود واتساب طلب الاختبار؛ ولا يؤكد ذلك وصول الرسالة إلى الهاتف.',
+    })
+  } catch (error) {
+    console.error('WhatsApp clinic test failed:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        code: 'PROVIDER_UNAVAILABLE',
+        error: 'خدمة واتساب غير متاحة حاليًا. حاول مرة أخرى لاحقًا.',
+      },
+      { status: 503 }
+    )
+  }
+}
+
+// POST - Test SMS, email, or the authenticated clinic's saved WhatsApp number
 export async function POST(request: NextRequest) {
   const { error, hospitalId } = await requireAuthAndRole(['ADMIN'])
   if (error || !hospitalId) {
@@ -18,8 +112,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Type is required' }, { status: 400 })
     }
 
-    if (type !== 'sms' && type !== 'email') {
-      return NextResponse.json({ error: "Type must be 'sms' or 'email'" }, { status: 400 })
+    if (type !== 'sms' && type !== 'email' && type !== 'whatsapp') {
+      return NextResponse.json(
+        { error: "Type must be 'sms', 'email', or 'whatsapp'" },
+        { status: 400 }
+      )
+    }
+
+    if (type === 'whatsapp') {
+      // The recipient is always loaded from this authenticated tenant's
+      // persisted Hospital.phone. Client-supplied testData is intentionally ignored.
+      return testWhatsAppForClinic(hospitalId)
     }
 
     // Test SMS connection
@@ -55,8 +158,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Failed to send test SMS',
-            details: error.message,
+            error: 'تعذر إرسال رسالة الاختبار عبر SMS. تحقق من الإعدادات وحاول مرة أخرى.',
           },
           { status: 400 }
         )
@@ -111,8 +213,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Failed to send test email',
-            details: error.message,
+            error:
+              'تعذر إرسال رسالة الاختبار عبر البريد الإلكتروني. تحقق من الإعدادات وحاول مرة أخرى.',
           },
           { status: 400 }
         )
@@ -125,8 +227,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to test communication settings',
-        details: error.message,
+        error: 'تعذر اختبار إعدادات الاتصال. حاول مرة أخرى.',
       },
       { status: 500 }
     )

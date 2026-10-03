@@ -46,9 +46,9 @@ async function main() {
       address: '15 شارع التحرير، وسط البلد',
       city: 'القاهرة',
       state: 'القاهرة',
-      pincode: '11513',
+      pincode: '115135',
       tagline: 'Your Smile, Our Priority',
-      website: 'www.example.com',
+      website: 'https://www.example.com',
       gstNumber: '123456789',
       registrationNo: '987654321',
       workingHours: JSON.stringify({

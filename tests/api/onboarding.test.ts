@@ -30,7 +30,7 @@ const validOnboardingData = {
   address: '123 Main St',
   city: 'Cairo',
   state: 'القاهرة',
-  pincode: '11513',
+  pincode: '115135',
   tagline: 'Best dental clinic',
   gstNumber: '27AAPFU0939F1ZV',
   registrationNo: 'MH/12345',
@@ -76,15 +76,16 @@ describe('Onboarding API — POST /api/onboarding', () => {
     const res = await POST(createRequest(validOnboardingData))
     expect(res.status).toBe(403)
     const body = await res.json()
-    expect(body.error).toContain('hospital admin')
+    expect(body.error).toContain('مسؤول العيادة')
   })
 
   it('should return 400 for missing required fields', async () => {
     const res = await POST(createRequest({ tagline: 'No address' }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toBe('Validation failed')
-    expect(body.details).toBeDefined()
+    expect(body.error).toContain('عنوان العيادة مطلوب.')
+    expect(body.details).toBeUndefined()
+    expect(JSON.stringify(body)).not.toMatch(/expected|received|ZodError|Prisma|stack/i)
   })
 
   it('should return 400 for empty address', async () => {
@@ -92,9 +93,57 @@ describe('Onboarding API — POST /api/onboarding', () => {
     expect(res.status).toBe(400)
   })
 
-  it('should return 400 for short pincode', async () => {
+  it('should return 400 for short pincode with safe Arabic copy', async () => {
     const res = await POST(createRequest({ ...validOnboardingData, pincode: '123' }))
     expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toContain('6 إلى 8 أرقام')
+    expect(body.details).toBeUndefined()
+    expect(JSON.stringify(body)).not.toMatch(/ZodError|expected.*received|Prisma/i)
+  })
+
+  it.each(['123456', '12345678'])('accepts onboarding pincode %s', async (pincode) => {
+    vi.mocked(prisma.hospital.update).mockResolvedValue({
+      id: 'hospital-1',
+      name: 'Test Clinic',
+      slug: 'test-clinic',
+    })
+    const res = await POST(createRequest({ ...validOnboardingData, pincode }))
+    expect(res.status).toBe(200)
+  })
+
+  it('accepts a blank optional website and a valid HTTP URL', async () => {
+    vi.mocked(prisma.hospital.update).mockResolvedValue({
+      id: 'hospital-1',
+      name: 'Test Clinic',
+      slug: 'test-clinic',
+    })
+    const blank = await POST(createRequest({ ...validOnboardingData, website: '   ' }))
+    expect(blank.status).toBe(200)
+    expect(prisma.hospital.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ website: undefined }) })
+    )
+
+    const http = await POST(createRequest({ ...validOnboardingData, website: 'http://localhost' }))
+    expect(http.status).toBe(200)
+    expect(prisma.hospital.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ website: 'http://localhost' }) })
+    )
+  })
+
+  it('rejects invalid optional website and alternate phone with Arabic messages', async () => {
+    const res = await POST(
+      createRequest({
+        ...validOnboardingData,
+        website: 'not-a-url',
+        alternatePhone: 'call 01012345678',
+      })
+    )
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toContain('رابط الموقع')
+    expect(body.error).toContain('رقم هاتف بديل صحيح')
+    expect(body.details).toBeUndefined()
   })
 
   it('should complete onboarding with valid data', async () => {
@@ -108,7 +157,7 @@ describe('Onboarding API — POST /api/onboarding', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
-    expect(body.message).toContain('successfully')
+    expect(body.message).toContain('اكتمل إعداد العيادة بنجاح.')
     expect(body.hospital.id).toBe('hospital-1')
   })
 
@@ -129,7 +178,7 @@ describe('Onboarding API — POST /api/onboarding', () => {
           address: '123 Main St',
           city: 'Cairo',
           state: 'القاهرة',
-          pincode: '11513',
+          pincode: '115135',
           gstNumber: '27AAPFU0939F1ZV',
         }),
       })
@@ -147,7 +196,7 @@ describe('Onboarding API — POST /api/onboarding', () => {
       address: '123 Main St',
       city: 'Cairo',
       state: 'القاهرة',
-      pincode: '11513',
+      pincode: '115135',
     }
 
     const res = await POST(createRequest(minimalData))
@@ -160,7 +209,8 @@ describe('Onboarding API — POST /api/onboarding', () => {
     const res = await POST(createRequest(validOnboardingData))
     expect(res.status).toBe(500)
     const body = await res.json()
-    expect(body.error).toContain('error')
+    expect(body.error).toBe('تعذر إكمال إعداد العيادة. حاول مرة أخرى.')
+    expect(JSON.stringify(body)).not.toContain('DB error')
   })
 })
 
@@ -197,7 +247,7 @@ describe('Onboarding API — GET /api/onboarding', () => {
       address: '123 Main St',
       city: 'Cairo',
       state: 'القاهرة',
-      pincode: '11513',
+      pincode: '115135',
       onboardingCompleted: true,
       plan: 'FREE',
     })
@@ -228,7 +278,7 @@ describe('Onboarding API — GET /api/onboarding', () => {
       address: '123 St',
       city: 'Alexandria',
       state: 'Alexandria',
-      pincode: '11599',
+      pincode: '115990',
       alternatePhone: '9999999999',
       website: 'https://clinic.com',
       gstNumber: '07AAPFU0939F1ZV',

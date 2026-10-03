@@ -102,7 +102,7 @@ const clinicData = (overrides = {}) => ({
     address: '123 Main St',
     city: 'Cairo',
     state: 'القاهرة',
-    pincode: '11513',
+    pincode: '115135',
     slug: 'dr-dev-dental',
     logo: null,
     registrationNo: 'REG001',
@@ -189,7 +189,7 @@ describe('ClinicSettingsPage', () => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
             variant: 'destructive',
-            description: 'تعذر تحميل بيانات العيادة',
+            description: 'تعذر تحميل بيانات العيادة.',
           })
         )
       })
@@ -380,7 +380,7 @@ describe('ClinicSettingsPage', () => {
         expect(mockToast).toHaveBeenCalledWith(
           expect.objectContaining({
             title: 'تم الحفظ',
-            description: 'تم حفظ بيانات العيادة بنجاح',
+            description: 'تم حفظ بيانات العيادة بنجاح.',
           })
         )
       })
@@ -416,6 +416,178 @@ describe('ClinicSettingsPage', () => {
           })
         )
       })
+    })
+
+    it('preserves form values and hides raw API errors after a failed save', async () => {
+      ;(global.fetch as any).mockImplementation((url: string, opts?: any) => {
+        if (opts?.method === 'POST') {
+          return Promise.resolve({
+            ok: false,
+            json: () =>
+              Promise.resolve({
+                error: '{"name":"PrismaClientKnownRequestError"} INTERNAL_SECRET',
+              }),
+          })
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(clinicData()) })
+      })
+
+      render(<ClinicSettingsPage />)
+      await waitFor(() =>
+        expect(screen.getByDisplayValue('Demo Dental Clinic')).toBeInTheDocument()
+      )
+
+      fireEvent.change(screen.getByDisplayValue('Demo Dental Clinic'), {
+        target: { value: 'Unsaved clinic name' },
+      })
+      fireEvent.click(screen.getAllByRole('button').find((b) => b.textContent?.includes('Save'))!)
+
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('Unsaved clinic name')).toBeInTheDocument()
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({ description: 'تعذر حفظ بيانات العيادة. حاول مرة أخرى.' })
+        )
+      })
+      expect(JSON.stringify(mockToast.mock.calls)).not.toContain('INTERNAL_SECRET')
+      expect(JSON.stringify(mockToast.mock.calls)).not.toContain('PrismaClientKnownRequestError')
+    })
+
+    it('blocks invalid website locally and preserves the entered value', async () => {
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(clinicData()),
+      })
+      render(<ClinicSettingsPage />)
+      await waitFor(() =>
+        expect(screen.getByDisplayValue('https://demo-dental.com')).toBeInTheDocument()
+      )
+
+      fireEvent.change(screen.getByDisplayValue('https://demo-dental.com'), {
+        target: { value: 'not-a-url' },
+      })
+      fireEvent.click(screen.getAllByRole('button').find((b) => b.textContent?.includes('Save'))!)
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'destructive',
+            description: expect.stringContaining('رابط الموقع'),
+          })
+        )
+      )
+      expect(screen.getByDisplayValue('not-a-url')).toBeInTheDocument()
+      expect((global.fetch as any).mock.calls.some((call: any) => call[1]?.method === 'POST')).toBe(
+        false
+      )
+    })
+  })
+
+  describe('WhatsApp clinic-phone test', () => {
+    const testButton = () => screen.getByRole('button', { name: /اختبار واتساب على رقم العيادة/ })
+
+    it('requires a saved phone before testing and distinguishes unsaved changes', async () => {
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(clinicData()),
+      })
+      render(<ClinicSettingsPage />)
+      await waitFor(() => expect(screen.getByDisplayValue('01012345678')).toBeInTheDocument())
+
+      fireEvent.change(screen.getByDisplayValue('01012345678'), {
+        target: { value: '+20 11 2345 6789' },
+      })
+      fireEvent.click(testButton())
+
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'إعدادات غير محفوظة',
+          description: 'احفظ رقم هاتف العيادة الحالي قبل إجراء اختبار واتساب.',
+        })
+      )
+      expect(
+        (global.fetch as any).mock.calls.some(
+          (call: any) => call[0] === '/api/settings/communications/test'
+        )
+      ).toBe(false)
+      expect(screen.getByDisplayValue('+20 11 2345 6789')).toBeInTheDocument()
+    })
+
+    it('requires a clinic phone and rejects an invalid edited phone', async () => {
+      ;(global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(clinicData({ phone: '' })),
+      })
+      render(<ClinicSettingsPage />)
+      await waitFor(() => expect(testButton()).toBeInTheDocument())
+      fireEvent.click(testButton())
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'رقم هاتف العيادة مطلوب' })
+      )
+
+      fireEvent.change(screen.getByLabelText('Primary Phone *'), {
+        target: { value: 'letters only' },
+      })
+      fireEvent.click(testButton())
+      expect(mockToast).toHaveBeenLastCalledWith(
+        expect.objectContaining({ title: 'رقم الهاتف غير صالح' })
+      )
+    })
+
+    it('sends only the WhatsApp action, then shows a safe provider-unavailable outcome', async () => {
+      ;(global.fetch as any).mockImplementation((url: string, opts?: any) => {
+        if (url === '/api/settings/communications/test') {
+          expect(JSON.parse(opts.body)).toEqual({ type: 'whatsapp' })
+          return Promise.resolve({
+            ok: false,
+            status: 503,
+            json: () =>
+              Promise.resolve({
+                code: 'PROVIDER_UNAVAILABLE',
+                error: 'خدمة واتساب غير متاحة حاليًا.',
+              }),
+          })
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(clinicData()) })
+      })
+
+      render(<ClinicSettingsPage />)
+      await waitFor(() => expect(screen.getByDisplayValue('01012345678')).toBeInTheDocument())
+      fireEvent.click(testButton())
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'تعذر اختبار واتساب',
+            description: 'خدمة واتساب غير متاحة حاليًا. تحقق من إعداد المزود أو حاول لاحقًا.',
+            variant: 'destructive',
+          })
+        )
+      )
+    })
+
+    it('does not claim delivery when a provider accepts the test request', async () => {
+      ;(global.fetch as any).mockImplementation((url: string) => {
+        if (url === '/api/settings/communications/test') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ success: true, code: 'PROVIDER_ACCEPTED' }),
+          })
+        }
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(clinicData()) })
+      })
+
+      render(<ClinicSettingsPage />)
+      await waitFor(() => expect(screen.getByDisplayValue('01012345678')).toBeInTheDocument())
+      fireEvent.click(testButton())
+
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'تم قبول طلب الاختبار',
+            description: expect.stringContaining('لا يؤكد وصول الرسالة'),
+          })
+        )
+      )
     })
   })
 

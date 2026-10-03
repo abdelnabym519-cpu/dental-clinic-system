@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { describe, it, expect } from 'vitest'
-import { normalizeToE164, isPlausibleE164, isEgyptianMobile, maskPhone } from '@/lib/phone'
+import {
+  normalizeToE164,
+  normalizeClinicPhone,
+  isPlausibleE164,
+  isEgyptianMobile,
+  maskPhone,
+} from '@/lib/phone'
 
 // ---------------------------------------------------------------------------
 // Phone number handling (master prompt 3K): E.164 normalization with Egypt
@@ -37,6 +43,21 @@ describe('phone normalization (3K)', () => {
 })
 
 describe('phone validation helpers', () => {
+  it('validates clinic phones without rejecting normal local or international formatting', () => {
+    expect(normalizeClinicPhone('010 1234 5678')).toBe('+201012345678')
+    expect(normalizeClinicPhone('(010) 1234-5678')).toBe('+201012345678')
+    expect(normalizeClinicPhone('+20 (10) 1234-5678')).toBe('+201012345678')
+    expect(normalizeClinicPhone('00971 50 123 4567')).toBe('+971501234567')
+    expect(normalizeClinicPhone('+44 (0)20 7946 0958')).toBe('+442079460958')
+  })
+
+  it('rejects phone strings containing words, extensions, or too few digits', () => {
+    expect(normalizeClinicPhone('clinic 01012345678')).toBeNull()
+    expect(normalizeClinicPhone('01012345678 ext 4')).toBeNull()
+    expect(normalizeClinicPhone('012345')).toBeNull()
+    expect(normalizeClinicPhone('')).toBeNull()
+  })
+
   it('checks E.164 shape', () => {
     expect(isPlausibleE164('+201012345678')).toBe(true)
     expect(isPlausibleE164('01012345678')).toBe(false)

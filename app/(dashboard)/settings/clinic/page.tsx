@@ -10,9 +10,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Separator } from '@/components/ui/separator'
-import { Building2, Save, Upload, Trash2, Loader2, Copy } from 'lucide-react'
+import { Building2, Save, Upload, Trash2, Loader2, Copy, MessageCircle } from 'lucide-react'
 import { EGYPT_GOVERNORATES } from '@/lib/egypt-governorates'
 import { DEFAULT_CLINIC_WEEK } from '@/lib/working-hours'
+import { normalizeClinicPhone } from '@/lib/phone'
+import {
+  clinicInfoSchema,
+  clinicValidationMessage,
+  CLINIC_LOAD_ERROR,
+  CLINIC_SAVE_ERROR,
+} from '@/lib/clinic-settings-validation'
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 const DAY_LABELS: Record<string, string> = {
@@ -31,7 +38,10 @@ type WeekSchedule = Record<string, DaySchedule>
 const DEFAULT_SCHEDULE: WeekSchedule = Object.fromEntries(
   DAYS.map((day) => {
     const defaults = DEFAULT_CLINIC_WEEK[day]
-    return [day, { open: defaults.open ?? '', close: defaults.close ?? '', closed: defaults.closed }]
+    return [
+      day,
+      { open: defaults.open ?? '', close: defaults.close ?? '', closed: defaults.closed },
+    ]
   })
 )
 
@@ -63,34 +73,22 @@ function serializeSchedule(schedule: WeekSchedule): string {
   return JSON.stringify(obj)
 }
 
-/**
- * Issue 3 — user-facing validation errors must be friendly Arabic, never the
- * raw Zod JSON array. The API now returns an Arabic message directly; this
- * parser is defense-in-depth for any legacy/other payload shapes.
- */
-function parseValidationError(error: unknown): string {
-  const raw = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        return parsed
-          .map((e: any) => {
-            if (typeof e?.message === 'string' && /[\u0600-\u06FF]/.test(e.message)) return e.message
-            if (e?.code === 'invalid_format' && e?.format === 'url') return 'رابط الموقع غير صحيح — يجب أن يبدأ بـ https://'
-            if (e?.code === 'too_small') return e?.path?.includes('pincode') ? `الرمز السري يجب أن يكون ${e.minimum} أرقام على الأقل` : `القيمة قصيرة جدًا — الحد الأدنى ${e.minimum}`
-            if (e?.code === 'invalid_string') return 'صيغة غير صحيحة'
-            return 'خطأ في البيانات'
-          })
-          .join('\n')
-      }
-    } catch {
-      // not JSON — fall through
-    }
-    // Already-friendly text passes through; anything else gets the generic line.
-    if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) return raw
+/** Only short Arabic UI copy may cross the API-to-toast boundary. */
+function safeArabicMessage(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  const message = value.trim()
+  if (
+    !message ||
+    message.length > 280 ||
+    !/[\u0600-\u06FF]/.test(message) ||
+    /[{}]|\[|\]/.test(message) ||
+    /(?:Prisma|Zod|Error:|Exception|stack(?: trace)?|SQL|DATABASE|TypeError|SyntaxError|HTTP\/\d|status\s*[:=]?\s*[45]\d{2}|ENOTFOUND|ECONN\w*|ERR_[A-Z_]+|\bat\s+\w+\s*\()/i.test(
+      message
+    )
+  ) {
+    return fallback
   }
-  return 'حدث خطأ في حفظ البيانات'
+  return message
 }
 
 export default function ClinicSettingsPage() {
@@ -104,6 +102,8 @@ export default function ClinicSettingsPage() {
   const [schedule, setSchedule] = useState<WeekSchedule>({ ...DEFAULT_SCHEDULE })
   const [patientPortalEnabled, setPatientPortalEnabled] = useState(false)
   const [hospitalSlug, setHospitalSlug] = useState('')
+  const [savedPhone, setSavedPhone] = useState('')
+  const [testingWhatsApp, setTestingWhatsApp] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -135,13 +135,23 @@ export default function ClinicSettingsPage() {
     setLoading(true)
     try {
       const response = await fetch('/api/settings/clinic')
-      const result = await response.json()
+      const result = await response.json().catch(() => null)
 
-      if (result.success && result.data) {
+      if (!response.ok || !result?.success) {
+        toast({
+          title: 'تعذر التحميل',
+          description: safeArabicMessage(result?.error, CLINIC_LOAD_ERROR),
+          variant: 'destructive',
+        })
+        return
+      }
+
+      if (result.data) {
         setLogo(result.data.logo || null)
         setSchedule(parseSchedule(result.data.workingHours))
         setPatientPortalEnabled(result.data.patientPortalEnabled || false)
         setHospitalSlug(result.data.slug || '')
+        setSavedPhone(result.data.phone || '')
         setFormData({
           name: result.data.name || '',
           tagline: result.data.tagline || '',
@@ -163,10 +173,10 @@ export default function ClinicSettingsPage() {
           upiId: result.data.upiId || '',
         })
       }
-    } catch (error: any) {
+    } catch {
       toast({
-        title: 'خطأ',
-        description: 'تعذر تحميل بيانات العيادة',
+        title: 'تعذر التحميل',
+        description: CLINIC_LOAD_ERROR,
         variant: 'destructive',
       })
     } finally {
@@ -184,14 +194,28 @@ export default function ClinicSettingsPage() {
       fd.append('file', file)
 
       const res = await fetch('/api/settings/clinic/logo', { method: 'POST', body: fd })
-      const result = await res.json()
+      const result = await res.json().catch(() => null)
 
-      if (!res.ok) throw new Error(result.error || 'Upload failed')
+      if (!res.ok || !result?.success) {
+        toast({
+          variant: 'destructive',
+          title: 'تعذر رفع الشعار',
+          description: safeArabicMessage(
+            result?.error,
+            'تعذر رفع الشعار. تحقق من نوع الملف وحجمه.'
+          ),
+        })
+        return
+      }
 
       setLogo(result.logo)
-      toast({ title: 'Logo uploaded', description: 'Your clinic logo has been updated.' })
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Upload failed', description: err.message })
+      toast({ title: 'تم رفع الشعار', description: 'تم تحديث شعار العيادة.' })
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'تعذر رفع الشعار',
+        description: 'تعذر رفع الشعار. حاول مرة أخرى.',
+      })
     } finally {
       setUploadingLogo(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -202,12 +226,23 @@ export default function ClinicSettingsPage() {
     setUploadingLogo(true)
     try {
       const res = await fetch('/api/settings/clinic/logo', { method: 'DELETE' })
-      if (!res.ok) throw new Error(t('Failed to remove logo'))
+      if (!res.ok) {
+        toast({
+          variant: 'destructive',
+          title: 'تعذر حذف الشعار',
+          description: 'تعذر حذف الشعار. حاول مرة أخرى.',
+        })
+        return
+      }
 
       setLogo(null)
-      toast({ title: t('Logo removed') })
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message })
+      toast({ title: 'تم حذف الشعار' })
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'تعذر حذف الشعار',
+        description: 'تعذر حذف الشعار. حاول مرة أخرى.',
+      })
     } finally {
       setUploadingLogo(false)
     }
@@ -235,37 +270,135 @@ export default function ClinicSettingsPage() {
   }, [])
 
   const handleSave = async () => {
+    const payload = {
+      ...formData,
+      workingHours: serializeSchedule(schedule),
+      patientPortalEnabled,
+    }
+    const validated = clinicInfoSchema.safeParse(payload)
+    if (!validated.success) {
+      toast({
+        title: 'تحقق من البيانات',
+        description: clinicValidationMessage(validated.error),
+        variant: 'destructive',
+      })
+      return
+    }
+
     setSaving(true)
     try {
-      const payload = {
-        ...formData,
-        workingHours: serializeSchedule(schedule),
-        patientPortalEnabled,
-      }
       const response = await fetch('/api/settings/clinic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(validated.data),
       })
+      const result = await response.json().catch(() => null)
 
-      const result = await response.json()
-
-      if (response.ok) {
+      if (!response.ok || !result?.success) {
         toast({
-          title: 'تم الحفظ',
-          description: 'تم حفظ بيانات العيادة بنجاح',
+          title: 'تعذر الحفظ',
+          description: safeArabicMessage(result?.error, CLINIC_SAVE_ERROR),
+          variant: 'destructive',
         })
-      } else {
-        throw new Error(result.error || 'Failed to save')
+        return
       }
-    } catch (error: any) {
+
+      setSavedPhone(validated.data.phone)
       toast({
-        title: 'خطأ في الحفظ',
-        description: parseValidationError(error?.message ?? error),
+        title: 'تم الحفظ',
+        description: 'تم حفظ بيانات العيادة بنجاح.',
+      })
+    } catch {
+      toast({
+        title: 'تعذر الحفظ',
+        description: CLINIC_SAVE_ERROR,
         variant: 'destructive',
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleWhatsAppTest = async () => {
+    const currentInput = formData.phone.trim()
+    const currentPhone = normalizeClinicPhone(currentInput)
+    const persistedPhone = normalizeClinicPhone(savedPhone)
+
+    if (currentInput && !currentPhone) {
+      toast({
+        title: 'رقم الهاتف غير صالح',
+        description: 'يرجى إدخال رقم هاتف عيادة صحيح قبل إجراء الاختبار.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (savedPhone.trim() && !persistedPhone) {
+      toast({
+        title: 'الرقم المحفوظ غير صالح',
+        description: 'حدّث رقم هاتف العيادة واحفظ رقمًا صحيحًا قبل الاختبار.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!currentInput && !savedPhone.trim()) {
+      toast({
+        title: 'رقم هاتف العيادة مطلوب',
+        description: 'أدخل رقم هاتف العيادة واحفظه قبل إجراء الاختبار.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!currentPhone || !persistedPhone || currentPhone !== persistedPhone) {
+      toast({
+        title: 'إعدادات غير محفوظة',
+        description: 'احفظ رقم هاتف العيادة الحالي قبل إجراء اختبار واتساب.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setTestingWhatsApp(true)
+    try {
+      const response = await fetch('/api/settings/communications/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'whatsapp' }),
+      })
+      const result = await response.json().catch(() => null)
+
+      if (!response.ok || !result?.success) {
+        const messageByCode: Record<string, string> = {
+          CLINIC_PHONE_MISSING: 'لم يتم حفظ رقم هاتف للعيادة. أضف رقمًا واحفظه أولًا.',
+          CLINIC_PHONE_INVALID: 'رقم هاتف العيادة المحفوظ غير صالح لاختبار واتساب.',
+          PROVIDER_UNAVAILABLE:
+            'خدمة واتساب غير متاحة حاليًا. تحقق من إعداد المزود أو حاول لاحقًا.',
+          WHATSAPP_TEST_FAILED: 'تعذر تنفيذ اختبار واتساب. تحقق من الإعدادات وحاول مرة أخرى.',
+        }
+        toast({
+          title: 'تعذر اختبار واتساب',
+          description:
+            messageByCode[result?.code] ||
+            safeArabicMessage(result?.error, 'تعذر تنفيذ اختبار واتساب. حاول مرة أخرى.'),
+          variant: 'destructive',
+        })
+        return
+      }
+
+      toast({
+        title: 'تم قبول طلب الاختبار',
+        description: 'قبل مزود واتساب الطلب. هذا لا يؤكد وصول الرسالة إلى الهاتف.',
+      })
+    } catch {
+      toast({
+        title: 'تعذر اختبار واتساب',
+        description: 'خدمة واتساب غير متاحة حاليًا. حاول مرة أخرى لاحقًا.',
+        variant: 'destructive',
+      })
+    } finally {
+      setTestingWhatsApp(false)
     }
   }
 
@@ -284,7 +417,9 @@ export default function ClinicSettingsPage() {
           <Building2 className="w-8 h-8" />
           {t('Clinic Information')}
         </h1>
-        <p className="text-muted-foreground">{t('Manage your clinic details and contact information')}</p>
+        <p className="text-muted-foreground">
+          {t('Manage your clinic details and contact information')}
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -331,7 +466,7 @@ export default function ClinicSettingsPage() {
                   ) : (
                     <Upload className="mr-2 h-4 w-4" />
                   )}
-                  {logo ? t("Change Logo") : t("Upload Logo")}
+                  {logo ? t('Change Logo') : t('Upload Logo')}
                 </Button>
                 {logo && (
                   <Button
@@ -363,7 +498,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label htmlFor="name">{t("Clinic Name *")}</Label>
+                <Label htmlFor="name">{t('Clinic Name *')}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -395,7 +530,7 @@ export default function ClinicSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="phone">{t("Primary Phone *")}</Label>
+                <Label htmlFor="phone">{t('Primary Phone *')}</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -403,6 +538,24 @@ export default function ClinicSettingsPage() {
                   placeholder="044-12345678"
                   required
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  disabled={testingWhatsApp || saving}
+                  onClick={handleWhatsAppTest}
+                >
+                  {testingWhatsApp ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {testingWhatsApp ? 'جارٍ اختبار واتساب...' : 'اختبار واتساب على رقم العيادة'}
+                </Button>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  يُستخدم رقم العيادة المحفوظ فقط؛ قبول المزود للطلب لا يؤكد وصول الرسالة.
+                </p>
               </div>
 
               <div>
@@ -422,7 +575,7 @@ export default function ClinicSettingsPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder={t("info@yourclinic.com")}
+                  placeholder={t('info@yourclinic.com')}
                 />
               </div>
 
@@ -432,7 +585,7 @@ export default function ClinicSettingsPage() {
                   id="website"
                   value={formData.website}
                   onChange={(e) => handleChange('website', e.target.value)}
-                  placeholder={t("https://www.yourclinic.com")}
+                  placeholder={t('https://www.yourclinic.com')}
                 />
               </div>
             </div>
@@ -447,12 +600,12 @@ export default function ClinicSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="address">{t("Street Address *")}</Label>
+              <Label htmlFor="address">{t('Street Address *')}</Label>
               <Textarea
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleChange('address', e.target.value)}
-                placeholder={t("123, Main Street, Ayanavaram")}
+                placeholder={t('123, Main Street, Ayanavaram')}
                 rows={2}
                 required
               />
@@ -460,7 +613,7 @@ export default function ClinicSettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="city">{t("City *")}</Label>
+                <Label htmlFor="city">{t('City *')}</Label>
                 <Input
                   id="city"
                   value={formData.city}
@@ -489,7 +642,7 @@ export default function ClinicSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="pincode">{t("Postal Code *")}</Label>
+                <Label htmlFor="pincode">{t('Postal Code *')}</Label>
                 <Input
                   id="pincode"
                   value={formData.pincode}
@@ -647,7 +800,7 @@ export default function ClinicSettingsPage() {
                   id="upiId"
                   value={formData.upiId}
                   onChange={(e) => handleChange('upiId', e.target.value)}
-                  placeholder={t("clinic@instapay")}
+                  placeholder={t('clinic@instapay')}
                 />
               </div>
             </div>
@@ -694,7 +847,9 @@ export default function ClinicSettingsPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {t('Share this URL with patients so they can log in with their registered phone number')}
+                  {t(
+                    'Share this URL with patients so they can log in with their registered phone number'
+                  )}
                 </p>
               </div>
             )}
@@ -705,7 +860,7 @@ export default function ClinicSettingsPage() {
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={saving} size="lg">
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : t("Save Clinic Information")}
+            {saving ? 'Saving...' : t('Save Clinic Information')}
           </Button>
         </div>
       </div>

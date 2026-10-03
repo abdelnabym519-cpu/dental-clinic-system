@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import {
+  clinicPincodeSchema,
+  clinicValidationMessage,
+  optionalClinicPhoneSchema,
+  optionalWebsiteSchema,
+} from '@/lib/clinic-settings-validation'
 
 const onboardingSchema = z.object({
   // Step 1: Clinic Details
   tagline: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  pincode: z.string().min(5, 'Valid pincode is required'),
-  alternatePhone: z.string().optional(),
-  website: z.string().optional(),
+  address: z.string().trim().min(1, 'عنوان العيادة مطلوب.'),
+  city: z.string().trim().min(1, 'المدينة مطلوبة.'),
+  state: z.string().trim().min(1, 'المحافظة مطلوبة.'),
+  pincode: clinicPincodeSchema,
+  alternatePhone: optionalClinicPhoneSchema,
+  website: optionalWebsiteSchema,
 
   // Step 2: Business Details
   gstNumber: z.string().optional(),
@@ -37,25 +43,33 @@ export async function POST(request: Request) {
 
   // Only hospital admin can complete onboarding
   if (!user?.isHospitalAdmin) {
+    return NextResponse.json({ error: 'يُسمح لمسؤول العيادة فقط بإكمال الإعداد.' }, { status: 403 })
+  }
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
     return NextResponse.json(
-      { error: 'Only the hospital admin can complete onboarding' },
-      { status: 403 }
+      { success: false, code: 'INVALID_JSON', error: 'تعذر قراءة البيانات المدخلة.' },
+      { status: 400 }
     )
   }
 
+  const validated = onboardingSchema.safeParse(body)
+  if (!validated.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        code: 'VALIDATION_ERROR',
+        error: clinicValidationMessage(validated.error),
+      },
+      { status: 400 }
+    )
+  }
+
+  const data = validated.data
   try {
-    const body = await request.json()
-    const validated = onboardingSchema.safeParse(body)
-
-    if (!validated.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validated.error.flatten() },
-        { status: 400 }
-      )
-    }
-
-    const data = validated.data
-
     // Update hospital with onboarding data
     const hospital = await prisma.hospital.update({
       where: { id: hospitalId },
@@ -81,7 +95,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Onboarding completed successfully',
+      message: 'اكتمل إعداد العيادة بنجاح.',
       hospital: {
         id: hospital.id,
         name: hospital.name,
@@ -91,7 +105,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Onboarding error:', error)
     return NextResponse.json(
-      { error: 'An error occurred during onboarding. Please try again.' },
+      {
+        success: false,
+        code: 'ONBOARDING_FAILED',
+        error: 'تعذر إكمال إعداد العيادة. حاول مرة أخرى.',
+      },
       { status: 500 }
     )
   }
@@ -135,12 +153,15 @@ export async function GET() {
     })
 
     if (!hospital) {
-      return NextResponse.json({ error: 'Hospital not found' }, { status: 404 })
+      return NextResponse.json({ error: 'بيانات العيادة غير متاحة.' }, { status: 404 })
     }
 
     return NextResponse.json(hospital)
   } catch (error) {
     console.error('Get onboarding status error:', error)
-    return NextResponse.json({ error: 'An error occurred. Please try again.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'تعذر تحميل بيانات العيادة. حاول مرة أخرى.' },
+      { status: 500 }
+    )
   }
 }

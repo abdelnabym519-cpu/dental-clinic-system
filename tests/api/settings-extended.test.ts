@@ -39,6 +39,19 @@ vi.mock('@/lib/services/email.service', () => ({
   emailService: mockEmailService,
 }))
 
+const { mockGetWhatsAppProvider, mockWhatsAppProvider } = vi.hoisted(() => ({
+  mockWhatsAppProvider: {
+    name: 'real-whatsapp',
+    channel: 'WHATSAPP',
+    sendMessage: vi.fn(),
+  },
+  mockGetWhatsAppProvider: vi.fn(),
+}))
+
+vi.mock('@/lib/messaging/factory', () => ({
+  getWhatsAppProvider: mockGetWhatsAppProvider,
+}))
+
 // ── Imports ──────────────────────────────────────────────────────────────────
 
 import { GET as gatewayGET, PUT as gatewayPUT } from '@/app/api/settings/billing/gateway/route'
@@ -627,7 +640,16 @@ describe('DELETE /api/settings/procedures/[id]', () => {
 // ═════════════════════════════════════════════════════════════════════════════
 
 describe('POST /api/settings/communications/test', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockWhatsAppProvider.name = 'real-whatsapp'
+    mockWhatsAppProvider.channel = 'WHATSAPP'
+    mockWhatsAppProvider.sendMessage.mockResolvedValue({
+      success: true,
+      providerMessageId: 'real-id',
+    })
+    mockGetWhatsAppProvider.mockReturnValue(mockWhatsAppProvider)
+  })
 
   it('returns 401 when unauthenticated', async () => {
     mockAuthError()
@@ -648,11 +670,127 @@ describe('POST /api/settings/communications/test', () => {
   it('returns 400 for invalid type', async () => {
     mockAuth()
     const res = await commTestPOST(
-      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+      makeReq('/api/settings/communications/test', 'POST', { type: 'voice' })
     )
     const body = await res.json()
     expect(res.status).toBe(400)
-    expect(body.error).toContain("'sms' or 'email'")
+    expect(body.error).toContain("'sms', 'email', or 'whatsapp'")
+  })
+
+  it('tests WhatsApp using only the authenticated tenant clinic phone', async () => {
+    mockAuth({ hospitalId: 'clinic-tenant-7' })
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ phone: '010 1234 5678' } as any)
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', {
+        type: 'whatsapp',
+        testData: { phone: '+971501234567' },
+      })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    expect(body.code).toBe('PROVIDER_ACCEPTED')
+    expect(body.message).toContain('لا يؤكد')
+    expect(JSON.stringify(body)).not.toContain('+971501234567')
+    expect(requireAuthAndRole).toHaveBeenCalledWith(['ADMIN'])
+    expect(prisma.hospital.findUnique).toHaveBeenCalledWith({
+      where: { id: 'clinic-tenant-7' },
+      select: { phone: true },
+    })
+    expect(mockWhatsAppProvider.sendMessage).toHaveBeenCalledWith(
+      '+201012345678',
+      expect.objectContaining({ text: expect.stringContaining('اختبار') })
+    )
+  })
+
+  it('returns a distinct safe error when the saved clinic phone is missing', async () => {
+    mockAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ phone: null } as any)
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.code).toBe('CLINIC_PHONE_MISSING')
+    expect(body.error).toContain('لم يتم حفظ رقم هاتف')
+    expect(mockWhatsAppProvider.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('rejects malformed saved clinic phones without exposing provider details', async () => {
+    mockAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({
+      phone: 'clinic: call 01012345678',
+    } as any)
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.code).toBe('CLINIC_PHONE_INVALID')
+    expect(JSON.stringify(body)).not.toMatch(/clinic:|ZodError|Prisma|stack/i)
+    expect(mockWhatsAppProvider.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('reports mock provider as unavailable instead of simulated success', async () => {
+    mockAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ phone: '01012345678' } as any)
+    mockWhatsAppProvider.name = 'mock-whatsapp'
+    mockWhatsAppProvider.sendMessage.mockResolvedValue({ success: true, providerMessageId: 'fake' })
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(503)
+    expect(body.success).toBe(false)
+    expect(body.code).toBe('PROVIDER_UNAVAILABLE')
+    expect(mockWhatsAppProvider.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('normalizes provider failures and exceptions without exposing internal details', async () => {
+    mockAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ phone: '+971 50 123 4567' } as any)
+    mockWhatsAppProvider.sendMessage.mockRejectedValue(new Error('INTERNAL_SECRET stack trace'))
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(503)
+    expect(body.code).toBe('PROVIDER_UNAVAILABLE')
+    expect(JSON.stringify(body)).not.toMatch(/INTERNAL_SECRET|stack trace|Error:/)
+    expect(mockWhatsAppProvider.sendMessage).toHaveBeenCalledWith(
+      '+971501234567',
+      expect.any(Object)
+    )
+  })
+
+  it('returns a safe failed result when WhatsApp rejects the recipient', async () => {
+    mockAuth()
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ phone: '01012345678' } as any)
+    mockWhatsAppProvider.sendMessage.mockResolvedValue({
+      success: false,
+      error: 'private provider response',
+      errorCode: 131026,
+    })
+
+    const res = await commTestPOST(
+      makeReq('/api/settings/communications/test', 'POST', { type: 'whatsapp' })
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.code).toBe('CLINIC_PHONE_NOT_ON_WHATSAPP')
+    expect(body.error).toContain('غير مسجل على واتساب')
+    expect(JSON.stringify(body)).not.toContain('private provider response')
   })
 
   it('returns 400 when phone is missing for SMS test', async () => {
@@ -701,6 +839,8 @@ describe('POST /api/settings/communications/test', () => {
 
     expect(res.status).toBe(400)
     expect(body.success).toBe(false)
+    expect(body.details).toBeUndefined()
+    expect(JSON.stringify(body)).not.toContain('SMS gateway unreachable')
   })
 
   it('returns 400 when email address is missing for email test', async () => {
@@ -749,5 +889,7 @@ describe('POST /api/settings/communications/test', () => {
 
     expect(res.status).toBe(400)
     expect(body.success).toBe(false)
+    expect(body.details).toBeUndefined()
+    expect(JSON.stringify(body)).not.toContain('SMTP error')
   })
 })

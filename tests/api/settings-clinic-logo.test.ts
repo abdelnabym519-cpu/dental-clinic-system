@@ -150,7 +150,7 @@ describe('POST /api/settings/clinic/logo', () => {
     const res = await mod.POST(req)
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('No file')
+    expect(body.error).toContain('يرجى اختيار ملف')
   })
 
   it('returns 400 for disallowed file type', async () => {
@@ -159,7 +159,7 @@ describe('POST /api/settings/clinic/logo', () => {
     const res = await mod.POST(req)
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('allowed')
+    expect(body.error).toContain('نوع الملف غير مدعوم')
   })
 
   it('returns 400 for oversized file (>2MB)', async () => {
@@ -168,7 +168,7 @@ describe('POST /api/settings/clinic/logo', () => {
     const res = await mod.POST(req)
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('2 MB')
+    expect(body.error).toContain('2 ميجابايت')
   })
 
   it('returns 401 for non-ADMIN users', async () => {
@@ -228,6 +228,9 @@ describe('DELETE /api/settings/clinic/logo', () => {
 
     const res = await mod.DELETE()
     expect(res.status).toBe(500)
+    const body = await res.json()
+    expect(body.error).toBe('تعذر حذف شعار العيادة. حاول مرة أخرى.')
+    expect(JSON.stringify(body)).not.toContain('bucket unreachable')
     expect(prisma.hospital.update).not.toHaveBeenCalled()
   })
 
