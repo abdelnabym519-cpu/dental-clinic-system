@@ -370,6 +370,11 @@ export const navigation: NavSection[] = [
             icon: Link2,
           },
           {
+            title: 'Working Hours',
+            href: '/settings/working-hours',
+            icon: Clock,
+          },
+          {
             title: 'Pricing Advisor',
             href: '/settings/pricing',
             icon: DollarSign,

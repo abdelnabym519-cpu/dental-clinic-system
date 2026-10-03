@@ -489,6 +489,19 @@ export default function NewAppointmentPage() {
                   <Switch checked={isVirtual} onCheckedChange={setIsVirtual} />
                 </div>
 
+                {isVirtual && (
+                  <div className="md:col-span-3 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2" data-testid="video-consultation-box">
+                    <Label className="flex items-center gap-2 text-blue-800">
+                      <Video className="h-4 w-4" />
+                      {t('رابط الاجتماع التلفزيوني')}
+                    </Label>
+                    <Input readOnly value={`https://meet.jit.si/dentora-${selectedDate || '<التاريخ>'}`} className="bg-white text-left" dir="ltr" aria-readonly />
+                    <p className="text-xs text-blue-700">
+                      {t('سيتم إنشاء رابط الاجتماع تلقائيًا عند حفظ الموعد، وسيظهر زر «انضم للاجتماع» في صفحة الموعد.')}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2 md:col-span-3">
                   <Label>{t('ui.chief_complaint')}</Label>
                   <Input
