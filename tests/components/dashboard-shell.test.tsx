@@ -207,4 +207,51 @@ describe('DashboardShell', () => {
     expect(screen.getByTestId('mobile-sidebar')).toHaveAttribute('data-role', 'SUPER_ADMIN')
     expect(screen.getByTestId('header')).toHaveAttribute('data-user-role', 'SUPER_ADMIN')
   })
+
+  // ── Issue 1 — scroll blank white space (live-testing defect) ────────────
+  // Root causes: (a) the shell root was a bare `h-screen` (100vh), which on
+  // mobile dynamic viewports is TALLER than the visible viewport — the body
+  // then scrolls by the delta exposing blank white below the app;
+  // (b) page containers inside the clipped shell used `min-h-screen`, which
+  // guarantees a trailing blank scroll region ≥ the header height.
+  it('shell root clamps to the dynamic viewport (100dvh) — no body overscroll blank', () => {
+    const { container } = render(
+      <DashboardShell user={defaultUser} hospital={defaultHospital}>
+        <p>x</p>
+      </DashboardShell>,
+    )
+    const root = container.querySelector('div.flex')
+    expect(root).not.toBeNull()
+    const cls = root!.className
+    expect(cls).toContain('h-screen') // fallback for browsers without dvh
+    expect(cls).toContain('supports-[height:100dvh]:h-[100dvh]') // clamp
+    expect(cls).toContain('overflow-hidden')
+  })
+
+  it('main scroll container contains its scroll (no chaining to the body)', () => {
+    const { container } = render(
+      <DashboardShell user={defaultUser} hospital={defaultHospital}>
+        <p>x</p>
+      </DashboardShell>,
+    )
+    const main = container.querySelector('main')
+    expect(main?.className).toContain('overflow-auto')
+    expect(main?.className).toContain('overscroll-contain')
+  })
+
+  it('no dashboard page forces min-h-screen inside the clipped shell (static scan)', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const rootDir = path.resolve(process.cwd(), 'app/(dashboard)')
+    const offenders: string[] = []
+    const walk = (dir: string) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name)
+        if (e.isDirectory()) walk(p)
+        else if (e.name.endsWith('.tsx') && /min-h-screen|h-screen/.test(fs.readFileSync(p, 'utf-8'))) offenders.push(p)
+      }
+    }
+    walk(rootDir)
+    expect(offenders).toEqual([])
+  })
 })
