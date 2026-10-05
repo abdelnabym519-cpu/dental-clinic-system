@@ -3,6 +3,42 @@
 
 import prisma from '@/lib/prisma'
 
+// Issue 3 — the canonical Egyptian phone rules live here so every surface
+// (SMS/WhatsApp gateway, clinic settings validation) agrees on one format.
+// Egyptian mobile (WhatsApp-usable): 01[0125] + 8 digits, tolerating
+// spaces/dashes/parens and an optional +20 / 0020 country code.
+export function isValidEgyptianPhoneNumber(phone: string): boolean {
+  let cleaned = String(phone ?? '')
+    .replace(/[\s()-]/g, '')
+    .trim()
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
+  if (cleaned.startsWith('0020')) cleaned = cleaned.slice(4)
+  else if (cleaned.startsWith('20') && cleaned.length === 12) cleaned = cleaned.slice(2)
+  // Issue 3 — the international form drops the national trunk 0
+  // (e.g. +20 100 123 4567 → 1001234567); restore it so +20/0020 numbers
+  // validate like their national equivalent instead of always failing.
+  if (/^1[0125]\d{8}$/.test(cleaned)) cleaned = '0' + cleaned
+  return /^01[0125]\d{8}$/.test(cleaned)
+}
+
+// Clinic contact phones may also be Egyptian LANDLINEs (e.g. Cairo 02…)
+// — the seeded clinic data uses one. Mobile or landline, still strictly
+// numeric Egyptian numbering.
+export function isValidEgyptianClinicPhone(phone: string): boolean {
+  let cleaned = String(phone ?? '')
+    .replace(/[\s()-]/g, '')
+    .trim()
+  if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
+  if (cleaned.startsWith('0020')) cleaned = cleaned.slice(4)
+  else if (cleaned.startsWith('20') && cleaned.length >= 11 && cleaned.length <= 13)
+    cleaned = cleaned.slice(2)
+  if (isValidEgyptianPhoneNumber(cleaned)) return true
+  // Landline: area code 0[2-9] + 7–8 subscriber digits (e.g. Cairo 0222345678).
+  // A missing trunk '0' (international-style 222345678) is tolerated.
+  if (/^[2-9]\d{7,8}$/.test(cleaned)) cleaned = '0' + cleaned
+  return /^0[2-9]\d{7,8}$/.test(cleaned)
+}
+
 export interface SMSConfig {
   gateway: 'VODAFONE' | 'ETISALAT' | 'ORANGE' | 'TWILIO'
   apiKey: string
@@ -270,12 +306,7 @@ class SMSService {
   }
 
   private isValidEgyptianPhoneNumber(phone: string): boolean {
-    // Egyptian mobile: 01XXXXXXXXX (optionally with +20 / 0020 country code)
-    let cleaned = phone.replace(/[\s()-]/g, '')
-    if (cleaned.startsWith('+')) cleaned = cleaned.slice(1)
-    if (cleaned.startsWith('0020')) cleaned = cleaned.slice(4)
-    else if (cleaned.startsWith('20') && cleaned.length === 12) cleaned = cleaned.slice(2)
-    return /^01[0125]\d{8}$/.test(cleaned)
+    return isValidEgyptianPhoneNumber(phone)
   }
 
   private normalizePhoneNumber(phone: string): string {

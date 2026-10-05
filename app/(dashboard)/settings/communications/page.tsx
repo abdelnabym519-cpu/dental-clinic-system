@@ -58,6 +58,21 @@ export default function CommunicationSettingsPage() {
   // Load settings on mount
   useEffect(() => {
     loadSettings()
+    // Issue 3 — the WhatsApp/SMS test box starts from the CANONICAL saved
+    // clinic phone (settings/clinic), so the test targets the clinic's real
+    // contact number instead of a blank field. Still editable by the admin.
+    const loadClinicPhone = async () => {
+      try {
+        const response = await fetch('/api/settings/clinic')
+        if (!response.ok) return
+        const data = await response.json()
+        const saved = String(data?.data?.phone ?? '').trim()
+        setTestPhone((prev) => prev || saved)
+      } catch {
+        // canonical phone is a convenience prefill — never blocks the page
+      }
+    }
+    loadClinicPhone()
   }, [])
 
   const loadSettings = async () => {
@@ -204,10 +219,11 @@ export default function CommunicationSettingsPage() {
   }
 
   const handleTestSMS = async () => {
-    if (!testPhone) {
+    // Issue 3 — Arabic, and distinguishes a missing number from a failed send.
+    if (!testPhone || testPhone.trim() === '') {
       toast({
-        title: 'Error',
-        description: 'Please enter a phone number to test',
+        title: 'تعذر إرسال رسالة الاختبار',
+        description: 'يرجى إدخال رقم هاتف للاختبار.',
         variant: 'destructive',
       })
       return
@@ -231,16 +247,18 @@ export default function CommunicationSettingsPage() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        throw new Error(data.details || data.error || 'Failed to send test SMS')
+        // The server now answers with a safe Arabic category message —
+        // never raw provider/stack output (Issue 3).
+        throw new Error(data.error || 'تعذر إرسال رسالة الاختبار. حاول مرة أخرى.')
       }
 
       toast({
-        title: 'Success',
-        description: data.message || 'Test SMS sent successfully',
+        title: 'تم الإرسال',
+        description: data.message || 'تم إرسال رسالة الاختبار بنجاح',
       })
     } catch (error: any) {
       toast({
-        title: 'Test Failed',
+        title: 'تعذر إرسال رسالة الاختبار',
         description: error.message,
         variant: 'destructive',
       })

@@ -89,8 +89,16 @@ function parseValidationError(error: unknown): string {
     } catch {
       // not JSON — fall through
     }
-    // Already-friendly text passes through; anything else gets the generic line.
-    if (!raw.trim().startsWith('{') && !raw.trim().startsWith('[')) return raw
+    // Already-friendly Arabic text passes through. Anything else (a raw
+    // Prisma/HTTP/internal English dump) must never reach the toast — Issue 3
+    // closes that legacy leak path.
+    if (
+      !raw.trim().startsWith('{') &&
+      !raw.trim().startsWith('[') &&
+      /[\u0600-\u06FF]/.test(raw)
+    ) {
+      return raw
+    }
   }
   return 'حدث خطأ في حفظ البيانات'
 }
@@ -258,7 +266,7 @@ export default function ClinicSettingsPage() {
           description: 'تم حفظ بيانات العيادة بنجاح',
         })
       } else {
-        throw new Error(result.error || 'Failed to save')
+        throw new Error(result.error || 'تعذر حفظ بيانات العيادة. حاول مرة أخرى.')
       }
     } catch (error: any) {
       toast({

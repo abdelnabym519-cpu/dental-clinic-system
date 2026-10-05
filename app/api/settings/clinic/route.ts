@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
+import { isValidEgyptianClinicPhone } from '@/lib/services/sms.service'
 
 const optionalString = z.preprocess(
   (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
@@ -12,7 +13,16 @@ const clinicInfoSchema = z.object({
   name: z.string().min(1),
   tagline: optionalString,
   logo: optionalString,
-  phone: z.string().min(10),
+  // Issue 3 — the clinic phone follows the ONE canonical Egyptian numbering
+  // rule shared with the SMS/WhatsApp gateway (mobile 01[0125]… or landline
+  // 02…); whitespace-only or alphabetic junk can no longer be saved, and the
+  // message is Arabic instead of a bare min(10) Zod output.
+  phone: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim() : val),
+    z.string().refine(isValidEgyptianClinicPhone, {
+      message: 'يرجى إدخال رقم هاتف صحيح (رقم مصري مثل 01xxxxxxxxx أو رقم أرضي).',
+    })
+  ),
   alternatePhone: optionalString,
   email: z.preprocess(
     (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
@@ -20,7 +30,16 @@ const clinicInfoSchema = z.object({
   ),
   website: z.preprocess(
     (val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
-    z.string().url({ message: 'رابط الموقع غير صحيح — يجب أن يبدأ بـ https://' }).optional()
+    // Issue 3 — enforcement now MATCHES the canonical Arabic message the
+    // product has always shown: a real URL starting with https:// (empty /
+    // whitespace-only stays optional and is accepted).
+    z
+      .string()
+      .url({ message: 'رابط الموقع غير صحيح — يجب أن يبدأ بـ https://' })
+      .refine((v) => v.startsWith('https://'), {
+        message: 'رابط الموقع غير صحيح — يجب أن يبدأ بـ https://',
+      })
+      .optional()
   ),
   address: z.string().min(1),
   city: z.string().min(1),
@@ -91,10 +110,8 @@ export async function GET(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('Get clinic info error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get clinic information' },
-      { status: 500 }
-    )
+    // Issue 3 — internal/Prisma error text must never reach the client.
+    return NextResponse.json({ error: 'تعذر تحميل بيانات العيادة' }, { status: 500 })
   }
 }
 
@@ -153,8 +170,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: friendly.join('؛ ') }, { status: 400 })
     }
 
+    // Issue 3 — Prisma/database/internal failures are normalized to one safe
+    // Arabic line; the raw exception text is only logged server-side.
     return NextResponse.json(
-      { error: error.message || 'Failed to update clinic information' },
+      { error: 'تعذر حفظ بيانات العيادة. حاول مرة أخرى.' },
       { status: 500 }
     )
   }

@@ -33,6 +33,8 @@ const { mockSmsService, mockEmailService } = vi.hoisted(() => ({
 
 vi.mock('@/lib/services/sms.service', () => ({
   smsService: mockSmsService,
+  // Issue 3: the test route pre-validates with the canonical Egyptian rule
+  isValidEgyptianPhoneNumber: (phone: string) => /^01[0125]\d{8}$/.test(String(phone)),
 }))
 
 vi.mock('@/lib/services/email.service', () => ({
@@ -665,7 +667,8 @@ describe('POST /api/settings/communications/test', () => {
     )
     const body = await res.json()
     expect(res.status).toBe(400)
-    expect(body.error).toContain('Phone number')
+    // Issue 3: Arabic-safe, no raw technical output
+    expect(body.error).toContain('رقم هاتف')
   })
 
   it('sends test SMS successfully', async () => {
