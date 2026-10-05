@@ -25,6 +25,9 @@ interface QueryResult {
   summary?: string
   rowCount?: number
   model?: string
+  /** Issue 4 — honesty labeling: 'ai' = real LLM path, 'deterministic' = local */
+  mode?: 'ai' | 'deterministic'
+  notice?: string
   error?: string
   code?: string
 }
@@ -200,6 +203,14 @@ export function ReportBuilder() {
           {result.summary && (
             <div className="p-3 bg-primary/5 border-b">
               <p className="text-sm leading-relaxed">{result.summary}</p>
+            </div>
+          )}
+
+          {/* Issue 4 — honesty notice: a deterministic report says so, it never
+              claims AI inference that did not happen */}
+          {result.success && result.mode === 'deterministic' && (
+            <div className="px-3 py-2 bg-muted/40 border-b" data-testid="deterministic-notice">
+              <p className="text-xs text-muted-foreground">{result.notice}</p>
             </div>
           )}
 

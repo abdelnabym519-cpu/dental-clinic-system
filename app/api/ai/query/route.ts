@@ -3,6 +3,15 @@ import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import { complete, extractJSON } from '@/lib/ai/openrouter'
 import { getModelByTier } from '@/lib/ai/models'
+import {
+  detectReportIntent,
+  cairoReportWindow,
+  rangeLabel,
+  DETERMINISTIC_NOTICE,
+  type ReportKind,
+  type ReportRange,
+  type CairoWindow,
+} from '@/lib/ai/report-intent'
 
 /**
  * Whitelisted query specs — maps "model" names to safe Prisma query builders.
@@ -114,34 +123,36 @@ User query: "${naturalQuery}"`
 // ── Issue 4 — pre-built reports (NO LLM needed) ────────────────────────────
 // When the language model is not configured/reachable, the reports page must
 // still work: these presets run whitelisted, tenant-scoped queries directly.
-const startOfMonth = (now: Date) => new Date(now.getFullYear(), now.getMonth(), 1)
+// Each builder receives a Cairo-local [gte, lt) window (Issue 4 PHASE 8 —
+// Egyptian clinic day semantics, never a raw UTC block).
+type DeterministicBuilder = (
+  hospitalId: string,
+  window: CairoWindow
+) => Promise<{ summary: string; rows: any[] }>
 
-const PRESET_BUILDERS: Record<string, (hospitalId: string, now: Date) => Promise<{ summary: string; rows: any[] }>> = {
-  new_patients_monthly: async (hospitalId, now) => {
-    const since = startOfMonth(now)
+const PRESET_BUILDERS: Record<ReportKind, DeterministicBuilder> = {
+  new_patients: async (hospitalId, window) => {
     const rows = await prisma.patient.findMany({
-      where: { hospitalId, createdAt: { gte: since } },
+      where: { hospitalId, createdAt: { gte: window.gte, lt: window.lt } },
       select: { firstName: true, lastName: true, patientId: true, phone: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
-    return { summary: `المرضى الجدد هذا الشهر: ${rows.length}`, rows }
+    return { summary: `المرضى الجدد ${window.label}: ${rows.length}`, rows }
   },
-  revenue_monthly: async (hospitalId, now) => {
-    const since = startOfMonth(now)
+  revenue: async (hospitalId, window) => {
     const rows = await prisma.invoice.findMany({
-      where: { hospitalId, status: 'PAID', updatedAt: { gte: since } },
+      where: { hospitalId, status: 'PAID', updatedAt: { gte: window.gte, lt: window.lt } },
       select: { invoiceNo: true, totalAmount: true, paidAmount: true, updatedAt: true, patient: { select: { firstName: true, lastName: true } } },
       orderBy: { updatedAt: 'desc' },
       take: 50,
     })
     const total = rows.reduce((s: number, r: any) => s + Number(r.paidAmount ?? 0), 0)
-    return { summary: `إيرادات هذا الشهر (فواتير محصّلة): ${total.toFixed(2)} جنيه من ${rows.length} فاتورة`, rows }
+    return { summary: `الإيرادات ${window.label} (فواتير محصّلة): ${total.toFixed(2)} جنيه من ${rows.length} فاتورة`, rows }
   },
-  cancelled_appointments: async (hospitalId, now) => {
-    const since = startOfMonth(now)
+  cancelled_appointments: async (hospitalId, window) => {
     const rows = await prisma.appointment.findMany({
-      where: { hospitalId, status: 'CANCELLED', scheduledDate: { gte: since } },
+      where: { hospitalId, status: 'CANCELLED', scheduledDate: { gte: window.gte, lt: window.lt } },
       include: {
         patient: { select: { firstName: true, lastName: true } },
         doctor: { select: { firstName: true, lastName: true } },
@@ -149,12 +160,11 @@ const PRESET_BUILDERS: Record<string, (hospitalId: string, now: Date) => Promise
       orderBy: { scheduledDate: 'desc' },
       take: 50,
     })
-    return { summary: `المواعيد الملغاة هذا الشهر: ${rows.length}`, rows }
+    return { summary: `المواعيد الملغاة ${window.label}: ${rows.length}`, rows }
   },
-  top_procedures: async (hospitalId, now) => {
-    const since = startOfMonth(now)
+  top_procedures: async (hospitalId, window) => {
     const rows = await prisma.treatment.findMany({
-      where: { hospitalId, createdAt: { gte: since } },
+      where: { hospitalId, createdAt: { gte: window.gte, lt: window.lt } },
       include: { procedure: { select: { name: true } }, patient: { select: { firstName: true, lastName: true } } },
       take: 200,
     })
@@ -164,8 +174,49 @@ const PRESET_BUILDERS: Record<string, (hospitalId: string, now: Date) => Promise
       counts.set(name, (counts.get(name) ?? 0) + 1)
     }
     const summary_rows = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([procedure, count]) => ({ procedure, count }))
-    return { summary: `أكثر الإجراءات طلبًا هذا الشهر (من ${rows.length} علاجًا)`, rows: summary_rows }
+    return { summary: `أكثر الإجراءات طلبًا ${window.label} (من ${rows.length} علاجًا)`, rows: summary_rows }
   },
+}
+
+const PRESET_ALIASES: Record<string, ReportKind> = {
+  new_patients_monthly: 'new_patients',
+  revenue_monthly: 'revenue',
+  cancelled_appointments: 'cancelled_appointments',
+  top_procedures: 'top_procedures',
+}
+
+/**
+ * Issue 4 — run one deterministic report and audit it. Every query is
+ * hospitalId-scoped inside the builder; nothing user-authored reaches SQL.
+ */
+async function runDeterministicReport(
+  kind: ReportKind,
+  range: ReportRange,
+  hospitalId: string,
+  userId: string,
+  skill: string
+) {
+  const window = cairoReportWindow(range, new Date())
+  const { summary, rows } = await PRESET_BUILDERS[kind](hospitalId, window)
+  await prisma.aISkillExecution.create({
+    data: {
+      hospitalId,
+      userId,
+      skill,
+      input: { kind, range } as any,
+      output: { rowCount: rows.length } as any,
+      status: 'COMPLETED',
+    },
+  })
+  return NextResponse.json({
+    summary,
+    model: kind,
+    mode: 'deterministic' as const,
+    notice: DETERMINISTIC_NOTICE,
+    rangeLabel: rangeLabel(range),
+    rowCount: rows.length,
+    rows,
+  })
 }
 
 function aiUnavailableError(err: unknown): boolean {
@@ -198,13 +249,13 @@ export async function POST(req: Request) {
   // Issue 4 — preset reports run WITHOUT the language model (deterministic,
   // whitelisted, tenant-scoped). This is the fallback path that keeps the
   // reports page functional when the LLM is not configured or unreachable.
-  if (typeof preset === 'string' && PRESET_BUILDERS[preset]) {
+  if (typeof preset === 'string') {
+    const kind = PRESET_ALIASES[preset]
+    if (!kind) {
+      return NextResponse.json({ error: 'حدث خطأ أثناء توليد التقرير — حاول مرة أخرى' }, { status: 400 })
+    }
     try {
-      const { summary, rows } = await PRESET_BUILDERS[preset](hospitalId, new Date())
-      await prisma.aISkillExecution.create({
-        data: { hospitalId, userId: user.id, skill: `preset_${preset}`, input: { preset } as any, output: { rowCount: rows.length } as any, status: 'COMPLETED' },
-      })
-      return NextResponse.json({ summary, model: preset, rowCount: rows.length, rows })
+      return await runDeterministicReport(kind, 'month', hospitalId, user.id, `preset_${kind}`)
     } catch (err) {
       console.error('Preset report error:', err)
       return NextResponse.json({ error: 'حدث خطأ أثناء توليد التقرير — حاول مرة أخرى' }, { status: 500 })
@@ -212,6 +263,27 @@ export async function POST(req: Request) {
   }
 
   if (!query?.trim()) return NextResponse.json({ error: 'query is required' }, { status: 400 })
+
+  // Issue 4 — natural-language intent routing: the four canonical clinic
+  // reports are served deterministically whenever the user's words clearly
+  // map to them (Egyptian Arabic + MSA variants, with time ranges). This is
+  // honest by construction — the response is labeled mode:'deterministic' —
+  // and keeps the query text out of the LLM entirely for these reports.
+  const intent = detectReportIntent(query)
+  if (intent) {
+    try {
+      return await runDeterministicReport(
+        intent.kind,
+        intent.range,
+        hospitalId,
+        user.id,
+        `nl_report_${intent.kind}`
+      )
+    } catch (err) {
+      console.error('Deterministic report error:', err)
+      return NextResponse.json({ error: 'تعذر إنشاء التقرير حاليًا. حاول مرة أخرى.' }, { status: 500 })
+    }
+  }
 
   // Step 1: translate to spec
   let spec: { model: string; filters: Record<string, any>; limit?: number; summary?: string }
@@ -239,7 +311,11 @@ export async function POST(req: Request) {
   // Step 2: validate model is whitelisted
   const builder = QUERY_BUILDERS[spec.model]
   if (!builder) {
-    return NextResponse.json({ error: `Unsupported data source: ${spec.model}` }, { status: 400 })
+    // Issue 4 — never echo model output back to the UI.
+    return NextResponse.json(
+      { error: 'لم نتمكن من تحليل سؤالك — جرّب إعادة صياغته أو استخدم التقارير الجاهزة بالأسفل.', code: 'PARSE_FAILED' },
+      { status: 400 }
+    )
   }
 
   // Step 3: execute
@@ -248,8 +324,10 @@ export async function POST(req: Request) {
   try {
     rows = await builder(hospitalId, spec.filters || {}, limit)
   } catch (err) {
+    console.error('AI query execution error:', err)
+    // Issue 4 — Prisma/database errors must never reach the user.
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Query execution error' },
+      { error: 'تعذر إنشاء التقرير حاليًا. حاول مرة أخرى.' },
       { status: 500 }
     )
   }
@@ -269,6 +347,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     summary: spec.summary || query,
     model: spec.model,
+    mode: 'ai' as const,
     rowCount: rows.length,
     rows,
   })

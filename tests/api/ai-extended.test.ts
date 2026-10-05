@@ -106,7 +106,9 @@ describe('POST /api/ai/query', () => {
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'show me unknowns' }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('Unsupported data source')
+    // Issue 4: the model's raw output is never echoed back — Arabic PARSE_FAILED
+    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
+    expect(body.code).toBe('PARSE_FAILED')
   })
 
   it('executes whitelisted patient query successfully', async () => {

@@ -89,7 +89,7 @@ describe('POST /api/data-import/ai-mapping', () => {
     const body = await res.json()
     expect(body.mapping.Col1).toBeNull()
     expect(body.mapping.Col2).toBeNull()
-    expect(body.aiError).toContain('unavailable')
+    expect(body.aiError).toContain('غير متاحة') // Issue 4: Arabic-safe AI fallback note
     expect(body.unmappedRequired).toBeDefined()
   })
 
@@ -109,7 +109,7 @@ describe('POST /api/data-import/ai-mapping', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.mapping.Name).toBeNull()
-    expect(body.aiError).toContain('parse')
+    expect(body.aiError).toContain('تعذر تحليل استجابة الذكاء الاصطناعي') // Issue 4: Arabic
   })
 
   it('returns 400 when jobId is missing', async () => {

@@ -80,9 +80,11 @@ describe('POST /api/ai/query — Issue 4 (LLM-down graceful degradation)', () =>
   })
 
   // ── LLM failures are classified, never raw ──────────────────────────────
-  it('provider unreachable → 503 AI_UNAVAILABLE with Arabic guidance', async () => {
+  it('provider unreachable on a NON-report query → 503 AI_UNAVAILABLE with Arabic guidance', async () => {
+    // ('إيرادات الشهر' is now served deterministically — see the NL fallback
+    // block below; this contract needs a query outside the four intents.)
     mockComplete.complete.mockRejectedValue(new TypeError('fetch failed'))
-    const res = await POST(post({ query: 'إيرادات الشهر' }))
+    const res = await POST(post({ query: 'من أقدم الأطباء في العيادة؟' }))
     expect(res.status).toBe(503)
     const data = await res.json()
     expect(data.code).toBe('AI_UNAVAILABLE')
@@ -107,5 +109,135 @@ describe('POST /api/ai/query — Issue 4 (LLM-down graceful degradation)', () =>
     expect(data.code).toBe('PARSE_FAILED')
     expect(data.error).toMatch(/[\u0600-\u06FF]/)
     expect(data.error).not.toContain('Could not parse')
+  })
+
+  // ── Issue 4 hardening — NL intent routing (Egyptian Arabic) ─────────────
+  // The six sample queries from the Issue 4 prompt must be served
+  // deterministically (no LLM, no key needed) and labeled honestly.
+  const SAMPLES: Array<[string, string, RegExp]> = [
+    ['وريني عدد المرضى الجدد', 'patient', /المرضى الجدد/],
+    ['قولي إيرادات العيادة', 'invoice', /الإيرادات/],
+    ['وريني المواعيد الملغية', 'appointment', /المواعيد الملغاة/],
+    ['إيه أكتر الإجراءات اللي اتعملت؟', 'treatment', /أكثر الإجراءات/],
+    ['اعمل تقرير عن المرضى الجدد', 'patient', /المرضى الجدد/],
+    ['اعمل تقرير عن الإيرادات', 'invoice', /الإيرادات/],
+  ]
+  for (const [query, prismaModel, summaryRe] of SAMPLES) {
+    it(`NL fallback (no LLM): "${query}" → deterministic + honest labeling`, async () => {
+      ;(prisma[prismaModel] as any).findMany.mockResolvedValue([])
+      const res = await POST(post({ query }))
+      expect(res.status).toBe(200)
+      const data = await res.json()
+      expect(data.mode).toBe('deterministic')
+      expect(data.notice).toContain('بدون نموذج ذكاء اصطناعي')
+      expect(data.summary).toMatch(summaryRe)
+      // NEVER claims AI inference that did not happen
+      expect(data.summary).not.toContain('الذكاء الاصطناعي')
+      expect(mockComplete.complete).not.toHaveBeenCalled()
+    })
+  }
+
+  it('NL fallback respects Cairo date words: النهارده → today window (gte AND lt)', async () => {
+    prisma.patient.findMany.mockResolvedValue([])
+    const res = await POST(post({ query: 'المرضى الجدد النهارده' }))
+    expect(res.status).toBe(200)
+    const where = prisma.patient.findMany.mock.calls[0][0].where
+    expect(where.hospitalId).toBe('h1') // tenant isolation in the same where
+    expect(where.createdAt.gte).toBeInstanceOf(Date)
+    expect(where.createdAt.lt).toBeInstanceOf(Date)
+    // [gte, lt) is exactly one Cairo day
+    expect(where.createdAt.lt.getTime() - where.createdAt.gte.getTime()).toBe(24 * 3600_000)
+  })
+
+  it('NL fallback with امبارح → yesterday window (still exactly one day)', async () => {
+    prisma.invoice.findMany.mockResolvedValue([])
+    await POST(post({ query: 'إيرادات العيادة امبارح' }))
+    const where = prisma.invoice.findMany.mock.calls[0][0].where
+    expect(where.updatedAt.gte).toBeInstanceOf(Date)
+    expect(where.updatedAt.lt.getTime() - where.updatedAt.gte.getTime()).toBe(24 * 3600_000)
+    expect(where.status).toBe('PAID')
+  })
+
+  it('deterministic reports are audit-logged but never write domain data', async () => {
+    prisma.patient.findMany.mockResolvedValue([])
+    await POST(post({ query: 'وريني عدد المرضى الجدد' }))
+    // only the skill-execution audit row is written
+    expect(prisma.aISkillExecution.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ skill: 'nl_report_new_patients' }),
+      })
+    )
+    expect(prisma.patient.create).not.toHaveBeenCalled()
+    expect(prisma.$executeRaw).not.toHaveBeenCalled()
+  })
+
+  it('tenant isolation: deterministic builders always scope by the caller hospitalId', async () => {
+    prisma.appointment.findMany.mockResolvedValue([])
+    await POST(post({ query: 'المواعيد الملغية' }))
+    const where = prisma.appointment.findMany.mock.calls[0][0].where
+    expect(where.hospitalId).toBe('h1')
+    expect(where.status).toBe('CANCELLED')
+  })
+
+  it('unauthenticated users are rejected before any report logic (RBAC)', async () => {
+    mockAuth.requireAuthAndRole.mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+      user: null,
+      hospitalId: null,
+    })
+    const res = await POST(post({ query: 'وريني عدد المرضى الجدد' }))
+    expect(res.status).toBe(401)
+  })
+
+  it('NL queries that match NO intent still reach the LLM path (MODE A preserved)', async () => {
+    mockComplete.complete.mockResolvedValue({
+      content: '{"model":"patient","filters":{},"limit":5,"summary":"أقدم المرضى"}',
+      usage: {},
+      model: 't',
+    })
+    prisma.patient.findMany.mockResolvedValue([])
+    const res = await POST(post({ query: 'رتب المرضى بالعمر' }))
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.mode).toBe('ai')
+    expect(mockComplete.complete).toHaveBeenCalled()
+  })
+
+  it('DB failure inside a deterministic report → Arabic 500, no Prisma text', async () => {
+    prisma.patient.findMany.mockRejectedValue(new Error('P2021: table does not exist at db.host'))
+    const res = await POST(post({ query: 'وريني عدد المرضى الجدد' }))
+    expect(res.status).toBe(500)
+    const data = await res.json()
+    expect(data.error).toContain('تعذر إنشاء التقرير')
+    expect(data.error).not.toContain('P2021')
+    expect(data.error).not.toContain('db.host')
+  })
+
+  it('DB failure inside the LLM path → Arabic 500, no raw err.message', async () => {
+    mockComplete.complete.mockResolvedValue({
+      content: '{"model":"patient","filters":{},"limit":5}',
+      usage: {},
+      model: 't',
+    })
+    prisma.patient.findMany.mockRejectedValue(new Error('Invalid prisma.patient.findMany() invocation'))
+    const res = await POST(post({ query: 'رتب المرضى بالعمر' }))
+    expect(res.status).toBe(500)
+    const data = await res.json()
+    expect(data.error).toContain('تعذر إنشاء التقرير')
+    expect(data.error).not.toContain('prisma')
+    expect(data.error).not.toContain('invocation')
+  })
+
+  it('unparseable model output naming an unknown source never echoes it back', async () => {
+    mockComplete.complete.mockResolvedValue({
+      content: '{"model":"DROP_TABLE Patients","filters":{}}',
+      usage: {},
+      model: 't',
+    })
+    const res = await POST(post({ query: 'رتب المرضى بالعمر' }))
+    const data = await res.json()
+    expect(res.status).toBe(400)
+    expect(JSON.stringify(data)).not.toContain('DROP_TABLE')
+    expect(data.code).toBe('PARSE_FAILED')
   })
 })

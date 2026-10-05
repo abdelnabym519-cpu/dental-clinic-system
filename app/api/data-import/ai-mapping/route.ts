@@ -100,7 +100,7 @@ Map each source column to the most appropriate target field.`
         confidence: emptyConfidence,
         unmappedRequired: schema.fields.filter((f) => f.required).map((f) => f.name),
         splitFields: [],
-        aiError: 'AI mapping unavailable. Please map columns manually.',
+        aiError: 'مطابقة الأعمدة بالذكاء الاصطناعي غير متاحة — الرجاء المطابقة يدويًا.',
       })
     }
 
@@ -124,7 +124,7 @@ Map each source column to the most appropriate target field.`
           confidence: {},
           unmappedRequired: schema.fields.filter((f) => f.required).map((f) => f.name),
           splitFields: [],
-          aiError: 'Could not parse AI response. Please map columns manually.',
+          aiError: 'تعذر تحليل استجابة الذكاء الاصطناعي — الرجاء مطابقة الأعمدة يدويًا.',
         })
       }
     }
