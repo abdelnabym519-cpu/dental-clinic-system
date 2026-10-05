@@ -220,7 +220,7 @@ export function ReportBuilder() {
               <p>{result.error || t("Query failed")}</p>
               {result.code === 'AI_UNAVAILABLE' && (
                 <p className="text-xs text-muted-foreground">
-                  {t('للتفعيل: ثبّت نموذج الذكاء الاصطناعي المحلي أو أضف مفتاح OPENROUTER_API_KEY في ملف .env ثم أعد تشغيل النظام.')}
+                  {t('للتفعيل: ثبّت نموذج الذكاء الاصطناعي المحلي، أو أضف بيانات Cloudflare AI Gateway (معرّف الحساب والبوابة والرمز) في ملف .env على الخادم ثم أعد تشغيل النظام.')}
                 </p>
               )}
             </div>

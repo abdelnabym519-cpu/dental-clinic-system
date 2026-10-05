@@ -5,7 +5,7 @@ const mockAuth = vi.hoisted(() => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-const mockOpenRouter = vi.hoisted(() => ({
+const mockGateway = vi.hoisted(() => ({
   complete: vi.fn(),
   extractJSON: vi.fn((s: string) => s),
 }))
@@ -16,7 +16,7 @@ const mockModels = vi.hoisted(() => ({
 
 vi.mock('@/lib/api-helpers', () => mockAuth)
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
-vi.mock('@/lib/ai/openrouter', () => mockOpenRouter)
+vi.mock('@/lib/ai/gateway', () => mockGateway)
 vi.mock('@/lib/ai/models', () => mockModels)
 
 const mod = await import('@/app/api/ai/analyze/route')
@@ -118,11 +118,11 @@ describe('POST /api/ai/analyze', () => {
       recommendation: 'Low risk with allergy precautions',
     }
 
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: JSON.stringify(aiResult),
       usage: { totalTokens: 500 },
     })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(aiResult))
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(aiResult))
     ;(prisma.patientRiskScore.create as any).mockResolvedValue({})
     ;(prisma.aISkillExecution.create as any).mockResolvedValue({})
 
@@ -153,7 +153,7 @@ describe('POST /api/ai/analyze', () => {
         otherConditions: null,
       },
     })
-    mockOpenRouter.complete.mockRejectedValue(new Error('AI service down'))
+    mockGateway.complete.mockRejectedValue(new Error('AI service down'))
 
     const res = await mod.POST(makeRequest({ type: 'risk_score', patientId: 'p1' }))
     expect(res.status).toBe(502)
@@ -168,7 +168,7 @@ describe('POST /api/ai/analyze', () => {
   })
 
   it('performs generic data analysis', async () => {
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: 'Analysis results here',
       usage: { totalTokens: 200 },
     })
@@ -180,7 +180,7 @@ describe('POST /api/ai/analyze', () => {
   })
 
   it('returns 502 when AI fails for data analysis', async () => {
-    mockOpenRouter.complete.mockRejectedValue(new Error('AI error'))
+    mockGateway.complete.mockRejectedValue(new Error('AI error'))
     const res = await mod.POST(makeRequest({ type: 'data', data: 'test' }))
     expect(res.status).toBe(502)
   })

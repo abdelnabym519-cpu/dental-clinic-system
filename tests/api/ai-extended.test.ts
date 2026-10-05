@@ -15,7 +15,7 @@ const { mockComplete, mockExtractJSON } = vi.hoisted(() => ({
   mockExtractJSON: vi.fn((s) => s),
 }))
 
-vi.mock('@/lib/ai/openrouter', () => ({
+vi.mock('@/lib/ai/gateway', () => ({
   complete: mockComplete,
   extractJSON: mockExtractJSON,
 }))
@@ -160,7 +160,7 @@ describe('POST /api/ai/query', () => {
 
   it('returns 400 PARSE_FAILED (Arabic guidance) when the LLM call errors — Issue 4 contract', async () => {
     mockAuth()
-    mockComplete.mockRejectedValue(new Error('OpenRouter API rate limit exceeded'))
+    mockComplete.mockRejectedValue(new Error('AI Gateway rate limit exceeded'))
 
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'test query' }))
     expect(res.status).toBe(400)

@@ -1,9 +1,12 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Issue 4 — smallest production-safe AI-runtime diagnostic: ADMIN-only,
-// distinguishes not_configured / unreachable / reachable_model_missing / ready,
-// never exposes the API key value, and never sends patient data anywhere.
+// Cloudflare era — AI-runtime diagnostic (ADMIN-only, cached, probe-free):
+//   UNAVAILABLE   — no gateway configuration
+//   MISCONFIGURED — configured but identifier shapes are invalid
+//   CONFIGURED    — configured and identifier-valid (NO expensive LLM probe)
+// The payload never carries the token value, never sends patient data, and
+// never fabricates "AVAILABLE" from configuration alone.
 
 const mockAuth = vi.hoisted(() => ({ requireAuthAndRole: vi.fn() }))
 vi.mock('@/lib/api-helpers', () => mockAuth)
@@ -11,9 +14,9 @@ vi.mock('@/lib/api-helpers', () => mockAuth)
 const fetchMock = vi.hoisted(() => ({ fn: vi.fn() }))
 vi.stubGlobal('fetch', fetchMock.fn)
 
-import { GET } from '@/app/api/ai/runtime-status/route'
+describe('GET /api/ai/runtime-status — Cloudflare AI Gateway diagnostic', () => {
+  const ENV_KEYS = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_AI_GATEWAY_ID', 'DEN_TORA_AI_MODEL']
 
-describe('GET /api/ai/runtime-status — Issue 4 diagnostic', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
@@ -23,6 +26,7 @@ describe('GET /api/ai/runtime-status — Issue 4 diagnostic', () => {
       hospitalId: 'h1',
       session: { user: { id: 'u1', role: 'ADMIN' } },
     })
+    for (const k of ENV_KEYS) delete process.env[k]
   })
 
   async function getStatus() {
@@ -31,45 +35,58 @@ describe('GET /api/ai/runtime-status — Issue 4 diagnostic', () => {
     return mod.GET()
   }
 
-  it('not_configured when no key is present (and never fetches)', async () => {
-    delete process.env.OPENROUTER_API_KEY
+  it('UNAVAILABLE when no gateway configuration is present (and never fetches)', async () => {
     const res = await getStatus()
     const data = await res.json()
     expect(data.configured).toBe(false)
-    expect(data.status).toBe('not_configured')
+    expect(data.status).toBe('UNAVAILABLE')
+    expect(data.runtime).toBe('cloudflare-ai-gateway')
+    expect(data.localEngines).toBe('local')
     expect(fetchMock.fn).not.toHaveBeenCalled()
+    // no secrets in the payload
     expect(JSON.stringify(data)).not.toMatch(/sk-|Bearer/i)
   })
 
-  it('ready when the provider serves the configured model', async () => {
-    process.env.OPENROUTER_API_KEY = 'test-key-123'
-    fetchMock.fn.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ data: [{ id: 'google/gemini-2.5-pro' }] }),
-    })
+  it('CONFIGURED with valid identifiers — configuration only, no LLM probe', async () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'acct-1'
+    process.env.CLOUDFLARE_API_TOKEN = 'test-cf-token-secret'
+    process.env.CLOUDFLARE_AI_GATEWAY_ID = 'gw_1'
+    process.env.DEN_TORA_AI_MODEL = 'google/gemini-2.5-pro'
     const res = await getStatus()
     const data = await res.json()
-    expect(data.status).toBe('ready')
+    expect(data.status).toBe('CONFIGURED')
     expect(data.configured).toBe(true)
-    // no secrets in the payload
-    expect(JSON.stringify(data)).not.toContain('test-key-123')
+    expect(data.model).toBe('google/gemini-2.5-pro')
+    // configuration is NOT proof of reachability — AVAILABLE is never fabricated
+    expect(data.status).not.toBe('AVAILABLE')
+    // no probe requests are fired by the diagnostic
+    expect(fetchMock.fn).not.toHaveBeenCalled()
+    // the token value never leaves the process
+    expect(JSON.stringify(data)).not.toContain('test-cf-token-secret')
   })
 
-  it('reachable_model_missing when the provider is up but the model is absent', async () => {
-    process.env.OPENROUTER_API_KEY = 'test-key-123'
-    fetchMock.fn.mockResolvedValue({ ok: true, json: () => Promise.resolve({ data: [{ id: 'other/model' }] }) })
+  it('MISCONFIGURED when identifiers are present but not safe-ID shaped', async () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = '../../evil'
+    process.env.CLOUDFLARE_API_TOKEN = 'test-cf-token-secret'
+    process.env.CLOUDFLARE_AI_GATEWAY_ID = 'has space'
     const res = await getStatus()
     const data = await res.json()
-    expect(data.status).toBe('reachable_model_missing')
+    expect(data.status).toBe('MISCONFIGURED')
+    expect(data.configured).toBe(true)
+    expect(data.detail).toMatch(/[\u0600-\u06FF]/) // Arabic-safe detail
+    // invalid identifiers are echoed nowhere
+    expect(JSON.stringify(data)).not.toContain('../..')
+    expect(JSON.stringify(data)).not.toContain('has space')
   })
 
-  it('unreachable on network failure — Arabic-safe, no stack', async () => {
-    process.env.OPENROUTER_API_KEY = 'test-key-123'
-    fetchMock.fn.mockRejectedValue(new TypeError('fetch failed'))
-    const res = await getStatus()
-    const data = await res.json()
-    expect(data.status).toBe('unreachable')
-    expect(JSON.stringify(data)).not.toContain('fetch failed')
+  it('caches the payload for 60s (no repeated computation)', async () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'acct-1'
+    process.env.CLOUDFLARE_API_TOKEN = 'test-cf-token-secret'
+    process.env.CLOUDFLARE_AI_GATEWAY_ID = 'gw_1'
+    const first = await (await getStatus()).json()
+    const second = await (await getStatus()).json()
+    expect(second).toEqual(first)
+    expect(fetchMock.fn).not.toHaveBeenCalled()
   })
 
   it('ADMIN authorization is enforced', async () => {

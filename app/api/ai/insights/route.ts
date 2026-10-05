@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/openrouter'
+import { complete } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
-import { extractJSON } from '@/lib/ai/openrouter'
+import { extractJSON } from '@/lib/ai/gateway'
 
 /**
  * GET /api/ai/insights – fetch recent, non-dismissed insights

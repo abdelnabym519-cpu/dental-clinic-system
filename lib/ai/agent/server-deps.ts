@@ -26,7 +26,7 @@ export type ProductionPrisma = typeof PrismaClientType
  */
 export async function createProductionAgentDeps(client: ProductionPrisma): Promise<AgentDeps> {
   const { DEFAULT_AGENT_LIMITS } = await import('@/lib/ai/agent/types')
-  const { complete } = await import('@/lib/ai/openrouter')
+  const { complete } = await import('@/lib/ai/gateway')
   const { getModelByTier } = await import('@/lib/ai/models')
   const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
   const { createAttachmentService } = await import('@/lib/ai/multimodal/attachments')

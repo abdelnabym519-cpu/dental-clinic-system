@@ -12,7 +12,7 @@ import prisma from '@/tests/__mocks__/prisma'
 const mockAuth = vi.hoisted(() => ({ requireAuthAndRole: vi.fn() }))
 const mockComplete = vi.hoisted(() => ({ complete: vi.fn() }))
 vi.mock('@/lib/api-helpers', () => mockAuth)
-vi.mock('@/lib/ai/openrouter', () => ({ complete: mockComplete.complete, extractJSON: (s: string) => s }))
+vi.mock('@/lib/ai/gateway', () => ({ complete: mockComplete.complete, extractJSON: (s: string) => s }))
 vi.mock('@/lib/ai/models', () => ({ getModelByTier: () => ({ model: 'test' }) }))
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
 
@@ -94,7 +94,13 @@ describe('POST /api/ai/query — Issue 4 (LLM-down graceful degradation)', () =>
   })
 
   it('missing API key → 503 AI_UNAVAILABLE (not "could not parse")', async () => {
-    mockComplete.complete.mockRejectedValue(new Error('OPENROUTER_API_KEY is not set. Add it to your .env file.'))
+    mockComplete.complete.mockRejectedValue(
+      Object.assign(new Error('خدمة الذكاء الاصطناعي غير مهيأة — أضف بيانات Cloudflare AI Gateway إلى إعدادات الخادم.'), {
+        name: 'AIUnavailableError',
+        code: 'AI_NOT_CONFIGURED',
+        correlationId: 'test-correlation',
+      })
+    )
     const res = await POST(post({ query: 'any' }))
     expect(res.status).toBe(503)
     const data = await res.json()

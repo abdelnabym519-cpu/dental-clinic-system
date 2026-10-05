@@ -1,0 +1,89 @@
+# Cloudflare AI Gateway — canonical external LLM runtime
+
+Every external LLM call in DenToRA resolves through **one module**:
+`lib/ai/gateway.ts`. There is no second path and no direct provider call.
+
+```
+DenToRa feature (chat, insights, forecasts, agent, …)
+  → lib/ai/gateway.ts          routing · fallback · timeout · observability
+    → Cloudflare AI Gateway    https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/v1/chat/completions
+      → configured provider    OpenAI / Anthropic / Google AI / DeepSeek / xAI / Workers AI
+```
+
+Local dental engines (Orchestrator, Liodon, MeshSegNet MAN+MAX, Implant, Ortho)
+do **not** traverse the gateway — vision/3D stay local by architecture
+(`lib/ai-orchestrator.ts`, `lib/ai/engines/`). LLM = cloud; vision/3D = local.
+
+## Configuration (server-only)
+
+| Variable | Purpose |
+|---|---|
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account id (pattern-validated before URL composition) |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token — **secret**, server-only, never client-exposed |
+| `CLOUDFLARE_AI_GATEWAY_ID` | Gateway id (pattern-validated) |
+| `DEN_TORA_AI_TIMEOUT_MS` | Request timeout (default 30000) |
+| `DEN_TORA_AI_MODEL` | Default-tier model override |
+| `DEN_TORA_AI_FAST_MODEL` | Fast tier override (chat / command / fast) |
+| `DEN_TORA_AI_REASONING_MODEL` | Safety-critical reasoning override (clinical) |
+| `DEN_TORA_AI_FALLBACK_MODEL` | Explicit one-shot fallback used when the primary model fails |
+
+Model ids are provider-prefixed exactly as the gateway routes them, e.g.
+`google/gemini-2.5-pro`, `anthropic/claude-opus-4.5`. Changing models is a
+configuration edit — never a code change. Tier defaults live in
+`lib/ai/models.ts`; env overrides are applied at the single tier-resolution
+point (`getModelByTier` / `getModelForSkill`), so no feature hard-codes a
+provider choice.
+
+Store provider API keys inside the gateway (AI Gateway → Providers) so the
+application never handles them.
+
+## Failure semantics (explicit, observable)
+
+* Primary model → configured fallback model (once) → typed failure.
+* Failures are `AIUnavailableError` with `code`
+  (`AI_NOT_CONFIGURED` | `AI_TIMEOUT` | `AI_PROVIDER_ERROR`) and a
+  `correlationId`. Messages are Arabic-safe and never carry provider error
+  bodies, tokens, or environment variable names.
+* An unconfigured or unreachable gateway is a **truthful failure**: routes
+  answer 503 with Arabic guidance (e.g. no-show risk) or degrade to their
+  deterministic local path (e.g. NL query presets). The system never
+  disguises an absent LLM as AI success, and never silently switches
+  providers or crosses local↔cloud.
+* Streaming keeps the exact SSE shape the product already uses:
+  `data: {"text":"…"}` events terminated by `data: {"done":true}`.
+
+## Observability
+
+Each request logs a structured `[ai-gateway]` line: correlation id, model,
+latency, token usage, outcome (`attempt|success|fallback|failure`).
+Logs never contain keys, authorization headers, prompts, or patient data.
+
+## Runtime status (admin diagnostic)
+
+`GET /api/ai/runtime-status` — ADMIN-only, 60s cached, configuration-only
+(no expensive LLM probe, no secrets in the payload):
+
+| State | Meaning |
+|---|---|
+| `UNAVAILABLE` | No gateway configuration present |
+| `MISCONFIGURED` | Configured, but identifiers fail the safe-ID pattern |
+| `CONFIGURED` | Configured and identifier-valid (not proof of reachability) |
+| `AVAILABLE` | Only a real minimal request may confirm this — never fabricated |
+| `DEGRADED` | Reserved for partial degradation reporting |
+
+## Security
+
+* Credentials are server-only; nothing Cloudflare-related is exposed through
+  `NEXT_PUBLIC_*`.
+* The gateway URL is composed exclusively from pattern-validated IDs
+  (`[A-Za-z0-9_-]{1,64}`) — no user input ever reaches URL composition.
+* Every request carries an `AbortController` timeout; responses with
+  provider error bodies are never surfaced raw.
+
+## Migration guarantees (enforced by `tests/ai/cloudflare-migration.test.ts`)
+
+The architectural audit harness reads the shipped source and proves: every
+LLM call site imports the gateway (≥15 sites), the retired provider client is
+deleted (not shimmed), zero provider-brand residue in shipped code, server-only
+credentials, SSRF-safe URL composition, configuration-driven tiers, honest
+runtime-status, truthful no-show 503, and local engines untouched.

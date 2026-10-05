@@ -197,7 +197,7 @@ vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-vi.mock('@/lib/ai/openrouter', () => ({
+vi.mock('@/lib/ai/gateway', () => ({
   complete: vi.fn(),
   streamResponse: vi.fn(),
   extractJSON: vi.fn((text: string) => text),
@@ -226,7 +226,7 @@ import { GET as approvalsGET } from '@/app/api/ai/approvals/route'
 import { POST as approvalPOST } from '@/app/api/ai/approvals/[id]/route'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/openrouter'
+import { complete } from '@/lib/ai/gateway'
 import { computeFingerprint } from '@/lib/ai/approvals'
 import { POLICY_VERSION } from '@/lib/ai/action-policy'
 

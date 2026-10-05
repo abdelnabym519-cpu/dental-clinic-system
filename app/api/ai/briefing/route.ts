@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/openrouter'
+import { complete } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 
 /**

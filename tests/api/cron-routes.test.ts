@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/prisma', () => import('../__mocks__/prisma'))
 
-vi.mock('@/lib/ai/openrouter', () => ({
+vi.mock('@/lib/ai/gateway', () => ({
   complete: vi
     .fn()
     .mockResolvedValue({ content: 'Test briefing content', usage: { totalTokens: 100 } }),
@@ -26,7 +26,7 @@ import { GET as recallGET } from '@/app/api/cron/recall/route'
 import { GET as inventoryGET } from '@/app/api/cron/inventory/route'
 import { POST as cleanupPOST } from '@/app/api/cron/cleanup/route'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/openrouter'
+import { complete } from '@/lib/ai/gateway'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

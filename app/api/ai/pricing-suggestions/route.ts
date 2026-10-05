@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { getModelForSkill } from '@/lib/ai/models'
-import { complete, extractJSON } from '@/lib/ai/openrouter'
+import { complete, extractJSON } from '@/lib/ai/gateway'
 import { getSkill } from '@/lib/ai/skills'
 
 /**

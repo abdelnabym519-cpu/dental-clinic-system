@@ -5,7 +5,7 @@ const mockAuth = vi.hoisted(() => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-const mockOpenRouter = vi.hoisted(() => ({
+const mockGateway = vi.hoisted(() => ({
   complete: vi.fn(),
   extractJSON: vi.fn((s: string) => s),
 }))
@@ -21,7 +21,7 @@ const mockContext = vi.hoisted(() => ({
 
 vi.mock('@/lib/api-helpers', () => mockAuth)
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
-vi.mock('@/lib/ai/openrouter', () => mockOpenRouter)
+vi.mock('@/lib/ai/gateway', () => mockGateway)
 vi.mock('@/lib/ai/models', () => mockModels)
 vi.mock('@/lib/ai/context-builder', () => mockContext)
 
@@ -49,8 +49,8 @@ describe('GET /api/ai/suggestions', () => {
         urgency: 'normal',
       },
     ]
-    mockOpenRouter.complete.mockResolvedValue({ content: JSON.stringify(suggestions) })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(suggestions))
+    mockGateway.complete.mockResolvedValue({ content: JSON.stringify(suggestions) })
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(suggestions))
 
     const req = new Request('http://localhost/api/ai/suggestions?page=/dashboard') as any
     req.nextUrl = new URL('http://localhost/api/ai/suggestions?page=/dashboard')
@@ -63,8 +63,8 @@ describe('GET /api/ai/suggestions', () => {
   it('enriches billing page context with overdue count', async () => {
     ;(prisma.hospital.findUnique as any).mockResolvedValue({ name: 'Test Clinic', plan: 'PRO' })
     ;(prisma.invoice.count as any).mockResolvedValue(5)
-    mockOpenRouter.complete.mockResolvedValue({ content: '[]' })
-    mockOpenRouter.extractJSON.mockReturnValue('[]')
+    mockGateway.complete.mockResolvedValue({ content: '[]' })
+    mockGateway.extractJSON.mockReturnValue('[]')
 
     const req = new Request('http://localhost/api/ai/suggestions?page=/billing') as any
     req.nextUrl = new URL('http://localhost/api/ai/suggestions?page=/billing')
@@ -76,7 +76,7 @@ describe('GET /api/ai/suggestions', () => {
 
   it('returns empty array when AI fails', async () => {
     ;(prisma.hospital.findUnique as any).mockResolvedValue({ name: 'Test', plan: 'FREE' })
-    mockOpenRouter.complete.mockRejectedValue(new Error('AI error'))
+    mockGateway.complete.mockRejectedValue(new Error('AI error'))
 
     const req = new Request('http://localhost/api/ai/suggestions') as any
     req.nextUrl = new URL('http://localhost/api/ai/suggestions')
@@ -124,7 +124,7 @@ describe('GET /api/ai/briefing', () => {
     ;(prisma.patientRiskScore.findMany as any).mockResolvedValue([])
     ;(prisma.treatment.findMany as any).mockResolvedValue([])
 
-    mockOpenRouter.complete.mockResolvedValue({ content: 'Good morning! Here is your briefing.' })
+    mockGateway.complete.mockResolvedValue({ content: 'Good morning! Here is your briefing.' })
     ;(prisma.aIInsight.create as any).mockResolvedValue({})
 
     const res = await briefingModule.GET()
@@ -152,7 +152,7 @@ describe('GET /api/ai/briefing', () => {
     ;(prisma.patientRiskScore.findMany as any).mockResolvedValue([])
     ;(prisma.treatment.findMany as any).mockResolvedValue([])
 
-    mockOpenRouter.complete.mockRejectedValue(new Error('AI service error'))
+    mockGateway.complete.mockRejectedValue(new Error('AI service error'))
 
     const res = await briefingModule.GET()
     expect(res.status).toBe(502)

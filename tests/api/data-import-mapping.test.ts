@@ -12,7 +12,7 @@ const mockAI = vi.hoisted(() => ({
 
 vi.mock('@/lib/api-helpers', () => mockAuth)
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
-vi.mock('@/lib/ai/openrouter', () => mockAI)
+vi.mock('@/lib/ai/gateway', () => mockAI)
 
 const mod = await import('@/app/api/data-import/ai-mapping/route')
 

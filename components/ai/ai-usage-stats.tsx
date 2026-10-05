@@ -122,7 +122,7 @@ export function AIUsageStats() {
             <span>💰</span>
             <span className="text-xs font-semibold">{t('Estimated AI Cost')}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{t("via OpenRouter")}</span>
+          <span className="text-xs text-muted-foreground">{t('عبر بوابة Cloudflare')}</span>
         </div>
         <div className="flex items-center gap-6 mt-2">
           <div>

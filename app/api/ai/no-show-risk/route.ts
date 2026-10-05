@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { complete, extractJSON } from '@/lib/ai/openrouter'
+import { complete, extractJSON } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 
 /**
@@ -182,10 +182,33 @@ Use patient history as primary factor. Return ONLY valid JSON array, no markdown
       model: response.model,
     })
   } catch (error: any) {
+    // Cloudflare-era fail-safe: an unavailable/unconfigured LLM is a typed,
+    // expected condition — answered with a truthful 503 and an Arabic-safe
+    // message. Raw provider/environment error strings (which historically
+    // leaked env-var names) are never surfaced to the client. The local
+    // heuristic fallback above still covers malformed model output, but an
+    // absent gateway is never disguised as AI success (Issue-4 rule).
     console.error('No-show risk error:', error)
+    // Structural check (not instanceof) so module mocks and cross-bundle
+    // instances still match; the gateway contract guarantees name/code/
+    // correlationId on AIUnavailableError, which is the only shape granted
+    // the 503 path below.
+    const aiErr = error as Error & { code?: string; correlationId?: string }
+    const isAIUnavailable =
+      aiErr instanceof Error &&
+      (aiErr.name === 'AIUnavailableError' ||
+        aiErr.code === 'AI_NOT_CONFIGURED' ||
+        aiErr.code === 'AI_TIMEOUT' ||
+        aiErr.code === 'AI_PROVIDER_ERROR')
+    if (isAIUnavailable) {
+      return NextResponse.json(
+        { error: aiErr.message, code: aiErr.code, correlationId: aiErr.correlationId },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
-      { error: error.message || 'Failed to generate predictions' },
-      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+      { error: 'تعذر تحليل مخاطر عدم الحضور. حاول مرة أخرى لاحقًا.' },
+      { status: 500 }
     )
   }
 }

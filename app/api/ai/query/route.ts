@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete, extractJSON } from '@/lib/ai/openrouter'
+import { complete, extractJSON } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 import {
   detectReportIntent,
@@ -220,10 +220,18 @@ async function runDeterministicReport(
 }
 
 function aiUnavailableError(err: unknown): boolean {
+  // Cloudflare era: the gateway throws typed AIUnavailableError (name + code),
+  // whose message is intentionally Arabic-safe — classify by CONTRACT, not by
+  // message text (structural check first, string markers as defense-in-depth
+  // for network-layer errors that never reach the typed wrapper).
+  if (err instanceof Error && err.name === 'AIUnavailableError') return true
+  if ((err as any)?.code === 'AI_NOT_CONFIGURED' || (err as any)?.code === 'AI_TIMEOUT' || (err as any)?.code === 'AI_PROVIDER_ERROR') return true
   const msg = err instanceof Error ? `${err.message} ${String((err as any)?.cause ?? '')}` : String(err)
   return (
-    msg.includes('OPENROUTER_API_KEY') ||
-    msg.includes('OpenRouter [') ||
+    msg.includes('CLOUDFLARE_API_TOKEN') ||
+    msg.includes('AI Gateway [') ||
+    msg.includes('AI_NOT_CONFIGURED') ||
+    msg.includes('AIUnavailableError') ||
     msg.includes('fetch failed') ||
     msg.includes('ECONNREFUSED') ||
     msg.includes('ENOTFOUND') ||

@@ -5,7 +5,7 @@ const mockAuth = vi.hoisted(() => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-const mockOpenRouter = vi.hoisted(() => ({
+const mockGateway = vi.hoisted(() => ({
   complete: vi.fn(),
   extractJSON: vi.fn((s: string) => s),
 }))
@@ -16,7 +16,7 @@ const mockModels = vi.hoisted(() => ({
 
 vi.mock('@/lib/api-helpers', () => mockAuth)
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
-vi.mock('@/lib/ai/openrouter', () => mockOpenRouter)
+vi.mock('@/lib/ai/gateway', () => mockGateway)
 vi.mock('@/lib/ai/models', () => mockModels)
 
 const inventoryForecastModule = await import('@/app/api/ai/inventory-forecast/route')
@@ -77,11 +77,11 @@ describe('GET /api/ai/inventory-forecast', () => {
       ],
       summary: { criticalItems: 0, reorderItems: 0, excessItems: 1, totalReorderValue: 0 },
     }
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: JSON.stringify(aiResult),
       model: 'test-model',
     })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(aiResult))
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(aiResult))
 
     const req = new Request('http://localhost/api/ai/inventory-forecast') as any
     const res = await inventoryForecastModule.GET(req)
@@ -105,8 +105,8 @@ describe('GET /api/ai/inventory-forecast', () => {
       },
     ])
     ;(prisma.stockTransaction.findMany as any).mockResolvedValue([])
-    mockOpenRouter.complete.mockResolvedValue({ content: 'invalid json', model: 'test' })
-    mockOpenRouter.extractJSON.mockReturnValue('invalid json')
+    mockGateway.complete.mockResolvedValue({ content: 'invalid json', model: 'test' })
+    mockGateway.extractJSON.mockReturnValue('invalid json')
 
     const req = new Request('http://localhost/api/ai/inventory-forecast') as any
     const res = await inventoryForecastModule.GET(req)
@@ -148,11 +148,11 @@ describe('GET /api/ai/cashflow-forecast', () => {
         trend: 'STABLE',
       },
     }
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: JSON.stringify(aiResult),
       model: 'test-model',
     })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(aiResult))
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(aiResult))
 
     const req = new Request('http://localhost/api/ai/cashflow-forecast') as any
     const res = await cashflowModule.GET(req)
@@ -168,8 +168,8 @@ describe('GET /api/ai/cashflow-forecast', () => {
     ;(prisma.insuranceClaim.findMany as any).mockResolvedValue([])
     ;(prisma.invoice.findMany as any).mockResolvedValue([])
     ;(prisma.paymentPlanSchedule.findMany as any).mockResolvedValue([])
-    mockOpenRouter.complete.mockResolvedValue({ content: 'bad json', model: 'test' })
-    mockOpenRouter.extractJSON.mockReturnValue('bad json')
+    mockGateway.complete.mockResolvedValue({ content: 'bad json', model: 'test' })
+    mockGateway.extractJSON.mockReturnValue('bad json')
 
     const req = new Request('http://localhost/api/ai/cashflow-forecast') as any
     const res = await cashflowModule.GET(req)
@@ -239,11 +239,11 @@ describe('GET /api/ai/patient-segments', () => {
         topRetentionActions: ['Send thank you'],
       },
     }
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: JSON.stringify(aiResult),
       model: 'test-model',
     })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(aiResult))
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(aiResult))
 
     const req = new Request('http://localhost/api/ai/patient-segments') as any
     const res = await segmentsModule.GET(req)
@@ -267,8 +267,8 @@ describe('GET /api/ai/patient-segments', () => {
     ;(prisma.appointment.findMany as any).mockResolvedValue([])
     ;(prisma.appointment.groupBy as any).mockResolvedValue([])
     ;(prisma.invoice.findMany as any).mockResolvedValue([])
-    mockOpenRouter.complete.mockResolvedValue({ content: 'bad', model: 'test' })
-    mockOpenRouter.extractJSON.mockReturnValue('bad')
+    mockGateway.complete.mockResolvedValue({ content: 'bad', model: 'test' })
+    mockGateway.extractJSON.mockReturnValue('bad')
 
     const req = new Request('http://localhost/api/ai/patient-segments') as any
     const res = await segmentsModule.GET(req)
@@ -334,12 +334,12 @@ describe('POST /api/ai/claim-analysis', () => {
       appealLetter: 'Dear Sir...',
       preventionTips: ['Always attach supporting docs'],
     }
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: JSON.stringify(aiResult),
       usage: { totalTokens: 800 },
       model: 'test-model',
     })
-    mockOpenRouter.extractJSON.mockReturnValue(JSON.stringify(aiResult))
+    mockGateway.extractJSON.mockReturnValue(JSON.stringify(aiResult))
     ;(prisma.aISkillExecution.create as any).mockResolvedValue({})
 
     const res = await claimModule.POST(makeRequest({ claimId: 'claim-1' }))
@@ -368,12 +368,12 @@ describe('POST /api/ai/claim-analysis', () => {
       invoices: [],
     })
     ;(prisma.insuranceClaim.findMany as any).mockResolvedValue([])
-    mockOpenRouter.complete.mockResolvedValue({
+    mockGateway.complete.mockResolvedValue({
       content: 'bad json',
       usage: { totalTokens: 100 },
       model: 'test',
     })
-    mockOpenRouter.extractJSON.mockReturnValue('bad json')
+    mockGateway.extractJSON.mockReturnValue('bad json')
     ;(prisma.aISkillExecution.create as any).mockResolvedValue({})
 
     const res = await claimModule.POST(makeRequest({ claimId: 'claim-1' }))

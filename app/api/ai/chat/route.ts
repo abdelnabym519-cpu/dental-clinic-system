@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
 import { buildContext, serializeContext } from '@/lib/ai/context-builder'
-import { complete, extractJSON, streamResponse } from '@/lib/ai/openrouter'
+import { complete, extractJSON, streamResponse } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 import { runAiAction } from '@/lib/ai/action-pipeline'
-import type { ChatMessage } from '@/lib/ai/openrouter'
+import type { ChatMessage } from '@/lib/ai/gateway'
 
 // ---------------------------------------------------------------------------
 // Intent detection prompt — analyses full conversation to detect actions

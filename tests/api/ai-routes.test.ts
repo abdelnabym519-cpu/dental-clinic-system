@@ -74,7 +74,7 @@ vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-vi.mock('@/lib/ai/openrouter', () => ({
+vi.mock('@/lib/ai/gateway', () => ({
   complete: vi.fn(),
   streamResponse: vi.fn(),
   extractJSON: vi.fn((text: string) => text),
@@ -120,7 +120,7 @@ import { POST as webhooksPOST } from '@/app/api/webhooks/route'
 
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete, streamResponse } from '@/lib/ai/openrouter'
+import { complete, streamResponse } from '@/lib/ai/gateway'
 import { dispatchEvent } from '@/lib/ai/event-dispatcher'
 
 // ---------------------------------------------------------------------------

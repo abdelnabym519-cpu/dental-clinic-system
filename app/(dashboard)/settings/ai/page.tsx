@@ -66,8 +66,8 @@ export default function AISettingsPage() {
       .catch(() => {})
       .finally(() => setLoading(false))
 
-    // Quick check: try hitting /api/ai/chat with an empty body — if 500 with key error, key is missing
-    // For now, just show "configured" if OPENROUTER_API_KEY env var is referenced
+    // Cloudflare era: real configuration state comes from the ADMIN-only
+    // runtime-status endpoint (cached); the page no longer keys off an env name.
     setApiKeyStatus('unknown')
   }, [])
 
@@ -112,7 +112,7 @@ export default function AISettingsPage() {
       <div>
         <h1 className="text-xl font-bold">{t('AI Settings')}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {t('Configure AI features powered by OpenRouter')}
+          {t('إعداد ميزات الذكاء الاصطناعي عبر بوابة Cloudflare')}
         </p>
       </div>
 
@@ -120,9 +120,9 @@ export default function AISettingsPage() {
       <div className="rounded-lg border p-4 bg-muted/30">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold">{t('OpenRouter API Key')}</p>
+            <p className="text-sm font-semibold">{t('بوابة Cloudflare للذكاء الاصطناعي')}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t('Set OPENROUTER_API_KEY in your .env file. Restart the app after changes.')}
+              {t('أضف بيانات Cloudflare AI Gateway إلى ملف .env على الخادم، ثم أعد تشغيل التطبيق.')}
             </p>
           </div>
           <span className="text-xs rounded-full px-2.5 py-1 bg-blue-100 text-blue-800">
@@ -270,7 +270,7 @@ export default function AISettingsPage() {
               className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {t('Estimated OpenRouter cost cap per month')}
+              {t('الحد الأقصى التقديري للتكلفة الشهرية عبر البوابة')}
             </p>
           </div>
         </div>

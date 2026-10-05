@@ -273,7 +273,7 @@ describe('Security — API Key Exposure Prevention', () => {
     const serverEnvVars = [
       'DATABASE_URL',
       'NEXTAUTH_SECRET',
-      'OPENROUTER_API_KEY',
+      'CLOUDFLARE_API_TOKEN',
       'ENCRYPTION_KEY',
       'RAZORPAY_KEY_SECRET',
     ]
