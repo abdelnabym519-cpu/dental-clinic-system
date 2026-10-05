@@ -119,7 +119,7 @@ function makeFixture(c: GoldenCase9) {
 function withInsights(fake: Record<string, any>) {
   const rows: Record<string, unknown>[] = []
   let seq = 0
-  fake.aiInsight = {
+  fake.aIInsight = {
     findMany: async ({ where }: { where?: Record<string, unknown> } = {}) =>
       rows.filter((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)),
     create: async ({ data }: { data: Record<string, unknown> }) => {

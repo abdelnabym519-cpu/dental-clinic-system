@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 
 // Phase 19A (D11) — doctor review of AI findings.
@@ -127,7 +128,10 @@ export async function POST(
       reviewedAt: new Date(),
       reviewDecision: decision,
       reviewNotes,
-      acceptedFindings,
+      // the two assignments above are validated findings arrays (doctor-corrected
+      // payloads pass the shape validation earlier in this handler)
+      acceptedFindings: (acceptedFindings ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+
     },
   })
 

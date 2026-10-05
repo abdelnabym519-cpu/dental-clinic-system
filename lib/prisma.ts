@@ -1,17 +1,11 @@
-// The generated Prisma client (`.prisma/client`) is produced by
-// `prisma generate`, which requires network access in offline sandboxes.
-// This module therefore keeps the client type structural instead of importing
-// from the generated module, so the app stays importable either way.
-type PrismaClient = {
-  $connect(): Promise<void>
-  $disconnect(): Promise<void>
-  $on(event: string, callback: () => void): void
-  $transaction(input: unknown, options?: unknown): Promise<unknown>
-  $queryRaw(query: unknown, ...values: unknown[]): Promise<unknown>
-  $executeRaw(query: unknown, ...values: unknown[]): Promise<unknown>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [model: string]: any
-}
+import type { PrismaClient } from '@prisma/client'
+
+// The real generated Prisma type is imported TYPE-ONLY above: type imports are
+// erased at compile time, so the runtime architecture below (computed require,
+// fallback proxy client, fallback flag) is unchanged and still works with or
+// without a generated client. Typing `prisma` structurally (index-signature
+// `any`) instead made EVERY query result untyped and cascaded ~400 implicit-any
+// errors through the codebase — the type debt this file once carried.
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined

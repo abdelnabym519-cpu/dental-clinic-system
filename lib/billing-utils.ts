@@ -87,6 +87,11 @@ export const paymentMethodConfig: Record<
     icon: 'Banknote',
     description: 'دفع نقدي',
   },
+  UPI: {
+    label: 'دفع إلكتروني (UPI)',
+    icon: 'Smartphone',
+    description: 'تحويل إلكتروني فوري (طرق دفع قديمة)',
+  },
   CARD: {
     label: 'بطاقة',
     icon: 'CreditCard',

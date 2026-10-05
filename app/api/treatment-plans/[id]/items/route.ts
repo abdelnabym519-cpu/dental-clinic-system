@@ -42,10 +42,18 @@ export async function POST(
     if (!procedure) {
       return NextResponse.json({ error: 'Procedure not found' }, { status: 404 })
     }
-    const cost = estimatedCost === undefined || estimatedCost === null ? null : Number(estimatedCost)
-    if (cost !== null && (Number.isNaN(cost) || cost < 0)) {
-      return NextResponse.json({ error: 'estimatedCost must be >= 0' }, { status: 400 })
+    // The estimatedCost column is NOT NULL — a null cost used to crash the
+    // create with a raw Prisma 500. The certified Phase-11 contract is that a
+    // procedure item created without an explicit cost is priced from the
+    // procedure catalog (basePrice) — the fallback the plan totals already use.
+    const explicitCost = estimatedCost === undefined || estimatedCost === null ? null : Number(estimatedCost)
+    if (explicitCost !== null && (Number.isNaN(explicitCost) || explicitCost < 0)) {
+      return NextResponse.json({ error: 'التكلفة المقدرة يجب أن تكون رقمًا غير سالب' }, { status: 400 })
     }
+    if (explicitCost !== null && explicitCost > 99999999.99) {
+      return NextResponse.json({ error: 'التكلفة المقدرة أكبر من الحد المسموح' }, { status: 400 })
+    }
+    const cost = explicitCost ?? Number(procedure.basePrice)
 
     const item = await prisma.treatmentPlanItem.create({
       data: {

@@ -130,7 +130,7 @@ describe('PERFORMANCE (Phase 9, §36): environment-labeled intelligence metrics'
     const fake = fixture() as unknown as Record<string, any>
     const rows: Record<string, unknown>[] = []
     let seq = 0
-    fake.aiInsight = {
+    fake.aIInsight = {
       findMany: async ({ where }: { where?: Record<string, unknown> } = {}) =>
         rows.filter((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)),
       create: async ({ data }: { data: Record<string, unknown> }) => {

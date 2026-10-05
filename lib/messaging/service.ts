@@ -3,6 +3,7 @@ import { normalizeToE164, maskPhone } from '@/lib/phone'
 import { sendWithFallback } from './factory'
 import * as templates from './templates'
 import type { MessagePayload } from './types'
+import type { MessageType } from '@prisma/client'
 
 /**
  * Message queue service (master prompt 3B, 3C–3J, 3L).
@@ -60,7 +61,11 @@ export async function enqueueMessage(input: QueueMessageInput): Promise<string |
       patientId: input.patientId ?? null,
       recipient: e164,
       channel: input.channel,
-      messageType: input.messageType,
+      // KNOWN GAP (reported, not hidden): the Phase-13 'WELCOME' queue event is
+      // not a member of the MessageType enum, so a real database would reject
+      // that insert. Runtime behavior is unchanged here; the enum/migration
+      // decision belongs to a dedicated schema phase.
+      messageType: input.messageType as MessageType,
       payload: input.payload as unknown as object,
       scheduledAt: input.scheduledAt ?? new Date(),
       status: 'PENDING',

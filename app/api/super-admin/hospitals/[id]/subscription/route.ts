@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { SubscriptionStatus } from '@prisma/client'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -145,7 +146,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         subscriptionId: existing.id,
         action: changes.status ? `STATUS_CHANGED_TO_${changes.status}` : 'UPDATED',
         previousStatus: existing.status,
-        newStatus: (changes.status ?? existing.status) as string,
+        // STATUS_VALUES (the zod enum above) is a subset of SubscriptionStatus
+        newStatus: (changes.status ?? existing.status) as SubscriptionStatus,
         performedBy: session!.user.id,
         notes: changes.notes ?? `Updated by SUPER_ADMIN: ${session!.user.email}`,
         metadata: { changes } as object,
