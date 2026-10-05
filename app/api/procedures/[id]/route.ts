@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { validateEditablePrice } from '@/lib/money'
 
 // GET - Get single procedure
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -53,6 +54,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params
     const body = await request.json()
+
+    // Issue 7 — this legacy write path also mutates the catalog price, so
+    // it enforces the same canonical price rule as the settings route
+    // (the two paths previously disagreed: this one validated nothing).
+    if (body.basePrice !== undefined) {
+      const price = validateEditablePrice(body.basePrice)
+      if (!price.ok) {
+        return NextResponse.json({ error: price.error }, { status: 400 })
+      }
+    }
 
     // Check if procedure exists
     const existingProcedure = await prisma.procedure.findUnique({

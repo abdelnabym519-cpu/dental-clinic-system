@@ -471,7 +471,9 @@ describe('POST /api/settings/procedures', () => {
     expect(body.error).toContain('already exists')
   })
 
-  it('returns 500 for invalid category', async () => {
+  // Issue 7 contract: an invalid payload is a CLIENT error — Arabic 400,
+  // not the old 500 that leaked raw Zod text into the UI.
+  it('returns 400 with an Arabic message for invalid category', async () => {
     mockAuth()
     const res = await proceduresPOST(
       makeReq('/api/settings/procedures', 'POST', {
@@ -481,7 +483,10 @@ describe('POST /api/settings/procedures', () => {
         basePrice: 500,
       })
     )
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toMatch(/[\u0600-\u06FF]/)
+    expect(body.error).not.toContain('Invalid enum')
   })
 })
 
