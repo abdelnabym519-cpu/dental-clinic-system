@@ -5,8 +5,10 @@
  *
  *   DenToRa feature
  *     → lib/ai/gateway (this file: routing, fallback, timeout, observability)
- *       → Cloudflare AI Gateway (OpenAI-compatible endpoint)
- *         → configured provider/model (openai/…, anthropic/…, google/…, …)
+ *       → Cloudflare REST AI API (OpenAI-compatible), routed through the
+ *         configured AI Gateway via the `cf-aig-gateway-id` header
+ *           POST https://api.cloudflare.com/client/v4/{account}/ai/v1/chat/completions
+ *         → configured model (@cf/… Workers AI, or openai/…, anthropic/…, google/…)
  *
  * Feature code never sees account IDs, gateway URLs, tokens, or provider
  * endpoints — only `complete()` / `streamResponse()` / `extractJSON()` and
@@ -21,6 +23,14 @@
  * untouched): no production feature may reference a direct provider
  * endpoint or a provider-specific API key; the architectural audit in
  * tests/ai/cloudflare-migration.test.ts enforces this absolutely.
+ *
+ * Cloudflare surface contract (per official docs, AI Gateway → REST API):
+ * /accounts/{account}/ai/v1/chat/completions serves BOTH Workers AI
+ * (`@cf/…`) and third-party (`author/model`) models with a Cloudflare token
+ * (Workers AI Read permission); the `cf-aig-gateway-id` header selects the
+ * gateway and is REQUIRED for `@cf/` requests. The previously used
+ * host-routed `gateway.ai.cloudflare.com/v1/{acct}/{gw}/…` surface rejects
+ * these requests (HTTP 400) — do not reintroduce it.
  *
  * Fallback policy (explicit, observable — never silent):
  *   primary tier model → configured fallback model → typed AIUnavailableError
@@ -130,24 +140,48 @@ function newCorrelationId(): string {
   }
 }
 
-/** The OpenAI-compatible AI-Gateway base URL (composed from validated IDs only). */
-export function gatewayBaseUrl(cfg: GatewayConfig): string {
-  return `https://gateway.ai.cloudflare.com/v1/${cfg.accountId}/${cfg.gatewayId}`
+/**
+ * The OpenAI-compatible Cloudflare REST AI endpoint (composed from
+ * validated IDs only). The gateway rides in the `cf-aig-gateway-id`
+ * request header — never in the URL.
+ */
+export function chatCompletionsEndpoint(cfg: GatewayConfig): string {
+  return `https://api.cloudflare.com/client/v4/${cfg.accountId}/ai/v1/chat/completions`
 }
 
 // ── Model routing (configuration-driven; no hard-coded provider choice) ────
 
 /**
+ * Model names travel inside the request body only, but a malformed env value
+ * (whitespace/newline) must fail fast and truthfully — never serialize.
+ */
+const MODEL_SAFE = /^[A-Za-z0-9@._/-]{1,128}$/
+
+/**
  * Model resolution: callers normally pass a tier-resolved ModelConfig from
  * lib/ai/models (which already applies the DEN_TORA_AI_* env overrides at the
  * single tier-resolution point). Explicit config.model always wins.
+ * The value is sent to Cloudflare EXACTLY as configured (`@cf/…` included).
  */
 function resolveModel(config: Partial<ModelConfig>): string {
-  return (
+  const model =
     config.model ||
     process.env.DEN_TORA_AI_MODEL ||
     'google/gemini-2.5-pro' // last-resort default, identical to the legacy client
-  )
+  if (!MODEL_SAFE.test(model)) {
+    throw new AIUnavailableError(
+      'إعدادات نموذج الذكاء الاصطناعي غير صالحة — راجع DEN_TORA_AI_MODEL.',
+      'AI_NOT_CONFIGURED',
+      newCorrelationId()
+    )
+  }
+  return model
+}
+
+/** Completion token budget: tier config first, then the DEN_TORA_AI_MAX_TOKENS env knob, then 4096. */
+function resolveMaxTokens(config: Partial<ModelConfig>): number {
+  const envBudget = Number(process.env.DEN_TORA_AI_MAX_TOKENS)
+  return config.maxTokens || (Number.isFinite(envBudget) && envBudget > 0 ? envBudget : 4096)
 }
 
 // ── Observability (structured, secret-free, correlation-ID-bearing) ────────
@@ -181,6 +215,10 @@ function getHeaders(cfg: GatewayConfig): Record<string, string> {
   return {
     Authorization: `Bearer ${cfg.apiToken}`,
     'Content-Type': 'application/json',
+    // Routes the request through the configured AI Gateway. REQUIRED for
+    // Workers AI (`@cf/…`) models; selects the gateway for third-party
+    // models. Value is SAFE_ID-validated (no header injection).
+    'cf-aig-gateway-id': cfg.gatewayId,
   }
 }
 
@@ -192,7 +230,7 @@ async function postChat(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), cfg.timeoutMs)
   try {
-    return await fetch(`${gatewayBaseUrl(cfg)}/v1/chat/completions`, {
+    return await fetch(chatCompletionsEndpoint(cfg), {
       method: 'POST',
       headers: getHeaders(cfg),
       body: JSON.stringify(body),
@@ -233,7 +271,7 @@ export async function complete(
       {
         model,
         messages,
-        max_tokens: config.maxTokens || 4096,
+        max_tokens: resolveMaxTokens(config),
         temperature: config.temperature ?? 0.7,
       },
       meta
@@ -248,6 +286,7 @@ export async function complete(
       )
     }
     const data = await res.json()
+    const finishReason: string | undefined = data.choices?.[0]?.finish_reason || undefined
     const out: CompletionResponse = {
       content: data.choices?.[0]?.message?.content || '',
       usage: {
@@ -265,15 +304,36 @@ export async function complete(
     // provider failure) instead of fabricated output.
     const reasoning: string | undefined = data.choices?.[0]?.message?.reasoning_content
     if (reasoning) out.reasoning = reasoning
+    // Truthful content handling: reasoning models may exhaust the token
+    // budget before emitting content (finish_reason 'length'), or return
+    // nothing usable at all. None of these may masquerade as a successful
+    // empty answer — each is a typed failure that still triggers the
+    // configured fallback path.
     if (!out.content && out.reasoning) {
-      logLLM('failure', meta, { reason: 'reasoning_only_response' })
+      logLLM('failure', meta, { reason: 'reasoning_only_response', finishReason })
       throw new AIUnavailableError(
         'أعاد النموذج استدلالًا دون محتوى قابل للعرض. حاول مرة أخرى.',
         'AI_PROVIDER_ERROR',
         correlationId
       )
     }
-    logLLM('success', meta, { totalTokens: out.usage.totalTokens })
+    if (!out.content && finishReason === 'length') {
+      logLLM('failure', meta, { reason: 'output_budget_exhausted', finishReason })
+      throw new AIUnavailableError(
+        'وصل النموذج إلى حد المخرجات قبل إنتاج محتوى — ارفع حد الرموز عبر DEN_TORA_AI_MAX_TOKENS.',
+        'AI_PROVIDER_ERROR',
+        correlationId
+      )
+    }
+    if (!out.content) {
+      logLLM('failure', meta, { reason: 'empty_content', finishReason })
+      throw new AIUnavailableError(
+        'لم يُرجع النموذج محتوى قابلًا للاستخدام. حاول مرة أخرى.',
+        'AI_PROVIDER_ERROR',
+        correlationId
+      )
+    }
+    logLLM('success', meta, { totalTokens: out.usage.totalTokens, finishReason })
     return out
   }
 
@@ -308,7 +368,7 @@ export async function streamResponse(
     {
       model,
       messages,
-      max_tokens: config.maxTokens || 4096,
+      max_tokens: resolveMaxTokens(config),
       temperature: config.temperature ?? 0.7,
       stream: true,
     },

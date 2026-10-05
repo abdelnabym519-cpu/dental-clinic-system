@@ -5,10 +5,21 @@ Every external LLM call in DenToRA resolves through **one module**:
 
 ```
 DenToRa feature (chat, insights, forecasts, agent, …)
-  → lib/ai/gateway.ts          routing · fallback · timeout · observability
-    → Cloudflare AI Gateway    https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/v1/chat/completions
-      → configured provider    OpenAI / Anthropic / Google AI / DeepSeek / xAI / Workers AI
+  → lib/ai/gateway.ts             routing · fallback · timeout · observability
+    → Cloudflare REST AI API      POST https://api.cloudflare.com/client/v4/{account}/ai/v1/chat/completions
+      ├─ Authorization: Bearer {CLOUDFLARE_API_TOKEN}   (Workers AI Read permission)
+      ├─ cf-aig-gateway-id: {CLOUDFLARE_AI_GATEWAY_ID}  (gateway routing — required for @cf/ models)
+      └→ configured model          @cf/zai-org/glm-4.7-flash, openai/…, anthropic/…, google/…
 ```
+
+This is the officially documented AI Gateway REST contract: one
+OpenAI-compatible endpoint serves Workers AI (`@cf/author/model`) AND
+third-party (`author/model`) models with the Cloudflare token only — no
+provider API keys. The gateway identifier travels in the
+`cf-aig-gateway-id` request header, so caching, rate limiting, guardrails
+and logging configured on that gateway apply to every request. (The older
+host-routed `gateway.ai.cloudflare.com/v1/{account}/{gateway}/…` surface
+rejects these requests with HTTP 400 and must not be used.)
 
 Local dental engines (Orchestrator, Liodon, MeshSegNet MAN+MAX, Implant, Ortho)
 do **not** traverse the gateway — vision/3D stay local by architecture
@@ -22,6 +33,7 @@ do **not** traverse the gateway — vision/3D stay local by architecture
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token — **secret**, server-only, never client-exposed |
 | `CLOUDFLARE_AI_GATEWAY_ID` | Gateway id (pattern-validated) |
 | `DEN_TORA_AI_TIMEOUT_MS` | Request timeout (default 30000) |
+| `DEN_TORA_AI_MAX_TOKENS` | Completion token budget when the tier config carries none (default 4096). Reasoning models can exhaust a small budget before emitting content — the gateway then fails truthfully and names this knob. |
 | `DEN_TORA_AI_MODEL` | Default-tier model override |
 | `DEN_TORA_AI_FAST_MODEL` | Fast tier override (chat / command / fast) |
 | `DEN_TORA_AI_REASONING_MODEL` | Safety-critical reasoning override (clinical) |
@@ -49,6 +61,10 @@ application never handles them.
   deterministic local path (e.g. NL query presets). The system never
   disguises an absent LLM as AI success, and never silently switches
   providers or crosses local↔cloud.
+* `finish_reason` is captured and logged. A reasoning-only response, a
+  budget-exhausted response (`finish_reason: "length"` with no content),
+  or an empty response each map to a distinct truthful typed failure
+  (`AI_PROVIDER_ERROR`) — and still trigger the configured fallback once.
 * Streaming keeps the exact SSE shape the product already uses:
   `data: {"text":"…"}` events terminated by `data: {"done":true}`.
 * Reasoning models (e.g. `@cf/zai-org/glm-4.7-flash`) may return a separate
@@ -92,5 +108,10 @@ Logs never contain keys, authorization headers, prompts, or patient data.
 The architectural audit harness reads the shipped source and proves: every
 LLM call site imports the gateway (≥15 sites), the retired provider client is
 deleted (not shimmed), zero provider-brand residue in shipped code, server-only
-credentials, SSRF-safe URL composition, configuration-driven tiers, honest
-runtime-status, truthful no-show 503, and local engines untouched.
+credentials, the documented Cloudflare REST endpoint + gateway header,
+SSRF-safe URL composition, configuration-driven tiers, honest runtime-status,
+truthful no-show 503, and local engines untouched.
+
+Token permission note: the API token needs **Account → Workers AI → Read**.
+A token carrying only AI Gateway permissions is rejected (401, error 10000)
+on the `/ai/*` endpoints.

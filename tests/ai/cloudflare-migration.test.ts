@@ -110,9 +110,14 @@ describe('Cloudflare AI migration — architectural audit', () => {
   })
 
   // ── A5: SSRF-safe composition, timeout, typed Arabic-safe failures ──────
-  it('A5: gateway composes the AI-Gateway URL from validated IDs with timeout + typed errors', () => {
+  it('A5: gateway composes the documented Cloudflare REST AI endpoint with timeout + typed errors', () => {
     const src = read(join(ROOT, 'lib', 'ai', 'gateway.ts'))
-    expect(src).toContain('https://gateway.ai.cloudflare.com/v1/')
+    // Official contract: /accounts/{account}/ai/v1/chat/completions with the
+    // cf-aig-gateway-id header (required for @cf/ models). The retired
+    // host-routed gateway.ai.cloudflare.com surface must NOT return.
+    expect(src).toContain('https://api.cloudflare.com/client/v4/')
+    expect(src).toContain("'cf-aig-gateway-id'")
+    expect(src).not.toContain('https://gateway.ai.cloudflare.com/v1/')
     expect(src).toMatch(/SAFE_ID\s*=\s*\/\^?\[A-Za-z0-9_-\]/)
     expect(src).toContain('AbortController')
     expect(src).toContain('class AIUnavailableError')

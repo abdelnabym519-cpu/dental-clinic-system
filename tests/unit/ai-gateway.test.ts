@@ -6,17 +6,19 @@ import {
   AIUnavailableError,
   isGatewayConfigured,
   getGatewayConfig,
-  gatewayBaseUrl,
+  chatCompletionsEndpoint,
   getAIHealth,
   type ChatMessage,
 } from '@/lib/ai/gateway'
 
-// Canonical Cloudflare AI Gateway runtime spec. The gateway composes
-// https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/v1/chat/completions
-// (OpenAI-compatible) from pattern-validated IDs, authenticates with the
-// server-only token, enforces a timeout, falls back explicitly to the
-// configured fallback model, and fails with typed Arabic-safe
-// AIUnavailableError — never with raw provider/environment strings.
+// Canonical Cloudflare AI runtime spec. The gateway posts to the
+// OpenAI-compatible Cloudflare REST AI endpoint
+//   https://api.cloudflare.com/client/v4/{account}/ai/v1/chat/completions
+// composed from pattern-validated IDs, authenticates with the server-only
+// Cloudflare token, routes through the configured AI Gateway via the
+// `cf-aig-gateway-id` header (required for @cf/ models), enforces a timeout,
+// falls back explicitly to the configured fallback model, and fails with
+// typed Arabic-safe AIUnavailableError — never with raw provider strings.
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -126,8 +128,10 @@ describe('gateway configuration', () => {
     process.env.CLOUDFLARE_AI_GATEWAY_ID = 'bad id'
     expect(() => getGatewayConfig()).toThrow(AIUnavailableError)
     process.env.CLOUDFLARE_AI_GATEWAY_ID = 'ok_gateway-1'
-    expect(gatewayBaseUrl(getGatewayConfig())).toBe(
-      'https://gateway.ai.cloudflare.com/v1/ok-id/ok_gateway-1'
+    // the endpoint carries ONLY the validated account id; the gateway
+    // identifier rides in the cf-aig-gateway-id header instead
+    expect(chatCompletionsEndpoint(getGatewayConfig())).toBe(
+      'https://api.cloudflare.com/client/v4/ok-id/ai/v1/chat/completions'
     )
   })
 })
@@ -153,16 +157,18 @@ describe('complete', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
     await complete(sampleMessages)
     const [url, options] = vi.mocked(global.fetch).mock.calls[0]
-    expect(url).toBe('https://gateway.ai.cloudflare.com/v1/cert-account/cert-gateway/v1/chat/completions')
+    expect(url).toBe('https://api.cloudflare.com/client/v4/cert-account/ai/v1/chat/completions')
     expect((options as RequestInit).method).toBe('POST')
   })
 
-  it('authenticates with the server-only token and JSON content type', async () => {
+  it('authenticates with the server-only token, JSON content type, and the gateway header', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
     await complete(sampleMessages)
     const headers = (vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).headers as Record<string, string>
     expect(headers['Authorization']).toBe('Bearer test-cf-token')
     expect(headers['Content-Type']).toBe('application/json')
+    // AI Gateway routing — REQUIRED for @cf/ models, selects the gateway otherwise
+    expect(headers['cf-aig-gateway-id']).toBe('cert-gateway')
   })
 
   it('sends the tier model, messages, max_tokens and temperature', async () => {
@@ -205,12 +211,12 @@ describe('complete', () => {
     expect(out.model).toBe('google/gemini-2.5-pro')
   })
 
-  it('defaults missing content/usage fields (0-token usage never NaN)', async () => {
+  it('defaults missing usage fields (0-token usage never NaN; content present)', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(
-      jsonCompletion({ choices: [], usage: undefined }, 'm-1')
+      jsonCompletion({ choices: [{ message: { content: 'النتيجة جاهزة' }, finish_reason: 'stop' }], usage: undefined }, 'm-1')
     )
     const out = await complete(sampleMessages)
-    expect(out.content).toBe('')
+    expect(out.content).toBe('النتيجة جاهزة')
     expect(out.usage).toEqual({ promptTokens: 0, completionTokens: 0, totalTokens: 0 })
     expect(out.model).toBe('m-1')
   })
@@ -271,11 +277,74 @@ describe('complete', () => {
     expect(out.content).toBe('parsed-content')
   })
 
-  it('genuinely empty content (no reasoning) keeps the legacy normalized shape', async () => {
+  it('no usable assistant content at all → truthful typed failure (never empty success)', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion({ choices: [] }))
+    try {
+      await complete(sampleMessages)
+      throw new Error('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(AIUnavailableError)
+      expect((err as AIUnavailableError).code).toBe('AI_PROVIDER_ERROR')
+      expect((err as AIUnavailableError).message).toMatch(/[\u0600-\u06FF]/)
+    }
+  })
+
+  it('finish_reason length with empty content → budget-exhaustion typed failure naming the knob', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: null }, finish_reason: 'length' }],
+          usage: { prompt_tokens: 20, completion_tokens: 4096, total_tokens: 4116 },
+          model: '@cf/zai-org/glm-4.7-flash',
+        }),
+    } as unknown as Response)
+    try {
+      await complete(sampleMessages)
+      throw new Error('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(AIUnavailableError)
+      expect((err as AIUnavailableError).code).toBe('AI_PROVIDER_ERROR')
+      expect((err as AIUnavailableError).message).toContain('DEN_TORA_AI_MAX_TOKENS')
+    }
+  })
+
+  it('budget-exhausted primary still triggers the configured fallback (explicit, observable)', async () => {
+    process.env.DEN_TORA_AI_FALLBACK_MODEL = 'google/gemini-2.5-flash'
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            choices: [{ message: { content: null, reasoning_content: 'تفكير طويل' }, finish_reason: 'length' }],
+            usage: {},
+            model: 'primary',
+          }),
+      } as unknown as Response)
+      .mockResolvedValueOnce(jsonCompletion({}, 'google/gemini-2.5-flash'))
     const out = await complete(sampleMessages)
-    expect(out.content).toBe('')
-    expect(out.reasoning).toBeUndefined()
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(out.content).toBe('parsed-content')
+  })
+
+  it('DEN_TORA_AI_MAX_TOKENS overrides the budget when the tier config carries none', async () => {
+    process.env.DEN_TORA_AI_MAX_TOKENS = '777'
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
+    await complete(sampleMessages)
+    let body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.max_tokens).toBe(777)
+    // explicit tier config still wins over the env knob
+    vi.mocked(global.fetch).mockClear()
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
+    await complete(sampleMessages, { maxTokens: 2048 })
+    body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.max_tokens).toBe(2048)
+  })
+
+  it('a malformed configured model fails fast and truthfully before any network call', async () => {
+    process.env.DEN_TORA_AI_MODEL = 'bad model\nwith-newline'
+    await expect(complete(sampleMessages)).rejects.toMatchObject({ code: 'AI_NOT_CONFIGURED' })
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
   it('provider rejection → typed AI_PROVIDER_ERROR with Arabic-safe message and correlation id', async () => {
@@ -398,7 +467,7 @@ describe('streamResponse', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(sseResponse(['data: [DONE]\n\n']))
     const res = await streamResponse(sampleMessages)
     const [url, options] = vi.mocked(global.fetch).mock.calls[0]
-    expect(url).toBe('https://gateway.ai.cloudflare.com/v1/cert-account/cert-gateway/v1/chat/completions')
+    expect(url).toBe('https://api.cloudflare.com/client/v4/cert-account/ai/v1/chat/completions')
     const body = JSON.parse((options as RequestInit).body as string)
     expect(body.stream).toBe(true)
     expect(res).toBeInstanceOf(Response)
