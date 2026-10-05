@@ -38,8 +38,8 @@ interface QueryResult {
  * results as a dynamic table.  Supports exporting results as JSON.
  */
 // Issue 4 — pre-built reports run WITHOUT the language model (direct
-// whitelisted queries), so the reports page stays useful when the local
-// model/Ollama is not configured or unreachable.
+// whitelisted queries), so the reports page stays useful when the
+// Cloudflare AI Gateway is not configured or unreachable.
 const PRESET_REPORTS = [
   { label: 'تقرير المرضى الجدد هذا الشهر', preset: 'new_patients_monthly' },
   { label: 'إيرادات هذا الشهر', preset: 'revenue_monthly' },
@@ -220,7 +220,7 @@ export function ReportBuilder() {
               <p>{result.error || t("Query failed")}</p>
               {result.code === 'AI_UNAVAILABLE' && (
                 <p className="text-xs text-muted-foreground">
-                  {t('للتفعيل: ثبّت نموذج الذكاء الاصطناعي المحلي، أو أضف بيانات Cloudflare AI Gateway (معرّف الحساب والبوابة والرمز) في ملف .env على الخادم ثم أعد تشغيل النظام.')}
+                  {t('للتفعيل: أضف بيانات Cloudflare AI Gateway (معرّف الحساب والبوابة والرمز) في ملف .env على الخادم، واختر النموذج عبر DEN_TORA_AI_MODEL، ثم أعد تشغيل النظام.')}
                 </p>
               )}
             </div>

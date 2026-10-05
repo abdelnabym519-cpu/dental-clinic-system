@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
+import { containsCI } from '@/lib/prisma-search'
 
 // GET - Fetch all lab vendors
 export async function GET(request: NextRequest) {
@@ -24,9 +25,9 @@ export async function GET(request: NextRequest) {
     // Add search filter
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { contactPerson: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
+        { name: containsCI(search) },
+        { contactPerson: containsCI(search) },
+        { phone: containsCI(search) },
       ]
     }
 

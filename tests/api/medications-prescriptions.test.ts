@@ -88,7 +88,7 @@ describe('GET /api/medications', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           OR: expect.arrayContaining([
-            expect.objectContaining({ name: { contains: 'amox', mode: 'insensitive' } }),
+            expect.objectContaining({ name: { contains: 'amox' } }),
           ]),
         }),
       })

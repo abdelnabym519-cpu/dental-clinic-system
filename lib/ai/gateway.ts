@@ -50,6 +50,8 @@ export interface CompletionUsage {
 
 export interface CompletionResponse {
   content: string
+  /** Chain-of-thought/reasoning channel when the provider returns one separately. */
+  reasoning?: string
   usage: CompletionUsage
   model: string
 }
@@ -254,6 +256,22 @@ export async function complete(
         totalTokens: data.usage?.total_tokens || 0,
       },
       model: data.model || model,
+    }
+    // Reasoning models (e.g. GLM/DeepSeek families through the gateway) may
+    // return their chain-of-thought in a separate `reasoning_content` field.
+    // Normalize it, but NEVER present a reasoning-only response as a
+    // successful empty report: genuinely absent content is a truthful typed
+    // failure (and triggers the configured fallback path like any other
+    // provider failure) instead of fabricated output.
+    const reasoning: string | undefined = data.choices?.[0]?.message?.reasoning_content
+    if (reasoning) out.reasoning = reasoning
+    if (!out.content && out.reasoning) {
+      logLLM('failure', meta, { reason: 'reasoning_only_response' })
+      throw new AIUnavailableError(
+        'أعاد النموذج استدلالًا دون محتوى قابل للعرض. حاول مرة أخرى.',
+        'AI_PROVIDER_ERROR',
+        correlationId
+      )
     }
     logLLM('success', meta, { totalTokens: out.usage.totalTokens })
     return out

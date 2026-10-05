@@ -51,6 +51,13 @@ application never handles them.
   providers or crosses local↔cloud.
 * Streaming keeps the exact SSE shape the product already uses:
   `data: {"text":"…"}` events terminated by `data: {"done":true}`.
+* Reasoning models (e.g. `@cf/zai-org/glm-4.7-flash`) may return a separate
+  `reasoning_content` channel. The gateway normalizes it as `reasoning`, but a
+  reasoning-only response is a truthful typed `AI_PROVIDER_ERROR` — never a
+  fabricated report. A configured fallback model is attempted first.
+* Smart Reports UI guidance names the real requirement (AI Gateway config,
+  `DEN_TORA_AI_MODEL`, restart); deterministic preset reports never touch the
+  LLM and keep working without it.
 
 ## Observability
 

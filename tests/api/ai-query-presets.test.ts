@@ -88,7 +88,7 @@ describe('POST /api/ai/query — Issue 4 (LLM-down graceful degradation)', () =>
     expect(res.status).toBe(503)
     const data = await res.json()
     expect(data.code).toBe('AI_UNAVAILABLE')
-    expect(data.error).toContain('نموذج الذكاء الاصطناعي')
+    expect(data.error).toContain('بوابة Cloudflare للذكاء الاصطناعي')
     expect(data.error).toContain('التقارير الجاهزة')
     expect(data.error).not.toContain('fetch failed')
   })

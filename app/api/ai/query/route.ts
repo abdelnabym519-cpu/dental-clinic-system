@@ -306,7 +306,10 @@ export async function POST(req: Request) {
     // hint when the real problem is that the model is not available.
     if (aiUnavailableError(err)) {
       return NextResponse.json(
-        { error: 'خاصية التقارير الذكية تحتاج إلى تفعيل نموذج الذكاء الاصطناعي المحلي. استخدم التقارير الجاهزة بالأسفل — تعمل بدون نموذج.', code: 'AI_UNAVAILABLE' },
+        // Cloudflare era: the message names the ACTUAL configuration
+        // requirement (the AI Gateway) and never mentions retired
+        // infrastructure — a legacy provider key or a local general model.
+        { error: 'خاصية التقارير الذكية تحتاج إلى بوابة Cloudflare للذكاء الاصطناعي. استخدم التقارير الجاهزة بالأسفل — تعمل بدون نموذج.', code: 'AI_UNAVAILABLE' },
         { status: 503 },
       )
     }

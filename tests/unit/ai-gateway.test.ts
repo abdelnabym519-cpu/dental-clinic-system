@@ -190,6 +190,13 @@ describe('complete', () => {
     expect(body.model).toBe('deepseek/deepseek-r1')
   })
 
+  it('Workers AI model ids (@cf/…) flow to the wire body unchanged', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion({}, '@cf/zai-org/glm-4.7-flash'))
+    await complete(sampleMessages, { model: '@cf/zai-org/glm-4.7-flash' })
+    const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.model).toBe('@cf/zai-org/glm-4.7-flash')
+  })
+
   it('maps the OpenAI-compatible payload onto CompletionResponse', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
     const out = await complete(sampleMessages)
@@ -206,6 +213,69 @@ describe('complete', () => {
     expect(out.content).toBe('')
     expect(out.usage).toEqual({ promptTokens: 0, completionTokens: 0, totalTokens: 0 })
     expect(out.model).toBe('m-1')
+  })
+
+  it('reasoning alongside content normalizes both without breaking extraction', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: '{"model":"patient"}', reasoning_content: 'سأفحص جدول المرضى أولاً' } }],
+          usage: { prompt_tokens: 9, completion_tokens: 4, total_tokens: 13 },
+          model: '@cf/zai-org/glm-4.7-flash',
+        }),
+    } as unknown as Response)
+    const out = await complete(sampleMessages)
+    expect(out.content).toBe('{"model":"patient"}')
+    expect(out.reasoning).toBe('سأفحص جدول المرضى أولاً')
+    expect(out.model).toBe('@cf/zai-org/glm-4.7-flash')
+  })
+
+  it('reasoning-only response → truthful typed failure (never a successful empty report)', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          choices: [{ message: { content: '', reasoning_content: 'سلسلة استدلال فقط' } }],
+          usage: { prompt_tokens: 9, completion_tokens: 0, total_tokens: 9 },
+          model: '@cf/zai-org/glm-4.7-flash',
+        }),
+    } as unknown as Response)
+    try {
+      await complete(sampleMessages)
+      throw new Error('should have thrown')
+    } catch (err) {
+      expect(err).toBeInstanceOf(AIUnavailableError)
+      expect((err as AIUnavailableError).code).toBe('AI_PROVIDER_ERROR')
+      expect((err as AIUnavailableError).message).toMatch(/[\u0600-\u06FF]/)
+    }
+  })
+
+  it('reasoning-only primary triggers the configured fallback and succeeds there', async () => {
+    process.env.DEN_TORA_AI_FALLBACK_MODEL = 'google/gemini-2.5-flash'
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            choices: [{ message: { content: '', reasoning_content: 'استدلال فقط' } }],
+            usage: {},
+            model: 'primary',
+          }),
+      } as unknown as Response)
+      .mockResolvedValueOnce(jsonCompletion({}, 'google/gemini-2.5-flash'))
+    const out = await complete(sampleMessages)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    const body2 = JSON.parse((vi.mocked(global.fetch).mock.calls[1][1] as RequestInit).body as string)
+    expect(body2.model).toBe('google/gemini-2.5-flash')
+    expect(out.content).toBe('parsed-content')
+  })
+
+  it('genuinely empty content (no reasoning) keeps the legacy normalized shape', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion({ choices: [] }))
+    const out = await complete(sampleMessages)
+    expect(out.content).toBe('')
+    expect(out.reasoning).toBeUndefined()
   })
 
   it('provider rejection → typed AI_PROVIDER_ERROR with Arabic-safe message and correlation id', async () => {
