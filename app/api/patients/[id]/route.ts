@@ -82,7 +82,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
   } catch (error: any) {
     console.error('Error fetching patient:', error)
-    return NextResponse.json({ error: error.message || 'Failed to fetch patient' }, { status: 500 })
+    // Issue 5 — the medical-history read path must never leak raw internals.
+    return NextResponse.json({ error: 'تعذر تحميل بيانات المريض. حاول مرة أخرى.' }, { status: 500 })
   }
 }
 

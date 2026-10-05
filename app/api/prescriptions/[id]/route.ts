@@ -47,7 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!prescription) {
-      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+      return NextResponse.json({ error: 'الروشتة غير موجودة' }, { status: 404 })
     }
 
     // Also fetch hospital info for the print view
@@ -70,10 +70,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ success: true, data: prescription, hospital })
   } catch (err: any) {
     console.error('Error fetching prescription:', err)
-    return NextResponse.json(
-      { error: err.message || 'Failed to fetch prescription' },
-      { status: 500 }
-    )
+    // Issue 5 — raw internal errors never reach the user.
+    return NextResponse.json({ error: 'تعذر تحميل الروشتة. حاول مرة أخرى.' }, { status: 500 })
   }
 }
 
@@ -91,18 +89,26 @@ export async function DELETE(
     const { id } = await params
     const existing = await prisma.prescription.findFirst({ where: { id, hospitalId } })
     if (!existing) {
-      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+      return NextResponse.json({ error: 'الروشتة غير موجودة' }, { status: 404 })
+    }
+
+    // Issue 5 — clinical data safety: a signed/sent prescription is a clinical
+    // record; hard-deleting it silently destroyed history. Drafts (never
+    // issued) may still be hard-deleted; everything else must be CANCELLED
+    // so the record stays auditable.
+    if (existing.status !== 'DRAFT') {
+      return NextResponse.json(
+        { error: 'لا يمكن حذف روشتة موقّعة أو مرسلة — استخدم إلغاء الروشتة بدلًا من الحذف.' },
+        { status: 409 }
+      )
     }
 
     await prisma.prescription.delete({ where: { id } })
 
-    return NextResponse.json({ success: true, message: 'Prescription deleted' })
+    return NextResponse.json({ success: true, message: 'تم حذف الروشتة' })
   } catch (err: any) {
     console.error('Error deleting prescription:', err)
-    return NextResponse.json(
-      { error: err.message || 'Failed to delete prescription' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'تعذر حذف الروشتة. حاول مرة أخرى.' }, { status: 500 })
   }
 }
 
@@ -122,10 +128,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params
     const existing = await prisma.prescription.findFirst({ where: { id, hospitalId } })
     if (!existing) {
-      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+      return NextResponse.json({ error: 'الروشتة غير موجودة' }, { status: 404 })
     }
     if (existing.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Only DRAFT prescriptions can be edited' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'لا يمكن تعديل روشتة موقّعة أو مرسلة أو ملغاة — ألغِها وأنشئ روشتة جديدة.' },
+        { status: 409 }
+      )
     }
 
     const body = await request.json()
@@ -135,10 +144,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         where: { id: body.appointmentId, hospitalId },
         select: { id: true, patientId: true },
       })
-      if (!appt) return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+      if (!appt) return NextResponse.json({ error: 'الموعد غير موجود' }, { status: 404 })
       if (appt.patientId !== existing.patientId) {
         return NextResponse.json(
-          { error: 'Appointment belongs to a different patient' },
+          { error: 'الموعد يتبع مريضًا آخر' },
           { status: 400 }
         )
       }
@@ -148,10 +157,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         where: { id: body.treatmentPlanId, hospitalId },
         select: { id: true, patientId: true },
       })
-      if (!plan) return NextResponse.json({ error: 'Treatment plan not found' }, { status: 404 })
+      if (!plan) return NextResponse.json({ error: 'خطة العلاج غير موجودة' }, { status: 404 })
       if (plan.patientId !== existing.patientId) {
         return NextResponse.json(
-          { error: 'Treatment plan belongs to a different patient' },
+          { error: 'خطة العلاج تتبع مريضًا آخر' },
           { status: 400 }
         )
       }
@@ -171,26 +180,38 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       for (const m of body.medications) {
         if (!m?.medicationName || !m?.dosage || !m?.frequency || !m?.duration) {
           return NextResponse.json(
-            { error: 'Each medication needs name, dosage, frequency and duration' },
+            { error: 'كل دواء يحتاج الاسم والجرعة والعدد المتكرر والمدة' },
             { status: 400 }
           )
         }
       }
-      await prisma.prescriptionMedication.deleteMany({ where: { prescriptionId: existing.id } })
-      await prisma.prescriptionMedication.createMany({
-        data: body.medications.map((m: Record<string, unknown>) => ({
-          prescriptionId: existing.id,
-          medicationId: m.medicationId || null,
-          medicationName: m.medicationName,
-          dosage: m.dosage,
-          frequency: m.frequency,
-          duration: m.duration,
-          route: m.route || 'Oral',
-          timing: m.timing || null,
-          quantity: m.quantity || null,
-          instructions: m.instructions || null,
-        })),
+      // Issue 5 — clinical data safety: replacing the medication list must be
+      // atomic. Previously delete → create ran as separate calls, so a
+      // mid-flight failure left the draft with NO medication rows at all.
+      const updated = await prisma.$transaction(async (tx: any) => {
+        await tx.prescriptionMedication.deleteMany({ where: { prescriptionId: existing.id } })
+        await tx.prescriptionMedication.createMany({
+          data: body.medications.map((m: Record<string, unknown>) => ({
+            prescriptionId: existing.id,
+            medicationId: m.medicationId || null,
+            medicationName: m.medicationName,
+            dosage: m.dosage,
+            frequency: m.frequency,
+            duration: m.duration,
+            route: m.route || 'Oral',
+            timing: m.timing || null,
+            quantity: m.quantity || null,
+            instructions: m.instructions || null,
+          })),
+        })
+        return tx.prescription.update({
+          where: { id: existing.id },
+          data: data as never,
+          include: { medications: true },
+        })
       })
+
+      return NextResponse.json({ success: true, data: updated })
     }
 
     const prescription = await prisma.prescription.update({
@@ -202,9 +223,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ success: true, data: prescription })
   } catch (err: any) {
     console.error('Error updating prescription:', err)
-    return NextResponse.json(
-      { error: err.message || 'Failed to update prescription' },
-      { status: 500 }
-    )
+    // Issue 5 — raw Prisma/internal error text must never reach the clinic user.
+    return NextResponse.json({ error: 'تعذر تحديث الروشتة. حاول مرة أخرى.' }, { status: 500 })
   }
 }
+

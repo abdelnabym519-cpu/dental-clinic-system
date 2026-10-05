@@ -772,7 +772,8 @@ describe('8.2 Data Consistency', () => {
       // Should reject with 409 conflict
       expect(res.status).toBe(409)
       const body = await res.json()
-      expect(body.error).toContain('already exists')
+      // Issue 5 contract: Arabic duplicate-phone message.
+      expect(body.error).toContain('بنفس رقم الهاتف')
     })
 
     it('Duplicate phone in different hospital — allowed (no conflict)', async () => {

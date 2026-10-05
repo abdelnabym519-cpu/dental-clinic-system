@@ -143,10 +143,51 @@ export async function POST(request: NextRequest) {
       medicalHistory,
     } = body
 
+    // Issue 5 — clinical data safety: the embedded medical history is
+    // SANITIZED server-side. Previously the raw client object went straight
+    // into prisma.patient.create, so arbitrary fields (including a forged
+    // `patientId` re-linking the 1:1 history row) could be smuggled in.
+    const HISTORY_BOOLEANS = [
+      'hasAllergies', 'hasDiabetes', 'hasHypertension', 'hasHeartDisease',
+      'hasBleedingDisorder', 'hasAsthma', 'hasThyroid', 'hasHepatitis',
+      'hasHiv', 'hasEpilepsy', 'isPregnant', 'tobaccoChewing',
+    ] as const
+    const HISTORY_STRINGS = [
+      'drugAllergies', 'foodAllergies', 'materialAllergies', 'diabetesType',
+      'heartCondition', 'thyroidType', 'hepatitisType', 'otherConditions',
+      'currentMedications', 'previousDentalWork', 'familyDentalHistory',
+      'additionalNotes',
+    ] as const
+    const HISTORY_ENUMS: Record<string, string[]> = {
+      smokingStatus: ['NEVER', 'FORMER', 'CURRENT', 'OCCASIONAL'],
+      alcoholConsumption: ['NEVER', 'OCCASIONAL', 'MODERATE', 'HEAVY'],
+    }
+    const cap = (v: unknown) =>
+      typeof v === 'string' ? v.trim().slice(0, 2000) || null : null
+    const sanitizedHistory: Record<string, unknown> = {}
+    if (medicalHistory && typeof medicalHistory === 'object') {
+      const raw = medicalHistory as Record<string, unknown>
+      for (const k of HISTORY_BOOLEANS) if (raw[k] === true || raw[k] === 'true') sanitizedHistory[k] = true
+      for (const k of HISTORY_STRINGS) if (raw[k] !== undefined) sanitizedHistory[k] = cap(raw[k])
+      for (const [k, allowed] of Object.entries(HISTORY_ENUMS)) {
+        if (typeof raw[k] === 'string' && (allowed as string[]).includes(raw[k] as string))
+          sanitizedHistory[k] = raw[k]
+      }
+      for (const k of ['pregnancyWeeks', 'dentalAnxietyLevel'] as const) {
+        const n = Number(raw[k])
+        if (raw[k] !== undefined && raw[k] !== null && raw[k] !== '' && Number.isInteger(n) && n >= 0)
+          sanitizedHistory[k] = n
+      }
+      if (typeof raw.lastDentalVisit === 'string' && raw.lastDentalVisit) {
+        const d = new Date(raw.lastDentalVisit)
+        if (!isNaN(d.getTime())) sanitizedHistory.lastDentalVisit = d
+      }
+    }
+
     // Validate required fields
     if (!firstName || !lastName || !phone) {
       return NextResponse.json(
-        { error: 'First name, last name, and phone are required' },
+        { error: 'الاسم الأول واسم العائلة ورقم الهاتف مطلوبة' },
         { status: 400 }
       )
     }
@@ -158,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     if (existingPatient) {
       return NextResponse.json(
-        { error: 'A patient with this phone number already exists' },
+        { error: 'يوجد مريض مسجل بنفس رقم الهاتف' },
         { status: 409 }
       )
     }
@@ -190,9 +231,9 @@ export async function POST(request: NextRequest) {
         emergencyContactPhone,
         emergencyContactRelation,
         hospitalId,
-        medicalHistory: medicalHistory
+        medicalHistory: Object.keys(sanitizedHistory).length
           ? {
-              create: medicalHistory,
+              create: sanitizedHistory,
             }
           : undefined,
       },

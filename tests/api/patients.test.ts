@@ -203,7 +203,8 @@ describe('Patients API - POST /api/patients', () => {
 
     expect(response.status).toBe(400)
     const data = await response.json()
-    expect(data.error).toContain('required')
+    // Issue 5 contract: Arabic-first validation on the changed surface.
+    expect(data.error).toContain('مطلوبة')
   })
 
   it('should return 409 for duplicate phone number', async () => {
@@ -224,7 +225,8 @@ describe('Patients API - POST /api/patients', () => {
 
     expect(response.status).toBe(409)
     const data = await response.json()
-    expect(data.error).toContain('phone number already exists')
+    // Issue 5 contract: Arabic duplicate-phone message.
+    expect(data.error).toContain('بنفس رقم الهاتف')
   })
 
   it('should return 403 when patient limit is reached', async () => {

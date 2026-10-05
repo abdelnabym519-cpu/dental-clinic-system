@@ -126,9 +126,15 @@ describe('DELETE /api/prescriptions/[id]', () => {
     expect(res.status).toBe(404)
   })
 
-  it('deletes prescription (hard delete)', async () => {
+  // Issue 5 contract: hard delete is now DRAFT-only; SIGNED/SENT/CANCELLED
+  // must go through POST /api/prescriptions/[id]/cancel (record preserved).
+  it('hard-deletes a never-issued DRAFT prescription', async () => {
     mockAuth()
-    vi.mocked(prisma.prescription.findFirst).mockResolvedValue({ id: 'p1' } as any)
+    vi.mocked(prisma.prescription.findFirst).mockResolvedValue({
+      id: 'p1',
+      hospitalId: 'h1',
+      status: 'DRAFT',
+    } as any)
     vi.mocked(prisma.prescription.delete).mockResolvedValue({ id: 'p1' } as any)
 
     const res = await prescriptionDELETE(
@@ -139,6 +145,25 @@ describe('DELETE /api/prescriptions/[id]', () => {
 
     expect(body.success).toBe(true)
     expect(prisma.prescription.delete).toHaveBeenCalledWith({ where: { id: 'p1' } })
+  })
+
+  it('refuses to hard-delete a SIGNED prescription (409 — cancel instead)', async () => {
+    mockAuth()
+    vi.mocked(prisma.prescription.findFirst).mockResolvedValue({
+      id: 'p1',
+      hospitalId: 'h1',
+      status: 'SIGNED',
+    } as any)
+
+    const res = await prescriptionDELETE(
+      makeReq('/api/prescriptions/p1', 'DELETE'),
+      makeParams('p1') as any
+    )
+    const body = await res.json()
+
+    expect(res.status).toBe(409)
+    expect(body.error).toContain('إلغاء الروشتة')
+    expect(prisma.prescription.delete).not.toHaveBeenCalled()
   })
 
   it('restricts to ADMIN and DOCTOR roles', async () => {

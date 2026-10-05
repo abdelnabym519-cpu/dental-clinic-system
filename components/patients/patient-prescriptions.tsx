@@ -27,19 +27,39 @@ const STATUS_AR: Record<string, string> = {
   DRAFT: 'مسودة',
   SIGNED: 'موقعة',
   SENT: 'مرسلة',
+  CANCELLED: 'ملغاة',
 }
 
 export function PatientPrescriptions({ patientId }: { patientId: string }) {
   const { t } = useLanguage()
   const [rows, setRows] = useState<PrescriptionRow[] | null>(null)
   const [failed, setFailed] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
 
-  useEffect(() => {
+  const reload = () =>
     fetch(`/api/prescriptions?patientId=${encodeURIComponent(patientId)}&limit=50`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((data) => setRows(data.data ?? []))
       .catch(() => setFailed(true))
+
+  useEffect(() => {
+    reload()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId])
+
+  // Issue 5 — cancel (never delete) an issued prescription: the clinical
+  // record stays visible and auditable with the ملغاة badge.
+  const handleCancel = async (rxId: string) => {
+    setCancellingId(rxId)
+    try {
+      const res = await fetch(`/api/prescriptions/${rxId}/cancel`, { method: 'POST' })
+      if (res.ok) {
+        await reload()
+      }
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   if (failed) {
     return (
@@ -82,16 +102,43 @@ export function PatientPrescriptions({ patientId }: { patientId: string }) {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="font-medium">{rx.prescriptionNo}</span>
-                <Badge variant={rx.status === 'SENT' ? 'default' : rx.status === 'SIGNED' ? 'secondary' : 'outline'}>
+                <Badge
+                  variant={
+                    rx.status === 'SENT'
+                      ? 'default'
+                      : rx.status === 'CANCELLED'
+                        ? 'destructive'
+                        : rx.status === 'SIGNED'
+                          ? 'secondary'
+                          : 'outline'
+                  }
+                >
                   {STATUS_AR[rx.status] ?? rx.status}
                 </Badge>
               </div>
-              <Button variant="outline" size="sm" asChild>
-                <a href={`/api/documents/prescription/${rx.id}`} target="_blank" rel="noreferrer">
-                  <Download className="h-4 w-4" />
-                  {t('تحميل PDF')}
-                </a>
-              </Button>
+              <div className="flex items-center gap-2">
+                {rx.status !== 'CANCELLED' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={cancellingId === rx.id}
+                    onClick={() => handleCancel(rx.id)}
+                    data-testid={`cancel-rx-${rx.id}`}
+                  >
+                    {cancellingId === rx.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t('إلغاء الروشتة')
+                    )}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`/api/documents/prescription/${rx.id}`} target="_blank" rel="noreferrer">
+                    <Download className="h-4 w-4" />
+                    {t('تحميل PDF')}
+                  </a>
+                </Button>
+              </div>
             </div>
             <div className="text-sm text-muted-foreground">
               {rx.doctor ? `د. ${rx.doctor.firstName} ${rx.doctor.lastName}` : ''} —{' '}

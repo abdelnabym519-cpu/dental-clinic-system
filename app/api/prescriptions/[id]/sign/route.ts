@@ -21,15 +21,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       include: { medications: { select: { id: true } } },
     })
     if (!prescription) {
-      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
+      return NextResponse.json({ error: 'الروشتة غير موجودة' }, { status: 404 })
     }
 
     if (prescription.status !== 'DRAFT') {
-      return NextResponse.json({ error: 'Only DRAFT prescriptions can be signed' }, { status: 409 })
+      return NextResponse.json({ error: 'لا يمكن توقيع روشتة غير مسودة' }, { status: 409 })
     }
     if (prescription.medications.length === 0) {
       return NextResponse.json(
-        { error: 'Cannot sign a prescription with no medications' },
+        { error: 'لا يمكن توقيع روشتة بدون أدوية' },
         { status: 400 }
       )
     }
@@ -57,9 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     )
   } catch (err: unknown) {
     console.error('Error signing prescription:', err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Failed to sign prescription' },
-      { status: 500 }
-    )
+    // Issue 5 — raw internal errors never reach the clinic user.
+    return NextResponse.json({ error: 'تعذر توقيع الروشتة. حاول مرة أخرى.' }, { status: 500 })
   }
 }
