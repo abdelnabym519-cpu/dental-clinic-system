@@ -161,6 +161,98 @@ describe('complete', () => {
     expect((options as RequestInit).method).toBe('POST')
   })
 
+  it('WIRE PARITY (400 root-cause pin): conversation ends with a user turn, body has no null/extra fields', async () => {
+    // The proven-working Cloudflare request shape is system… + user. A
+    // system-only payload (conversation ending on role "system") is what the
+    // provider rejects with HTTP 400. This pins the invariant absolutely.
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
+    await complete(
+      [
+        { role: 'system', content: 'INSTRUCTIONS' },
+        { role: 'user', content: 'ما إجمالي الإيرادات هذا الشهر؟' },
+      ],
+      { model: '@cf/zai-org/glm-4.7-flash', maxTokens: 100 }
+    )
+    const [, options] = vi.mocked(global.fetch).mock.calls[0]
+    const body = JSON.parse((options as RequestInit).body as string)
+    const messages = body.messages
+    expect(messages.at(-1).role).toBe('user') // ← the exact 400-causing invariant
+    expect(messages[0].role).toBe('system')
+    expect(messages.at(-1).content).toBe('ما إجمالي الإيرادات هذا الشهر؟')
+    // no null / undefined / empty-string fields may ever serialize
+    const serialized = JSON.stringify(body)
+    expect(serialized).not.toMatch(/:null|:""|:undefined/)
+    // exactly the proven-curl body fields — no extra OpenAI params
+    expect(Object.keys(body).sort()).toEqual(['max_tokens', 'messages', 'model', 'temperature'])
+    // model preserved exactly, @cf/ namespace included
+    expect(body.model).toBe('@cf/zai-org/glm-4.7-flash')
+  })
+
+  it('system-only message arrays are normalized to end with a user turn (content carried verbatim)', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
+    await complete([{ role: 'system', content: 'TRANSLATOR-PROMPT + clinic question' }])
+    const body = JSON.parse((vi.mocked(global.fetch).mock.calls[0][1] as RequestInit).body as string)
+    expect(body.messages).toHaveLength(1)
+    expect(body.messages[0]).toEqual({ role: 'user', content: 'TRANSLATOR-PROMPT + clinic question' })
+    // nothing is invented: the payload content is the caller's, relocated
+  })
+
+  it('Cloudflare rejection reasons are captured server-side (typed client error unchanged, secrets redacted)', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    try {
+      process.env.CLOUDFLARE_API_TOKEN = 'super-secret-token-value'
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: async () =>
+          JSON.stringify({
+            success: false,
+            errors: [{ code: 7423, message: 'invalid payload: last message must be from user' }],
+          }),
+      } as unknown as Response)
+      try {
+        await complete(sampleMessages, { model: '@cf/zai-org/glm-4.7-flash' })
+        throw new Error('should have thrown')
+      } catch (err) {
+        // clients still receive the same typed Arabic-safe error…
+        expect(err).toBeInstanceOf(AIUnavailableError)
+        expect((err as AIUnavailableError).code).toBe('AI_PROVIDER_ERROR')
+        expect((err as AIUnavailableError).message).toMatch(/[\u0600-\u06FF]/)
+        expect((err as AIUnavailableError).message).not.toContain('7423')
+        expect((err as AIUnavailableError).message).not.toContain('invalid payload')
+      }
+      // …while the exact Cloudflare rejection is diagnosable from server logs
+      const logLine = infoSpy.mock.calls.map((c) => c.join(' ')).find((l) => l.includes('provider_rejection'))
+      expect(logLine).toBeTruthy()
+      expect(logLine).toContain('"providerStatus":400')
+      expect(logLine).toContain('"cfErrorCode":7423')
+      expect(logLine).toContain('last message must be from user')
+      // no secret material anywhere in the logs
+      const allLogs = infoSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+      expect(allLogs).not.toContain('super-secret-token-value')
+      expect(allLogs).not.toContain('Bearer super-secret')
+    } finally {
+      infoSpy.mockRestore()
+    }
+  })
+
+  it('a bearer-shaped string inside provider error text is redacted before logging', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    try {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        text: async () => 'oops Bearer abc.def.ghi leaked-shape',
+      } as unknown as Response)
+      await expect(complete(sampleMessages)).rejects.toBeInstanceOf(AIUnavailableError)
+      const allLogs = infoSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+      expect(allLogs).toContain('Bearer [redacted]')
+      expect(allLogs).not.toContain('abc.def.ghi')
+    } finally {
+      infoSpy.mockRestore()
+    }
+  })
+
   it('authenticates with the server-only token, JSON content type, and the gateway header', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
     await complete(sampleMessages)

@@ -211,6 +211,49 @@ function logLLM(
 
 // ── Core request path ──────────────────────────────────────────────────────
 
+/**
+ * OpenAI-compatible generation requires the conversation to END with a
+ * user/assistant turn. Providers reject system-only payloads with HTTP 400
+ * (invalid payload) — the proven-working request shape is system… + user.
+ * Feature code that passes instruction-only (system) message arrays is
+ * normalized here, in the one canonical client: the LAST system message is
+ * demoted to the user turn (content is carried verbatim — nothing is
+ * invented, removed, or reordered beyond this demotion).
+ */
+export function normalizeMessages(messages: ChatMessage[]): ChatMessage[] {
+  if (!messages.length || messages.some((m) => m.role !== 'system')) return messages
+  const last = messages[messages.length - 1]
+  return [...messages.slice(0, -1), { role: 'user' as const, content: last.content }]
+}
+
+/**
+ * Server-side, secret-safe capture of a provider rejection (e.g. HTTP 400).
+ * Extracts ONLY the Cloudflare error code and a truncated message so the
+ * exact rejection reason is diagnosable from server logs. Never returns or
+ * logs the request body, prompts, patient data, or the authorization token;
+ * any bearer-shaped string in provider text is redacted. Clients keep
+ * receiving the same typed Arabic-safe error as before.
+ */
+async function describeProviderRejection(res: Response): Promise<Record<string, unknown>> {
+  const raw = await res.text().catch(() => '')
+  if (!raw) return { providerStatus: res.status }
+  const redacted = raw.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [redacted]')
+  try {
+    const parsed = JSON.parse(redacted) as { errors?: Array<{ code?: unknown; message?: unknown }> }
+    const first = Array.isArray(parsed.errors) ? parsed.errors[0] : undefined
+    return {
+      providerStatus: res.status,
+      cfErrorCode: first && (typeof first.code === 'number' || typeof first.code === 'string') ? first.code : undefined,
+      cfErrorMessage:
+        first && typeof first.message === 'string'
+          ? first.message.replace(/\s+/g, ' ').slice(0, 300)
+          : undefined,
+    }
+  } catch {
+    return { providerStatus: res.status, cfErrorExcerpt: redacted.replace(/\s+/g, ' ').slice(0, 200) }
+  }
+}
+
 function getHeaders(cfg: GatewayConfig): Record<string, string> {
   return {
     Authorization: `Bearer ${cfg.apiToken}`,
@@ -262,6 +305,7 @@ export async function complete(
   const correlationId = newCorrelationId()
   const primaryModel = resolveModel(config)
   const fallbackModel = process.env.DEN_TORA_AI_FALLBACK_MODEL
+  const wireMessages = normalizeMessages(messages)
 
   const attempt = async (model: string): Promise<CompletionResponse> => {
     const meta: RequestMeta = { correlationId, model, startedAt: Date.now() }
@@ -270,15 +314,17 @@ export async function complete(
       cfg,
       {
         model,
-        messages,
+        messages: wireMessages,
         max_tokens: resolveMaxTokens(config),
         temperature: config.temperature ?? 0.7,
       },
       meta
     )
     if (!res.ok) {
-      // Error text may contain provider hints — never surfaced raw.
-      await res.text().catch(() => '')
+      // Provider hints stay server-side (structured, secret-safe) — clients
+      // keep receiving the same typed Arabic-safe error.
+      const rejection = await describeProviderRejection(res)
+      logLLM('failure', meta, { reason: 'provider_rejection', ...rejection })
       throw new AIUnavailableError(
         'خدمة الذكاء الاصطناعي رفضت الطلب مؤقتًا. حاول مرة أخرى.',
         'AI_PROVIDER_ERROR',
@@ -367,7 +413,7 @@ export async function streamResponse(
     cfg,
     {
       model,
-      messages,
+      messages: normalizeMessages(messages),
       max_tokens: resolveMaxTokens(config),
       temperature: config.temperature ?? 0.7,
       stream: true,
@@ -376,7 +422,8 @@ export async function streamResponse(
   )
 
   if (!res.ok) {
-    await res.text().catch(() => '')
+    const rejection = await describeProviderRejection(res)
+    logLLM('failure', meta, { reason: 'provider_rejection', ...rejection })
     throw new AIUnavailableError(
       'خدمة الذكاء الاصطناعي رفضت الطلب مؤقتًا. حاول مرة أخرى.',
       'AI_PROVIDER_ERROR',

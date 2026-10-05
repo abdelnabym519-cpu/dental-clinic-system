@@ -139,6 +139,25 @@ describe('Smart Reports — success (C)', () => {
     expect(cfg).toBeTruthy()
   })
 
+  it('the translator request matches the proven provider shape: system instructions + user question', async () => {
+    mockGateway.complete.mockResolvedValue({
+      content: '{"model":"invoice","filters":{}}',
+      usage: {},
+      model: 'm',
+    })
+    prisma.invoice.findMany.mockResolvedValue([])
+
+    await queryPOST(post({ query: LLM_QUERY })) // a non-report question (report questions take the deterministic path)
+
+    const messages = mockGateway.complete.mock.calls[0][0]
+    expect(messages).toHaveLength(2)
+    expect(messages[0].role).toBe('system')
+    expect(messages[0].content).not.toContain(LLM_QUERY) // instructions only, question is not embedded
+    expect(messages.at(-1)).toEqual({ role: 'user', content: LLM_QUERY })
+    // the conversation must always end with a user/assistant turn (HTTP 400 pin)
+    expect(messages.at(-1).role).not.toBe('system')
+  })
+
   it('model selection flows through the configuration-driven tier routing', async () => {
     // getModelByTier('query') must apply DEN_TORA_AI_MODEL when set
     process.env.DEN_TORA_AI_MODEL = '@cf/zai-org/glm-4.7-flash'

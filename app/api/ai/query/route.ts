@@ -97,7 +97,13 @@ const QUERY_BUILDERS: Record<
 
 const AVAILABLE_MODELS = Object.keys(QUERY_BUILDERS).join(', ')
 
-function queryTranslatorPrompt(naturalQuery: string) {
+/**
+ * Translation instructions (system turn). The clinic question itself travels
+ * as the USER turn — OpenAI-compatible conversations must end with a
+ * user/assistant turn; a system-only payload is rejected by the provider
+ * with HTTP 400 (see normalizeMessages in lib/ai/gateway.ts).
+ */
+function queryTranslatorSystemPrompt() {
   return `You translate natural-language questions into structured query specs for a dental clinic database.
 
 Available models: ${AVAILABLE_MODELS}
@@ -115,9 +121,7 @@ Respond ONLY with JSON:
   "filters": { ... },
   "limit": <number, max 50>,
   "summary": "<plain English restatement of the query>"
-}
-
-User query: "${naturalQuery}"`
+}`
 }
 
 // ── Issue 4 — pre-built reports (NO LLM needed) ────────────────────────────
@@ -296,8 +300,12 @@ export async function POST(req: Request) {
   // Step 1: translate to spec
   let spec: { model: string; filters: Record<string, any>; limit?: number; summary?: string }
   try {
+    // Proven provider contract: system = instructions, user = the question.
     const { content } = await complete(
-      [{ role: 'system', content: queryTranslatorPrompt(query) }],
+      [
+        { role: 'system', content: queryTranslatorSystemPrompt() },
+        { role: 'user', content: query },
+      ],
       getModelByTier('query')
     )
     spec = JSON.parse(extractJSON(content))
