@@ -3110,6 +3110,13 @@ enum MessageType {
   RADIOLOGY
   REVIEW_REQUEST
   TEST
+  // Phase 13 — portal account activation (patient-facing welcome message).
+  // Shipped code path: app/api/portal/accounts/route.ts; the original
+  // messaging migration (20260920010000) predated this event and its
+  // MySQL ENUM column never carried it, so a real database rejected the
+  // insert. Added by 20261005090000 — ENUM append is metadata-only and
+  // backward-compatible.
+  WELCOME
 }
 
 enum WaitlistStatus {
