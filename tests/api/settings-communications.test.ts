@@ -133,7 +133,8 @@ describe('Settings Communications API', () => {
       const res = await mod.POST(makePostRequest({ type: 'invalid', settings: {} }))
       expect(res.status).toBe(400)
       const body = await res.json()
-      expect(body.error).toContain("'sms', 'email', or 'reviews'")
+      // Issue 6 contract: Arabic type validation (same 400 semantics).
+      expect(body.error).toContain('sms')
     })
 
     it('returns 401 when not authenticated', async () => {

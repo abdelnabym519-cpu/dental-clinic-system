@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT', 'RECEPTIONIST'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to record payments" },
+        { error: "لا تملك صلاحية تسجيل الدفعات" },
         { status: 403 }
       )
     }

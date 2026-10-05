@@ -67,7 +67,7 @@ export async function PUT(req: NextRequest) {
       data: { isRead: true, readAt: now },
     })
   } else {
-    return NextResponse.json({ error: "Provide 'ids' array or 'all: true'" }, { status: 400 })
+    return NextResponse.json({ error: "أرسل مصفوفة المعرفات أو حدد الخيار all" }, { status: 400 })
   }
 
   const unreadCount = await prisma.notification.count({

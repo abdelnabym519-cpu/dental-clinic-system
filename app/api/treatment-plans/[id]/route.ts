@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
       return NextResponse.json(
-        { error: "You don't have permission to update treatment plans" },
+        { error: "لا تملك صلاحية تعديل خطط العلاج" },
         { status: 403 }
       )
     }
@@ -241,7 +241,7 @@ export async function PATCH(
   }
   if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
     return NextResponse.json(
-      { error: "You don't have permission to update treatment plans" },
+      { error: "لا تملك صلاحية تعديل خطط العلاج" },
       { status: 403 }
     )
   }

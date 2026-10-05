@@ -415,6 +415,7 @@ describe('PUT /api/notifications', () => {
     const body = await res.json()
 
     expect(res.status).toBe(400)
-    expect(body.error).toContain("'ids'")
+    // Issue 6 contract: same 400, Arabic-only message.
+    expect(body.error).toContain('المعرفات')
   })
 })

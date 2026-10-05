@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to update treatments" },
+        { error: "لا تملك صلاحية تعديل جلسات العلاج" },
         { status: 403 }
       )
     }

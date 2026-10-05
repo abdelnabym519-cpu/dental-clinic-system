@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
       return NextResponse.json(
-        { error: "You don't have permission to update dental charts" },
+        { error: "لا تملك صلاحية تعديل المخطط السني" },
         { status: 403 }
       )
     }
@@ -117,7 +117,7 @@ export async function DELETE(
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
       return NextResponse.json(
-        { error: "You don't have permission to delete dental chart entries" },
+        { error: "لا تملك صلاحية حذف إدخالات المخطط السني" },
         { status: 403 }
       )
     }

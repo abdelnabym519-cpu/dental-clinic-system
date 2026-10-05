@@ -269,8 +269,8 @@ export default function BillingPage() {
               <AlertCircle className="h-5 w-5 text-red-600" />
               <div>
                 <p className="font-medium text-red-900">{t('Error loading billing data')}</p>
-                <p className="text-sm text-red-700">{error}</p>
-                {error.includes('permission') && (
+                <p className="text-sm text-red-700">{t(error)}</p>
+                {(error.includes('صلاحية') || error.includes('permission')) && (
                   <p className="text-xs text-red-600 mt-1">
                     {t('Your account needs ADMIN or ACCOUNTANT role to view billing reports.')}
                   </p>

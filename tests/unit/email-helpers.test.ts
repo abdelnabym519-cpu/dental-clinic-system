@@ -41,10 +41,14 @@ describe('sendInviteEmail', () => {
     const call = mockSendEmail.mock.calls[0][0]
     expect(call.to).toBe('john@example.com')
     expect(call.subject).toContain('Smile Dental')
+    // Issue 6 contract: Arabic invite subject + RTL body
+    expect(call.subject).toContain('دعوة')
+    expect(call.body).toContain('قبول الدعوة')
+    expect(call.body).toContain('dir="rtl"')
     expect(call.body).toContain('John')
     expect(call.body).toContain('Smile Dental')
     expect(call.body).toContain('Admin User')
-    expect(call.body).toContain('Doctor') // role formatted
+    expect(call.body).toContain('طبيب') // Issue 6: canonical Arabic role
     expect(call.body).toContain('abc123') // token in link
   })
 
@@ -101,7 +105,8 @@ describe('sendVerificationEmail', () => {
     expect(mockSendEmail).toHaveBeenCalledTimes(1)
     const call = mockSendEmail.mock.calls[0][0]
     expect(call.to).toBe('admin@example.com')
-    expect(call.subject).toContain('Verify')
+    // Issue 6 contract: Arabic-only system emails.
+    expect(call.subject).toContain('تأكيد')
     expect(call.body).toContain('Admin')
     expect(call.body).toContain('New Clinic')
     expect(call.body).toContain('/verify-email?token=verify123')
@@ -133,7 +138,10 @@ describe('sendVerificationEmail', () => {
     const html = mockSendEmail.mock.calls[0][0].body
     expect(html).toContain('<!DOCTYPE html>')
     expect(html).toContain('Dentora')
-    expect(html).toContain('Verify your email')
-    expect(html).toContain('24 hours') // expiry note
+    expect(html).toContain('تأكيد بريدك الإلكتروني')
+    expect(html).toContain('24 ساعة') // expiry note
+    // Issue 6: the whole system email is Arabic RTL — no English prose remains
+    expect(html).not.toContain('Verify your email address')
+    expect(html).not.toContain('This link expires')
   })
 })

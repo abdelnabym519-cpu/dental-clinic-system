@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to start treatments" },
+        { error: "لا تملك صلاحية بدء جلسات العلاج" },
         { status: 403 }
       )
     }

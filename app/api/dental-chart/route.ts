@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
       return NextResponse.json(
-        { error: "You don't have permission to update dental charts" },
+        { error: "لا تملك صلاحية تعديل المخطط السني" },
         { status: 403 }
       )
     }

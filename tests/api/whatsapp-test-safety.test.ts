@@ -134,6 +134,8 @@ describe('POST /api/settings/communications/test — Issue 3 error safety', () =
     const res = await POST(post({ type: 'fax', testData: {} }))
     expect(res.status).toBe(400)
     const data = await res.json()
-    expect(data.error).toContain("'sms' or 'email'")
+    // Issue 6 contract: same 400 safety, Arabic-only message.
+    expect(data.error).toContain('sms')
+    expect(data.error).toMatch(/[\u0600-\u06FF]/)
   })
 })

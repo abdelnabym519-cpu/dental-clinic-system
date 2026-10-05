@@ -654,7 +654,9 @@ describe('POST /api/settings/communications/test', () => {
     )
     const body = await res.json()
     expect(res.status).toBe(400)
-    expect(body.error).toContain("'sms' or 'email'")
+    // Issue 6 contract: same 400 safety, Arabic-only message.
+    expect(body.error).toContain('sms')
+    expect(body.error).toMatch(/[\u0600-\u06FF]/)
   })
 
   it('returns 400 when phone is missing for SMS test', async () => {

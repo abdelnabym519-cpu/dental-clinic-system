@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to update procedures" },
+        { error: "لا تملك صلاحية تعديل الإجراءات" },
         { status: 403 }
       )
     }

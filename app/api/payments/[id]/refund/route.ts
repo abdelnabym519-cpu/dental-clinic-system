@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to process refunds" },
+        { error: "لا تملك صلاحية تنفيذ الاستردادات" },
         { status: 403 }
       )
     }

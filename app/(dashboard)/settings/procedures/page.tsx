@@ -544,7 +544,7 @@ export default function ProceduresSettingsPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4" />
-              {error}
+              {t(error)}
             </div>
           )}
 

@@ -5705,5 +5705,9 @@
   "The Robot — the unified AI assistant for the clinic": "The Robot — the unified AI assistant for the clinic",
   "The Robot answers questions about patients, appointments, and billing — by voice or text": "The Robot answers questions about patients, appointments, and billing — by voice or text",
   "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance": "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance",
-  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— Robot: The unified AI assistant (voice + text) for the whole clinic"
+  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— Robot: The unified AI assistant (voice + text) for the whole clinic",
+  "ui.password": "Password",
+  "Allergies: {v1}": "Allergies: {v1}",
+  " (age {v1})": " (age {v1})",
+  "Failed to update cost": "Failed to update cost"
 }

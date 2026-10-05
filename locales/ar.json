@@ -5705,5 +5705,9 @@
   "The Robot — the unified AI assistant for the clinic": "الروبوت — مساعد الذكاء الاصطناعي الموحّد للعيادة",
   "The Robot answers questions about patients, appointments, and billing — by voice or text": "الروبوت يجيب عن الأسئلة حول المرضى والمواعيد والفواتير — صوتًا أو نصًا",
   "Enable AI-powered features like the Robot assistant, scheduling suggestions, and billing assistance": "تفعيل ميزات الذكاء الاصطناعي مثل الروبوت واقتراحات الجدولة ومساعدة الفواتير",
-  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— الروبوت: مساعد الذكاء الاصطناعي الموحّد (صوت ونص) للعيادة كلها"
+  "— Robot: The unified AI assistant (voice + text) for the whole clinic": "— الروبوت: مساعد الذكاء الاصطناعي الموحّد (صوت ونص) للعيادة كلها",
+  "ui.password": "كلمة المرور",
+  "Allergies: {v1}": "الحساسية: {v1}",
+  " (age {v1})": " ({v1} سنة)",
+  "Failed to update cost": "تعذر تحديث التكلفة"
 }

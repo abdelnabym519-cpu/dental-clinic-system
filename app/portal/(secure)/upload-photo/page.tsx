@@ -218,7 +218,7 @@ export default function UploadPhotoPage() {
 
           {error && (
             <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-              {error}
+              {t(error)}
             </div>
           )}
 

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "You don't have permission to view reports" },
+        { error: "لا تملك صلاحية عرض التقارير" },
         { status: 403 }
       )
     }

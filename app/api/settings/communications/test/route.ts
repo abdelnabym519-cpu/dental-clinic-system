@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (type !== 'sms' && type !== 'email') {
-      return NextResponse.json({ error: "Type must be 'sms' or 'email'" }, { status: 400 })
+      return NextResponse.json({ error: "النوع يجب أن يكون sms أو email" }, { status: 400 })
     }
 
     // Test SMS connection

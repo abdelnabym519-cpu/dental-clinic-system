@@ -519,7 +519,8 @@ describe('Treatments API - Comprehensive Tests', () => {
 
       expect(response.status).toBe(403)
       const data = await response.json()
-      expect(data.error).toContain('permission')
+      // Issue 6 contract: Arabic denial (same 403 semantics).
+      expect(data.error).toContain('صلاحية')
     })
 
     it('should allow ADMIN to create treatments', async () => {
