@@ -99,30 +99,54 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
     rmSync(root, { recursive: true, force: true })
   })
 
-  function fakeDeps(): DevStartDeps & { seenDatabaseUrl: () => string | undefined } {
+  function fakeDeps(): DevStartDeps & { seenDatabaseUrl: () => string | undefined; probeUrl: () => string | undefined } {
     let seen: string | undefined
+    let probeUrl: string | undefined
+    let commands = 0
     return {
       runCommand: (async () => {
-        // first command the orchestrator runs is `docker compose version` —
-        // capture the process environment AT THAT MOMENT.
-        seen = process.env.DATABASE_URL
-        return { code: 1, stdout: '', stderr: 'no docker in sandbox' }
+        // sequence: [1] `docker compose version` (resolveCompose), [2] compose
+        // up; capture the process environment AT THE FIRST COMMAND.
+        seen ??= process.env.DATABASE_URL
+        commands += 1
+        return commands <= 2
+          ? { code: 0, stdout: '', stderr: '' }
+          : { code: 1, stdout: '', stderr: 'unexpected extra command' }
       }) as DevStartDeps['runCommand'],
-      createPrisma: (async () => {
+      createPrisma: (async (databaseUrl?: string) => {
+        // record the EXPLICIT URL the orchestrator hands the probe client —
+        // the real seam under investigation (loader -> resolution -> constructor).
+        probeUrl = databaseUrl
         throw new Error('probe must not run before docker in this test')
       }) as DevStartDeps['createPrisma'],
       sleep: async () => {},
       seenDatabaseUrl: () => seen,
+      probeUrl: () => probeUrl,
     }
   }
+
+  it('hands the RESOLVED DATABASE_URL explicitly to the probe client constructor (no env-var indirection)', async () => {
+    writeFileSync(path.join(root, '.env'), 'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n')
+    writeFileSync(path.join(root, 'docker-compose.dev.yml'), 'services: {}\n')
+    const deps = fakeDeps()
+    // the fake probe client throws its marker error the moment it is created —
+    // proving the orchestrator passed the resolution straight to the constructor.
+    await expect(
+      runSafeStartup(deps, { root, readinessTimeoutMs: 10, intervalMs: 5 })
+    ).rejects.toThrow(/probe must not run/)
+    expect(deps.probeUrl()).toBe('mysql://root:dental@localhost:3306/dental_erp')
+    expect(deps.seenDatabaseUrl()).toBe('mysql://root:dental@localhost:3306/dental_erp')
+  })
 
   it('DATABASE_URL from .env is present in the process before the first command runs', async () => {
     writeFileSync(path.join(root, '.env'), 'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n')
     writeFileSync(path.join(root, 'docker-compose.dev.yml'), 'services: {}\n')
     const deps = fakeDeps()
+    // the fake docker succeeds -> the flow proceeds to the probe construction,
+    // which the fake fails at its marker — past every environment-dependent step.
     await expect(
       runSafeStartup(deps, { root, readinessTimeoutMs: 10, intervalMs: 5 })
-    ).rejects.toThrow(/docker/i) // fails later, at the (expected) docker step in this sandbox
+    ).rejects.toThrow(/probe must not run/)
     expect(deps.seenDatabaseUrl()).toBe('mysql://root:dental@localhost:3306/dental_erp')
   })
 
@@ -132,5 +156,33 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
       /DATABASE_URL is not configured/
     )
     expect(deps.seenDatabaseUrl()).toBeUndefined() // never proceeded past the environment step
+  })
+})
+
+describe('the REAL PrismaClient receives the explicit datasource URL without process.env', () => {
+  it('constructing with { datasources: { db: { url } } } never fails with env-not-found', async () => {
+    // Start from the exact failure state: DATABASE_URL absent from process.env.
+    const saved = process.env.DATABASE_URL
+    delete process.env.DATABASE_URL
+    try {
+      const { PrismaClient } = await import('@prisma/client')
+      const client = new PrismaClient({
+        datasources: { db: { url: 'mysql://sentinel-user:not-a-secret@127.0.0.1:3306/dental_erp' } },
+      } as never)
+      try {
+        await client.$queryRawUnsafe('SELECT 1')
+        expect(true).toBe(true) // a live MySQL would land here — also acceptable
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        // The URL was DELIVERED: the failure class is the URL/transport itself,
+        // never the missing environment variable.
+        expect(msg).not.toContain('Environment variable not found: DATABASE_URL')
+        expect(/prisma:\/\/|Can't reach|Connect|ECONNREFUSED|getaddrinfo|protocol/i.test(msg)).toBe(true)
+      } finally {
+        await client.$disconnect().catch(() => {})
+      }
+    } finally {
+      if (saved !== undefined) process.env.DATABASE_URL = saved
+    }
   })
 })

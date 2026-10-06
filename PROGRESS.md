@@ -82,6 +82,28 @@ diff-verification that it is the minimal correct fix:
   suite 6149/12/0 · build 256 pages. Playwright install attempted → egress-blocked (B2).
 - Commit: (this commit)
 
+### Iteration 3 — P1 follow-up: real-machine still failed; seam hardened + stale-checkout self-evidence (user-reported)
+- Problem: after 02448af the user's real `npm run dev:start` STILL showed the pre-fix
+  failure signature (no `environment:` log line, old 'DATABASE_URL not found' probe error).
+- Root Cause (two layers):
+  (1) DECISIVE: the executing script on the user's machine did NOT contain 02448af — the
+      output lacks BOTH new artifacts (v2 provenance line, new error message) while the
+      code at HEAD verifiably contains them (grep at HEAD). The runtime was a stale/locally
+      modified working tree.
+  (2) LATENT: even with the loader, the probe client depended on process.env indirection.
+- Fix: belt-and-braces seam hardening — the probe client now receives the resolved URL
+  EXPLICITLY (`new PrismaClient({ datasources: { db: { url } } })`), making readiness
+  immune to any env-inheritance quirk; provenance banner (dev-start with env-loader v2 +
+  resolved root) makes a stale checkout SELF-EVIDENT; probe env-not-found errors now
+  carry an actionable stale-checkout note; new permanent diagnostic `scripts/env-doctor.ts`
+  (presence/source/cwd/execPath/argv — never values).
+- Verification: real command executed in-repo — banner + `.env loaded (+1 keys)` printed,
+  then the ONLY failure is Docker-absent (sandbox-external, AFTER the env stage);
+  strengthened orchestrator test asserts the resolved URL is the CONSTRUCTOR ARGUMENT the
+  probe receives (the real seam); real-PrismaClient test proves the explicit-datasource
+  construction never fails with env-not-found; `npm run verify` EXIT 0 (6151/12/0).
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

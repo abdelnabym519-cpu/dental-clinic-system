@@ -99,7 +99,7 @@ export interface DevStartDeps {
    * null-returning fallback from lib/prisma.ts, which would make the
    * readiness probe and the seed decision meaningless).
    */
-  createPrisma: () => Promise<DevStartPrisma>
+  createPrisma: (databaseUrl?: string) => Promise<DevStartPrisma>
   sleep: (ms: number) => Promise<void>
 }
 
@@ -142,6 +142,9 @@ export async function runSafeStartup(
   const intervalMs = opts.readinessIntervalMs ?? DEFAULT_READINESS_INTERVAL_MS
 
   log('Safe development startup (no reset, no data loss)')
+  // Provenance marker: if THIS line is missing from an execution's output,
+  // the running checkout predates the environment-loader repair (stale tree).
+  log(`dev-start with env-loader v2 (root: ${root})`)
 
   // 1. Environment — LOAD .env / .env.local into this process before any
   //    Prisma work. Plain tsx does not load env files (only the Prisma CLI
@@ -194,7 +197,10 @@ export async function runSafeStartup(
   }
 
   let seededNow = false
-  const prisma = await deps.createPrisma()
+  // The probe client receives the resolved DATABASE_URL EXPLICITLY — it must
+  // not depend on process.env indirection (Windows/tsx/env quirks become
+  // irrelevant to readiness).
+  const prisma = await deps.createPrisma(devEnv.databaseUrl)
   try {
     // 3. Readiness — verified with the app's own runtime, not with a sleep.
     await waitForMysqlReady(deps, prisma, composeFile, timeoutMs, intervalMs)
@@ -316,6 +322,16 @@ export async function waitForDatabaseReady(
       return
     } catch (err) {
       lastError = errorOf(err)
+      if (/Environment variable not found: DATABASE_URL/.test(lastError)) {
+        // Impossible when the env-loader ran: the client was constructed with
+        // an explicit datasource URL. Seeing this means the executing checkout
+        // predates the repair.
+        lastError +=
+          '\n  NOTE: this process was started by dev-start with an EXPLICIT' +
+          '\n  datasource URL. If you see this error, the running' +
+          '\n  scripts/dev-start.ts is STALE — update the working tree' +
+          '\n  (git pull / verify the commit contains scripts/lib/dev-env.ts).'
+      }
       if (Date.now() >= deadline) break
       if (attempt === 1 || attempt % 15 === 0) {
         const secondsLeft = Math.max(0, Math.round((deadline - Date.now()) / 1000))
@@ -400,7 +416,7 @@ type PrismaClientModule = {
   PrismaClient?: new (options?: Record<string, unknown>) => DevStartPrisma
 }
 
-async function createAppPrismaClient(): Promise<DevStartPrisma> {
+async function createAppPrismaClient(databaseUrl?: string): Promise<DevStartPrisma> {
   let mod: PrismaClientModule
   try {
     mod = (await import('@prisma/client')) as unknown as PrismaClientModule
@@ -420,7 +436,14 @@ async function createAppPrismaClient(): Promise<DevStartPrisma> {
     )
   }
   try {
-    return new mod.PrismaClient()
+    // Explicit datasource override when a resolved URL exists: readiness must
+    // not depend on environment-variable inheritance AT ALL. process.env is
+    // ALSO populated (step 1) for the child processes (prisma CLI, next dev).
+    return new mod.PrismaClient(
+      databaseUrl
+        ? ({ datasources: { db: { url: databaseUrl } } } as Record<string, unknown>)
+        : undefined
+    )
   } catch (err) {
     throw new StartupError(
       [
