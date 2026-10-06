@@ -256,6 +256,29 @@ describe('complete', () => {
     }
   })
 
+  it('provider rejections carry providerStatus (401 → AUTHENTICATION-classifiable)', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
+    try {
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 401, text: async () => 'invalid token' } as unknown as Response)
+      try {
+        await complete(sampleMessages)
+        throw new Error('should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(AIUnavailableError)
+        expect((err as AIUnavailableError).code).toBe('AI_PROVIDER_ERROR')
+        expect((err as AIUnavailableError).providerStatus).toBe(401)
+      }
+      // the structural check still holds for the enriched error
+      const { isAIUnavailableError } = await import('@/lib/ai/gateway')
+      vi.mocked(global.fetch).mockResolvedValueOnce({ ok: false, status: 403, text: async () => 'forbidden' } as unknown as Response)
+      const e403 = await complete(sampleMessages).catch((e) => e)
+      expect(isAIUnavailableError(e403)).toBe(true)
+      expect(e403.providerStatus).toBe(403)
+    } finally {
+      infoSpy.mockRestore()
+    }
+  })
+
   it('a bearer-shaped string inside provider error text is redacted before logging', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
     try {

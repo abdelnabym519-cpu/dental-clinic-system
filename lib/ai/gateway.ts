@@ -71,15 +71,19 @@ export interface CompletionResponse {
 export class AIUnavailableError extends Error {
   readonly code: 'AI_NOT_CONFIGURED' | 'AI_TIMEOUT' | 'AI_PROVIDER_ERROR'
   readonly correlationId: string
+  /** HTTP status from the provider when the failure was an HTTP rejection (e.g. 401/403 → auth). */
+  readonly providerStatus?: number
   constructor(
     message: string,
     code: 'AI_NOT_CONFIGURED' | 'AI_TIMEOUT' | 'AI_PROVIDER_ERROR',
-    correlationId: string
+    correlationId: string,
+    providerStatus?: number
   ) {
     super(message)
     this.name = 'AIUnavailableError'
     this.code = code
     this.correlationId = correlationId
+    this.providerStatus = providerStatus
   }
 }
 
@@ -353,7 +357,8 @@ export async function complete(
       throw new AIUnavailableError(
         'خدمة الذكاء الاصطناعي رفضت الطلب مؤقتًا. حاول مرة أخرى.',
         'AI_PROVIDER_ERROR',
-        correlationId
+        correlationId,
+        res.status
       )
     }
     const data = await res.json()
@@ -452,7 +457,8 @@ export async function streamResponse(
     throw new AIUnavailableError(
       'خدمة الذكاء الاصطناعي رفضت الطلب مؤقتًا. حاول مرة أخرى.',
       'AI_PROVIDER_ERROR',
-      correlationId
+      correlationId,
+      res.status
     )
   }
   const body = res.body

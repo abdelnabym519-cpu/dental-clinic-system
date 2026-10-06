@@ -89,6 +89,8 @@ message + `code` + `correlationId` — never a raw 500, never a leaked
 environment/provider string. Deterministic (non-LLM) fallbacks keep working
 independently and are labeled as such.
 
+| AUTHENTICATION | provider HTTP 401/403 (`providerStatus` on the typed error) | token invalid/expired or lacks **Account → Workers AI → Read** | harness classifies `AUTHENTICATION`; routes answer 503 |
+
 | Class | Gateway `code` | Typical cause | Route behavior |
 |---|---|---|---|
 | `AI_NOT_CONFIGURED` | configuration missing/invalid | env not set, malformed model | 503 + Arabic guidance |
@@ -101,10 +103,15 @@ Client error text NEVER carries tokens, provider bodies, or env names.
 
 `node scripts/llm-e2e.mjs` — deterministic gateway-contract + failure-taxonomy
 probes (no network required). `node scripts/llm-e2e.mjs --live` — real
-Cloudflare inference through the canonical gateway from an environment with
-`CLOUDFLARE_*` credentials (prints latency, model, content length; never
-secrets). `--base-url http://localhost:3000` additionally proves the running
-app's auth boundary. Taxonomy: `SUCCESS | CONFIGURATION | AUTHENTICATION |
+Cloudflare inference through the canonical gateway. Live configuration
+resolves from the REAL shell environment with the repository `.env.local`
+filling gaps (a plain `node` process does not load `.env.local` — only
+`next dev/start` does); the gateway identifier follows the documented
+`cf-aig-gateway-id: default` contract when unconfigured. Secret values are
+injected into `process.env` via a closure (`apply()`) and are structurally
+unable to reach logs. `--base-url http://localhost:3000` additionally proves
+the running app's auth boundary. Verdicts: `PASS` only when every probe —
+including live inference — succeeds; otherwise `BLOCKED (reason)` or `FAIL`. Taxonomy: `SUCCESS | CONFIGURATION | AUTHENTICATION |
 ROUTING | PROVIDER_REJECTION | TIMEOUT | NETWORK | INVALID_RESPONSE |
 EMPTY_RESPONSE | APPLICATION_ERROR`. Only `--live` probes can report SUCCESS
 (real inference); deterministic probes verify the contract.

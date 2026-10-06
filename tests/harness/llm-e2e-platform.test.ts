@@ -100,9 +100,13 @@ describe('LLM E2E harness — cross-platform execution contract', () => {
   })
 
   it('distinguishes live credentials from deterministic-mode env (no placeholder confusion)', () => {
-    // live classification must read the saved SHELL env, not probe-mutated env
-    expect(HARNESS).toContain('savedEnv.CLOUDFLARE_ACCOUNT_ID')
-    expect(HARNESS).toContain('setEnv(savedEnv)')
+    // live classification must read the saved SHELL env (plus .env.local via
+    // the pure resolver), never the deterministic probes' mutated env
+    expect(HARNESS).toContain('resolveLiveEnv({ env: savedEnv, envLocal })')
+    expect(HARNESS).toContain('setEnv({ ...savedEnv })')
+    expect(HARNESS).toContain('live.apply(process.env)')
+    // the resolver is the leak-proof pure module
+    expect(HARNESS).toContain("llm-e2e-env.mjs")
   })
 
   it('keeps secrets out of observable output (redaction layer present)', () => {

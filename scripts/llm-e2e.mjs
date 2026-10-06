@@ -20,7 +20,7 @@
  * mode the classification target is the GATEWAY CONTRACT; only --live probes
  * can yield SUCCESS (real provider content).
  */
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
@@ -61,6 +61,13 @@ buildSync({
 // standard mechanism on every OS (POSIX raw paths happen to work, which
 // masked this until real Windows execution).
 const gw = await import(pathToFileURL(bundle).href)
+
+// Live-configuration resolution (pure module, unit-tested): the real shell
+// environment wins, the repository .env.local fills gaps (a plain `node`
+// process does not load it — only next dev/start does), and the gateway
+// identifier follows the documented cf-aig-gateway-id: default contract.
+// Secret VALUES are injected into process.env only — never logged.
+const { resolveLiveEnv, parseEnvFile } = await import(pathToFileURL(join(ROOT, 'scripts', 'lib', 'llm-e2e-env.mjs')).href)
 
 const realFetch = globalThis.fetch
 const REDACT = (s) => String(s).replace(/(Bearer\s+)\S+/gi, '$1[redacted]')
@@ -146,15 +153,19 @@ catch (e) { record('malformed-response', 'INVALID_RESPONSE', e.constructor.name)
 let liveRan = false
 if (LIVE) {
   console.log('\n■ Live Cloudflare probes (real inference)\n')
-  // IMPORTANT: classify against the REAL shell env (savedEnv), never the
-  // deterministic probe env still sitting in process.env.
-  const creds = savedEnv.CLOUDFLARE_ACCOUNT_ID && savedEnv.CLOUDFLARE_API_TOKEN && savedEnv.CLOUDFLARE_AI_GATEWAY_ID
-  if (!creds) {
-    record('live-smoke', 'CONFIGURATION', 'CLOUDFLARE_* not set in this shell — run from the developer environment')
+  // IMPORTANT: classify against the REAL caller environment (savedEnv +
+  // repository .env.local), never the deterministic probe env still sitting
+  // in process.env. Precedence: shell wins, .env.local fills gaps.
+  let envLocal
+  try { envLocal = parseEnvFile(readFileSync(join(ROOT, '.env.local'), 'utf8')) } catch { envLocal = undefined }
+  const live = resolveLiveEnv({ env: savedEnv, envLocal })
+  if (!live.creds) {
+    record('live-smoke', 'CONFIGURATION', live.detail + ' — export the credentials or add them to .env.local')
   } else {
     liveRan = true
     globalThis.fetch = realFetch
-    setEnv(savedEnv) // restore the real configuration
+    setEnv({ ...savedEnv })
+    live.apply(process.env) // inject real configuration (+ documented defaults) — never logged
     // connectivity probe: distinguishes NETWORK-blocked from provider rejection
     const c0 = Date.now()
     try {
@@ -171,8 +182,14 @@ if (LIVE) {
       record('live-smoke', ok ? 'SUCCESS' : 'EMPTY_RESPONSE',
         `latency=${ms}ms model=${out.model} contentLen=${out.content.trim().length} reasoningLen=${out.reasoning?.length || 0}`)
     } catch (e) {
-      const cls = classifyGatewayError(e)
-      record('live-smoke', cls === 'PROVIDER_REJECTION' ? `PROVIDER_REJECTION (see [ai-gateway] failure log for cfErrorCode)` : cls, e.code || e.message)
+      // AUTHENTICATION is distinguished from generic provider rejection via
+      // the typed error's providerStatus (401/403 from Cloudflare).
+      if (e?.providerStatus === 401 || e?.providerStatus === 403) {
+        record('live-smoke', 'AUTHENTICATION', `provider HTTP ${e.providerStatus} — token lacks Workers AI Read permission or is invalid/expired`)
+      } else {
+        const cls = classifyGatewayError(e)
+        record('live-smoke', cls === 'PROVIDER_REJECTION' ? `PROVIDER_REJECTION (see [ai-gateway] failure log for cfErrorCode)` : cls, e.code || e.message)
+      }
     }
   }
   if (BASE_URL) {
@@ -189,8 +206,14 @@ if (LIVE) {
 const fails = results.filter((r) => r.classification === 'APPLICATION_ERROR')
 console.log('\n■ Summary')
 for (const r of results) console.log(`  ${r.probe.padEnd(34)} ${r.classification}`)
-const liveBlocked = LIVE && results.some((r) => r.probe === 'live-smoke' && r.classification === 'CONFIGURATION')
-console.log(`\nHARNESS RESULT: ${fails.length ? 'FAIL' : liveBlocked ? 'BLOCKED (live credentials absent in this shell)' : 'PASS'}`)
+const liveSmoke = results.find((r) => r.probe === 'live-smoke')
+let verdict
+if (fails.length) verdict = `FAIL (${fails.length} application error${fails.length > 1 ? 's' : ''})`
+else if (LIVE && liveRan && liveSmoke?.classification !== 'SUCCESS')
+  verdict = `BLOCKED (live inference not achieved: ${liveSmoke?.classification})`
+else if (LIVE && !liveRan) verdict = 'BLOCKED (live credentials absent in this shell)'
+else verdict = 'PASS'
+console.log(`\nHARNESS RESULT: ${verdict}`)
 setEnv(Object.fromEntries(ENV_KEYS.map((k) => [k, savedEnv[k]])))
 rmSync(outDir, { recursive: true, force: true })
 process.exit(fails.length ? 1 : 0)
