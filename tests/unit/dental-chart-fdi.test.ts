@@ -9,6 +9,7 @@ import {
   groupOf,
   specificTypeOf,
   toothNameAr,
+  toothNameEn,
   adjacentTeeth,
   opposingTooth,
   navigationTargets,
@@ -65,6 +66,13 @@ describe('Arabic tooth names', () => {
 
   it('names all 32 teeth (no gaps)', () => {
     for (const t of FDI_TEETH) expect(toothNameAr(t).length).toBeGreaterThan(3)
+  })
+
+  it('provides English names for LTR mode', () => {
+    expect(toothNameEn(16)).toBe('upper right first molar')
+    expect(toothNameEn(41)).toBe('lower right central incisor')
+    expect(toothNameEn(28)).toBe('upper left wisdom tooth')
+    for (const t of FDI_TEETH) expect(toothNameEn(t).length).toBeGreaterThan(5)
   })
 })
 

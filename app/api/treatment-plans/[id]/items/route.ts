@@ -67,26 +67,46 @@ export async function POST(
       },
       include: { procedure: { select: { id: true, code: true, name: true, category: true } } },
     })
-  // Audit trail (master spec Stage K) — procedures assigned from the
-  // dental chart (or anywhere) are audited with tooth linkage.
-  await prisma.auditLog.create({
-    data: {
-      hospitalId,
-      userId: user.id,
-      action: 'PROCEDURE_ASSIGNED',
-      entityType: 'TreatmentPlanItem',
-      entityId: item.id,
-      newValues: JSON.stringify({
-        treatmentPlanId: item.treatmentPlanId,
-        procedureId: item.procedureId,
-        toothNumbers: item.toothNumbers,
-        status: item.status,
-        estimatedCost: String(item.estimatedCost),
-      }),
-    },
-  })
 
-return NextResponse.json({ success: true, data: item }, { status: 201 })
+    // Audit trail (master spec Stage K) — procedures assigned from the
+    // dental chart (or anywhere) are audited with tooth linkage. Ordered
+    // AFTER the create and BEFORE the totals sync; a failed audit write
+    // surfaces as 500 (the trail is never silently skipped).
+    await prisma.auditLog.create({
+      data: {
+        hospitalId,
+        userId: user.id,
+        action: 'PROCEDURE_ASSIGNED',
+        entityType: 'TreatmentPlanItem',
+        entityId: item.id,
+        newValues: JSON.stringify({
+          treatmentPlanId: item.treatmentPlanId,
+          procedureId: item.procedureId,
+          toothNumbers: item.toothNumbers,
+          status: item.status,
+          estimatedCost: String(item.estimatedCost),
+        }),
+      },
+    })
+
+    // Keep the plan totals in sync (same rule as the legacy PUT: an item
+    // without its own cost falls back to the procedure's base price).
+    const allItems = await prisma.treatmentPlanItem.findMany({
+      where: { treatmentPlanId: plan.id },
+      include: { procedure: { select: { basePrice: true, defaultDuration: true } } },
+    })
+    let totalCost = 0
+    let totalDuration = 0
+    for (const it of allItems) {
+      totalCost += Number(it.estimatedCost) > 0 ? Number(it.estimatedCost) : Number(it.procedure.basePrice) || 0
+      totalDuration += Number(it.procedure.defaultDuration) || 0
+    }
+    await prisma.treatmentPlan.update({
+      where: { id: plan.id },
+      data: { estimatedCost: totalCost, estimatedDuration: totalDuration },
+    })
+
+    return NextResponse.json({ success: true, data: item }, { status: 201 })
   } catch (err: unknown) {
     console.error('Error adding treatment plan item:', err)
     return NextResponse.json(

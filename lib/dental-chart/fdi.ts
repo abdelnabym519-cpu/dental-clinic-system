@@ -94,6 +94,23 @@ const SIDE_AR: Record<ToothSideRL, string> = { right: 'الأيمن', left: 'ا�
 const ARCH_AR_F = { upper: 'العلوية', lower: 'السفلية' } as const
 const SIDE_AR_F = { right: 'اليمنى', left: 'اليسرى' } as const
 
+
+const TYPE_EN: Record<number, string> = {
+  1: 'central incisor',
+  2: 'lateral incisor',
+  3: 'canine',
+  4: 'first premolar',
+  5: 'second premolar',
+  6: 'first molar',
+  7: 'second molar',
+  8: 'wisdom tooth',
+}
+
+/** English clinical name, e.g. 16 → "upper right first molar". */
+export function toothNameEn(n: number): string {
+  return `${archOf(n)} ${sideOf(n)} ${TYPE_EN[toothIndexOf(n)]}`
+}
+
 /** Arabic clinical name with gender agreement, e.g. 16 → "الرحى الأولى العلوية اليمنى". */
 export function toothNameAr(n: number): string {
   const t = toothIndexOf(n)

@@ -48,11 +48,13 @@ and `components/imaging/dental-3d-viewer.tsx` quadrant maps.
   finding; requires patientId+toothNumber+condition; FDI-validated).
 - `/api/dental-chart/[id]` — GET / PATCH / DELETE.
 - `/api/treatment-plans/[id]/items` — POST: already `['ADMIN','DOCTOR']` ✅.
-- **RBAC gaps found:** dental-chart routes call `requireAuthAndRole()` with **no role list** →
-  any staff role (incl. RECEPTIONIST, LAB_TECH, ACCOUNTANT) can mutate findings. Master spec
-  requires DOCTOR/ADMIN for mutations → tighten (server-side).
-- **Audit gaps found:** no `auditLog.create` on any dental-chart mutation or procedure
-  assignment → add (`DENTAL_FINDING_ADDED`, `TOOTH_STATE_CHANGED`, `PROCEDURE_ASSIGNED`).
+- **RBAC (corrected during implementation):** dental-chart routes call `requireAuthAndRole()`
+  without a role list for GET (view — correct), but the MUTATION handlers carry inline
+  `['ADMIN','DOCTOR']` checks — role restriction was already correct; what was missing was a
+  **test pin** for it. Added pins; behavior preserved.
+- **Audit gaps found (real):** no `auditLog.create` on any dental-chart mutation or procedure
+  assignment → added (`DENTAL_FINDING_ADDED`, `TOOTH_STATE_CHANGED`, `PROCEDURE_ASSIGNED`);
+  an audit-write failure surfaces as 500 (trail never silently skipped).
 
 ## 6. RBAC
 

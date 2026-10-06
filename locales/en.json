@@ -5763,5 +5763,8 @@
   "dental_chart.ai_disclaimer": "AI findings are suggestions only and must be reviewed by a licensed dental professional.",
   "dental_chart.no_tooth_selected": "Select a tooth to view its details",
   "dental_chart.webgl_unsupported_title": "3D view unavailable",
-  "dental_chart.webgl_unsupported_body": "Your browser does not support WebGL — the 2D view remains fully functional."
+  "dental_chart.webgl_unsupported_body": "Your browser does not support WebGL — the 2D view remains fully functional.",
+  "dental_chart.error": "An error occurred while loading the chart",
+  "dental_chart.resolved": "Resolved",
+  "Failed to load dental chart summary": "Failed to load dental chart summary"
 }

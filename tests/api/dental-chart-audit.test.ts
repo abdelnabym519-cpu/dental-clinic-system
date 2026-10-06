@@ -111,6 +111,11 @@ describe('dental chart mutation audit trail', () => {
       toothNumbers: '16', estimatedCost: '350', status: 'PENDING',
       procedure: { id: 'proc-1', code: 'P1', name: 'حشو مركب', category: 'RESTORATIVE' },
     })
+    // the golden Phase-11 totals-sync block runs after the audit write
+    ;(prisma.treatmentPlanItem.findMany as any).mockResolvedValue([
+      { estimatedCost: '350', procedure: { basePrice: '350.00', defaultDuration: 30 } },
+    ])
+    ;(prisma.treatmentPlan.update as any).mockResolvedValue({ id: 'plan-1' })
     const res = await itemsModule.POST(
       post('http://localhost/api/treatment-plans/plan-1/items', { procedureId: 'proc-1', toothNumbers: '16' }),
       { params: Promise.resolve({ id: 'plan-1' }) } as any

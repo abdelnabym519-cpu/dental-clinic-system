@@ -5763,5 +5763,8 @@
   "dental_chart.ai_disclaimer": "مخرجات الذكاء الاصطناعي استرشادية فقط ويجب مراجعتها من طبيب ممارس قبل الاعتماد عليها.",
   "dental_chart.no_tooth_selected": "اختر سناً لعرض تفاصيله",
   "dental_chart.webgl_unsupported_title": "العرض ثلاثي الأبعاد غير متاح",
-  "dental_chart.webgl_unsupported_body": "متصفحك لا يدعم WebGL — لا تقلق، العرض ثنائي الأبعاد يعمل بكامل وظائفه."
+  "dental_chart.webgl_unsupported_body": "متصفحك لا يدعم WebGL — لا تقلق، العرض ثنائي الأبعاد يعمل بكامل وظائفه.",
+  "dental_chart.error": "حدث خطأ في تحميل المخطط",
+  "dental_chart.resolved": "مُعالج",
+  "Failed to load dental chart summary": "تعذر تحميل ملخص مخطط الأسنان"
 }
