@@ -7,7 +7,7 @@
  *     → lib/ai/gateway (this file: routing, fallback, timeout, observability)
  *       → Cloudflare REST AI API (OpenAI-compatible), routed through the
  *         configured AI Gateway via the `cf-aig-gateway-id` header
- *           POST https://api.cloudflare.com/client/v4/{account}/ai/v1/chat/completions
+ *           POST https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/chat/completions
  *         → configured model (@cf/… Workers AI, or openai/…, anthropic/…, google/…)
  *
  * Feature code never sees account IDs, gateway URLs, tokens, or provider
@@ -146,7 +146,9 @@ function newCorrelationId(): string {
  * request header — never in the URL.
  */
 export function chatCompletionsEndpoint(cfg: GatewayConfig): string {
-  return `https://api.cloudflare.com/client/v4/${cfg.accountId}/ai/v1/chat/completions`
+  // /accounts/ is a REQUIRED literal path segment (Cloudflare error 7000
+  // "No route for that URI" is emitted for /client/v4/{account}/ai/...).
+  return `https://api.cloudflare.com/client/v4/accounts/${cfg.accountId}/ai/v1/chat/completions`
 }
 
 // ── Model routing (configuration-driven; no hard-coded provider choice) ────

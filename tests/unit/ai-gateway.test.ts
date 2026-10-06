@@ -128,10 +128,10 @@ describe('gateway configuration', () => {
     process.env.CLOUDFLARE_AI_GATEWAY_ID = 'bad id'
     expect(() => getGatewayConfig()).toThrow(AIUnavailableError)
     process.env.CLOUDFLARE_AI_GATEWAY_ID = 'ok_gateway-1'
-    // the endpoint carries ONLY the validated account id; the gateway
-    // identifier rides in the cf-aig-gateway-id header instead
+    // Full pathname contract: /client/v4/accounts/{account}/ai/v1/chat/completions.
+    // The gateway identifier rides in the cf-aig-gateway-id header, never the URL.
     expect(chatCompletionsEndpoint(getGatewayConfig())).toBe(
-      'https://api.cloudflare.com/client/v4/ok-id/ai/v1/chat/completions'
+      'https://api.cloudflare.com/client/v4/accounts/ok-id/ai/v1/chat/completions'
     )
   })
 })
@@ -157,7 +157,7 @@ describe('complete', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
     await complete(sampleMessages)
     const [url, options] = vi.mocked(global.fetch).mock.calls[0]
-    expect(url).toBe('https://api.cloudflare.com/client/v4/cert-account/ai/v1/chat/completions')
+    expect(url).toBe('https://api.cloudflare.com/client/v4/accounts/cert-account/ai/v1/chat/completions')
     expect((options as RequestInit).method).toBe('POST')
   })
 
@@ -251,6 +251,29 @@ describe('complete', () => {
     } finally {
       infoSpy.mockRestore()
     }
+  })
+
+  it('URI CONTRACT (CF-7000 regression pin): /client/v4/accounts/{account}/ai/v1/chat/completions, byte-exact', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(jsonCompletion())
+    await complete(sampleMessages)
+    const [rawUrl, options] = vi.mocked(global.fetch).mock.calls[0]
+    const u = new URL(String(rawUrl))
+    // exact pathname — asserts the literal /accounts segment and the account
+    // id in the ONLY position that routes (missing it = Cloudflare 7000)
+    expect(u.protocol).toBe('https:')
+    expect(u.hostname).toBe('api.cloudflare.com')
+    expect(u.pathname).toBe('/client/v4/accounts/cert-account/ai/v1/chat/completions')
+    expect(u.pathname.startsWith('/client/v4/accounts/')).toBe(true)
+    expect(u.pathname).not.toMatch(/accounts\/.*\/accounts\//) // no duplication
+    expect(u.pathname.endsWith('/')).toBe(false) // no trailing slash
+    expect(u.search).toBe('') // no query mutation
+    // gateway id must NEVER appear in the path — header-only routing
+    expect(u.pathname).not.toContain('cert-gateway')
+    const headers = (options as RequestInit).headers as Record<string, string>
+    expect(headers['cf-aig-gateway-id']).toBe('cert-gateway')
+    // Authorization stays header-based and is not serialized into the URL
+    expect(String(rawUrl)).not.toContain('Bearer')
+    expect(headers['Authorization']).toMatch(/^Bearer /)
   })
 
   it('authenticates with the server-only token, JSON content type, and the gateway header', async () => {
@@ -559,7 +582,7 @@ describe('streamResponse', () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(sseResponse(['data: [DONE]\n\n']))
     const res = await streamResponse(sampleMessages)
     const [url, options] = vi.mocked(global.fetch).mock.calls[0]
-    expect(url).toBe('https://api.cloudflare.com/client/v4/cert-account/ai/v1/chat/completions')
+    expect(url).toBe('https://api.cloudflare.com/client/v4/accounts/cert-account/ai/v1/chat/completions')
     const body = JSON.parse((options as RequestInit).body as string)
     expect(body.stream).toBe(true)
     expect(res).toBeInstanceOf(Response)

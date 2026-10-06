@@ -6,7 +6,7 @@ Every external LLM call in DenToRA resolves through **one module**:
 ```
 DenToRa feature (chat, insights, forecasts, agent, …)
   → lib/ai/gateway.ts             routing · fallback · timeout · observability
-    → Cloudflare REST AI API      POST https://api.cloudflare.com/client/v4/{account}/ai/v1/chat/completions
+    → Cloudflare REST AI API      POST https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/chat/completions
       ├─ Authorization: Bearer {CLOUDFLARE_API_TOKEN}   (Workers AI Read permission)
       ├─ cf-aig-gateway-id: {CLOUDFLARE_AI_GATEWAY_ID}  (gateway routing — required for @cf/ models)
       └→ configured model          @cf/zai-org/glm-4.7-flash, openai/…, anthropic/…, google/…
