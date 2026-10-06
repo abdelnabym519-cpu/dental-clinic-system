@@ -22,7 +22,7 @@
  */
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -55,7 +55,12 @@ buildSync({
   outfile: bundle,
   logLevel: 'silent',
 })
-const gw = await import(bundle)
+// Windows-critical: the ESM loader requires a URL scheme — import('C:\\…')
+// parses 'C:' as a protocol (ERR_UNSUPPORTED_ESM_URL_SCHEME, 'Received
+// protocol c:'). Convert the absolute bundle path with pathToFileURL, the
+// standard mechanism on every OS (POSIX raw paths happen to work, which
+// masked this until real Windows execution).
+const gw = await import(pathToFileURL(bundle).href)
 
 const realFetch = globalThis.fetch
 const REDACT = (s) => String(s).replace(/(Bearer\s+)\S+/gi, '$1[redacted]')

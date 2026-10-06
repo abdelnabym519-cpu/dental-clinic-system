@@ -37,6 +37,60 @@ describe('LLM E2E harness — cross-platform execution contract', () => {
     expect(HARNESS).toContain('CVE-2024-27980')
   })
 
+  it('ESM URL CONTRACT (Windows c: regression pin): bundled module imported via pathToFileURL only', () => {
+    // The exact Windows failure: import('C:\\…\\gateway.mjs') → the ESM
+    // loader parses 'C:' as a protocol (ERR_UNSUPPORTED_ESM_URL_SCHEME,
+    // "Received protocol 'c:'"). Every dynamic import in the harness must be
+    // either a bare package specifier or a pathToFileURL()-wrapped path.
+    const dynamicImports = [...HARNESS.matchAll(/await import\(([^)]+)\)/g)].map((m) => m[1].trim())
+    expect(dynamicImports.length).toBeGreaterThanOrEqual(2)
+    for (const target of dynamicImports) {
+      const isBareSpecifier = /^['"]([a-z@][^'"]*)['"]$/.test(target)
+      const isPathToFileURL = target.startsWith('pathToFileURL(')
+      expect(isBareSpecifier || isPathToFileURL, `dynamic import target: ${target}`).toBe(true)
+    }
+    expect(HARNESS).toContain('pathToFileURL(bundle).href')
+  })
+
+  it('behavioral: pathToFileURL round-trips absolute paths into loader-accepted file: URLs', () => {
+    // Node is platform-aware here (POSIX pathToFileURL does NOT reinterpret
+    // 'C:\\' — win32 semantics apply on Windows hosts natively). The honest
+    // cross-platform invariant: for any NATIVE absolute path, pathToFileURL
+    // yields a file: URL that round-trips exactly — and file: is in the ESM
+    // loader's allowed scheme set (file|data|node), which is precisely why
+    // this conversion fixes the 'Received protocol c:' rejection.
+    const { pathToFileURL, fileURLToPath } = require('node:url')
+    const { mkdtempSync, writeFileSync, rmSync } = require('node:fs')
+    const path = require('path')
+    const abs = path.join(mkdtempSync(path.join(require('node:os').tmpdir(), 'esm-url-')), 'gateway.mjs')
+    try {
+      writeFileSync(abs, 'export const marker = 42\n')
+      const href = pathToFileURL(abs).href
+      expect(href.startsWith('file://')).toBe(true)
+      expect(fileURLToPath(href)).toBe(abs)
+      // executable proof in REAL Node (not the Vite runner, which intercepts
+      // dynamic imports and cannot resolve outside its root): a child node
+      // process loads the file exactly the way the harness does. node itself
+      // is the cross-platform executable — no .bin shims involved.
+      const { execFileSync } = require('child_process')
+      execFileSync(
+        process.execPath,
+        [
+          '-e',
+          "const { pathToFileURL } = require('node:url');" +
+            'import(pathToFileURL(process.argv[1]).href)' +
+            '.then((m) => { if (m.marker !== 42) process.exit(1) })' +
+            '.catch(() => process.exit(2))',
+          abs,
+        ],
+        { stdio: 'pipe' }
+      )
+      expect(true).toBe(true)
+    } finally {
+      try { rmSync(abs) } catch {}
+    }
+  })
+
   it('stays syntactically valid for the shipped Node runtime (node --check)', () => {
     const { execFileSync } = require('child_process')
     // node --check is a parse-only validation of the harness itself; the
