@@ -57,13 +57,15 @@ export function extractToothFindings(acceptedFindings: unknown): RawAiFinding[] 
   return out
 }
 
-export async function GET(_request: NextRequest, ctx: { params: Promise<{ patientId: string }> }) {
+export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole(VIEW_ROLES)
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { patientId } = await ctx.params
+  // Route slug is [id] (codebase convention, shared with [id]/route.ts);
+  // the function body keeps the domain name `patientId`.
+  const { id: patientId } = await ctx.params
 
   try {
     // Tenant isolation: cross-hospital access must be indistinguishable

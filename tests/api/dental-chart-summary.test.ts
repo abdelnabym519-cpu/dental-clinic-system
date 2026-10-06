@@ -10,7 +10,7 @@ const mockAuth = vi.hoisted(() => ({
 vi.mock('@/lib/api-helpers', () => mockAuth)
 vi.mock('@/lib/prisma', () => ({ prisma, default: prisma }))
 
-const summaryModule = await import('@/app/api/dental-chart/[patientId]/summary/route')
+const summaryModule = await import('@/app/api/dental-chart/[id]/summary/route')
 
 function makeRequest() {
   return new Request('http://localhost/api/dental-chart/patient-1/summary', { method: 'GET' }) as any
@@ -55,7 +55,7 @@ beforeEach(() => {
   })
 })
 
-describe('GET /api/dental-chart/[patientId]/summary', () => {
+describe('GET /api/dental-chart/[id]/summary', () => {
   it('restricts view access to ADMIN/DOCTOR/RECEPTIONIST/SUPER_ADMIN (RBAC arg pinned)', async () => {
     setupPrisma()
     await summaryModule.GET(makeRequest(), ctx)
