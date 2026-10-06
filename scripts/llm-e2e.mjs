@@ -20,7 +20,6 @@
  * mode the classification target is the GATEWAY CONTRACT; only --live probes
  * can yield SUCCESS (real provider content).
  */
-import { execFileSync } from 'node:child_process'
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -28,15 +27,34 @@ import { tmpdir } from 'node:os'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const LIVE = process.argv.includes('--live')
-const BASE_URL = (process.argv.find((a) => a.startsWith('--base-url')) || '').split('=')[1] ||
-  (process.argv[process.argv.indexOf('--base-url') + 1] || '')
+const argvFlag = (name) => {
+  for (let i = 0; i < process.argv.length; i++) {
+    const a = process.argv[i]
+    if (a === name) return process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : undefined
+    if (a.startsWith(name + '=')) return a.slice(name.length + 1)
+  }
+  return undefined
+}
+const BASE_URL = argvFlag('--base-url')
 
 // ── bundle the REAL canonical gateway ───────────────────────────────────────
+// Cross-platform by construction: use esbuild's JavaScript API (the package
+// resolves its own native binary per-OS). NEVER spawn node_modules/.bin/*
+// shims from this harness — on Windows the extensionless .bin entry is a
+// sh wrapper (spawnSync → ENOENT) and the .cmd/.ps1 shims are rejected by
+// Node without shell (CVE-2024-27980 mitigation). Same semantics on every
+// OS: Git Bash, PowerShell, CMD, Linux, macOS.
+const { buildSync } = await import('esbuild')
 const outDir = mkdtempSync(join(tmpdir(), 'dentrora-llm-'))
 const bundle = join(outDir, 'gateway.mjs')
-execFileSync(join(ROOT, 'node_modules', '.bin', 'esbuild'), [
-  join(ROOT, 'lib', 'ai', 'gateway.ts'), '--bundle', '--platform=node', '--format=esm', `--outfile=${bundle}`,
-], { stdio: 'pipe' })
+buildSync({
+  entryPoints: [join(ROOT, 'lib', 'ai', 'gateway.ts')],
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  outfile: bundle,
+  logLevel: 'silent',
+})
 const gw = await import(bundle)
 
 const realFetch = globalThis.fetch
