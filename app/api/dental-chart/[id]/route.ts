@@ -95,6 +95,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       },
     })
 
+    // Audit trail (master spec Stage K) — old and new values recorded.
+    await prisma.auditLog.create({
+      data: {
+        hospitalId,
+        userId: session?.user?.id,
+        action: 'TOOTH_STATE_CHANGED',
+        entityType: 'DentalChartEntry',
+        entityId: id,
+        oldValues: JSON.stringify({
+          toothNumber: existingEntry.toothNumber,
+          condition: existingEntry.condition,
+          severity: existingEntry.severity,
+          resolvedDate: existingEntry.resolvedDate,
+        }),
+        newValues: JSON.stringify({ toothNumber: entry.toothNumber, ...updateData }),
+      },
+    })
+
     return NextResponse.json(entry)
   } catch (error) {
     console.error('Error updating dental chart entry:', error)
@@ -136,6 +154,23 @@ export async function DELETE(
     // Hard delete the entry
     await prisma.dentalChartEntry.delete({
       where: { id },
+    })
+
+    // Audit trail (master spec Stage K) — deletion is a tooth-state change.
+    await prisma.auditLog.create({
+      data: {
+        hospitalId,
+        userId: session?.user?.id,
+        action: 'TOOTH_STATE_CHANGED',
+        entityType: 'DentalChartEntry',
+        entityId: id,
+        oldValues: JSON.stringify({
+          toothNumber: entry.toothNumber,
+          condition: entry.condition,
+          severity: entry.severity,
+        }),
+        newValues: JSON.stringify({ deleted: true, toothNumber: entry.toothNumber }),
+      },
     })
 
     return NextResponse.json({

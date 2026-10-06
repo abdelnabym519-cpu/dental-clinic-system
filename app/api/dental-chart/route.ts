@@ -195,6 +195,29 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Audit trail (master spec Stage K) — clinical mutations are always
+    // audited with actor, tenant, patient, tooth and the recorded change.
+    await prisma.auditLog.create({
+      data: {
+        hospitalId,
+        userId: session?.user?.id,
+        action: 'DENTAL_FINDING_ADDED',
+        entityType: 'DentalChartEntry',
+        entityId: entry.id,
+        newValues: JSON.stringify({
+          patientId,
+          toothNumber,
+          condition,
+          severity: severity || 'MILD',
+          mesial: mesial || false,
+          distal: distal || false,
+          occlusal: occlusal || false,
+          buccal: buccal || false,
+          lingual: lingual || false,
+        }),
+      },
+    })
+
     return NextResponse.json(entry, { status: 201 })
   } catch (error) {
     console.error('Error creating dental chart entry:', error)
