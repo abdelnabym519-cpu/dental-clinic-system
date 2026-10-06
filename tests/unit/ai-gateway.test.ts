@@ -102,6 +102,26 @@ describe('gateway configuration', () => {
     process.env = { ...ENV_SNAPSHOT }
   })
 
+  it('TIMEOUT CONTRACT: default is the measured 120s (reasoning model ~19 tok/s); explicit env stays authoritative', () => {
+    // no env set → measured default (the old 30s aborted mid-generation)
+    const cfg = getGatewayConfig()
+    expect(cfg.timeoutMs).toBe(120_000)
+    // explicit env knob is authoritative (ops + tests win)
+    process.env.DEN_TORA_AI_TIMEOUT_MS = '5000'
+    expect(getGatewayConfig().timeoutMs).toBe(5000)
+    delete process.env.DEN_TORA_AI_TIMEOUT_MS
+  })
+
+  it('isAIUnavailableError classifies the typed contract structurally (mock/bundle-safe)', async () => {
+    const { isAIUnavailableError } = await import('@/lib/ai/gateway')
+    for (const code of ['AI_NOT_CONFIGURED', 'AI_TIMEOUT', 'AI_PROVIDER_ERROR']) {
+      expect(isAIUnavailableError(Object.assign(new Error('x'), { name: 'AIUnavailableError', code }))).toBe(true)
+    }
+    expect(isAIUnavailableError(new TypeError('fetch failed'))).toBe(false)
+    expect(isAIUnavailableError('string error')).toBe(false)
+    expect(isAIUnavailableError(null)).toBe(false)
+  })
+
   it('isGatewayConfigured requires all three identifiers', () => {
     expect(isGatewayConfigured()).toBe(true)
     delete process.env.CLOUDFLARE_API_TOKEN

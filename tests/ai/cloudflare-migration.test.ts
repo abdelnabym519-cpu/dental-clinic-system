@@ -154,13 +154,26 @@ describe('Cloudflare AI migration — architectural audit', () => {
   })
 
   // ── A8: no-show risk fails truthfully ───────────────────────────────────
-  it('A8: no-show risk maps typed AI unavailability to a truthful 503 (no leakage)', () => {
+  it('A8: AI routes classify typed unavailability through the ONE canonical check (truthful 503)', () => {
     const src = read(join(ROOT, 'app', 'api', 'ai', 'no-show-risk', 'route.ts'))
-    expect(src).toContain("name === 'AIUnavailableError'")
+    // the shared classification helper — every AI route must use this, not
+    // ad-hoc per-route duck typing
+    expect(src).toContain('isAIUnavailableError(error)')
     expect(src).toContain('503')
+    expect(src).toContain('isAIUnavailableError(error)')
     expect(src).not.toMatch(/OPENROUTER|error\.message \|\|/)
     // the deterministic heuristic fallback for malformed model output is intact
     expect(src).toMatch(/Fallback: use simple heuristic/)
+    // every forecast/analysis AI route maps typed failures through the helper
+    const aiRoutes = ['inventory-forecast', 'cashflow-forecast', 'claim-analysis', 'patient-segments']
+    for (const r of aiRoutes) {
+      expect(read(join(ROOT, 'app', 'api', 'ai', r, 'route.ts')), r).toContain('isAIUnavailableError')
+    }
+    // the NL-query route keeps its richer dual-outcome classifier (typed
+    // unavailability → 503 AI_UNAVAILABLE vs unparseable model answer → 400
+    // PARSE_FAILED); its typed-unavailability leg is still contract-first
+    const querySrc = read(join(ROOT, 'app', 'api', 'ai', 'query', 'route.ts'))
+    expect(querySrc).toContain("err.name === 'AIUnavailableError'")
   })
 
   // ── A9: local dental engines remain local ───────────────────────────────

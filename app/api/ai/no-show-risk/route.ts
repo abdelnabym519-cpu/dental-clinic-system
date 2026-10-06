@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { complete, extractJSON } from '@/lib/ai/gateway'
+import { complete, extractJSON, isAIUnavailableError } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 
 /**
@@ -189,20 +189,10 @@ Use patient history as primary factor. Return ONLY valid JSON array, no markdown
     // heuristic fallback above still covers malformed model output, but an
     // absent gateway is never disguised as AI success (Issue-4 rule).
     console.error('No-show risk error:', error)
-    // Structural check (not instanceof) so module mocks and cross-bundle
-    // instances still match; the gateway contract guarantees name/code/
-    // correlationId on AIUnavailableError, which is the only shape granted
-    // the 503 path below.
-    const aiErr = error as Error & { code?: string; correlationId?: string }
-    const isAIUnavailable =
-      aiErr instanceof Error &&
-      (aiErr.name === 'AIUnavailableError' ||
-        aiErr.code === 'AI_NOT_CONFIGURED' ||
-        aiErr.code === 'AI_TIMEOUT' ||
-        aiErr.code === 'AI_PROVIDER_ERROR')
-    if (isAIUnavailable) {
+    // Canonical typed-unavailability check (shared with every AI route).
+    if (isAIUnavailableError(error)) {
       return NextResponse.json(
-        { error: aiErr.message, code: aiErr.code, correlationId: aiErr.correlationId },
+        { error: error.message, code: error.code, correlationId: error.correlationId },
         { status: 503 }
       )
     }

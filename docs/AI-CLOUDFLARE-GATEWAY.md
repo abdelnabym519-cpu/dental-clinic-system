@@ -32,7 +32,7 @@ do **not** traverse the gateway — vision/3D stay local by architecture
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account id (pattern-validated before URL composition) |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token — **secret**, server-only, never client-exposed |
 | `CLOUDFLARE_AI_GATEWAY_ID` | Gateway id (pattern-validated) |
-| `DEN_TORA_AI_TIMEOUT_MS` | Request timeout (default 30000) |
+| `DEN_TORA_AI_TIMEOUT_MS` | Request timeout (default **120000**). Measured contract: the reasoning model generates at ≈19 tokens/s (external datapoint: 5.27s for a 100-token budget), and reasoning models routinely spend hundreds of tokens thinking before content — the previous 30s default aborted mid-generation. |
 | `DEN_TORA_AI_MAX_TOKENS` | Completion token budget when the tier config carries none (default 4096). Reasoning models can exhaust a small budget before emitting content — the gateway then fails truthfully and names this knob. |
 | `DEN_TORA_AI_MODEL` | Default-tier model override |
 | `DEN_TORA_AI_FAST_MODEL` | Fast tier override (chat / command / fast) |
@@ -80,6 +80,34 @@ application never handles them.
 Each request logs a structured `[ai-gateway]` line: correlation id, model,
 latency, token usage, outcome (`attempt|success|fallback|failure`).
 Logs never contain keys, authorization headers, prompts, or patient data.
+
+## Failure taxonomy (typed, observable)
+
+Every AI route maps gateway failures through the ONE canonical check
+(`isAIUnavailableError`) to a truthful **503** carrying the Arabic-safe
+message + `code` + `correlationId` — never a raw 500, never a leaked
+environment/provider string. Deterministic (non-LLM) fallbacks keep working
+independently and are labeled as such.
+
+| Class | Gateway `code` | Typical cause | Route behavior |
+|---|---|---|---|
+| `AI_NOT_CONFIGURED` | configuration missing/invalid | env not set, malformed model | 503 + Arabic guidance |
+| `AI_TIMEOUT` | abort after `DEN_TORA_AI_TIMEOUT_MS` | slow reasoning generation | 503 (Arabic) |
+| `AI_PROVIDER_ERROR` | non-OK status, network, empty/reasoning-only content | provider rejection, egress, budget exhaustion | 503 (Arabic; CF `cfErrorCode`/`cfErrorMessage` in server log) |
+
+Client error text NEVER carries tokens, provider bodies, or env names.
+
+## E2E LLM harness
+
+`node scripts/llm-e2e.mjs` — deterministic gateway-contract + failure-taxonomy
+probes (no network required). `node scripts/llm-e2e.mjs --live` — real
+Cloudflare inference through the canonical gateway from an environment with
+`CLOUDFLARE_*` credentials (prints latency, model, content length; never
+secrets). `--base-url http://localhost:3000` additionally proves the running
+app's auth boundary. Taxonomy: `SUCCESS | CONFIGURATION | AUTHENTICATION |
+ROUTING | PROVIDER_REJECTION | TIMEOUT | NETWORK | INVALID_RESPONSE |
+EMPTY_RESPONSE | APPLICATION_ERROR`. Only `--live` probes can report SUCCESS
+(real inference); deterministic probes verify the contract.
 
 ## Runtime status (admin diagnostic)
 

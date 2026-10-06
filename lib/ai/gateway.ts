@@ -66,7 +66,8 @@ export interface CompletionResponse {
   model: string
 }
 
-/** Typed failure so features can distinguish "LLM unavailable" from bugs. */
+/**
+ * Typed failure so features can distinguish "LLM unavailable" from bugs. */
 export class AIUnavailableError extends Error {
   readonly code: 'AI_NOT_CONFIGURED' | 'AI_TIMEOUT' | 'AI_PROVIDER_ERROR'
   readonly correlationId: string
@@ -80,6 +81,22 @@ export class AIUnavailableError extends Error {
     this.code = code
     this.correlationId = correlationId
   }
+}
+
+/**
+ * Structural check for the typed unavailability contract (mock/bundle-safe:
+ * no instanceof dependency). This is the ONE canonical classification all
+ * routes share — an AI-capability outage must surface as 503, never as a
+ * raw 500 or a leaked environment/provider string.
+ */
+export function isAIUnavailableError(err: unknown): err is AIUnavailableError {
+  if (!(err instanceof Error)) return false
+  return (
+    err.name === 'AIUnavailableError' ||
+    (err as { code?: string }).code === 'AI_NOT_CONFIGURED' ||
+    (err as { code?: string }).code === 'AI_TIMEOUT' ||
+    (err as { code?: string }).code === 'AI_PROVIDER_ERROR'
+  )
 }
 
 // ── Configuration (server-only; never imported by client code) ─────────────
@@ -113,7 +130,13 @@ export function getGatewayConfig(): GatewayConfig {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || ''
   const apiToken = process.env.CLOUDFLARE_API_TOKEN || ''
   const gatewayId = process.env.CLOUDFLARE_AI_GATEWAY_ID || ''
-  const timeoutMs = Number(process.env.DEN_TORA_AI_TIMEOUT_MS) || 30_000
+  // Measured timeout contract: the configured reasoning model generates at
+  // roughly 19 tokens/second (external datapoint: 5.27s for a 100-token
+  // budget). Reasoning models routinely spend hundreds of tokens thinking
+  // before content, so production budgets (4096-8192) legitimately need
+  // 15-120s+. The previous 30s default aborted mid-generation (AI_TIMEOUT at
+  // ~30,000ms). DEN_TORA_AI_TIMEOUT_MS stays the authoritative ops knob.
+  const timeoutMs = Number(process.env.DEN_TORA_AI_TIMEOUT_MS) || 120_000
 
   if (!accountId || !apiToken || !gatewayId) {
     throw new AIUnavailableError(

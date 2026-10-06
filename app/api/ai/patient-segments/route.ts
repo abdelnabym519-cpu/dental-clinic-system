@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { complete, extractJSON } from '@/lib/ai/gateway'
+import { complete, extractJSON, isAIUnavailableError } from '@/lib/ai/gateway'
 import { getModelByTier } from '@/lib/ai/models'
 
 /**
@@ -214,9 +214,20 @@ Return ONLY valid JSON, no markdown.`,
     return NextResponse.json({ ...result, model: response.model })
   } catch (error: any) {
     console.error('Patient segmentation error:', error)
+    // Typed AI unavailability (not configured / timeout / provider rejection)
+    // is a truthful 503 with the gateway's Arabic-safe message — never a raw
+    // 500 and never a leaked environment/provider string. The deterministic
+    // fallback above still covers malformed model output; an absent LLM is
+    // never disguised as AI success (Issue-4 rule).
+    if (isAIUnavailableError(error)) {
+      return NextResponse.json(
+        { error: error.message, code: error.code, correlationId: error.correlationId },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
-      { error: error.message || 'Failed to generate segments' },
-      { status: error.message?.includes('Unauthorized') ? 401 : 500 }
+      { error: 'تعذر إنشاء التقرير حاليًا. حاول مرة أخرى.' },
+      { status: 500 }
     )
   }
 }
