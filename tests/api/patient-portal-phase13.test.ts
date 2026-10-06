@@ -392,6 +392,7 @@ describe('GET /api/patient-portal/prescriptions/[id]/pdf (Phase 13)', () => {
       pdfUrl: null,
       diagnosis: 'Caries',
       notes: null,
+      patient: { dateOfBirth: new Date('1990-05-01') }, // age line source (staff-PDF parity)
       doctor: { firstName: 'Laila', lastName: 'Khaled' },
       medications: [
         { medicationName: 'Amoxicillin', dosage: '500mg', frequency: 'BD', duration: '7 days', instructions: 'After meals' },

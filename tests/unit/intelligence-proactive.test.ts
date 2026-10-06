@@ -26,7 +26,7 @@ const hoursAhead = (n: number) => new Date(NOW.getTime() + n * 3_600_000)
 
 type InsightRow = Record<string, unknown>
 
-/** createFakePrisma + a stateful aiInsight delegate (findMany/create/updateMany). */
+/** createFakePrisma + a stateful aIInsight delegate (findMany/create/updateMany). */
 function makeDb(extra: Record<string, unknown[]> = {}) {
   const rows: InsightRow[] = []
   const base = createFakePrisma({ aiAnalysisJob: [], ...extra } as never) as unknown as Record<string, unknown>
@@ -51,7 +51,7 @@ function makeDb(extra: Record<string, unknown[]> = {}) {
       return { count }
     },
   }
-  base.aiInsight = delegate
+  base.aIInsight = delegate
   return { db: base as unknown as AlertPrisma, rows }
 }
 

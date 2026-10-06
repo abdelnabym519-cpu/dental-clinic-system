@@ -256,26 +256,26 @@ describe('Billing Utils - getDueDays', () => {
     const result = getDueDays('2024-06-10')
     expect(result.isOverdue).toBe(true)
     expect(result.days).toBe(5)
-    expect(result.label).toBe('5 days overdue')
+    expect(result.label).toBe('متأخرة 5 يوم')
   })
 
   it('should return days until due for future dates', () => {
     const result = getDueDays('2024-06-20')
     expect(result.isOverdue).toBe(false)
     expect(result.days).toBe(5)
-    expect(result.label).toBe('Due in 5 days')
+    expect(result.label).toBe('تستحق خلال 5 يوم')
   })
 
   it('should handle due today', () => {
     const result = getDueDays('2024-06-15')
     expect(result.isOverdue).toBe(false)
     expect(result.days).toBe(0)
-    expect(result.label).toBe('Due today')
+    expect(result.label).toBe('مستحقة اليوم')
   })
 
   it('should handle null due date', () => {
     const result = getDueDays(null)
-    expect(result.label).toBe('No due date')
+    expect(result.label).toBe('لا يوجد تاريخ استحقاق')
   })
 })
 

@@ -17,7 +17,7 @@ import type { DataState, IntelligenceItem } from './types'
 
 export type ClinicPrisma = GraphPrisma & {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  aiInsight?: { findMany: (a?: { where?: Record<string, unknown> }) => Promise<Record<string, any>[]> }
+  aIInsight?: { findMany: (a?: { where?: Record<string, unknown> }) => Promise<Record<string, any>[]> }
 }
 
 export interface ClinicOpsMetrics {

@@ -74,7 +74,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run test && npm run test:e2e",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run lint && npm test -- --run && npm run build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",

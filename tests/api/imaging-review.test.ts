@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { Prisma } from '@prisma/client'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -207,7 +208,8 @@ describe('review decisions (D11 + D12)', () => {
     expect(res.status).toBe(200)
 
     const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
-    expect(upd.data.acceptedFindings).toBeNull()
+    // Prisma.JsonNull is the explicit JSON-null write (REJECTED ⇒ no findings stored)
+    expect(upd.data.acceptedFindings).toBe(Prisma.JsonNull)
     expect(prisma.auditLog.create.mock.calls[0][0].data.action).toBe('AI_FINDING_REJECTED')
   })
 
