@@ -36,7 +36,7 @@ export async function GET() {
   }
   const { hospitalId } = auth
   const now = new Date()
-  const rows = (await prisma.aIInsight.findMany({
+  const rows = (await prisma.aiInsight.findMany({
     where: {
       hospitalId,
       category: { in: ['CLINICAL', 'OPERATIONAL', 'PATIENT'] },

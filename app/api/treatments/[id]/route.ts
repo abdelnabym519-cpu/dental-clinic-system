@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { validateEditablePrice } from '@/lib/money'
 
 // GET - Get single treatment with all details
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -97,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية تعديل جلسات العلاج" },
+        { error: "You don't have permission to update treatments" },
         { status: 403 }
       )
     }
@@ -126,16 +125,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const updateData: any = {}
-
-    // Issue 7 — the treatment charge is an editable pre-invoice price, so it
-    // follows the same canonical rule. Zero is rejected on purpose: creation
-    // treats `cost || procedure.basePrice`, so 0 was never a stored price.
-    if (body.cost !== undefined) {
-      const price = validateEditablePrice(body.cost)
-      if (!price.ok) {
-        return NextResponse.json({ error: price.error }, { status: 400 })
-      }
-    }
 
     // Only update fields that are provided
     if (body.toothNumbers !== undefined) updateData.toothNumbers = body.toothNumbers

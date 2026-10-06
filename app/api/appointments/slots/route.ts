@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { resolveDayWorkingWindow } from '@/lib/working-hours'
 
 // GET - Get available time slots for a doctor on a specific date
 export async function GET(request: NextRequest) {
@@ -21,39 +20,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Doctor ID and date are required' }, { status: 400 })
     }
 
-    const dateObj = new Date(date)
-
-    // Get hospital working hours — canonicalized through lib/working-hours
-    // (accepts BOTH stored shapes: flat {start,end,lunch…} and the onboarding
-    // per-day {monday:{open,close,closed}, …}). The old code read `.start`
-    // directly and 500-ed on the per-day shape — the live "no available
-    // appointments for any date" defect.
+    // Get hospital working hours (default 9 AM to 9 PM)
     const hospital = await prisma.hospital.findUnique({
       where: { id: hospitalId },
       select: { workingHours: true },
     })
 
-    const hospitalWindow = resolveDayWorkingWindow(hospital?.workingHours ?? null, dateObj.getDay())
+    let workingHours = { start: '09:00', end: '21:00', lunchStart: '13:00', lunchEnd: '14:00' }
 
-    if (hospitalWindow.closed) {
-      return NextResponse.json({
-        available: false,
-        reason: 'العيادة مقفولة في هذا اليوم حسب ساعات العمل المسجلة',
-        slots: [],
-      })
+    if (hospital?.workingHours) {
+      try {
+        workingHours = JSON.parse(hospital.workingHours)
+      } catch (e) {
+        // Use defaults
+      }
     }
-
-    const workingHours = {
-      start: hospitalWindow.start,
-      end: hospitalWindow.end,
-      // Lunch break only exists in the canonical shape; per-day data has none.
-      lunchStart: hospitalWindow.lunchStart ?? '13:00',
-      lunchEnd: hospitalWindow.lunchEnd ?? '13:00',
-    }
-    // When there is no lunch window, keep the loop simple: an empty lunch.
-    const hasLunch = hospitalWindow.lunchStart != null && hospitalWindow.lunchEnd != null
 
     // Check if it's a holiday for this hospital
+    const dateObj = new Date(date)
     const holiday = await prisma.holiday.findFirst({
       where: {
         hospitalId,
@@ -78,9 +62,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Doctor not found' }, { status: 404 })
     }
 
-    // Get doctor's shift for the day of week. An INACTIVE shift means the
-    // doctor is intentionally off this day (/settings/working-hours) — the
-    // hospital-level fallback must NOT resurrect availability.
+    // Get doctor's shift for the day of week
     const dayOfWeek = dateObj.getDay()
     const doctorShift = await prisma.staffShift.findUnique({
       where: {
@@ -90,14 +72,6 @@ export async function GET(request: NextRequest) {
         },
       },
     })
-
-    if (doctorShift && !doctorShift.isActive) {
-      return NextResponse.json({
-        available: false,
-        reason: 'الطبيب مش متاح في هذا اليوم حسب ساعات العمل المسجلة',
-        slots: [],
-      })
-    }
 
     // Get existing appointments for the doctor on this date
     const existingAppointments = await prisma.appointment.findMany({
@@ -139,9 +113,8 @@ export async function GET(request: NextRequest) {
     while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
       const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`
 
-      // Check if slot is during lunch break (canonical shape only — the
-      // per-day onboarding shape carries no lunch window).
-      const isLunchTime = hasLunch &&
+      // Check if slot is during lunch break
+      const isLunchTime =
         (currentHour > lunchStartHour ||
           (currentHour === lunchStartHour && currentMin >= lunchStartMin)) &&
         (currentHour < lunchEndHour || (currentHour === lunchEndHour && currentMin < lunchEndMin))

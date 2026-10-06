@@ -40,7 +40,7 @@ let fetchMock
 
 function renderPanel(onReviewComplete = vi.fn()) {
   render(
-    <LanguageProvider initialLocale="ar-EG">
+    <LanguageProvider initialLocale="en-US">
       <DoctorReviewPanel jobId="job-1" findings={FINDINGS} onReviewComplete={onReviewComplete} />
       <Toaster />
     </LanguageProvider>
@@ -68,7 +68,7 @@ describe('DoctorReviewPanel — decision semantics', () => {
   it('accept-all posts ACCEPTED without acceptedFindings', async () => {
     const onReviewComplete = vi.fn()
     renderPanel(onReviewComplete)
-    fireEvent.click(screen.getByRole('button', { name: 'قبول الكل' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(fetchMock.mock.calls[0][0]).toBe('/api/imaging/jobs/job-1/review')
@@ -80,7 +80,7 @@ describe('DoctorReviewPanel — decision semantics', () => {
 
   it('accept-selected with every finding ticked still posts ACCEPTED', async () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: 'قبول المحدد' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept selected' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(lastRequestBody().decision).toBe('ACCEPTED')
   })
@@ -90,7 +90,7 @@ describe('DoctorReviewPanel — decision semantics', () => {
     const checkboxes = screen.getAllByRole('checkbox')
     fireEvent.click(checkboxes[1]) // untick the periapical finding
 
-    fireEvent.click(screen.getByRole('button', { name: 'قبول المحدد (2)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept selected (2)' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     const body = lastRequestBody()
     expect(body.decision).toBe('MODIFIED')
@@ -103,10 +103,10 @@ describe('DoctorReviewPanel — decision semantics', () => {
   it('reject-all asks for confirmation, then posts REJECTED', async () => {
     const onReviewComplete = vi.fn()
     renderPanel(onReviewComplete)
-    fireEvent.click(screen.getByRole('button', { name: 'رفض الكل' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reject all' }))
 
     // The confirmation dialog appears (portal); confirm it.
-    const confirmButtons = await screen.findAllByRole('button', { name: 'رفض الكل' })
+    const confirmButtons = await screen.findAllByRole('button', { name: 'Reject all' })
     fireEvent.click(confirmButtons[confirmButtons.length - 1])
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
@@ -116,18 +116,18 @@ describe('DoctorReviewPanel — decision semantics', () => {
 
   it('cancelling the confirmation posts nothing', async () => {
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: 'رفض الكل' }))
-    await waitFor(() => expect(screen.getByText('رفض جميع نتائج الذكاء الاصطناعي؟')).toBeTruthy())
-    fireEvent.click(screen.getByRole('button', { name: 'إلغاء' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reject all' }))
+    await waitFor(() => expect(screen.getByText('Reject all AI findings?')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('sends the doctor notes when provided', async () => {
     renderPanel()
-    fireEvent.change(screen.getByPlaceholderText('أضف ملاحظات سريرية (اختياري)'), {
+    fireEvent.change(screen.getByPlaceholderText('Add clinical notes (optional)'), {
       target: { value: 'Consistent with clinical exam.' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'قبول الكل' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     expect(lastRequestBody().reviewNotes).toBe('Consistent with clinical exam.')
   })
@@ -136,10 +136,10 @@ describe('DoctorReviewPanel — decision semantics', () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 409,
-      json: async () => ({ error: 'يمكن مراجعة المهام المكتملة فقط' }),
+      json: async () => ({ error: 'Only completed jobs can be reviewed' }),
     })
     renderPanel()
-    fireEvent.click(screen.getByRole('button', { name: 'قبول الكل' }))
-    await waitFor(() => expect(screen.getByText('يمكن مراجعة المهام المكتملة فقط')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
+    await waitFor(() => expect(screen.getByText('Only completed jobs can be reviewed')).toBeTruthy())
   })
 })

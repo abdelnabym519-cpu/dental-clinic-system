@@ -75,7 +75,7 @@ function mockFetchStudy() {
 
 function renderPage() {
   return render(
-    <LanguageProvider initialLocale="ar-EG">
+    <LanguageProvider initialLocale="en-US">
       <Page />
     </LanguageProvider>
   )
@@ -94,7 +94,7 @@ describe('Imaging study detail — MeshSegNet (Phase 20B)', () => {
     mockFetchStudy()
     renderPage()
 
-    await waitFor(() => expect(screen.getByText('تحليل المسح ثلاثي الأبعاد')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('3D scan analysis')).toBeTruthy())
 
     // 15 classes, all names present (neutral vocabulary, verbatim).
     expect(screen.getByText('Gingiva')).toBeTruthy()
@@ -106,18 +106,18 @@ describe('Imaging study detail — MeshSegNet (Phase 20B)', () => {
     expect(screen.getAllByText('2.6%')).toHaveLength(14)
     // The classes label + total share one <p> — match by substring.
     const summary = screen.getByText((content, el) =>
-      el?.tagName === 'P' && content?.includes('إجمالي النقاط: 19000')
+      el?.tagName === 'P' && content?.includes('Total points: 19000')
     )
-    expect(summary.textContent).toContain('الأصناف المكتشفة: 15')
-    expect(summary.textContent).toContain('إجمالي النقاط: 19000')
+    expect(summary.textContent).toContain('Detected classes: 15')
+    expect(summary.textContent).toContain('Total points: 19000')
   })
 
   it('shows a file card (no <img>) for the 3D original + a download link', async () => {
     mockFetchStudy()
     renderPage()
 
-    await waitFor(() => expect(screen.getByText('تنزيل الملف الأصلي')).toBeTruthy())
-    expect(screen.getByText('ملف شبكة ثلاثي الأبعاد (لا توجد معاينة ثنائية الأبعاد)')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('Download original file')).toBeTruthy())
+    expect(screen.getByText('3D mesh file (no 2D preview)')).toBeTruthy()
     expect(screen.getByText(/original\.obj/)).toBeTruthy()
 
     // A mesh is not an image: no <img> anywhere on the page (the annotated
@@ -129,12 +129,12 @@ describe('Imaging study detail — MeshSegNet (Phase 20B)', () => {
     mockFetchStudy()
     renderPage()
 
-    await waitFor(() => expect(screen.getByText('مسح ثلاثي الأبعاد · study-3d')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('3D scan · study-3d')).toBeTruthy())
 
     // Review controls are present for COMPLETED mesh jobs (ACCEPT/MODIFY/REJECT).
-    expect(screen.getByRole('button', { name: 'قبول النتائج' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'تعديل النتائج' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'رفض النتائج' })).toBeTruthy()
-    expect(screen.getByText('نتائج الذكاء الاصطناعي')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Accept findings' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Modify findings' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reject findings' })).toBeTruthy()
+    expect(screen.getByText('AI Findings')).toBeTruthy()
   })
 })

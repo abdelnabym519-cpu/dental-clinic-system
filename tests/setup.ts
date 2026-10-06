@@ -40,11 +40,7 @@ vi.mock('next/headers', () => ({
 process.env.DATABASE_URL = 'mysql://test:test@localhost:3306/dental_erp_test'
 process.env.NEXTAUTH_SECRET = 'test-secret-key-for-testing'
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
-// Cloudflare era: legacy OpenRouter key intentionally absent — the AI runtime
-// resolves through the Cloudflare AI Gateway (tests prove absence-safety).
-process.env.CLOUDFLARE_ACCOUNT_ID = 'cert-account'
-process.env.CLOUDFLARE_API_TOKEN = 'test-cf-token'
-process.env.CLOUDFLARE_AI_GATEWAY_ID = 'cert-gateway'
+process.env.OPENROUTER_API_KEY = 'test-openrouter-api-key'
 process.env.CRON_SECRET = 'test-cron-secret'
 process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2'
 process.env.TZ = 'Asia/Kolkata'

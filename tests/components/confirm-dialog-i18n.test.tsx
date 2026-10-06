@@ -52,11 +52,11 @@ describe('ConfirmDialog localization', () => {
     // Google stays Latin on purpose: it is a brand name inside an Arabic sentence
   })
 
-  it('stays Arabic even when an English locale is requested — Arabic-only lock', () => {
+  it('keeps the English rendering byte-identical for English locales', () => {
     renderDialog('en-EG')
-    expect(screen.getByText('إيقاف الدواء')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'إلغاء' })).toBeTruthy()
-    expect(screen.getByText('لن تُحذف أحداثك المتزامنة من Google.')).toBeTruthy()
+    expect(screen.getByText('Deactivate Medication')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy()
+    expect(screen.getByText("Your synced events won't be removed from Google.")).toBeTruthy()
   })
 
   it('translates the default action labels when a call site omits them', () => {

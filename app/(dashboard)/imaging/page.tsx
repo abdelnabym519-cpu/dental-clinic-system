@@ -155,7 +155,7 @@ export default function ImagingStudiesPage() {
       PROCESSING: { label: t('Processing'), className: 'bg-amber-100 text-amber-800' },
       COMPLETED: { label: t('Completed'), className: 'bg-green-100 text-green-800' },
       FAILED: { label: t('Failed'), className: 'bg-red-100 text-red-800' },
-      CANCELLED: { label: t('ملغي'), className: '' },
+      CANCELLED: { label: job.status, className: '' },
     }
     const s = map[job.status] ?? { label: job.status, className: '' }
     return <Badge className={s.className}>{s.label}</Badge>

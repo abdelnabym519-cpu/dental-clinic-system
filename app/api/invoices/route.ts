@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT', 'RECEPTIONIST'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية إنشاء الفواتير" },
+        { error: "You don't have permission to create invoices" },
         { status: 403 }
       )
     }

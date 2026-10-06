@@ -25,11 +25,7 @@ interface QueryResult {
   summary?: string
   rowCount?: number
   model?: string
-  /** Issue 4 — honesty labeling: 'ai' = real LLM path, 'deterministic' = local */
-  mode?: 'ai' | 'deterministic'
-  notice?: string
   error?: string
-  code?: string
 }
 
 /**
@@ -37,16 +33,6 @@ interface QueryResult {
  * Sends queries to POST /api/ai/query (whitelisted builders) and renders
  * results as a dynamic table.  Supports exporting results as JSON.
  */
-// Issue 4 — pre-built reports run WITHOUT the language model (direct
-// whitelisted queries), so the reports page stays useful when the
-// Cloudflare AI Gateway is not configured or unreachable.
-const PRESET_REPORTS = [
-  { label: 'تقرير المرضى الجدد هذا الشهر', preset: 'new_patients_monthly' },
-  { label: 'إيرادات هذا الشهر', preset: 'revenue_monthly' },
-  { label: 'المواعيد الملغاة', preset: 'cancelled_appointments' },
-  { label: 'أكثر الإجراءات طلباً', preset: 'top_procedures' },
-] as const
-
 export function ReportBuilder() {
   const { t } = useLanguage()
   const [query, setQuery] = useState('')
@@ -55,34 +41,29 @@ export function ReportBuilder() {
   const [history, setHistory] = useState<string[]>([])
 
   // ---------------------------------------------------------------
-  const runPayload = useCallback(async (payload: Record<string, unknown>) => {
+  const execute = useCallback(async () => {
+    if (!query.trim() || loading) return
     setLoading(true)
     setResult(null)
     try {
       const res = await fetch('/api/ai/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ query: query.trim() }),
       })
       const data = await res.json()
       if (res.ok) {
         setResult({ success: true, ...data })
       } else {
-        setResult({ success: false, error: data.error || 'تعذر تنفيذ الاستعلام', code: data.code })
+        setResult({ success: false, error: data.error || 'Query failed' })
       }
-      if (typeof payload.query === 'string') {
-        setHistory((prev) => [payload.query as string, ...prev.filter((h) => h !== payload.query)].slice(0, 10))
-      }
+      setHistory((prev) => [query.trim(), ...prev.filter((h) => h !== query.trim())].slice(0, 10))
     } catch {
-      setResult({ success: false, error: 'تعذر تنفيذ الاستعلام — تحقق من الاتصال' })
+      setResult({ success: false, error: 'Failed to execute query' })
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  const execute = useCallback(() => runPayload({ query: query.trim() }), [runPayload, query])
-
-  const runPreset = useCallback((preset: string) => runPayload({ preset }), [runPayload])
+  }, [query, loading])
 
   // ---------------------------------------------------------------
   const exportJSON = () => {
@@ -152,21 +133,6 @@ export function ReportBuilder() {
         ))}
       </div>
 
-      {/* Issue 4 — pre-built reports: direct DB queries, no LLM needed */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-2">
-        <span className="text-xs font-medium text-muted-foreground px-1">{t('تقارير جاهزة (بدون ذكاء اصطناعي):')}</span>
-        {PRESET_REPORTS.map((pr) => (
-          <button
-            key={pr.preset}
-            onClick={() => runPreset(pr.preset)}
-            disabled={loading}
-            className="rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs hover:bg-primary/20 transition-colors disabled:opacity-40"
-          >
-            {pr.label}
-          </button>
-        ))}
-      </div>
-
       {/* recent history (shown when idle) */}
       {history.length > 0 && !result && !loading && (
         <div>
@@ -206,24 +172,9 @@ export function ReportBuilder() {
             </div>
           )}
 
-          {/* Issue 4 — honesty notice: a deterministic report says so, it never
-              claims AI inference that did not happen */}
-          {result.success && result.mode === 'deterministic' && (
-            <div className="px-3 py-2 bg-muted/40 border-b" data-testid="deterministic-notice">
-              <p className="text-xs text-muted-foreground">{result.notice}</p>
-            </div>
-          )}
-
-          {/* error — friendly Arabic only, never a raw payload */}
+          {/* error */}
           {!result.success && (
-            <div className="p-3 text-sm text-red-600 space-y-1">
-              <p>{result.error || t("Query failed")}</p>
-              {result.code === 'AI_UNAVAILABLE' && (
-                <p className="text-xs text-muted-foreground">
-                  {t('للتفعيل: أضف بيانات Cloudflare AI Gateway (معرّف الحساب والبوابة والرمز) في ملف .env على الخادم، واختر النموذج عبر DEN_TORA_AI_MODEL، ثم أعد تشغيل النظام.')}
-                </p>
-              )}
-            </div>
+            <div className="p-3 text-sm text-red-600">{result.error || t("Query failed")}</div>
           )}
 
           {/* data table */}

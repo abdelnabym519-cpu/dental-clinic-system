@@ -11,7 +11,6 @@
  */
 
 import { isValidFdi } from '@/lib/ai/context/fdi'
-import { latinFormsFor } from '@/lib/ai/entity/name-matching'
 import {
   extractToothCandidates,
   normalizeTranscript,
@@ -59,37 +58,6 @@ function matchesAny(normalized: string, patterns: string[]): boolean {
  * CONFIRM here is only a candidate — real confirmation binding is enforced
  * in security.ts (session state + freshness + single pending approval).
  */
-/**
- * The content AFTER a leading control phrase, when the utterance is an
- * INTERRUPTION WITH CONTENT ('استنى، قصدي الأسبوع ده' → 'قصدي الأسبوع ده').
- * Deterministic: the utterance must START with a control word (punctuation
- * between the word and the rest is tolerated — 'استنى، …'), the leading
- * control words + connectors are stripped, and a non-empty remainder means
- * the doctor SAID something after the stop — capture it as the real turn.
- * A pure control utterance returns null (bare stop → ack path).
- */
-export function remainderAfterControlPhrase(normalizedText: string): string | null {
-  const strip = new Set([...INTERRUPT_PATTERNS, ...CANCEL_PATTERNS, 'يا'])
-  const clean = (w: string) => w.replace(/[،,.:;!?؟]+/g, '')
-  let words = normalizedText.trim().split(/\s+/).filter(Boolean)
-  // first word (punctuation-stripped) must be a control word
-  if (!words.length || !strip.has(clean(words[0]!))) return null
-  let anyRemoved = false
-  while (words.length) {
-    const c = clean(words[0]!)
-    if (strip.has(c)) {
-      anyRemoved = true
-      words = words.slice(1)
-      continue
-    }
-    break
-  }
-  // drop separators glued to the control words
-  words = words.map((w) => w.replace(/^[،,]+\s*/, ''))
-  const remainder = words.join(' ').trim()
-  return anyRemoved && remainder ? remainder : null
-}
-
 export function matchControlPhrase(text: string): ControlPhraseKind {
   // Normalize defensively so callers may pass raw STT text (hamza/ى folding
   // must not hide control words like أسكت / أكد).
@@ -211,14 +179,6 @@ function cleanHintToken(t: string | null | undefined): string | null {
 const AR_NON_NAME = new Set([
   'عنده', 'عندها', 'عندهم', 'عند', 'في', 'من', 'الي', 'الى',
   'ده', 'دي', 'اللي', 'مع', 'عن', 'الذي', 'التي', 'لا', 'ما',
-  // temporal words directly after 'المريض' are DATE constraints, not the
-  // patient's name ('مواعيد المريض النهاردة' = the patient's appointments
-  // TODAY — probing 'النهاردة' as a name produced a bogus NOT_FOUND that
-  // interrupted the request before the agent could ask for the identity).
-  'النهاردة', 'النهارده', 'اليوم', 'بكرة', 'بكده', 'امبارح', 'امس',
-  // possessive pronouns + identity-clause scaffolding name a RELATION,
-  // never a patient ('المواعيد بتاعه' = his appointments).
-  'بتاعه', 'بتاعها', 'بتاعهم', 'بتاعتها', 'بتاعته', 'اللي', 'الذي', 'التي', 'اسمه', 'اسمها', 'اسم', 'الاسم',
 ])
 
 export function extractPatientNameHint(text: string): PatientNameHint | null {
@@ -230,17 +190,11 @@ export function extractPatientNameHint(text: string): PatientNameHint | null {
   const ar = text.match(new RegExp('المريض\\s+(' + AR_NAME_CHARS + '+)(?:\\s+(' + AR_NAME_CHARS + '+))?'))
   if (ar) {
     const first = cleanHintToken(ar[1])
-    // The FIRST token must itself be a plausible name: 'المريض اللي عليه
-    // مراجعة النهارده' is a clinic-level relative clause — extracting 'اللي'
-    // would fail resolution and clarify BEFORE the agent ever sees that the
-    // request needs no patient at all.
     const second = cleanHintToken(ar[2])
-    if (first && !AR_NON_NAME.has(first) && first !== 'اللي' && first !== 'الذي' && first !== 'التي') {
-      // A second token is a last name ONLY when it is not a following
-      // preposition/verb ("المريض منى عنده..." → first=منى, last=null).
-      const last = second && !AR_NON_NAME.has(second) ? second : null
-      return { first, last }
-    }
+    // A second token is a last name ONLY when it is not a following
+    // preposition/verb ("المريض منى عنده..." → first=منى, last=null).
+    const last = second && !AR_NON_NAME.has(second) ? second : null
+    if (first) return { first, last }
   }
   return null
 }
@@ -283,19 +237,12 @@ export async function resolvePatientReference(
     select: { id: true, firstName: true, lastName: true },
   })
 
-  // Bounded Arabic→Latin renderings of the hint ('أحمد' → 'ahmed'): Egyptian
-  // records often store LATIN names while doctors speak Arabic. Same
-  // exact → unique-contains → ambiguous-clarify semantics; never a guess.
-  const latinFirst = latinFormsFor(hintFirst)
-  const matchesFirst = (nf: string): boolean => nf === hintFirst || latinFirst.includes(nf)
-  const containsFirst = (nf: string): boolean => nf.includes(hintFirst) || latinFirst.some((f) => nf.includes(f))
-
   // Normalization-aware verification of the DB-level candidates.
   const exact = rows.filter((p) => {
     const nf = norm(p.firstName)
     const nl = norm(p.lastName)
-    if (hintLast) return matchesFirst(nf) && nl === norm(hintLast)
-    return matchesFirst(nf)
+    if (hintLast) return nf === hintFirst && nl === hintLast
+    return nf === hintFirst
   })
   if (exact.length === 1) {
     const p = exact[0]!
@@ -313,8 +260,8 @@ export async function resolvePatientReference(
   const contains = rows.filter((p) => {
     const nf = norm(p.firstName)
     const nl = norm(p.lastName)
-    if (hintLast) return (containsFirst(nf) || nl.includes(norm(hintLast)))
-    return containsFirst(nf)
+    if (hintLast) return (nf.includes(hintFirst) || nl.includes(hintLast))
+    return nf.includes(hintFirst)
   })
   if (contains.length === 1) {
     const p = contains[0]!

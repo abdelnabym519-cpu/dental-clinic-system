@@ -1,6 +1,5 @@
 /**
- * AI model configuration — tiered, configuration-driven routing through the
- * Cloudflare AI Gateway (see lib/ai/gateway.ts for the transport).
+ * AI Model configuration for OpenRouter.
  * Maps task types to the optimal model + parameters.
  *
  * Cost tiers (approximate per 1M tokens):
@@ -83,38 +82,9 @@ export const SKILL_MODEL_MAP: Record<string, string> = {
 }
 
 export function getModelForSkill(skillName: string): ModelConfig {
-  return applyModelOverride(AI_MODELS[SKILL_MODEL_MAP[skillName]] || AI_MODELS.default, SKILL_MODEL_MAP[skillName] || 'default')
+  return AI_MODELS[SKILL_MODEL_MAP[skillName] || 'default']
 }
 
 export function getModelByTier(tier: string): ModelConfig {
-  return applyModelOverride(AI_MODELS[tier] || AI_MODELS.default, tier)
-}
-
-/**
- * Cloudflare migration — configuration-driven model routing. An env override
- * for a tier wins over the built-in default, so the default LLM can change
- * without touching feature code. Tiers map to env vars as:
- *   default/reports/query/scheduling/billing/insights → DEN_TORA_AI_MODEL
- *   fast/chat/command                                 → DEN_TORA_AI_FAST_MODEL
- *   clinical (safety-critical reasoning)              → DEN_TORA_AI_REASONING_MODEL
- * The FALLBACK model lives in DEN_TORA_AI_FALLBACK_MODEL and is applied by
- * lib/ai/gateway.ts (explicit, observable fallback — not silently per tier).
- */
-const TIER_ENV: Record<string, string> = {
-  default: 'DEN_TORA_AI_MODEL',
-  reports: 'DEN_TORA_AI_MODEL',
-  query: 'DEN_TORA_AI_MODEL',
-  scheduling: 'DEN_TORA_AI_MODEL',
-  billing: 'DEN_TORA_AI_MODEL',
-  insights: 'DEN_TORA_AI_MODEL',
-  fast: 'DEN_TORA_AI_FAST_MODEL',
-  chat: 'DEN_TORA_AI_FAST_MODEL',
-  command: 'DEN_TORA_AI_FAST_MODEL',
-  clinical: 'DEN_TORA_AI_REASONING_MODEL',
-}
-
-function applyModelOverride(config: ModelConfig, tier: string): ModelConfig {
-  const envName = TIER_ENV[tier]
-  const override = envName ? process.env[envName] : undefined
-  return override ? { ...config, model: override } : config
+  return AI_MODELS[tier] || AI_MODELS.default
 }

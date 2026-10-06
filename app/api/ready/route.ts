@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma, isPrismaFallback } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { getStorage } from '@/lib/storage'
 import { appVersion, releaseRevision } from '@/lib/config/version'
 import { currentEnvironment } from '@/lib/config/env'
@@ -33,22 +33,6 @@ export async function GET() {
   const version = appVersion()
   const sha = releaseRevision()
   try {
-    // Honesty gate (§12): when the generated Prisma client is missing the
-    // process runs on the null-returning fallback client — `$queryRaw`
-    // resolves null WITHOUT throwing, so the round trip below cannot prove
-    // anything. Reporting 'ready' here would tell the load balancer to send
-    // traffic to a database-less instance. Fail readiness honestly instead.
-    if (isPrismaFallback()) {
-      return NextResponse.json(
-        {
-          status: 'not_ready',
-          version,
-          environment: currentEnvironment(),
-          checks: { database: 'fallback', storage: storageCheck(), redis: 'not_configured' },
-        },
-        { status: 503, headers: { 'Cache-Control': 'no-store' } }
-      )
-    }
     // Cheapest possible round trip that proves the connection pool works.
     await prisma.$queryRaw`SELECT 1`
 

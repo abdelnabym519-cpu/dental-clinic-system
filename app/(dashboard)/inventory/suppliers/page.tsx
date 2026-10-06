@@ -228,7 +228,7 @@ export default function SuppliersPage() {
       {/* Add Supplier Modal - Placeholder */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{t('Add New Supplier')}</h2>
             <p className="text-muted-foreground mb-4">
               {t("Supplier form will be implemented here. For now, please use the API directly or create a dedicated page.")}

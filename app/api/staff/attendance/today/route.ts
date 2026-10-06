@@ -90,6 +90,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching today's attendance:", error)
-    return NextResponse.json({ error: "تعذر تحميل حضور اليوم" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch today's attendance" }, { status: 500 })
   }
 }

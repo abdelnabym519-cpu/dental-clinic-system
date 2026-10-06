@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete, extractJSON } from '@/lib/ai/gateway'
+import { complete, extractJSON } from '@/lib/ai/openrouter'
 import { AI_MODELS } from '@/lib/ai/models'
 import { ENTITY_SCHEMAS } from '@/lib/import/schema-definitions'
 
@@ -100,7 +100,7 @@ Map each source column to the most appropriate target field.`
         confidence: emptyConfidence,
         unmappedRequired: schema.fields.filter((f) => f.required).map((f) => f.name),
         splitFields: [],
-        aiError: 'مطابقة الأعمدة بالذكاء الاصطناعي غير متاحة — الرجاء المطابقة يدويًا.',
+        aiError: 'AI mapping unavailable. Please map columns manually.',
       })
     }
 
@@ -124,7 +124,7 @@ Map each source column to the most appropriate target field.`
           confidence: {},
           unmappedRequired: schema.fields.filter((f) => f.required).map((f) => f.name),
           splitFields: [],
-          aiError: 'تعذر تحليل استجابة الذكاء الاصطناعي — الرجاء مطابقة الأعمدة يدويًا.',
+          aiError: 'Could not parse AI response. Please map columns manually.',
         })
       }
     }

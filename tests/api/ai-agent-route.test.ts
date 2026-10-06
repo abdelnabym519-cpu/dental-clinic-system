@@ -40,7 +40,7 @@ vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: async () => store.requireAuth,
 }))
 
-vi.mock('@/lib/ai/gateway', () => ({
+vi.mock('@/lib/ai/openrouter', () => ({
   complete: async () => ({ content: 'ok', model: 'test', usage: {} }),
 }))
 

@@ -205,10 +205,6 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         setClarification(data.clarification ? (locale === 'ar-EG' ? data.clarification.questionAr : data.clarification.questionEn) : null)
         if (data.error) setError(data.error.code)
         else setError(null)
-        // Server-confirmed barge-in (§7): the turn arrived during active
-        // speech — cancel TTS NOW so the doctor hears the answer, not the
-        // tail of the interrupted sentence.
-        if (data.interrupted) stopSpeaking()
         if (data.speakableText) {
           if (userTurnText) {
             setTurns((t) => [...t, { role: 'assistant', content: data.speakableText ?? '', at: new Date().toISOString(), state: data.state }])
@@ -228,28 +224,14 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   )
 
   // ---- Recognition ---------------------------------------------------------
-  // Turn-taking client contract (§5): the recognizer runs CONTINUOUSLY and
-  // auto-restarts when the browser ends it — a short pause no longer kills
-  // the listen (the server turn manager holds incomplete fragments and
-  // combines them, so pause-finalized fragments still form ONE turn).
-  // Natural barge-in: the recognizer keeps running while the robot speaks
-  // (browser echo cancellation); the doctor's speech reaches the server as a
-  // SPEAK turn during SPEAKING and the server's interruption contract
-  // (interrupted:true) stops playback without destroying state.
-  const wantListenRef = useRef(false)
-  // Late-bound self-reference: the recognizer's onend restarts listening
-  // (continuous turn-taking) without a TDZ self-closure.
-  const startListeningRef = useRef<() => void>(() => {})
   const startListening = useCallback(() => {
     const SR = getSpeechRecognition()
-    if (!SR) return
-    wantListenRef.current = true
-    if (recogRef.current) return // already listening (restart handles the rest)
+    if (!SR || busyRef.current) return
     stopSpeaking()
     try {
       const recog = new SR()
       recogRef.current = recog
-      recog.continuous = true
+      recog.continuous = false
       recog.interimResults = true
       recog.lang = locale
       setInterim('')
@@ -258,34 +240,20 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
       recog.onresult = (e: SpeechRecognitionEventT) => {
         let finalText = ''
         let interimText = ''
-        let confidence = 0
-        let confidenceN = 0
         for (let i = e.resultIndex; i < e.results.length; i += 1) {
           const r = e.results[i]
-          const alt = r[0]
-          if (r.isFinal) {
-            finalText += alt?.transcript ?? ''
-            const c = typeof alt?.confidence === 'number' && alt.confidence > 0 ? alt.confidence : null
-            if (c != null) { confidence += c; confidenceN += 1 }
-          } else {
-            interimText += alt?.transcript ?? ''
-          }
+          if (r.isFinal) finalText += r[0]?.transcript ?? ''
+          else interimText += r[0]?.transcript ?? ''
         }
         setInterim(interimText)
         if (finalText.trim()) {
           setInterim('')
-          // Barge-in: cancel local TTS FIRST so the answer can be heard and
-          // the interruption feels immediate (the server also reports it).
-          if (interactionStateRef.current === 'SPEAKING') stopSpeaking()
           void postTurn(
             {
               op: 'SPEAK',
               transcript: {
                 text: finalText.trim(),
-                // The PROVIDER's own confidence (§13) — never a hardcoded
-                // value: low-confidence ASR must be distinguishable
-                // server-side (ASR failure-layer attribution).
-                confidence: confidenceN > 0 ? Math.min(1, confidence / confidenceN) : 0,
+                confidence: 0.9,
                 isFinal: true,
                 providerId: 'web-speech-stt-browser',
                 locale,
@@ -297,6 +265,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         }
       }
       recog.onerror = (e: SpeechRecognitionErrorEventT) => {
+        setListening(false)
         if (e.error !== 'aborted' && e.error !== 'no-speech') {
           setError(`STT_${e.error.toUpperCase()}`)
           setInteractionState('ERROR')
@@ -304,17 +273,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
           setInteractionState('IDLE')
         }
       }
-      recog.onend = () => {
-        setListening(false)
-        // Auto-restart: continuous listening across the browser's own pauses
-        // (§5-C — a short pause must not terminate the user's turn).
-        if (wantListenRef.current) {
-          window.setTimeout(() => {
-            if (!wantListenRef.current || recogRef.current) return
-            startListeningRef.current()
-          }, 250)
-        }
-      }
+      recog.onend = () => setListening(false)
       recog.start()
     } catch {
       setListening(false)
@@ -328,12 +287,8 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   useEffect(() => {
     interactionStateRef.current = interactionState
   }, [interactionState])
-  useEffect(() => {
-    startListeningRef.current = startListening
-  }, [startListening])
 
   const stopListening = useCallback(() => {
-    wantListenRef.current = false
     recogRef.current?.abort()
     recogRef.current = null
     setListening(false)
@@ -350,7 +305,6 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   }, [postTurn, stopSpeaking])
 
   const cancel = useCallback(() => {
-    wantListenRef.current = false
     stopSpeaking()
     stopListening()
     const id = sessionRef.current
@@ -418,7 +372,6 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   // Cleanup recognition on unmount.
   useEffect(() => {
     return () => {
-      wantListenRef.current = false
       recogRef.current?.abort()
     }
   }, [])

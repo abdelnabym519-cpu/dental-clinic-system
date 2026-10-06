@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { containsCI } from '@/lib/prisma-search'
 
 // GET — list prescriptions
 export async function GET(request: NextRequest) {
@@ -23,13 +22,13 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { prescriptionNo: containsCI(search) },
+        { prescriptionNo: { contains: search, mode: 'insensitive' } },
         {
           patient: {
             OR: [
-              { firstName: containsCI(search) },
-              { lastName: containsCI(search) },
-              { patientId: containsCI(search) },
+              { firstName: { contains: search, mode: 'insensitive' } },
+              { lastName: { contains: search, mode: 'insensitive' } },
+              { patientId: { contains: search, mode: 'insensitive' } },
             ],
           },
         },
@@ -72,8 +71,10 @@ export async function GET(request: NextRequest) {
     })
   } catch (err: any) {
     console.error('Error fetching prescriptions:', err)
-    // Issue 5 — raw internal errors never reach the clinic user.
-    return NextResponse.json({ error: 'تعذر تحميل الروشتات. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: err.message || 'Failed to fetch prescriptions' },
+      { status: 500 }
+    )
   }
 }
 
@@ -88,48 +89,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { patientId, diagnosis, notes, validUntil, medications } = body
 
-    if (!patientId || !Array.isArray(medications) || medications.length === 0) {
+    if (!patientId || !medications || medications.length === 0) {
       return NextResponse.json(
-        { error: 'المريض ودواء واحد على الأقل مطلوبان' },
+        { error: 'Patient and at least one medication are required' },
         { status: 400 }
       )
     }
 
-    // Issue 5 — server-side medication validation (Phase 11 of the clinical
-    // prompt): the schema requires name/dosage/frequency/duration on every
-    // item; accepting junk here used to explode into a raw Prisma 500.
-    for (const m of medications) {
-      if (
-        !m ||
-        typeof m.medicationName !== 'string' ||
-        !m.medicationName.trim() ||
-        typeof m.dosage !== 'string' ||
-        !m.dosage.trim() ||
-        typeof m.frequency !== 'string' ||
-        !m.frequency.trim() ||
-        typeof m.duration !== 'string' ||
-        !m.duration.trim()
-      ) {
-        return NextResponse.json(
-          { error: 'كل دواء يحتاج الاسم والجرعة والعدد المتكرر والمدة' },
-          { status: 400 }
-        )
-      }
-      if (m.quantity !== undefined && m.quantity !== null) {
-        const q = Number(m.quantity)
-        if (!Number.isInteger(q) || q < 1) {
-          return NextResponse.json(
-            { error: 'كمية الدواء يجب أن تكون رقمًا صحيحًا أكبر من صفر' },
-            { status: 400 }
-          )
-        }
-      }
-    }
-
-    // Verify patient (tenant-scoped — a foreign patient id is NOT FOUND)
+    // Verify patient
     const patient = await prisma.patient.findFirst({ where: { id: patientId, hospitalId } })
     if (!patient) {
-      return NextResponse.json({ error: 'المريض غير موجود' }, { status: 404 })
+      return NextResponse.json({ error: 'Patient not found' }, { status: 404 })
     }
 
     // Generate prescription number
@@ -148,10 +118,7 @@ export async function POST(request: NextRequest) {
     // Get doctor's staff record
     const staff = await prisma.staff.findFirst({ where: { userId: session!.user!.id, hospitalId } })
     if (!staff) {
-      return NextResponse.json(
-        { error: 'لا يوجد ملف طبيب مرتبط بحسابك في هذه العيادة' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Doctor staff record not found' }, { status: 400 })
     }
 
     const prescription = await prisma.prescription.create({
@@ -187,7 +154,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: prescription }, { status: 201 })
   } catch (err: any) {
     console.error('Error creating prescription:', err)
-    // Issue 5 — a unique-collision or Prisma failure must never leak its text.
-    return NextResponse.json({ error: 'تعذر إنشاء الروشتة. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: err.message || 'Failed to create prescription' },
+      { status: 500 }
+    )
   }
 }

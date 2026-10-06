@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import prisma from '@/lib/prisma'
-import { validateEditablePrice } from '@/lib/money'
 import { z } from 'zod'
 
 const procedureUpdateSchema = z.object({
@@ -53,7 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
   } catch (error: any) {
     console.error('Get procedure error:', error)
-    return NextResponse.json({ error: 'تعذر تحميل الإجراء. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to get procedure' }, { status: 500 })
   }
 }
 
@@ -68,16 +67,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const body = await req.json()
     const data = procedureUpdateSchema.parse(body)
-
-    // Issue 7 — editable catalog price: one canonical validation rule
-    // (finite number, > 0, ≤ Decimal(10,2) capacity, ≤ 2 decimal places)
-    // before anything is persisted. Invalid input mutates nothing.
-    if (data.basePrice !== undefined) {
-      const price = validateEditablePrice(data.basePrice)
-      if (!price.ok) {
-        return NextResponse.json({ error: price.error }, { status: 400 })
-      }
-    }
 
     // Check if procedure exists
     const existing = await prisma.procedure.findUnique({
@@ -111,11 +100,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     })
   } catch (error: any) {
     console.error('Update procedure error:', error)
-    // Issue 7 — invalid payloads are an Arabic 400, never a Zod-text 500.
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'بيانات الإجراء غير صالحة. تحقق من القيم المدخلة.' }, { status: 400 })
-    }
-    return NextResponse.json({ error: 'تعذر تحديث الإجراء. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to update procedure' },
+      { status: 500 }
+    )
   }
 }
 
@@ -150,6 +138,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     })
   } catch (error: any) {
     console.error('Delete procedure error:', error)
-    return NextResponse.json({ error: 'تعذر حذف الإجراء. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete procedure' },
+      { status: 500 }
+    )
   }
 }

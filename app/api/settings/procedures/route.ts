@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import prisma from '@/lib/prisma'
-import { validateEditablePrice } from '@/lib/money'
 import { z } from 'zod'
 
 const procedureSchema = z.object({
@@ -66,7 +65,10 @@ export async function GET(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('Get procedures error:', error)
-    return NextResponse.json({ error: 'تعذر تحميل الإجراءات. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to get procedures' },
+      { status: 500 }
+    )
   }
 }
 
@@ -77,20 +79,9 @@ export async function POST(req: NextRequest) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Issue 7 — the catalog price is validated by one canonical rule
-  // (finite number, > 0, Decimal(10,2) scale/capacity) before persistence.
-
   try {
     const body = await req.json()
     const data = procedureSchema.parse(body)
-
-    // Issue 7 — canonical price rule on top of the shape schema: rejects
-    // negative/zero prices, float artifacts and Decimal(10,2) overflow with
-    // a safe Arabic message instead of a Prisma 500.
-    const price = validateEditablePrice(data.basePrice)
-    if (!price.ok) {
-      return NextResponse.json({ error: price.error }, { status: 400 })
-    }
 
     // Check if code already exists for this hospital
     const existing = await prisma.procedure.findFirst({
@@ -115,11 +106,9 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('Create procedure error:', error)
-    // Issue 7 — validation failures are a 400 with an Arabic message; the
-    // raw Zod/Prisma text never reaches the clinic user.
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'بيانات الإجراء غير صالحة. تحقق من القيم المدخلة.' }, { status: 400 })
-    }
-    return NextResponse.json({ error: 'تعذر إنشاء الإجراء. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Failed to create procedure' },
+      { status: 500 }
+    )
   }
 }

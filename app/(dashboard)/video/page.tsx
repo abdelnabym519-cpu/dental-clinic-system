@@ -188,12 +188,12 @@ export default function VideoConsultationsPage() {
       {/* Status Filters */}
       <div className="flex gap-2">
         {[
-          { value: '', label: 'الكل' },
-          { value: 'SCHEDULED', label: 'مجدول' },
-          { value: 'IN_PROGRESS', label: 'مباشر' },
-          { value: 'COMPLETED', label: 'مكتمل' },
-          { value: 'CANCELLED', label: 'ملغي' },
-          { value: 'NO_SHOW', label: 'لم يحضر' },
+          { value: '', label: 'All' },
+          { value: 'SCHEDULED', label: 'Scheduled' },
+          { value: 'IN_PROGRESS', label: 'Live' },
+          { value: 'COMPLETED', label: 'Completed' },
+          { value: 'CANCELLED', label: 'Cancelled' },
+          { value: 'NO_SHOW', label: 'No Show' },
         ].map((f) => (
           <Button
             key={f.value}

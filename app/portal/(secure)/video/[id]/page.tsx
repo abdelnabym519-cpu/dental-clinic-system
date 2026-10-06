@@ -143,7 +143,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
   if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">{error ? t(error) : t('Consultation not found')}</p>
+        <p className="text-red-600">{error || 'Consultation not found'}</p>
         <Link href="/portal/appointments">
           <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
         </Link>

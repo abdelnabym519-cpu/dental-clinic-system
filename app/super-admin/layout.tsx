@@ -24,10 +24,10 @@ export default async function SuperAdminLayout({ children }: { children: React.R
       <nav className="border-b border-gray-800 bg-gray-900 px-6 py-4">
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold uppercase tracking-wider text-red-500">
-            المشرف الأعلى
+            Super Admin
           </span>
           <span className="text-gray-600">|</span>
-          <span className="text-sm text-gray-300">لوحة تحكم DenToRa</span>
+          <span className="text-sm text-gray-300">DenToRa Control Panel</span>
         </div>
       </nav>
       <main className="p-6">{children}</main>

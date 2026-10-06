@@ -235,11 +235,11 @@ describe('calculatePlanProgress()', () => {
 // ---------------------------------------------------------------------------
 describe('getTreatmentStatusBadge()', () => {
   it('returns label for known status', () => {
-    expect(getTreatmentStatusBadge('COMPLETED').label).toBe('مكتمل')
+    expect(getTreatmentStatusBadge('COMPLETED').label).toBe('Completed')
   })
 
   it('falls back to PLANNED for unknown status', () => {
-    expect(getTreatmentStatusBadge('UNKNOWN').label).toBe('مخطط')
+    expect(getTreatmentStatusBadge('UNKNOWN').label).toBe('Planned')
   })
 })
 

@@ -68,17 +68,16 @@ describe('public pay page renders the API message through the dictionary', () =>
     expect(JSON.parse(fetchSpy.mock.calls[0][1].body).token).toBe('BADTOKEN123')
   })
 
-  it('stays Arabic even when an English locale is requested — Arabic-only lock', async () => {
+  it('keeps the server sentence verbatim in en-EG', async () => {
     installFetch(404, { error: 'Invalid payment link' })
     render(
       <LanguageProvider initialLocale="en-EG">
         <PayPage {...PROPS} locale="en-EG" />
       </LanguageProvider>
     )
-    const btn = screen.getAllByRole('button').find((b) => /دفع|Pay/.test(b.textContent || ''))
-    expect(btn).toBeTruthy()
+    const btn = screen.getAllByRole('button').find((b) => /Pay/.test(b.textContent || ''))
     fireEvent.click(btn!)
-    await waitFor(() => expect(screen.getByText('رابط الدفع غير صالح')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('Invalid payment link')).toBeTruthy())
   })
 
   it('also translates the expired-link reply', async () => {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { containsCI } from '@/lib/prisma-search'
 
 // GET — list medications with search, category filter, pagination
 export async function GET(request: NextRequest) {
@@ -23,9 +22,9 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { name: containsCI(search) },
-        { genericName: containsCI(search) },
-        { manufacturer: containsCI(search) },
+        { name: { contains: search, mode: 'insensitive' } },
+        { genericName: { contains: search, mode: 'insensitive' } },
+        { manufacturer: { contains: search, mode: 'insensitive' } },
       ]
     }
 

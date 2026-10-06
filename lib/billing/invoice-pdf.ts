@@ -21,12 +21,6 @@ import { getServerLocale } from '@/lib/i18n/server'
 import { translateText } from '@/lib/i18n/dictionary'
 import { formatDate, formatCurrency } from '@/lib/i18n/format'
 
-// Issue: Prisma columns are `Prisma.Decimal`; every monetary consumer passes
-// model rows straight through, so the accepted money type includes Decimal.
-// Runtime conversion stays centralized in money()/moneyLocal() (Number(v)).
-import type { Prisma } from '@prisma/client'
-type MoneyLike = number | string | Prisma.Decimal
-
 export interface InvoicePdfData {
   invoiceNo: string
   status: string
@@ -36,26 +30,26 @@ export interface InvoicePdfData {
   issueDate: Date
   issuedAt: Date | null
   dueDate: Date | null
-  items: Array<{ description: string; quantity: number; unitPrice: MoneyLike; amount: MoneyLike }>
-  subtotal: MoneyLike
-  discountAmount: MoneyLike
-  vatRate: MoneyLike
-  vatAmount: MoneyLike
-  total: MoneyLike
-  paidAmount: MoneyLike
-  balanceAmount: MoneyLike
+  items: Array<{ description: string; quantity: number; unitPrice: number | string; amount: number | string }>
+  subtotal: number | string
+  discountAmount: number | string
+  vatRate: number | string
+  vatAmount: number | string
+  total: number | string
+  paidAmount: number | string
+  balanceAmount: number | string
   notes?: string | null
 }
 
 /** Localized currency, 2 decimals — matches the Phase 6 invoice caption rule. */
-function money(value: MoneyLike, locale: string): string {
+function money(value: number | string, locale: string): string {
   return formatCurrency(Number(value) || 0, { locale })
 }
 
 export async function generateInvoicePDF(inv: InvoicePdfData): Promise<Buffer> {
   const locale = await getServerLocale()
   const t = (key: string, vars?: Record<string, string | number>) => translateText(locale, key, vars)
-  const moneyLocal = (v: MoneyLike) => money(v, locale)
+  const moneyLocal = (v: number | string) => money(v, locale)
   const date = (d: Date) => formatDate(d, { locale })
 
   const lines: Array<{ text: string; bold?: boolean; gapAfter?: number }> = [
@@ -111,12 +105,12 @@ function statusLabel(status: string): string {
   const labels: Record<string, string> = {
     DRAFT: 'Draft',
     PENDING: 'Pending',
-    ISSUED: 'صادرة',
-    PARTIALLY_PAID: 'مدفوعة جزئيًا',
-    PAID: 'مدفوعة',
-    OVERDUE: 'متأخرة',
-    CANCELLED: 'ملغاة',
-    REFUNDED: 'مستردة',
+    ISSUED: 'Issued',
+    PARTIALLY_PAID: 'Partially Paid',
+    PAID: 'Paid',
+    OVERDUE: 'Overdue',
+    CANCELLED: 'Cancelled',
+    REFUNDED: 'Refunded',
   }
   return labels[status] ?? status
 }

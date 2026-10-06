@@ -93,6 +93,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching today's appointments:", error)
-    return NextResponse.json({ error: "تعذر تحميل مواعيد اليوم" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch today's appointments" }, { status: 500 })
   }
 }

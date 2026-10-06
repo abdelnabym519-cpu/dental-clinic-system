@@ -52,7 +52,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       },
     })
     if (!prescription) {
-      return NextResponse.json({ error: 'الروشتة غير موجودة' }, { status: 404 })
+      return NextResponse.json({ error: 'Prescription not found' }, { status: 404 })
     }
 
     // 1) Prefer the stored document (the one that was signed/sent).
@@ -81,8 +81,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       select: { name: true },
     })
     const clinicName = hospital?.name ?? t('Clinic')
-    // Issue 5 — the issued document uses the canonical Arabic doctor prefix.
-    const doctorName = `د. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`
+    const doctorName = `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`
     const age = prescription.patient.dateOfBirth
       ? Math.floor(
           (Date.now() - prescription.patient.dateOfBirth.getTime()) / (365.25 * 24 * 3600_000)
@@ -144,7 +143,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     })
   } catch (err: unknown) {
     console.error('Error rendering prescription PDF:', err)
-    // Issue 5 — raw storage/render errors never reach the clinic user.
-    return NextResponse.json({ error: 'تعذر توليد ملف الروشتة. حاول مرة أخرى.' }, { status: 500 })
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Failed to render prescription PDF' },
+      { status: 500 }
+    )
   }
 }

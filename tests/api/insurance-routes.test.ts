@@ -224,8 +224,7 @@ describe('POST /api/insurance-claims', () => {
     )
     expect(res.status).toBe(400)
     const body = await res.json()
-    // Issue 6 contract: Arabic ownership error (same 400 semantics).
-    expect(body.error).toContain('إحدى الفواتير غير موجودة')
+    expect(body.error).toContain('invoices not found')
   })
 
   it('creates claim successfully', async () => {

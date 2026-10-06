@@ -48,14 +48,7 @@ export const ENVIRONMENT_SPECS: readonly EnvVarSpec[] = [
   { name: 'S3_ACCESS_KEY_ID', purpose: 'Object storage access key (s3 driver)', required: false, secret: true, appliesTo: ['staging', 'production'] },
   { name: 'S3_SECRET_ACCESS_KEY', purpose: 'Object storage secret key (s3 driver)', required: false, secret: true, appliesTo: ['staging', 'production'] },
   // --- AI providers (optional — local-first: absent ⇒ local/honest unavailable) ---
-  // --- external LLM gateway (Cloudflare AI Gateway — the canonical LLM path) ---
-  { name: 'CLOUDFLARE_ACCOUNT_ID', purpose: 'Cloudflare account id for AI Gateway routing', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'CLOUDFLARE_API_TOKEN', purpose: 'Cloudflare API token for AI Gateway (server-only)', required: false, secret: true, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'CLOUDFLARE_AI_GATEWAY_ID', purpose: 'Cloudflare AI Gateway id', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'DEN_TORA_AI_MODEL', purpose: 'Default LLM model through the gateway (provider-prefixed, e.g. google/gemini-2.5-pro)', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'DEN_TORA_AI_FAST_MODEL', purpose: 'Fast-tier model override', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'DEN_TORA_AI_REASONING_MODEL', purpose: 'Reasoning/safety-critical model override', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
-  { name: 'DEN_TORA_AI_FALLBACK_MODEL', purpose: 'Explicit fallback model used once when the primary fails', required: false, secret: false, appliesTo: ['development', 'staging', 'production'] },
+  { name: 'OPENROUTER_API_KEY', purpose: 'Optional LLM provider key (agent degrades honestly without it)', required: false, secret: true, appliesTo: ['development', 'staging', 'production'] },
   // --- optional integrations ----------------------------------------------
   { name: 'WHATSAPP_ACCESS_TOKEN', purpose: 'WhatsApp Cloud API token (messaging integration)', required: false, secret: true, appliesTo: ['staging', 'production'] },
   { name: 'CORS_ALLOWED_ORIGINS', purpose: 'Comma-separated allowlist for credentialed API CORS; empty keeps legacy same-site behavior', required: false, secret: false, appliesTo: ['staging', 'production'] },

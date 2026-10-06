@@ -233,9 +233,9 @@ describe('Inventory API - Comprehensive Tests', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: [
-              { name: { contains: 'glove' } },
-              { sku: { contains: 'glove' } },
-              { description: { contains: 'glove' } },
+              { name: { contains: 'glove', mode: 'insensitive' } },
+              { sku: { contains: 'glove', mode: 'insensitive' } },
+              { description: { contains: 'glove', mode: 'insensitive' } },
             ],
           }),
         })

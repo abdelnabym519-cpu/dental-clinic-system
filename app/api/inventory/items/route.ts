@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { containsCI } from '@/lib/prisma-search'
 import { InventoryItemType } from '@prisma/client'
 
 // GET - Fetch all inventory items with filters
@@ -31,9 +30,9 @@ export async function GET(request: NextRequest) {
     // Add search filter
     if (search) {
       where.OR = [
-        { name: containsCI(search) },
-        { sku: containsCI(search) },
-        { description: containsCI(search) },
+        { name: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ]
     }
 

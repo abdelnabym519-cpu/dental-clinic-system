@@ -19,8 +19,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(''),
 }))
 
-// Arabic-only: entry point forces ar-EG
-async function renderLogin(locale = 'ar-EG') {
+async function renderLogin(locale = 'en-US') {
   const { default: PatientLoginPage } = await import('@/app/portal/login/page')
   return render(
     <LanguageProvider initialLocale={locale}>
@@ -32,7 +31,7 @@ async function renderLogin(locale = 'ar-EG') {
 describe('Portal login phone field — 11-digit Egyptian mobile numbers', () => {
   it('keeps all 11 digits of an Egyptian mobile number', async () => {
     await renderLogin()
-    const phone = screen.getByPlaceholderText('أدخل رقمك المكوّن من 11 رقمًا')
+    const phone = screen.getByPlaceholderText('Enter your 11-digit number')
 
     fireEvent.change(phone, { target: { value: '01012345678' } })
 
@@ -42,7 +41,7 @@ describe('Portal login phone field — 11-digit Egyptian mobile numbers', () => 
 
   it('truncates input at 11 digits', async () => {
     await renderLogin()
-    const phone = screen.getByPlaceholderText('أدخل رقمك المكوّن من 11 رقمًا')
+    const phone = screen.getByPlaceholderText('Enter your 11-digit number')
 
     fireEvent.change(phone, { target: { value: '01012345678901' } })
 
@@ -51,7 +50,7 @@ describe('Portal login phone field — 11-digit Egyptian mobile numbers', () => 
 
   it('strips non-digits while typing', async () => {
     await renderLogin()
-    const phone = screen.getByPlaceholderText('أدخل رقمك المكوّن من 11 رقمًا')
+    const phone = screen.getByPlaceholderText('Enter your 11-digit number')
 
     fireEvent.change(phone, { target: { value: '010-123-45678' } })
 
@@ -60,11 +59,11 @@ describe('Portal login phone field — 11-digit Egyptian mobile numbers', () => 
 
   it('rejects a 10-digit number with the 11-digit validation message', async () => {
     await renderLogin()
-    const phone = screen.getByPlaceholderText('أدخل رقمك المكوّن من 11 رقمًا')
+    const phone = screen.getByPlaceholderText('Enter your 11-digit number')
     fireEvent.change(phone, { target: { value: '0101234567' } })
 
-    fireEvent.click(screen.getByText('إرسال الرمز'))
+    fireEvent.click(screen.getByText('Send OTP'))
 
-    expect(screen.getByText('أدخل رقم هاتف صحيح من ١١ رقماً')).toBeTruthy()
+    expect(screen.getByText('Please enter a valid 11-digit phone number')).toBeTruthy()
   })
 })

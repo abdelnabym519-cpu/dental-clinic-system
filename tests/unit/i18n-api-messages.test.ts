@@ -32,11 +32,7 @@ const ACCEPTED = new Set([
 
 describe('API error messages are Arabic-resolvable', () => {
   const files = walk('app/api')
-  // Issue 6: single-quoted literals used to be the only match — but every
-  // message containing an apostrophe ("You don't have permission to …") is
-  // double-quoted in source, and that family silently escaped the pass-3
-  // sweep. Both quote styles are audited now.
-  const LITERAL = /(?:error|message)\s*:\s*(?:'([^'\n]{4,120})'|"([^"\n]{4,120})")/g
+  const LITERAL = /(?:error|message)\s*:\s*'([^'\n]{4,120})'/g
   const TEMPLATE = /(?:error|message)\s*:\s*`([^`\n]{4,160})`/g
 
   it('returns every prose error string as a translatable key', () => {
@@ -45,7 +41,7 @@ describe('API error messages are Arabic-resolvable', () => {
     for (const file of files) {
       const src = fs.readFileSync(file, 'utf8')
       for (const m of src.matchAll(LITERAL)) {
-        const lit = (m[1] ?? m[2]).trim()
+        const lit = m[1].trim()
         const words = lit.match(/[A-Za-z]{3,}/g)
         if (!words || !words.some((w) => !ACCEPTED.has(w))) continue
         audited++

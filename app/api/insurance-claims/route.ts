@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية إنشاء مطالبات التأمين" },
+        { error: "You don't have permission to create insurance claims" },
         { status: 403 }
       )
     }
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
 
       if (invoices.length !== invoiceIds.length) {
         return NextResponse.json(
-          { error: "إحدى الفواتير غير موجودة أو لا تتبع هذا المريض" },
+          { error: "One or more invoices not found or don't belong to this patient" },
           { status: 400 }
         )
       }

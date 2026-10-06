@@ -213,11 +213,11 @@ export default function PaymentPlansPage() {
       {/* Status Filters */}
       <div className="flex gap-2">
         {[
-          { value: '', label: 'الكل' },
-          { value: 'ACTIVE', label: 'نشط' },
-          { value: 'COMPLETED', label: 'مكتمل' },
-          { value: 'DEFAULTED', label: 'متعثر' },
-          { value: 'CANCELLED', label: 'ملغي' },
+          { value: '', label: 'All' },
+          { value: 'ACTIVE', label: 'Active' },
+          { value: 'COMPLETED', label: 'Completed' },
+          { value: 'DEFAULTED', label: 'Defaulted' },
+          { value: 'CANCELLED', label: 'Cancelled' },
         ].map((f) => (
           <Button
             key={f.value}

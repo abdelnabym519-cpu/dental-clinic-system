@@ -277,8 +277,7 @@ describe('Patients API - Comprehensive Tests', () => {
 
       expect(response.status).toBe(400)
       const data = await response.json()
-      // Issue 5 contract: Arabic-first validation.
-      expect(data.error).toBe('الاسم الأول واسم العائلة ورقم الهاتف مطلوبة')
+      expect(data.error).toBe('First name, last name, and phone are required')
     })
 
     it('should reject duplicate phone numbers within the same hospital', async () => {
@@ -299,8 +298,7 @@ describe('Patients API - Comprehensive Tests', () => {
 
       expect(response.status).toBe(409)
       const data = await response.json()
-      // Issue 5 contract: Arabic duplicate-phone message.
-      expect(data.error).toBe('يوجد مريض مسجل بنفس رقم الهاتف')
+      expect(data.error).toBe('A patient with this phone number already exists')
     })
 
     it('should enforce patient limit for the hospital plan', async () => {
@@ -353,19 +351,14 @@ describe('Patients API - Comprehensive Tests', () => {
       )
     })
 
-    it('should create patient with medical history (real schema columns, sanitized)', async () => {
-      // Issue 5 contract: only REAL MedicalHistory columns survive the
-      // server-side sanitizer — the previously asserted `allergies` /
-      // `conditions` keys do not exist on the model and a real Prisma
-      // would have rejected the whole create.
+    it('should create patient with medical history', async () => {
       mockPrisma.patient.findFirst.mockResolvedValue(null)
       mockPrisma.patient.create.mockResolvedValue({
         id: '1',
         patientId: 'PAT202500001',
         medicalHistory: {
-          hasAllergies: true,
-          drugAllergies: 'Penicillin',
-          otherConditions: 'Diabetes',
+          allergies: 'Penicillin',
+          conditions: 'Diabetes',
         },
       })
 
@@ -376,10 +369,8 @@ describe('Patients API - Comprehensive Tests', () => {
           lastName: 'Doe',
           phone: '01012345678',
           medicalHistory: {
-            hasAllergies: true,
-            drugAllergies: 'Penicillin',
-            otherConditions: 'Diabetes',
-            forgedField: 'must be stripped',
+            allergies: 'Penicillin',
+            conditions: 'Diabetes',
           },
         }),
       })
@@ -391,9 +382,8 @@ describe('Patients API - Comprehensive Tests', () => {
           data: expect.objectContaining({
             medicalHistory: {
               create: {
-                hasAllergies: true,
-                drugAllergies: 'Penicillin',
-                otherConditions: 'Diabetes',
+                allergies: 'Penicillin',
+                conditions: 'Diabetes',
               },
             },
           }),

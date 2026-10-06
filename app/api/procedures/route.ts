@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // Check if user has permission (Admin or Doctor)
     if (!['ADMIN', 'DOCTOR'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية إنشاء الإجراءات" },
+        { error: "You don't have permission to create procedures" },
         { status: 403 }
       )
     }

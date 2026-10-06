@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { deriveStatusMap, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
+import type { Prisma } from '@prisma/client'
+
+// Explicit payload types: inference through Prisma's payload generics is
+// schema-sensitive; annotating keeps this route schema-portable.
+type StudyWithJobs = Prisma.ImagingStudyGetPayload<{
+  include: { aiJobs: { select: { id: true; status: true; acceptedFindings: true; completedAt: true } } }
+}>
+type PlanItemWithRelations = Prisma.TreatmentPlanItemGetPayload<{
+  include: { procedure: { select: { name: true } }; treatmentPlan: { select: { id: true; status: true } } }
+}>
+type CatalogRow = Prisma.ProcedureGetPayload<{ select: { id: true; name: true; basePrice: true } }>
 
 /**
  * GET /api/dental-chart/:patientId/summary
@@ -111,8 +122,8 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
       }),
     ])
 
-    const imaging = studies.flatMap((study) =>
-      study.aiJobs.flatMap((job) =>
+    const imaging = studies.flatMap((study: StudyWithJobs) =>
+      study.aiJobs.flatMap((job: StudyWithJobs['aiJobs'][number]) =>
         extractToothFindings(job.acceptedFindings).map((f) => ({
           toothNumber: f.toothNumber,
           studyId: study.id,
@@ -132,7 +143,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
       entriesByTooth.set(e.toothNumber, list)
     }
     const procsByTooth = new Map<number, { status: string }[]>()
-    for (const item of planItems) {
+    for (const item of planItems as PlanItemWithRelations[]) {
       for (const tooth of parseToothList(item.toothNumbers)) {
         const list = procsByTooth.get(tooth) ?? []
         list.push({ status: item.status })
@@ -142,17 +153,17 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
     const statusByTooth: Record<number, ToothTreatmentStatus> = deriveStatusMap(entriesByTooth, procsByTooth)
 
     // Procedure catalog for the panel's "add procedure" selector (read-only).
-    const catalog = await prisma.procedure.findMany({
+    const catalog = (await prisma.procedure.findMany({
       where: { hospitalId, isActive: true },
       select: { id: true, name: true, basePrice: true },
       orderBy: { name: 'asc' },
       take: 200,
-    })
+    })) as CatalogRow[]
 
     return NextResponse.json({
       patient: { id: patient.id, name: `${patient.firstName} ${patient.lastName}`.trim() },
       entries,
-      procedures: planItems.map((item) => ({
+      procedures: planItems.map((item: PlanItemWithRelations) => ({
         id: item.id,
         procedureName: item.procedure.name,
         status: item.status,

@@ -16,7 +16,6 @@
  */
 
 import { buildClinicalContext } from '@/lib/ai/context/service'
-import { buildCommandCenter } from '@/lib/ai/intelligence/clinic-brain'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
 import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
@@ -248,21 +247,6 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
     viaActionPipeline: false,
     validateInput: OK,
     timeoutMs: 5000,
-    maxRetries: 1,
-    idempotent: true,
-  },
-  get_command_center: {
-    name: 'get_command_center',
-    description:
-      'Clinic daily command center over the digital twin: today appointments by status, utilization, waiting queue, AI findings awaiting review, overdue follow-ups, pending treatments, bottlenecks — every section with its honest data state',
-    domain: 'scheduling',
-    writeClass: 'READ',
-    riskLevel: 'NONE',
-    requiredRoles: STAFF,
-    requiresPatient: false,
-    viaActionPipeline: false,
-    validateInput: OK,
-    timeoutMs: 8000,
     maxRetries: 1,
     idempotent: true,
   },
@@ -957,21 +941,6 @@ async function knowledgeTool(input: Record<string, unknown>, rt: ToolRuntime): P
 }
 
 async function clinicTool(name: string, input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
-  if (name === 'get_command_center') {
-    // §26 — the canonical agent queries the SAME clinic digital twin the
-    // command-center API serves (one source of truth, no parallel metrics
-    // implementation). The §9 date layer may re-scope the day ('جهزلي حالات
-    // بكرة' → TOMORROW's command center — the resolved day is honored, never
-    // silently today). Sections carry their honest data states; the
-    // deterministic answer renders them without dressing anything up.
-    const day = typeof input.date === 'string' && input.date ? new Date(input.date + 'T00:00:00') : rt.now
-    const cc = await buildCommandCenter(rt.client, { hospitalId: rt.hospitalId, now: day, actorRole: rt.role })
-    // The rendered day is the §9-RESOLVED date (input.date), not
-    // generatedAt: the twin's ISO timestamp is UTC and can shift back a
-    // local day (dayBounds is local). One label, no day lies.
-    return { kind: 'command_center', date: (typeof input.date === 'string' && input.date) || null, commandCenter: cc }
-  }
-
   if (name === 'get_appointments') {
     const where: Record<string, unknown> = { hospitalId: rt.hospitalId }
     // No date → today's window (never an unbounded all-time list).

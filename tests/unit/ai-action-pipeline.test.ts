@@ -552,9 +552,7 @@ describe('pipeline — F-1 patient-scope resolution (Phase 8)', () => {
       trtNo += 1
       return { ...data, id: `trt-${trtNo}`, status: 'IN_PROGRESS', cost: Number(data.cost) }
     })
-    // Verification reads use findFirst (compound non-id lookups are not valid
-    // findUnique inputs on a real database — production repair, same shape).
-    prisma.treatment.findFirst.mockImplementation(async ({ where }: any) => {
+    prisma.treatment.findUnique.mockImplementation(async ({ where }: any) => {
       const n = Number((where.treatmentNo ?? '').split('-')[1])
       return n > 0 ? { treatmentNo: where.treatmentNo, hospitalId: TENANT, status: 'IN_PROGRESS' } : null
     })

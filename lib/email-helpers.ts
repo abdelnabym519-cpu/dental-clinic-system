@@ -15,7 +15,7 @@ function baseUrl(): string {
 function wrapHTML(content: string): string {
   return `
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,7 +39,7 @@ function wrapHTML(content: string): string {
       ${content}
     </div>
     <div class="footer">
-      <p dir="rtl">هذه رسالة آلية من ${APP_NAME}. يرجى عدم الرد عليها.</p>
+      <p>This is an automated email from ${APP_NAME}. Please do not reply.</p>
     </div>
   </div>
 </body>
@@ -60,36 +60,26 @@ export async function sendInviteEmail(params: {
 }): Promise<boolean> {
   const { to, inviteeName, hospitalName, role, inviterName, token } = params
   const link = `${baseUrl()}/invite/accept?token=${token}`
-  // Issue 6 — canonical Arabic role names (same terms as role.DOCTOR etc.
-  // in the i18n dictionary); the raw enum is data and never shown.
-  const ROLE_AR: Record<string, string> = {
-    ADMIN: 'مدير',
-    DOCTOR: 'طبيب',
-    RECEPTIONIST: 'موظف استقبال',
-    ACCOUNTANT: 'محاسب',
-    LAB_TECH: 'فني معمل',
-    NURSE: 'ممرض',
-  }
-  const roleLabel = ROLE_AR[role] ?? role
+  const roleLabel = role.charAt(0) + role.slice(1).toLowerCase().replace('_', ' ')
 
   const html = wrapHTML(`
     <div class="logo">${APP_NAME}</div>
-    <h1 dir="rtl">تمت دعوتك للانضمام إلى ${hospitalName}</h1>
-    <p dir="rtl">مرحبًا ${inviteeName}،</p>
-    <p dir="rtl">دعاك <strong>${inviterName}</strong> للانضمام إلى <strong>${hospitalName}</strong> بدور <strong>${roleLabel}</strong>.</p>
-    <p dir="rtl">اضغط على الزر أدناه لقبول الدعوة وإنشاء حسابك:</p>
+    <h1>You're invited to join ${hospitalName}</h1>
+    <p>Hi ${inviteeName},</p>
+    <p><strong>${inviterName}</strong> has invited you to join <strong>${hospitalName}</strong> as a <strong>${roleLabel}</strong>.</p>
+    <p>Click the button below to accept the invitation and create your account:</p>
     <p style="text-align:center; margin: 28px 0;">
-      <a href="${link}" class="btn">قبول الدعوة</a>
+      <a href="${link}" class="btn">Accept Invitation</a>
     </p>
     <hr class="divider">
-    <p class="muted" dir="rtl">تنتهي صلاحية هذه الدعوة بعد 7 أيام. إذا لم تكن تتوقع هذه الرسالة يمكنك تجاهلها بأمان.</p>
-    <p class="muted" dir="rtl">أو انسخ الرابط: ${link}</p>
+    <p class="muted">This invitation expires in 7 days. If you did not expect this email, you can safely ignore it.</p>
+    <p class="muted">Or copy this link: ${link}</p>
   `)
 
   try {
     await emailService.sendEmail({
       to,
-      subject: `دعوة للانضمام إلى ${hospitalName} على ${APP_NAME}`,
+      subject: `You're invited to join ${hospitalName} on ${APP_NAME}`,
       body: html,
     })
     return true
@@ -114,21 +104,21 @@ export async function sendVerificationEmail(params: {
 
   const html = wrapHTML(`
     <div class="logo">${APP_NAME}</div>
-    <h1 dir="rtl">تأكيد بريدك الإلكتروني</h1>
-    <p dir="rtl">مرحبًا ${userName}،</p>
-    <p dir="rtl">شكرًا لتسجيل <strong>${hospitalName}</strong> على ${APP_NAME}. يرجى تأكيد بريدك الإلكتروني لتفعيل حسابك:</p>
+    <h1>Verify your email address</h1>
+    <p>Hi ${userName},</p>
+    <p>Thank you for registering <strong>${hospitalName}</strong> on ${APP_NAME}. Please verify your email to activate your account:</p>
     <p style="text-align:center; margin: 28px 0;">
-      <a href="${link}" class="btn">تأكيد البريد الإلكتروني</a>
+      <a href="${link}" class="btn">Verify Email</a>
     </p>
     <hr class="divider">
-    <p class="muted" dir="rtl">تنتهي صلاحية هذا الرابط بعد 24 ساعة. إذا لم تنشئ هذا الحساب يمكنك تجاهل هذه الرسالة بأمان.</p>
-    <p class="muted" dir="rtl">أو انسخ الرابط: ${link}</p>
+    <p class="muted">This link expires in 24 hours. If you did not create this account, you can safely ignore this email.</p>
+    <p class="muted">Or copy this link: ${link}</p>
   `)
 
   try {
     await emailService.sendEmail({
       to,
-      subject: `تأكيد بريدك الإلكتروني — ${APP_NAME}`,
+      subject: `Verify your email — ${APP_NAME}`,
       body: html,
     })
     return true

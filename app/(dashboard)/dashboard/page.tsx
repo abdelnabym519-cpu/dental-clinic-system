@@ -161,7 +161,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-5 w-5" />
-              <p>{error ? t(error) : t("An error occurred")}</p>
+              <p>{error || t("An error occurred")}</p>
             </div>
             <Button onClick={fetchDashboardStats} className="mt-4">
               {t('Retry')}

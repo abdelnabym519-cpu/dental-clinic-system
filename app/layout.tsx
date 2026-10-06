@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/providers'
 import { LanguageProvider } from '@/components/providers/language-provider'
 import { directionFor, translateText } from '@/lib/i18n/dictionary'
-import { defaultLocale } from '@/lib/i18n/config'
+import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/config'
 
 // Phase 11 (§52/§69): Inter is SELF-HOSTED (next/font/local, OFL-licensed
 // files vendored from @fontsource/inter 5.3.0). The previous next/font/google
@@ -29,8 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // Browser-tab title and social previews follow the selected locale exactly
   // like the rendered UI does: the language is a user/clinic preference, so it
   // cannot live in a static object evaluated once at build time.
-  // ISSUE 6 — Arabic-only: metadata locale is the Arabic default.
-  const locale = defaultLocale
+  const locale = resolveLocale((await cookies()).get(LOCALE_COOKIE)?.value)
   const t = (text: string) => translateText(locale, text)
 
   const title = t('Dentora — Egyptian Dental Clinic Management')
@@ -102,11 +101,11 @@ export const viewport: Viewport = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // ISSUE 6 — the system is ARABIC-ONLY: <html lang dir> is always the
-  // Arabic default (RTL). The cookie is read for compatibility but can no
-  // longer select a locale (the selector UI was removed); stored User.locale
-  // preferences cannot render the product in anything but Arabic.
-  const locale = defaultLocale
+  // Locale precedence for <html lang/dir>: explicit cookie choice (login /
+  // profile selector) → default. Authenticated users' stored User.locale is
+  // mirrored into the cookie by the profile selector.
+  const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value
+  const locale = resolveLocale(cookieLocale)
   const dir = directionFor(locale)
 
   return (

@@ -4,6 +4,7 @@ import { AccessDenied } from '@/components/settings/access-denied'
 import { LanguagePreferenceCard } from '@/components/i18n/language-preference-card'
 import { auth } from '@/lib/auth'
 import { canAccessSettingsSection } from '@/lib/settings-access'
+import { locales } from '@/lib/i18n/config'
 import { getServerTranslator } from '@/lib/i18n/server'
 import { prisma } from '@/lib/prisma'
 
@@ -55,15 +56,13 @@ export default async function ProfileSettingsPage() {
         </p>
       </div>
 
-      {/* ISSUE 6 — Arabic-only: the language selector was removed. The system
-          always renders in Arabic (RTL); the preference endpoint is no longer
-          reachable from the UI. */}
-      <div className="rounded-lg border p-4 space-y-1" data-testid="language-arabic-only">
-        <p className="text-sm font-medium">{t('لغة النظام')}</p>
-        <p className="text-sm text-muted-foreground">
-          {t('النظام يعمل باللغة العربية فقط (من اليمين إلى اليسار).')}
-        </p>
-      </div>
+      <LanguagePreferenceCard
+        locale={user.locale}
+        hospitalLocale={user.hospital?.locale ?? null}
+        currency={user.hospital?.currency ?? 'EGP'}
+        supportedLocales={locales}
+        endpoint="/api/settings/profile"
+      />
     </div>
   )
 }

@@ -30,6 +30,7 @@ vi.mock('@/components/ui/button', () => ({
 }))
 
 import { LanguageProvider, LOCALE_COOKIE } from '@/components/providers/language-provider'
+import { LanguageToggle } from '@/components/i18n/language-toggle'
 import { useLanguage } from '@/components/providers/language-provider'
 import { directionFor, translate, translateLabel } from '@/lib/i18n/dictionary'
 import { isRTL } from '@/lib/i18n/config'
@@ -111,36 +112,40 @@ describe('LanguageProvider switching + persistence', () => {
     expect(document.documentElement.lang).toBe('ar-EG')
   })
 
-  // ISSUE 6 — Arabic-only: switching is disabled. The provider ignores every
-  // attempt (selector UI removed; setLocale is a compatibility no-op) and the
-  // locale cookie stays aligned with Arabic.
-  it('cannot switch to English — the UI and the locale cookie stay Arabic', async () => {
+  it('switches to English and persists the choice in the locale cookie', async () => {
     render(
       <LanguageProvider>
         <Probe />
+        <LanguageToggle />
       </LanguageProvider>
     )
 
-    // Every switch attempt is a no-op: the probe stays Arabic/RTL and the
-    // cookie is (re)written with the Arabic locale, never 'en-EG'.
-    function SwitchAttempt() {
-      const { setLocale } = useLanguage()
-      setLocale('en-EG')
-      return null
-    }
-    render(
-      <LanguageProvider>
-        <SwitchAttempt />
-      </LanguageProvider>
-    )
+    // Language names are shown in the language currently selected, so the
+    // English option reads "الإنجليزية" while the UI is Arabic; its `lang`
+    // attribute is the stable handle.
+    const englishOption = document.querySelector('button[lang="en"]')
+    expect(englishOption?.textContent).toBe('الإنجليزية')
+    fireEvent.click(englishOption!)
 
+    await waitFor(() => {
+      expect(screen.getByTestId('probe-locale').textContent).toBe('en-EG')
+    })
+    expect(screen.getByTestId('probe-agenda').textContent).toBe('Agenda')
+    expect(screen.getByTestId('probe-dir').textContent).toBe('ltr')
+    expect(document.documentElement.dir).toBe('ltr')
+    expect(document.documentElement.lang).toBe('en-EG')
+    expect(cookieWrite).toContain(`${LOCALE_COOKIE}=en-EG`)
+
+    // In English mode the same option reads "English".
+    const arabicOption = document.querySelector('button[lang="ar"]')
+    expect(arabicOption?.textContent).toBe('Arabic')
+    expect(document.querySelector('button[lang="en"]')?.textContent).toBe('English')
+
+    // …and back to Arabic
+    fireEvent.click(arabicOption!)
     await waitFor(() => {
       expect(screen.getByTestId('probe-locale').textContent).toBe('ar-EG')
     })
-    expect(screen.getByTestId('probe-agenda').textContent).toBe('الأجندة')
-    expect(screen.getByTestId('probe-dir').textContent).toBe('rtl')
-    expect(document.documentElement.dir).toBe('rtl')
-    expect(document.documentElement.lang).toBe('ar-EG')
-    expect(cookieWrite).not.toContain('en-EG')
+    expect(cookieWrite).toContain(encodeURIComponent('ar-EG'))
   })
 })

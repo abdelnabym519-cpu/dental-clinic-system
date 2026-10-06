@@ -100,7 +100,7 @@ function makeFake() {
       }
       return row[k] === v
     })
-  base.aIInsight = {
+  base.aiInsight = {
     findMany: async ({ where, orderBy, take } = {}) => {
       let rows = insightRows.filter((r) => matchI(r, where))
       if (Array.isArray(orderBy)) {

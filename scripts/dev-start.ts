@@ -390,7 +390,7 @@ type PrismaClientModule = {
 async function createAppPrismaClient(): Promise<DevStartPrisma> {
   let mod: PrismaClientModule
   try {
-    mod = (await import('@prisma/client')) as unknown as PrismaClientModule
+    mod = (await import('@prisma/client')) as PrismaClientModule
   } catch {
     throw new StartupError(
       [

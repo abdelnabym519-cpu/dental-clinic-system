@@ -35,7 +35,6 @@ export async function GET(
         patientId: patient!.id,
       },
       include: {
-        patient: { select: { dateOfBirth: true } },
         doctor: { select: { firstName: true, lastName: true } },
         medications: {
           select: {
@@ -79,10 +78,9 @@ export async function GET(
     })
     const clinicName = hospital?.name ?? t('Clinic')
     const doctorName = `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`
-    // Age comes from the prescription's patient row (the auth context is a
-    // projection without dateOfBirth) — parity with the staff PDF route.
-    const dob = prescription.patient.dateOfBirth
-    const age = dob ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 3600_000)) : null
+    const age = patient!.dateOfBirth
+      ? Math.floor((Date.now() - patient!.dateOfBirth.getTime()) / (365.25 * 24 * 3600_000))
+      : null
 
     const pdf = renderSimplePdf({
       title: t('Prescription {v1}', { v1: prescription.prescriptionNo }),

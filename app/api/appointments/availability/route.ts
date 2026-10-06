@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
       select: { workingHours: true },
     })
 
-    const [shifts, doctorBreaks, blockedSlots, leaves, holidays] = await Promise.all([
+    const [shifts, doctorBreaks, blockedSlots, leaves, holidays] = (
+      await Promise.all([
         prisma.staffShift.findMany({
           where: { hospitalId, staffId: doctorId },
         }),
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest) {
         }),
         prisma.holiday.findMany({ where: { hospitalId } }),
       ])
+    ).map((v) => v ?? [])
 
     // Per-day effective windows: doctor shift → clinic week schedule →
     // built-in defaults. The UI shades exactly what the booking gate enforces.
@@ -107,13 +109,13 @@ export async function GET(request: NextRequest) {
       doctorId,
       date: toDateKey(date),
       windowsByDay,
-      leaves: leaves.map((l) => ({
+      leaves: leaves.map((l: { startDate: Date; endDate: Date; leaveType: string; status: string }) => ({
         startDate: toDateKey(l.startDate),
         endDate: toDateKey(l.endDate),
         leaveType: l.leaveType,
         status: l.status,
       })),
-      holidays: holidays.map((h) => ({
+      holidays: holidays.map((h: { date: Date; name: string; isRecurring: boolean }) => ({
         date: toDateKey(h.date),
         name: h.name,
         isRecurring: h.isRecurring,

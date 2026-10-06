@@ -1,45 +1,45 @@
-// Appointment status colors and labels — Arabic-only product (Issue 6)
+// Appointment status colors and labels
 export const appointmentStatusConfig: Record<
   string,
   { label: string; color: string; bgColor: string }
 > = {
   SCHEDULED: {
-    label: 'مجدول',
+    label: 'Scheduled',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
   },
   CONFIRMED: {
-    label: 'مؤكد',
+    label: 'Confirmed',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-100',
   },
   CHECKED_IN: {
-    label: 'تم الوصول',
+    label: 'Checked In',
     color: 'text-amber-700',
     bgColor: 'bg-amber-100',
   },
   IN_PROGRESS: {
-    label: 'جاري',
+    label: 'In Progress',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
   },
   COMPLETED: {
-    label: 'مكتمل',
+    label: 'Completed',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
   },
   CANCELLED: {
-    label: 'ملغي',
+    label: 'Cancelled',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
   NO_SHOW: {
-    label: 'لم يحضر',
+    label: 'No Show',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
   },
   RESCHEDULED: {
-    label: 'معاد جدولته',
+    label: 'Rescheduled',
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',
   },
@@ -50,27 +50,27 @@ export const appointmentTypeConfig: Record<
   { label: string; color: string; bgColor: string }
 > = {
   CONSULTATION: {
-    label: 'استشارة',
+    label: 'Consultation',
     color: 'text-blue-700',
     bgColor: 'bg-blue-50',
   },
   PROCEDURE: {
-    label: 'إجراء',
+    label: 'Procedure',
     color: 'text-purple-700',
     bgColor: 'bg-purple-50',
   },
   FOLLOW_UP: {
-    label: 'متابعة',
+    label: 'Follow Up',
     color: 'text-teal-700',
     bgColor: 'bg-teal-50',
   },
   EMERGENCY: {
-    label: 'طوارئ',
+    label: 'Emergency',
     color: 'text-red-700',
     bgColor: 'bg-red-50',
   },
   CHECK_UP: {
-    label: 'فحص دوري',
+    label: 'Check Up',
     color: 'text-green-700',
     bgColor: 'bg-green-50',
   },
@@ -78,22 +78,22 @@ export const appointmentTypeConfig: Record<
 
 export const priorityConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   LOW: {
-    label: 'منخفض',
+    label: 'Low',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
   NORMAL: {
-    label: 'عادي',
+    label: 'Normal',
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
   },
   HIGH: {
-    label: 'عالي',
+    label: 'High',
     color: 'text-orange-600',
     bgColor: 'bg-orange-100',
   },
   URGENT: {
-    label: 'عاجل',
+    label: 'Urgent',
     color: 'text-red-600',
     bgColor: 'bg-red-100',
   },
@@ -102,7 +102,7 @@ export const priorityConfig: Record<string, { label: string; color: string; bgCo
 // Format time string (24h to 12h format)
 export function formatTime(time: string): string {
   const [hours, minutes] = time.split(':').map(Number)
-  const period = hours >= 12 ? 'م' : 'ص'
+  const period = hours >= 12 ? 'PM' : 'AM'
   const displayHours = hours % 12 || 12
   return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`
 }
@@ -110,7 +110,7 @@ export function formatTime(time: string): string {
 // Format date for display
 export function formatDate(date: Date | string): string {
   const d = new Date(date)
-  return d.toLocaleDateString('ar-EG', {
+  return d.toLocaleDateString('en-EG', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -136,5 +136,5 @@ export function getPatientName(patient: { firstName: string; lastName: string })
 
 // Get doctor full name
 export function getDoctorName(doctor: { firstName: string; lastName: string }): string {
-  return `د. ${doctor.firstName} ${doctor.lastName}`
+  return `Dr. ${doctor.firstName} ${doctor.lastName}`
 }

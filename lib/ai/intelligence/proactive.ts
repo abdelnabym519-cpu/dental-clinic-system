@@ -23,7 +23,7 @@ import type { AlertSeverity, AlertType, ProactiveAlert } from './types'
 import type { GraphPrisma } from './case-graph'
 
 export type AlertPrisma = GraphPrisma & {
-  aIInsight: {
+  aiInsight: {
     findMany: (args?: { where?: Record<string, unknown>; take?: number }) => Promise<Record<string, any>[]>
     create: (args: { data: Record<string, any> }) => Promise<Record<string, any>>
     updateMany: (args: { where: Record<string, any>; data: Record<string, any> }) => Promise<{ count: number }>
@@ -140,7 +140,7 @@ export async function runProactiveIntelligence(
   }
 
   // Deduplicate against existing ACTIVE alerts (data.dedupKey), then persist.
-  const existing = await prisma.aIInsight.findMany({ where: { hospitalId: p.hospitalId, dismissed: false } })
+  const existing = await prisma.aiInsight.findMany({ where: { hospitalId: p.hospitalId, dismissed: false } })
   const activeKeys = new Set(
     existing
       .map((r) => (r.data && typeof r.data === 'object' && r.data.dedupKey ? String((r.data as Record<string, unknown>).dedupKey) : null))
@@ -155,7 +155,7 @@ export async function runProactiveIntelligence(
       continue
     }
     activeKeys.add(alert.dedupKey)
-    await prisma.aIInsight.create({
+    await prisma.aiInsight.create({
       data: {
         hospitalId: p.hospitalId,
         category: ALERT_CATEGORY[alert.alertType],
@@ -191,12 +191,12 @@ export async function dismissAlert(
   prisma: AlertPrisma,
   p: { hospitalId: string; alertId: string; actorId: string },
 ): Promise<{ ok: boolean; state: 'DISMISSED' | 'NOT_FOUND' }> {
-  const rows = await prisma.aIInsight.findMany({ where: { hospitalId: p.hospitalId, id: p.alertId } })
+  const rows = await prisma.aiInsight.findMany({ where: { hospitalId: p.hospitalId, id: p.alertId } })
   const row = rows[0]
   if (!row) return { ok: false, state: 'NOT_FOUND' }
   // Tenant-pinned update (never a bare-id update: a foreign id must not
   // touch another tenant's row — fail closed instead).
-  const updated = await prisma.aIInsight.updateMany({
+  const updated = await prisma.aiInsight.updateMany({
     where: { id: p.alertId, hospitalId: p.hospitalId },
     data: { dismissed: true, data: { ...(row.data as Record<string, unknown> ?? {}), dismissedById: p.actorId, dismissedAt: new Date().toISOString() } },
   })

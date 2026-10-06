@@ -32,16 +32,6 @@ const DENTAL_TERMS = [
   'anesthesia', 'anesthetic', 'pain', 'gum', 'gums', 'wisdom', 'denture', 'bridge',
   'implant', 'implants', 'veneer', 'whitening', 'periodont', 'pulp', 'caries',
   'dry socket', 'alveolar', 'extraction site',
-  // Clinic schedule vocabulary (Arabic Egyptian + EN): 'اعرضلي جدول بكرة',
-  // 'جدول النهارده إيه؟', 'هاتلي الأجندة'.
-  'schedule', 'agenda', 'جدول', 'أجندة', 'اجندة', 'جدولة',
-  // waiting-room / queue vocabulary (the operationalTopic knows these — the
-  // domain GATE must let them in: 'مين في الانتظار؟', 'who is waiting?').
-  'queue', 'waiting', 'انتظار', 'الانتظار', 'طابور', 'المرضى', 'مرضى', 'مستني', 'مستنية', 'مستنيين', 'زيارة', 'الزيارة', 'زيارات', 'محجوز', 'محجوزة', 'محجوزين',
-  // patient-record vocabulary ('Show me Ahmed Ali's overview', 'open the
-  // file of Sara Hassan') — a patient-record lookup IS in-domain.
-  'overview', 'record', 'records', 'file', 'chart', 'profile', 'recheck', 'rechecks', 'follow ups', 'followups',
-  'problem', 'problems', 'مشاكل', 'المشاكل', 'مشكلة',
   'queue', 'waiting', 'check-in', 'checkin', 'overdue', 'schedule', 'staff',
   'inventory', 'stock', 'revenue', 'referral', 'odontogram', 'chart', 'finding',
   'findings', 'diagnosis', 'symptom', 'symptoms', 'complaint',
@@ -88,13 +78,9 @@ const NAME_STOP = new Set([
   'please', 'kindly', 'immediately', 'urgent', 'urgently', 'asap', 'right',
   'away', 'execute', 'book', 'schedule', 'create', 'record', 'approve',
   'approved', 'admin', 'director',
-, 'today', 'tomorrow', 'yesterday', 'now', 'week', 'month', 'record', 'records', 'file', 'overview', 'chart', 'profile', 'data', 'info', 'tooth', 'teeth', 'lesion', 'fracture', 'care', 'management', 'anyway', 'impacted', 'periapical', 'panoramic', 'abscess', 'abscesses', 'x-ray', 'xray', 'image', 'images', 'imaging', 'root', 'canal', 'nerve', 'bone', 'caries', 'cavity', 'filling', 'crown', 'extraction', 'pain', 'swelling', 'study', 'studies'])
+])
 
-const AR_NAME_STOP = new Set(['اليوم', 'غداً', 'غدا', 'الأسبوع', 'الاسبوع', 'الشهر', 'الشهر الجاي', 'القادم', 'الجاي', 'الماضي', 'اللي فات', 'متابعة', 'موعد', 'مواعيد', 'دفع', 'دفعة', 'فاتورة', 'الحالة', 'المريض', 'مريض', 'عيادة', 'العيادة', 'طبيب', 'الطبيب', 'مستشفى', 'المرضى', 'الحالات', 'الملف', 'بيانات', 'النهارده', 'النهاردة', 'دكتور', 'الدكتور', 'الدكتورة', 'سستم', 'السستم', 'الروبوت',
-  // relative-clause + identity-clause words ('المريض اللي اسمه محمد') and
-  // possessive pronouns ('المواعيد بتاعه') are grammatical scaffolding —
-  // they name a RELATION, never a patient.
-  'اللي', 'الذى', 'الذي', 'التي', 'اسمه', 'اسمها', 'اسم', 'الاسم', 'بتاعه', 'بتاعها', 'بتاعهم', 'بتاعتها', 'بتاعته'])
+const AR_NAME_STOP = new Set(['اليوم', 'غداً', 'غدا', 'الأسبوع', 'الشهر', 'القادم', 'متابعة', 'موعد', 'مواعيد', 'دفع', 'دفعة', 'فاتورة', 'الحالة', 'المريض', 'مريض', 'عيادة', 'العيادة', 'طبيب', 'الطبيب', 'مستشفى', 'المرضى', 'الحالات', 'الملف', 'بيانات', 'النهارده', 'النهاردة', 'دكتور', 'الدكتور', 'الدكتورة', 'سستم', 'السستم', 'الروبوت'])
 
 /** Candidate patient name from the message (EN + AR patterns), or null. */
 /**
@@ -107,18 +93,11 @@ const AR_NAME_STOP = new Set(['اليوم', 'غداً', 'غدا', 'الأسبو�
 export function patientLookupIntent(m: string): boolean {
   // '(?!s)' — 'show ALL patient RECORDS' (bulk dump demand, e.g. role
   // spoofing) is NOT a single-record lookup.
-  return /patient record(?!s)|patient file(?!s)|patient info|patient overview|بيانات المريض|ملف المريض|سجل المريض|بيانات الحالة|بيانات الحالات|افتح ملف/.test(m) ||
-    // object-of-lookup phrasing: 'the file of Sara Hassan', 'Ahmed's record'
-    /\b(file|record|overview|chart|profile)\b/.test(m)
+  return /patient record(?!s)|patient file(?!s)|patient info|patient overview|بيانات المريض|ملف المريض|سجل المريض|بيانات الحالة|بيانات الحالات|افتح ملف/.test(m)
 }
 
 export function extractPatientName(message: string): string | null {
   const m = message.trim()
-  // Possessive clinical reference: "Show me Ahmed's latest x-ray" — the
-  // possessor of a clinical object IS the patient reference.
-  const poss = m.match(/(?<![A-Za-z\u0600-\u06FF])([A-Za-z][a-z]{1,15}|[\u0600-\u06FF]{2,})(?:['’]s|s['’])\s+(?:(?:latest|last|next)\s+)?(?:x-?ray|imaging|scan|file|record|case|appointment|visit|follow-?up|treatment|overview|profile|chart)/i)
-  // 'today's appointments' is a TIME possessive — never a patient name.
-  if (poss && !/^(today|tomorrow|yesterday|the|this|that|clinic|doctor|patient|he|she|it|there)$/i.test(poss[1])) return poss[1]
   const en = m.match(/\b(?:for|about|of|patient)\s+([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,2})/i)
   if (en) {
     const words = en[1].split(/\s+/).filter((w) => !NAME_STOP.has(w.toLowerCase()))
@@ -129,215 +108,15 @@ export function extractPatientName(message: string): string | null {
     const words = ar[1].split(/\s+/).filter((w) => !AR_NAME_STOP.has(w))
     if (words.length >= 1 && words.length <= 3) return words.join(' ')
   }
-  // Relative-clause identity: 'المريض اللي اسمه محمد علي' — the clause
-  // (اللي/الذي + اسمه/اسمها/الاسم) INTRODUCES the name; the clause words
-  // themselves are scaffolding and never part of the name.
-  const rel = m.match(/(?:اللي|الذى|الذي|التي)\s+(?:اسمه|اسمها|الاسم)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
-  if (rel) {
-    const nameWords: string[] = []
-    for (const raw of rel[1].split(/\s+/)) {
-      const w = raw.replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
-      const nonName = AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w)
-      if (nonName) {
-        if (nameWords.length > 0) break
-        continue
-      }
-      if (w.length >= 2) nameWords.push(w)
-    }
-    if (nameWords.length >= 1 && nameWords.length <= 3) return nameWords.join(' ')
-  }
   // Explicit patient markers ('بيانات المريض أحمد', 'ملف المريض أحمد',
-  // '… بتاع أحمد', 'اسمه محمد', 'اسم محمد النبي'): the marker names the
-  // FOLLOWING words as the patient. 'اسم' (bare) is deliberately LAST in
-  // the alternation so 'اسمه/اسمها' win at the same position; a bare-name
-  // candidate never self-executes a query (continuation-only — see the
-  // agent loop's pending-task gate).
-  const marker = m.match(/(?:للمريض|المريض|لمريض|بتاعت|بتاع|اسمه|اسمها|اسم)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
+  // '… بتاع أحمد'): the marker names the FOLLOWING words as the patient.
+  const marker = m.match(/(?:المريض|بتاع|بتاعت)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
   if (marker) {
-    // contiguous AFTER the name begins: LEADING scaffolding (object words,
-    // 'بتاعة/اللي') is skipped — 'الأشعة بتاعة أحمد' → 'أحمد' — while any
-    // non-name token once the name started ENDS it ('بتاع بكره بالليل' →
-    // the possessive has no name → fall through to the object capture).
-    const nameWords: string[] = []
-    for (const raw of marker[1].split(/\s+/)) {
-      const w = raw.replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
-      const nonName = AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w) || w === 'المريض' || w === 'بتاع' || w === 'بتاعت'
-      if (nonName) {
-        if (nameWords.length > 0) break
-        continue
-      }
-      if (w.length >= 2) nameWords.push(w)
-    }
-    if (nameWords.length >= 1 && nameWords.length <= 3) return nameWords.join(' ')
-  }
-  // Patient-OBJECT lookups without the المريض marker: 'هات حالة أحمد',
-  // 'افتح ملف محمد', 'مواعيد سارة النهارده' — the OBJECT (حالة/ملف/بيانات/
-  // مواعيد) names the FOLLOWING words as the patient. Every token is
-  // stopword-filtered; junk never becomes a name (knowledge questions have
-  // no object+name shape and stay unextracted).
-  const obj = m.match(/(?:الحالة|حالة|الملف|ملف|البيانات|بيانات|مواعيد|موعد|الأشعة|أشعة|اشعة|الفاتورة|فاتورة)\s+(([\u0600-\u06FF]{2,}|[A-Za-z]{2,})(?:\s+([\u0600-\u06FF]{2,}|[A-Za-z]{2,})){0,2})/)
-  if (obj) {
-    // Truncate at the first waw-joined request ('وافتح آخر أشعة ليه') —
-    // everything after the attached-waw verb belongs to the NEXT request.
-    const cut = obj[1].split(/\s+/)
-      // Arabic punctuation (؟ ، ؛) AND the tatweel (ـ) live INSIDE the
-      // Arabic block — strip them before filtering, or 'إيه؟' / 'الـ'
-      // slip past the stopword list as fake names.
-      .map((w) => w.replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, ''))
-      .filter((w) => w.length >= 3)
-    const cutIdx = cut.findIndex((w) => /^و/.test(w) && (AR_READ_WRITE_VERBS.has(w.slice(1)) || AR_READ_WRITE_VERBS.has('ا' + w.slice(2)) || /أشعة|اشعة|زيارة/.test(w.slice(1))))
-    const bounded = cutIdx === -1 ? cut : cut.slice(0, cutIdx)
-    // A NAME is a CONTIGUOUS run: the capture TRUNCATES at the first
-    // non-name token (temporal/possessive/verb scaffolding after the name —
-    // 'مواعيد محمد النبي بتاع بكره بالليل' → 'محمد النبي') instead of
-    // filtering it out and gluing the leftovers onto the name.
-    const isNonName = (w: string) =>
-      AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w) ||
-      w === 'الحالة' || w === 'الملف' || w === 'البيانات' || w === 'المريض' ||
-      AR_READ_WRITE_VERBS.has(w) || /^و/.test(w)
-    const nameWords: string[] = []
-    for (const raw of bounded) {
-      // possessive lam on a captured token: 'متابعة لأحمد' → 'أحمد'
-      const w = raw.replace(/^ل(?=[\u0600-\u06FF]{2,}$)/, '')
-      if (isNonName(w)) {
-        // leading scaffolding (the object word itself, 'بتاعة …') is
-        // skipped; once the name started, scaffolding ENDS it
-        if (nameWords.length > 0) break
-        continue
-      }
-      nameWords.push(w)
-    }
-    const words = nameWords
+    const words = marker[1].split(/\s+/).filter((w) => !AR_NAME_STOP.has(w) && w !== 'المريض' && w !== 'بتاع' && w !== 'بتاعت')
     if (words.length >= 1 && words.length <= 3) return words.join(' ')
-  }
-  // Possessive 'عند <name>': 'إيه المشاكل عند سارة؟' — عند + person name.
-  const ind = m.match(/(?:عند|لدى)\s+([\u0600-\u06FF]{2,})(?=\s|$|[.,؟!?،؛])/)
-  if (ind) {
-    // Arabic punctuation (؟) lives INSIDE the \u0600-\u06FF block — strip it.
-    const w = ind[1].replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
-    if (!AR_NAME_STOP.has(w) && !AR_NON_NAME_WORDS.has(w) && !AR_OBJECT_NOUNS.has(w) && !AR_READ_WRITE_VERBS.has(w) && !/^(يه|يها|هم|هن)$/.test(w)) {
-      return w
-    }
-  }
-  // Verb-led bare name: 'هات أحمد محمد' — the verb + a filtered name IS a
-  // patient call even without an object word.
-  const verbLed = m.match(/(?:هاتلي|هات|اعرضلي|اعرض|وريني|بينلي)\s+([\u0600-\u06FF]{2,}(?:\s+[\u0600-\u06FF]{2,}){0,2})/)
-  if (verbLed && !obj) {
-    // The captured name must END the request (or hand over to a و-verb).
-    // 'اعرض علي الـ queue بتاع العيادة' — 'علي' is the PREPOSITION there,
-    // not a patient named Ali: real content after the kept tokens
-    // disqualifies the capture (no name is guessed).
-    const verbIdx = verbLed.index ?? 0
-    const capStart = verbIdx + verbLed[0].indexOf(verbLed[1])
-    const rawTokens = verbLed[1].split(/\s+/)
-    const clean = (w: string) => w.replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
-    const cut = rawTokens.map(clean).filter((w) => w.length >= 3)
-    const cutIdx = cut.findIndex((w) => /^و/.test(w) && (AR_READ_WRITE_VERBS.has(w.slice(1)) || AR_READ_WRITE_VERBS.has('ا' + w.slice(2)) || /أشعة|اشعة|زيارة/.test(w.slice(1))))
-    const keptCount = cutIdx === -1 ? rawTokens.length : cutIdx
-    let keptLen = 0
-    for (let i = 0; i < keptCount; i++) keptLen += rawTokens[i].length + 1
-    const keptEnd = capStart + Math.max(keptLen - 1, 0)
-    const rest = m.slice(keptEnd).trim()
-    // Hamza variants (أ/إ/آ → ا) so 'وأعرض' matches the bare-alef verb list.
-    const restNorm = rest.replace(/[\u0623\u0625\u0622]/g, '\u0627')
-    const restOk =
-      rest === '' ||
-      /^(?:و(?:افتح|اعرض|اعرضلي|وريني|هات|هاتلي|قولي|شوف|راجع|بين|بينلي|دور|آخر|اخر|كل|الأشعة|أشعة|اشعة|العلاجات|العلاج|الخطط|خطة|المواعيد|المتابعات|الفاتورة))/.test(restNorm)
-    if (restOk) {
-      const bounded2 = cutIdx === -1 ? cut : cut.slice(0, cutIdx)
-      const words2 = bounded2
-        .map((w) => w.replace(/^ل(?=[\u0600-\u06FF]{2,}$)/, ''))
-        .filter((w) =>
-          !AR_NAME_STOP.has(w) && !AR_NON_NAME_WORDS.has(w) && !AR_OBJECT_NOUNS.has(w) &&
-          w !== 'الحالة' && w !== 'الملف' && w !== 'البيانات' && w !== 'المريض' &&
-          !AR_READ_WRITE_VERBS.has(w) && !/^و/.test(w))
-      if (words2.length >= 1 && words2.length <= 3) return words2.join(' ')
-    }
-  }
-  // Possessive lam: 'آخر أشعة لأحمد' → 'أحمد' (bounded; pronoun-carrying and
-  // function words are rejected, never guessed into a name).
-  const lam = m.match(/(?:^|\s)ل([\u0600-\u06FF]{3,})(?=\s|$|[.,؟!?،؛])/)
-  if (lam) {
-    const w = lam[1]
-    if (!AR_NAME_STOP.has(w) && !AR_NON_NAME_WORDS.has(w) && !AR_READ_WRITE_VERBS.has(w.slice(1)) &&
-        !/^(يه|يها|هم|هن|كل|ما|لا|لم|ل)/.test(w) && !/أشعة|اشعة|زيارة|موعد|مواعيد|علاج|مراجعة/.test(w)) {
-      return w
-    }
   }
   return null
 }
-
-/** Words that FOLLOW a patient-object but are never the name itself. */
-const AR_NON_NAME_WORDS = new Set(['بتاع', 'بتاعت', 'اللي', 'الذى', 'الذي', 'التي', 'عنده', 'عندها', 'عندهم', 'عند', 'في', 'من', 'الي', 'الى', 'ده', 'دي', 'مع', 'عن', 'النهارده', 'النهاردة', 'بكرة', 'بكره', 'امبارح', 'المطلوب', 'المستحقة', 'المستحقه', 'اليوم', 'هو', 'هي', 'ليه', 'ليها', 'لهم', 'بالليل', 'بالنهار', 'الجاي', 'الجديدة', 'الماضي', 'اللي فات',
-  // weekday / temporal / imaging words are never names
-  'الاحد', 'الأحد', 'الاثنين', 'الاتنين', 'الإثنين', 'التلات', 'الثلاثاء', 'الاربع', 'الاربعاء', 'الأربعاء', 'الخميس', 'الجمعة', 'الجمعه', 'السبت',
-  'آخر', 'اخر', 'أشعة', 'اشعة', 'الأشعة', 'زيارة', 'الزيارة', 'الزيارات', 'الأول', 'الاول', 'كمان', 'برضه', 'برضو', 'بتاعة', 'بتاع', 'المريض', 'عندنا', 'عندى', 'لو', 'الآن', 'الان', 'دلوقتي', 'فورا', 'لسه', 'بسه', 'سمحت', 'لوسمحت', 'من', 'فضلك'])
-
-/**
- * §17 — explicit patient CORRECTION ('لا، قصدي محمد', 'I meant Mohamed').
- * Returns the corrected name ONLY when a correction cue precedes it (never a
- * bare name, never a non-corrective sentence). Same hygiene as every other
- * capture: punctuation stripped, stopwords/object-nouns/verbs rejected.
- */
-/** Correction-cue detector (identity OR scope correction — 'قصدي …', 'لا، …'). */
-export function hasCorrectionCue(message: string): boolean {
-  return /(?:^|\s)(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد)(?=[\s،,]|$)|\bi mean\b|\bi meant\b|(?:^|\s)لا\s*[،,]/i.test(message.trim())
-}
-
-export function extractCorrectedPatientName(message: string): string | null {
-  const m = message.trim()
-  // Correction cues: 'قصدي …' family AND a 'لا،' rejection-led correction
-  // ('لا، محمد النبي' = 'no — Mohamed Alnabi').
-  const cue = /(?:^|\s)(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد)(?=[\s،,]|$)|\bi mean\b|\bi meant\b|(?:^|\s)لا\s*[،,]/i
-  if (!cue.test(m)) return null
-  const cap = m.match(/(?:قصدي|مقصدش|مقصدي|أقصد|اقصد|أنا بقصد|i mean|i meant|لا\s*[،,]\s*(?:قصدي\s*)?)\s+(([\u0600-\u06FF]{2,}|[A-Za-z][A-Za-z'-]{1,})(?:\s+([\u0600-\u06FF]{2,}|[A-Za-z][A-Za-z'-]{1,})){0,2})/i)
-  if (!cap) return null
-  // contiguous: the corrected NAME ends at the first non-name token —
-  // 'قصدي الأسبوع ده' carries NO name (the cue re-scopes TIME, not identity)
-  const clean = (w: string) => w.replace(/[\u061F\u060C\u061B!.,:;'"؟،؛\u0640]+/g, '')
-  const nameWords: string[] = []
-  for (const raw of cap[1].split(/\s+/)) {
-    const w = clean(raw)
-    if (w.length < 3) break
-    if (AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w) || AR_OBJECT_NOUNS.has(w) || AR_READ_WRITE_VERBS.has(w)) break
-    nameWords.push(w)
-  }
-  if (nameWords.length < 1 || nameWords.length > 3) return null
-  return nameWords.join(' ')
-}
-
-/**
- * Conservative BARE-NAME candidate ('محمد النبي', 'Ahmed Ali') for the
- * agent loop's pending-task continuation ONLY — a bare name with NO active
- * pending patient task is never promoted into a query (the continuation
- * gate owns that decision). Every token must survive the stopword/object/
- * verb/temporal filters; discourse fillers ('تم', 'شكرا', …) never pass.
- */
-const AR_BARE_NON_NAME = new Set(['تم', 'تمام', 'اوك', 'أوك', 'شكرا', 'شكراً', 'تسلم', 'ايوه', 'إيوه', 'أيوه', 'ماشي', 'ماشى', 'حاضر', 'اها', 'آه', 'طب', 'طيب', 'سلام', 'مرحبا', 'أهلا', 'اهلا', 'yes', 'no', 'ok', 'okay', 'thanks', 'thank', 'hello', 'hi', 'yes please'])
-
-export function extractBareNameCandidate(message: string): string | null {
-  const cleaned = message.trim().replace(/[\u061F?!.\u060C؛:'"،]+$/g, '')
-  if (!cleaned || /\d/.test(cleaned)) return null
-  const tokens = cleaned.split(/\s+/)
-  if (tokens.length < 1 || tokens.length > 3) return null
-  const strip = (w: string) => w.replace(/[^\u0600-\u06FFA-Za-z']/g, '')
-  const kept = tokens.map(strip)
-  const hasAr = kept.some((w) => /[\u0600-\u06FF]/.test(w))
-  const hasLatin = kept.some((w) => /^[A-Za-z]/.test(w))
-  if (hasAr && hasLatin) return null // mixed-script fragments are not names
-  for (const w of kept) {
-    if (w.length < 2) return null
-    if (AR_NAME_STOP.has(w) || AR_NON_NAME_WORDS.has(w) || AR_OBJECT_NOUNS.has(w) ||
-        AR_READ_WRITE_VERBS.has(w) || AR_BARE_NON_NAME.has(w.toLowerCase())) return null
-  }
-  return kept.join(' ')
-}
-
-/** Object nouns: the thing being asked about — never the patient's name. */
-const AR_OBJECT_NOUNS = new Set(['جدول', 'أجندة', 'اجندة', 'الأشعة', 'أشعة', 'اشعة', 'الاشعه', 'اشعه', 'الالفاتورة', 'الفاتورة', 'فاتورة', 'مواعيد', 'المواعيد', 'موعد', 'الحالة', 'حالة', 'الحاله', 'الملف', 'ملف', 'البيانات', 'بيانات', 'قائمة', 'الانتظار', 'انتظار', 'المتابعات', 'متابعة', 'المتابعه', 'الزيارات', 'زيارة', 'الخطط', 'خطة', 'العلاجات', 'علاج', 'العلاج', 'السجل', 'سجل'])
-
-/** READ/WRITE verbs that must never be taken for a name after an object. */
-const AR_READ_WRITE_VERBS = new Set(['هات', 'هاتلي', 'افتح', 'اعرض', 'اعرضلي', 'وريني', 'بين', 'بينلي', 'شوف', 'شوفلي', 'قول', 'قولي', 'راجع', 'راجعلي', 'دور', 'دورلي', 'احجز', 'حجز', 'سجل', 'ادفع', 'الغي', 'ألغي', 'حدث', 'جهز', 'رتب', 'صمم', 'عايذ', 'عايز', 'أريد', 'اريد', 'ممكن', 'ازاي', 'إزاي', 'كام', 'إيه', 'ايه', 'مين', 'فين', 'امتى', 'إمتى'])
 
 // ---------------------------------------------------------------------------
 // Entity extraction — never guesses: only pattern-certain identifiers
@@ -389,17 +168,8 @@ const ACTION_VERBS = [
 
 /** ASCII verbs match on word boundaries (so "payments" ≠ "pay"); non-ASCII
  *  verbs use substring match (JS \b does not work for Arabic words). */
-/** Verbs that double as clinical nouns ('record', 'note') — only an
- *  utterance-INITIAL occurrence is the ACTION verb; 'his record, show …'
- *  is a noun and must never start a write. */
-const AMBIGUOUS_NOUN_VERBS = new Set(['record', 'note', 'form', 'draft', 'run'])
-
 function hasVerb(m: string): boolean {
   return ACTION_VERBS.some((v) => {
-    if (AMBIGUOUS_NOUN_VERBS.has(v)) {
-      // utterance-initial (or right after a politeness marker) only
-      return new RegExp(`(?:^|[.?!]\\s+|please\\s+)${v}\\b`).test(m)
-    }
     if (v.includes(' ')) return m.includes(v)
     if (/^[\x00-\x7F]+$/.test(v)) return new RegExp(`\\b${v}\\b`).test(m)
     return m.includes(v)
@@ -415,31 +185,11 @@ export function extractDateParam(message: string, now: Date): string | null {
     const t = new Date(now.getTime() + offsetDays * 86400000)
     return t.toISOString().split('T')[0]
   }
-  if (/(yesterday|امبارح|مبارح)/.test(m)) return d(-1)
-  if (/(tomorrow|after tomorrow|غدا|غداً|بعد بكرة|غدًا|بعد يومين|بكرة)/.test(m)) {
+  if (/(tomorrow|after tomorrow|غدا|غداً|بعد بكرة|غدًا|بعد يومين|بعد يومين)/.test(m)) {
     return /after tomorrow|بعد بكرة|بعد يومين/.test(m) ? d(2) : d(1)
   }
-  // Weekday names (Arabic Egyptian + English) → the NEAREST occurrence
-  // including today (deterministic; the response prints the concrete date).
-  const DAYS: [number, string[]][] = [
-    [0, ['sunday', 'الاحد', 'الأحد']],
-    [1, ['monday', 'الاثنين', 'الإثنين', 'الاتنين']],
-    [2, ['tuesday', 'الثلاثاء', 'التلات']],
-    [3, ['wednesday', 'الاربعاء', 'الأربعاء', 'الاربع']],
-    [4, ['thursday', 'الخميس']],
-    [5, ['friday', 'الجمعة', 'الجمعه']],
-    [6, ['saturday', 'السبت']],
-  ]
-  for (const [dow, names] of DAYS) {
-    if (names.some((n) => new RegExp(`(?:^|[^\\u0621-\\u064Aa-z])${n}(?:[^\\u0621-\\u064Aa-z]|$)`).test(m))) {
-      return d((dow - now.getUTCDay() + 7) % 7)
-    }
-  }
-  // Explicit NEXT week only — bare 'الأسبوع ده' (this week) is NOT a day
-  // date; the tool answers for its default day and the template prints the
-  // actual queried date (never mislabel a week as a day).
-  if (/(next week|الاسبوع الجاي|الأسبوع الجاي|الاسبوع المقبل|الأسبوع المقبل|الاسبوع القادم|الأسبوع القادم)/.test(m)) return d(7)
-  if (/(next month|الشهر القادم|الشهر المقبل)/.test(m)) return d(30)
+  if (/(next week|اسبوع|أسبوع|الأسبوع المقبل|الاسبوع القادم)/.test(m)) return d(7)
+  if (/(next month|الشهر القادم|الشهر المقبل|شهر)/.test(m)) return d(30)
   if (/(tonday|today|الآن|اليوم|النهارده|النهاردة)/.test(m)) return d(0)
   return null
 }
@@ -458,14 +208,7 @@ export function extractAmountParam(message: string): string | null {
 }
 
 export function detectActionSignal(message: string, now: Date): ActionSignal | null {
-  let m = message.toLowerCase()
-  // A sort clause ('رتبهم حسب الوقت' / 'sort by time') is a READ presentation
-  // modifier — strip 'رتب' before the verb gate so a clinic-level read like
-  // 'شوف المرضى اللي عندهم متابعة النهارده ورتبهم حسب الوقت' is never
-  // hijacked into a write ACTION_REQUEST.
-  if (/(رتبهم|رتبها|رتبهن)(\s|$)|رتب\s+\S+\s+حسب|حسب\s+(الوقت|الاسم|السعر|التاريخ|التاريخ)/.test(m)) {
-    m = m.replace(/رتب(هم|ها|هن)?/g, ' ')
-  }
+  const m = message.toLowerCase()
   if (!hasVerb(m)) return null
 
   const has = (...terms: string[]) => terms.some((t) => m.includes(t.toLowerCase()))
@@ -506,10 +249,10 @@ export function detectActionSignal(message: string, now: Date): ActionSignal | n
 // ---------------------------------------------------------------------------
 
 const IMAGING_TERMS = ['x-ray', 'xray', 'radiograph', 'panoramic', 'pano', 'periapical', 'cbct', 'imaging', 'radiology', 'ai finding', 'ai analysis', 'أشعة', 'اشعة', 'تصوير', 'panoram', 'panoramic']
-const CLINICAL_TERMS = ['diagnosis', 'diagnoses', 'findings', 'finding', 'symptom', 'symptoms', 'complaint', 'medical history', 'dental history', 'history', 'exam', 'examination', 'notes', 'chart', 'odontogram', 'treatment', 'treatments', 'تشخيص', 'أعراض', 'شكوى', 'سوابق', 'فحص', 'ملاحظات', 'مشاكل', 'المشاكل', 'مشكلة', 'مخطط', 'مراجعة', 'مراجعات', 'علاج', 'العلاج', 'علاجات', 'راجع']
-const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'schedule', 'انتظار', 'الانتظار', 'طابور', 'مين في', 'أجندة', 'اجندة', 'مستني', 'مستنيين', 'محجوز', 'محجوزة', 'محجوزين', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات', 'حالات اليوم', 'مرضى اليوم', 'الحالات اللي', 'اللي محتاجة', 'مواعيد النهارده', 'مواعيد النهاردة', 'عيادات النهارده', 'حالات بكرة', 'جهزلي', 'جهز الحالات', 'تجهيز الحالات', 'جهز حالات', 'وضع العيادة', 'حالة العيادة', 'command center', 'end of day']
-const FOLLOWUP_TERMS = ['follow-up', 'followup', 'follow up', 'متابعة', 'متابعات', 'recheck', 'review visit', 'مراجعة', 'مراجعات', 'المراجعات', 'محتاجة مراجعة', 'محتاجة مراجعات', 'يرجع', 'ترجع', 'يرجعوا', 'يعود', 'تعود', 'return visit', 'come back']
-const CASE_TERMS = ['case', 'treatment plan', 'plan', 'حالة', 'حالات', 'خطة', 'مخطط', 'خطط', 'الخطط', 'بيانات', 'البيانات', 'ملف', 'الملف', 'سجل']
+const CLINICAL_TERMS = ['diagnosis', 'diagnoses', 'findings', 'finding', 'symptom', 'symptoms', 'complaint', 'medical history', 'dental history', 'history', 'exam', 'examination', 'notes', 'chart', 'odontogram', 'تشخيص', 'أعراض', 'شكوى', 'سوابق', 'فحص', 'ملاحظات', 'مخطط', 'مراجعة', 'مراجعات', 'علاج', 'العلاج', 'علاجات', 'راجع']
+const OPERATIONAL_TERMS = ['queue', 'waiting', 'who is waiting', 'waiting room', 'overdue', 'late', 'today schedule', 'doctor schedule', 'doctor availability', 'staff schedule', 'revenue', 'income', 'قائمة', 'محاسب', 'طوارئ', 'جاهزين', 'متأخر', 'جدول', 'الدخل', 'الإيرادات', 'حالات اليوم', 'مرضى اليوم', 'الحالات اللي', 'اللي محتاجة', 'مواعيد النهارده', 'مواعيد النهاردة', 'عيادات النهارده']
+const FOLLOWUP_TERMS = ['follow-up', 'followup', 'follow up', 'متابعة', 'متابعات', 'recheck', 'review visit', 'مراجعة', 'مراجعات', 'المراجعات', 'محتاجة مراجعة', 'محتاجة مراجعات']
+const CASE_TERMS = ['case', 'treatment plan', 'plan', 'حالة', 'حالات', 'خطة', 'مخطط']
 const BILLING_TERMS = ['invoice', 'payment', 'balance', 'billing', 'overdue invoice', 'فاتورة', 'حساب', 'رصيد', 'دفعة']
 const APPT_TERMS = ['appointment', 'appointments', 'visit', 'visits', 'موعد', 'مواعيد', 'زيارات', 'زيارة', 'معاد', 'معاد الكشف']
 
@@ -536,7 +279,7 @@ const SIGNALS = {
   appt: (m: string) => APPT_TERMS.some((t) => termHit(m, t)),
 }
 
-const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين', 'كمان']
+const CONJUNCTIONS = [' and ', ' then ', ' also ', ' plus ', ' و ', ' ثم ', 'وبعدها', 'وبعد كده', 'kde', 'بعدين']
 
 // ---------------------------------------------------------------------------
 // Phase 4 — knowledge (RAG) intent: general dental knowledge questions
@@ -660,13 +403,9 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   // A tooth keyword without a valid FDI → flag it (the loop asks, never guesses).
   const toothKeywordPresent = /\btooth\b|\bteeth\b|\bmolar\b|سن|أسنان/.test(m)
   // Patient-name lookup hint (client hint first, else message extraction).
-  // A correction cue ('قصدي محمد النبي', 'لا، محمد النبي') SUPPLIES the
-  // identity — the corrected name is the strongest hint on the turn.
-  const patientName = input.patientNameHint || extractCorrectedPatientName(input.message) || extractPatientName(input.message)
+  const patientName = input.patientNameHint || extractPatientName(input.message)
   // First-person reference = the speaker's own record (self-scope downstream).
-  // 'Show me …' is a dative, not a patient scope — only possessives
-  // ('my appointments', 'حالتي', 'مواعيدي') put the DOCTOR's own scope first.
-  const firstPerson = /\bmy\b|\bmine\b|^أنا\s|أنا\b|(^|\s)لي(\s|$)/.test(m)
+  const firstPerson = /\bmy\b|\bme\b|^أنا\s|أنا\b|(^|\s)لي(\s|$)/.test(m)
 
   // 1 — Domain gate. A STRONG knowledge intent (guidelines/criteria/
   // protocol/…) passes the gate even without a known dental term: the
@@ -677,12 +416,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
   const strongKnowledgeIntent = KNOWLEDGE_INTENT_STRONG.some((t) => m.includes(t))
   if (
     !isInDentalDomain(input.message, hasMetadata) &&
-    !(detectKnowledgeSignal(m, false) !== null && strongKnowledgeIntent) &&
-    !(patientName !== null && /(?:^|\s)(?:هات|هاتلي|وريني|اعرض|اعرضلي|افتح)(?:\s|$)/.test(m)) &&
-    // §17 — an explicit patient CORRECTION ('لا، قصدي محمد') is always
-    // in-domain clinical context even though the utterance carries no other
-    // request word.
-    extractCorrectedPatientName(input.message) === null
+    !(detectKnowledgeSignal(m, false) !== null && strongKnowledgeIntent)
   ) {
     return {
       task: baseTask({ taskType: 'OUT_OF_DOMAIN', confidence: 0.95 }),
@@ -701,23 +435,9 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
     billing: SIGNALS.billing(m),
     appt: SIGNALS.appt(m),
   }
-  const conjunctionCount =
-    CONJUNCTIONS.filter((c) => m.includes(c)).length +
-    // Egyptian attaches 'و' to the next word: 'هات حالة أحمد وافتح آخر أشعة
-    // ليه' — count start-of-word waw followed by a KNOWN verb (bounded list,
-    // never open-ended) as a conjunction.
-    (m.match(/(?:^|\s)و(?=(?:افتح|اعرض|اعرضلي|وريني|هات|هاتلي|قولي|احجز|سجل|ادفع|الغي|ألغي|حدث|بين|بينلي|شوف|راجع|رتب|جهز|صمم|دور|آخر|اخر|كل|الأشعة|أشعة|اشعة|العلاجات|العلاج|الخطط|خطة|المواعيد|المتابعات|الفاتورة))/g)?.length ?? 0)
+  const conjunctionCount = CONJUNCTIONS.filter((c) => m.includes(c)).length
 
-  // A SINGULAR definite patient reference with no name ('مواعيد المريض
-  // النهاردة') scopes the request to ONE still-unidentified patient —
-  // identity is required. The plural ('المرضى') is a distinct word and
-  // never matches: clinic-level requests keep flowing without a patient.
-  const singularPatientRef = /(?<![\u0600-\u06FF])(?:المريض|المريضة)(?![\u0600-\u06FF])/.test(input.message)
-  // A possessive PRONOUN reference ('المواعيد بتاعه' = his appointments,
-  // 'his appointments') scopes the request to ONE person named only by
-  // pronoun — identity must come from an active pin or be requested.
-  const possessivePatientRef = /(?<![\u0600-\u06FFA-Za-z])(?:بتاعه|بتاعها|بتاعهم|بتاعتها|بتاعته|(?:his|her|their))(?![\u0600-\u06FFA-Za-z])/.test(input.message)
-  const rawPatientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson || singularPatientRef || possessivePatientRef
+  const rawPatientInvolved = input.hasPatientId || toothFdi !== null || input.caseId !== null || input.treatmentNo !== null || patientName !== null || firstPerson
 
   // Phase 4 — knowledge (RAG) intent: general dental knowledge question?
   // (The domain gate above already guarantees dental context.) A domain
@@ -793,7 +513,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       missingInfo: patientInvolved === false ? [] : input.hasPatientId ? [] : ['patient identity (resolve by name or id)'],
       confidence: 0.8,
     })
-  } else if (signals.imaging && !isMultiStep && (input.studyId || patientName !== null || /find|analy|review|result|أي|نتائج|تحليل/.test(m))) {
+  } else if (signals.imaging && (input.studyId || /find|analy|review|result|أي|نتائج|تحليل/.test(m))) {
     task = baseTask({
       taskType: 'IMAGING_ANALYSIS',
       domains: ['imaging'],
@@ -818,12 +538,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       contextProfile: null,
       confidence: 0.85,
     })
-
-  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup) && !signals.imaging &&
-    // 'آخر زيارة كانت إمتى؟' with NO patient scope is an anaphor needing the
-    // patient — never answered by a clinic-wide list (which would quietly
-    // answer a different question).
-    !(signals.appt && !signals.operational && /إمتى|امتى|\bwhen\b/i.test(m))) {
+  } else if (!patientInvolved && (signals.operational || signals.appt || signals.billing || signals.followup) && !signals.imaging) {
     // No patient in scope → clinic-level operational query. Checked BEFORE
     // the clinical branch: clinic-wide review/follow-up questions ('إيه
     // الحالات اللي محتاجة مراجعة النهارده', 'review today's follow-up
@@ -834,34 +549,6 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       domains: ['scheduling'],
       contextProfile: null,
       confidence: 0.8,
-    })
-  } else if (patientName !== null && (signals.case || signals.appt || signals.imaging || signals.billing || patientLookupIntent(m) || /ملف|بيانات|سجل المريض/.test(m) || /(?:^|\s)(?:هات|هاتلي)(?:\s|$)/.test(m))
-    // A CASE *REVIEW* or follow-up-plan discussion about a named patient is
-    // a clinical analysis with memory intent (§5/§14) — not a generic
-    // profile read.
-    && !(signals.case && (/راجع|راجعلي|\breview\b/.test(m) || signals.followup || /\bplan\b|\bdiscuss\b|previously|خط[ةت]\b|مناقشة|اتفقنا/.test(m)))) {
-    // Patient-specific lookup: an OBJECT (case / file / appointments /
-    // imaging / record) plus a NAME hint — patient identity becomes the
-    // thing to resolve (never guessed), and the smallest profile answers.
-    const imagingish = /أشعة|اشعة|imaging|x-ray|xray|راديولوجي/.test(m)
-    task = baseTask({
-      taskType: imagingish ? 'IMAGING_ANALYSIS' : 'INFORMATIONAL',
-      domains: [imagingish ? 'imaging' : 'patient'],
-      contextProfile: imagingish ? 'IMAGING' : 'PATIENT_OVERVIEW',
-      patientInvolved: true,
-      confidence: 0.85,
-      missingInfo: input.hasPatientId ? [] : ['patient identity (resolve by name or id)'],
-    })
-  } else if (extractCorrectedPatientName(input.message) !== null) {
-    // §17 — correction turn: the corrected name re-resolves (hint carries
-    // it); the next anaphor turn ('آخر أشعة ليه؟') then uses the NEW pin.
-    task = baseTask({
-      taskType: 'INFORMATIONAL',
-      domains: ['patient'],
-      contextProfile: 'PATIENT_OVERVIEW',
-      patientInvolved: true,
-      confidence: 0.85,
-      missingInfo: input.hasPatientId ? [] : ['patient identity (resolve by name or id)'],
     })
   } else if (signals.clinical || (signals.followup && patientInvolved) || (toothFdi !== null && !signals.operational)) {
     task = baseTask({
@@ -874,14 +561,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       confidence: 0.8,
       missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
-    // (§5 ordering) AFTER the clinical/memory-worthy branch above: a follow-up
-    // plan or review request about a named patient stays a clinical analysis
-    // (the memory-intent contract rides on it); the generic profile answer
-    // only claims requests nothing more specific answers.
-  } else if (signals.appt || signals.billing || hasMetadata || (patientLookupIntent(m)
-    // A BULK demand ('show all patient records…') is never answered by a
-    // single-patient overview — it fails closed to clarification instead.
-    && !/\ball\b|كل\s+ال|جميع|dump/i.test(m))) {
+  } else if (signals.appt || signals.billing || hasMetadata || patientLookupIntent(m)) {
     task = baseTask({
       taskType: 'INFORMATIONAL',
       domains: pickDomains(signals, patientInvolved),
@@ -889,7 +569,7 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
       patientInvolved,
       toothInvolved: toothFdi !== null,
       confidence: 0.75,
-      missingInfo: (patientInvolved || (signals.appt && /إمتى|امتى|\bwhen\b/i.test(m))) && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
+      missingInfo: patientInvolved && !input.hasPatientId ? ['patient identity (resolve by name or id)'] : [],
     })
   } else if (knowledge) {
     // Phase 4 — general dental knowledge question (RAG). No patient context

@@ -15,7 +15,7 @@ const { mockComplete, mockExtractJSON } = vi.hoisted(() => ({
   mockExtractJSON: vi.fn((s) => s),
 }))
 
-vi.mock('@/lib/ai/gateway', () => ({
+vi.mock('@/lib/ai/openrouter', () => ({
   complete: mockComplete,
   extractJSON: mockExtractJSON,
 }))
@@ -106,9 +106,7 @@ describe('POST /api/ai/query', () => {
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'show me unknowns' }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    // Issue 4: the model's raw output is never echoed back — Arabic PARSE_FAILED
-    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
-    expect(body.code).toBe('PARSE_FAILED')
+    expect(body.error).toContain('Unsupported data source')
   })
 
   it('executes whitelisted patient query successfully', async () => {
@@ -158,15 +156,14 @@ describe('POST /api/ai/query', () => {
     expect(body.rowCount).toBe(1)
   })
 
-  it('returns 400 PARSE_FAILED (Arabic guidance) when the LLM call errors — Issue 4 contract', async () => {
+  it('returns 502 when AI service errors with OpenRouter message', async () => {
     mockAuth()
-    mockComplete.mockRejectedValue(new Error('AI Gateway rate limit exceeded'))
+    mockComplete.mockRejectedValue(new Error('OpenRouter API rate limit exceeded'))
 
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'test query' }))
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(502)
     const body = await res.json()
-    expect(body.code).toBe('PARSE_FAILED')
-    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
+    expect(body.error).toContain('AI service error')
   })
 
   it('returns 400 when AI response is unparseable', async () => {
@@ -177,8 +174,7 @@ describe('POST /api/ai/query', () => {
     const res = await queryPOST(makeReq('/api/ai/query', 'POST', { query: 'show patients' }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.code).toBe('PARSE_FAILED')
-    expect(body.error).toContain('لم نتمكن من تحليل سؤالك')
+    expect(body.error).toContain('Could not parse')
   })
 
   it('caps limit at 50', async () => {

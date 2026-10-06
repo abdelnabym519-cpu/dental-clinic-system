@@ -300,10 +300,6 @@ export interface AgentState {
   status: 'RUNNING' | AgentStatus
   stopReason: string | null
   stageTimes: Record<string, number>
-  /** Server-verified patient resolved THIS turn (§4 Remember step — the
-   *  voice pipeline pins it into the session so follow-up turns keep
-   *  context). null when no patient was resolved. */
-  resolvedPatient: { id: string; displayName: string } | null
   modelCalls: number
   modelLatencyMs: number
   toolCalls: {
@@ -454,10 +450,6 @@ export interface AgentResponse {
   actionsExecuted: ActionExecuted[]
   approvalState: ApprovalState | null
   verification: { verified: boolean; method: string; result: 'PASS' | 'FAIL' } | null
-  /** Server-verified patient resolved THIS turn (§4 Remember) — the voice
-   *  pipeline pins it into the session scope for follow-up turns. null when
-   *  no patient was resolved. */
-  resolvedPatient: { id: string; displayName: string } | null
   uncertainty: string[]
   missingInfo: string[]
   warnings: string[]

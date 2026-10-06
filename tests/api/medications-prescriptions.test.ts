@@ -88,7 +88,7 @@ describe('GET /api/medications', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           OR: expect.arrayContaining([
-            expect.objectContaining({ name: { contains: 'amox' } }),
+            expect.objectContaining({ name: { contains: 'amox', mode: 'insensitive' } }),
           ]),
         }),
       })
@@ -326,8 +326,7 @@ describe('POST /api/prescriptions', () => {
     const body = await res.json()
 
     expect(res.status).toBe(400)
-    // Issue 5 contract: Arabic-first validation (Phase 15, changed surface).
-    expect(body.error).toContain('المريض')
+    expect(body.error).toContain('Patient')
   })
 
   it('returns 400 when medications array is empty', async () => {
@@ -358,8 +357,7 @@ describe('POST /api/prescriptions', () => {
     const body = await res.json()
 
     expect(res.status).toBe(404)
-    // Issue 5 contract: cross-tenant patient is NOT FOUND in Arabic.
-    expect(body.error).toBe('المريض غير موجود')
+    expect(body.error).toBe('Patient not found')
   })
 
   it('returns 400 when doctor staff record not found', async () => {
@@ -379,8 +377,7 @@ describe('POST /api/prescriptions', () => {
     const body = await res.json()
 
     expect(res.status).toBe(400)
-    // Issue 5 contract: Arabic error for a missing doctor staff profile.
-    expect(body.error).toContain('ملف طبيب')
+    expect(body.error).toContain('Doctor staff record')
   })
 
   it('creates prescription with generated number', async () => {

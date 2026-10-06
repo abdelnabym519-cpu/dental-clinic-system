@@ -153,12 +153,10 @@ export default function NewTreatmentPage() {
   const handleProcedureSelect = (procedureId: string) => {
     const procedure = procedures.find((p) => p.id === procedureId)
     setSelectedProcedure(procedure || null)
-    // Issue 7 — manual prices: selecting a procedure must NOT auto-populate
-    // the cost from the catalog. The base price stays visible as a passive
-    // hint next to the field; the accountant/receptionist types the price.
     setFormData({
       ...formData,
       procedureId,
+      cost: procedure ? procedure.basePrice.toString() : '',
     })
   }
 
@@ -225,7 +223,7 @@ export default function NewTreatmentPage() {
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
-          {t(error)}
+          {error}
         </div>
       )}
 

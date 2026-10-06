@@ -132,17 +132,10 @@ async function resolvePatientForAction(
   // Resolution is tenant-scoped: a foreign-tenant or nonexistent id fails
   // closed exactly like a bad name.
   if (params.patientId) {
-    let patient: { id: string; hospitalId: string } | null = null
-    try {
-      patient = await prisma.patient.findUnique({
-        where: { id: params.patientId },
-        select: { id: true, hospitalId: true },
-      })
-    } catch {
-      // Fail closed (the pipeline's own doctrine): an unresolved scope — bad
-      // id, foreign tenant, OR an unavailable database — never executes.
-      patient = null
-    }
+    const patient = await prisma.patient.findUnique({
+      where: { id: params.patientId },
+      select: { id: true, hospitalId: true },
+    })
     if (patient && patient.hospitalId === hospitalId) {
       // Phase 8 (F-1) — record_payment binds money to an invoice; the
       // patient scope and the invoice's own patient must AGREE, else fail
@@ -303,34 +296,34 @@ async function verifyAction(action: string, result: any, hospitalId: string): Pr
       }
       case 'create_invoice': {
         if (!result?.invoiceNo) return { verified: false, detail: 'no invoice reference returned' }
-        const invoice = await prisma.invoice.findFirst({ where: { hospitalId, invoiceNo: result.invoiceNo } })
+        const invoice = await prisma.invoice.findUnique({ where: { hospitalId, invoiceNo: result.invoiceNo } })
         if (!invoice) return { verified: false, detail: 'invoice row not found' }
         const ok = invoice.hospitalId === hospitalId && invoice.status === 'PENDING'
         return { verified: ok, detail: `invoice ${invoice.invoiceNo} status=${invoice.status}` }
       }
       case 'book_appointment': {
         if (!result?.appointmentNo) return { verified: false, detail: 'no appointment reference returned' }
-        const appt = await prisma.appointment.findFirst({ where: { hospitalId, appointmentNo: result.appointmentNo } })
+        const appt = await prisma.appointment.findUnique({ where: { hospitalId, appointmentNo: result.appointmentNo } })
         if (!appt) return { verified: false, detail: 'appointment row not found' }
         const ok = appt.hospitalId === hospitalId && appt.status === 'SCHEDULED'
         return { verified: ok, detail: `appointment ${appt.appointmentNo} status=${appt.status}` }
       }
       case 'create_patient': {
         if (!result?.patientId) return { verified: false, detail: 'no patient reference returned' }
-        const p = await prisma.patient.findFirst({ where: { hospitalId, patientId: result.patientId } })
+        const p = await prisma.patient.findUnique({ where: { hospitalId, patientId: result.patientId } })
         const ok = Boolean(p && p.hospitalId === hospitalId)
         return { verified: ok, detail: `patient ${result.patientId} ${ok ? 'exists' : 'missing'}` }
       }
       case 'create_treatment': {
         if (!result?.treatmentNo) return { verified: false, detail: 'no treatment reference returned' }
-        const t = await prisma.treatment.findFirst({ where: { hospitalId, treatmentNo: result.treatmentNo } })
+        const t = await prisma.treatment.findUnique({ where: { hospitalId, treatmentNo: result.treatmentNo } })
         if (!t) return { verified: false, detail: 'treatment row not found' }
         const ok = t.hospitalId === hospitalId && t.status === 'IN_PROGRESS'
         return { verified: ok, detail: `treatment ${t.treatmentNo} status=${t.status}` }
       }
       case 'create_prescription': {
         if (!result?.prescriptionNo) return { verified: false, detail: 'no prescription reference returned' }
-        const rx = await prisma.prescription.findFirst({ where: { hospitalId, prescriptionNo: result.prescriptionNo } })
+        const rx = await prisma.prescription.findUnique({ where: { hospitalId, prescriptionNo: result.prescriptionNo } })
         if (!rx) return { verified: false, detail: 'prescription row not found' }
         // AI-created prescriptions must remain DRAFT — never authoritative.
         const ok = rx.hospitalId === hospitalId && rx.status === 'DRAFT'
@@ -345,7 +338,7 @@ async function verifyAction(action: string, result: any, hospitalId: string): Pr
       }
       case 'create_lab_order': {
         if (!result?.orderNumber) return { verified: false, detail: 'no lab order reference returned' }
-        const o = await prisma.labOrder.findFirst({ where: { hospitalId, orderNumber: result.orderNumber } })
+        const o = await prisma.labOrder.findUnique({ where: { hospitalId, orderNumber: result.orderNumber } })
         if (!o) return { verified: false, detail: 'lab order row not found' }
         const ok = o.hospitalId === hospitalId && o.status === 'CREATED'
         return { verified: ok, detail: `lab order ${o.orderNumber} status=${o.status}` }

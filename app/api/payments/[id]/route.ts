@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Check if user has permission
     if (!['ADMIN', 'ACCOUNTANT'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية تعديل الدفعات" },
+        { error: "You don't have permission to update payments" },
         { status: 403 }
       )
     }
@@ -174,7 +174,7 @@ export async function DELETE(
     // Check if user has permission
     if (!['ADMIN'].includes(session.user.role)) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية حذف الدفعات" },
+        { error: "You don't have permission to delete payments" },
         { status: 403 }
       )
     }

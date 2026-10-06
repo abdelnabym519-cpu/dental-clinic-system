@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     // and isolate agent failures from the module graph.
     const { runAgent } = await import('@/lib/ai/agent/loop')
     const { DEFAULT_AGENT_LIMITS } = await import('@/lib/ai/agent/types')
-    const { complete } = await import('@/lib/ai/gateway')
+    const { complete } = await import('@/lib/ai/openrouter')
     const { getModelByTier } = await import('@/lib/ai/models')
     const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
     // Phase 6 — real-inference path: attachment service + LocalAIService

@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { smsService, isValidEgyptianPhoneNumber } from '@/lib/services/sms.service'
+import { smsService } from '@/lib/services/sms.service'
 import { emailService } from '@/lib/services/email.service'
-
-// Issue 3 — configuration failures of the SMS/WhatsApp gateway are a distinct,
-// understandable category for the user (settings incomplete), never a raw
-// provider/stack message.
-function isGatewayConfigurationError(err: any): boolean {
-  const msg = typeof err?.message === 'string' ? err.message : ''
-  return (
-    msg.includes('not configured') ||
-    msg.includes('SMS API key') ||
-    msg.includes('gateway') ||
-    msg.includes('ENOTFOUND') ||
-    msg.includes('ECONNREFUSED') ||
-    msg.includes('ETIMEDOUT')
-  )
-}
-
-const MSG_CONFIG_UNAVAILABLE = 'إعدادات واتساب غير مكتملة أو غير متاحة حاليًا.'
-const MSG_TEST_SEND_FAILED = 'تعذر إرسال رسالة الاختبار. حاول مرة أخرى.'
 
 // POST - Test SMS or email connection
 export async function POST(request: NextRequest) {
@@ -37,24 +19,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (type !== 'sms' && type !== 'email') {
-      return NextResponse.json({ error: "النوع يجب أن يكون sms أو email" }, { status: 400 })
+      return NextResponse.json({ error: "Type must be 'sms' or 'email'" }, { status: 400 })
     }
 
     // Test SMS connection
     if (type === 'sms') {
-      if (!testData?.phone || String(testData.phone).trim() === '') {
+      if (!testData?.phone) {
         return NextResponse.json(
-          { error: 'يرجى إدخال رقم هاتف للاختبار.' },
-          { status: 400 }
-        )
-      }
-
-      // Issue 3 — validate with the SAME canonical Egyptian rule the gateway
-      // itself enforces, BEFORE initialize(), and answer in Arabic so the
-      // user can tell an invalid number apart from a misconfigured gateway.
-      if (!isValidEgyptianPhoneNumber(String(testData.phone))) {
-        return NextResponse.json(
-          { error: 'يرجى إدخال رقم هاتف صحيح (موبايل مصري مثل 01xxxxxxxxx).' },
+          { error: 'Phone number is required for SMS test' },
           { status: 400 }
         )
       }
@@ -80,16 +52,11 @@ export async function POST(request: NextRequest) {
         })
       } catch (error: any) {
         console.error('SMS test failed:', error)
-        const safeError =
-          error?.message === 'Invalid phone number format'
-            ? 'يرجى إدخال رقم هاتف صحيح (موبايل مصري مثل 01xxxxxxxxx).'
-            : isGatewayConfigurationError(error)
-              ? MSG_CONFIG_UNAVAILABLE
-              : MSG_TEST_SEND_FAILED
         return NextResponse.json(
           {
             success: false,
-            error: safeError,
+            error: 'Failed to send test SMS',
+            details: error.message,
           },
           { status: 400 }
         )
@@ -144,9 +111,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: isGatewayConfigurationError(error)
-              ? MSG_CONFIG_UNAVAILABLE
-              : MSG_TEST_SEND_FAILED,
+            error: 'Failed to send test email',
+            details: error.message,
           },
           { status: 400 }
         )

@@ -18,7 +18,7 @@ vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: vi.fn(),
 }))
 
-vi.mock('@/lib/ai/gateway', () => ({
+vi.mock('@/lib/ai/openrouter', () => ({
   complete: vi.fn(),
   streamResponse: vi.fn(),
   extractJSON: vi.fn((text: string) => text),
@@ -43,7 +43,7 @@ vi.mock('@/lib/ai/action-pipeline', () => ({
 import { POST as chatPOST } from '@/app/api/ai/chat/route'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/gateway'
+import { complete } from '@/lib/ai/openrouter'
 import { runAiAction } from '@/lib/ai/action-pipeline'
 
 function setup() {

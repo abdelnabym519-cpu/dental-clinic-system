@@ -331,7 +331,7 @@ export default function TransactionsPage() {
       {/* Add Transaction Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+          <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{t('New Stock Transaction')}</h2>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

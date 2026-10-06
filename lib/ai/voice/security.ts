@@ -65,24 +65,6 @@ export function validateTranscriptSafety(t: VoiceTranscript): TranscriptSafetyRe
   return { ok: true, code: null, normalized: n.normalized, language: n.language }
 }
 
-/**
- * Validate + normalize an ASR INTERIM (isFinal=false) for BUFFERING ONLY
- * (§6 — partials are never acted on, but they must not be discarded: the
- * turn manager accumulates them until the provider finalizes). Same
- * hygiene as a final transcript, minus the finality gate.
- */
-export function normalizePartialTranscript(t: VoiceTranscript): TranscriptSafetyResult {
-  if (!t || typeof t.text !== 'string') {
-    return { ok: false, code: 'VOICE_TRANSCRIPT_UNSAFE', normalized: '', language: 'en' }
-  }
-  const sanitized = sanitizeTranscript(t.text)
-  if (!sanitized.ok) {
-    return { ok: false, code: sanitized.code, normalized: '', language: 'en' }
-  }
-  const n = normalizeTranscript(sanitized.text)
-  return { ok: true, code: null, normalized: n.normalized, language: n.language }
-}
-
 // ---------------------------------------------------------------------------
 // Duplicate-action protection (§17)
 // ---------------------------------------------------------------------------

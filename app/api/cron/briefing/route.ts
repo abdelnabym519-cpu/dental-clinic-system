@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { complete } from '@/lib/ai/gateway'
+import { complete } from '@/lib/ai/openrouter'
 import { getModelByTier } from '@/lib/ai/models'
 
 /**

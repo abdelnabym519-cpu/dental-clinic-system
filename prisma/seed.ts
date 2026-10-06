@@ -1495,32 +1495,6 @@ async function main() {
 
   console.log('Created doctor staff record')
 
-  // Issue 2 — default working hours for the doctor (Egyptian work week:
-  // Sunday–Thursday, 9AM–5PM). Without a StaffShift row the slot generator
-  // falls back to hospital-level hours; seeding the shift makes the doctor's
-  // real availability explicit and editable from /settings/working-hours.
-  const workingDays = [0, 1, 2, 3, 4] // Sunday=0 … Thursday=4
-  for (const dayOfWeek of workingDays) {
-    await prisma.staffShift.upsert({
-      where: {
-        staffId_dayOfWeek: {
-          staffId: doctorStaff.id,
-          dayOfWeek,
-        },
-      },
-      update: {},
-      create: {
-        hospitalId: hospital.id,
-        staffId: doctorStaff.id,
-        dayOfWeek,
-        startTime: '09:00',
-        endTime: '17:00',
-        isActive: true,
-      },
-    })
-  }
-  console.log('Created default working hours (Sun–Thu 09:00–17:00)')
-
   const appointmentCount = await prisma.appointment.count({
     where: { hospitalId: hospital.id },
   })

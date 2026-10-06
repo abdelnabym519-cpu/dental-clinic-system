@@ -69,14 +69,14 @@ function wfCtx(over: Partial<WorkflowContext> = {}): WorkflowContext {
   return { hospitalId: HOSP_A, patientId: PAT_A1, caseId: null, actor: { id: ACTORS.doctorA.id, role: 'DOCTOR', name: 'Hana Shalaby' }, ...over }
 }
 
-/** stateful aIInsight rows for alert tests */
+/** stateful aiInsight rows for alert tests */
 function withInsights(jobs: unknown[] = []) {
   const rows: Record<string, unknown>[] = []
   let seq = 0
   const fake = prismaWith(jobs) as unknown as Record<string, unknown>
   const match = (r: Record<string, unknown>, w: Record<string, unknown>) =>
     Object.entries(w ?? {}).every(([k, v]) => r[k] === v)
-  fake.aIInsight = {
+  fake.aiInsight = {
     findMany: async (args?: { where?: Record<string, unknown> }) => rows.filter((r) => match(r, args?.where)),
     create: async (args: { data: Record<string, unknown> }) => {
       const row = { id: `ins-${++seq}`, createdAt: NOW, dismissed: false, ...args.data }
@@ -324,8 +324,8 @@ describe('Phase 9 adversarial — proactive alerts: no unauthorized action (§34
     const { fake, rows } = withInsights([])
     rows.push({ id: 'ins-B', hospitalId: 'hosp-B', dismissed: false, data: { kind: 'PROACTIVE_ALERT', dedupKey: 'x' } })
     expect(await dismissAlert(fake, { hospitalId: HOSP_A, alertId: 'ins-B', actorId: 's' })).toEqual({ ok: false, state: 'NOT_FOUND' })
-    // The sweep does not write anywhere except aIInsight (verified by shape:
-    // no delegate other than aIInsight gained rows in this fake).
+    // The sweep does not write anywhere except aiInsight (verified by shape:
+    // no delegate other than aiInsight gained rows in this fake).
     expect(rows.filter((r) => r.hospitalId === HOSP_A)).toHaveLength(0)
   })
 })

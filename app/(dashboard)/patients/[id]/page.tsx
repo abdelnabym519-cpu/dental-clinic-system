@@ -78,8 +78,6 @@ import {
   Pen,  MessageCircle,
 } from 'lucide-react'
 import { DentalChart } from '@/components/dental-chart'
-import { MedicalHistoryView, MedicalHistoryPageLink, type MedicalHistoryData } from '@/components/patients/medical-history-view'
-import { PatientPrescriptions } from '@/components/patients/patient-prescriptions'
 import { Patient360 } from '@/components/ai/patient-360'
 import { PatientFormSubmissions } from '@/components/forms/patient-form-submissions'
 import { PatientInsurance } from '@/components/insurance/patient-insurance'
@@ -108,9 +106,12 @@ interface Patient {
   emergencyContactName?: string
   emergencyContactPhone?: string
   emergencyContactRelation?: string
-  // Issue 5 — the real MedicalHistory relation shape (the previous local
-  // arrays/strings shape never matched what /api/patients/[id] returns).
-  medicalHistory?: MedicalHistoryData['medicalHistory']
+  medicalHistory?: {
+    allergies?: string[]
+    chronicConditions?: string[]
+    currentMedications?: string[]
+    familyHistory?: string
+  }
   appointments: any[]
   treatments: any[]
   invoices: any[]
@@ -205,8 +206,6 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       'billing',
       'forms',
       'insurance',
-      'medical-history',
-      'prescriptions',
     ]
     if (requested && valid.includes(requested)) setActiveTab(requested)
   }, [])
@@ -520,7 +519,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         // switching tab content, so it is excluded from the local state.
         onValueChange={(value) => value !== 'imaging' && setActiveTab(value)}
       >
-        <TabsList className="grid w-full grid-cols-12">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="overview" className="gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">{t('ui.overview')}</span>
@@ -559,14 +558,6 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <TabsTrigger value="insurance" className="gap-2">
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">{t('ui.insurance')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="medical-history" className="gap-2">
-            <Heart className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('التاريخ الطبي')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="prescriptions" className="gap-2">
-            <Pill className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('الوصفات')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="imaging"
@@ -685,12 +676,44 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Issue 5 — the old card read a phantom shape (allergies/
-                    chronicConditions arrays) that the API never returned, so
-                    it ALWAYS showed 'no history'. The shared view renders the
-                    real MedicalHistory relation honestly. */}
                 {patient.medicalHistory ? (
-                  <MedicalHistoryView patient={{ bloodGroup: patient.bloodGroup, medicalHistory: patient.medicalHistory }} compact />
+                  <div className="space-y-3">
+                    {patient.medicalHistory.allergies &&
+                      patient.medicalHistory.allergies.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">{t('ui.allergies')}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {patient.medicalHistory.allergies.map((allergy, i) => (
+                              <Badge key={i} variant="destructive">
+                                {allergy}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    {patient.medicalHistory.chronicConditions &&
+                      patient.medicalHistory.chronicConditions.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">{t('Chronic Conditions')}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {patient.medicalHistory.chronicConditions.map((condition, i) => (
+                              <Badge key={i} variant="secondary">
+                                {condition}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    {patient.medicalHistory.currentMedications &&
+                      patient.medicalHistory.currentMedications.length > 0 && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">{t('Current Medications')}</p>
+                          <p className="text-sm">
+                            {patient.medicalHistory.currentMedications.join(', ')}
+                          </p>
+                        </div>
+                      )}
+                  </div>
                 ) : (
                   <p className="text-muted-foreground">{t('No medical history recorded')}</p>
                 )}
@@ -1233,17 +1256,6 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </TabsContent>
 
         {/* Treatments Tab */}
-        {/* Issue 5 — medical history tab (embeds the shared view) */}
-        <TabsContent value="medical-history" className="space-y-4">
-          <MedicalHistoryPageLink patientId={patient.id} />
-          <MedicalHistoryView patient={patient} compact />
-        </TabsContent>
-
-        {/* Issue 5 — prescriptions tab (existing Phase-11 API + PDF route) */}
-        <TabsContent value="prescriptions" className="space-y-4">
-          <PatientPrescriptions patientId={patient.id} />
-        </TabsContent>
-
         <TabsContent value="treatments" className="space-y-6">
           <Card>
             <CardHeader>

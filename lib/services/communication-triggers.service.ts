@@ -428,10 +428,10 @@ class CommunicationTriggersService {
               where: { id: hospital.id },
               select: { name: true, phone: true },
             })
-            const clinicName = clinicInfo?.name || 'عيادتنا السنية'
+            const clinicName = clinicInfo?.name || 'Our Dental Clinic'
 
             if (appt.patient.phone) {
-              const message = `${appt.patient.firstName}، شكرًا لزيارتك ${clinicName}! يسعدنا سماع رأيك في تجربتك. نرجو تقييمنا من خلال: ${reviewUrl}`
+              const message = `Hi ${appt.patient.firstName}, thank you for visiting ${clinicName}! We'd love to hear about your experience. Please leave us a review: ${reviewUrl}`
 
               await smsService.sendSMS({
                 phone: appt.patient.phone,

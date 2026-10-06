@@ -109,7 +109,7 @@ describe('voice pipeline — lifecycle ops', () => {
     expect(r.error?.code).toBe('VOICE_SESSION_INVALID')
   })
 
-  it('partial transcripts are BUFFERED, never acted on (§6 — turn manager)', async () => {
+  it('partial transcripts never reach the agent (§37)', async () => {
     let called = 0
     const { deps, session } = makeDeps(() => { called += 1; return agentResponse() })
     const r = await runVoiceTurn(deps, {
@@ -117,14 +117,8 @@ describe('voice pipeline — lifecycle ops', () => {
       transcript: { text: 'احجز', confidence: 0.5, isFinal: false, providerId: 'fixture-stt' },
       actor,
     })
-    // the interim is held in the session buffer — NO agent call, NO audio out
+    expect(r.error?.code).toBe('VOICE_TRANSCRIPT_PARTIAL')
     expect(called).toBe(0)
-    expect(r.speakableText).toBeNull()
-    expect(r.agentStatus).toBeNull()
-    expect(r.telemetry.turnCompletionReason).toBe('PARTIAL_BUFFERED')
-    expect(r.telemetry.bufferedChars).toBeGreaterThan(0)
-    const after = deps.sessions.get(session.voiceSessionId, actor.userId, actor.tenantId)
-    expect(after?.turn?.bufferedTranscript).toContain('احجز')
   })
 
   it('agent exceptions surface as honest voice ERROR (no fake success)', async () => {

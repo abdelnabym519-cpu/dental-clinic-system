@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { LanguageToggle } from '@/components/i18n/language-toggle'
 import { useLanguage } from '@/components/providers/language-provider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -81,6 +82,7 @@ function LoginForm() {
       </CardHeader>
       <CardContent>
         <div className="mb-4 flex justify-center">
+          <LanguageToggle aria-label={t('auth.language')} />
         </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">

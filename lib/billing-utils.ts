@@ -24,52 +24,52 @@ export const invoiceStatusConfig: Record<
   }
 > = {
   DRAFT: {
-    label: 'مسودة',
+    label: 'Draft',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
-    description: 'الفاتورة قيد التحضير',
+    description: 'Invoice is being prepared',
   },
   ISSUED: {
-    label: 'صادرة',
+    label: 'Issued',
     color: 'text-indigo-700',
     bgColor: 'bg-indigo-100',
-    description: 'صدرت رسميًا — تم توليد PDF وإرسالها',
+    description: 'Formally issued — PDF generated and sent',
   },
   PENDING: {
-    label: 'معلقة',
+    label: 'Pending',
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-100',
-    description: 'أُرسلت الفاتورة وفي انتظار السداد',
+    description: 'Invoice sent, awaiting payment',
   },
   PARTIALLY_PAID: {
-    label: 'مدفوعة جزئيًا',
+    label: 'Partially Paid',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
-    description: 'تم استلام دفعة جزئية',
+    description: 'Partial payment received',
   },
   PAID: {
-    label: 'مدفوعة',
+    label: 'Paid',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
-    description: 'تم استلام كامل المبلغ',
+    description: 'Full payment received',
   },
   OVERDUE: {
-    label: 'متأخرة',
+    label: 'Overdue',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
-    description: 'السداد تجاوز تاريخ الاستحقاق',
+    description: 'Payment past due date',
   },
   CANCELLED: {
-    label: 'ملغاة',
+    label: 'Cancelled',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
-    description: 'أُلغيت الفاتورة',
+    description: 'Invoice has been cancelled',
   },
   REFUNDED: {
-    label: 'مستردة',
+    label: 'Refunded',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
-    description: 'تم استرداد المبلغ',
+    description: 'Payment has been refunded',
   },
 }
 
@@ -83,59 +83,54 @@ export const paymentMethodConfig: Record<
   }
 > = {
   CASH: {
-    label: 'نقدًا',
+    label: 'Cash',
     icon: 'Banknote',
-    description: 'دفع نقدي',
-  },
-  UPI: {
-    label: 'دفع إلكتروني (UPI)',
-    icon: 'Smartphone',
-    description: 'تحويل إلكتروني فوري (طرق دفع قديمة)',
+    description: 'Cash payment',
   },
   CARD: {
-    label: 'بطاقة',
+    label: 'Card',
     icon: 'CreditCard',
-    description: 'بطاقة بنكية (خصم أو ائتمان)',
+    description: 'Debit/Credit card',
   },
   INSTAPAY: {
-    label: 'انستاباي',
+    label: 'InstaPay',
     icon: 'Smartphone',
-    description: 'تحويل بنكي عبر انستاباي',
+    description: 'InstaPay bank transfer',
   },
   PAYMOB: {
-    label: 'بايموب',
+    label: 'Paymob',
     icon: 'CreditCard',
-    description: 'بوابة بايموب (بطاقة، محفظة، أونلاين)',
+    description: 'Paymob gateway (card, wallet, online)',
   },
   FAWRY: {
-    label: 'فوري',
+    label: 'Fawry',
     icon: 'Store',
-    description: 'دفع عبر فوري (نقاط البيع والشبكة)',
+    description: 'Fawry payment (POS, retail network)',
   },
   BANK_TRANSFER: {
-    label: 'تحويل بنكي',
+    label: 'Bank Transfer',
     icon: 'Building2',
-    description: 'تحويل إلى الحساب البنكي',
+    description: 'Bank account transfer',
   },
   CHEQUE: {
-    label: 'شيك',
+    label: 'Cheque',
     icon: 'FileText',
-    description: 'دفع بشيك',
+    description: 'Cheque payment',
   },
   INSURANCE: {
-    label: 'تأمين',
+    label: 'Insurance',
     icon: 'Shield',
-    description: 'دفع عبر مطالبة تأمينية',
+    description: 'Insurance claim payment',
   },
   WALLET: {
-    label: 'محفظة إلكترونية',
+    label: 'Mobile Wallet',
     icon: 'Wallet',
-    description: 'فودافون كاش، اورنج ماني، اتصالات كاش',
+    description: 'Vodafone Cash, Orange Money, Etisalat Cash',
   },
   ONLINE: {
-    label: 'أونلاين',
+    label: 'Online',
     icon: 'Globe',
-    description: 'بوابة دفع إلكترونية',
+    description: 'Online payment gateway',
   },
 }
 
@@ -149,27 +144,27 @@ export const paymentStatusConfig: Record<
   }
 > = {
   PENDING: {
-    label: 'قيد الانتظار',
+    label: 'Pending',
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-100',
   },
   COMPLETED: {
-    label: 'مكتملة',
+    label: 'Completed',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
   },
   FAILED: {
-    label: 'فاشلة',
+    label: 'Failed',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
   },
   REFUNDED: {
-    label: 'مستردة',
+    label: 'Refunded',
     color: 'text-purple-700',
     bgColor: 'bg-purple-100',
   },
   CANCELLED: {
-    label: 'ملغاة',
+    label: 'Cancelled',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
   },
@@ -186,46 +181,46 @@ export const insuranceClaimStatusConfig: Record<
   }
 > = {
   DRAFT: {
-    label: 'مسودة',
+    label: 'Draft',
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
-    description: 'المطالبة قيد التحضير',
+    description: 'Claim is being prepared',
   },
   SUBMITTED: {
-    label: 'مقدمة',
+    label: 'Submitted',
     color: 'text-blue-700',
     bgColor: 'bg-blue-100',
-    description: 'أُرسلت المطالبة لشركة التأمين',
+    description: 'Claim submitted to insurer',
   },
   UNDER_REVIEW: {
-    label: 'تحت المراجعة',
+    label: 'Under Review',
     color: 'text-yellow-700',
     bgColor: 'bg-yellow-100',
-    description: 'شركة التأمين تراجع المطالبة',
+    description: 'Insurer is reviewing the claim',
   },
   APPROVED: {
-    label: 'مقبولة',
+    label: 'Approved',
     color: 'text-green-700',
     bgColor: 'bg-green-100',
-    description: 'وافقت شركة التأمين على المطالبة',
+    description: 'Claim approved by insurer',
   },
   PARTIALLY_APPROVED: {
-    label: 'مقبولة جزئيًا',
+    label: 'Partially Approved',
     color: 'text-orange-700',
     bgColor: 'bg-orange-100',
-    description: 'وافقت شركة التأمين على جزء من المطالبة',
+    description: 'Claim partially approved',
   },
   REJECTED: {
-    label: 'مرفوضة',
+    label: 'Rejected',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
-    description: 'رفضت شركة التأمين المطالبة',
+    description: 'Claim rejected by insurer',
   },
   SETTLED: {
-    label: 'مسواة',
+    label: 'Settled',
     color: 'text-emerald-700',
     bgColor: 'bg-emerald-100',
-    description: 'تم استلام المبلغ من شركة التأمين',
+    description: 'Payment received from insurer',
   },
 }
 
@@ -238,11 +233,11 @@ export const discountTypeConfig: Record<
   }
 > = {
   PERCENTAGE: {
-    label: 'نسبة مئوية',
+    label: 'Percentage',
     symbol: '%',
   },
   FIXED: {
-    label: 'مبلغ ثابت',
+    label: 'Fixed Amount',
     symbol: 'ج.م',
   },
 }
@@ -511,7 +506,7 @@ export function getDueDays(dueDate: Date | string | null): {
   isOverdue: boolean
   label: string
 } {
-  if (!dueDate) return { days: 0, isOverdue: false, label: 'لا يوجد تاريخ استحقاق' }
+  if (!dueDate) return { days: 0, isOverdue: false, label: 'No due date' }
 
   const due = typeof dueDate === 'string' ? new Date(dueDate) : dueDate
   const today = new Date()
@@ -525,15 +520,15 @@ export function getDueDays(dueDate: Date | string | null): {
     return {
       days: Math.abs(diffDays),
       isOverdue: true,
-      label: `متأخرة ${Math.abs(diffDays)} يوم`,
+      label: `${Math.abs(diffDays)} days overdue`,
     }
   } else if (diffDays === 0) {
-    return { days: 0, isOverdue: false, label: 'مستحقة اليوم' }
+    return { days: 0, isOverdue: false, label: 'Due today' }
   } else {
     return {
       days: diffDays,
       isOverdue: false,
-      label: `تستحق خلال ${diffDays} يوم`,
+      label: `Due in ${diffDays} days`,
     }
   }
 }

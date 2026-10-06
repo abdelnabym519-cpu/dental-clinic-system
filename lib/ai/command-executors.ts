@@ -623,10 +623,7 @@ export async function execCreateInvoice(
       message: `No unbilled completed treatments for ${patient.firstName} ${patient.lastName}.`,
     }
 
-  const subtotal = unbilled.reduce(
-    (s: number, t: { cost: unknown }) => s + Number(t.cost),
-    0
-  )
+  const subtotal = unbilled.reduce((s, t) => s + Number(t.cost), 0)
   // Egyptian VAT: single 14% rate stored in the legacy cgst slot (sgst 0)
   const cgstRate = 14
   const sgstRate = 0
@@ -652,7 +649,7 @@ export async function execCreateInvoice(
       balanceAmount: totalAmount,
       status: 'PENDING',
       items: {
-        create: unbilled.map((t: { id: string; cost: unknown; procedure: { name: string } }) => ({
+        create: unbilled.map((t) => ({
           treatmentId: t.id,
           description: t.procedure.name,
           unitPrice: Number(t.cost),
