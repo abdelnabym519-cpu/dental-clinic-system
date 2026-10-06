@@ -54,6 +54,34 @@ diff-verification that it is the minimal correct fix:
 - Verification: tsc 52 → **0**; full suite 6141/0; lint 0/260; build exit 0; boot smoke PASS.
 - Commit: (this commit)
 
+### Iteration 2 — ROOT CAUSE: dev-start ran its DB probe without DATABASE_URL (P1, user-reported)
+- Problem: `npm run dev:start` failed with "MySQL did not become ready within 180s /
+  Environment variable not found: DATABASE_URL" while Docker reported mysql+redis Running.
+- Severity: P1 (startup path broken on the canonical command).
+- Root Cause (environment graph traced end-to-end): `scripts/dev-start.ts` validated that
+  `.env` EXISTS but never LOADED it into `process.env`. A plain `tsx` process does not load
+  env files (only the Prisma CLI and `next dev` do), so the script's own PrismaClient
+  readiness probe ran with no DATABASE_URL and looped the exact reported error for 180s
+  while MySQL was healthy. Docker was never the problem.
+- Fix: new pure module `scripts/lib/dev-env.ts` (unit-tested) — canonical precedence
+  **shell > .env.local > .env** (Next.js-compatible; shell keys snapshotted so file-vs-file
+  override works), values injected only into unset keys, secret values never logged/returned;
+  wired into `runSafeStartup` step 1 (load → secret-free summary logs → actionable
+  `DATABASE_URL is not configured` error naming all checked sources → recommended-var
+  warnings by name only). Downstream inheritors (probe PrismaClient, `prisma migrate deploy`,
+  `next dev`) now all receive the configuration.
+- Verification (A/B, executable): control run reproduced the EXACT user error
+  (env-missing=true); fixed run shows DATABASE_URL reaching Prisma (env-missing=false;
+  remaining sandbox error is the --no-engine client's prisma:// protocol requirement — a
+  sandbox artifact, not repo behavior). 8 new unit tests incl. an orchestrator behavioral
+  test proving DATABASE_URL is present in the process before the first command runs, and
+  secret-safety (error text never contains planted secret values). One robot test
+  (`dev-start.test.ts`) contract-updated for the deliberately improved error message;
+  behavioral invariant (fails BEFORE any Docker command) asserted unchanged.
+- Full regression: `npm run verify` EXIT 0 — tsc 0 · lint 0 errors/260 warnings ·
+  suite 6149/12/0 · build 256 pages. Playwright install attempted → egress-blocked (B2).
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

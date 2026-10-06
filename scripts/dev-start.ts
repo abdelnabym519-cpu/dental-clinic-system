@@ -5,7 +5,11 @@
  *     npm run dev:start -- --db-only     services -> database, without starting the app
  *
  * Steps:
- *   1. Sanity check: .env exists (or DATABASE_URL is already in the environment).
+ *   1. Environment: load .env / .env.local into this process (shell wins,
+ *      then .env.local, then .env — Next.js-compatible precedence) and fail
+ *      fast with an actionable message when DATABASE_URL is still missing.
+ *      Plain tsx does not load env files on its own, so this step is what
+ *      makes the Prisma readiness probe below actually see DATABASE_URL.
  *   2. `docker compose -f docker-compose.dev.yml up -d mysql redis` — only the
  *      core services the application requires (MySQL, Redis; see
  *      CORE_SERVICES). Idempotent: running containers are reused, stopped
@@ -40,6 +44,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { isDatabaseSeeded, type SeedCheckClient } from './seed-check'
+import { assertDatabaseConfigured, loadDevEnvIntoProcess } from './lib/dev-env'
 
 export const COMPOSE_FILE = 'docker-compose.dev.yml'
 
@@ -138,19 +143,27 @@ export async function runSafeStartup(
 
   log('Safe development startup (no reset, no data loss)')
 
-  // 1. Environment sanity — fail fast, before touching Docker.
-  const envFile = path.join(root, '.env')
-  if (!existsSync(envFile) && !process.env.DATABASE_URL) {
-    throw new StartupError(
-      [
-        'No .env file and no DATABASE_URL in the environment.',
-        '  Create one first:',
-        '    cp .env.example .env',
-        '  then set DATABASE_URL to match docker-compose.dev.yml:',
-        '    DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"',
-        '  and fill in NEXTAUTH_SECRET, ENCRYPTION_KEY and CRON_SECRET (see .env.example).',
-      ].join('\n')
-    )
+  // 1. Environment — LOAD .env / .env.local into this process before any
+  //    Prisma work. Plain tsx does not load env files (only the Prisma CLI
+  //    and `next dev` do): without this, the readiness probe below ran with
+  //    no DATABASE_URL and looped on "Environment variable not found" while
+  //    MySQL was healthy. Precedence: shell > .env.local > .env. Secret
+  //    values are never logged — only file names and applied-key counts.
+  const devEnv = loadDevEnvIntoProcess(root)
+  for (const loadedFile of devEnv.loaded) {
+    log(`environment: ${loadedFile.file} loaded (+${loadedFile.keys} keys)`)
+  }
+  try {
+    assertDatabaseConfigured(devEnv)
+  } catch (err) {
+    throw new StartupError(err instanceof Error ? err.message : String(err))
+  }
+  // Recommended development variables — warn by NAME only, never values.
+  const recommendedMissing = ['AUTH_SECRET', 'NEXTAUTH_SECRET', 'ENCRYPTION_KEY', 'CRON_SECRET'].filter(
+    (k) => !process.env[k]
+  )
+  if (recommendedMissing.length > 0) {
+    log(`note: recommended variables not set: ${recommendedMissing.join(', ')}`)
   }
 
   if (!existsSync(path.join(root, composeFile))) {

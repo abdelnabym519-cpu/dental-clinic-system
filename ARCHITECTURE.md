@@ -20,6 +20,15 @@ AI: routes → gateway.ts (Cloudflare AI Gateway; 120s timeout; 1 explicit fallb
 Background: cron routes (briefing/inventory/automations) · communication-triggers service
 ```
 
+## Environment graph (startup)
+```
+shell env  >  .env.local  >  .env          (canonical precedence, Next.js-compatible)
+   ↓ scripts/lib/dev-env.ts  (loadDevEnvIntoProcess — plain tsx never loads env files)
+scripts/dev-start.ts  →  docker compose (mysql, redis)  →  PrismaClient SELECT 1 probe
+                      →  prisma migrate deploy (CLI)  →  seed-if-uninitialized  →  next dev
+next dev loads the same files with the same precedence → one configuration model everywhere.
+```
+
 ## Critical invariants (load-bearing)
 - Tenant isolation: patient/record resolution is ALWAYS `{id, hospitalId}`; cross-tenant → 404.
 - Money: unified lib/money.ts; monetary consumers accept `number | string | Prisma.Decimal`;

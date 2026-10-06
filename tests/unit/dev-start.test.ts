@@ -275,7 +275,12 @@ describe('runSafeStartup — failure scenarios', () => {
     delete process.env.DATABASE_URL
     try {
       const h = makeHarness({})
-      await expect(runSafeStartup(h.deps, { root: dir })).rejects.toThrow(/No .env file/)
+      // CONTRACT UPDATE (stabilization): the startup now LOADS .env/.env.local
+      // (plain tsx never did — root fix for the readiness probe's missing
+      // DATABASE_URL), and the no-configuration error names every checked
+      // source with deterministic precedence. The behavioral invariant is
+      // unchanged: it still fails BEFORE any Docker command.
+      await expect(runSafeStartup(h.deps, { root: dir })).rejects.toThrow(/DATABASE_URL is not configured/)
       expect(h.callKeys()).toHaveLength(0)
     } finally {
       if (saved !== undefined) process.env.DATABASE_URL = saved

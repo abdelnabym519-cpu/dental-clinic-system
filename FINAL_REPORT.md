@@ -82,3 +82,37 @@ Graph ✅ (root-cause node fixed, ALL downstream nodes re-verified by full suite
 All in-repo completion criteria proven. The three environment-blocked rows (B1–B3) are
 genuinely external. `PROJECT_100_PERCENT_WORKING` is claimed for everything verifiable
 inside this environment; the blocked rows require the operator's machine (one command each, documented).
+
+---
+
+# Addendum — Iteration 2: Environment/Startup Root Repair (user-reported P1)
+
+## Executive Summary
+`npm run dev:start` failed on the canonical startup path ("Environment variable not
+found: DATABASE_URL", then a 180s readiness timeout) **while Docker showed mysql+redis
+Running**. Root cause was NOT MySQL: `scripts/dev-start.ts` validated `.env` existence
+but never loaded it — and a plain `tsx` process does not load env files (only the Prisma
+CLI and `next dev` do). The script's own PrismaClient probe therefore ran unconfigured
+and looped the exact reported error. Fixed with `scripts/lib/dev-env.ts` (canonical
+precedence **shell > .env.local > .env**, secret-safe) wired into the orchestrator.
+
+## Evidence (A/B, executable)
+- Control (pre-fix behavior): PrismaClient query in a bare tsx process →
+  `env-missing-error=true` — the EXACT user failure reproduced.
+- Fixed: `loadDevEnvIntoProcess` + probe → `env-missing-error=false` (DATABASE_URL
+  reaches Prisma; the only residual sandbox error is the `--no-engine` client's
+  `prisma://` protocol requirement — a sandbox generation artifact, not repo behavior).
+- Orchestrator behavioral test: DATABASE_URL from `.env` is present in `process.env`
+  BEFORE the first command the startup runs; no-config → actionable error before any
+  Docker command (robot invariant preserved).
+- Secret safety: planted secret values never appear in logs, errors, or returns (tested).
+
+## Verification
+`npm run verify` → EXIT 0: tsc 0 · lint 0 errors / 260 warnings · suite **6149 / 12 skipped /
+0 failed** · build 256 pages. `npx playwright install chromium` attempted → egress-blocked
+(B2 evidence). Protected `docs/phase12` bytes re-verified.
+
+## Status Impact
+- B1 downgraded to database-runtime-only: the user's machines' containers were already
+  healthy; `npm run dev:start` will now load their `.env`/`.env.local` and probe MySQL
+  over real TCP. Everything else unchanged.
