@@ -46,7 +46,9 @@ interface SetupSection {
   id: string
   title: string
   description: string
-  icon: React.ElementType
+  // LucideIcon: React.ElementType's union collapses to never under R3F's
+  // global JSX (three-elements) augmentation — the precise lucide type is immune.
+  icon: import('lucide-react').LucideIcon
   color: string
   priority: 'essential' | 'recommended' | 'optional'
   estimatedTime: string

@@ -2,7 +2,7 @@
 
 import { use } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Box } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/components/providers/language-provider'
 import { DentalChart } from '@/components/dental-chart'
@@ -28,6 +28,13 @@ export default function PatientOdontogramPage({ params }: { params: Promise<{ id
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('clinical.odontogram')}</h1>
           <p className="text-sm text-muted-foreground">{t('clinical.patient_file')}</p>
+        </div>
+        <div className="ms-auto">
+          <Link href={`/patients/${id}/dental-chart`}>
+            <Button variant="outline" size="sm">
+              <Box className="ms-0 h-4 w-4" /> {t('dental_chart.title')} 2D/3D
+            </Button>
+          </Link>
         </div>
       </div>
 
