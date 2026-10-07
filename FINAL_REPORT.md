@@ -116,3 +116,24 @@ precedence **shell > .env.local > .env**, secret-safe) wired into the orchestrat
 - B1 downgraded to database-runtime-only: the user's machines' containers were already
   healthy; `npm run dev:start` will now load their `.env`/`.env.local` and probe MySQL
   over real TCP. Everything else unchanged.
+
+
+---
+
+# Addendum — Iteration 4: Local Environment Bootstrap Completed
+
+ROOT CAUSE: `.env.example`'s active `DATABASE_URL` (`root:password@...`) contradicted
+`docker-compose.dev.yml` (`root:dental`, port `3306:3306`, db `dental_erp`) — the
+canonical `cp .env.example .env` flow could never reach a live `SELECT 1`, and required
+secrets shipped empty. The user's own env-doctor output proved the loader correct
+(`.env loaded (+6 keys)`, `DATABASE_URL present = false` — an incomplete `.env`).
+
+CONTRACT NOW: `npm run setup:dev` (idempotent, never overwrites, never touches
+.env.local, generates only missing secrets, prints no values) -> complete `.env` whose
+DATABASE_URL is test-pinned to compose. `cp .env.example .env` also works (active,
+correct URL). All failure messages point to the same one-command recovery.
+
+LIVE PROOF (sandbox): fresh `npm run setup:dev` -> `.env created`, 3 secrets generated,
+VERDICT CONFIGURED; `npm run dev:start` -> banner, `.env loaded (+20 keys)`, only failure
+Docker-absent (external); second run idempotent (md5 identical). Full harness EXIT 0.
+Docker/TCP/browser legs remain BLOCKED_EXTERNAL in the sandbox.

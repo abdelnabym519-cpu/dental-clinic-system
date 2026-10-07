@@ -104,11 +104,13 @@ export function assertDatabaseConfigured(resolution: DevEnvResolution): void {
   throw new EnvConfigError(
     [
       'DATABASE_URL is not configured (checked the shell, .env and .env.local).',
-      '  Create one first:',
-      '    cp .env.example .env',
-      '  then set DATABASE_URL to match docker-compose.dev.yml:',
+      '  One-command fix:',
+      '    npm run setup:dev',
+      '  (creates .env from .env.example and generates the required dev',
+      '   secrets; never overwrites existing values, never touches data)',
+      '  Manual alternative: cp .env.example .env and set DATABASE_URL to',
+      '  match docker-compose.dev.yml:',
       '    DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"',
-      '  and fill in NEXTAUTH_SECRET, ENCRYPTION_KEY and CRON_SECRET (see .env.example).',
       '  Precedence: shell environment > .env.local > .env (Next.js-compatible).',
     ].join('\n')
   )

@@ -35,6 +35,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:start": "npx tsx scripts/dev-start.ts",
+    "setup:dev": "npx tsx scripts/setup-dev.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

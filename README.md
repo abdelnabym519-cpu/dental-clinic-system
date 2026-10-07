@@ -61,7 +61,9 @@ A comprehensive, AI-powered **dental hospital management system** built with Nex
 git clone https://github.com/abinauv/dental-erp.git
 cd dental-erp
 npm install
-cp .env.example .env
+npm run setup:dev   # creates .env from .env.example AND generates the required secrets
+# (manual alternative: cp .env.example .env — then fill NEXTAUTH_SECRET,
+#  ENCRYPTION_KEY and CRON_SECRET with the generator commands in .env.example)
 # Fill in NEXTAUTH_SECRET, ENCRYPTION_KEY and CRON_SECRET (each has a
 # generator command beside it in .env.example), and set:
 #   DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"

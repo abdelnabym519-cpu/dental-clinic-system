@@ -21,6 +21,9 @@ Background: cron routes (briefing/inventory/automations) · communication-trigge
 ```
 
 ## Environment graph (startup)
+Bootstrap: `npm run setup:dev` creates `.env` from `.env.example` (DATABASE_URL matches
+docker-compose.dev.yml by a pinned test) and generates the three required dev secrets
+in place, only filling keys that are missing/empty (idempotent, value-never-logged).
 ```
 shell env  >  .env.local  >  .env          (canonical precedence, Next.js-compatible)
    ↓ scripts/lib/dev-env.ts  (loadDevEnvIntoProcess — plain tsx never loads env files)

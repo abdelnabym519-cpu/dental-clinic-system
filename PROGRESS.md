@@ -104,6 +104,29 @@ diff-verification that it is the minimal correct fix:
   construction never fails with env-not-found; `npm run verify` EXIT 0 (6151/12/0).
 - Commit: (this commit)
 
+### Iteration 4 — P1 final bootstrap: the template itself was broken (user's env-doctor output)
+- Evidence: user's real machine — loader v2 banner + `.env loaded (+6 keys)` but
+  `DATABASE_URL present = false` -> assertDatabaseConfigured fired exactly as designed.
+  The loader is innocent; the CONFIGURATION CONTRACT was incomplete.
+- Root Cause: `.env.example`'s ACTIVE DATABASE_URL was `root:password@...` while
+  docker-compose.dev.yml provisions root/dental — the canonical `cp .env.example .env`
+  path could never reach a working `SELECT 1`. Required secrets shipped empty with no
+  deterministic way to fill them.
+- Fix: template's active DATABASE_URL now matches compose exactly (verified by a
+  consistency test that parses the compose file); new `npm run setup:dev`
+  (scripts/setup-dev.ts + pure scripts/lib/setup-dev.ts) — creates .env from the
+  template, generates NEXTAUTH_SECRET/ENCRYPTION_KEY/CRON_SECRET crypto-randomly,
+  fills only MISSING keys, never overwrites, never touches .env.local, idempotent,
+  never prints values; all recovery messages (dev-start error, env-doctor verdict)
+  now point to `npm run setup:dev`; README canonical first step updated; dev-start's
+  recommended list aligned with app reality (NEXTAUTH_SECRET/ENCRYPTION_KEY/CRON_SECRET).
+- Tests: tests/unit/setup-dev.test.ts — template<->compose consistency pin, cp-equivalence,
+  fresh creation fills 4/4, existing values preserved verbatim + idempotent, fail-loud on
+  template without active DATABASE_URL. Full harness EXIT 0.
+- Real-machine expectation: `npm run setup:dev` -> `npm run dev:start` -> MySQL probe with
+  explicit URL -> ready -> migrate deploy -> app. Docker/TCP legs remain sandbox-external.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

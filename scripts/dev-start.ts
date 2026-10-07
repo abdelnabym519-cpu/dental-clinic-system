@@ -162,7 +162,7 @@ export async function runSafeStartup(
     throw new StartupError(err instanceof Error ? err.message : String(err))
   }
   // Recommended development variables — warn by NAME only, never values.
-  const recommendedMissing = ['AUTH_SECRET', 'NEXTAUTH_SECRET', 'ENCRYPTION_KEY', 'CRON_SECRET'].filter(
+  const recommendedMissing = ['NEXTAUTH_SECRET', 'ENCRYPTION_KEY', 'CRON_SECRET'].filter(
     (k) => !process.env[k]
   )
   if (recommendedMissing.length > 0) {
