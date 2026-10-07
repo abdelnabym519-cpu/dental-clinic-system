@@ -137,3 +137,19 @@ LIVE PROOF (sandbox): fresh `npm run setup:dev` -> `.env created`, 3 secrets gen
 VERDICT CONFIGURED; `npm run dev:start` -> banner, `.env loaded (+20 keys)`, only failure
 Docker-absent (external); second run idempotent (md5 identical). Full harness EXIT 0.
 Docker/TCP/browser legs remain BLOCKED_EXTERNAL in the sandbox.
+
+
+---
+
+# Addendum — Iteration 5: External-Block Evidence Finalized (2026-10-08)
+
+Exhaustive re-probe closed every remaining avenue for a real MySQL or browser in this
+sandbox (six CDN/mirror hosts unreachable; apt unusable; no local runtimes; npm-hosted
+MySQL options are runtime downloaders for the blocked CDN; a protocol-level MySQL stand-in
+was rejected as readiness-faking). B1/B2 stand as genuine BLOCKED_EXTERNAL with dated
+evidence; the §13 live-integration matrix (requirement/feature/command/resolution, no
+values) is now recorded in BLOCKERS.md. Everything provable in-sandbox remains proven at
+`4d781b4` (verify EXIT 0; real-command env/bootstrap flow live-tested). On any Docker
+machine the single path `npm run setup:dev && npm run dev:start` executes the DB leg that
+this sandbox cannot: compose up -> explicit-URL probe -> live SELECT 1 -> migrate deploy ->
+seed-if-uninitialized -> next dev.

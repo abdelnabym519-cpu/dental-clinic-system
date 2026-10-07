@@ -127,6 +127,18 @@ diff-verification that it is the minimal correct fix:
   explicit URL -> ready -> migrate deploy -> app. Docker/TCP legs remain sandbox-external.
 - Commit: (this commit)
 
+### Iteration 5 — evidence refresh: external blocks re-probed exhaustively, §13 record completed (no code change)
+- Egress re-probe (2026-10-08): cdn.mysql.com, dev.mysql.com, registry.npmmirror.com,
+  cdn.playwright.dev, playwright.azureedge.net, deb.debian.org — ALL unreachable (000);
+  apt unusable; NO local mysqld/mariadb/docker/podman/mysql-client; npm-hosted
+  `mysql-memory-server` is a runtime downloader for the blocked CDN. Pure-JS MySQL
+  stand-in considered and REJECTED (would fake the exact readiness being certified).
+  => B1/B2 remain genuinely BLOCKED_EXTERNAL, now with dated exhaustive evidence.
+- BLOCKERS.md: B1 evidence table added; new §13 live-integration matrix
+  (requirement/feature/command/resolution, no values) per the certification contract.
+- No production code changed (HEAD 4d781b4 semantics untouched); docs-only iteration.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 
