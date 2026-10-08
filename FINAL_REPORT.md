@@ -176,3 +176,23 @@ boot log clean; /login labels flip with the locale cookie; playwright --list
 collects 2946 tests / 53 files. Full harness EXIT 0 (6168/12/0). New 10-test
 contract suite pins all three seams without a browser. Browser E2E execution
 itself remains BLOCKED_EXTERNAL here (B2) and runs on the user's machine.
+
+
+---
+
+# Addendum — Iteration 7: 3D Dental Chart — Audit, Gap Closure, Validation
+
+The interactive 3D Dental Chart (R3F, original procedural dentition, FDI-canonical,
+patient-aware, RBAC/tenant-bounded) audited end-to-end against the mission DoD and
+found COMPLETE at the architecture level; two real gaps closed:
+
+1. PATIENT ISOLATION (Phase 8): store reset on patient switch — component-proven
+   (selection/hover/panel cleared; summary refetched for the new patient).
+2. E2E SPEC REPAIR: dental-chart-3d.spec.ts rebuilt on the repaired auth fixtures
+   with the full critical path, isolation test, and read-only receptionist —
+   collecting 18 across 6 projects (2952 total).
+
+New procedure-workflow component tests (post to existing treatment-plans API with
+toothNumbers + refetch; honest no-active-plan state). Live: 307/401/401 unauth
+boundaries with a clean boot log. verify EXIT 0 (6171/12/0, 256 pages). Browser
+execution + in-canvas pointer picking: real-machine validation (documented).

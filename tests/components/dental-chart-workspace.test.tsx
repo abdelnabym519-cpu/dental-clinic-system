@@ -104,6 +104,27 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     expect(panel.textContent).toContain('Add procedure')
   })
 
+  it('PHASE-8 isolation: switching patients resets interaction state (no selection leak)', async () => {
+    mockSummaryFetch()
+    const view = render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    // clinician selects tooth 16 on Patient A (e.g. from the 3D view):
+    act(() => useDentalChartStore.getState().setSelectedTooth(16))
+    expect(await screen.findByTestId('tooth-context-panel')).toBeTruthy()
+    // ...then navigates to Patient B's chart:
+    fetchMock.mockClear()
+    mockSummaryFetch()
+    view.rerender(<DentalChartWorkspace patientId="patient-2" />)
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/dental-chart/patient-2/summary', expect.anything())
+    )
+    // Patient B's chart must open WITHOUT Patient A's selection, hover or panel:
+    expect(useDentalChartStore.getState().selectedToothNumber).toBeNull()
+    expect(useDentalChartStore.getState().hoveredTooth).toBeNull()
+    expect(screen.queryByTestId('tooth-context-panel')).toBeNull()
+    expect(screen.getByTestId('dental-chart-2d')).toBeTruthy()
+  })
+
   it('clinical status is derived from the summary and shown on the panel badge (sync rule 3)', async () => {
     mockSummaryFetch()
     render(<DentalChartWorkspace patientId="patient-1" />)
@@ -157,6 +178,57 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     const body = JSON.parse(fetchMock.mock.calls.find((c) => c[0] === '/api/dental-chart')[1].body)
     expect(body).toMatchObject({ patientId: 'patient-1', toothNumber: 16, condition: 'CARIES' })
     expect(body.occlusal === undefined || typeof body.occlusal === 'boolean').toBe(true)
+  })
+
+  it('add-procedure posts to the existing treatment-plan items API for the selected tooth, then refetches', async () => {
+    mockSummaryFetch()
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    act(() => useDentalChartStore.getState().setSelectedTooth(16))
+    const panel = await screen.findByTestId('tooth-context-panel')
+    // open the procedure form and choose a catalog procedure
+    fireEvent.click(screen.getByText('Add procedure'))
+    const form = await screen.findByTestId('add-procedure-form')
+    expect(form).toBeTruthy()
+    fireEvent.change(screen.getByLabelText(/select procedure/i), { target: { value: 'proc-1' } })
+    // the save button is disabled until a procedure is chosen (validation)
+    const saveBtn = screen.getByRole('button', { name: 'Save' })
+    expect(saveBtn).toBeTruthy()
+    fireEvent.click(saveBtn)
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/treatment-plans/plan-1/items',
+        expect.objectContaining({ method: 'POST' })
+      )
+    )
+    const call = fetchMock.mock.calls.find(([u]) => String(u).includes('/api/treatment-plans/plan-1/items'))
+    const body = JSON.parse((call?.[1] as { body: string }).body)
+    expect(body.procedureId).toBe('proc-1')
+    expect(body.toothNumbers).toBe('16')
+    // single refetch point: the summary is fetched again after the mutation
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/dental-chart/patient-1/summary', expect.anything())
+    )
+    void panel
+  })
+
+  it('no active treatment plan → the procedure form says so instead of pretending to save', async () => {
+    // same summary but WITHOUT an active plan
+    fetchMock.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ ...SUMMARY, activePlan: null }),
+    }))
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    act(() => useDentalChartStore.getState().setSelectedTooth(16))
+    const panel = await screen.findByTestId('tooth-context-panel')
+    fireEvent.click(screen.getByText('Add procedure'))
+    const form = await screen.findByTestId('add-procedure-form')
+    // honest no-plan state; no save control is rendered
+    expect(form.textContent).toContain('No active treatment plan')
+    expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
+    void panel
   })
 
   it('summary fetch failure renders the localized error state', async () => {

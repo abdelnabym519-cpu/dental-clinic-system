@@ -89,12 +89,18 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
   }, [patientId, t])
 
   useEffect(() => {
+    // Phase-8 isolation: a patient switch must clear ALL interaction state
+    // (selection, hover, view) so Patient B's chart never opens with
+    // Patient A's selected tooth or hover chip. reset() is the store's
+    // pristine state; the summary refetch below rebuilds clinical state
+    // from the DB for the NEW patient (sync rule 4).
+    useDentalChartStore.getState().reset()
     // Deferred one tick: keeps the initial fetch (whose completion sets
     // state) out of the effect's synchronous call graph — no cascading
     // renders during the commit phase.
     const id = setTimeout(refetch, 0)
     return () => clearTimeout(id)
-  }, [refetch])
+  }, [refetch, patientId])
 
   // Sync rule 3: clinical status is DERIVED once (canonical pure module) and
   // fed to every consumer (2D legend colors, 3D materials, panel badge) — a

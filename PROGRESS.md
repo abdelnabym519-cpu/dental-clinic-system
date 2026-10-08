@@ -171,6 +171,46 @@ diff-verification that it is the minimal correct fix:
   the user's machine (browsers + MySQL + seeded DB) runs `npx playwright test`.
 - Commit: (this commit)
 
+### Iteration 7 — 3D Dental Chart mission: full-stack audit, 2 gaps closed, all layers validated
+- Phase 0/1 AUDIT (no premature writing): the interactive 2D/3D dental chart ALREADY
+  exists as a complete architecture — DentalChartWorkspace (single summary fetch,
+  single refetch point, client-mirrored RBAC enforced server-side), DentalChart3D
+  (R3F/three: procedural anatomical teeth per FDI group — crown/root/cusps/sockets,
+  parametric arch with correct patient-right mapping, per-tooth raycast picking,
+  hover/select materials, camera presets, frameloop=demand, shared GPU resources +
+  explicit disposal), DentalChart3DLoader (ssr:false + useSyncExternalStore WebGL
+  detection + localized fallback), ToothContextPanel (findings/procedures/imaging,
+  empty-select guard, busy states, no-plan honesty), zustand store (2D<->3D sync),
+  aggregate summary API (view roles, tenant-404, read-only), FDI canonical module.
+  Baseline: 72/72 dental tests green. NO schema change needed (pure reuse — Phase 16).
+- GAP 1 (mission Phase 8, mandatory): the zustand store is a module singleton and
+  nothing reset it on patient switch — Patient A's selected tooth/hover leaked into
+  Patient B's chart. FIXED in DentalChartWorkspace (reset() on patientId change,
+  before refetch) + component test 'PHASE-8 isolation' (selection/hover/panel all
+  cleared, refetch for patient-2 asserted) — suite now 11/11.
+- GAP 2 (mission Phase 14/19): tests/e2e/dental-chart-3d.spec.ts was doubly stale —
+  it NEVER authenticated (middleware would bounce it to /login) and targeted
+  /patients/patient-e2e-1 (not in seed; wrong id form). REWRITTEN on the repaired
+  fixture architecture: doctorPage/receptionistPage shared fixtures, patient id from
+  the REAL navigation path (list -> detail -> chart), honest 3D-or-fallback assertion,
+  full critical path (split view -> canvas -> 2D-driven shared-store selection ->
+  panel -> add finding via real API -> reload -> persisted state re-derived), the
+  mandatory patient-isolation E2E, and read-only RECEPTIONIST. Collects 3 tests x
+  6 projects = 18 (playwright --list total 2952).
+- Also closed: missing component coverage for the PROCEDURE workflow (add-procedure
+  posts to /api/treatment-plans/[planId]/items with toothNumbers '16' + single
+  refetch; no-active-plan renders the honest message with NO save control).
+- Live runtime (provisioned env): unauth chart page 307 -> login?callbackUrl=...;
+  unauth summary GET 401; unauth finding POST 401; boot log clean (no MissingSecret).
+- Full regression: npm run verify EXIT 0 (6171/12/0, build 256 pages); tsc 0; lint
+  0 errors/260 warnings; phase12 bytes intact. No test weakened; no app behavior
+  removed; Odontogram untouched.
+- Limitations (documented, non-blocking): browser E2E execution + pointer-level
+  3D canvas picking are verified on the REAL machine run (browsers/MySQL absent in
+  sandbox — dated BLOCKERS.md evidence); 3D tooth numbering is delivered via the
+  hover chip + context panel + 2D numbering (deliberate: no per-frame 3D text cost).
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 
