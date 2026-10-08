@@ -237,6 +237,41 @@ diff-verification that it is the minimal correct fix:
   playwright --list 2952 total, 18 in the targeted file.
 - Commit: (this commit)
 
+### Iteration 9 — real-machine 16/18 failure classes: auth contract + Radix nav made engine-independent
+- User machine: 18 collected, 2 passed / 16 failed; auth.ts:40 waitForURL(/dashboard|onboarding/)
+  timeouts on several engines; patients.ts menuitem (WebKit) + waitForURL (Firefox); 2 passed
+  => one project authenticated fine => credentials/seed/secret VALID on real DB; the failing
+  seam is the CLIENT-REDIRECT TIMING assumption, not auth itself.
+- RC-A (auth fixture): login() raced the login page's client-side router.push (fetch-callback
+  -> engine-dependent). REWRITE: observe the real credentials callback
+  (POST /api/auth/callback/credentials; accept 200 and 302 transports; non-ok throws a
+  DIAGNOSTIC error naming seed/secret checks), then require a server-issued session cookie
+  (authjs|next-auth session-token prefix regex — v4/v5/__Secure/chunked), then prove the
+  middleware accepts it (goto /dashboard + toHaveURL(/dashboard) — a rejected session 307s to
+  /login and fails loudly). No bypass, no fake cookies; REAL auth contract, engine-independent.
+- RC-B (patient nav): the row menu trigger is an icon-only button with NO accessible name and
+  the fixture blind-clicked '.last()' then raced the Radix portal mount (WebKit drops the first
+  pointer event during mount). FIX (production a11y, justified): trigger now carries
+  aria-label={t('ui.actions')} (en 'Actions' / ar 'إجراءات'); fixture targets
+  button[aria-haspopup="menu"], ASSERTS the role=menu portal is open before the item click,
+  and verifies the destination with a function predicate on pathname (never /patients/new).
+  New shared helper openPatientDetailByRow(page, rowIndex); openFirstPatientDetail delegates.
+- RC-C (spec): isolation test now uses the shared helper for Patient B (row 1, seed-guaranteed);
+  the FDI round-trip is explicit (panel header number captured pre-reload, asserted post-reload).
+- Phase 11 (stream error): classified SECONDARY — Next dev logs 'The destination stream closed
+  early' when the CLIENT aborts an in-flight RSC stream; the failing tests' teardown after
+  waitForURL timeouts is exactly that pattern. Sandbox: all responses completed with correct
+  codes (200/302/307) under repeated mid-render aborts; the error is logged, never thrown, and
+  absent from every clean flow. Also observed: raw callback POST without CSRF -> MissingCSRF
+  302 (protection working; secret healthy). No production change.
+- Pins: contract suite extended to 13 tests (auth contract present, brittle pattern banned,
+  Radix menu contract, a11y trigger name). verify EXIT 0 (6174/12/0, build 256 pages); tsc 0;
+  lint 0. A corrupted .next/dev/types/validator.ts (dev-server artifact) briefly broke
+  typecheck — cleared, regenerated cleanly; no source impact.
+- Final honesty: the 18-test browser matrix remains machine-bound (sandbox browsers blocked,
+  dated evidence). Expected on the real machine after pull: 18 passed / 0 failed / 0 skipped.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

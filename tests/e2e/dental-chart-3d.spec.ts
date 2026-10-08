@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures/auth'
-import { openFirstPatientDetail } from './fixtures/patients'
+import { openFirstPatientDetail, openPatientDetailByRow } from './fixtures/patients'
 
 /**
  * E2E (Playwright — requires a running app + seeded DB; not part of the
@@ -56,6 +56,11 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     await expect(panel).toBeVisible()
     const panelHeader = await panel.textContent()
 
+    // the panel names the SELECTED FDI tooth in its header ("Tooth <n>") —
+    // capture it as the identity that must survive the reload.
+    const selectedTooth = (panelHeader ?? '').match(/\d+/)?.[0]
+    expect(selectedTooth).toBeTruthy()
+
     // Add a finding through the REAL write API (server-side RBAC + audit).
     await panel.getByRole('button', { name: /Add finding|إضافة حالة/ }).click()
     await panel.getByRole('button', { name: /^Save$|^حفظ$/ }).click()
@@ -67,8 +72,8 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
     const reloaded = page.getByTestId('tooth-context-panel')
     await expect(reloaded).toBeVisible()
-    // the same tooth, with the finding that was persisted before reload
-    expect(await reloaded.textContent()).toContain((panelHeader ?? '').match(/#?\d+/)?.[0] ?? '')
+    // the SAME FDI tooth, with the finding persisted before the reload
+    expect((await reloaded.textContent()) ?? '').toContain(selectedTooth ?? 'NEVER')
     await expect(reloaded).toContainText(/Clinical findings|الحالات السريرية/)
   })
 
@@ -79,18 +84,12 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
     await expect(page.getByTestId('tooth-context-panel')).toBeVisible()
 
-    // open ANOTHER patient's chart through the real navigation path.
-    // The seed guarantees 10 patients — assert the second row exists instead
-    // of conditionally skipping (a vacuous isolation test protects nobody).
-    await page.goto('/patients')
-    const rows = page.locator('tbody tr')
-    const second = rows.nth(1)
-    await expect(second).toBeVisible()
-    await second.getByRole('button').last().click()
-    await page.getByRole('menuitem', { name: /view details/i }).click()
-    await page.waitForURL(/\/patients\/(?!new)[^/]+$/, { timeout: 10000 })
+    // open ANOTHER patient's chart through the REAL navigation path with the
+    // shared engine-robust helper. The seed guarantees 10 patients, so the
+    // second row is asserted — a vacuous isolation test protects nobody.
+    await openPatientDetailByRow(page, 1)
     const idB = new URL(page.url()).pathname.split('/')[2]
-    expect(idB).not.toBeNull()
+    expect(idB).toBeTruthy()
     await page.goto(`/patients/${idB}/dental-chart`)
     await expect(page.getByTestId('dental-chart-workspace')).toBeVisible()
     // no selection, no panel: Patient A's state must not appear here

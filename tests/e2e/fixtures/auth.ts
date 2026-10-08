@@ -24,20 +24,58 @@ const TEST_RECEPTIONIST = {
 }
 
 /**
- * Login helper — fills the login form and submits
+ * Login helper — fills the login form and submits, then proves the REAL
+ * authentication contract instead of racing client-side redirect timing.
+ *
+ * Why not waitForURL(/dashboard/): the login page performs signIn() with
+ * redirect:false and pushes /dashboard from a fetch callback — engine- and
+ * timing-dependent (observed: waitForURL timeouts on firefox/webkit/edge
+ * while chromium passed). The actual contract has two engine-independent
+ * parts, and BOTH are asserted here:
+ *
+ *   1. the credentials callback responded OK and the server ISSUED a
+ *      session cookie (real server-side authentication — no fake cookies);
+ *   2. the middleware — the enforcement point — ACCEPTS that session on a
+ *      protected route (a rejected session 307s to /login?callbackUrl=…,
+ *      which fails the URL assertion with a clear diff).
  */
 async function login(page: Page, email: string, password: string) {
   await page.goto('/login')
   // Structural locators on purpose: the form's ids and its single submit
   // button are locale-independent. Label-text selectors (getByLabel(/email/i))
-  // break on the Arabic-first default rendering (البريد الإلكتروني) whenever
-  // the locale cookie is absent — the exact failure that stalled every
-  // fixture-dependent suite at beforeEach for 45s each.
+  // break on the Arabic-first default rendering (البريد الإلكتروني).
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
+
+  const credentialsCallback = page.waitForResponse(
+    (r) => r.url().includes('/api/auth/callback/credentials') && r.request().method() === 'POST',
+    { timeout: 20000 }
+  )
   await page.locator('form button[type="submit"]').click()
-  // Wait for navigation away from login page
-  await page.waitForURL(/.*(?:dashboard|onboarding)/, { timeout: 15000 })
+  const res = await credentialsCallback
+  // 200 = redirect:false JSON answer; 302 = redirect-mode answer — both are
+  // success transports. Anything else is a real authentication failure.
+  if (!res.ok() && res.status() !== 302) {
+    // Diagnostic, not a weakening: fail with the actual transaction result.
+    throw new Error(
+      `Sign-in failed: POST /api/auth/callback/credentials -> ${res.status()}. ` +
+        'Verify the seeded users exist in the database (prisma/seed.ts) and ' +
+        'that the auth secret is provisioned (npm run setup:dev).'
+    )
+  }
+
+  // Contract 1: a server-issued session cookie exists.
+  // next-auth v5 names it authjs.session-token (v4: next-auth.session-token),
+  // optionally __Secure- prefixed and .N-chunked — the prefix regex covers all.
+  await page.waitForFunction(
+    () => /(?:authjs|next-auth)\.session-token/.test(document.cookie),
+    undefined,
+    { timeout: 15000 }
+  )
+
+  // Contract 2: the middleware accepts the session on a protected route.
+  await page.goto('/dashboard')
+  await expect(page).toHaveURL(/\/dashboard/)
 }
 
 /**

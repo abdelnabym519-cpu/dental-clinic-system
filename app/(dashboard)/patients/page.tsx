@@ -313,7 +313,9 @@ export default function PatientsPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          {/* a11y: icon-only control must expose an accessible
+                              name (screen readers + stable E2E targeting). */}
+                          <Button variant="ghost" size="icon" aria-label={t('ui.actions')}>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

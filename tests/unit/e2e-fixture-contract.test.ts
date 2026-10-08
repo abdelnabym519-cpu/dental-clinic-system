@@ -126,3 +126,31 @@ describe('RC3 — NextAuth secret follows the documented env contract', () => {
     expect(read('scripts/lib/setup-dev.ts')).toContain('NEXTAUTH_SECRET')
   })
 })
+
+describe('E2E harness contracts — engine-independent authentication + navigation', () => {
+  it('the login fixture proves the AUTH CONTRACT, not client-side redirect timing', () => {
+    const fixture = read(FIXTURE)
+    // the brittle pattern that timed out on firefox/webkit/edge is banned:
+    expect(fixture).not.toContain('waitForURL(/.*(?:dashboard|onboarding)/')
+    // contract 1: the credentials callback is observed + a session cookie is required
+    expect(fixture).toContain('/api/auth/callback/credentials')
+    expect(fixture).toContain('(?:authjs|next-auth)\\.session-token')
+    // contract 2: the middleware (enforcement point) must accept the session
+    expect(fixture).toContain("toHaveURL(/\\/dashboard/)")
+  })
+
+  it('the patient-nav fixture uses the Radix menu contract, not blind button indices', () => {
+    const nav = read('tests/e2e/fixtures/patients.ts')
+    // trigger = the Radix trigger button (cannot be shifted by other row buttons)
+    expect(nav).toContain('button[aria-haspopup=')
+    // the portal menu must be OPEN before the item click (WebKit mount race)
+    expect(nav).toContain("getByRole('menu')")
+    // destination predicate excludes /patients/new via a function on pathname
+    expect(nav).toContain('/\\/patients\\/(?!new)[^/]+/')
+  })
+
+  it('production: the patient row menu trigger exposes an accessible name (a11y)', () => {
+    const page = read('app/(dashboard)/patients/page.tsx')
+    expect(page).toContain("aria-label={t('ui.actions')}")
+  })
+})
