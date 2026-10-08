@@ -211,6 +211,32 @@ diff-verification that it is the minimal correct fix:
   hover chip + context panel + 2D numbering (deliberate: no per-frame 3D text cost).
 - Commit: (this commit)
 
+### Iteration 8 — '12/12 dental-chart-3d failures': root cause = stale pre-8f5b972 spec on the executing machine
+- DECISIVE EVIDENCE (4 independent lines, all in-repo): (1) the reported failing test
+  names ('open patient dental chart, switch to 3D, select a tooth, see the panel',
+  'RECEPTIONIST is read-only on the chart') exist VERBATIM only in the b4f4082 version
+  of tests/e2e/dental-chart-3d.spec.ts; (2) the reported failure lines 15:55/37:55 are
+  exactly that file's dental-chart-2d toBeVisible asserts — at 8f5b972 line 15 is a
+  doc comment; (3) '12 tests executed' = 2x6 projects = the OLD suite's count; at
+  8f5b972 the suite is 3x6 = 18; (4) the old spec never authenticates -> middleware
+  307 -> /login -> dental-chart-2d never renders -> 'element(s) not found'. The repair
+  itself already shipped in 8f5b972 (fixture-based rewrite).
+- This iteration (hardening + proof, no production change):
+  * test.use desktop workstation viewport (1366x768) — the shared patients-list
+    navigation helper is desktop-layout; all 6 ENGINE projects still run.
+  * isolation test made NON-VACUOUS: seed guarantees 10 patients, so the second row
+    is now asserted, not conditionally skipped.
+  * locale contract re-verified against locales/en.json (3D View / Split View /
+    Add finding / Save / View Details all match the spec regexes with the pinned
+    dentora-locale=en-EG cookie).
+- Honest execution status: sandbox cannot run browsers (chromium executable absent;
+  CDN egress-blocked — re-demonstrated this iteration: 'Executable doesn't exist',
+  ~/.cache/ms-playwright empty; dated probe matrix in BLOCKERS.md). Targeted result
+  at HEAD must be 18 passed / 0 failed on a browser+MySQL machine.
+- Full regression: npm run verify EXIT 0 (6171/12/0, build 256 pages); tsc 0;
+  playwright --list 2952 total, 18 in the targeted file.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

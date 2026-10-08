@@ -19,6 +19,13 @@ import { openFirstPatientDetail } from './fixtures/patients'
  * R3F event wiring is verified on the real machine run.
  */
 test.describe('Interactive Dental Chart (3D workspace)', () => {
+  // Clinical-workstation context: the shared patients-list navigation helper
+  // (fixtures/patients.ts) drives the desktop table layout, and the dental
+  // chart is a clinician desktop workflow. All six ENGINE projects still run
+  // (chromium/firefox/webkit/edge/mobile-chrome/mobile-safari) — only the
+  // viewport is pinned so mobile-emulated engines exercise the same layout.
+  test.use({ viewport: { width: 1366, height: 768 } })
+
   async function openFirstPatientChart(page: import('@playwright/test').Page) {
     await openFirstPatientDetail(page)
     const id = new URL(page.url()).pathname.split('/')[2]
@@ -72,20 +79,22 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
     await expect(page.getByTestId('tooth-context-panel')).toBeVisible()
 
-    // open ANOTHER patient's chart through the real navigation path
+    // open ANOTHER patient's chart through the real navigation path.
+    // The seed guarantees 10 patients — assert the second row exists instead
+    // of conditionally skipping (a vacuous isolation test protects nobody).
     await page.goto('/patients')
     const rows = page.locator('tbody tr')
     const second = rows.nth(1)
-    if (await second.isVisible()) {
-      await second.getByRole('button').last().click()
-      await page.getByRole('menuitem', { name: /view details/i }).click()
-      await page.waitForURL(/\/patients\/(?!new)[^/]+$/, { timeout: 10000 })
-      const idB = new URL(page.url()).pathname.split('/')[2]
-      await page.goto(`/patients/${idB}/dental-chart`)
-      await expect(page.getByTestId('dental-chart-workspace')).toBeVisible()
-      // no selection, no panel: Patient A's state must not appear here
-      await expect(page.getByTestId('tooth-context-panel')).toHaveCount(0)
-    }
+    await expect(second).toBeVisible()
+    await second.getByRole('button').last().click()
+    await page.getByRole('menuitem', { name: /view details/i }).click()
+    await page.waitForURL(/\/patients\/(?!new)[^/]+$/, { timeout: 10000 })
+    const idB = new URL(page.url()).pathname.split('/')[2]
+    expect(idB).not.toBeNull()
+    await page.goto(`/patients/${idB}/dental-chart`)
+    await expect(page.getByTestId('dental-chart-workspace')).toBeVisible()
+    // no selection, no panel: Patient A's state must not appear here
+    await expect(page.getByTestId('tooth-context-panel')).toHaveCount(0)
   })
 
   test('RECEPTIONIST is read-only on the 3D workspace', async ({ receptionistPage: page }) => {
