@@ -64,14 +64,23 @@ async function login(page: Page, email: string, password: string) {
     )
   }
 
-  // Contract 1: a server-issued session cookie exists.
-  // next-auth v5 names it authjs.session-token (v4: next-auth.session-token),
-  // optionally __Secure- prefixed and .N-chunked — the prefix regex covers all.
-  await page.waitForFunction(
-    () => /(?:authjs|next-auth)\.session-token/.test(document.cookie),
-    undefined,
-    { timeout: 15000 }
-  )
+  // Contract 1: a SERVER-side session exists. The session cookie is issued
+  // HttpOnly (@auth/core cookie.ts: sessionToken httpOnly: true) — it is
+  // INVISIBLE to document.cookie by design, so the proof must come from the
+  // server: GET /api/auth/session through the context's request client
+  // (shares the browser cookie jar) must answer with a session containing a
+  // user. This proves Credentials -> Session Creation -> Server Session —
+  // the real contract, engine-independently.
+  await expect
+    .poll(
+      async () => {
+        const res = await page.request.get('/api/auth/session')
+        const session = (await res.json()) as { user?: unknown } | null
+        return Boolean(session && session.user)
+      },
+      { timeout: 15000, message: 'server-side session was never established after the credentials callback' }
+    )
+    .toBe(true)
 
   // Contract 2: the middleware accepts the session on a protected route.
   await page.goto('/dashboard')

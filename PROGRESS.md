@@ -308,6 +308,30 @@ diff-verification that it is the minimal correct fix:
   tsc 0; 15/15 contract tests; 18 collected.
 - Commit: (this commit)
 
+### Iteration 11 — V7 swarm self-attack: HttpOnly fixture defect caught and fixed (REPAIRER != VERIFIER applied to my own work)
+- SELF-ADVERSARIAL FINDING (the swarm's §21 rule caught my own b045b4b defect):
+  the auth fixture proved the session via document.cookie in waitForFunction —
+  but @auth/core issues the session token cookie with httpOnly: true (VERIFIED in
+  node_modules/@auth/core/src/lib/utils/cookie.ts:63-66: sessionToken ->
+  authjs.session-token, httpOnly: true). document.cookie can NEVER see it ->
+  Contract-1 would time out on EVERY engine -> every fixture login would fail at
+  HEAD. The two prior real-machine failures were stale-tree runs; this one would
+  have been REAL.
+- FIX: Contract-1 now proves the session SERVER-SIDE — expect.poll on
+  GET /api/auth/session through the context request client (shares the cookie
+  jar; the server reads the HttpOnly cookie) until a session WITH A USER is
+  returned. Stronger than the cookie check (proves Credentials -> Session
+  Creation -> Server Session) and engine-independent by construction.
+  Contract-2 (middleware accepts /dashboard) unchanged. Contract pins updated:
+  '/api/auth/session' + '.poll(' required; 'waitForFunction' (the mechanism)
+  banned.
+- CONCURRENCY (V7 §30): double-click-during-write test added — the Save button's
+  disabled={busy} must collapse a rapid double-click to exactly ONE clinical
+  POST (component-proven).
+- Gates: component+harness+dental suites 39/39; tsc 0; npm run verify EXIT 0
+  (6177/12/0, build 256 pages); 18 E2E collected.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

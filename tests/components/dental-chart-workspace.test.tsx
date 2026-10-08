@@ -212,6 +212,29 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     void panel
   })
 
+  it('CONCURRENCY: double-clicking Save during an in-flight write posts exactly once', async () => {
+    mockSummaryFetch()
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    act(() => useDentalChartStore.getState().setSelectedTooth(16))
+    await screen.findByTestId('tooth-context-panel')
+    // open the finding form
+    fireEvent.click(screen.getByText('Add finding'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    // a second click lands while busy: the button is disabled -> no second POST
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/dental-chart',
+        expect.objectContaining({ method: 'POST' })
+      )
+    )
+    const posts = fetchMock.mock.calls.filter(
+      ([u, init]) => String(u) === '/api/dental-chart' && (init as { method?: string }).method === 'POST'
+    )
+    expect(posts).toHaveLength(1)
+  })
+
   it('no active treatment plan → the procedure form says so instead of pretending to save', async () => {
     // same summary but WITHOUT an active plan
     fetchMock.mockImplementation(async () => ({

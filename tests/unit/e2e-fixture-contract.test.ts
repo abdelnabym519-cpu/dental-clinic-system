@@ -132,9 +132,16 @@ describe('E2E harness contracts — engine-independent authentication + navigati
     const fixture = read(FIXTURE)
     // the brittle pattern that timed out on firefox/webkit/edge is banned:
     expect(fixture).not.toContain('waitForURL(/.*(?:dashboard|onboarding)/')
-    // contract 1: the credentials callback is observed + a session cookie is required
+    // contract 1: the credentials callback is observed + the session is proven
+    // SERVER-SIDE (the session cookie is HttpOnly — document.cookie can never
+    // see it, so any cookie-based wait would be a guaranteed false timeout)
     expect(fixture).toContain('/api/auth/callback/credentials')
-    expect(fixture).toContain('(?:authjs|next-auth)\\.session-token')
+    expect(fixture).toContain("/api/auth/session")
+    expect(fixture).toContain('.poll(')
+    // the HttpOnly-blind defect class must not return (ban the MECHANISM,
+    // not the prose — comments legitimately explain why document.cookie
+    // cannot work):
+    expect(fixture).not.toContain('waitForFunction')
     // contract 2: the middleware (enforcement point) must accept the session
     expect(fixture).toContain("toHaveURL(/\\/dashboard/)")
   })

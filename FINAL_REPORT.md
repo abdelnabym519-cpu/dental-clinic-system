@@ -239,3 +239,34 @@ Browser execution only. Every statically and runtime-provable gate is green.
 ## Final Decision
 Engineering complete to the sandbox boundary; certification requires the
 machine-run named in TODO.md item 1.
+
+
+---
+
+# V7 Swarm Certification Kernel (current evidence, trust-leveled)
+
+| Gate | Status | Evidence | Trust |
+|---|---|---|---|
+| Build | PASS | verify: 256 pages | L4 |
+| TypeScript | PASS | tsc --noEmit: 0 | L2 |
+| Lint | PASS | 0 errors / 260 warnings | L4 |
+| Unit/Integration | PASS | 6177/12/0 | L2/L3 |
+| Prisma | PASS | schema valid | L2 |
+| Auth contract | PASS | live endpoints (session/providers 200) + contract pins | L4 |
+| RBAC server-side | PASS | 401 unauth read/write live; role pins in API tests | L4/L3 |
+| Tenant isolation | PASS | cross-hospital 404 pinned (API tests); live-tenant attack needs 2nd tenant MySQL | L3 (L6 blocked) |
+| Patient isolation | PASS | store reset component-proven + E2E test | L2/L5-pending |
+| Dental chart (code+API+component) | PASS | 75+ tests, live boundaries | L3/L4 |
+| Dental E2E 18x6 | MACHINE-BOUND | browsers absent, CDN egress-blocked (dated) | — |
+| Full E2E 2952 | MACHINE-BOUND | same | — |
+| AI truth | PASS | unauth->401->CF-not-called pinned; fallback model pinned; no fabricated inference | L3 |
+| Chaos (DB down) | PASS | /api/ready honest 503 (boot smoke) | L4 |
+| Concurrency | PASS | double-submit collapsed to one POST (new) | L2 |
+| Clean-room | PASS | full gate re-run from fresh node_modules + regenerated env every turn | L4 |
+| Browser matrix | BLOCKED | executable-level impossibility, evidenced | — |
+
+## Final Verdict: NOT CERTIFIED
+Mandatory browser-matrix gates cannot execute in this environment. Every gate
+provable without browsers is at its highest practical trust level. The swarm's
+self-attack (§21/§51) caught and fixed one real defect this pass (HttpOnly
+session proof) — the process works.
