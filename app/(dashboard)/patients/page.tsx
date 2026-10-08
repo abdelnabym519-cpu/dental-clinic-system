@@ -332,7 +332,13 @@ export default function PatientsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => router.push(`/patients/${patient.id}/medical-history`)}
+                            // Medical history renders inside the patient file's
+                            // overview tab; the old /medical-history route never
+                            // existed (404). Deep-link to the tab instead of
+                            // duplicating the page.
+                            onClick={() =>
+                              router.push(`/patients/${patient.id}?tab=overview#medical-history`)
+                            }
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             {t('Medical History')}

@@ -26,6 +26,27 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
   // viewport is pinned so mobile-emulated engines exercise the same layout.
   test.use({ viewport: { width: 1366, height: 768 } })
 
+  /**
+   * Select the first 2D tooth the way a human does on any viewport.
+   *
+   * Why the explicit centering scroll: the odontogram board is a fixed-size
+   * (~760px) grid inside `overflow-x-auto` — the correct responsive contract
+   * (32 teeth must keep tappable sizes on phones). Playwright's MINIMAL
+   * auto-scroll reveals only part of an edge tooth, so the click point can
+   * hit-test through the transparent scroll containers to <main> ("main
+   * intercepts pointer events" — observed on mobile projects). A human
+   * centers the tooth in view before tapping; scrollIntoView with
+   * block/inline center does exactly that across ALL ancestor scroll
+   * containers, deterministically, engine-uniformly. No force, no
+   * coordinates, no sleeps; the click itself is a genuine one.
+   */
+  async function selectFirstTooth(page: import('@playwright/test').Page) {
+    const tooth = page.getByTestId('dental-chart-2d').getByRole('button').first()
+    await tooth.scrollIntoViewIfNeeded()
+    await tooth.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }))
+    await tooth.click()
+  }
+
   async function openFirstPatientChart(page: import('@playwright/test').Page) {
     await openFirstPatientDetail(page)
     const id = new URL(page.url()).pathname.split('/')[2]
@@ -51,7 +72,7 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
 
     // Shared-store selection: pick the first 2D tooth — the panel must open
     // for that exact tooth (the same selection the 3D meshes write).
-    await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
+    await selectFirstTooth(page)
     const panel = page.getByTestId('tooth-context-panel')
     await expect(panel).toBeVisible()
     const panelHeader = await panel.textContent()
@@ -69,7 +90,7 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     // Reload: state is reconstructed from the DB (never memory).
     await page.reload()
     await expect(page.getByTestId('dental-chart-workspace')).toBeVisible()
-    await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
+    await selectFirstTooth(page)
     const reloaded = page.getByTestId('tooth-context-panel')
     await expect(reloaded).toBeVisible()
     // the SAME FDI tooth, with the finding persisted before the reload
@@ -81,7 +102,7 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
     doctorPage: page,
   }) => {
     await openFirstPatientChart(page)
-    await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
+    await selectFirstTooth(page)
     await expect(page.getByTestId('tooth-context-panel')).toBeVisible()
 
     // open ANOTHER patient's chart through the REAL navigation path with the
@@ -98,7 +119,7 @@ test.describe('Interactive Dental Chart (3D workspace)', () => {
 
   test('RECEPTIONIST is read-only on the 3D workspace', async ({ receptionistPage: page }) => {
     await openFirstPatientChart(page)
-    await page.getByTestId('dental-chart-2d').getByRole('button').first().click()
+    await selectFirstTooth(page)
     const panel = page.getByTestId('tooth-context-panel')
     await expect(panel).toBeVisible()
     // view roles may read; mutations must not exist in the DOM at all

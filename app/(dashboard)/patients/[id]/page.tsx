@@ -668,7 +668,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             </Card>
 
             {/* Medical History Summary */}
-            <Card>
+            {/* id: deep-link target for the patients-list "Medical History"
+                menu item (/patients/[id]?tab=overview#medical-history). */}
+            <Card id="medical-history" className="scroll-mt-24">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Heart className="h-4 w-4" />

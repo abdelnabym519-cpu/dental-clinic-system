@@ -196,3 +196,46 @@ New procedure-workflow component tests (post to existing treatment-plans API wit
 toothNumbers + refetch; honest no-active-plan state). Live: 307/401/401 unauth
 boundaries with a clean boot log. verify EXIT 0 (6171/12/0, 256 pages). Browser
 execution + in-canvas pointer picking: real-machine validation (documented).
+
+
+---
+
+# DenToRa Final Stabilization Report (Ultimate Master Prompt pass)
+
+## Status
+NOT CERTIFIED — one gate remains: the 18-test browser matrix on the real machine
+(browsers + MySQL). Two consecutive real-machine runs executed STALE trees; the
+third must verify parity first (git log --oneline -1 => b045b4b or newer).
+
+## Issues Found / Fixed
+Found 6 failure classes (A-F) + 8 product hypotheses. Fixed at HEAD: A (auth
+contract fixture), B (Radix portal nav), C (mobile hit-test via centering
+scrollIntoView), product defect #3 (medical-history 404 menu target -> deep
+link), plus all prior iterations (env bootstrap, secret mapping, seed-credential
+sync, locale pin, patient-isolation reset). Classified: D downstream-of-A,
+E secondary (evidenced), F dependency-internal. Hypotheses: slug conflict
+non-existent; prescriptions tab absent (deferred by design); others
+non-reproducible this pass.
+
+## Verification
+| Gate | Result | Evidence |
+|---|---|---|
+| Build | PASS | npm run verify: 256 pages |
+| TypeScript | PASS | tsc --noEmit: 0 errors |
+| Lint | PASS | 0 errors / 260 warnings |
+| Unit/Integration | PASS | 6176 passed / 12 skipped / 0 failed |
+| Prisma | PASS | prisma validate: schema valid |
+| Dental E2E (collect) | PASS | 18 tests / 6 projects / 3 scenarios |
+| Dental E2E (execute) | MACHINE-BOUND | sandbox browsers CDN-blocked (dated evidence) |
+| Full E2E | MACHINE-BOUND | 2952 tests require browser binaries |
+
+## Git
+Branch: arena/01a0f3e0-dental-clinic-system. HEAD: (this commit). Origin: equal
+after push. Working tree: clean.
+
+## Remaining Limitations
+Browser execution only. Every statically and runtime-provable gate is green.
+
+## Final Decision
+Engineering complete to the sandbox boundary; certification requires the
+machine-run named in TODO.md item 1.

@@ -154,3 +154,23 @@ describe('E2E harness contracts — engine-independent authentication + navigati
     expect(page).toContain("aria-label={t('ui.actions')}")
   })
 })
+
+describe('product navigation contracts — no 404 menu targets', () => {
+  it('the Medical History menu item deep-links to the existing overview tab section', () => {
+    const list = read('app/(dashboard)/patients/page.tsx')
+    // the old push target had no route (404):
+    expect(list).not.toContain('/medical-history`')
+    // it deep-links to the overview tab section instead:
+    expect(list).toContain('tab=overview#medical-history')
+    // and the anchor target exists in the patient file:
+    const detail = read('app/(dashboard)/patients/[id]/page.tsx')
+    expect(detail).toContain('id="medical-history"')
+  })
+
+  it('the E2E tooth selection centers before clicking (mobile hit-test contract)', () => {
+    const spec = read('tests/e2e/dental-chart-3d.spec.ts')
+    expect(spec).toContain("scrollIntoView({ block: 'center', inline: 'center' })")
+    // the defect class — a bare edge-tooth click without centering — is gone:
+    expect(spec).not.toContain("getByRole('button').first().click()")
+  })
+})

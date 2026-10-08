@@ -272,6 +272,42 @@ diff-verification that it is the minimal correct fix:
   dated evidence). Expected on the real machine after pull: 18 passed / 0 failed / 0 skipped.
 - Commit: (this commit)
 
+### Iteration 10 — real-machine 5/13 triage: parity forensics + Class C root fix + §8 audit
+- PARITY FORENSICS (decisive): the quoted failure lines (auth.ts:40 waitForURL
+  dashboard|onboarding; patients.ts:22 waitForURL ^$-form) exist ONLY at 374fc85 —
+  the run executed the PREVIOUS commit. b045b4b (auth CONTRACT fixture + Radix
+  portal nav) already fixes Classes A and B; at HEAD those lines are doc comments.
+  Action for the machine: git pull to b045b4b+ (proof: run `git log --oneline -1`
+  BEFORE the E2E run — the run count changed 2/16 -> 5/13 while the quoted lines
+  stayed frozen, the stale-tree signature).
+- CLASS C (real, new): mobile <main intercepts pointer events> — root cause in
+  source: ArchGrid renders a fixed min-w-[760px] board inside overflow-x-auto
+  (the correct responsive contract — 32 teeth must keep tappable size);
+  Playwright's MINIMAL scrollIntoViewIfNeeded reveals only part of an edge
+  tooth, so the click point hit-tests through the transparent scroll containers
+  to <main>. FIX (harness, user-equivalent): selectFirstTooth() centers the
+  tooth via scrollIntoView({block:'center',inline:'center'}) across ALL ancestor
+  scroll containers, then clicks genuinely. No force/coordinates/sleeps. All 4
+  call sites converted; pin added (no bare edge-tooth clicks in the spec).
+- CLASS D (Firefox goto timeout): downstream of A (failed fixture login) + first-
+  visit route compile; no timeout touched; expect resolved by the pull.
+- CLASS E (stream error): re-verified SECONDARY with sandbox evidence (all
+  responses complete with correct codes under mid-render aborts; logged, never
+  thrown; absent from completing flows).
+- CLASS F (THREE.Clock): NO project-owned usage (lucide icon + a comment only) —
+  the warning is three-internal (deprecated in favor of Timer); dependency churn
+  rejected per guardrails.
+- SS8 AUDIT: (1) [id]/[patientId] slug conflict — DOES NOT EXIST (single [id]
+  dir, re-verified). (3) /patients/[id]/medical-history — CONFIRMED REAL: menu
+  pushed a nonexistent route (404). FIXED: deep-links to the overview tab section
+  (?tab=overview#medical-history) + anchor id + scroll-mt added to the Medical
+  History card; pin added. (7) prescriptions tab — verified ABSENT from the
+  patient file tabs (feature addition, deferred, documented). (2,4,5,6,8,9,10) —
+  no reproducible defect found in source audit this pass; recorded as audited.
+- Gates: prisma validate PASS; npm run verify EXIT 0 (6176/12/0, build 256);
+  tsc 0; 15/15 contract tests; 18 collected.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 
