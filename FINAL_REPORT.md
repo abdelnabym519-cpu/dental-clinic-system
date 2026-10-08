@@ -153,3 +153,26 @@ values) is now recorded in BLOCKERS.md. Everything provable in-sandbox remains p
 machine the single path `npm run setup:dev && npm run dev:start` executes the DB leg that
 this sandbox cannot: compose up -> explicit-URL probe -> live SELECT 1 -> migrate deploy ->
 seed-if-uninitialized -> next dev.
+
+
+---
+
+# Addendum — Iteration 6: E2E Harness Root Repair (adminPage beforeEach failure)
+
+Three INDEPENDENT root causes stacked behind one symptom (1917 specs did not run):
+
+1. LOCALE — the app is Arabic-first; the E2E harness asserted English label text.
+   Live proof: /login SSRs `البريد الإلكتروني` fresh, `Email` with the app's own
+   `dentora-locale=en-EG` cookie. Fix: default storageState pins that cookie
+   (the LanguageToggle mechanism — no mock, no bypass) + structural locators
+   (#email/#password/submit) in the login fixture.
+2. CREDENTIALS — fixture `*@demo-dental.com` vs seed `*@dentora-dental.com`.
+3. SECRET — next-auth v5 reads only AUTH_SECRET; the documented contract
+   provisions NEXTAUTH_SECRET; every signIn/session/proxy call failed with
+   MissingSecret. Fix: canonical mapping in shared lib/auth.config.ts.
+
+Live verification (sandbox, no browser): /api/auth/session 200, providers 200,
+boot log clean; /login labels flip with the locale cookie; playwright --list
+collects 2946 tests / 53 files. Full harness EXIT 0 (6168/12/0). New 10-test
+contract suite pins all three seams without a browser. Browser E2E execution
+itself remains BLOCKED_EXTERNAL here (B2) and runs on the user's machine.

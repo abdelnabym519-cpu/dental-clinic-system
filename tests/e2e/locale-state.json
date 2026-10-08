@@ -1,0 +1,16 @@
+{
+  "comment": "Default Playwright storage state. The app is Arabic-first (defaultLocale ar-EG); the E2E suite asserts the English dictionary strings. This pins the app's OWN locale cookie — the exact cookie the LanguageToggle writes — so label/text assertions are deterministic. Specs exercising the Arabic UI override storageState per test.",
+  "cookies": [
+    {
+      "name": "dentora-locale",
+      "value": "en-EG",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

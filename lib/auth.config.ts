@@ -2,6 +2,15 @@ import type { NextAuthConfig } from 'next-auth'
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
+  // next-auth v5 reads ONLY `AUTH_SECRET`; this repository's documented
+  // environment contract (`.env.example`, `npm run setup:dev`) provisions
+  // `NEXTAUTH_SECRET` — which other modules also read directly (mobile JWT
+  // helpers). Without this mapping every signIn/session/proxy-auth call fails
+  // with MissingSecret on a machine that followed the documented setup.
+  // Defined HERE (the shared config) so both NextAuth instances inherit it:
+  // lib/auth.ts (credentials provider, Node runtime) and proxy.ts/middleware.ts
+  // (edge-safe instance constructed from the bare authConfig).
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
     error: '/login',

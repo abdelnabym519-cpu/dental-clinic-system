@@ -37,6 +37,12 @@ export default defineConfig({
   reporter: isCI ? [['line'], ['html', { open: 'never' }]] : [['html', { open: 'on-failure' }]],
   use: {
     baseURL: 'http://localhost:3000',
+    // Pin the app's own locale cookie (dentora-locale=en-EG — exactly what the
+    // LanguageToggle writes). The app is Arabic-first: without this, every page
+    // renders Arabic labels and the English-text assertions across the suite
+    // can never match (observed as getByLabel(/email/i) fill timeouts in the
+    // adminPage fixture). Arabic-UI specs override this per test.
+    storageState: './tests/e2e/locale-state.json',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

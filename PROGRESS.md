@@ -139,6 +139,38 @@ diff-verification that it is the minimal correct fix:
 - No production code changed (HEAD 4d781b4 semantics untouched); docs-only iteration.
 - Commit: (this commit)
 
+### Iteration 6 — E2E repair: three stacked root causes behind the adminPage fixture failure (user's real browser run)
+- Baseline (user's machine, browsers installed): 122 passed / 8 skipped / 1917 did not
+  run — every fixture-dependent spec died in beforeEach (`locator.fill` 45s timeout).
+- RC1 locale (fixture): the app is Arabic-first (`defaultLocale ar-EG`); fresh visitors
+  get Arabic labels (auth.email = 'البريد الإلكتروني'). The harness asserts English
+  label text (getByLabel(/email/i)) — provably zero matches. PROVEN LIVE: SSR of /login
+  renders `<label for="email">البريد الإلكتروني</label>` without the cookie and
+  `<label ...>Email</label>` with the app's own `dentora-locale=en-EG` cookie.
+  Fix: (a) default Playwright storageState pins the app's OWN locale cookie
+  (tests/e2e/locale-state.json — exactly what LanguageToggle writes; no Arabic-UI
+  specs exist to conflict); (b) fixtures/auth.ts login() uses structural locators
+  (#email / #password / form button[type=submit]) — immune to any label language.
+- RC2 credentials (fixture): fixture used *@demo-dental.com while prisma/seed.ts
+  creates *@dentora-dental.com — every login was an invalid-credentials failure even
+  past RC1. Fix: fixture synced to seed (admin/doctor/reception @dentora-dental.com).
+- RC3 secret (application, root): next-auth v5 reads ONLY AUTH_SECRET while the
+  documented contract (.env.example + setup:dev) provisions NEXTAUTH_SECRET ->
+  MissingSecret on every signIn/session/proxy-auth call. Fix: one canonical mapping
+  `secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET` in the SHARED
+  lib/auth.config.ts (inherited by lib/auth.ts AND the edge middleware instance);
+  PROVEN LIVE: with provisioned env, /api/auth/session 200, /api/auth/providers 200
+  (credentials provider listed), boot log clean (was: MissingSecret + 404/500s).
+- Regression pins: tests/unit/e2e-fixture-contract.test.ts (10 tests, no browser
+  needed) — seed<->fixture credential sync, structural selectors + no .getByLabel(
+  at the login seam, locale-cookie pin wired in playwright.config, secret mapping in
+  the shared config, no instance escaping it, login-page structural hooks exist.
+- Validation: `npx playwright test --list` -> 2946 tests / 53 files (config + storage
+  state valid); `npm run verify` EXIT 0 (6168/12/0, build 256 pages); phase12 bytes
+  restored. Browser E2E execution remains BLOCKED_EXTERNAL in this sandbox (B2) —
+  the user's machine (browsers + MySQL + seeded DB) runs `npx playwright test`.
+- Commit: (this commit)
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 

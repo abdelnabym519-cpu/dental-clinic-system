@@ -3,18 +3,23 @@ import { test as base, expect, Page } from '@playwright/test'
 // Test credentials — these MUST stay in sync with prisma/seed.ts.
 // Every authenticated spec logs in through these fixtures, so a mismatch fails
 // the entire suite at fixture setup rather than in any one test.
+// (tests/unit/e2e-fixture-contract.test.ts pins this sync executably.)
+// Synced to the seed: admin@dentora-dental.com / doctor@dentora-dental.com /
+// reception@dentora-dental.com — the seeded emails use the dentora-dental.com
+// domain (the old demo-dental.com addresses match no seeded user, so every
+// login failed with invalid credentials).
 const TEST_ADMIN = {
-  email: 'admin@demo-dental.com',
+  email: 'admin@dentora-dental.com',
   password: 'Admin@123',
 }
 
 const TEST_DOCTOR = {
-  email: 'doctor@demo-dental.com',
+  email: 'doctor@dentora-dental.com',
   password: 'Doctor@123',
 }
 
 const TEST_RECEPTIONIST = {
-  email: 'reception@demo-dental.com',
+  email: 'reception@dentora-dental.com',
   password: 'Reception@123',
 }
 
@@ -23,9 +28,14 @@ const TEST_RECEPTIONIST = {
  */
 async function login(page: Page, email: string, password: string) {
   await page.goto('/login')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill(password)
-  await page.getByRole('button', { name: /sign in|login/i }).click()
+  // Structural locators on purpose: the form's ids and its single submit
+  // button are locale-independent. Label-text selectors (getByLabel(/email/i))
+  // break on the Arabic-first default rendering (البريد الإلكتروني) whenever
+  // the locale cookie is absent — the exact failure that stalled every
+  // fixture-dependent suite at beforeEach for 45s each.
+  await page.locator('#email').fill(email)
+  await page.locator('#password').fill(password)
+  await page.locator('form button[type="submit"]').click()
   // Wait for navigation away from login page
   await page.waitForURL(/.*(?:dashboard|onboarding)/, { timeout: 15000 })
 }
