@@ -332,6 +332,22 @@ diff-verification that it is the minimal correct fix:
   (6177/12/0, build 256 pages); 18 E2E collected.
 - Commit: (this commit)
 
+### Iteration 12 — attack-surface exhaustion pass: last tooth-class instance + a11y pin + DB-enforced vocab audit
+- PUT/DELETE finding boundary re-audited: tenant-404, ADMIN/DOCTOR Arabic-403,
+  audit log (old+new values), tooth immutable on update — all verified in source.
+- condition/severity: Prisma ENUMS (schema 796-797) — invalid clinical vocabulary
+  is DATABASE-enforced fail-closed (the 500-vs-400 shape is cosmetic only).
+- CLASS CLOSED: parseToothNumbers (workspace display) used a loose 11..48 range
+  accepting 19/29/39/49 (no FDI quadrant) — now filters through the canonical
+  isValidFdi. The tooth-validation class now has ONE authority from DB writes to
+  display: chart API whitelist + items API validation + display parse.
+- ACCESSIBILITY (§41): keyboard-only chart use pinned (ArrowRight/ArrowLeft move
+  to ADJACENT distinct teeth; Escape clears).
+- Gates: 14/14 component suite; npm run verify EXIT 0; commit 45a42ab; HEAD==origin.
+- Remaining knowns are ALL machine-bound (browser matrix, full suite, live second-
+  tenant attack, RTL screenshots, perf profiling on real MySQL) — in-sandbox
+  attack surface exhausted at this evidence level.
+
 ## Remaining Work
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 
