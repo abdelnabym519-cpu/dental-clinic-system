@@ -43,18 +43,29 @@ export async function POST(
     // form, require every token to be a valid FDI number.
     let normalizedToothNumbers: string | null = null
     if (toothNumbers !== undefined && toothNumbers !== null && String(toothNumbers).trim() !== '') {
-      const tokens = String(toothNumbers)
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t !== '')
-      const allValid = tokens.length > 0 && tokens.every((t) => isValidFdi(Number.parseInt(t, 10)))
-      if (!allValid) {
+      const teeth: number[] = []
+      for (const raw of String(toothNumbers).split(',')) {
+        const t = raw.trim()
+        if (t === '') continue // empty tokens (',,' / trailing commas) are noise, not data
+        // STRICT integer check BEFORE parseInt: '16.5' / '16;17' / '16x' all
+        // parseInt() to a valid-looking prefix — they must never enter a
+        // clinical record. FDI numbers are unsigned digit strings, nothing else.
+        if (!/^\d+$/.test(t) || !isValidFdi(Number.parseInt(t, 10))) {
+          return NextResponse.json(
+            { error: 'أرقام الأسنان غير صالحة — استخدم ترقيم FDI (11-18، 21-28، 31-38، 41-48)' },
+            { status: 400 }
+          )
+        }
+        const n = Number.parseInt(t, 10)
+        if (!teeth.includes(n)) teeth.push(n) // duplicates normalize away
+      }
+      if (teeth.length === 0) {
         return NextResponse.json(
           { error: 'أرقام الأسنان غير صالحة — استخدم ترقيم FDI (11-18، 21-28، 31-38، 41-48)' },
           { status: 400 }
         )
       }
-      normalizedToothNumbers = tokens.join(',')
+      normalizedToothNumbers = teeth.join(',')
     }
     const procedure = await prisma.procedure.findFirst({
       where: { id: procedureId, hospitalId },

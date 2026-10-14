@@ -149,6 +149,24 @@ describe('Dental Chart API', () => {
       expect(res.status).toBe(400)
     })
 
+    it('MISSING/EXTRACTION auto-resolve + create are submitted ATOMICALLY (one transaction)', async () => {
+      // auth is provisioned by the suite's beforeEach (DOCTOR)
+      vi.mocked(prisma.dentalChartEntry.updateMany).mockClear()
+      vi.mocked(prisma.dentalChartEntry.create).mockClear()
+      vi.mocked(prisma.$transaction).mockClear()
+
+      const res = await listModule.POST(
+        makePostRequest({ patientId: 'patient-1', toothNumber: 16, condition: 'MISSING' })
+      )
+      expect(res.status).toBe(201)
+      // the resolve and the create are BOTH issued inside the $transaction
+      // callback — never as independent awaits (a torn write would leave the
+      // tooth resolved with the new finding lost)
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1)
+      expect(prisma.dentalChartEntry.updateMany).toHaveBeenCalledTimes(1)
+      expect(prisma.dentalChartEntry.create).toHaveBeenCalledTimes(1)
+    })
+
     it('rejects invalid FDI tooth number', async () => {
       const res = await listModule.POST(
         makePostRequest({ patientId: 'p1', toothNumber: 99, condition: 'CAVITY' })

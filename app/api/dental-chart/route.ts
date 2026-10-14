@@ -151,48 +151,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Patient not found' }, { status: 404 })
     }
 
-    // If condition is MISSING or EXTRACTION, mark previous entries as resolved
-    if (['MISSING', 'EXTRACTION'].includes(condition)) {
-      await prisma.dentalChartEntry.updateMany({
-        where: {
-          patientId,
-          hospitalId,
-          toothNumber,
-          resolvedDate: null,
-        },
-        data: {
-          resolvedDate: new Date(),
-        },
-      })
-    }
+    // MISSING/EXTRACTION auto-resolve + the new entry MUST be atomic:
+    // a failure between "resolve the old findings" and "create the new one"
+    // would leave the tooth silently healed/missing with the new finding
+    // lost (a clinical-coherence violation). One transaction, or neither.
+    const entry = await prisma.$transaction(async (tx) => {
+      if (['MISSING', 'EXTRACTION'].includes(condition)) {
+        await tx.dentalChartEntry.updateMany({
+          where: {
+            patientId,
+            hospitalId,
+            toothNumber,
+            resolvedDate: null,
+          },
+          data: {
+            resolvedDate: new Date(),
+          },
+        })
+      }
 
-    // Create new entry
-    const entry = await prisma.dentalChartEntry.create({
-      data: {
-        hospitalId,
-        patientId,
-        toothNumber,
-        toothNotation: toothNotation || String(toothNumber),
-        condition,
-        severity: severity || 'MILD',
-        mesial: mesial || false,
-        distal: distal || false,
-        occlusal: occlusal || false,
-        buccal: buccal || false,
-        lingual: lingual || false,
-        notes: notes || null,
-        diagnosedDate: new Date(),
-      },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            patientId: true,
-            firstName: true,
-            lastName: true,
+      // Create new entry
+      return tx.dentalChartEntry.create({
+        data: {
+          hospitalId,
+          patientId,
+          toothNumber,
+          toothNotation: toothNotation || String(toothNumber),
+          condition,
+          severity: severity || 'MILD',
+          mesial: mesial || false,
+          distal: distal || false,
+          occlusal: occlusal || false,
+          buccal: buccal || false,
+          lingual: lingual || false,
+          notes: notes || null,
+          diagnosedDate: new Date(),
+        },
+        include: {
+          patient: {
+            select: {
+              id: true,
+              patientId: true,
+              firstName: true,
+              lastName: true,
+            },
           },
         },
-      },
+      })
     })
 
     // Audit trail (master spec Stage K) — clinical mutations are always

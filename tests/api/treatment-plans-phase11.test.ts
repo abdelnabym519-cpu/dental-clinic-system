@@ -328,6 +328,56 @@ describe('POST /api/treatment-plans/[id]/items (Phase 11)', () => {
     expect(prisma.treatmentPlanItem.create).not.toHaveBeenCalled()
   })
 
+  it('rejects PREFIX-PARSING attacks: 16.5 / 16;17 parse to valid FDI but are not teeth', async () => {
+    await as()
+    const { POST } = await import('@/app/api/treatment-plans/[id]/items/route')
+
+    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({
+      id: 'tp1',
+      hospitalId: 'h1',
+      status: 'DRAFT',
+    } as any)
+
+    for (const malformed of ['16.5', '16;17', '16x']) {
+      vi.mocked(prisma.treatmentPlanItem.create).mockClear()
+      const req = makeRequest('http://localhost/api/treatment-plans/tp1/items', {
+        method: 'POST',
+        body: { procedureId: 'proc1', toothNumbers: malformed },
+      })
+      const res = await POST(req, { params: Promise.resolve({ id: 'tp1' }) })
+      expect(res.status, `toothNumbers=${malformed}`).toBe(400)
+      expect(prisma.treatmentPlanItem.create, `toothNumbers=${malformed}`).not.toHaveBeenCalled()
+    }
+  })
+
+  it('accepts whitespace/empty-token/duplicate forms by NORMALIZING to canonical FDI', async () => {
+    await as()
+    const { POST } = await import('@/app/api/treatment-plans/[id]/items/route')
+
+    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({
+      id: 'tp1',
+      hospitalId: 'h1',
+      status: 'DRAFT',
+    } as any)
+    vi.mocked(prisma.procedure.findFirst).mockResolvedValue({
+      id: 'proc1',
+      basePrice: 1000,
+      defaultDuration: 30,
+    } as any)
+    vi.mocked(prisma.treatmentPlanItem.create).mockResolvedValue({ id: 'it9' } as any)
+    vi.mocked(prisma.treatmentPlanItem.findMany).mockResolvedValue([] as any)
+    vi.mocked(prisma.treatmentPlan.update).mockResolvedValue({ id: 'tp1' } as any)
+
+    const req = makeRequest('http://localhost/api/treatment-plans/tp1/items', {
+      method: 'POST',
+      body: { procedureId: 'proc1', toothNumbers: ' 16 , ,17, 16 ' },
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 'tp1' }) })
+    expect(res.status).toBe(201)
+    const createCall = vi.mocked(prisma.treatmentPlanItem.create).mock.calls[0][0]
+    expect(createCall.data.toothNumbers).toBe('16,17')
+  })
+
   it('400 without procedureId', async () => {
     await as()
     const { POST } = await import('@/app/api/treatment-plans/[id]/items/route')
