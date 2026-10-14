@@ -80,6 +80,28 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     useDentalChartStore.getState().reset()
   })
 
+  it('REGRESSION (pointer interception): arch rows use SAFE centering so arch-end teeth stay scrollable-reachable in Split/narrow columns', async () => {
+    // Root cause of the chromium "main intercepts pointer events" failure:
+    // unsafe `justify-center` on the arch rows spills the arch-end teeth
+    // (18/28/48/31) symmetrically when the row overflows the board (Split
+    // view column ≈ 500px < board min-w-[760px]); the start-side spill is
+    // clipped by the overflow-x-auto wrapper AND unscrollable, so the tooth's
+    // click point resolves to <main> forever. `justify-content: safe center`
+    // keeps pixel-identical centering when the row fits and start-aligns
+    // (reachable by scrolling) when it overflows.
+    mockSummaryFetch()
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    const archRows = document.querySelectorAll('[data-arch-row]')
+    expect(archRows.length).toBe(2) // upper + lower arch
+    for (const row of archRows) {
+      // the compiled Tailwind arbitrary property must be the safe alignment —
+      // plain `justify-center` here is the defect this pin exists to prevent.
+      expect(row.className).toContain('justify-content:safe_center')
+      expect(row.className).not.toContain('justify-center ')
+    }
+  })
+
   it('loads the summary and renders 2D + legend + empty-selection hint', async () => {
     mockSummaryFetch()
     render(<DentalChartWorkspace patientId="patient-1" />)

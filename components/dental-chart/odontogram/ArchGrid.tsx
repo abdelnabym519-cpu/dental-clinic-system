@@ -53,7 +53,13 @@ export function ArchGrid({
               {t("Upper Jaw (Maxilla)")} </span>
           </div>
 
-          <div className="relative flex justify-center items-center gap-2 sm:gap-4">
+          {/* safe centering: when the arch row overflows the board (Split/narrow
+              columns), unsafe `justify-center` spills the arch-end teeth (18/28/
+              48/31) past the board into unscrollable start-side overflow, where
+              hit-testing resolves to <main> and the teeth become unclickable for
+              real users too. `safe center` centers exactly as before when the row
+              fits and start-aligns (scrollable, reachable) when it overflows. */}
+          <div data-arch-row className="relative flex [justify-content:safe_center] items-center gap-2 sm:gap-4">
             {/* Quadrant 1 (18 -> 11) */}
             <Quadrant
               id="Q1"
@@ -101,7 +107,7 @@ export function ArchGrid({
 
         {/* ─── 2. LOWER JAW (MANDIBULAR ARCH) ─────────────────────────── */}
         <div className="relative pt-2 pb-6">
-          <div className="relative flex justify-center items-center gap-2 sm:gap-4">
+          <div data-arch-row className="relative flex [justify-content:safe_center] items-center gap-2 sm:gap-4">
             {/* Quadrant 4 (48 -> 41) */}
             <Quadrant
               id="Q4"
