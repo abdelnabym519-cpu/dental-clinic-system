@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { DentalChartEntryRecord } from '@/components/dental-chart/types/odontogram'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 import {
   TOOTH_COLORS,
   deriveStatusMap,
@@ -337,5 +338,8 @@ export function parseToothNumbers(value: string | null | undefined): number[] {
   return value
     .split(',')
     .map((s) => Number.parseInt(s.trim(), 10))
-    .filter((n) => Number.isInteger(n) && n >= 11 && n <= 48)
+    // Canonical FDI authority (same 32-tooth whitelist the write APIs
+    // enforce) — NOT a loose 11..48 range, which would accept 19/29/39/49,
+    // numbers that exist in no FDI quadrant.
+    .filter((n) => isValidFdi(n))
 }

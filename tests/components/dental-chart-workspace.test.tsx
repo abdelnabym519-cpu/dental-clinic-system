@@ -260,6 +260,31 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     await waitFor(() => expect(screen.getByTestId('dental-chart-error')).toBeTruthy())
   })
 
+  it('ACCESSIBILITY: arrow keys move the selection between teeth (keyboard-only usable)', async () => {
+    mockSummaryFetch()
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    const chart = screen.getByTestId('dental-chart-2d')
+    // focus the chart and navigate with the keyboard only
+    fireEvent.keyDown(chart, { key: 'ArrowRight' })
+    expect(useDentalChartStore.getState().selectedToothNumber).not.toBeNull()
+    const afterRight = useDentalChartStore.getState().selectedToothNumber
+    fireEvent.keyDown(chart, { key: 'ArrowLeft' })
+    const afterLeft = useDentalChartStore.getState().selectedToothNumber
+    // left/right move to ADJACENT teeth (never the same tooth)
+    expect(afterLeft).not.toBe(afterRight)
+    // Escape clears the selection (keyboard-equivalent of clicking away)
+    fireEvent.keyDown(chart, { key: 'Escape' })
+    expect(useDentalChartStore.getState().selectedToothNumber).toBeNull()
+  })
+
+  it('parseToothNumbers uses the canonical FDI whitelist (19/29/39/49 are not teeth)', () => {
+    expect(parseToothNumbers('16,17')).toEqual([16, 17])
+    expect(parseToothNumbers('19,29')).toEqual([]) // not FDI teeth
+    expect(parseToothNumbers('48')).toEqual([48])
+    expect(parseToothNumbers(null)).toEqual([])
+  })
+
   it('parseToothNumbers handles the Phase-11 comma-separated FDI string', () => {
     expect(parseToothNumbers('16, 17,48')).toEqual([16, 17, 48])
     expect(parseToothNumbers(null)).toEqual([])
