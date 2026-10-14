@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 
 /**
  * POST /api/treatment-plans/[id]/items (Phase 11) — add a procedure item to
@@ -35,6 +36,26 @@ export async function POST(
     if (!procedureId) {
       return NextResponse.json({ error: 'procedureId is required' }, { status: 400 })
     }
+    // Clinical data integrity: toothNumbers is a Tooth REFERENCE. The chart
+    // write path (POST /api/dental-chart) whitelists FDI numbers; this path
+    // must not be the loophole that stores an unidentifiable tooth ("99",
+    // "abc") in a clinical record. Accept the documented comma-separated
+    // form, require every token to be a valid FDI number.
+    let normalizedToothNumbers: string | null = null
+    if (toothNumbers !== undefined && toothNumbers !== null && String(toothNumbers).trim() !== '') {
+      const tokens = String(toothNumbers)
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t !== '')
+      const allValid = tokens.length > 0 && tokens.every((t) => isValidFdi(Number.parseInt(t, 10)))
+      if (!allValid) {
+        return NextResponse.json(
+          { error: 'أرقام الأسنان غير صالحة — استخدم ترقيم FDI (11-18، 21-28، 31-38، 41-48)' },
+          { status: 400 }
+        )
+      }
+      normalizedToothNumbers = tokens.join(',')
+    }
     const procedure = await prisma.procedure.findFirst({
       where: { id: procedureId, hospitalId },
       select: { id: true, basePrice: true, defaultDuration: true },
@@ -59,7 +80,7 @@ export async function POST(
       data: {
         treatmentPlanId: plan.id,
         procedureId,
-        toothNumbers: toothNumbers ?? null,
+        toothNumbers: normalizedToothNumbers,
         priority: typeof priority === 'number' ? priority : 1,
         estimatedCost: cost,
         status: status ?? 'PENDING',

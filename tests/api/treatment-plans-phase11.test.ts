@@ -307,6 +307,27 @@ describe('POST /api/treatment-plans/[id]/items (Phase 11)', () => {
     expect(res.status).toBe(404)
   })
 
+  it('rejects invalid FDI tooth numbers on items (400) — clinical reference integrity', async () => {
+    await as()
+    const { POST } = await import('@/app/api/treatment-plans/[id]/items/route')
+
+    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({
+      id: 'tp1',
+      hospitalId: 'h1',
+      status: 'DRAFT',
+    } as any)
+
+    const req = makeRequest('http://localhost/api/treatment-plans/tp1/items', {
+      method: 'POST',
+      body: { procedureId: 'proc1', toothNumbers: '99,abc' },
+    })
+    const res = await POST(req, { params: Promise.resolve({ id: 'tp1' }) })
+
+    expect(res.status).toBe(400)
+    // nothing clinical was written:
+    expect(prisma.treatmentPlanItem.create).not.toHaveBeenCalled()
+  })
+
   it('400 without procedureId', async () => {
     await as()
     const { POST } = await import('@/app/api/treatment-plans/[id]/items/route')
