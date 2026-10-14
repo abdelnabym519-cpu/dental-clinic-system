@@ -77,7 +77,7 @@ import {
   Shield,
   Pen,  MessageCircle,
 } from 'lucide-react'
-import { DentalChart } from '@/components/dental-chart'
+import { DentalChartWorkspace } from '@/components/dental-chart/interactive/DentalChartWorkspace'
 import { Patient360 } from '@/components/ai/patient-360'
 import { PatientFormSubmissions } from '@/components/forms/patient-form-submissions'
 import { PatientInsurance } from '@/components/insurance/patient-insurance'
@@ -726,7 +726,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Dental Chart Tab */}
         <TabsContent value="dental-chart" className="space-y-6">
-          <DentalChart patientId={patient.id} />
+          {/* The INTENDED interactive chart (same workspace as the dedicated
+              /patients/[id]/dental-chart route): real 2D/3D/Split modes,
+              visible tooth selection, clinical context panel, and persistence
+              through the existing authorized APIs. The legacy Phase-3
+              Odontogram previously mounted here had no shared selection state
+              and no clinical panel — clicks gave no expected feedback. */}
+          <DentalChartWorkspace patientId={patient.id} />
         </TabsContent>
 
         {/* Timeline Tab */}

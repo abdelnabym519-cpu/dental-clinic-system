@@ -102,6 +102,27 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     }
   })
 
+  it('REGRESSION (patient-page tab): clicking a 2D tooth visibly selects it and opens the clinical panel', async () => {
+    // The Dental Chart tab on /patients/[id] used to mount the legacy
+    // Phase-3 Odontogram (self-contained dialog, no shared selection state,
+    // no clinical panel) — clicks gave no expected selection/details UI.
+    // It now mounts this workspace; this pin proves the user-visible
+    // contract through the REAL click path (button → DentalChart2D →
+    // store → panel), not by seeding the store directly.
+    mockSummaryFetch()
+    render(<DentalChartWorkspace patientId="patient-1" />)
+    await waitFor(() => expect(screen.getByTestId('dental-chart-2d')).toBeTruthy())
+    const tooth16 = screen.getByRole('button', { name: /16:/i })
+    expect(tooth16.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(tooth16)
+    // visible selection state on the clicked tooth itself:
+    expect(tooth16.getAttribute('aria-pressed')).toBe('true')
+    // the clinical-details UI opens for THAT tooth:
+    const panel = screen.getByTestId('tooth-context-panel')
+    expect(panel).toBeTruthy()
+    expect((panel.textContent ?? '')).toContain('16')
+  })
+
   it('loads the summary and renders 2D + legend + empty-selection hint', async () => {
     mockSummaryFetch()
     render(<DentalChartWorkspace patientId="patient-1" />)
