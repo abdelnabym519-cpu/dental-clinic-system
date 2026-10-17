@@ -27,14 +27,18 @@ import type { VoiceTurnDeps } from '@/lib/ai/voice/pipeline'
 // ---------------------------------------------------------------------------
 
 describe('Robot naming and unified surface', () => {
-  it('navigation exposes Robot and NO independent AI Chat entry', () => {
+  it('navigation exposes the RESTORED AI Chat (primary assistant) AND the Robot companion', () => {
+    // Workstream-A reversal: the previous assistant (/chat) is restored as the
+    // primary AI surface; the Robot remains available as the companion —
+    // underlying AI functionality unchanged.
     const items = navigation.flatMap((s) => s.items)
     const robot = items.find((i) => i.href === '/ai-companion')
     expect(robot, 'robot nav item exists').toBeTruthy()
     expect(robot!.title).toBe('Robot')
-    expect(items.some((i) => i.href === '/chat'), 'no /chat nav entry').toBe(false)
-    expect(items.some((i) => i.title === 'AI Chat'), 'no AI Chat title').toBe(false)
-    expect(items.some((i) => i.title === 'AI Companion'), 'Companion naming removed').toBe(false)
+    const chat = items.find((i) => i.href === '/chat')
+    expect(chat, 'restored /chat nav entry exists').toBeTruthy()
+    expect(chat!.title).toBe('AI Chat')
+    expect(items.some((i) => i.title === 'AI Companion'), 'Companion naming stays removed').toBe(false)
   })
 
   it('Arabic user-facing name is روبوت', () => {
@@ -45,14 +49,17 @@ describe('Robot naming and unified surface', () => {
     expect(ar['DenToRa Robot']).toContain('روبوت')
   })
 
-  it('/chat is only a redirect to the Robot — no chat UI surface remains', () => {
+  it('/chat serves the RESTORED assistant UI; the floating widget is back in the shell', () => {
     const page = readFileSync('app/(dashboard)/chat/page.tsx', 'utf8')
-    expect(page).toContain("redirect('/ai-companion')")
-    expect(page).not.toContain("'use client'")
-    expect(page.length, 'redirect stub only').toBeLessThan(400)
-    // The floating chat widget is gone from the shell.
+    expect(page).toContain("'use client'")
+    expect(page).toContain('voice-orb')
+    expect(page).toContain('sendChat')
+    // The restored floating assistant is mounted in the dashboard shell.
     const shell = readFileSync('components/layout/dashboard-shell.tsx', 'utf8')
-    expect(shell).not.toContain('ChatWidget')
+    expect(shell).toContain('ChatWidget')
+    // The Robot companion surface remains intact (functionality preserved).
+    const companion = readFileSync('app/(dashboard)/ai-companion/page.tsx', 'utf8')
+    expect(companion.length).toBeGreaterThan(0)
   })
 })
 

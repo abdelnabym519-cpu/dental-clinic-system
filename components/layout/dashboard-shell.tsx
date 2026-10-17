@@ -6,6 +6,7 @@ import { Header } from './header'
 import { SidebarProvider } from './sidebar-context'
 import { AIProvider } from '@/components/ai/ai-provider'
 import { CommandBar } from '@/components/ai/command-bar'
+import { ChatWidget } from '@/components/ai/chat-widget'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { KeyboardShortcutHelp } from '@/components/layout/keyboard-shortcut-help'
 
@@ -58,6 +59,9 @@ export function DashboardShell({ children, user, hospital }: DashboardShellProps
       </SidebarProvider>
       <CommandBar />
       <KeyboardShortcutHelp />
+      {/* Restored primary AI assistant (floating) — the Robot companion
+          remains available at /ai-companion; shared AI infra unchanged. */}
+      <ChatWidget />
     </AIProvider>
   )
 }

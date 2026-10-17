@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  BotMessageSquare,
   Users,
   Calendar,
   Stethoscope,
@@ -57,6 +58,11 @@ export const navigation: NavSection[] = [
   {
     title: 'Overview',
     items: [
+      {
+        title: 'AI Chat',
+        href: '/chat',
+        icon: BotMessageSquare,
+      },
       {
         title: 'Robot',
         href: '/ai-companion',
