@@ -34,12 +34,14 @@ describe('navigation config', () => {
     expect(titles).toContain('Administration')
   })
 
-  it('Overview section has Dashboard and the unified Robot (no AI Chat)', () => {
+  it('Overview section has Dashboard, the restored AI Chat, and the Robot', () => {
     const overview = navigation.find((s) => s.title === 'Overview')!
     const titles = overview.items.map((i) => i.title)
     expect(titles).toContain('Dashboard')
     expect(titles).toContain('Robot')
-    expect(titles).not.toContain('AI Chat')
+    // WS-A reversal: the previous assistant is RESTORED as the primary AI
+    // surface; the Robot remains the companion (both entries required).
+    expect(titles).toContain('AI Chat')
   })
 
   it('Dashboard has no role restriction', () => {
