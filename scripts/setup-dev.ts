@@ -4,7 +4,7 @@
  *   npm run setup:dev
  *
  * Creates .env from .env.example when missing, generates the required dev
- * secrets (NEXTAUTH_SECRET, ENCRYPTION_KEY, CRON_SECRET), fills DATABASE_URL
+ * secrets (NEXTAUTH_SECRET, ENCRYPTION_KEY, CRON_SECRET, ORCHESTRATOR_SECRET), fills DATABASE_URL
  * with the docker-compose.dev.yml-matching value, and NEVER overwrites
  * existing values, never touches .env.local, never touches the database.
  * Run again any time — it is idempotent and repairs only what is missing.

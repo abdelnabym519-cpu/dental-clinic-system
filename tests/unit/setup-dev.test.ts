@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it, beforeEach } from 'vitest'
 import { parseEnvFileContent, loadDevEnvIntoProcess } from '../../scripts/lib/dev-env'
-import { planDevEnv, REQUIRED_KEYS } from '../../scripts/lib/setup-dev'
+import { planDevEnv, REQUIRED_KEYS, SECRET_GENERATORS } from '../../scripts/lib/setup-dev'
 
 const root = path.resolve(__dirname, '../..')
 const template = () => readFileSync(path.join(root, '.env.example'), 'utf8')
@@ -23,7 +23,7 @@ describe('the environment contract: .env.example must match docker-compose.dev.y
     expect(active?.[1]).toBe(`mysql://root:${password}@localhost:${hostPort}/${database}`)
   })
 
-  it('the template defines all four required keys with generation docs for the secrets', () => {
+  it('the template defines all required keys with generation docs for the secrets', () => {
     // RAW presence: the parser drops empty values by design, but the template
     // must carry every required key as an active (uncommented) KEY= line.
     for (const key of REQUIRED_KEYS) {
@@ -65,7 +65,7 @@ describe('planDevEnv — the deterministic bootstrap core', () => {
     generated = []
   })
 
-  it('fresh creation: fills DATABASE_URL from the template and generates the three secrets', () => {
+  it('fresh creation: fills DATABASE_URL from the template and generates the four secrets', () => {
     const plan = planDevEnv(template(), undefined, gen)
     expect(plan.createdFresh).toBe(true)
     const parsed = parseEnvFileContent(plan.content)
@@ -73,12 +73,25 @@ describe('planDevEnv — the deterministic bootstrap core', () => {
     expect((parsed.NEXTAUTH_SECRET ?? '').length).toBeGreaterThan(0)
     expect((parsed.ENCRYPTION_KEY ?? '').length).toBeGreaterThan(0)
     expect((parsed.CRON_SECRET ?? '').length).toBeGreaterThan(0)
+    expect((parsed.ORCHESTRATOR_SECRET ?? '').length).toBeGreaterThan(0)
     // plan METADATA carries no values — generated values live only in the file
     for (const e of plan.entries) {
       expect(Object.values(e)).not.toContain(expect.stringMatching(/secret-/))
       expect(e.action === 'generated' ? true : true).toBe(true)
     }
-    expect(plan.entries.filter((e) => e.action === 'generated')).toHaveLength(3)
+    expect(plan.entries.filter((e) => e.action === 'generated')).toHaveLength(4)
+  })
+
+  it('ORCHESTRATOR-CONTRACT: the compose-required secret is bootstrapped, crypto-random, and shared via the one .env', () => {
+    // ai-compose.yml fail-fasts (${ORCHESTRATOR_SECRET:?}) and the app's
+    // agent/imaging routes throw 'ORCHESTRATOR_SECRET is not configured'
+    // when it is unset — so the bootstrap MUST guarantee it (the same .env
+    // feeds both the compose interpolation and the Next.js process env).
+    expect(REQUIRED_KEYS).toContain('ORCHESTRATOR_SECRET')
+    const yml = readFileSync(path.join(root, 'ai-compose.yml'), 'utf8')
+    expect(yml).toMatch(/\$\{ORCHESTRATOR_SECRET:?\?/)
+    // the real generator is crypto-random 32-byte hex — shape only, never the value
+    expect(SECRET_GENERATORS.ORCHESTRATOR_SECRET()).toMatch(/^[0-9a-f]{64}$/)
   })
 
   it('existing .env: existing values kept VERBATIM, only missing keys appended, idempotent', () => {
@@ -87,6 +100,7 @@ describe('planDevEnv — the deterministic bootstrap core', () => {
       'DATABASE_URL="mysql://root:my-own@localhost:3307/dental_erp"',
       'NEXTAUTH_SECRET="user-existing-secret"',
       'ENCRYPTION_KEY=""',
+      'ORCHESTRATOR_SECRET="user-orchestrator-secret"',
       '',
     ].join('\n')
     const plan1 = planDevEnv(template(), userEnv, gen)
@@ -94,6 +108,7 @@ describe('planDevEnv — the deterministic bootstrap core', () => {
     const p1 = parseEnvFileContent(plan1.content)
     expect(p1.DATABASE_URL).toBe('mysql://root:my-own@localhost:3307/dental_erp') // NEVER overwritten
     expect(p1.NEXTAUTH_SECRET).toBe('user-existing-secret') // NEVER overwritten
+    expect(p1.ORCHESTRATOR_SECRET).toBe('user-orchestrator-secret') // NEVER overwritten
     expect((p1.ENCRYPTION_KEY ?? '').length).toBeGreaterThan(0) // empty -> generated
     expect(p1.CRON_SECRET).toBe('secret-1') // missing -> generated
     // idempotent: planning again on the result changes nothing

@@ -8,10 +8,11 @@
  *   - creates .env from .env.example when missing (template = single source of truth)
  *   - NEVER overwrites existing non-empty values in an existing .env
  *   - fills ONLY the required keys that are absent/empty:
- *       DATABASE_URL      -> the compose-matching template value
- *       NEXTAUTH_SECRET   -> crypto-random base64 (32 bytes)
- *       ENCRYPTION_KEY    -> crypto-random hex (32 bytes = AES-256)
- *       CRON_SECRET       -> crypto-random hex (16 bytes)
+ *       DATABASE_URL        -> the compose-matching template value
+ *       NEXTAUTH_SECRET     -> crypto-random base64 (32 bytes)
+ *       ENCRYPTION_KEY      -> crypto-random hex (32 bytes = AES-256)
+ *       CRON_SECRET         -> crypto-random hex (16 bytes)
+ *       ORCHESTRATOR_SECRET -> crypto-random hex (32 bytes; app<->orchestrator)
  *   - generated values are written to .env ONLY — never logged, never returned
  *   - .env.local is never read for values here nor modified
  *   - idempotent: a second run changes nothing
@@ -26,15 +27,21 @@ export const REQUIRED_KEYS = [
   'NEXTAUTH_SECRET',
   'ENCRYPTION_KEY',
   'CRON_SECRET',
+  'ORCHESTRATOR_SECRET',
 ] as const
 
-export type SecretGenerator = () => string
+export type SecretGenerator = (key: string) => string
 
 /** Generators matching the documented commands in .env.example verbatim. */
 export const SECRET_GENERATORS: Record<string, SecretGenerator> = {
   NEXTAUTH_SECRET: () => randomBytes(32).toString('base64'),
   ENCRYPTION_KEY: () => randomBytes(32).toString('hex'),
   CRON_SECRET: () => randomBytes(16).toString('hex'),
+  // Internal app↔orchestrator shared secret (X-Orchestrator-Secret). The AI
+  // compose stack fail-fasts without it (ai-compose.yml ${ORCHESTRATOR_SECRET:?})
+  // and the app's agent/imaging routes throw when it is unset — so the
+  // bootstrap must guarantee it like the other secrets.
+  ORCHESTRATOR_SECRET: () => randomBytes(32).toString('hex'),
 }
 
 export interface SetupPlanEntry {
@@ -53,7 +60,7 @@ export interface SetupPlan {
 
 function generatedValueFor(key: string, generate: SecretGenerator): string {
   if (key === 'DATABASE_URL') throw new Error('DATABASE_URL is not a generated secret')
-  return SECRET_GENERATORS[key] ? generate() : 'GENERATED'
+  return SECRET_GENERATORS[key] ? generate(key) : 'GENERATED'
 }
 
 /**
@@ -63,7 +70,9 @@ function generatedValueFor(key: string, generate: SecretGenerator): string {
 export function planDevEnv(
   templateContent: string,
   existingContent: string | undefined,
-  generate: SecretGenerator = () => 'GENERATED'
+  // Default: the REAL crypto generators (the CLI relies on this — it never
+  // passes its own). Tests inject a deterministic generator instead.
+  generate: SecretGenerator = (key) => SECRET_GENERATORS[key]?.(key) ?? 'GENERATED'
 ): SetupPlan {
   const template = parseEnvFileContent(templateContent)
   const existing = existingContent === undefined ? undefined : parseEnvFileContent(existingContent)
