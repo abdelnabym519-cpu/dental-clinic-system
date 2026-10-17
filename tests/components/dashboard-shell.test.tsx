@@ -52,7 +52,17 @@ vi.mock('@/components/layout/sidebar-context', () => ({
 
 vi.mock('@/components/ai/ai-provider', () => ({
   AIProvider: ({ children }: any) => <div data-testid="ai-provider">{children}</div>,
+  // the restored floating assistant consumes the provider hook (WS-A)
+  useAI: () => ({
+    chatMessages: [],
+    chatLoading: false,
+    sendChat: vi.fn(),
+    clearChat: vi.fn(),
+  }),
 }))
+
+// the restored widget reads the active route for page context
+vi.mock('next/navigation', () => ({ usePathname: () => '/dashboard' }))
 
 vi.mock('@/components/ai/command-bar', () => ({
   CommandBar: () => <div data-testid="command-bar">CommandBar</div>,
