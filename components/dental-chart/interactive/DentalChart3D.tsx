@@ -23,11 +23,7 @@ import { FDI_TEETH } from '@/lib/dental-chart/fdi'
 import { TOOTH_COLORS, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
 import { toothTransform, toothDimensions, ARCH_Y } from './tooth-3d'
-import {
-  buildCrownGeometry,
-  buildRootGeometry,
-  rootSpecs,
-} from './tooth-anatomy'
+import { buildCrownGeometry, buildRootGeometry, rootSpecs } from './tooth-anatomy'
 
 // ─── shared GPU resources (created once, disposed on unmount) ───────────────
 
@@ -131,15 +127,26 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
     if (d.cusps === 5) {
       // 5-cusp mandibular first molar pattern (3 buccal, 2 lingual)
       return [
-        [-r, d.crownHeight / 2 * 0.95, -r],
-        [0, d.crownHeight / 2 * 0.95, -r],
-        [r, d.crownHeight / 2 * 0.95, -r],
-        [-r * 0.8, d.crownHeight / 2 * 0.95, r],
-        [r * 0.8, d.crownHeight / 2 * 0.95, r],
+        [-r, (d.crownHeight / 2) * 0.95, -r],
+        [0, (d.crownHeight / 2) * 0.95, -r],
+        [r, (d.crownHeight / 2) * 0.95, -r],
+        [-r * 0.8, (d.crownHeight / 2) * 0.95, r],
+        [r * 0.8, (d.crownHeight / 2) * 0.95, r],
       ] as [number, number, number][]
     }
-    const offs = d.cusps === 2 ? [[-r, 0], [r, 0]] : [[-r, -r], [r, -r], [-r, r], [r, r]]
-    return offs.map(([cx, cz]) => [cx, d.crownHeight / 2 * 0.95, cz] as [number, number, number])
+    const offs =
+      d.cusps === 2
+        ? [
+            [-r, 0],
+            [r, 0],
+          ]
+        : [
+            [-r, -r],
+            [r, -r],
+            [-r, r],
+            [r, r],
+          ]
+    return offs.map(([cx, cz]) => [cx, (d.crownHeight / 2) * 0.95, cz] as [number, number, number])
   }, [d.crownHeight, d.crownTop, d.cusps])
 
   return (
@@ -242,7 +249,10 @@ export default function DentalChart3D({
   // Dispose shared GPU resources when the 3D view unmounts (Stage N rule 5).
   useEffect(() => () => getShared() && shared?.dispose(), [])
 
-  const teeth = useMemo(() => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })), [statusByTooth])
+  const teeth = useMemo(
+    () => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })),
+    [statusByTooth]
+  )
 
   return (
     <Canvas

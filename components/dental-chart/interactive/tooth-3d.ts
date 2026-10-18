@@ -63,38 +63,134 @@ export function toothDimensions(n: number): ToothDimensions {
     if (arch === 'upper') {
       // Maxillary central incisor (#11/21) is wider than lateral (#12/22)
       return pos === 1
-        ? { crownTop: 0.16, crownBottom: 0.18, crownHeight: 0.36, rootHeight: 0.44, segments: 4, flattenZ: 0.58, cusps: 0 }
-        : { crownTop: 0.13, crownBottom: 0.16, crownHeight: 0.32, rootHeight: 0.42, segments: 4, flattenZ: 0.62, cusps: 0 }
+        ? {
+            crownTop: 0.16,
+            crownBottom: 0.18,
+            crownHeight: 0.36,
+            rootHeight: 0.44,
+            segments: 4,
+            flattenZ: 0.58,
+            cusps: 0,
+          }
+        : {
+            crownTop: 0.13,
+            crownBottom: 0.16,
+            crownHeight: 0.32,
+            rootHeight: 0.42,
+            segments: 4,
+            flattenZ: 0.62,
+            cusps: 0,
+          }
     }
     // Mandibular incisors (#31/32/41/42) are narrowest
     return pos === 1
-      ? { crownTop: 0.11, crownBottom: 0.14, crownHeight: 0.3, rootHeight: 0.4, segments: 4, flattenZ: 0.55, cusps: 0 }
-      : { crownTop: 0.12, crownBottom: 0.15, crownHeight: 0.31, rootHeight: 0.42, segments: 4, flattenZ: 0.55, cusps: 0 }
+      ? {
+          crownTop: 0.11,
+          crownBottom: 0.14,
+          crownHeight: 0.3,
+          rootHeight: 0.4,
+          segments: 4,
+          flattenZ: 0.55,
+          cusps: 0,
+        }
+      : {
+          crownTop: 0.12,
+          crownBottom: 0.15,
+          crownHeight: 0.31,
+          rootHeight: 0.42,
+          segments: 4,
+          flattenZ: 0.55,
+          cusps: 0,
+        }
   }
 
   if (group === 'canine') {
     return arch === 'upper'
-      ? { crownTop: 0.08, crownBottom: 0.18, crownHeight: 0.4, rootHeight: 0.52, segments: 4, flattenZ: 0.72, cusps: 0 }
-      : { crownTop: 0.07, crownBottom: 0.16, crownHeight: 0.37, rootHeight: 0.48, segments: 4, flattenZ: 0.75, cusps: 0 }
+      ? {
+          crownTop: 0.08,
+          crownBottom: 0.18,
+          crownHeight: 0.4,
+          rootHeight: 0.52,
+          segments: 4,
+          flattenZ: 0.72,
+          cusps: 0,
+        }
+      : {
+          crownTop: 0.07,
+          crownBottom: 0.16,
+          crownHeight: 0.37,
+          rootHeight: 0.48,
+          segments: 4,
+          flattenZ: 0.75,
+          cusps: 0,
+        }
   }
 
   if (group === 'premolar') {
     return pos === 4
-      ? { crownTop: 0.17, crownBottom: 0.15, crownHeight: 0.31, rootHeight: 0.42, segments: 8, flattenZ: 0.85, cusps: 2 }
-      : { crownTop: 0.18, crownBottom: 0.16, crownHeight: 0.3, rootHeight: 0.4, segments: 8, flattenZ: 0.88, cusps: 2 }
+      ? {
+          crownTop: 0.17,
+          crownBottom: 0.15,
+          crownHeight: 0.31,
+          rootHeight: 0.42,
+          segments: 8,
+          flattenZ: 0.85,
+          cusps: 2,
+        }
+      : {
+          crownTop: 0.18,
+          crownBottom: 0.16,
+          crownHeight: 0.3,
+          rootHeight: 0.4,
+          segments: 8,
+          flattenZ: 0.88,
+          cusps: 2,
+        }
   }
 
   // Molar
   if (arch === 'lower' && pos === 6) {
     // Mandibular 1st molar has 5 cusps
-    return { crownTop: 0.24, crownBottom: 0.18, crownHeight: 0.32, rootHeight: 0.42, segments: 8, flattenZ: 0.95, cusps: 5 }
+    return {
+      crownTop: 0.24,
+      crownBottom: 0.18,
+      crownHeight: 0.32,
+      rootHeight: 0.42,
+      segments: 8,
+      flattenZ: 0.95,
+      cusps: 5,
+    }
   }
   if (pos === 6) {
-    return { crownTop: 0.23, crownBottom: 0.18, crownHeight: 0.31, rootHeight: 0.4, segments: 8, flattenZ: 0.95, cusps: 4 }
+    return {
+      crownTop: 0.23,
+      crownBottom: 0.18,
+      crownHeight: 0.31,
+      rootHeight: 0.4,
+      segments: 8,
+      flattenZ: 0.95,
+      cusps: 4,
+    }
   }
   if (pos === 7) {
-    return { crownTop: 0.21, crownBottom: 0.16, crownHeight: 0.29, rootHeight: 0.38, segments: 8, flattenZ: 0.92, cusps: 4 }
+    return {
+      crownTop: 0.21,
+      crownBottom: 0.16,
+      crownHeight: 0.29,
+      rootHeight: 0.38,
+      segments: 8,
+      flattenZ: 0.92,
+      cusps: 4,
+    }
   }
   // 3rd molar (wisdom tooth, compact)
-  return { crownTop: 0.19, crownBottom: 0.15, crownHeight: 0.27, rootHeight: 0.34, segments: 8, flattenZ: 0.88, cusps: 4 }
+  return {
+    crownTop: 0.19,
+    crownBottom: 0.15,
+    crownHeight: 0.27,
+    rootHeight: 0.34,
+    segments: 8,
+    flattenZ: 0.88,
+    cusps: 4,
+  }
 }

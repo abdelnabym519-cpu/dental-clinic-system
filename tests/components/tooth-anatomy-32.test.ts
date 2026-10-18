@@ -9,7 +9,11 @@ import {
   anatomyKeys,
   anatomyOf,
 } from '@/components/dental-chart/interactive/tooth-anatomy'
-import { toothTransform, toothDimensions, archAngle } from '@/components/dental-chart/interactive/tooth-3d'
+import {
+  toothTransform,
+  toothDimensions,
+  archAngle,
+} from '@/components/dental-chart/interactive/tooth-3d'
 import { FDI_TEETH, groupOf, archOf, toothIndexOf } from '@/lib/dental-chart/fdi'
 
 function bbox(g: THREE.BufferGeometry) {
