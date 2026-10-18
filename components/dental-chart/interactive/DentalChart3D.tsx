@@ -19,21 +19,16 @@ import { Canvas, invalidate, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useEffect, useMemo, useRef } from 'react'
-import { FDI_TEETH, groupOf } from '@/lib/dental-chart/fdi'
+import { FDI_TEETH } from '@/lib/dental-chart/fdi'
 import { TOOTH_COLORS, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
 import { toothTransform, toothDimensions, ARCH_Y } from './tooth-3d'
-import {
-  buildCrownGeometry,
-  buildRootGeometry,
-  rootSpecs,
-  type ToothGroup,
-} from './tooth-anatomy'
+import { buildCrownGeometry, buildRootGeometry, rootSpecs } from './tooth-anatomy'
 
 // ─── shared GPU resources (created once, disposed on unmount) ───────────────
 
 interface SharedResources {
-  crownGeoms: Record<string, THREE.BufferGeometry>
+  crownGeoms: Record<number, THREE.BufferGeometry>
   cuspGeom: THREE.SphereGeometry
   rootGeoms: { lower: THREE.BufferGeometry; upper: THREE.BufferGeometry }
   socketGeom: THREE.CylinderGeometry
@@ -48,15 +43,13 @@ let shared: SharedResources | null = null
 function getShared(): SharedResources {
   if (shared) return shared
 
-  // WS-C: anatomically differentiated crowns (extruded class outlines with
-  // cervical taper + bevelled occlusal rim) — replaces the block primitives.
-  const crownGeoms: Record<string, THREE.BufferGeometry> = {}
-  for (const group of ['incisor', 'canine', 'premolar', 'molar'] as const) {
-    crownGeoms[group] = buildCrownGeometry(group)
+  // Human-Accurate Tooth Morphometry: anatomically differentiated crowns for all 32 FDI teeth
+  const crownGeoms: Record<number, THREE.BufferGeometry> = {}
+  for (const n of FDI_TEETH) {
+    crownGeoms[n] = buildCrownGeometry(n)
   }
 
   const cuspGeom = new THREE.SphereGeometry(0.07, 12, 8)
-  // Unit root cones (base at Y=0, apex at ∓Y) — shared; per-root splays via rootSpecs.
   const rootLower = buildRootGeometry()
   const rootUpper = buildRootGeometry()
   rootUpper.rotateX(Math.PI)
@@ -131,8 +124,29 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
   const cusps = useMemo(() => {
     if (!d.cusps) return []
     const r = d.crownTop * 0.45
-    const offs = d.cusps === 2 ? [[-r, 0], [r, 0]] : [[-r, -r], [r, -r], [-r, r], [r, r]]
-    return offs.map(([cx, cz]) => [cx, d.crownHeight / 2 * 0.95, cz] as [number, number, number])
+    if (d.cusps === 5) {
+      // 5-cusp mandibular first molar pattern (3 buccal, 2 lingual)
+      return [
+        [-r, (d.crownHeight / 2) * 0.95, -r],
+        [0, (d.crownHeight / 2) * 0.95, -r],
+        [r, (d.crownHeight / 2) * 0.95, -r],
+        [-r * 0.8, (d.crownHeight / 2) * 0.95, r],
+        [r * 0.8, (d.crownHeight / 2) * 0.95, r],
+      ] as [number, number, number][]
+    }
+    const offs =
+      d.cusps === 2
+        ? [
+            [-r, 0],
+            [r, 0],
+          ]
+        : [
+            [-r, -r],
+            [r, -r],
+            [-r, r],
+            [r, r],
+          ]
+    return offs.map(([cx, cz]) => [cx, (d.crownHeight / 2) * 0.95, cz] as [number, number, number])
   }, [d.crownHeight, d.crownTop, d.cusps])
 
   return (
@@ -161,13 +175,13 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
       {status !== 'missing' ? (
         <>
           {/* crown */}
-          <mesh geometry={res.crownGeoms[groupKey(n)]} material={material} position={[0, crownY, 0]} />
+          <mesh geometry={res.crownGeoms[n]} material={material} position={[0, crownY, 0]} />
           {/* cusps */}
           {cusps.map((c, i) => (
             <mesh key={i} geometry={res.cuspGeom} material={material} position={c} />
           ))}
-          {/* root system: class- and arch-specific (WS-C) */}
-          {rootSpecs(groupKey(n) as ToothGroup, crownDown ? 'upper' : 'lower').map((r, i) => (
+          {/* root system: tooth- and arch-specific */}
+          {rootSpecs(n).map((r, i) => (
             <mesh
               key={i}
               geometry={crownDown ? res.rootGeoms.upper : res.rootGeoms.lower}
@@ -188,10 +202,6 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
       )}
     </group>
   )
-}
-
-function groupKey(n: number): string {
-  return groupOf(n)
 }
 
 // ─── camera rig (preset views + reset) ──────────────────────────────────────
@@ -239,7 +249,10 @@ export default function DentalChart3D({
   // Dispose shared GPU resources when the 3D view unmounts (Stage N rule 5).
   useEffect(() => () => getShared() && shared?.dispose(), [])
 
-  const teeth = useMemo(() => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })), [statusByTooth])
+  const teeth = useMemo(
+    () => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })),
+    [statusByTooth]
+  )
 
   return (
     <Canvas
