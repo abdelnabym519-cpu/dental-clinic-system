@@ -5,6 +5,7 @@ Stack: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Prisma 5.
 · three.js/R3F (lazy) · Cloudflare AI Gateway = canonical external LLM runtime (lib/ai/gateway.ts).
 
 ## System graph (verified from source)
+
 ```
 UI (app/(dashboard)/**, app/portal/**, components/**)
   → pages/routes (server components + client islands)
@@ -21,9 +22,11 @@ Background: cron routes (briefing/inventory/automations) · communication-trigge
 ```
 
 ## Environment graph (startup)
+
 Bootstrap: `npm run setup:dev` creates `.env` from `.env.example` (DATABASE_URL matches
 docker-compose.dev.yml by a pinned test) and generates the three required dev secrets
 in place, only filling keys that are missing/empty (idempotent, value-never-logged).
+
 ```
 shell env  >  .env.local  >  .env          (canonical precedence, Next.js-compatible)
    ↓ scripts/lib/dev-env.ts  (loadDevEnvIntoProcess — plain tsx never loads env files)
@@ -33,6 +36,7 @@ next dev loads the same files with the same precedence → one configuration mod
 ```
 
 ## Critical invariants (load-bearing)
+
 - Tenant isolation: patient/record resolution is ALWAYS `{id, hospitalId}`; cross-tenant → 404.
 - Money: unified lib/money.ts; monetary consumers accept `number | string | Prisma.Decimal`;
   runtime conversion centralized in money()/moneyLocal(); Arabic labels are the API (I6/I7).
@@ -43,5 +47,6 @@ next dev loads the same files with the same precedence → one configuration mod
 - Tests: 335 files; suites cover every route handler via the real handlers + mocked persistence.
 
 ## 3D dental chart (added capability)
+
 components/dental-chart/interactive/* → R3F WebGL (lazy, ssr:false), shared store
 (lib/dental-chart/chart-state.ts), derived statuses (clinical-status.ts) — see docs/dental-chart/audit.md.

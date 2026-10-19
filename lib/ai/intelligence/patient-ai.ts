@@ -47,7 +47,12 @@ export interface PatientCurrentState {
   followUpsDue: { ref: string; date: string | null; overdue: boolean }[]
   recentFindings: { ref: string; label: string; confirmed: boolean }[]
   unresolvedIssues: string[]
-  memoryRefs: { ref: string; key: string | null; trustLevel: string | null; domain: string | null }[]
+  memoryRefs: {
+    ref: string
+    key: string | null
+    trustLevel: string | null
+    domain: string | null
+  }[]
 }
 
 export interface PatientIntelligence {
@@ -121,12 +126,18 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
         id: `ev:${n.id}`,
         at: n.provenance.at,
         kind: 'AI_FINDING',
-        labelKey: accepted ? 'int.patient.timeline.aiFindingAccepted' : 'int.patient.timeline.aiFinding',
+        labelKey: accepted
+          ? 'int.patient.timeline.aiFindingAccepted'
+          : 'int.patient.timeline.aiFinding',
         labelParams: { ref: n.ref, engine: String(n.data.engine ?? '') },
         // UNCONFIRMED AI output stays AI_INTERPRETATION — never a fact.
         insightClass: accepted ? 'FACT' : 'AI_INTERPRETATION',
         provenance: n.provenance.source,
-        data: { engine: n.data.engine ?? null, reviewDecision: n.data.reviewDecision ?? null, findingCount: n.data.findingCount ?? 0 },
+        data: {
+          engine: n.data.engine ?? null,
+          reviewDecision: n.data.reviewDecision ?? null,
+          findingCount: n.data.findingCount ?? 0,
+        },
       })
     } else if (n.id.startsWith('followup:')) {
       const date = (n.data.date as string | null) ?? null
@@ -135,7 +146,9 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
         id: `ev:${n.id}`,
         at: date ?? n.provenance.at,
         kind: 'FOLLOW_UP',
-        labelKey: overdue ? 'int.patient.timeline.followUpOverdue' : 'int.patient.timeline.followUp',
+        labelKey: overdue
+          ? 'int.patient.timeline.followUpOverdue'
+          : 'int.patient.timeline.followUp',
         labelParams: { ref: n.ref, date: date?.slice(0, 10) ?? '' },
         insightClass: overdue ? 'DERIVED_INSIGHT' : 'FACT',
         provenance: n.provenance.source,
@@ -174,13 +187,25 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
         labelParams: { ref: n.ref, trust: String(n.data.trustLevel ?? 'UNKNOWN') },
         insightClass: 'FACT',
         provenance: n.provenance.source,
-        data: { key: n.data.key ?? null, trustLevel: n.data.trustLevel ?? null, domain: n.data.domain ?? null },
+        data: {
+          key: n.data.key ?? null,
+          trustLevel: n.data.trustLevel ?? null,
+          domain: n.data.domain ?? null,
+        },
       })
     }
   }
 
   // Deterministic ordering (time desc, then kind, then id — stable replay).
-  events.sort((a, b) => (a.at === b.at ? (a.kind === b.kind ? a.id.localeCompare(b.id) : a.kind.localeCompare(b.kind)) : a.at < b.at ? 1 : -1))
+  events.sort((a, b) =>
+    a.at === b.at
+      ? a.kind === b.kind
+        ? a.id.localeCompare(b.id)
+        : a.kind.localeCompare(b.kind)
+      : a.at < b.at
+        ? 1
+        : -1
+  )
   const truncated = events.length > TIMELINE_LIMIT
   const timeline = events.slice(0, TIMELINE_LIMIT)
 
@@ -189,20 +214,34 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
   // 'ACTIVE' is a legacy out-of-enum value seen in real data — intelligence
   // reports it as active rather than silently dropping the case.
   const activeCases = caseNodes
-    .filter((n) => ['PROPOSED', 'ACCEPTED', 'IN_PROGRESS', 'ACTIVE'].includes(String(n.data.status ?? '')))
-    .map((n) => ({ ref: n.ref, status: String(n.data.status ?? ''), consentGiven: Boolean(n.data.consentGiven) }))
+    .filter((n) =>
+      ['PROPOSED', 'ACCEPTED', 'IN_PROGRESS', 'ACTIVE'].includes(String(n.data.status ?? ''))
+    )
+    .map((n) => ({
+      ref: n.ref,
+      status: String(n.data.status ?? ''),
+      consentGiven: Boolean(n.data.consentGiven),
+    }))
 
-  const trtNodes = graph.nodes.filter((n) => n.id.startsWith('treatment:') || n.id.startsWith('rx:'))
+  const trtNodes = graph.nodes.filter(
+    (n) => n.id.startsWith('treatment:') || n.id.startsWith('rx:')
+  )
   const currentTreatments = trtNodes
-    .filter((n) => ['IN_PROGRESS', 'PENDING', 'SCHEDULED', 'PLANNED', 'DRAFT'].includes(String(n.data.status ?? '')))
+    .filter((n) =>
+      ['IN_PROGRESS', 'PENDING', 'SCHEDULED', 'PLANNED', 'DRAFT'].includes(
+        String(n.data.status ?? '')
+      )
+    )
     .map((n) => ({ ref: n.ref, status: String(n.data.status ?? '') }))
 
   const pendingItems: string[] = []
   for (const n of trtNodes) {
-    if (['IN_PROGRESS', 'PENDING', 'SCHEDULED', 'PLANNED'].includes(String(n.data.status ?? ''))) pendingItems.push(`${n.ref} (${n.data.status})`)
+    if (['IN_PROGRESS', 'PENDING', 'SCHEDULED', 'PLANNED'].includes(String(n.data.status ?? '')))
+      pendingItems.push(`${n.ref} (${n.data.status})`)
   }
   for (const n of caseNodes) {
-    if (!n.data.consentGiven && ['PROPOSED', 'ACCEPTED'].includes(String(n.data.status ?? ''))) pendingItems.push(`consent for plan ${n.ref}`)
+    if (!n.data.consentGiven && ['PROPOSED', 'ACCEPTED'].includes(String(n.data.status ?? '')))
+      pendingItems.push(`consent for plan ${n.ref}`)
   }
 
   const followUpNodes = graph.nodes.filter((n) => n.kind === 'FOLLOW_UP')
@@ -211,12 +250,16 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
       const date = (n.data.date as string | null) ?? null
       return { ref: n.ref, date, overdue: Boolean(date && date < nowIso) }
     })
-    .sort((a, b) => (a.date ?? '') < (b.date ?? '') ? -1 : 1)
+    .sort((a, b) => ((a.date ?? '') < (b.date ?? '') ? -1 : 1))
 
   const aiNodes = graph.nodes.filter((n) => n.id.startsWith('aifinding:'))
   const chartNodes = graph.nodes.filter((n) => n.id.startsWith('finding:'))
   const recentFindings = [
-    ...aiNodes.map((n) => ({ ref: n.ref, label: n.label, confirmed: n.data.reviewDecision === 'ACCEPTED' })),
+    ...aiNodes.map((n) => ({
+      ref: n.ref,
+      label: n.label,
+      confirmed: n.data.reviewDecision === 'ACCEPTED',
+    })),
     ...chartNodes.map((n) => ({ ref: n.ref, label: n.label, confirmed: true })),
   ].slice(0, 10)
 
@@ -225,7 +268,8 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
     if (!n.data.resolved) unresolvedIssues.push(`${n.label} (unresolved chart finding)`)
   }
   for (const n of aiNodes) {
-    if (n.data.reviewDecision !== 'ACCEPTED') unresolvedIssues.push(`${n.ref} (AI finding unreviewed/unconfirmed)`)
+    if (n.data.reviewDecision !== 'ACCEPTED')
+      unresolvedIssues.push(`${n.ref} (AI finding unreviewed/unconfirmed)`)
   }
   for (const fu of followUpsDue) {
     if (fu.overdue) unresolvedIssues.push(`${fu.ref} (follow-up overdue)`)
@@ -242,13 +286,32 @@ export function buildPatientIntelligence(graph: CaseGraph, now: Date): PatientIn
 
   const items: IntelligenceItem[] = []
   let iN = 0
-  const item = (insightClass: IntelligenceItem['insightClass'], titleKey: string, detail: Record<string, unknown>) => {
+  const item = (
+    insightClass: IntelligenceItem['insightClass'],
+    titleKey: string,
+    detail: Record<string, unknown>
+  ) => {
     iN += 1
-    items.push({ id: `pi-${iN}`, insightClass, state: 'AVAILABLE', titleKey, titleParams: {}, detail, scope: { patientId: graph.patientId, caseId: graph.caseId } })
+    items.push({
+      id: `pi-${iN}`,
+      insightClass,
+      state: 'AVAILABLE',
+      titleKey,
+      titleParams: {},
+      detail,
+      scope: { patientId: graph.patientId, caseId: graph.caseId },
+    })
   }
-  if (followUpsDue.some((f) => f.overdue)) item('DERIVED_INSIGHT', 'int.patient.overdueFollowUps', { count: followUpsDue.filter((f) => f.overdue).length })
-  if (aiNodes.some((n) => n.data.reviewDecision !== 'ACCEPTED')) item('AI_INTERPRETATION', 'int.patient.unconfirmedAi', { count: aiNodes.filter((n) => n.data.reviewDecision !== 'ACCEPTED').length })
-  if (unresolvedIssues.length > 0) item('DERIVED_INSIGHT', 'int.patient.unresolved', { count: unresolvedIssues.length })
+  if (followUpsDue.some((f) => f.overdue))
+    item('DERIVED_INSIGHT', 'int.patient.overdueFollowUps', {
+      count: followUpsDue.filter((f) => f.overdue).length,
+    })
+  if (aiNodes.some((n) => n.data.reviewDecision !== 'ACCEPTED'))
+    item('AI_INTERPRETATION', 'int.patient.unconfirmedAi', {
+      count: aiNodes.filter((n) => n.data.reviewDecision !== 'ACCEPTED').length,
+    })
+  if (unresolvedIssues.length > 0)
+    item('DERIVED_INSIGHT', 'int.patient.unresolved', { count: unresolvedIssues.length })
   if (timeline.length === 0) item('FACT', 'int.patient.emptyHistory', {})
 
   // Unknown areas — explicit (unknown stays unknown, §16).

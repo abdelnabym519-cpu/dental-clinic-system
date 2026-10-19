@@ -154,7 +154,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           select: { id: true, patientId: true },
         })
         if (!appt || appt.patientId !== existingInvoice.patientId) {
-          return NextResponse.json({ error: 'Appointment does not belong to this patient' }, { status: 400 })
+          return NextResponse.json(
+            { error: 'Appointment does not belong to this patient' },
+            { status: 400 }
+          )
         }
       }
       updateData.appointmentId = appointmentId
@@ -166,7 +169,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           select: { id: true, patientId: true },
         })
         if (!plan || plan.patientId !== existingInvoice.patientId) {
-          return NextResponse.json({ error: 'Treatment plan does not belong to this patient' }, { status: 400 })
+          return NextResponse.json(
+            { error: 'Treatment plan does not belong to this patient' },
+            { status: 400 }
+          )
         }
       }
       updateData.treatmentPlanId = treatmentPlanId

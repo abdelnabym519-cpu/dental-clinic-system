@@ -88,8 +88,8 @@ writing code:
   `STAFF_ROLES = ['SUPER_ADMIN','ADMIN','DOCTOR','RECEPTIONIST']`;
   patient scope re-validated server-side (fail-closed).
 - **Approvals:** Phase 1 ledger (`resolvePolicy` at action-policy.ts:421);
-  params only ever from the stored row — voice can *request* and *surface*,
-  never *grant*.
+  params only ever from the stored row — voice can _request_ and _surface_,
+  never _grant_.
 - **Persistence:** `AIConversation` (messages/context JSON) and `AuditLog`
   (action/entityType/newValues) — voice reuses both; no new store.
 - **FDI:** existing `fdi.isValidFdi` (permanent set) reused as the tooth
@@ -110,11 +110,11 @@ behavior preserved (54 harness-consuming tests re-verified green).
 ## 4. Key Design Decisions
 
 1. **The agent receives natural text.** `prepareAgentMessage(raw)` = sanitize
-   + Arabic-Indic→ASCII digit fold **ONLY**. Letter folding/ى→أ normalization
-   is **resolution-only**. Rationale (measured, §29): feeding the agent
-   letter-normalized Arabic broke its own deterministic routing
-   (OUT_OF_DOMAIN on a valid operational query); feeding it the folded form
-   fixed routing while keeping resolvers normalization-aware on their side.
+   - Arabic-Indic→ASCII digit fold **ONLY**. Letter folding/ى→أ normalization
+     is **resolution-only**. Rationale (measured, §29): feeding the agent
+     letter-normalized Arabic broke its own deterministic routing
+     (OUT_OF_DOMAIN on a valid operational query); feeding it the folded form
+     fixed routing while keeping resolvers normalization-aware on their side.
 2. **Server owns state transitions; client owns SPEAKING playback.** The
    server replays end agent/clarification turns in LISTENING; the browser
    hook emits PLAYBACK_ENDED when TTS audio finishes, which legally completes
@@ -142,7 +142,7 @@ behavior preserved (54 harness-consuming tests re-verified green).
 ## 5. Voice Session State Machine (`lib/ai/voice/types.ts`, `session.ts`)
 
 - States: `IDLE, LISTENING, TRANSCRIBING, UNDERSTANDING, PROCESSING,
-  WAITING_APPROVAL, SPEAKING, INTERRUPTED, COMPLETED, ERROR, CANCELLED`.
+WAITING_APPROVAL, SPEAKING, INTERRUPTED, COMPLETED, ERROR, CANCELLED`.
 - `INTERACTION_STATE_TRANSITIONS` is an explicit adjacency table;
   `transitionSession` throws typed `VoiceStateTransitionError`
   (`VOICE_STATE_TRANSITION_INVALID` with from/to) on any other edge —
@@ -186,14 +186,14 @@ the API layer, by construction).
 Abstraction: `SttProvider.transcribe(input) → { text, confidence, isFinal,
 providerId, language, meta? }`.
 
-| providerId | engine | status (this sandbox) |
-|---|---|---|
-| `web-speech-stt-browser` | Web Speech (client device) | RUNTIME_VERIFIED as a *client-side* default; server-side refusal is by design (`WEB_SPEECH_IS_CLIENT_SIDE`) |
-| `pocketsphinx-local-stt` | PocketSphinx en-us, JSGF grammar mode | **REAL_INFERENCE_VERIFIED** — grammar decode ≈25–29 ms vs ≈574–764 ms open dictation on synthetic speech; sha256 of wheel + model recorded in EVIDENCE.json |
-| `vosk-local-stt` | Vosk | **BLOCKED** — model host unreachable (huggingface.co UNREACHABLE) |
-| `whisper-cpp-local-stt` | whisper.cpp | **BLOCKED** — same |
-| `faster-whisper-local-stt` | faster-whisper | **BLOCKED** — same |
-| `fixture-stt` | scripted | eval/replay only (never shipped as a real transcript source) |
+| providerId                 | engine                                | status (this sandbox)                                                                                                                                       |
+| -------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web-speech-stt-browser`   | Web Speech (client device)            | RUNTIME_VERIFIED as a _client-side_ default; server-side refusal is by design (`WEB_SPEECH_IS_CLIENT_SIDE`)                                                 |
+| `pocketsphinx-local-stt`   | PocketSphinx en-us, JSGF grammar mode | **REAL_INFERENCE_VERIFIED** — grammar decode ≈25–29 ms vs ≈574–764 ms open dictation on synthetic speech; sha256 of wheel + model recorded in EVIDENCE.json |
+| `vosk-local-stt`           | Vosk                                  | **BLOCKED** — model host unreachable (huggingface.co UNREACHABLE)                                                                                           |
+| `whisper-cpp-local-stt`    | whisper.cpp                           | **BLOCKED** — same                                                                                                                                          |
+| `faster-whisper-local-stt` | faster-whisper                        | **BLOCKED** — same                                                                                                                                          |
+| `fixture-stt`              | scripted                              | eval/replay only (never shipped as a real transcript source)                                                                                                |
 
 - Command STT boundary: argv-only spawn (no shell), 10 MB audio cap, 30 s
   runtime cap, 64 KB stdout cap, JSON contract `{text, confidence, isFinal}`;
@@ -208,13 +208,13 @@ providerId, language, meta? }`.
 
 ## 8. TTS Providers (`tts.ts`)
 
-| providerId | engine | status |
-|---|---|---|
-| `web-speech-tts-browser` | speechSynthesis (client) | default; text passes through untouched |
-| `mespeak-local-tts` | meSpeak (espeak-ng WASM build) | **REAL_INFERENCE_VERIFIED** — round-trip TTS→STT EXACT 3/3 on the tuned voice `{speed:130, wordgap:3, pitch:50, variant:'f2'}` (without pitch/variant only the first word survived) |
-| `piper-local-tts` | Piper | **BLOCKED** — model host unreachable |
-| `espeak-ng-local-tts` | espeak-ng | **UNAVAILABLE** — npm WASM package ships zero voice data; @echogarden build does not exist (404) |
-| `null-tts` | none | headless/CI honest empty |
+| providerId               | engine                         | status                                                                                                                                                                              |
+| ------------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `web-speech-tts-browser` | speechSynthesis (client)       | default; text passes through untouched                                                                                                                                              |
+| `mespeak-local-tts`      | meSpeak (espeak-ng WASM build) | **REAL_INFERENCE_VERIFIED** — round-trip TTS→STT EXACT 3/3 on the tuned voice `{speed:130, wordgap:3, pitch:50, variant:'f2'}` (without pitch/variant only the first word survived) |
+| `piper-local-tts`        | Piper                          | **BLOCKED** — model host unreachable                                                                                                                                                |
+| `espeak-ng-local-tts`    | espeak-ng                      | **UNAVAILABLE** — npm WASM package ships zero voice data; @echogarden build does not exist (404)                                                                                    |
+| `null-tts`               | none                           | headless/CI honest empty                                                                                                                                                            |
 
 **Speakable shaping** (`speakableFromResponse`, 800-char default): strips
 markdown tables/fences/emphasis/citation URLs while **preserving uncertainty
@@ -244,7 +244,7 @@ through the SAME Prisma boundary the agent uses:
 - unique **contains** match → RESOLVED (JS-side verify via
   `normalizeTranscript`);
 - 2–5 candidates → `PATIENT_AMBIGUOUS` clarification listing names verbatim;
-- >5 → ambiguous with count (never a wall of PHI);
+- > 5 → ambiguous with count (never a wall of PHI);
 - 0 → `PATIENT_NOT_FOUND` ("ممكن تتأكد من الاسم أو رقم المريض؟") — an honest
   fail-safe, not an error;
 - no name marker in the utterance → `NOT_REQUESTED` (agent answers
@@ -379,7 +379,7 @@ tenant isolation is tested at resolver, session, and agent levels.
   400; rate limit 60 turns/min/user via the existing audit-log counter
   (`AI_VOICE_TURN`); response is the typed `VoiceTurnResponse`
   (`state, speakableText, displayText, clarification, approval, agentStatus,
-  taskType, duplicateSuppressed, interrupted, telemetry, error`).
+taskType, duplicateSuppressed, interrupted, telemetry, error`).
 - `GET /api/ai/voice/providers` → the audited registry (machine-readable
   honesty for ops/UI).
 - Route contract tests: actor binding (client cannot spoof tenant/role),
@@ -427,15 +427,15 @@ and low-DPI kiosk displays; no absolute-positioned text.
 
 ## 24. Security Model Summary
 
-| attack class | defense | tested |
-|---|---|---|
-| prompt injection via speech | transcript is DATA; agent policy re-enforced; no tenant-wide dump/credentials in any response | golden SEC-011 + adversarial suite |
-| fake/echo confirmation | binding requirements (§14/§15) | unit + adversarial |
-| duplicate/replayed audio | fingerprint+window+action-history (§16) | unit + adversarial |
-| cross-session/tenant | actor-bound sessions; tenant-scoped resolvers | unit + adversarial |
-| oversized/malformed input | caps + typed contracts + fail-closed codes | unit + adversarial |
-| privilege escalation by voice | no new authz path; agent safety block | golden SEC-012 + adversarial |
-| PHI leakage via telemetry | fingerprint+counts+timings only | route contract tests |
+| attack class                  | defense                                                                                       | tested                             |
+| ----------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------- |
+| prompt injection via speech   | transcript is DATA; agent policy re-enforced; no tenant-wide dump/credentials in any response | golden SEC-011 + adversarial suite |
+| fake/echo confirmation        | binding requirements (§14/§15)                                                                | unit + adversarial                 |
+| duplicate/replayed audio      | fingerprint+window+action-history (§16)                                                       | unit + adversarial                 |
+| cross-session/tenant          | actor-bound sessions; tenant-scoped resolvers                                                 | unit + adversarial                 |
+| oversized/malformed input     | caps + typed contracts + fail-closed codes                                                    | unit + adversarial                 |
+| privilege escalation by voice | no new authz path; agent safety block                                                         | golden SEC-012 + adversarial       |
+| PHI leakage via telemetry     | fingerprint+counts+timings only                                                               | route contract tests               |
 
 ## 25. i18n / Arabic-first (§39)
 
@@ -476,22 +476,22 @@ Phase 7 `buildReplayAgentDeps` boundary.
 **14 goldens** (`tests/evaluation/golden/voice-interaction.golden.json`),
 all green:
 
-| id | class | asserts |
-|---|---|---|
-| VCE-AR-001 | Arabic operational query | real agent routing (waiting queue), tenant-scoped |
-| VCE-AR-002 | ٦٣ STT-confusion | clarification offers 36 AND 63 (heard form preserved) |
-| VCE-AR-003 | Arabic patient+tooth | resolver resolves منى; honest "not recorded" answer (no invented findings) |
-| VCE-EN-004 | English operational | same agent routing as typed chat |
-| VCE-EN-005 | clinical query via voice | agent-parity: CLINICAL_ANALYSIS/COMPLETED with honest no-evidence answer; must-not-contain guess guards |
-| VCE-AR-006 | two Ahmeds | PATIENT_AMBIGUOUS lists احمد علي / احمد سعيد (Arabic-seeded rows) |
-| VCE-MIX-007 | mixed AR/EN | routing intact on code-switched speech |
-| VCE-INT-008 | barge-in استنى | INTERRUPTED, agent not left running |
-| VCE-INT-009 | duplicate sensitive command | turn 2 suppressed, agentStatus null |
-| VCE-INT-010 | cancel خلاص الغيها | terminal-safe, binding cleared |
-| VCE-SEC-011 | spoken prompt injection | deflected; no PAY-/INV- leakage |
-| VCE-SEC-012 | RECEPTIONIST financial | agent safety refusal (not permitted) |
-| VCE-SEC-013 | weather chatter | stays out of the dental domain |
-| VCE-AR-014 | تسوس terminology | deterministic clarification path; no invented advice |
+| id          | class                       | asserts                                                                                                 |
+| ----------- | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| VCE-AR-001  | Arabic operational query    | real agent routing (waiting queue), tenant-scoped                                                       |
+| VCE-AR-002  | ٦٣ STT-confusion            | clarification offers 36 AND 63 (heard form preserved)                                                   |
+| VCE-AR-003  | Arabic patient+tooth        | resolver resolves منى; honest "not recorded" answer (no invented findings)                              |
+| VCE-EN-004  | English operational         | same agent routing as typed chat                                                                        |
+| VCE-EN-005  | clinical query via voice    | agent-parity: CLINICAL_ANALYSIS/COMPLETED with honest no-evidence answer; must-not-contain guess guards |
+| VCE-AR-006  | two Ahmeds                  | PATIENT_AMBIGUOUS lists احمد علي / احمد سعيد (Arabic-seeded rows)                                       |
+| VCE-MIX-007 | mixed AR/EN                 | routing intact on code-switched speech                                                                  |
+| VCE-INT-008 | barge-in استنى              | INTERRUPTED, agent not left running                                                                     |
+| VCE-INT-009 | duplicate sensitive command | turn 2 suppressed, agentStatus null                                                                     |
+| VCE-INT-010 | cancel خلاص الغيها          | terminal-safe, binding cleared                                                                          |
+| VCE-SEC-011 | spoken prompt injection     | deflected; no PAY-/INV- leakage                                                                         |
+| VCE-SEC-012 | RECEPTIONIST financial      | agent safety refusal (not permitted)                                                                    |
+| VCE-SEC-013 | weather chatter             | stays out of the dental domain                                                                          |
+| VCE-AR-014  | تسوس terminology            | deterministic clarification path; no invented advice                                                    |
 
 **Golden-alignment discipline:** expectations were aligned ONLY to verified
 deterministic behavior (debug-run evidence per case); safety semantics
@@ -557,17 +557,17 @@ explicit `DENTORA_WRITE_BENCH=1` →
 `ai-validation/voice-local/benchmarks-sandbox.json`). Medians (SANDBOX,
 fake agent boundary — isolates the VOICE LAYER cost, not LLM latency):
 
-| record | median | p95 |
-|---|---|---|
-| transcript trust (sanitize+validate) | 0.03 ms | 0.08 ms |
-| normalize | 0.02 ms | 0.04 ms |
-| prepareAgentMessage | 0.01 ms | 0.01 ms |
-| tooth resolution | 0.05 ms | 0.14 ms |
-| duplicate assessment | 0.01 ms | 0.08 ms |
-| speakable shaping | 0.01 ms | 0.02 ms |
+| record                                                           | median      | p95     |
+| ---------------------------------------------------------------- | ----------- | ------- |
+| transcript trust (sanitize+validate)                             | 0.03 ms     | 0.08 ms |
+| normalize                                                        | 0.02 ms     | 0.04 ms |
+| prepareAgentMessage                                              | 0.01 ms     | 0.01 ms |
+| tooth resolution                                                 | 0.05 ms     | 0.14 ms |
+| duplicate assessment                                             | 0.01 ms     | 0.08 ms |
+| speakable shaping                                                | 0.01 ms     | 0.02 ms |
 | **full informational turn (real pipeline+agent, fake boundary)** | **0.45 ms** | 0.73 ms |
-| duplicate-suppressed turn | 0.06 ms | 0.21 ms |
-| session ops | ~0 ms | 0.02 ms |
+| duplicate-suppressed turn                                        | 0.06 ms     | 0.21 ms |
+| session ops                                                      | ~0 ms       | 0.02 ms |
 
 Local engines (same SANDBOX, real inference): pocketsphinx grammar decode
 ≈25–29 ms (vs ≈574–764 ms open dictation — and open dictation on synthetic
@@ -577,15 +577,15 @@ speech is NOT accurate evidence, per §38); meSpeak synth + round-trip EXACT
 
 ## 33. Provider Audit — STATUS/BLOCKER/EVIDENCE/IMPACT/WORKAROUND/NEXT ACTION
 
-| item | status | blocker / evidence | impact | workaround | next action |
-|---|---|---|---|---|---|
-| PocketSphinx STT (en) | REAL_INFERENCE_VERIFIED | EVIDENCE.json: grammar 25–29 ms decode; wheel+model sha256 recorded | English command-mode local STT works today | — | Arabic acoustic model needs huggingface/alphacephei |
-| meSpeak TTS (en voice data) | REAL_INFERENCE_VERIFIED | round-trip 3/3 EXACT ({130,3,50,f2}); GPL tool, optional, not bundled | local English TTS | — | Arabic voice data hunt post-unblock |
-| Vosk / whisper.cpp / faster-whisper / Piper | BLOCKED | huggingface.co + alphacephei.com UNREACHABLE from sandbox (verified in EVIDENCE.json) | no AR local models validated | browser Web Speech default; command boundary ready | retry on the target machine with network |
-| espeak-ng WASM | UNAVAILABLE | npm package ships zero voice data; @echogarden build 404 | — | meSpeak (same engine family) | drop or vendor data |
-| Arabic local STT/TTS | BLOCKED | same hosts; Arabic bundles unreachable | voice AR currently via browser engines | ar-EG Web Speech | validate on TARGET_MACHINE |
-| `npx prisma generate` | BLOCKED (pre-existing) | binaries.prisma.sh TLS refused ×5 | typed client is a stub in THIS sandbox; runtime unaffected | tests use the fake boundary; routes cast the client | regenerate on target machine |
-| Browser Web Speech STT | RUNTIME_DEPENDENT | headless cannot verify; vendor cloud transport | production AR accuracy unmeasured | transcript trust + confirm flow mitigate | instrument via voice telemetry in prod clients |
+| item                                        | status                  | blocker / evidence                                                                    | impact                                                     | workaround                                          | next action                                         |
+| ------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| PocketSphinx STT (en)                       | REAL_INFERENCE_VERIFIED | EVIDENCE.json: grammar 25–29 ms decode; wheel+model sha256 recorded                   | English command-mode local STT works today                 | —                                                   | Arabic acoustic model needs huggingface/alphacephei |
+| meSpeak TTS (en voice data)                 | REAL_INFERENCE_VERIFIED | round-trip 3/3 EXACT ({130,3,50,f2}); GPL tool, optional, not bundled                 | local English TTS                                          | —                                                   | Arabic voice data hunt post-unblock                 |
+| Vosk / whisper.cpp / faster-whisper / Piper | BLOCKED                 | huggingface.co + alphacephei.com UNREACHABLE from sandbox (verified in EVIDENCE.json) | no AR local models validated                               | browser Web Speech default; command boundary ready  | retry on the target machine with network            |
+| espeak-ng WASM                              | UNAVAILABLE             | npm package ships zero voice data; @echogarden build 404                              | —                                                          | meSpeak (same engine family)                        | drop or vendor data                                 |
+| Arabic local STT/TTS                        | BLOCKED                 | same hosts; Arabic bundles unreachable                                                | voice AR currently via browser engines                     | ar-EG Web Speech                                    | validate on TARGET_MACHINE                          |
+| `npx prisma generate`                       | BLOCKED (pre-existing)  | binaries.prisma.sh TLS refused ×5                                                     | typed client is a stub in THIS sandbox; runtime unaffected | tests use the fake boundary; routes cast the client | regenerate on target machine                        |
+| Browser Web Speech STT                      | RUNTIME_DEPENDENT       | headless cannot verify; vendor cloud transport                                        | production AR accuracy unmeasured                          | transcript trust + confirm flow mitigate            | instrument via voice telemetry in prod clients      |
 
 ## 34. One Mapping, One Truth (§34)
 
@@ -627,22 +627,22 @@ policy).
 
 ## 36. Test Matrix (§39/§40)
 
-| suite | tests | result |
-|---|---|---|
-| voice-session | 8 | green |
-| voice-normalize | 13 | green |
-| voice-entity-resolution | 16 | green |
-| voice-security | 16 | green |
-| voice-pipeline (scripted agent) | 16 | green |
-| voice-stt-tts-providers | 24 | green |
-| voice-api-routes | 11 | green |
-| voice-adversarial-security | 14 | green |
-| dentora-robot (component) | 9 | green |
-| voice goldens gate (eval) | 4 | green |
-| voice perf (eval) | 7 | green |
-| **full repo** | **5,969 + 12 skipped** | **0 failed** (318 files; baseline 5,822/12) |
-| tsc --noEmit | — | 503 = pre-existing env baseline, **0 new** |
-| Phase 7 gates (regression) | replay-eval | 4/4 green |
+| suite                           | tests                  | result                                      |
+| ------------------------------- | ---------------------- | ------------------------------------------- |
+| voice-session                   | 8                      | green                                       |
+| voice-normalize                 | 13                     | green                                       |
+| voice-entity-resolution         | 16                     | green                                       |
+| voice-security                  | 16                     | green                                       |
+| voice-pipeline (scripted agent) | 16                     | green                                       |
+| voice-stt-tts-providers         | 24                     | green                                       |
+| voice-api-routes                | 11                     | green                                       |
+| voice-adversarial-security      | 14                     | green                                       |
+| dentora-robot (component)       | 9                      | green                                       |
+| voice goldens gate (eval)       | 4                      | green                                       |
+| voice perf (eval)               | 7                      | green                                       |
+| **full repo**                   | **5,969 + 12 skipped** | **0 failed** (318 files; baseline 5,822/12) |
+| tsc --noEmit                    | —                      | 503 = pre-existing env baseline, **0 new**  |
+| Phase 7 gates (regression)      | replay-eval            | 4/4 green                                   |
 
 ## 37. Definition of Done — checklist
 

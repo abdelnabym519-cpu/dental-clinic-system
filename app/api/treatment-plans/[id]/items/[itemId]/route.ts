@@ -40,7 +40,8 @@ export async function PATCH(
       data.status = body.status
     }
     if (body.toothNumbers !== undefined) data.toothNumbers = body.toothNumbers
-    if (body.priority !== undefined && typeof body.priority === 'number') data.priority = body.priority
+    if (body.priority !== undefined && typeof body.priority === 'number')
+      data.priority = body.priority
     if (body.estimatedCost !== undefined) {
       const cost = Number(body.estimatedCost)
       if (Number.isNaN(cost) || cost < 0) {

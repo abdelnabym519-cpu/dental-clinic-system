@@ -26,7 +26,7 @@ export function BridgeConnector({ viewModels, position }: BridgeConnectorProps) 
           ${position === 'upper' ? 'top-1' : 'bottom-1'}
         `}
       >
-        {t("Fixed Bridge Span:")} {bridgeTeeth.map((t) => t.number).join(', ')}
+        {t('Fixed Bridge Span:')} {bridgeTeeth.map((t) => t.number).join(', ')}
       </div>
     </div>
   )

@@ -50,10 +50,7 @@ interface FindingLike {
   confidence?: unknown
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, user, hospitalId } = await requireAuthAndRole(VIEW_ROLES)
 
   if (error || !user || !hospitalId) {
@@ -63,8 +60,7 @@ export async function GET(
   const { id } = await params
   const url = new URL(req.url)
   const locale = resolveReportLocale(url.searchParams.get('lang'))
-  const t = (key: string, vars?: Record<string, string | number>) =>
-    translate(locale, key, vars)
+  const t = (key: string, vars?: Record<string, string | number>) => translate(locale, key, vars)
 
   const study = await prisma.imagingStudy.findFirst({
     where: { id, hospitalId },
@@ -82,15 +78,20 @@ export async function GET(
     return NextResponse.json({ error: 'Study not found' }, { status: 404 })
   }
 
-  const job = (study.aiJobs as Array<Record<string, unknown> & {
-    findings: unknown
-    confidence: number | null
-    reviewDecision: string | null
-    reviewNotes: string | null
-    reviewedAt: Date | null
-    acceptedFindings: unknown
-    reviewedBy: { name: string } | null
-  }>)[0] ?? null
+  const job =
+    (
+      study.aiJobs as Array<
+        Record<string, unknown> & {
+          findings: unknown
+          confidence: number | null
+          reviewDecision: string | null
+          reviewNotes: string | null
+          reviewedAt: Date | null
+          acceptedFindings: unknown
+          reviewedBy: { name: string } | null
+        }
+      >
+    )[0] ?? null
 
   const conditionLabel = (raw: unknown): string => {
     const name = typeof raw === 'string' && raw.trim() ? raw.trim() : 'AI'
@@ -190,12 +191,17 @@ export async function GET(
   }
 
   const lines: { text: string; size?: number; bold?: boolean; gapAfter?: number }[] = [
-    { text: `${t('imaging.report.patient')}: ${study.patient ? `${study.patient.firstName} ${study.patient.lastName}`.trim() : '—'}` },
+    {
+      text: `${t('imaging.report.patient')}: ${study.patient ? `${study.patient.firstName} ${study.patient.lastName}`.trim() : '—'}`,
+    },
     ...(study.patient?.patientId
       ? [{ text: `${t('imaging.report.patient_id')}: ${study.patient.patientId}` }]
       : []),
     { text: `${t('imaging.report.date')}: ${isoDate(study.studyDate ?? study.createdAt)}` },
-    { text: `${t('imaging.report.modality')}: ${t(`imaging.modality.${study.modality}`)}`, gapAfter: 8 },
+    {
+      text: `${t('imaging.report.modality')}: ${t(`imaging.modality.${study.modality}`)}`,
+      gapAfter: 8,
+    },
     ...(imageUnavailable ? [{ text: t('imaging.report.image_unavailable'), gapAfter: 6 }] : []),
     ...findingLines,
     ...reviewLines,
@@ -206,9 +212,7 @@ export async function GET(
     subtitle: t('imaging.report.title'),
     lines,
     image: image ?? undefined,
-    footer: reviewed
-      ? t('imaging.report.footer_reviewed')
-      : t('imaging.report.footer_unreviewed'),
+    footer: reviewed ? t('imaging.report.footer_reviewed') : t('imaging.report.footer_unreviewed'),
   })
 
   return new NextResponse(new Uint8Array(pdf), {

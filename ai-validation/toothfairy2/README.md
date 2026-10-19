@@ -39,7 +39,7 @@ ToothFairy2  ──Set A (P, 417)──▶  ToothFairy3  ──Set A (P, 417)─
 
 So the **population** overlap is verified. But the download is account-gated, and
 **no case-ID listing is published anywhere** — not on the pages, not in the
-official GitHub repos. So *individual case identity* cannot be verified from
+official GitHub repos. So _individual case identity_ cannot be verified from
 public sources. It has to be established from the file itself, which is what
 `audit_compatibility.py` is for.
 
@@ -98,7 +98,7 @@ its files need the MHA→NIfTI step first. This lab supports both.
 
 > **On the checkpoint you already have.** The brief described it as coming from
 > `MostafaMousa/GP-Segmentation-iteration-2`. That repository does not exist on
-> GitHub (API: *Not Found*; that user has 0 public repositories), and no official
+> GitHub (API: _Not Found_; that user has 0 public repositories), and no official
 > ToothFairy2 checkpoint hash is published anywhere reachable. So this lab
 > **cannot verify that checkpoint's provenance** — only describe the file you
 > point it at. See `MODEL_PROVENANCE.md` §6. It does not block the run; it does
@@ -154,11 +154,11 @@ python scripts\audit_compatibility.py --input input\source\P381.nii.gz --case P3
 This is the step that replaces optimism with evidence. It checks the volume
 against official ToothFairy2 requirements and returns one of:
 
-| Verdict | Meaning |
-| --- | --- |
-| `VERIFIED` | every checkable property matches official TF2 values |
-| `UNKNOWN` | something decisive could not be established — **not** a pass |
-| `INCOMPATIBLE` | a property positively conflicts — **do not run inference** |
+| Verdict        | Meaning                                                      |
+| -------------- | ------------------------------------------------------------ |
+| `VERIFIED`     | every checkable property matches official TF2 values         |
+| `UNKNOWN`      | something decisive could not be established — **not** a pass |
+| `INCOMPATIBLE` | a property positively conflicts — **do not run inference**   |
 
 Checks performed, each with its source recorded:
 
@@ -219,13 +219,13 @@ real CBCT (.nii.gz or .mha)
 
 Grounded in official values, not guesses:
 
-| Parameter | Value | Source |
-| --- | --- | --- |
-| dataset id | `119` | `nnUNetPlans.json` → `Dataset119_ToothFairy2` |
-| plans | `nnUNetPlans` | same |
-| config | `3d_fullres`, patch [80,192,192], 0.3 mm | same |
-| input name | `<caseID>_0000.nii.gz` | nnU-Net convention + `channel_names` |
-| labels | 49 entries, 42 classes | `dataset.json` |
+| Parameter  | Value                                    | Source                                        |
+| ---------- | ---------------------------------------- | --------------------------------------------- |
+| dataset id | `119`                                    | `nnUNetPlans.json` → `Dataset119_ToothFairy2` |
+| plans      | `nnUNetPlans`                            | same                                          |
+| config     | `3d_fullres`, patch [80,192,192], 0.3 mm | same                                          |
+| input name | `<caseID>_0000.nii.gz`                   | nnU-Net convention + `channel_names`          |
+| labels     | 49 entries, 42 classes                   | `dataset.json`                                |
 
 Enforced: no training, no fine-tuning, no conversion, no architecture change;
 the MHA→NIfTI step is an input-format change only and **aborts if geometry was
@@ -249,16 +249,16 @@ machine, not an estimate.
 
 Checked against the **official** label map. Structures from the brief:
 
-| Structure | id(s) |
-| --- | --- |
-| Lower Jawbone | 1 |
-| Upper Jawbone | 2 |
-| Inferior Alveolar Canal | 3, 4 |
-| Maxillary Sinus | 5, 6 |
-| Teeth | 11–18, 21–28, 31–38, 41–48 |
-| Implant | 10 |
-| Crown | 9 |
-| Bridge | 8 |
+| Structure               | id(s)                      |
+| ----------------------- | -------------------------- |
+| Lower Jawbone           | 1                          |
+| Upper Jawbone           | 2                          |
+| Inferior Alveolar Canal | 3, 4                       |
+| Maxillary Sinus         | 5, 6                       |
+| Teeth                   | 11–18, 21–28, 31–38, 41–48 |
+| Implant                 | 10                         |
+| Crown                   | 9                          |
+| Bridge                  | 8                          |
 
 Any label not in the official `dataset.json` is flagged as `unknown_labels`. One
 case will not contain all 42 classes — `Implant`, `Crown`, `Bridge` appear only
@@ -269,24 +269,24 @@ the labels present are the model's real label space.
 
 ## Verification status
 
-| Claim | Status |
-| --- | --- |
-| TF2 dataset size, format, licence, labels, ids | **VERIFIED** — official `dataset.json` |
-| TF2 dataset id 119, plans, patch, spacing, reader | **VERIFIED** — official `nnUNetPlans.json` |
-| TF2 official intensity percentiles | **VERIFIED** — same file |
-| TF4 composition (P417/F63/S52/A100), `.nii.gz`, layout | **VERIFIED** — official TF4 page |
-| TF4 → TF3 → TF2 **cohort** overlap | **VERIFIED** — two official statements + exact counts |
-| TF4 **case-level** identity with TF2 | **NOT VERIFIED** — no case-ID listing published |
-| TF4/TF3/TF2 download requires an account | **VERIFIED** — all three pages |
-| TF2 and TF4 orientation | **NOT PUBLISHED — UNKNOWN** |
-| Orientation decoder (vs nibabel `aff2axcodes`) | **VERIFIED in Arena** — 5/5 cases |
-| `audit_compatibility.py` verdicts (VERIFIED / UNKNOWN / INCOMPATIBLE paths) | **VERIFIED in Arena** |
-| `inspect_cbct.py`, `verify_checkpoint.py` mechanics and stop-paths | **VERIFIED in Arena** |
-| `run_toothfairy2.py` preflight and `--dry-run` planning | **VERIFIED in Arena** |
-| **Real CBCT obtainable without authentication** | **NO — BLOCKED** |
-| Checkpoint provenance | **UNVERIFIED** |
-| `run_toothfairy2.py` completing a real inference | **NOT RUN — untested beyond preflight** |
-| Segmentation output, runtime, RAM | **UNKNOWN** |
+| Claim                                                                       | Status                                                |
+| --------------------------------------------------------------------------- | ----------------------------------------------------- |
+| TF2 dataset size, format, licence, labels, ids                              | **VERIFIED** — official `dataset.json`                |
+| TF2 dataset id 119, plans, patch, spacing, reader                           | **VERIFIED** — official `nnUNetPlans.json`            |
+| TF2 official intensity percentiles                                          | **VERIFIED** — same file                              |
+| TF4 composition (P417/F63/S52/A100), `.nii.gz`, layout                      | **VERIFIED** — official TF4 page                      |
+| TF4 → TF3 → TF2 **cohort** overlap                                          | **VERIFIED** — two official statements + exact counts |
+| TF4 **case-level** identity with TF2                                        | **NOT VERIFIED** — no case-ID listing published       |
+| TF4/TF3/TF2 download requires an account                                    | **VERIFIED** — all three pages                        |
+| TF2 and TF4 orientation                                                     | **NOT PUBLISHED — UNKNOWN**                           |
+| Orientation decoder (vs nibabel `aff2axcodes`)                              | **VERIFIED in Arena** — 5/5 cases                     |
+| `audit_compatibility.py` verdicts (VERIFIED / UNKNOWN / INCOMPATIBLE paths) | **VERIFIED in Arena**                                 |
+| `inspect_cbct.py`, `verify_checkpoint.py` mechanics and stop-paths          | **VERIFIED in Arena**                                 |
+| `run_toothfairy2.py` preflight and `--dry-run` planning                     | **VERIFIED in Arena**                                 |
+| **Real CBCT obtainable without authentication**                             | **NO — BLOCKED**                                      |
+| Checkpoint provenance                                                       | **UNVERIFIED**                                        |
+| `run_toothfairy2.py` completing a real inference                            | **NOT RUN — untested beyond preflight**               |
+| Segmentation output, runtime, RAM                                           | **UNKNOWN**                                           |
 
 Scripts were exercised against small fabricated volumes purely to test **script
 mechanics** — geometry parsing, orientation decoding, HU detection, stop-paths,

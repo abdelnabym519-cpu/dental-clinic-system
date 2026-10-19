@@ -56,7 +56,14 @@ export const POLICY_VERSION = 1
  *  PATIENT (portal) accounts can chat, but the policy layer refuses every
  *  action for them — closing the hole where a portal user's session could
  *  otherwise reach clinic data through the action executors. */
-export const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECH', 'ACCOUNTANT']
+export const STAFF_ROLES = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'DOCTOR',
+  'RECEPTIONIST',
+  'LAB_TECH',
+  'ACCOUNTANT',
+]
 
 // ---------------------------------------------------------------------------
 // Small validation helpers (params arrive as strings from the LLM)
@@ -85,11 +92,53 @@ function isTime(s: string): boolean {
 }
 
 const GENDERS = ['MALE', 'FEMALE', 'OTHER'] as const
-const BLOOD_GROUPS = ['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE'] as const
+const BLOOD_GROUPS = [
+  'A_POSITIVE',
+  'A_NEGATIVE',
+  'B_POSITIVE',
+  'B_NEGATIVE',
+  'AB_POSITIVE',
+  'AB_NEGATIVE',
+  'O_POSITIVE',
+  'O_NEGATIVE',
+] as const
 const APPT_TYPES = ['CONSULTATION', 'PROCEDURE', 'FOLLOW_UP', 'EMERGENCY', 'CHECK_UP'] as const
-const PAYMENT_METHODS = ['CASH', 'CARD', 'BANK_TRANSFER', 'CHEQUE', 'INSURANCE', 'WALLET', 'ONLINE', 'INSTAPAY', 'FAWRY'] as const
-const LAB_WORK_TYPES = ['CROWN', 'BRIDGE', 'DENTURE', 'PARTIAL_DENTURE', 'IMPLANT_CROWN', 'VENEER', 'INLAY_ONLAY', 'NIGHT_GUARD', 'RETAINER', 'ALIGNER', 'MODEL', 'OTHER'] as const
-const LAB_STATUSES = ['CREATED', 'SENT_TO_LAB', 'IN_PROGRESS', 'QUALITY_CHECK', 'READY', 'DELIVERED', 'FITTED', 'REMAKE_REQUIRED', 'CANCELLED'] as const
+const PAYMENT_METHODS = [
+  'CASH',
+  'CARD',
+  'BANK_TRANSFER',
+  'CHEQUE',
+  'INSURANCE',
+  'WALLET',
+  'ONLINE',
+  'INSTAPAY',
+  'FAWRY',
+] as const
+const LAB_WORK_TYPES = [
+  'CROWN',
+  'BRIDGE',
+  'DENTURE',
+  'PARTIAL_DENTURE',
+  'IMPLANT_CROWN',
+  'VENEER',
+  'INLAY_ONLAY',
+  'NIGHT_GUARD',
+  'RETAINER',
+  'ALIGNER',
+  'MODEL',
+  'OTHER',
+] as const
+const LAB_STATUSES = [
+  'CREATED',
+  'SENT_TO_LAB',
+  'IN_PROGRESS',
+  'QUALITY_CHECK',
+  'READY',
+  'DELIVERED',
+  'FITTED',
+  'REMAKE_REQUIRED',
+  'CANCELLED',
+] as const
 const REVENUE_PERIODS = ['today', 'this_week', 'this_month', 'last_month', 'this_quarter'] as const
 
 /** Dictionary key = user-visible error (both locales carry these). */
@@ -108,7 +157,18 @@ const E = {
 // The registry — every AI intent, explicitly classified
 // ---------------------------------------------------------------------------
 
-const READ: Pick<ActionPolicy, 'category' | 'riskLevel' | 'roles' | 'approvalRequired' | 'approvalRoles' | 'patientScope' | 'transactionRequired' | 'idempotencyRequired' | 'auditRequired'> = {
+const READ: Pick<
+  ActionPolicy,
+  | 'category'
+  | 'riskLevel'
+  | 'roles'
+  | 'approvalRequired'
+  | 'approvalRoles'
+  | 'patientScope'
+  | 'transactionRequired'
+  | 'idempotencyRequired'
+  | 'auditRequired'
+> = {
   category: 'read',
   riskLevel: 'READ',
   roles: [...STAFF_ROLES],
@@ -130,7 +190,11 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
       return null
     },
   },
-  check_patient: { ...READ, action: 'check_patient', validate: (p) => (nonEmpty(p.query) ? null : E.patientRequired) },
+  check_patient: {
+    ...READ,
+    action: 'check_patient',
+    validate: (p) => (nonEmpty(p.query) ? null : E.patientRequired),
+  },
   show_appointments: {
     ...READ,
     action: 'show_appointments',
@@ -142,9 +206,14 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
   show_revenue: {
     ...READ,
     action: 'show_revenue',
-    validate: (p) => (p.period !== undefined && !inEnum(p.period, REVENUE_PERIODS) ? E.invalidEnum : null),
+    validate: (p) =>
+      p.period !== undefined && !inEnum(p.period, REVENUE_PERIODS) ? E.invalidEnum : null,
   },
-  check_stock: { ...READ, action: 'check_stock', validate: (p) => (nonEmpty(p.itemName) ? null : E.required) },
+  check_stock: {
+    ...READ,
+    action: 'check_stock',
+    validate: (p) => (nonEmpty(p.itemName) ? null : E.required),
+  },
   low_stock: { ...READ, action: 'low_stock', validate: () => null },
   show_lab_orders: { ...READ, action: 'show_lab_orders', validate: () => null },
   show_prescriptions: { ...READ, action: 'show_prescriptions', validate: () => null },
@@ -184,7 +253,11 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     auditRequired: true,
     validate: (p) => {
       if (!nonEmpty(p.query)) return E.patientRequired
-      if (p.age !== undefined && (toNumber(p.age) === null || Number(toNumber(p.age)) < 0 || Number(toNumber(p.age)) > 120)) return E.malformedNumber
+      if (
+        p.age !== undefined &&
+        (toNumber(p.age) === null || Number(toNumber(p.age)) < 0 || Number(toNumber(p.age)) > 120)
+      )
+        return E.malformedNumber
       if (p.gender !== undefined && !inEnum(p.gender, GENDERS)) return E.invalidEnum
       if (p.bloodGroup !== undefined && !inEnum(p.bloodGroup, BLOOD_GROUPS)) return E.invalidEnum
       return null
@@ -221,7 +294,8 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     roles: ['ADMIN', 'RECEPTIONIST'],
     patientScope: true,
     auditRequired: true,
-    validate: (p) => (nonEmpty(p.appointmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired),
+    validate: (p) =>
+      nonEmpty(p.appointmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired,
   },
   reschedule_appointment: {
     ...READ,
@@ -247,7 +321,8 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     roles: ['ADMIN', 'RECEPTIONIST', 'DOCTOR'],
     patientScope: true,
     auditRequired: true,
-    validate: (p) => (nonEmpty(p.appointmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired),
+    validate: (p) =>
+      nonEmpty(p.appointmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired,
   },
 
   // ── 🟠 CLINICAL_WRITE — treatments & prescriptions (doctor-gated) ─────────
@@ -267,7 +342,8 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     validate: (p) => {
       if (!nonEmpty(p.patientName)) return E.patientRequired
       if (!nonEmpty(p.procedureName)) return E.required
-      if (p.cost !== undefined && (toNumber(p.cost) === null || Number(toNumber(p.cost)) <= 0)) return E.positiveAmount
+      if (p.cost !== undefined && (toNumber(p.cost) === null || Number(toNumber(p.cost)) <= 0))
+        return E.positiveAmount
       return null
     },
   },
@@ -279,7 +355,8 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     roles: ['ADMIN', 'DOCTOR'],
     patientScope: true,
     auditRequired: true,
-    validate: (p) => (nonEmpty(p.treatmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired),
+    validate: (p) =>
+      nonEmpty(p.treatmentNo) || nonEmpty(p.patientName) ? null : E.patientOrRefRequired,
   },
   create_prescription: {
     ...READ,
@@ -328,7 +405,11 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     transactionRequired: true,
     validate: (p) => {
       if (!nonEmpty(p.invoiceNo) && !nonEmpty(p.patientName)) return E.patientOrRefRequired
-      if (p.amount !== undefined && (toNumber(p.amount) === null || Number(toNumber(p.amount)) <= 0)) return E.positiveAmount
+      if (
+        p.amount !== undefined &&
+        (toNumber(p.amount) === null || Number(toNumber(p.amount)) <= 0)
+      )
+        return E.positiveAmount
       if (p.method !== undefined && !inEnum(p.method, PAYMENT_METHODS)) return E.invalidEnum
       return null
     },
@@ -346,8 +427,13 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     auditRequired: true,
     validate: (p) => {
       if (!nonEmpty(p.name)) return E.required
-      if (p.price !== undefined && (toNumber(p.price) === null || Number(toNumber(p.price)) < 0)) return E.malformedNumber
-      if (p.quantity !== undefined && (toNumber(p.quantity) === null || Number(toNumber(p.quantity)) < 0)) return E.malformedNumber
+      if (p.price !== undefined && (toNumber(p.price) === null || Number(toNumber(p.price)) < 0))
+        return E.malformedNumber
+      if (
+        p.quantity !== undefined &&
+        (toNumber(p.quantity) === null || Number(toNumber(p.quantity)) < 0)
+      )
+        return E.malformedNumber
       return null
     },
   },
@@ -384,7 +470,8 @@ export const ACTION_POLICIES: Record<string, ActionPolicy> = {
     validate: (p) => {
       if (!nonEmpty(p.patientName)) return E.patientRequired
       if (p.workType !== undefined && !inEnum(p.workType, LAB_WORK_TYPES)) return E.invalidEnum
-      if (p.cost !== undefined && (toNumber(p.cost) === null || Number(toNumber(p.cost)) < 0)) return E.malformedNumber
+      if (p.cost !== undefined && (toNumber(p.cost) === null || Number(toNumber(p.cost)) < 0))
+        return E.malformedNumber
       return null
     },
   },

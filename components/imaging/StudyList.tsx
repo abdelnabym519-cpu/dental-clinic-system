@@ -75,7 +75,9 @@ export function StudyList({ studies, selectedId = null, onSelect }: StudyListPro
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-sm font-medium">{modalityLabel(study.modality)}</span>
+                <span className="truncate text-sm font-medium">
+                  {modalityLabel(study.modality)}
+                </span>
                 <Badge variant="outline" className={`text-xs ${STATUS_STYLES[status] ?? ''}`}>
                   {statusLabel(status)}
                 </Badge>
@@ -86,7 +88,10 @@ export function StudyList({ studies, selectedId = null, onSelect }: StudyListPro
                   <> · {t('imaging.findings_count', { count: study.latestJob.findingsCount })}</>
                 )}
                 {study.latestJob?.reviewedByName && (
-                  <> · {t('imaging.review.reviewed_by')}: {study.latestJob.reviewedByName}</>
+                  <>
+                    {' '}
+                    · {t('imaging.review.reviewed_by')}: {study.latestJob.reviewedByName}
+                  </>
                 )}
               </p>
             </div>

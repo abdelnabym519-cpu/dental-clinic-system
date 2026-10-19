@@ -99,11 +99,15 @@ function StatusBadge({ status }: { status: Referral['status'] }) {
       return <Badge variant="outline">{t('ui.pending')}</Badge>
     case 'CONVERTED':
       return (
-        <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-100/80">{t('ui.converted')}</Badge>
+        <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-100/80">
+          {t('ui.converted')}
+        </Badge>
       )
     case 'REWARDED':
       return (
-        <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100/80">{t('ui.rewarded')}</Badge>
+        <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100/80">
+          {t('ui.rewarded')}
+        </Badge>
       )
     case 'EXPIRED':
       return <Badge variant="destructive">{t('ui.expired')}</Badge>
@@ -361,7 +365,9 @@ export default function ReferralsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t('ui.referral_program')}</h1>
         <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />{t('ui.create_referral')}</Button>
+          <Plus className="mr-2 h-4 w-4" />
+          {t('ui.create_referral')}
+        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -415,7 +421,9 @@ export default function ReferralsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-blue-500" />{t('ui.referrals')}</CardTitle>
+            <Share2 className="h-5 w-5 text-blue-500" />
+            {t('ui.referrals')}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -553,9 +561,9 @@ export default function ReferralsPage() {
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("referrals")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('referrals')}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -563,13 +571,17 @@ export default function ReferralsPage() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >{t('ui.previous')}</Button>
+                >
+                  {t('ui.previous')}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={page >= pagination.totalPages}
                   onClick={() => setPage((p) => p + 1)}
-                >{t('ui.next')}</Button>
+                >
+                  {t('ui.next')}
+                </Button>
               </div>
             </div>
           )}
@@ -636,7 +648,9 @@ export default function ReferralsPage() {
                 )}
               </div>
               {referrerPatientId && (
-                <p className="text-xs text-muted-foreground">{t("Selected:")} {referrerDisplay}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('Selected:')} {referrerDisplay}
+                </p>
               )}
             </div>
 
@@ -697,10 +711,14 @@ export default function ReferralsPage() {
             <Button className="w-full" onClick={handleCreateReferral} disabled={submitting}>
               {submitting ? (
                 <>
-                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{t('ui.creating')}</>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  {t('ui.creating')}
+                </>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" />{t('ui.create_referral')}</>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t('ui.create_referral')}
+                </>
               )}
             </Button>
           </div>

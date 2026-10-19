@@ -133,7 +133,10 @@ describe('PaymentCheckout', () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          checkout: { provider: 'fawry', redirectUrl: 'https://atfawry.fawrystaging.com/pay/order_123' },
+          checkout: {
+            provider: 'fawry',
+            redirectUrl: 'https://atfawry.fawrystaging.com/pay/order_123',
+          },
           order: { id: 'order_123' },
           hospital: { name: 'Test Clinic' },
           patient: { name: 'John', email: 'john@test.com', phone: '01012345678' },

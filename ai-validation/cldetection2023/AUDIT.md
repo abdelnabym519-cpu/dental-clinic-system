@@ -53,7 +53,7 @@ must be requested from `cl-detection2023.grand-challenge.org`, which is access-g
 iterates every image, computing MRE/SDR against the ground truth. Without the gated
 dataset it cannot run at all — for a new image there is no annotation to iterate.
 
-**Consequence.** The faithful way to run *this* model on *one* image is the same pipeline
+**Consequence.** The faithful way to run _this_ model on _one_ image is the same pipeline
 without the annotation loop: image → the repository's own preprocessing → `inference_topdown`
 → `merge_data_samples`. That is exactly what `scripts/run_inference.py` does; the model,
 config, weights and post-processing are unchanged.
@@ -62,11 +62,11 @@ config, weights and post-processing are unchanged.
 
 **VERIFIED-BY-OPERATOR (identity), EXPECTED (structure).**
 
-| field | value |
-| --- | --- |
-| file | `model/model_pretrained_on_train_and_val.pth` |
-| size | **268,846,952 bytes** |
-| sha256 | **`FB1A781AC1C83149B379CB15724E3B0FAE06BA2D567978F35C61E9D06B46FDCC`** |
+| field      | value                                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| file       | `model/model_pretrained_on_train_and_val.pth`                                                                             |
+| size       | **268,846,952 bytes**                                                                                                     |
+| sha256     | **`FB1A781AC1C83149B379CB15724E3B0FAE06BA2D567978F35C61E9D06B46FDCC`**                                                    |
 | provenance | the project's own pretrained weights, documented in the repository README and distributed by the authors via Google Drive |
 
 The digest was computed locally by the operator and matches the expected value exactly. It
@@ -79,7 +79,7 @@ on any mismatch (exit 6).
 Structure: a 268.3 MB `torch.save` artifact that the model builder reads as
 `{'state_dict': …, 'meta': …}` — `state_dict` for the 66.8 M-parameter HRNet-W48 +
 SRPoseHead graph, `meta` for `dataset_meta` (keypoint definitions, flip indices, sigmas).
-The audit verified the *shape* of that contract by building the model from the config,
+The audit verified the _shape_ of that contract by building the model from the config,
 saving an equivalent checkpoint and loading it through the same `init_model()` path with
 `strict=True`-equivalent equality checks (see §8, control run). It does not prove the real
 file's contents; that is what the first run on the operator's machine proves.
@@ -96,14 +96,14 @@ in the workspace and what does not:
   NIH, figshare, Mendeley, Zenodo, Hugging Face, arXiv, Google Drive — all unreachable).
 - A real one **is** reachable through GitHub, from the challenge organisers themselves:
 
-| field | value |
-| --- | --- |
-| repository | `szuboy/CL-Detection2023` — *"CL-Detection2023 Challenge Official Repository"*, **Apache-2.0** |
-| revision | `dc1ce2bd0a3f317de4160cde17e4a6f60371e67c` |
-| path | `step5_docker_and_upload/test/stack1.mha` (41,472,328 bytes) |
-| container | MetaImage, `MET_UCHAR`, `BinaryData = True`, `ElementDataFile = LOCAL`, `DimSize = 2880 2400 2`, `ElementNumberOfChannels = 3` |
-| content | two lateral cephalometric radiographs (2880×2400, RGB, grayscale-valued), i.e. the organisers' own validation inputs for the baseline they published |
-| companion file | `step5_docker_and_upload/test/expected_output.json` — the organisers' reference 76 points (38 per image) |
+| field          | value                                                                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| repository     | `szuboy/CL-Detection2023` — _"CL-Detection2023 Challenge Official Repository"_, **Apache-2.0**                                                       |
+| revision       | `dc1ce2bd0a3f317de4160cde17e4a6f60371e67c`                                                                                                           |
+| path           | `step5_docker_and_upload/test/stack1.mha` (41,472,328 bytes)                                                                                         |
+| container      | MetaImage, `MET_UCHAR`, `BinaryData = True`, `ElementDataFile = LOCAL`, `DimSize = 2880 2400 2`, `ElementNumberOfChannels = 3`                       |
+| content        | two lateral cephalometric radiographs (2880×2400, RGB, grayscale-valued), i.e. the organisers' own validation inputs for the baseline they published |
+| companion file | `step5_docker_and_upload/test/expected_output.json` — the organisers' reference 76 points (38 per image)                                             |
 
 These are the challenge's own validation images, published by the organisers for exactly
 this purpose, under Apache-2.0, alongside the ground truth. The extracted slice 1 writes to
@@ -138,7 +138,8 @@ appeared. (`meson` and `torch` were installed by that build path; the missing
 `download.openmmlab.com` are built for torch ≤ 2.1.0 — that host is unreachable from this
 sandbox and, more importantly, using it would force a torch downgrade. **`mmcv-lite` does
 publish a pure-Python wheel:** `mmcv_lite-2.1.0-py2.py3-none-any.whl` (720 KB, `requires_python
->=3.7`), and it satisfies the fork's version assertion.
+
+> =3.7`), and it satisfies the fork's version assertion.
 
 ### Does this model need full mmcv?
 
@@ -151,18 +152,18 @@ control run in §8 exercised exactly this path and loaded nothing from `mmcv.ops
 
 ### The stack that works (and why each pin)
 
-| package | version | why |
-| --- | --- | --- |
-| Python | 3.10 (repo's recipe) / 3.11 (audit env) | both work with these wheels |
-| **torch** | **2.6.0 (CPU)** — *kept, not downgraded* | see §7; the fork's mmcv cap is satisfied by mmcv-lite, so no torch change is needed |
-| torchvision | 0.21.0 | matches torch 2.6.0 |
-| **mmcv-lite** | **2.1.0** | inside `[2.0.0rc4, 2.1.0]`; **prebuilt wheel, no compilation**; the model never touches `mmcv.ops` |
-| mmengine | 0.10.7 | inside `[0.6.0, 1.0.0]` |
-| mmpose | 1.0.0 | the repository's own vendored fork, installed editable |
-| **numpy** | **1.26.4** | `xtcocotools` (mmpose dependency) is compiled against NumPy 1.x; on 2.x it raises `ValueError: numpy.dtype size changed` at import |
-| **setuptools** | **< 81** (80.10.2) | `mmengine.utils.package_utils.get_installed_path` imports `pkg_resources`, removed in setuptools 81 |
-| opencv | `opencv-python-headless` 4.10 | `xtcocotools` pulls full `opencv-python`, whose Linux wheel needs `libGL.so.1`; headless has no GUI dependency. **On Windows the normal `opencv-python` is fine** |
-| SimpleITK 2.2.1 | | imported by `cldetection_utils.py`; only needed to read `.mha` |
+| package         | version                                  | why                                                                                                                                                               |
+| --------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Python          | 3.10 (repo's recipe) / 3.11 (audit env)  | both work with these wheels                                                                                                                                       |
+| **torch**       | **2.6.0 (CPU)** — _kept, not downgraded_ | see §7; the fork's mmcv cap is satisfied by mmcv-lite, so no torch change is needed                                                                               |
+| torchvision     | 0.21.0                                   | matches torch 2.6.0                                                                                                                                               |
+| **mmcv-lite**   | **2.1.0**                                | inside `[2.0.0rc4, 2.1.0]`; **prebuilt wheel, no compilation**; the model never touches `mmcv.ops`                                                                |
+| mmengine        | 0.10.7                                   | inside `[0.6.0, 1.0.0]`                                                                                                                                           |
+| mmpose          | 1.0.0                                    | the repository's own vendored fork, installed editable                                                                                                            |
+| **numpy**       | **1.26.4**                               | `xtcocotools` (mmpose dependency) is compiled against NumPy 1.x; on 2.x it raises `ValueError: numpy.dtype size changed` at import                                |
+| **setuptools**  | **< 81** (80.10.2)                       | `mmengine.utils.package_utils.get_installed_path` imports `pkg_resources`, removed in setuptools 81                                                               |
+| opencv          | `opencv-python-headless` 4.10            | `xtcocotools` pulls full `opencv-python`, whose Linux wheel needs `libGL.so.1`; headless has no GUI dependency. **On Windows the normal `opencv-python` is fine** |
+| SimpleITK 2.2.1 |                                          | imported by `cldetection_utils.py`; only needed to read `.mha`                                                                                                    |
 
 `torch`, `mmcv-lite`, `mmengine`, `mmpose` and `numpy` were all installed (or already
 present) **without compiling anything**. The only source build in the whole stack is the
@@ -195,7 +196,7 @@ Three ways out, and the one taken:
 2. **Downgrade torch to < 2.6** — restores upstream behaviour exactly, at the cost of a
    second large reinstall and of pinning the engine away from current torch.
 3. **Keep torch 2.6 and allow-list the checkpoint's own reconstruction primitives** —
-   **chosen.** `run_inference.py` reads the checkpoint's pickle globals *before* loading
+   **chosen.** `run_inference.py` reads the checkpoint's pickle globals _before_ loading
    (non-executing, `pickletools`), refuses to continue if any name is outside a bounded,
    documented allow-list, then registers that allow-list with
    `torch.serialization.add_safe_globals` and lets `torch.load` keep its strict default.
@@ -203,7 +204,7 @@ Three ways out, and the one taken:
    `scripts/run_inference.py` (`SAFE_GLOBAL_NAMES` / `allow_list_names()`).
 
 Important detail for anyone reproducing this: registering only the names found in the file
-is **not** enough. torch's unpickler also checks the *type of every constructed object*, and
+is **not** enough. torch's unpickler also checks the _type of every constructed object_, and
 a numpy dtype class such as `numpy.dtypes.UInt8DType` never appears as a GLOBAL — it is
 constructed. The whole bounded allow-list is registered for that reason.
 
@@ -211,21 +212,21 @@ constructed. The whole bounded allow-list is registered for that reason.
 
 **VERIFIED-HERE.** In an isolated venv built from scratch on the stack in §6:
 
-| step | result |
-| --- | --- |
-| `python step1_test_mmpose.py` (the repository's own check) | `1.0.0`, exit 0 |
-| `scripts/check_environment.py --repo …` | **12/12 checks pass** (`reports/environment_checks.json`) |
-| config verification | `TopdownPoseEstimator` · backbone `HRNet`, channels `(64)/(48,96)/(48,96,192)/(48,96,192,384)` · head `SRPoseHead`, **`num_joints = 38`**, `upsample_log=[3,2,1,2]` · codec `MSRAHeatmap`, `input_size=(1024,1024)`, `sigma=6` · `test_cfg flip_test=True` · preprocessing mean/std `121.25/76.5`, `bgr_to_rgb=True` |
-| model build from the config | **66.8 M parameters**, `TopdownPoseEstimator`/`HRNet`/`SRPoseHead` |
-| checkpoint round-trip | saved a control checkpoint → loaded it through the same `init_model()` path → **all 1,969 tensors identical** |
-| real image | the organisers' cephalogram, `remove_zero_padding` → 2400×1935, exactly as the repository's own val loop does |
-| **forward pass** | **38 keypoints, all finite, non-empty** — no crash, no crash-workaround, `inference_topdown(bboxes=None)` |
-| runtime | **20.4 s inference / 25.9 s total; peak RSS 1.82 GB; `torch.cuda.is_available() = False`; device `cpu`** on 2 vCPU |
+| step                                                       | result                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `python step1_test_mmpose.py` (the repository's own check) | `1.0.0`, exit 0                                                                                                                                                                                                                                                                                                      |
+| `scripts/check_environment.py --repo …`                    | **12/12 checks pass** (`reports/environment_checks.json`)                                                                                                                                                                                                                                                            |
+| config verification                                        | `TopdownPoseEstimator` · backbone `HRNet`, channels `(64)/(48,96)/(48,96,192)/(48,96,192,384)` · head `SRPoseHead`, **`num_joints = 38`**, `upsample_log=[3,2,1,2]` · codec `MSRAHeatmap`, `input_size=(1024,1024)`, `sigma=6` · `test_cfg flip_test=True` · preprocessing mean/std `121.25/76.5`, `bgr_to_rgb=True` |
+| model build from the config                                | **66.8 M parameters**, `TopdownPoseEstimator`/`HRNet`/`SRPoseHead`                                                                                                                                                                                                                                                   |
+| checkpoint round-trip                                      | saved a control checkpoint → loaded it through the same `init_model()` path → **all 1,969 tensors identical**                                                                                                                                                                                                        |
+| real image                                                 | the organisers' cephalogram, `remove_zero_padding` → 2400×1935, exactly as the repository's own val loop does                                                                                                                                                                                                        |
+| **forward pass**                                           | **38 keypoints, all finite, non-empty** — no crash, no crash-workaround, `inference_topdown(bboxes=None)`                                                                                                                                                                                                            |
+| runtime                                                    | **20.4 s inference / 25.9 s total; peak RSS 1.82 GB; `torch.cuda.is_available() = False`; device `cpu`** on 2 vCPU                                                                                                                                                                                                   |
 
-**What this does *not* prove.** The control checkpoint in the sandbox has **random weights**
+**What this does _not_ prove.** The control checkpoint in the sandbox has **random weights**
 (268.3 MB, generated to match the real checkpoint's contract — same builder, same 1,969
 tensors), because the real 268,846,952-byte file is not in this environment and its
-distribution route is unreachable. So the run proves the *mechanism* — environment, model
+distribution route is unreachable. So the run proves the _mechanism_ — environment, model
 construction, checkpoint loading contract, preprocessing, forward pass, output structure,
 timings — and says **nothing** about landmark accuracy. Coordinates from a random-init
 network are meaningless by construction (`x` range outside the image), which is why they
@@ -270,7 +271,7 @@ python scripts\run_inference.py --repo CLdetection2023 `
 
 Optional cross-check: the same image has organiser ground truth in
 `CL-Detection2023\step5_docker_and_upload\test\expected_output.json` (38 points for image id 1).
-Comparing the prediction against it is a *sanity* measure on one image — it is not the
+Comparing the prediction against it is a _sanity_ measure on one image — it is not the
 challenge metric (that needs the gated 400-image validation set, and MRE in mm needs the
 per-image pixel spacing, which the test stack does not carry).
 
@@ -296,13 +297,13 @@ written with the same `torch.save()`.
 **The probe reproduced the real file's global signature exactly.**
 `scripts/diagnose_globals.py` (record: `reports/diagnostics_globals.json`):
 
-| step | result |
-| --- | --- |
-| C1 — enumerate (engine scanner) | 11 globals; unexplained by the **pre-repair** policy: exactly `['__builtin__.getattr', 'mmengine.logging.history_buffer.HistoryBuffer']` — the operator's two, and nothing else |
-| C2 — pre-repair gate | refuses (fail-closed proof) |
-| C3 — extended gate + `torch.load(weights_only=True)` | loads; 1,969/1,969 tensors intact and finite; `meta['history']` reconstructs as a real `HistoryBuffer` instance |
-| C3b — the engine's own path `init_model(checkpoint=…)` | loads, 66,816,510 parameters |
-| C4 — negative control | a payload naming `builtins.eval` is refused by the gate |
+| step                                                   | result                                                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1 — enumerate (engine scanner)                        | 11 globals; unexplained by the **pre-repair** policy: exactly `['__builtin__.getattr', 'mmengine.logging.history_buffer.HistoryBuffer']` — the operator's two, and nothing else |
+| C2 — pre-repair gate                                   | refuses (fail-closed proof)                                                                                                                                                     |
+| C3 — extended gate + `torch.load(weights_only=True)`   | loads; 1,969/1,969 tensors intact and finite; `meta['history']` reconstructs as a real `HistoryBuffer` instance                                                                 |
+| C3b — the engine's own path `init_model(checkpoint=…)` | loads, 66,816,510 parameters                                                                                                                                                    |
+| C4 — negative control                                  | a payload naming `builtins.eval` is refused by the gate                                                                                                                         |
 
 **`mmengine.logging.history_buffer.HistoryBuffer` — resolved and proven.**
 From the pinned mmengine 0.10.7 install (Part A of the diagnostic): the
@@ -337,11 +338,11 @@ unchanged.
 
 **The bounded change (identical in all three gate copies).**
 
-| addition | why |
-| --- | --- |
-| `mmengine.logging.history_buffer.HistoryBuffer` | the real checkpoint's `meta` carries one (operator's scan); pure data container (Part A) |
-| `builtins.getattr` / `__builtin__.getattr` | the real checkpoint names it once, as `getattr(Class, 'min')` (probe trace); attribute read only |
-| `torch.storage._load_from_bytes` | torch 2.6's zip pickling references this storage-bytes reader for every tensor (Part B); pure data |
+| addition                                        | why                                                                                                |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `mmengine.logging.history_buffer.HistoryBuffer` | the real checkpoint's `meta` carries one (operator's scan); pure data container (Part A)           |
+| `builtins.getattr` / `__builtin__.getattr`      | the real checkpoint names it once, as `getattr(Class, 'min')` (probe trace); attribute read only   |
+| `torch.storage._load_from_bytes`                | torch 2.6's zip pickling references this storage-bytes reader for every tensor (Part B); pure data |
 
 No other entry was added; nothing was removed; `FORBIDDEN_BUILTINS` and
 `FORBIDDEN_MODULES` are untouched. Final confirmation on the real file —

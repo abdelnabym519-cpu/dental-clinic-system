@@ -3,12 +3,7 @@
   "datasetVersion": "1.0.0",
   "phiPolicy": "SYNTHETIC_ONLY",
   "generatedAt": "2026-10-01",
-  "residualVocabulary": [
-    "ACCEPTABLE",
-    "CONDITIONAL",
-    "BLOCKING",
-    "UNKNOWN"
-  ],
+  "residualVocabulary": ["ACCEPTABLE", "CONDITIONAL", "BLOCKING", "UNKNOWN"],
   "levels": {
     "C1": "CRITICAL",
     "C2": "CRITICAL",

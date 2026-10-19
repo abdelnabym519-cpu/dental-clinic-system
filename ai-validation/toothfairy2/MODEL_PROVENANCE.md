@@ -11,42 +11,42 @@ Read: 2026-09-17.
 
 ## 1. The model / challenge
 
-| Field | Value | Status |
-| --- | --- | --- |
-| Name | ToothFairy2: Multi-Structure Segmentation in CBCT Volumes | VERIFIED |
-| Organisers | University of Modena and Reggio Emilia (DITTO lab) + Radboud UMC | VERIFIED |
-| Venue | MICCAI 2024 challenge, hosted by Grand Challenge | VERIFIED |
-| Official site | https://ditto.ing.unimore.it/toothfairy2/ | VERIFIED |
-| Challenge site | https://toothfairy2.grand-challenge.org/ | VERIFIED |
-| Official benchmark code | https://github.com/AImageLab-zip/ToothFairy2-Benchmark | VERIFIED |
-| Framework | nnU-Net (`nnunetv2`), custom nets in the benchmark repo | VERIFIED |
-| Papers | Medical Image Analysis 104095 (2026); CVPR 2025; IEEE Access (2024) | VERIFIED |
+| Field                   | Value                                                               | Status   |
+| ----------------------- | ------------------------------------------------------------------- | -------- |
+| Name                    | ToothFairy2: Multi-Structure Segmentation in CBCT Volumes           | VERIFIED |
+| Organisers              | University of Modena and Reggio Emilia (DITTO lab) + Radboud UMC    | VERIFIED |
+| Venue                   | MICCAI 2024 challenge, hosted by Grand Challenge                    | VERIFIED |
+| Official site           | https://ditto.ing.unimore.it/toothfairy2/                           | VERIFIED |
+| Challenge site          | https://toothfairy2.grand-challenge.org/                            | VERIFIED |
+| Official benchmark code | https://github.com/AImageLab-zip/ToothFairy2-Benchmark              | VERIFIED |
+| Framework               | nnU-Net (`nnunetv2`), custom nets in the benchmark repo             | VERIFIED |
+| Papers                  | Medical Image Analysis 104095 (2026); CVPR 2025; IEEE Access (2024) | VERIFIED |
 
 Later editions in the same series, relevant here because they supply input data:
 
-| Edition | Site | Size | Classes | Format |
-| --- | --- | --- | --- | --- |
-| ToothFairy3 | https://ditto.ing.unimore.it/toothfairy3/ | 532 volumes | 77 | NIfTI |
+| Edition     | Site                                      | Size         | Classes            | Format          |
+| ----------- | ----------------------------------------- | ------------ | ------------------ | --------------- |
+| ToothFairy3 | https://ditto.ing.unimore.it/toothfairy3/ | 532 volumes  | 77                 | NIfTI           |
 | ToothFairy4 | https://ditto.ing.unimore.it/toothfairy4/ | 625 patients | — (reporting task) | NIfTI `.nii.gz` |
 
 ---
 
 ## 2. ToothFairy2 dataset
 
-| Field | Value | Status |
-| --- | --- | --- |
-| Training set size | 480 volumes (`numTraining`) | VERIFIED — `dataset.json` |
-| Test set size | 50 volumes (`numTest`) | VERIFIED — `dataset.json` |
-| Published format | **`.mha`** | VERIFIED — dataset page |
-| Format the model reads | **`.nii.gz`** | VERIFIED — `dataset.json`, `file_ending` |
-| Channel | `CBCT` | VERIFIED — `dataset.json` |
-| Voxel spacing | **0.3 mm isotropic** | VERIFIED — Grand Challenge dataset page |
-| Value scale | Hounsfield | VERIFIED — dataset page |
-| Licence (dataset) | CC-BY-SA 4.0 | VERIFIED — `dataset.json` |
-| Min volume shape (P381) | (170, 272, 345) | VERIFIED — dataset page |
-| Median volume shape (P460) | (170, 357, 371) | VERIFIED — dataset page |
-| Max volume shape (F039) | (298, 512, 512) | VERIFIED — dataset page |
-| Composition | Set A (`P*`) = 417; Set B (`F*`) = 63. 417 + 63 = 480 ✓ | VERIFIED |
+| Field                      | Value                                                   | Status                                   |
+| -------------------------- | ------------------------------------------------------- | ---------------------------------------- |
+| Training set size          | 480 volumes (`numTraining`)                             | VERIFIED — `dataset.json`                |
+| Test set size              | 50 volumes (`numTest`)                                  | VERIFIED — `dataset.json`                |
+| Published format           | **`.mha`**                                              | VERIFIED — dataset page                  |
+| Format the model reads     | **`.nii.gz`**                                           | VERIFIED — `dataset.json`, `file_ending` |
+| Channel                    | `CBCT`                                                  | VERIFIED — `dataset.json`                |
+| Voxel spacing              | **0.3 mm isotropic**                                    | VERIFIED — Grand Challenge dataset page  |
+| Value scale                | Hounsfield                                              | VERIFIED — dataset page                  |
+| Licence (dataset)          | CC-BY-SA 4.0                                            | VERIFIED — `dataset.json`                |
+| Min volume shape (P381)    | (170, 272, 345)                                         | VERIFIED — dataset page                  |
+| Median volume shape (P460) | (170, 357, 371)                                         | VERIFIED — dataset page                  |
+| Max volume shape (F039)    | (298, 512, 512)                                         | VERIFIED — dataset page                  |
+| Composition                | Set A (`P*`) = 417; Set B (`F*`) = 63. 417 + 63 = 480 ✓ | VERIFIED                                 |
 
 ### 2.1 Class list — 49 label entries, 42 anatomical classes
 
@@ -54,17 +54,17 @@ Read verbatim from `dataset.json`. 49 = background + 42 anatomical + **6 `NA`
 placeholders** (`NA1`–`NA6` at ids 19, 20, 29, 30, 39, 40). The arithmetic
 reconciles with the page's "42 classes".
 
-| Structure | Label id(s) |
-| --- | --- |
-| Lower Jawbone | 1 |
-| Upper Jawbone | 2 |
-| Inferior Alveolar Canal | 3 (Left), 4 (Right) |
-| Maxillary Sinus | 5 (Left), 6 (Right) |
-| Teeth | 11–18, 21–28, 31–38, 41–48 |
-| Implant | 10 |
-| Crown | 9 |
-| Bridge | 8 |
-| Pharynx | 7 |
+| Structure               | Label id(s)                |
+| ----------------------- | -------------------------- |
+| Lower Jawbone           | 1                          |
+| Upper Jawbone           | 2                          |
+| Inferior Alveolar Canal | 3 (Left), 4 (Right)        |
+| Maxillary Sinus         | 5 (Left), 6 (Right)        |
+| Teeth                   | 11–18, 21–28, 31–38, 41–48 |
+| Implant                 | 10                         |
+| Crown                   | 9                          |
+| Bridge                  | 8                          |
+| Pharynx                 | 7                          |
 
 Full map: `scripts/run_toothfairy2.py` → `OFFICIAL_LABELS`.
 
@@ -72,18 +72,18 @@ Full map: `scripts/run_toothfairy2.py` → `OFFICIAL_LABELS`.
 
 From `nnUNetplans_files/nnUNetPlans.json` in the official repo.
 
-| Field | Value | Status |
-| --- | --- | --- |
-| `dataset_name` | `Dataset119_ToothFairy2` → **dataset id 119** | VERIFIED |
-| `plans_name` | `nnUNetPlans` | VERIFIED |
-| `image_reader_writer` | **`SimpleITKIO`** | VERIFIED |
-| **`transpose_forward`** | **[0, 1, 2]** (identity — no axis permutation) | VERIFIED |
-| **`transpose_backward`** | **[0, 1, 2]** | VERIFIED |
-| `original_median_spacing_after_transp` | [0.3, 0.3, 0.3] | VERIFIED |
-| `original_median_shape_after_transp` | [169, 347, 371] | VERIFIED |
-| 3d_fullres patch / spacing | [80, 192, 192] / 0.3 mm iso | VERIFIED |
-| 3d_fullres normalisation | ZScoreNormalization | VERIFIED |
-| `experiment_planner_used` | ExperimentPlanner | VERIFIED |
+| Field                                  | Value                                          | Status   |
+| -------------------------------------- | ---------------------------------------------- | -------- |
+| `dataset_name`                         | `Dataset119_ToothFairy2` → **dataset id 119**  | VERIFIED |
+| `plans_name`                           | `nnUNetPlans`                                  | VERIFIED |
+| `image_reader_writer`                  | **`SimpleITKIO`**                              | VERIFIED |
+| **`transpose_forward`**                | **[0, 1, 2]** (identity — no axis permutation) | VERIFIED |
+| **`transpose_backward`**               | **[0, 1, 2]**                                  | VERIFIED |
+| `original_median_spacing_after_transp` | [0.3, 0.3, 0.3]                                | VERIFIED |
+| `original_median_shape_after_transp`   | [169, 347, 371]                                | VERIFIED |
+| 3d_fullres patch / spacing             | [80, 192, 192] / 0.3 mm iso                    | VERIFIED |
+| 3d_fullres normalisation               | ZScoreNormalization                            | VERIFIED |
+| `experiment_planner_used`              | ExperimentPlanner                              | VERIFIED |
 
 `transpose_forward` being the identity is informative: the training data needed
 **no axis transposition** to reach the configuration the model expects, and
@@ -97,13 +97,13 @@ computed by nnU-Net on the TF2 training data. These are the authoritative
 intensity numbers, and `audit_compatibility.py` is built on them rather than on
 an invented window.
 
-| Statistic | Value |
-| --- | --- |
-| min | −1000.0 |
-| max | 5264.0 |
-| mean | 811.63 |
-| median | 940.41 |
-| std | 1000.97 |
+| Statistic       | Value      |
+| --------------- | ---------- |
+| min             | −1000.0    |
+| max             | 5264.0     |
+| mean            | 811.63     |
+| median          | 940.41     |
+| std             | 1000.97    |
 | percentile 00.5 | **−992.0** |
 | percentile 99.5 | **3512.9** |
 
@@ -121,20 +121,20 @@ ToothFairy2/3 data.
 
 Read from https://ditto.ing.unimore.it/toothfairy4/.
 
-| Field | Value | Status |
-| --- | --- | --- |
-| Total | **625 patients** | VERIFIED |
-| Set P | 417 volumes | VERIFIED |
-| Set F | 63 volumes | VERIFIED |
-| Set S | 52 volumes | VERIFIED |
-| Set A | 100 volumes | VERIFIED |
-| Format | NIfTI, **`.nii.gz`** | VERIFIED |
-| Per-case layout | `cbct/` (one volume), `reports_it/`, `reports_en/` | VERIFIED |
-| Provenance of P/F/S | "Sets P, F, and S come from ToothFairy3" | VERIFIED |
-| Spacing | "other sets ensure a **0.3 mm isotropic** pixel spacing, **set A does not**" | VERIFIED |
-| Set A origin | Digital Research Center of Sfax, different CBCT machines | VERIFIED |
-| **Download** | "You need to have an account to download the dataset." | VERIFIED |
-| Venue | ODIN2026 / MICCAI2026, task "ToothFairy4" | VERIFIED |
+| Field               | Value                                                                        | Status   |
+| ------------------- | ---------------------------------------------------------------------------- | -------- |
+| Total               | **625 patients**                                                             | VERIFIED |
+| Set P               | 417 volumes                                                                  | VERIFIED |
+| Set F               | 63 volumes                                                                   | VERIFIED |
+| Set S               | 52 volumes                                                                   | VERIFIED |
+| Set A               | 100 volumes                                                                  | VERIFIED |
+| Format              | NIfTI, **`.nii.gz`**                                                         | VERIFIED |
+| Per-case layout     | `cbct/` (one volume), `reports_it/`, `reports_en/`                           | VERIFIED |
+| Provenance of P/F/S | "Sets P, F, and S come from ToothFairy3"                                     | VERIFIED |
+| Spacing             | "other sets ensure a **0.3 mm isotropic** pixel spacing, **set A does not**" | VERIFIED |
+| Set A origin        | Digital Research Center of Sfax, different CBCT machines                     | VERIFIED |
+| **Download**        | "You need to have an account to download the dataset."                       | VERIFIED |
+| Venue               | ODIN2026 / MICCAI2026, task "ToothFairy4"                                    | VERIFIED |
 
 ### 3.2 A numerical inconsistency in the official page
 
@@ -182,12 +182,12 @@ Chain, each link from an official page:
 
 Counts across the three releases, all official:
 
-| Set | TF2 | TF3 | TF4 |
-| --- | --- | --- | --- |
-| P / A | 417 | 417 | 417 |
-| F / B | 63 | 63 | 63 |
-| S / C | — | 52 | 52 |
-| A | — | — | 100 |
+| Set       | TF2     | TF3     | TF4              |
+| --------- | ------- | ------- | ---------------- |
+| P / A     | 417     | 417     | 417              |
+| F / B     | 63      | 63      | 63               |
+| S / C     | —       | 52      | 52               |
+| A         | —       | —       | 100              |
 | **Total** | **480** | **532** | **625** (stated) |
 
 TF2 total = 417 + 63 = 480 ✓ exactly P + F.
@@ -200,7 +200,7 @@ independent official statements plus exact count agreement.
 
 ### 4.2 Case-level identity: NOT VERIFIED
 
-The user requirement was to prove that *a specific case* in ToothFairy4/P is the
+The user requirement was to prove that _a specific case_ in ToothFairy4/P is the
 same case as in ToothFairy2. **That cannot be established from public sources.**
 
 Why not, concretely:
@@ -218,8 +218,8 @@ Why not, concretely:
   would not guarantee identical voxel data or geometry.
 - **Orientation may have changed** (§3.3).
 
-**Therefore the honest statement is: the *population* overlap is verified; the
-*individual case* identity is not.** Confirming it requires the file: after
+**Therefore the honest statement is: the _population_ overlap is verified; the
+_individual case_ identity is not.** Confirming it requires the file: after
 download, compare the volume's shape, spacing, orientation and hash against
 TF2's documented values, which is exactly what `audit_compatibility.py` does.
 
@@ -255,11 +255,11 @@ non-0.3 mm spacing.
 
 Stated precisely, because this is the crux:
 
-| | Orientation | Source |
-| --- | --- | --- |
-| ToothFairy3 | **RPI** — "not a standard convention, but consistent with the first release of the Maxillo dataset" | TF3 page |
-| ToothFairy4 | **Not stated.** Explicitly warned to be a risk versus TF3 | TF4 page |
-| **ToothFairy2** | **Not stated anywhere public** | TF2 page — checked, absent |
+|                 | Orientation                                                                                         | Source                     |
+| --------------- | --------------------------------------------------------------------------------------------------- | -------------------------- |
+| ToothFairy3     | **RPI** — "not a standard convention, but consistent with the first release of the Maxillo dataset" | TF3 page                   |
+| ToothFairy4     | **Not stated.** Explicitly warned to be a risk versus TF3                                           | TF4 page                   |
+| **ToothFairy2** | **Not stated anywhere public**                                                                      | TF2 page — checked, absent |
 
 The decisive question — does a TF4 P case have the orientation the TF2 model was
 trained on? — **cannot be answered from documentation**, because TF2 never
@@ -274,7 +274,7 @@ Contributing facts:
 - TF3 publishes an **official** orientation script:
   `https://ditto.ing.unimore.it/static/toothfairy3/fix_orientation.py`
   It flips the array along numpy axes 1 and 2 and then calls
-  `CopyInformation(volume)` — so the voxel *data* is reordered while the *header*
+  `CopyInformation(volume)` — so the voxel _data_ is reordered while the _header_
   is carried across unchanged. Consequently the direction matrix, and therefore
   the orientation **code**, does not change. This is the only officially
   sanctioned transform, and `audit_compatibility.py --emit-lps` reproduces it
@@ -288,11 +288,11 @@ unless the file itself resolves it, and the overall verdict cannot reach
 
 ## 6. The checkpoint — UNVERIFIED
 
-| Field | Value | Status |
-| --- | --- | --- |
-| Official checkpoint page | https://ditto.ing.unimore.it/toothfairy2/download/checkpoints | VERIFIED (URL) |
-| Downloadable without an account? | **No** | VERIFIED — login-gated |
-| Official hash / size | **not published anywhere reachable** | **UNVERIFIED** |
+| Field                            | Value                                                         | Status                 |
+| -------------------------------- | ------------------------------------------------------------- | ---------------------- |
+| Official checkpoint page         | https://ditto.ing.unimore.it/toothfairy2/download/checkpoints | VERIFIED (URL)         |
+| Downloadable without an account? | **No**                                                        | VERIFIED — login-gated |
+| Official hash / size             | **not published anywhere reachable**                          | **UNVERIFIED**         |
 
 ### 6.1 On the checkpoint described in the task brief
 
@@ -330,18 +330,18 @@ you obtain an official hash, pass it with `--expect-sha256`.
 
 ## 7. Summary
 
-| Item | Status |
-| --- | --- |
-| Model identity, framework, official sites | **VERIFIED** |
-| TF2 dataset size, format, licence, labels, ids | **VERIFIED** |
-| TF2 dataset id 119, plans, patch, spacing, reader | **VERIFIED** |
-| TF2 official intensity percentiles | **VERIFIED** |
-| TF4 composition, format, per-case layout, spacing rule | **VERIFIED** |
-| TF4 → TF3 → TF2 **cohort** overlap | **VERIFIED** |
-| TF4 **case-level** identity with TF2 | **NOT VERIFIED** |
-| TF4 download requires authentication | **VERIFIED** |
-| Orientation of TF2 / TF4 | **NOT PUBLISHED — UNKNOWN** |
-| Local scripts (mechanics, stop-paths, orientation decoder) | **VERIFIED in Arena** |
-| Checkpoint provenance | **UNVERIFIED** |
-| Real CBCT input obtainable without authentication | **NO — BLOCKED** |
-| Inference result, runtime, RAM | **UNKNOWN — never run** |
+| Item                                                       | Status                      |
+| ---------------------------------------------------------- | --------------------------- |
+| Model identity, framework, official sites                  | **VERIFIED**                |
+| TF2 dataset size, format, licence, labels, ids             | **VERIFIED**                |
+| TF2 dataset id 119, plans, patch, spacing, reader          | **VERIFIED**                |
+| TF2 official intensity percentiles                         | **VERIFIED**                |
+| TF4 composition, format, per-case layout, spacing rule     | **VERIFIED**                |
+| TF4 → TF3 → TF2 **cohort** overlap                         | **VERIFIED**                |
+| TF4 **case-level** identity with TF2                       | **NOT VERIFIED**            |
+| TF4 download requires authentication                       | **VERIFIED**                |
+| Orientation of TF2 / TF4                                   | **NOT PUBLISHED — UNKNOWN** |
+| Local scripts (mechanics, stop-paths, orientation decoder) | **VERIFIED in Arena**       |
+| Checkpoint provenance                                      | **UNVERIFIED**              |
+| Real CBCT input obtainable without authentication          | **NO — BLOCKED**            |
+| Inference result, runtime, RAM                             | **UNKNOWN — never run**     |

@@ -9,7 +9,11 @@
 
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
-import { VOICE_PROVIDER_REGISTRY, VOICE_REGISTRY_AUDITED_AT, VOICE_REGISTRY_ENV } from '@/lib/ai/voice/providers'
+import {
+  VOICE_PROVIDER_REGISTRY,
+  VOICE_REGISTRY_AUDITED_AT,
+  VOICE_REGISTRY_ENV,
+} from '@/lib/ai/voice/providers'
 
 export const dynamic = 'force-dynamic'
 

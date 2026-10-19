@@ -55,9 +55,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const res = await cancelApproval(id, actor)
     if (!res.ok) {
       const message =
-        res.code === 'NOT_PENDING' ? 'This approval is no longer pending'
-        : res.code === 'EXPIRED' ? 'This approval has expired'
-        : 'You do not have permission to approve this request'
+        res.code === 'NOT_PENDING'
+          ? 'This approval is no longer pending'
+          : res.code === 'EXPIRED'
+            ? 'This approval has expired'
+            : 'You do not have permission to approve this request'
       const status = res.code === 'NOT_PENDING' || res.code === 'EXPIRED' ? 409 : 403
       return NextResponse.json({ error: message }, { status })
     }
@@ -75,9 +77,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const res = await rejectApproval(id, actor, body.note)
     if (!res.ok) {
       const message =
-        res.code === 'EXPIRED' ? 'This approval has expired'
-        : res.code === 'SELF_APPROVAL' ? 'An approver cannot approve their own request'
-        : 'This approval is no longer pending'
+        res.code === 'EXPIRED'
+          ? 'This approval has expired'
+          : res.code === 'SELF_APPROVAL'
+            ? 'An approver cannot approve their own request'
+            : 'This approval is no longer pending'
       const status = res.code === 'SELF_APPROVAL' ? 403 : 409
       return NextResponse.json({ error: message }, { status })
     }
@@ -110,7 +114,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       UNKNOWN_EXECUTOR: { message: 'This action is not permitted', status: 400 },
       EXECUTION_ERROR: { message: 'The action could not be executed safely', status: 502 },
     }
-    const m = map[outcome.code] ?? { message: 'The action could not be executed safely', status: 500 }
+    const m = map[outcome.code] ?? {
+      message: 'The action could not be executed safely',
+      status: 500,
+    }
     return NextResponse.json({ error: m.message, code: outcome.code }, { status: m.status })
   }
 

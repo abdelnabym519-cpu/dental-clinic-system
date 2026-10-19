@@ -68,10 +68,13 @@ export async function POST(req: Request) {
     // Phase 6 — attachment ids ONLY (server re-resolves every id against
     // the tenant; names/paths/URLs are never accepted from the client).
     attachments: Array.isArray(body.attachments)
-      ? [...new Set(
-          (body.attachments as unknown[])
-            .filter((a): a is string => typeof a === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(a))
-        )].slice(0, 4)
+      ? [
+          ...new Set(
+            (body.attachments as unknown[]).filter(
+              (a): a is string => typeof a === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(a)
+            )
+          ),
+        ].slice(0, 4)
       : null,
   }
 
@@ -82,7 +85,8 @@ export async function POST(req: Request) {
     const { DEFAULT_AGENT_LIMITS } = await import('@/lib/ai/agent/types')
     const { complete } = await import('@/lib/ai/openrouter')
     const { getModelByTier } = await import('@/lib/ai/models')
-    const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
+    const { createOrchestratorCapabilitySource } =
+      await import('@/lib/ai/engines/orchestrator-source')
     // Phase 6 — real-inference path: attachment service + LocalAIService
     // wired to the existing orchestrator transport (the single inference
     // boundary — no second pipeline, no engine selection from text).
@@ -95,40 +99,35 @@ export async function POST(req: Request) {
 
     const capabilitySource = createOrchestratorCapabilitySource()
 
-    const result = await runAgent(
-      request,
-      {
-        client: prisma,
-        // LLM usage is bounded by design: classification fallback + synthesis
-        // only — never authorization, execution or approval.
-        llm: async (messages, purpose) => {
-          const model = getModelByTier(purpose === 'agent_synthesis' ? 'default' : 'fast')
-          const { content, model: used } = await complete(messages, model)
-          return { content, model: used }
-        },
-        limits: { ...DEFAULT_AGENT_LIMITS },
-        now: () => new Date(),
-        // Phase 5 — local AI capability view (live orchestrator when
-        // configured; the tool reports honest unavailability otherwise).
-        localAiCapabilities: capabilitySource,
-        // Phase 6 — attachment service (tenant-scoped, server-resolved).
-        attachments: createAttachmentService(prisma),
-        // Phase 6 — LocalAIService WITH transport: integrity-checked real
-        // inference through the orchestrator (stand-in refusal, checksum
-        // verification, job identity check). The cast preserves runtime
-        // is_standin_* fields that AnalyzeResult does not declare.
-        localAiService: new LocalAIService(
-          capabilitySource,
-          (p) =>
-            requestOrchestratorAnalyze(p).then(
-              (r) =>
-                r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse,
-            ),
-        ),
-        // Phase 8 — canonical memory service (the loop's only memory path).
-        memory: new MemoryOrchestrator(new PrismaMemoryStore(prisma)),
-      }
-    )
+    const result = await runAgent(request, {
+      client: prisma,
+      // LLM usage is bounded by design: classification fallback + synthesis
+      // only — never authorization, execution or approval.
+      llm: async (messages, purpose) => {
+        const model = getModelByTier(purpose === 'agent_synthesis' ? 'default' : 'fast')
+        const { content, model: used } = await complete(messages, model)
+        return { content, model: used }
+      },
+      limits: { ...DEFAULT_AGENT_LIMITS },
+      now: () => new Date(),
+      // Phase 5 — local AI capability view (live orchestrator when
+      // configured; the tool reports honest unavailability otherwise).
+      localAiCapabilities: capabilitySource,
+      // Phase 6 — attachment service (tenant-scoped, server-resolved).
+      attachments: createAttachmentService(prisma),
+      // Phase 6 — LocalAIService WITH transport: integrity-checked real
+      // inference through the orchestrator (stand-in refusal, checksum
+      // verification, job identity check). The cast preserves runtime
+      // is_standin_* fields that AnalyzeResult does not declare.
+      localAiService: new LocalAIService(capabilitySource, (p) =>
+        requestOrchestratorAnalyze(p).then(
+          (r) =>
+            r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse
+        )
+      ),
+      // Phase 8 — canonical memory service (the loop's only memory path).
+      memory: new MemoryOrchestrator(new PrismaMemoryStore(prisma)),
+    })
 
     // Non-blocking audit (must never break the response).
     prisma.auditLog
@@ -141,7 +140,9 @@ export async function POST(req: Request) {
           entityId: result.trace.traceId,
         },
       })
-      .catch((e: unknown) => console.error('AI agent audit failed:', e instanceof Error ? e.message : e))
+      .catch((e: unknown) =>
+        console.error('AI agent audit failed:', e instanceof Error ? e.message : e)
+      )
 
     return NextResponse.json(result)
   } catch (err) {

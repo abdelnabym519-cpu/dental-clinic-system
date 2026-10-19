@@ -14,51 +14,123 @@
  *    never silently repair clinical data.
  */
 import { describe, it, expect } from 'vitest'
-import { createFakePrisma, HOSP_A, PAT_A1, PAT_A2, PAT_B1, NOW, ACTORS } from '@/tests/harness/context-fixtures'
-import { buildCaseGraph, traverseGraph, checkGraphConsistency, type GraphPrisma } from '@/lib/ai/intelligence/case-graph'
-import { GRAPH_EDGE_KINDS, GRAPH_NODE_KINDS, GRAPH_TRUSTS, type CaseGraph, type GraphNode, type GraphEdge } from '@/lib/ai/intelligence/types'
+import {
+  createFakePrisma,
+  HOSP_A,
+  PAT_A1,
+  PAT_A2,
+  PAT_B1,
+  NOW,
+  ACTORS,
+} from '@/tests/harness/context-fixtures'
+import {
+  buildCaseGraph,
+  traverseGraph,
+  checkGraphConsistency,
+  type GraphPrisma,
+} from '@/lib/ai/intelligence/case-graph'
+import {
+  GRAPH_EDGE_KINDS,
+  GRAPH_NODE_KINDS,
+  GRAPH_TRUSTS,
+  type CaseGraph,
+  type GraphNode,
+  type GraphEdge,
+} from '@/lib/ai/intelligence/types'
 
 const STAFF_A = [
-  { id: 'staff-doctor-1', hospitalId: HOSP_A, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR' },
-  { id: 'staff-doctor-B', hospitalId: 'hosp-B', firstName: 'Laila', lastName: 'Nabil', role: 'DOCTOR' },
+  {
+    id: 'staff-doctor-1',
+    hospitalId: HOSP_A,
+    firstName: 'Hana',
+    lastName: 'Shalaby',
+    role: 'DOCTOR',
+  },
+  {
+    id: 'staff-doctor-B',
+    hospitalId: 'hosp-B',
+    firstName: 'Laila',
+    lastName: 'Nabil',
+    role: 'DOCTOR',
+  },
 ]
 // Standalone AI jobs (the graph reads them from the aiAnalysisJob table and
 // re-pins them to the patient's studies — embedded job shapes are not used).
 const AI_JOBS = [
   {
-    id: 'job-A1', hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-    requestedById: 'staff-doctor-1', modelVersion: 'v1.2.0', modelChecksum: 'c0ffee0000000000000000000000000000000000',
-    orchestratorVersion: '2.1.0', startedAt: NOW, completedAt: NOW,
-    confidence: 0.87, findings: [{ condition: 'caries', tooth_number: 36 }],
-    reviewedById: 'staff-doctor-1', reviewedAt: NOW, reviewDecision: 'ACCEPTED',
-    acceptedFindings: [{ condition: 'caries', tooth_number: 36 }], createdAt: NOW,
+    id: 'job-A1',
+    hospitalId: HOSP_A,
+    studyId: 'study-A1',
+    engine: 'clm',
+    status: 'COMPLETED',
+    requestedById: 'staff-doctor-1',
+    modelVersion: 'v1.2.0',
+    modelChecksum: 'c0ffee0000000000000000000000000000000000',
+    orchestratorVersion: '2.1.0',
+    startedAt: NOW,
+    completedAt: NOW,
+    confidence: 0.87,
+    findings: [{ condition: 'caries', tooth_number: 36 }],
+    reviewedById: 'staff-doctor-1',
+    reviewedAt: NOW,
+    reviewDecision: 'ACCEPTED',
+    acceptedFindings: [{ condition: 'caries', tooth_number: 36 }],
+    createdAt: NOW,
   },
   {
-    id: 'job-B1', hospitalId: 'hosp-B', studyId: 'study-B1', engine: 'clm', status: 'COMPLETED',
-    requestedById: 'staff-doctor-B', modelVersion: 'v1.2.0', modelChecksum: 'beef0000000000000000000000000000000000',
-    orchestratorVersion: '2.1.0', startedAt: NOW, completedAt: NOW,
-    confidence: 0.9, findings: [{ condition: 'periapical', tooth_number: 46 }],
-    reviewedById: null, reviewedAt: null, reviewDecision: null,
-    acceptedFindings: null, createdAt: NOW,
+    id: 'job-B1',
+    hospitalId: 'hosp-B',
+    studyId: 'study-B1',
+    engine: 'clm',
+    status: 'COMPLETED',
+    requestedById: 'staff-doctor-B',
+    modelVersion: 'v1.2.0',
+    modelChecksum: 'beef0000000000000000000000000000000000',
+    orchestratorVersion: '2.1.0',
+    startedAt: NOW,
+    completedAt: NOW,
+    confidence: 0.9,
+    findings: [{ condition: 'periapical', tooth_number: 46 }],
+    reviewedById: null,
+    reviewedAt: null,
+    reviewDecision: null,
+    acceptedFindings: null,
+    createdAt: NOW,
   },
 ]
-const baseExtra = (memory = true) => ({
-  staff: STAFF_A,
-  aiAnalysisJob: AI_JOBS,
-  aiMemoryItem: memory
-    ? [{
-        id: 'mem-A1-1', hospitalId: HOSP_A, domain: 'PATIENT', patientId: PAT_A1,
-        key: 'event.followup_plan', value: { summary: 'Recheck 36 in four weeks' },
-        trustLevel: 'USER_PROVIDED', status: 'ACTIVE', sourceKind: 'USER_STATEMENT',
-        sourceRef: null, createdBy: 'staff-doctor-1', createdByIdType: 'USER',
-        createdAt: NOW, updatedAt: NOW, expiresAt: null, supersededBy: null,
-      }]
-    : [],
-} as never)
+const baseExtra = (memory = true) =>
+  ({
+    staff: STAFF_A,
+    aiAnalysisJob: AI_JOBS,
+    aiMemoryItem: memory
+      ? [
+          {
+            id: 'mem-A1-1',
+            hospitalId: HOSP_A,
+            domain: 'PATIENT',
+            patientId: PAT_A1,
+            key: 'event.followup_plan',
+            value: { summary: 'Recheck 36 in four weeks' },
+            trustLevel: 'USER_PROVIDED',
+            status: 'ACTIVE',
+            sourceKind: 'USER_STATEMENT',
+            sourceRef: null,
+            createdBy: 'staff-doctor-1',
+            createdByIdType: 'USER',
+            createdAt: NOW,
+            updatedAt: NOW,
+            expiresAt: null,
+            supersededBy: null,
+          },
+        ]
+      : [],
+  }) as never
 
 const db = () => createFakePrisma(baseExtra())
 
-const build = (p: { hospitalId?: string; patientId?: string; caseId?: string | null; now?: Date } = {}) =>
+const build = (
+  p: { hospitalId?: string; patientId?: string; caseId?: string | null; now?: Date } = {}
+) =>
   buildCaseGraph(db() as unknown as GraphPrisma, {
     hospitalId: p.hospitalId ?? HOSP_A,
     patientId: p.patientId ?? PAT_A1,
@@ -69,7 +141,9 @@ const build = (p: { hospitalId?: string; patientId?: string; caseId?: string | n
 
 describe('Phase 9 — case graph: scope & fail-closed (§7)', () => {
   it('unknown patient → INT_PATIENT_NOT_FOUND (never an empty graph served)', async () => {
-    await expect(build({ patientId: 'pat-nope' })).rejects.toMatchObject({ code: 'INT_PATIENT_NOT_FOUND' })
+    await expect(build({ patientId: 'pat-nope' })).rejects.toMatchObject({
+      code: 'INT_PATIENT_NOT_FOUND',
+    })
   })
 
   it('cross-tenant patient → INT_SCOPE_MISMATCH (the tenant-B trap)', async () => {
@@ -82,7 +156,10 @@ describe('Phase 9 — case graph: scope & fail-closed (§7)', () => {
     expect(patientNodes.map((n) => n.ref)).toEqual([PAT_A1])
     for (const e of g.edges) {
       if (e.kind.startsWith('PATIENT_')) {
-        expect(e.from === `patient:${PAT_A1}` || e.to === `patient:${PAT_A1}`, `edge ${e.kind} off the patient spine`).toBe(true)
+        expect(
+          e.from === `patient:${PAT_A1}` || e.to === `patient:${PAT_A1}`,
+          `edge ${e.kind} off the patient spine`
+        ).toBe(true)
       }
     }
   })
@@ -139,29 +216,79 @@ describe('Phase 9 — case graph: trust classes & provenance (§8)', () => {
   it('interpretation never silently becomes fact: pending AI job keeps AI_DERIVED', async () => {
     const fake = createFakePrisma({
       ...baseExtra(false),
-      aiAnalysisJob: [{
-        id: 'job-pend', hospitalId: HOSP_A, studyId: 'study-pend', engine: 'clm', status: 'COMPLETED',
-        requestedById: null, modelVersion: 'v1', modelChecksum: 'aa', orchestratorVersion: '2',
-        startedAt: NOW, completedAt: NOW, confidence: 0.5, findings: [],
-        reviewedById: null, reviewedAt: null, reviewDecision: null, acceptedFindings: null, createdAt: NOW,
-      }],
+      aiAnalysisJob: [
+        {
+          id: 'job-pend',
+          hospitalId: HOSP_A,
+          studyId: 'study-pend',
+          engine: 'clm',
+          status: 'COMPLETED',
+          requestedById: null,
+          modelVersion: 'v1',
+          modelChecksum: 'aa',
+          orchestratorVersion: '2',
+          startedAt: NOW,
+          completedAt: NOW,
+          confidence: 0.5,
+          findings: [],
+          reviewedById: null,
+          reviewedAt: null,
+          reviewDecision: null,
+          acceptedFindings: null,
+          createdAt: NOW,
+        },
+      ],
       imagingStudy: [
         {
-          id: 'study-pend', hospitalId: HOSP_A, patientId: PAT_A1,
-          studyType: 'PERIAPICAL', modality: 'DIGITAL_XRAY', studyDate: NOW,
-          status: 'COMPLETED', description: 'pending job', appointmentId: null, appointment: null,
-          uploadedById: 'staff-doctor-1', uploadedBy: null, createdAt: NOW,
-          aiJobs: [{ id: 'job-pend', engine: 'clm', status: 'COMPLETED', modelVersion: 'v1', modelChecksum: 'aa', orchestratorVersion: '2', completedAt: NOW, createdAt: NOW, confidence: 0.5, findings: [], reviewedById: null, reviewedAt: null, reviewDecision: null, reviewedBy: null, acceptedFindings: null }],
+          id: 'study-pend',
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          studyType: 'PERIAPICAL',
+          modality: 'DIGITAL_XRAY',
+          studyDate: NOW,
+          status: 'COMPLETED',
+          description: 'pending job',
+          appointmentId: null,
+          appointment: null,
+          uploadedById: 'staff-doctor-1',
+          uploadedBy: null,
+          createdAt: NOW,
+          aiJobs: [
+            {
+              id: 'job-pend',
+              engine: 'clm',
+              status: 'COMPLETED',
+              modelVersion: 'v1',
+              modelChecksum: 'aa',
+              orchestratorVersion: '2',
+              completedAt: NOW,
+              createdAt: NOW,
+              confidence: 0.5,
+              findings: [],
+              reviewedById: null,
+              reviewedAt: null,
+              reviewDecision: null,
+              reviewedBy: null,
+              acceptedFindings: null,
+            },
+          ],
         },
       ],
     } as never)
     const graph = await buildCaseGraph(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: PAT_A1, caseId: null,
-      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+      hospitalId: HOSP_A,
+      patientId: PAT_A1,
+      caseId: null,
+      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+      now: NOW,
     })
     const pending = graph.nodes.find((n) => n.id === 'aifinding:job-pend')
     expect(pending?.trust).toBe('AI_DERIVED')
-    expect(graph.edges.some((e) => e.kind === 'AI_FINDING_CONFIRMED_BY' && e.from === 'aifinding:job-pend')).toBe(false)
+    expect(
+      graph.edges.some(
+        (e) => e.kind === 'AI_FINDING_CONFIRMED_BY' && e.from === 'aifinding:job-pend'
+      )
+    ).toBe(false)
   })
 })
 
@@ -169,12 +296,25 @@ describe('Phase 9 — case graph: content mapping (§6)', () => {
   it('maps teeth, findings, case, treatments, follow-up, imaging, memory, symptoms', async () => {
     const graph = await build({ patientId: PAT_A1 })
     const kinds = new Set(graph.nodes.map((n) => n.kind))
-    for (const k of ['PATIENT', 'TOOTH', 'CASE', 'TREATMENT', 'FOLLOW_UP', 'IMAGING', 'AI_FINDING', 'MEMORY', 'SYMPTOM', 'FINDING']) {
+    for (const k of [
+      'PATIENT',
+      'TOOTH',
+      'CASE',
+      'TREATMENT',
+      'FOLLOW_UP',
+      'IMAGING',
+      'AI_FINDING',
+      'MEMORY',
+      'SYMPTOM',
+      'FINDING',
+    ]) {
       expect(kinds, `missing kind ${k}`).toContain(k as never)
     }
     const tooth36 = graph.nodes.find((n) => n.kind === 'TOOTH' && n.ref === '36')
     expect(tooth36).toBeTruthy()
-    const findings36 = graph.edges.filter((e) => e.kind === 'TOOTH_HAS_FINDING' && e.from === tooth36!.id)
+    const findings36 = graph.edges.filter(
+      (e) => e.kind === 'TOOTH_HAS_FINDING' && e.from === tooth36!.id
+    )
     expect(findings36.length).toBeGreaterThanOrEqual(2) // active + resolved history
     const fu = graph.nodes.find((n) => n.kind === 'FOLLOW_UP')
     expect(fu).toBeTruthy()
@@ -217,7 +357,10 @@ describe('Phase 9 — traversal & consistency (§31/§36)', () => {
   it('consistency: orphan + duplicate + missing-provenance edges are REPORTED (report-only)', async () => {
     const graph = await build({ patientId: PAT_A1 })
     const orphanEdge: GraphEdge = {
-      kind: 'PATIENT_HAS_APPOINTMENT', from: `patient:${PAT_A1}`, to: 'appointment:ghost', trust: 'RECORD_FACT',
+      kind: 'PATIENT_HAS_APPOINTMENT',
+      from: `patient:${PAT_A1}`,
+      to: 'appointment:ghost',
+      trust: 'RECORD_FACT',
       provenance: { source: 'x', actor: 'SYSTEM', at: NOW.toISOString(), sourceType: 'RECORD' },
     }
     const noProvEdge: GraphEdge = {
@@ -242,8 +385,18 @@ describe('Phase 9 — traversal & consistency (§31/§36)', () => {
   it('consistency: two distinct patient nodes → impossible-link finding', async () => {
     const graph = await build({ patientId: PAT_A1 })
     const ghost: GraphNode = {
-      id: 'patient:pat-ghost', kind: 'PATIENT', ref: 'pat-ghost', label: 'ghost', trust: 'UNKNOWN',
-      provenance: { source: 'unknown', actor: 'SYSTEM', at: NOW.toISOString(), sourceType: 'DERIVED' }, data: {},
+      id: 'patient:pat-ghost',
+      kind: 'PATIENT',
+      ref: 'pat-ghost',
+      label: 'ghost',
+      trust: 'UNKNOWN',
+      provenance: {
+        source: 'unknown',
+        actor: 'SYSTEM',
+        at: NOW.toISOString(),
+        sourceType: 'DERIVED',
+      },
+      data: {},
     }
     const mutated: CaseGraph = {
       ...graph,
@@ -251,8 +404,16 @@ describe('Phase 9 — traversal & consistency (§31/§36)', () => {
       edges: [
         ...graph.edges,
         {
-          kind: 'PATIENT_HAS_SYMPTOM', from: `patient:${PAT_A1}`, to: 'patient:pat-ghost', trust: 'USER_PROVIDED',
-          provenance: { source: 'forged', actor: 'SYSTEM', at: NOW.toISOString(), sourceType: 'DERIVED' },
+          kind: 'PATIENT_HAS_SYMPTOM',
+          from: `patient:${PAT_A1}`,
+          to: 'patient:pat-ghost',
+          trust: 'USER_PROVIDED',
+          provenance: {
+            source: 'forged',
+            actor: 'SYSTEM',
+            at: NOW.toISOString(),
+            sourceType: 'DERIVED',
+          },
         },
       ],
     }
@@ -265,22 +426,46 @@ describe('Phase 9 — traversal & consistency (§31/§36)', () => {
       ...baseExtra(false),
       treatment: [
         {
-          id: 'trt-stale', hospitalId: HOSP_A, patientId: PAT_A1, treatmentNo: 'TRT-STALE',
-          status: 'COMPLETED', toothNumbers: '36', diagnosis: null, findings: null, chiefComplaint: null,
-          procedureId: 'proc-rct', procedure: { name: 'RCT' }, doctorId: 'staff-doctor-1', doctor: null,
-          startTime: NOW, endTime: NOW, followUpRequired: true, followUpDate: new Date(NOW.getTime() - 5 * 86400000),
-          followUpNotes: null, complications: null, appointmentId: null, createdAt: NOW, updatedAt: NOW,
+          id: 'trt-stale',
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          treatmentNo: 'TRT-STALE',
+          status: 'COMPLETED',
+          toothNumbers: '36',
+          diagnosis: null,
+          findings: null,
+          chiefComplaint: null,
+          procedureId: 'proc-rct',
+          procedure: { name: 'RCT' },
+          doctorId: 'staff-doctor-1',
+          doctor: null,
+          startTime: NOW,
+          endTime: NOW,
+          followUpRequired: true,
+          followUpDate: new Date(NOW.getTime() - 5 * 86400000),
+          followUpNotes: null,
+          complications: null,
+          appointmentId: null,
+          createdAt: NOW,
+          updatedAt: NOW,
         },
       ],
     } as never)
     const graph = await buildCaseGraph(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: PAT_A1, caseId: null,
-      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+      hospitalId: HOSP_A,
+      patientId: PAT_A1,
+      caseId: null,
+      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+      now: NOW,
     })
     const codes = checkGraphConsistency(graph).map((i) => i.code)
     expect(codes).toContain('STALE_DERIVED_RELATIONSHIP')
     // The row itself is untouched — the graph only REPORTS.
-    const rows = await (fake as { treatment: { findMany: () => Promise<unknown[]> } }).treatment.findMany()
-    expect((rows as Record<string, unknown>[]).find((r) => r.id === 'trt-stale')?.followUpRequired).toBe(true)
+    const rows = await (
+      fake as { treatment: { findMany: () => Promise<unknown[]> } }
+    ).treatment.findMany()
+    expect(
+      (rows as Record<string, unknown>[]).find((r) => r.id === 'trt-stale')?.followUpRequired
+    ).toBe(true)
   })
 })

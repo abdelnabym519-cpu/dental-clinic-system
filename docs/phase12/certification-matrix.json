@@ -3,12 +3,7 @@
   "datasetVersion": "1.0.0",
   "phiPolicy": "SYNTHETIC_ONLY",
   "generatedAt": "2026-10-01",
-  "statuses": [
-    "CERTIFIED",
-    "CERTIFIED_WITH_RESIDUALS",
-    "ENVIRONMENT_BLOCKED",
-    "NOT_MEASURED"
-  ],
+  "statuses": ["CERTIFIED", "CERTIFIED_WITH_RESIDUALS", "ENVIRONMENT_BLOCKED", "NOT_MEASURED"],
   "baseline": {
     "tests": "6036 passed / 12 skipped / 0 failed / 0 unhandled (324 files)",
     "tsc": "502 pre-existing errors, 0 new",

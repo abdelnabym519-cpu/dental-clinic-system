@@ -103,17 +103,31 @@ export default function VideoConsultationsPage() {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.scheduled')}</Badge>
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.scheduled')}</Badge>
+        )
       case 'IN_PROGRESS':
         return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">{t('ui.live')}</Badge>
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 animate-pulse">
+            {t('ui.live')}
+          </Badge>
         )
       case 'COMPLETED':
-        return <Badge className="bg-muted text-muted-foreground hover:bg-muted">{t('ui.completed')}</Badge>
+        return (
+          <Badge className="bg-muted text-muted-foreground hover:bg-muted">
+            {t('ui.completed')}
+          </Badge>
+        )
       case 'CANCELLED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.cancelled')}</Badge>
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.cancelled')}</Badge>
+        )
       case 'NO_SHOW':
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">{t('ui.no_show')}</Badge>
+        return (
+          <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">
+            {t('ui.no_show')}
+          </Badge>
+        )
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -255,7 +269,7 @@ export default function VideoConsultationsPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {t("Dr.")} {c.doctor.firstName} {c.doctor.lastName}
+                          {t('Dr.')} {c.doctor.firstName} {c.doctor.lastName}
                         </div>
                         {c.doctor.specialization && (
                           <div className="text-xs text-muted-foreground">
@@ -322,7 +336,7 @@ export default function VideoConsultationsPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            {t("Page")} {page} {t("of")} {totalPages}
+            {t('Page')} {page} {t('of')} {totalPages}
           </span>
           <Button
             variant="outline"

@@ -42,7 +42,15 @@ describe('imaging object keys (D6/D6.1)', () => {
 
   it('original and AI outputs are DIFFERENT objects (originals immutable)', () => {
     const original = buildStorageKey(H1, 'imaging', PATIENT, STUDY, 'original.png')
-    const annotated = buildStorageKey(H1, 'imaging', PATIENT, STUDY, 'ai', 'liodon', 'annotated.png')
+    const annotated = buildStorageKey(
+      H1,
+      'imaging',
+      PATIENT,
+      STUDY,
+      'ai',
+      'liodon',
+      'annotated.png'
+    )
     expect(original).not.toBe(annotated)
   })
 

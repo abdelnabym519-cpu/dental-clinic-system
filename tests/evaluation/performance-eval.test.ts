@@ -15,7 +15,13 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { benchmark, detectEnvLabel, environmentFacts, assertLabeled, isEnvLabel } from '@/lib/ai/evaluation'
+import {
+  benchmark,
+  detectEnvLabel,
+  environmentFacts,
+  assertLabeled,
+  isEnvLabel,
+} from '@/lib/ai/evaluation'
 import { createInMemoryKnowledgeStore, SEED_KNOWLEDGE } from './harness'
 import { replayAgentCase } from '@/lib/ai/evaluation/replay'
 import type { GoldenCase } from '@/lib/ai/evaluation'
@@ -25,7 +31,18 @@ const store = createInMemoryKnowledgeStore(SEED_KNOWLEDGE)
 const HOSP = 'hosp-A'
 
 function caseOf(over: Partial<GoldenCase> & { message: string }): GoldenCase {
-  return { caseId: 'PERF-001', category: 'AGENT', domain: 'dental', language: 'en', title: 'perf', actorRole: 'DOCTOR', tenant: 'A', input: { message: over.message }, expected: {}, ...over }
+  return {
+    caseId: 'PERF-001',
+    category: 'AGENT',
+    domain: 'dental',
+    language: 'en',
+    title: 'perf',
+    actorRole: 'DOCTOR',
+    tenant: 'A',
+    input: { message: over.message },
+    expected: {},
+    ...over,
+  }
 }
 
 let envLabel: string
@@ -54,10 +71,21 @@ describe('PERFORMANCE (Gate K): environment-labeled metrics', () => {
   })
 
   it('RAG retrieval benchmark: labeled record, valid facts, zero failures', async () => {
-    const record = await benchmark('rag_retrieval_lexical', async () => {
-      const pkg = await retrieveKnowledge({ question: 'indications for a root canal treatment criteria', useCase: 'clinical', hospitalId: HOSP }, store)
-      return pkg.citations.length
-    }, { warmup: 2, samples: 7 })
+    const record = await benchmark(
+      'rag_retrieval_lexical',
+      async () => {
+        const pkg = await retrieveKnowledge(
+          {
+            question: 'indications for a root canal treatment criteria',
+            useCase: 'clinical',
+            hospitalId: HOSP,
+          },
+          store
+        )
+        return pkg.citations.length
+      },
+      { warmup: 2, samples: 7 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.runs.samples).toBe(7)
@@ -70,10 +98,14 @@ describe('PERFORMANCE (Gate K): environment-labeled metrics', () => {
 
   it('agent replay benchmark: labeled record, deterministic case has zero failures', async () => {
     const c = caseOf({ input: { message: 'Who is waiting in the queue right now?' } })
-    const record = await benchmark('agent_replay_operational', async () => {
-      const o = await replayAgentCase(c, { uploadDir })
-      return o.observed.tools.length
-    }, { warmup: 1, samples: 4 })
+    const record = await benchmark(
+      'agent_replay_operational',
+      async () => {
+        const o = await replayAgentCase(c, { uploadDir })
+        return o.observed.tools.length
+      },
+      { warmup: 1, samples: 4 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)
@@ -89,43 +121,54 @@ describe('PERFORMANCE (Gate K): environment-labeled metrics', () => {
     const store = new InMemoryMemoryStore(now)
     const memory = new MemoryOrchestrator(store)
     const actor = { id: 'staff-doctor-1', name: 'Dr. T', role: 'DOCTOR' }
-    const scope = { hospitalId: HOSP, domain: 'PATIENT' as const, doctorId: null, patientId: 'pat-A1', caseId: null, conversationId: null }
+    const scope = {
+      hospitalId: HOSP,
+      domain: 'PATIENT' as const,
+      doctorId: null,
+      patientId: 'pat-A1',
+      caseId: null,
+      conversationId: null,
+    }
     let n = 0
-    const record = await benchmark('memory_prepare_update', async () => {
-      // One bounded write (USER_PROVIDED preference) + one bounded retrieval
-      // against a growing but capped store — the hot path of the agent loop.
-      await store.write(
-        {
-          scope,
-          key: `perf.pref.${n++}`,
-          value: { summary: 'Synthetic performance probe.' },
-          memoryType: 'EPISODIC',
-          writeClass: 'USER_CONFIRMED',
-          trustLevel: 'USER_PROVIDED',
-          sourceKind: 'USER_STATEMENT',
-          sourceRef: null,
-          confidence: null,
-          expiresAt: null,
+    const record = await benchmark(
+      'memory_prepare_update',
+      async () => {
+        // One bounded write (USER_PROVIDED preference) + one bounded retrieval
+        // against a growing but capped store — the hot path of the agent loop.
+        await store.write(
+          {
+            scope,
+            key: `perf.pref.${n++}`,
+            value: { summary: 'Synthetic performance probe.' },
+            memoryType: 'EPISODIC',
+            writeClass: 'USER_CONFIRMED',
+            trustLevel: 'USER_PROVIDED',
+            sourceKind: 'USER_STATEMENT',
+            sourceRef: null,
+            confidence: null,
+            expiresAt: null,
+            actor,
+          } as never,
+          now
+        )
+        const mem = await memory.prepare({
+          hospitalId: HOSP,
+          conversationId: null,
           actor,
-        } as never,
-        now
-      )
-      const mem = await memory.prepare({
-        hospitalId: HOSP,
-        conversationId: null,
-        actor,
-        message: 'Previously, what did we discuss?',
-        patientId: 'pat-A1',
-        doctorId: 'staff-doctor-1',
-        caseId: null,
-        taskType: 'CLINICAL_ANALYSIS',
-        contextProfile: 'CLINICAL',
-        now,
-        maxItems: 10,
-        maxChars: 4000,
-      })
-      return (mem?.items ?? 0) + store.items.length
-    }, { warmup: 2, samples: 7 })
+          message: 'Previously, what did we discuss?',
+          patientId: 'pat-A1',
+          doctorId: 'staff-doctor-1',
+          caseId: null,
+          taskType: 'CLINICAL_ANALYSIS',
+          contextProfile: 'CLINICAL',
+          now,
+          maxItems: 10,
+          maxChars: 4000,
+        })
+        return (mem?.items ?? 0) + store.items.length
+      },
+      { warmup: 2, samples: 7 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.runs.samples).toBe(7)

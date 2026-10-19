@@ -43,7 +43,8 @@ export default function AiApprovalsPage() {
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/ai/approvals')
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Internal server error')
+      if (!res.ok)
+        throw new Error((await res.json().catch(() => ({}))).error || 'Internal server error')
       const data = await res.json()
       setApprovals(data.approvals || [])
       setError(null)
@@ -79,8 +80,7 @@ export default function AiApprovalsPage() {
   const pending = approvals.filter((a) => a.status === 'PENDING')
   const recent = approvals.filter((a) => a.status !== 'PENDING')
 
-  const statusLabel = (s: string) =>
-    t(`aiApprovals.status.${s.toLowerCase()}` as never) ?? s
+  const statusLabel = (s: string) => t(`aiApprovals.status.${s.toLowerCase()}` as never) ?? s
 
   const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—')
 
@@ -188,7 +188,10 @@ export default function AiApprovalsPage() {
         </h2>
         {recent.length === 0 && <p className="text-sm text-muted-foreground">—</p>}
         {recent.map((a) => (
-          <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
+          <div
+            key={a.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+          >
             <div className="flex items-center gap-2">
               <span className="font-mono">{a.action}</span>
               <span className="text-muted-foreground">{statusLabel(a.status)}</span>

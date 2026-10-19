@@ -155,7 +155,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { patientId, title, notes, startDate, expectedEndDate, items = [], appointmentId = null, chiefComplaint, diagnosis, currency, estimatedCost: explicitCost } = body
+    const {
+      patientId,
+      title,
+      notes,
+      startDate,
+      expectedEndDate,
+      items = [],
+      appointmentId = null,
+      chiefComplaint,
+      diagnosis,
+      currency,
+      estimatedCost: explicitCost,
+    } = body
 
     // Validate required fields
     if (!patientId || !title) {

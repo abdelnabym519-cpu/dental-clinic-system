@@ -24,8 +24,14 @@ export function detectSignature(buf: Buffer): SignatureResult {
   // PNG: 89 50 4E 47 0D 0A 1A 0A
   if (
     buf.length >= 8 &&
-    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
-    buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47 &&
+    buf[4] === 0x0d &&
+    buf[5] === 0x0a &&
+    buf[6] === 0x1a &&
+    buf[7] === 0x0a
   ) {
     return { fileClass: 'IMAGE_2D', mediaType: 'image/png', detail: 'PNG signature' }
   }
@@ -80,7 +86,11 @@ export function detectSignature(buf: Buffer): SignatureResult {
   if (looksLikeText(buf)) {
     return { fileClass: 'DOCUMENT_TEXT', mediaType: 'text/plain', detail: 'printable text' }
   }
-  return { fileClass: 'UNKNOWN', mediaType: 'application/octet-stream', detail: 'no known signature' }
+  return {
+    fileClass: 'UNKNOWN',
+    mediaType: 'application/octet-stream',
+    detail: 'no known signature',
+  }
 }
 
 function looksLikeAsciiStl(buf: Buffer): boolean {
@@ -92,7 +102,10 @@ function looksLikeAsciiStl(buf: Buffer): boolean {
 
 function looksLikeObj(buf: Buffer): boolean {
   const head = buf.toString('utf8', 0, Math.min(buf.length, 2048))
-  const lines = head.split('\n').map((l) => l.trim()).filter(Boolean)
+  const lines = head
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
   let meshLines = 0
   let otherLines = 0
   for (const line of lines.slice(0, 200)) {

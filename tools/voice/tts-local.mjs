@@ -29,8 +29,7 @@ import path from 'node:path'
 const require = createRequire(path.join(process.cwd(), 'package.json'))
 
 const argTextIdx = process.argv.indexOf('--text')
-const text =
-  argTextIdx >= 0 ? process.argv[argTextIdx + 1] : await readStdin()
+const text = argTextIdx >= 0 ? process.argv[argTextIdx + 1] : await readStdin()
 
 if (!text) {
   process.stderr.write('tts-local: no text provided\n')
@@ -43,7 +42,13 @@ mespeak.loadVoice(require('mespeak/voices/en/en-us.json'))
 
 // Tuned for command-ack clarity: 3/3 EXACT round-trip with the
 // pocketsphinx grammar mode in the Phase 10 audit (see EVIDENCE.json).
-const buf = mespeak.speak(text, { rawdata: 'buffer', speed: 130, wordgap: 3, pitch: 50, variant: 'f2' })
+const buf = mespeak.speak(text, {
+  rawdata: 'buffer',
+  speed: 130,
+  wordgap: 3,
+  pitch: 50,
+  variant: 'f2',
+})
 if (!buf || buf.length === 0) {
   process.stderr.write('tts-local: synthesis produced no audio\n')
   process.exit(1)

@@ -83,7 +83,13 @@ const baseInvoice = {
   sentViaWhatsApp: false,
   currency: 'EGP',
   createdAt: new Date('2026-09-01'),
-  patient: { id: 'pat1', patientId: 'P-001', firstName: 'Ahmed', lastName: 'Ali', phone: '01012345678' },
+  patient: {
+    id: 'pat1',
+    patientId: 'P-001',
+    firstName: 'Ahmed',
+    lastName: 'Ali',
+    phone: '01012345678',
+  },
   items: [
     {
       id: 'item1',
@@ -104,7 +110,10 @@ beforeEach(() => {
     hospitalId: 'h1',
     session: { user: { id: 'user1', role: 'ACCOUNTANT' } },
   })
-  vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ id: 'h1', name: 'DenToRa Clinic' } as any)
+  vi.mocked(prisma.hospital.findUnique).mockResolvedValue({
+    id: 'h1',
+    name: 'DenToRa Clinic',
+  } as any)
 })
 
 // ── POST /api/invoices/[id]/issue ────────────────────────────────────────────
@@ -112,11 +121,19 @@ describe('POST /api/invoices/[id]/issue (Phase 12)', () => {
   it('issues a DRAFT invoice → 201, ISSUED status, issuedAt + pdfUrl stamped, PDF persisted', async () => {
     const { POST } = await import('@/app/api/invoices/[id]/issue/route')
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(baseInvoice as any)
-    vi.mocked(prisma.invoice.update).mockResolvedValue({ ...baseInvoice, status: 'ISSUED', issuedAt: new Date('2026-09-10'), pdfUrl: 'h1/invoices/inv1/invoice.pdf' } as any)
+    vi.mocked(prisma.invoice.update).mockResolvedValue({
+      ...baseInvoice,
+      status: 'ISSUED',
+      issuedAt: new Date('2026-09-10'),
+      pdfUrl: 'h1/invoices/inv1/invoice.pdf',
+    } as any)
 
-    const res = await POST(makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }), {
-      params: Promise.resolve({ id: 'inv1' }),
-    })
+    const res = await POST(
+      makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }),
+      {
+        params: Promise.resolve({ id: 'inv1' }),
+      }
+    )
     const data = await res.json()
 
     expect(res.status).toBe(201)
@@ -124,24 +141,38 @@ describe('POST /api/invoices/[id]/issue (Phase 12)', () => {
     expect(data.pdfUrl).toBe('h1/invoices/inv1/invoice.pdf')
     expect(data.actorId).toBe('user1')
     expect(mockGenerateInvoicePDF).toHaveBeenCalledOnce()
-    expect(storageMock.put).toHaveBeenCalledWith('h1/invoices/inv1/invoice.pdf', expect.any(Uint8Array), {
-      contentType: 'application/pdf',
-    })
+    expect(storageMock.put).toHaveBeenCalledWith(
+      'h1/invoices/inv1/invoice.pdf',
+      expect.any(Uint8Array),
+      {
+        contentType: 'application/pdf',
+      }
+    )
     expect(prisma.invoice.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'inv1' },
-        data: expect.objectContaining({ status: 'ISSUED', issuedAt: expect.any(Date), pdfUrl: 'h1/invoices/inv1/invoice.pdf' }),
+        data: expect.objectContaining({
+          status: 'ISSUED',
+          issuedAt: expect.any(Date),
+          pdfUrl: 'h1/invoices/inv1/invoice.pdf',
+        }),
       })
     )
   })
 
   it('returns 409 for a non-DRAFT invoice', async () => {
     const { POST } = await import('@/app/api/invoices/[id]/issue/route')
-    vi.mocked(prisma.invoice.findFirst).mockResolvedValue({ ...baseInvoice, status: 'ISSUED' } as any)
+    vi.mocked(prisma.invoice.findFirst).mockResolvedValue({
+      ...baseInvoice,
+      status: 'ISSUED',
+    } as any)
 
-    const res = await POST(makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }), {
-      params: Promise.resolve({ id: 'inv1' }),
-    })
+    const res = await POST(
+      makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }),
+      {
+        params: Promise.resolve({ id: 'inv1' }),
+      }
+    )
 
     expect(res.status).toBe(409)
     expect(mockGenerateInvoicePDF).not.toHaveBeenCalled()
@@ -151,9 +182,12 @@ describe('POST /api/invoices/[id]/issue (Phase 12)', () => {
     const { POST } = await import('@/app/api/invoices/[id]/issue/route')
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(null)
 
-    const res = await POST(makeRequest('http://localhost/api/invoices/nope/issue', { method: 'POST' }), {
-      params: Promise.resolve({ id: 'nope' }),
-    })
+    const res = await POST(
+      makeRequest('http://localhost/api/invoices/nope/issue', { method: 'POST' }),
+      {
+        params: Promise.resolve({ id: 'nope' }),
+      }
+    )
 
     expect(res.status).toBe(404)
   })
@@ -169,9 +203,12 @@ describe('POST /api/invoices/[id]/issue (Phase 12)', () => {
     })
     vi.mocked(prisma.invoice.findFirst).mockResolvedValue(baseInvoice as any)
 
-    const res = await POST(makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }), {
-      params: Promise.resolve({ id: 'inv1' }),
-    })
+    const res = await POST(
+      makeRequest('http://localhost/api/invoices/inv1/issue', { method: 'POST' }),
+      {
+        params: Promise.resolve({ id: 'inv1' }),
+      }
+    )
 
     expect(res.status).toBe(403)
     expect(prisma.invoice.update).not.toHaveBeenCalled()
@@ -196,7 +233,9 @@ describe('GET /api/invoices/[id]/pdf (Phase 12)', () => {
 
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('application/pdf')
-    expect(res.headers.get('content-disposition')).toBe('inline; filename="invoice-INV-202609-0001.pdf"')
+    expect(res.headers.get('content-disposition')).toBe(
+      'inline; filename="invoice-INV-202609-0001.pdf"'
+    )
     expect(storageMock.get).toHaveBeenCalledWith('h1/invoices/inv1/invoice.pdf')
     expect(mockGenerateInvoicePDF).not.toHaveBeenCalled()
     const buf = Buffer.from(await res.arrayBuffer())
@@ -242,8 +281,14 @@ describe('POST /api/invoices (Phase 12 extensions)', () => {
   it('accepts matching appointmentId + treatmentPlanId and stamps createdById/currency', async () => {
     const { POST } = await import('@/app/api/invoices/route')
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({ id: 'pat1' } as any)
-    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ id: 'apt1', patientId: 'pat1' } as any)
-    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({ id: 'plan1', patientId: 'pat1' } as any)
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: 'apt1',
+      patientId: 'pat1',
+    } as any)
+    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({
+      id: 'plan1',
+      patientId: 'pat1',
+    } as any)
     vi.mocked(prisma.invoice.create).mockResolvedValue({ ...baseInvoice, id: 'inv-new' } as any)
 
     const res = await POST(
@@ -267,7 +312,10 @@ describe('POST /api/invoices (Phase 12 extensions)', () => {
   it('rejects an appointment belonging to another patient (400)', async () => {
     const { POST } = await import('@/app/api/invoices/route')
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({ id: 'pat1' } as any)
-    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({ id: 'apt1', patientId: 'pat-OTHER' } as any)
+    vi.mocked(prisma.appointment.findFirst).mockResolvedValue({
+      id: 'apt1',
+      patientId: 'pat-OTHER',
+    } as any)
 
     const res = await POST(
       makeRequest('http://localhost/api/invoices', {
@@ -284,7 +332,10 @@ describe('POST /api/invoices (Phase 12 extensions)', () => {
   it('rejects a treatment plan belonging to another patient (400)', async () => {
     const { POST } = await import('@/app/api/invoices/route')
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({ id: 'pat1' } as any)
-    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({ id: 'plan1', patientId: 'pat-OTHER' } as any)
+    vi.mocked(prisma.treatmentPlan.findFirst).mockResolvedValue({
+      id: 'plan1',
+      patientId: 'pat-OTHER',
+    } as any)
 
     const res = await POST(
       makeRequest('http://localhost/api/invoices', {
@@ -303,10 +354,22 @@ describe('POST /api/invoices (Phase 12 extensions)', () => {
 describe('POST /api/invoices/[id]/payments (Phase 12 attribution)', () => {
   it('records patientId + recordedById on the payment and stamps invoice.paidAt on full payment', async () => {
     const { POST } = await import('@/app/api/invoices/[id]/payments/route')
-    const fullInvoice = { ...baseInvoice, status: 'ISSUED', paidAmount: 0, balanceAmount: 1140, totalAmount: 1140 }
+    const fullInvoice = {
+      ...baseInvoice,
+      status: 'ISSUED',
+      paidAmount: 0,
+      balanceAmount: 1140,
+      totalAmount: 1140,
+    }
     vi.mocked(prisma.invoice.findUnique)
       .mockResolvedValueOnce(fullInvoice as any)
-      .mockResolvedValueOnce({ ...fullInvoice, paidAmount: 1140, balanceAmount: 0, status: 'PAID', paidAt: new Date() } as any)
+      .mockResolvedValueOnce({
+        ...fullInvoice,
+        paidAmount: 1140,
+        balanceAmount: 0,
+        status: 'PAID',
+        paidAt: new Date(),
+      } as any)
     vi.mocked(prisma.payment.create).mockResolvedValue({ id: 'pay1', amount: 1140 } as any)
     vi.mocked(prisma.invoice.update).mockResolvedValue(fullInvoice as any)
     mockGeneratePaymentNo.mockResolvedValue('PAY-0001')

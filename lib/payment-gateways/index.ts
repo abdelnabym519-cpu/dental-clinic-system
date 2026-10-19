@@ -39,7 +39,9 @@ export async function getGateway(hospitalId: string): Promise<{
   switch (config.provider) {
     case 'FAWRY':
       credentials.fawryMerchantCode = config.fawryMerchantCode || undefined
-      credentials.fawrySecretKey = config.fawrySecretKey ? decrypt(config.fawrySecretKey) : undefined
+      credentials.fawrySecretKey = config.fawrySecretKey
+        ? decrypt(config.fawrySecretKey)
+        : undefined
       break
     case 'PAYMOB':
       credentials.paymobApiKey = config.paymobApiKey ? decrypt(config.paymobApiKey) : undefined

@@ -171,22 +171,22 @@ export default function AISettingsPage() {
           {
             key: 'ai_command_bar_enabled' as const,
             label: 'Command Bar (Ctrl+K)',
-            desc: t("Natural-language command execution"),
+            desc: t('Natural-language command execution'),
           },
           {
             key: 'ai_auto_reminders' as const,
             label: 'Auto Appointment Reminders',
-            desc: t("AI-triggered reminders before appointments"),
+            desc: t('AI-triggered reminders before appointments'),
           },
           {
             key: 'ai_morning_briefing' as const,
             label: 'Morning Briefing',
-            desc: t("Daily clinic summary sent to admins"),
+            desc: t('Daily clinic summary sent to admins'),
           },
           {
             key: 'ai_risk_scoring_enabled' as const,
             label: 'Patient Risk Scoring',
-            desc: t("Automatic risk calculation on intake"),
+            desc: t('Automatic risk calculation on intake'),
           },
         ].map(({ key, label, desc }) => (
           <div key={key} className="flex items-center justify-between p-3 rounded-lg border">
@@ -223,10 +223,10 @@ export default function AISettingsPage() {
               <p className="text-sm font-semibold capitalize">{pref}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {pref === 'economy'
-                  ? t("Fastest, lowest cost")
+                  ? t('Fastest, lowest cost')
                   : pref === 'balanced'
-                    ? t("Best speed/quality mix")
-                    : t("Highest accuracy")}
+                    ? t('Best speed/quality mix')
+                    : t('Highest accuracy')}
               </p>
             </button>
           ))}
@@ -241,7 +241,7 @@ export default function AISettingsPage() {
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="text-xs font-medium text-muted-foreground">
-              {t("Financial Approval Limit (EGP )")}
+              {t('Financial Approval Limit (EGP )')}
             </label>
             <input
               type="number"
@@ -258,7 +258,7 @@ export default function AISettingsPage() {
           </div>
           <div className="flex-1">
             <label className="text-xs font-medium text-muted-foreground">
-              {t("Monthly AI Budget (EGP )")}
+              {t('Monthly AI Budget (EGP )')}
             </label>
             <input
               type="number"
@@ -288,9 +288,9 @@ export default function AISettingsPage() {
           disabled={saving}
           className="rounded-md bg-primary text-primary-foreground px-5 py-2 text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
         >
-          {saving ? t("Saving…") : t("Save Settings")}
+          {saving ? t('Saving…') : t('Save Settings')}
         </button>
-        {saved && <span className="text-xs text-emerald-600 font-medium">{t("Saved ✓")}</span>}
+        {saved && <span className="text-xs text-emerald-600 font-medium">{t('Saved ✓')}</span>}
       </div>
     </div>
   )

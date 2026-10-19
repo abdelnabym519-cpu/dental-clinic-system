@@ -57,7 +57,10 @@ function makeKnowledgeFake() {
     updateMany: async ({ where, data }) => {
       let count = 0
       for (const r of getRows()) {
-        if (match(r, where)) { Object.assign(r, data ?? {}); count++ }
+        if (match(r, where)) {
+          Object.assign(r, data ?? {})
+          count++
+        }
       }
       return { count }
     },
@@ -92,7 +95,10 @@ vi.mock('@/lib/prisma', () => ({
     return Object.assign(store.kb.client, {
       auditLog: {
         count: async () => 0,
-        create: async (args) => { store.auditCreate.push(args); return { id: 'audit-1' } },
+        create: async (args) => {
+          store.auditCreate.push(args)
+          return { id: 'audit-1' }
+        },
       },
     })
   },
@@ -200,10 +206,12 @@ describe('POST /api/ai/knowledge — ingestion', () => {
 
   it('duplicate content → REJECTED DUPLICATE_CONTENT, nothing published', async () => {
     await POST(json({ source: { ...GUIDELINE }, content: GUIDELINE_CONTENT }))
-    const dup = await POST(json({
-      source: { ...GUIDELINE, sourceKey: 'route-test-mirror', title: 'Mirror (TEST)' },
-      content: GUIDELINE_CONTENT,
-    }))
+    const dup = await POST(
+      json({
+        source: { ...GUIDELINE, sourceKey: 'route-test-mirror', title: 'Mirror (TEST)' },
+        content: GUIDELINE_CONTENT,
+      })
+    )
     const dupBody = await dup.json()
     expect(dupBody.report.status).toBe('REJECTED')
     expect(dupBody.report.failure.code).toBe('DUPLICATE_CONTENT')
@@ -212,10 +220,18 @@ describe('POST /api/ai/knowledge — ingestion', () => {
   })
 
   it('patient data in content → REJECTED PATIENT_DATA_DETECTED (§8)', async () => {
-    const res = await POST(json({
-      source: { ...GUIDELINE, sourceKey: 'route-test-patient-leak', sourceType: 'OTHER', authorityTier: 'TIER_3' },
-      content: 'Patient PAT_A1 has caries on tooth 36. Patient id: PAT_A1. Chart #4521. Diagnosis: deep caries, plan: root canal treatment.',
-    }))
+    const res = await POST(
+      json({
+        source: {
+          ...GUIDELINE,
+          sourceKey: 'route-test-patient-leak',
+          sourceType: 'OTHER',
+          authorityTier: 'TIER_3',
+        },
+        content:
+          'Patient PAT_A1 has caries on tooth 36. Patient id: PAT_A1. Chart #4521. Diagnosis: deep caries, plan: root canal treatment.',
+      })
+    )
     const body = await res.json()
     expect(body.report.status).toBe('REJECTED')
     expect(body.report.failure.code).toBe('PATIENT_DATA_DETECTED')
@@ -234,7 +250,9 @@ describe('POST /api/ai/knowledge — ingestion', () => {
       'loss define advanced periodontitis. The 4 mm threshold applies to',
       'moderate disease only in this revision.',
     ].join('\n')
-    const res = await POST(json({ source: { ...GUIDELINE, version: '2' }, content: v2, replaceVersion: true }))
+    const res = await POST(
+      json({ source: { ...GUIDELINE, version: '2' }, content: v2, replaceVersion: true })
+    )
     const body = await res.json()
     expect(body.report.status).toBe('PUBLISHED')
     expect(body.report.supersededDocumentIds.length).toBe(1)
@@ -247,10 +265,17 @@ describe('POST /api/ai/knowledge — ingestion', () => {
   })
 
   it('TENANT scope is pinned to the session tenant; client hospitalId is ignored', async () => {
-    const res = await POST(json({
-      source: { ...GUIDELINE, sourceKey: 'route-test-tenant-private', scope: 'TENANT', hospitalId: HOSP_B },
-      content: GUIDELINE_CONTENT,
-    }))
+    const res = await POST(
+      json({
+        source: {
+          ...GUIDELINE,
+          sourceKey: 'route-test-tenant-private',
+          scope: 'TENANT',
+          hospitalId: HOSP_B,
+        },
+        content: GUIDELINE_CONTENT,
+      })
+    )
     expect(res.status).toBe(200)
     const row = store.kb.rows().sources.find((s) => s.sourceKey === 'route-test-tenant-private')
     expect(row.scope).toBe('TENANT')
@@ -270,13 +295,19 @@ describe('POST /api/ai/knowledge — ingestion', () => {
     expect(noContent.status).toBe(400) // no content
     const noSource = await POST(json({ content: GUIDELINE_CONTENT }))
     expect(noSource.status).toBe(400) // no source
-    const bad = await POST(json({ source: { ...GUIDELINE, authorityTier: 'TIER_9' }, content: GUIDELINE_CONTENT }))
+    const bad = await POST(
+      json({ source: { ...GUIDELINE, authorityTier: 'TIER_9' }, content: GUIDELINE_CONTENT })
+    )
     expect(bad.status).toBe(400)
     const badBody = await bad.json()
     expect(badBody.error).toContain('authorityTier')
-    const badDomain = await POST(json({ source: { ...GUIDELINE, domain: 'ROBOTICS' }, content: GUIDELINE_CONTENT }))
+    const badDomain = await POST(
+      json({ source: { ...GUIDELINE, domain: 'ROBOTICS' }, content: GUIDELINE_CONTENT })
+    )
     expect(badDomain.status).toBe(400)
-    const badLang = await POST(json({ source: { ...GUIDELINE, language: 'fr' }, content: GUIDELINE_CONTENT }))
+    const badLang = await POST(
+      json({ source: { ...GUIDELINE, language: 'fr' }, content: GUIDELINE_CONTENT })
+    )
     expect(badLang.status).toBe(400)
   })
 

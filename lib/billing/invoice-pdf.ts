@@ -54,7 +54,8 @@ function money(value: MoneyLike, locale: string): string {
 
 export async function generateInvoicePDF(inv: InvoicePdfData): Promise<Buffer> {
   const locale = await getServerLocale()
-  const t = (key: string, vars?: Record<string, string | number>) => translateText(locale, key, vars)
+  const t = (key: string, vars?: Record<string, string | number>) =>
+    translateText(locale, key, vars)
   const moneyLocal = (v: MoneyLike) => money(v, locale)
   const date = (d: Date) => formatDate(d, { locale })
 

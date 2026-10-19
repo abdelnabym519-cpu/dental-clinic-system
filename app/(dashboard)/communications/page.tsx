@@ -126,15 +126,21 @@ export default function CommunicationsPage() {
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">{t('Communication Center')}</h1>
-        <p className="text-muted-foreground">{t('Manage SMS, Email, Templates, and Patient Feedback')}</p>
+        <p className="text-muted-foreground">
+          {t('Manage SMS, Email, Templates, and Patient Feedback')}
+        </p>
       </div>
 
       <Tabs defaultValue="sms" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="sms">
-            <MessageSquare className="w-4 h-4 mr-2" />{t('ui.sms')}</TabsTrigger>
+            <MessageSquare className="w-4 h-4 mr-2" />
+            {t('ui.sms')}
+          </TabsTrigger>
           <TabsTrigger value="email">
-            <Mail className="w-4 h-4 mr-2" />{t('ui.email')}</TabsTrigger>
+            <Mail className="w-4 h-4 mr-2" />
+            {t('ui.email')}
+          </TabsTrigger>
           <TabsTrigger value="templates">
             <FileText className="w-4 h-4 mr-2" />
             {t('Templates')}
@@ -158,7 +164,7 @@ export default function CommunicationsPage() {
                   <Label htmlFor="sms-phone">{t('ui.phone_number')}</Label>
                   <Input
                     id="sms-phone"
-                    placeholder={t("10-digit mobile number")}
+                    placeholder={t('10-digit mobile number')}
                     value={smsPhone}
                     onChange={(e) => setSmsPhone(e.target.value)}
                   />
@@ -175,12 +181,15 @@ export default function CommunicationsPage() {
                     onChange={(e) => setSmsMessage(e.target.value)}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    {smsMessage.length}{t("/500 characters")}
+                    {smsMessage.length}
+                    {t('/500 characters')}
                   </p>
                 </div>
 
                 <Button onClick={handleSendSMS} disabled={loading} className="w-full">
-                  <Send className="w-4 h-4 mr-2" />{t('ui.send_sms')}</Button>
+                  <Send className="w-4 h-4 mr-2" />
+                  {t('ui.send_sms')}
+                </Button>
               </CardContent>
             </Card>
 
@@ -190,7 +199,9 @@ export default function CommunicationsPage() {
                 <CardDescription>{t('Recent SMS communications')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{t('SMS history will be displayed here')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('SMS history will be displayed here')}
+                </p>
                 {/* SMS history table/list will go here */}
               </CardContent>
             </Card>
@@ -207,11 +218,11 @@ export default function CommunicationsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="email-to">{t("To (Email Address)")}</Label>
+                  <Label htmlFor="email-to">{t('To (Email Address)')}</Label>
                   <Input
                     id="email-to"
                     type="email"
-                    placeholder={t("patient@example.com")}
+                    placeholder={t('patient@example.com')}
                     value={emailTo}
                     onChange={(e) => setEmailTo(e.target.value)}
                   />
@@ -239,7 +250,9 @@ export default function CommunicationsPage() {
                 </div>
 
                 <Button onClick={handleSendEmail} disabled={loading} className="w-full">
-                  <Send className="w-4 h-4 mr-2" />{t('ui.send_email')}</Button>
+                  <Send className="w-4 h-4 mr-2" />
+                  {t('ui.send_email')}
+                </Button>
               </CardContent>
             </Card>
 
@@ -294,14 +307,18 @@ export default function CommunicationsPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('Patient Surveys & Feedback')}</CardTitle>
-              <CardDescription>{t('Create and manage patient satisfaction surveys')}</CardDescription>
+              <CardDescription>
+                {t('Create and manage patient satisfaction surveys')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-semibold">{t('Active Surveys')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('Collect feedback from patients')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('Collect feedback from patients')}
+                    </p>
                   </div>
                   <Button>{t('Create Survey')}</Button>
                 </div>

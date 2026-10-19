@@ -112,7 +112,13 @@ const MSG = {
 } as const
 
 function block(code: string, message: string, approvalId?: string): AiActionResult {
-  return { status: 'BLOCKED', success: false, message, blockCode: code, ...(approvalId ? { approvalId } : {}) }
+  return {
+    status: 'BLOCKED',
+    success: false,
+    message,
+    blockCode: code,
+    ...(approvalId ? { approvalId } : {}),
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +198,11 @@ async function resolveFinancialAmount(
       ? await prisma.invoice.findFirst({ where: { hospitalId, invoiceNo: params.invoiceNo } })
       : patientId
         ? await prisma.invoice.findFirst({
-            where: { hospitalId, patientId, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } },
+            where: {
+              hospitalId,
+              patientId,
+              status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
+            },
             orderBy: { createdAt: 'desc' },
           })
         : null
@@ -210,7 +220,7 @@ async function resolveFinancialAmount(
     })
     if (unbilled.length === 0) return null
     const subtotal = unbilled.reduce((s: number, t: any) => s + Number(t.cost), 0)
-    return Math.round((subtotal * 1.14) * 100) / 100 // 14% Egyptian VAT
+    return Math.round(subtotal * 1.14 * 100) / 100 // 14% Egyptian VAT
   }
 
   return policy.financialAmount ? policy.financialAmount(params) : null
@@ -228,7 +238,10 @@ async function financialSettings(hospitalId: string) {
     const n = Number(v)
     return Number.isFinite(n) && n > 0 ? n : null
   }
-  return { limit: parse(map['ai_financial_approval_limit']), budget: parse(map['ai_monthly_budget']) }
+  return {
+    limit: parse(map['ai_financial_approval_limit']),
+    budget: parse(map['ai_monthly_budget']),
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -250,38 +263,101 @@ async function dispatchExecutor(
     ? { ...params, __resolvedPatientId: resolvedPatientId }
     : params
   switch (action) {
-    case 'search_patients': return execSearchPatients(execParams, hospitalId)
-    case 'check_patient': return execCheckPatient(execParams, hospitalId)
-    case 'show_appointments': return execShowAppointments(execParams, hospitalId)
-    case 'show_treatments': return execShowTreatments(execParams, hospitalId)
-    case 'show_invoices': return execShowInvoices(execParams, hospitalId)
-    case 'check_overdue': return execCheckOverdue(hospitalId)
-    case 'show_revenue': return execShowRevenue(execParams, hospitalId)
-    case 'check_stock': return execCheckStock(execParams, hospitalId)
-    case 'low_stock': return execLowStock(hospitalId)
-    case 'show_lab_orders': return execShowLabOrders(execParams, hospitalId)
-    case 'show_prescriptions': return execShowPrescriptions(execParams, hospitalId)
-    case 'search_medications': return execSearchMedications(execParams, hospitalId)
-    case 'show_staff': return execShowStaff(hospitalId)
-    case 'daily_summary': return execDailySummary(hospitalId)
-    case 'create_patient': return tx ? execCreatePatient(execParams, hospitalId, tx) : execCreatePatient(execParams, hospitalId)
-    case 'update_patient': return tx ? execUpdatePatient(execParams, hospitalId, tx) : execUpdatePatient(execParams, hospitalId)
-    case 'book_appointment': return tx ? execBookAppointment(execParams, hospitalId, tx) : execBookAppointment(execParams, hospitalId)
-    case 'cancel_appointment': return tx ? execCancelAppointment(execParams, hospitalId, tx) : execCancelAppointment(execParams, hospitalId)
-    case 'reschedule_appointment': return tx ? execRescheduleAppointment(execParams, hospitalId, tx) : execRescheduleAppointment(execParams, hospitalId)
-    case 'complete_appointment': return tx ? execCompleteAppointment(execParams, hospitalId, tx) : execCompleteAppointment(execParams, hospitalId)
-    case 'create_treatment': return tx ? execCreateTreatment(execParams, hospitalId, tx) : execCreateTreatment(execParams, hospitalId)
-    case 'complete_treatment': return tx ? execCompleteTreatment(execParams, hospitalId, tx) : execCompleteTreatment(execParams, hospitalId)
+    case 'search_patients':
+      return execSearchPatients(execParams, hospitalId)
+    case 'check_patient':
+      return execCheckPatient(execParams, hospitalId)
+    case 'show_appointments':
+      return execShowAppointments(execParams, hospitalId)
+    case 'show_treatments':
+      return execShowTreatments(execParams, hospitalId)
+    case 'show_invoices':
+      return execShowInvoices(execParams, hospitalId)
+    case 'check_overdue':
+      return execCheckOverdue(hospitalId)
+    case 'show_revenue':
+      return execShowRevenue(execParams, hospitalId)
+    case 'check_stock':
+      return execCheckStock(execParams, hospitalId)
+    case 'low_stock':
+      return execLowStock(hospitalId)
+    case 'show_lab_orders':
+      return execShowLabOrders(execParams, hospitalId)
+    case 'show_prescriptions':
+      return execShowPrescriptions(execParams, hospitalId)
+    case 'search_medications':
+      return execSearchMedications(execParams, hospitalId)
+    case 'show_staff':
+      return execShowStaff(hospitalId)
+    case 'daily_summary':
+      return execDailySummary(hospitalId)
+    case 'create_patient':
+      return tx
+        ? execCreatePatient(execParams, hospitalId, tx)
+        : execCreatePatient(execParams, hospitalId)
+    case 'update_patient':
+      return tx
+        ? execUpdatePatient(execParams, hospitalId, tx)
+        : execUpdatePatient(execParams, hospitalId)
+    case 'book_appointment':
+      return tx
+        ? execBookAppointment(execParams, hospitalId, tx)
+        : execBookAppointment(execParams, hospitalId)
+    case 'cancel_appointment':
+      return tx
+        ? execCancelAppointment(execParams, hospitalId, tx)
+        : execCancelAppointment(execParams, hospitalId)
+    case 'reschedule_appointment':
+      return tx
+        ? execRescheduleAppointment(execParams, hospitalId, tx)
+        : execRescheduleAppointment(execParams, hospitalId)
+    case 'complete_appointment':
+      return tx
+        ? execCompleteAppointment(execParams, hospitalId, tx)
+        : execCompleteAppointment(execParams, hospitalId)
+    case 'create_treatment':
+      return tx
+        ? execCreateTreatment(execParams, hospitalId, tx)
+        : execCreateTreatment(execParams, hospitalId)
+    case 'complete_treatment':
+      return tx
+        ? execCompleteTreatment(execParams, hospitalId, tx)
+        : execCompleteTreatment(execParams, hospitalId)
     case 'create_invoice':
-    case 'generate_invoice': return tx ? execCreateInvoice(execParams, hospitalId, tx) : execCreateInvoice(execParams, hospitalId)
-    case 'record_payment': return tx ? execRecordPayment(execParams, hospitalId, tx) : execRecordPayment(execParams, hospitalId)
-    case 'add_inventory_item': return tx ? execAddInventoryItem(execParams, hospitalId, tx) : execAddInventoryItem(execParams, hospitalId)
-    case 'update_stock': return tx ? execUpdateStock(execParams, hospitalId, tx) : execUpdateStock(execParams, hospitalId)
-    case 'create_lab_order': return tx ? execCreateLabOrder(execParams, hospitalId, tx) : execCreateLabOrder(execParams, hospitalId)
-    case 'update_lab_order': return tx ? execUpdateLabOrder(execParams, hospitalId, tx) : execUpdateLabOrder(execParams, hospitalId)
-    case 'create_prescription': return tx ? execCreatePrescription(execParams, hospitalId, tx) : execCreatePrescription(execParams, hospitalId)
-    case 'add_medication': return tx ? execAddMedication(execParams, hospitalId, tx) : execAddMedication(execParams, hospitalId)
-    default: return null
+    case 'generate_invoice':
+      return tx
+        ? execCreateInvoice(execParams, hospitalId, tx)
+        : execCreateInvoice(execParams, hospitalId)
+    case 'record_payment':
+      return tx
+        ? execRecordPayment(execParams, hospitalId, tx)
+        : execRecordPayment(execParams, hospitalId)
+    case 'add_inventory_item':
+      return tx
+        ? execAddInventoryItem(execParams, hospitalId, tx)
+        : execAddInventoryItem(execParams, hospitalId)
+    case 'update_stock':
+      return tx
+        ? execUpdateStock(execParams, hospitalId, tx)
+        : execUpdateStock(execParams, hospitalId)
+    case 'create_lab_order':
+      return tx
+        ? execCreateLabOrder(execParams, hospitalId, tx)
+        : execCreateLabOrder(execParams, hospitalId)
+    case 'update_lab_order':
+      return tx
+        ? execUpdateLabOrder(execParams, hospitalId, tx)
+        : execUpdateLabOrder(execParams, hospitalId)
+    case 'create_prescription':
+      return tx
+        ? execCreatePrescription(execParams, hospitalId, tx)
+        : execCreatePrescription(execParams, hospitalId)
+    case 'add_medication':
+      return tx
+        ? execAddMedication(execParams, hospitalId, tx)
+        : execAddMedication(execParams, hospitalId)
+    default:
+      return null
   }
 }
 
@@ -290,47 +366,67 @@ async function dispatchExecutor(
 // Read the authoritative state back and check the expected change.
 // ---------------------------------------------------------------------------
 
-async function verifyAction(action: string, result: any, hospitalId: string): Promise<{ verified: boolean; detail: string }> {
+async function verifyAction(
+  action: string,
+  result: any,
+  hospitalId: string
+): Promise<{ verified: boolean; detail: string }> {
   try {
     switch (action) {
       case 'record_payment': {
         if (!result?.paymentNo) return { verified: false, detail: 'no payment reference returned' }
-        const payment = await prisma.payment.findFirst({ where: { paymentNo: result.paymentNo, hospitalId } })
+        const payment = await prisma.payment.findFirst({
+          where: { paymentNo: result.paymentNo, hospitalId },
+        })
         if (!payment) return { verified: false, detail: 'payment row not found' }
-        const amountOk = result.amount === undefined || Number(payment.amount) === Number(result.amount)
+        const amountOk =
+          result.amount === undefined || Number(payment.amount) === Number(result.amount)
         const ok = payment.hospitalId === hospitalId && payment.status === 'COMPLETED' && amountOk
         return { verified: ok, detail: `payment ${payment.paymentNo} status=${payment.status}` }
       }
       case 'create_invoice': {
         if (!result?.invoiceNo) return { verified: false, detail: 'no invoice reference returned' }
-        const invoice = await prisma.invoice.findFirst({ where: { hospitalId, invoiceNo: result.invoiceNo } })
+        const invoice = await prisma.invoice.findFirst({
+          where: { hospitalId, invoiceNo: result.invoiceNo },
+        })
         if (!invoice) return { verified: false, detail: 'invoice row not found' }
         const ok = invoice.hospitalId === hospitalId && invoice.status === 'PENDING'
         return { verified: ok, detail: `invoice ${invoice.invoiceNo} status=${invoice.status}` }
       }
       case 'book_appointment': {
-        if (!result?.appointmentNo) return { verified: false, detail: 'no appointment reference returned' }
-        const appt = await prisma.appointment.findFirst({ where: { hospitalId, appointmentNo: result.appointmentNo } })
+        if (!result?.appointmentNo)
+          return { verified: false, detail: 'no appointment reference returned' }
+        const appt = await prisma.appointment.findFirst({
+          where: { hospitalId, appointmentNo: result.appointmentNo },
+        })
         if (!appt) return { verified: false, detail: 'appointment row not found' }
         const ok = appt.hospitalId === hospitalId && appt.status === 'SCHEDULED'
         return { verified: ok, detail: `appointment ${appt.appointmentNo} status=${appt.status}` }
       }
       case 'create_patient': {
         if (!result?.patientId) return { verified: false, detail: 'no patient reference returned' }
-        const p = await prisma.patient.findFirst({ where: { hospitalId, patientId: result.patientId } })
+        const p = await prisma.patient.findFirst({
+          where: { hospitalId, patientId: result.patientId },
+        })
         const ok = Boolean(p && p.hospitalId === hospitalId)
         return { verified: ok, detail: `patient ${result.patientId} ${ok ? 'exists' : 'missing'}` }
       }
       case 'create_treatment': {
-        if (!result?.treatmentNo) return { verified: false, detail: 'no treatment reference returned' }
-        const t = await prisma.treatment.findFirst({ where: { hospitalId, treatmentNo: result.treatmentNo } })
+        if (!result?.treatmentNo)
+          return { verified: false, detail: 'no treatment reference returned' }
+        const t = await prisma.treatment.findFirst({
+          where: { hospitalId, treatmentNo: result.treatmentNo },
+        })
         if (!t) return { verified: false, detail: 'treatment row not found' }
         const ok = t.hospitalId === hospitalId && t.status === 'IN_PROGRESS'
         return { verified: ok, detail: `treatment ${t.treatmentNo} status=${t.status}` }
       }
       case 'create_prescription': {
-        if (!result?.prescriptionNo) return { verified: false, detail: 'no prescription reference returned' }
-        const rx = await prisma.prescription.findFirst({ where: { hospitalId, prescriptionNo: result.prescriptionNo } })
+        if (!result?.prescriptionNo)
+          return { verified: false, detail: 'no prescription reference returned' }
+        const rx = await prisma.prescription.findFirst({
+          where: { hospitalId, prescriptionNo: result.prescriptionNo },
+        })
         if (!rx) return { verified: false, detail: 'prescription row not found' }
         // AI-created prescriptions must remain DRAFT — never authoritative.
         const ok = rx.hospitalId === hospitalId && rx.status === 'DRAFT'
@@ -338,14 +434,19 @@ async function verifyAction(action: string, result: any, hospitalId: string): Pr
       }
       case 'update_stock': {
         if (!result?.itemName) return { verified: false, detail: 'no item reference returned' }
-        const item = await prisma.inventoryItem.findFirst({ where: { hospitalId, name: { contains: result.itemName } } })
+        const item = await prisma.inventoryItem.findFirst({
+          where: { hospitalId, name: { contains: result.itemName } },
+        })
         if (!item) return { verified: false, detail: 'inventory item not found' }
         const ok = result.newStock === undefined || item.currentStock === Number(result.newStock)
         return { verified: ok, detail: `stock ${item.name}=${item.currentStock}` }
       }
       case 'create_lab_order': {
-        if (!result?.orderNumber) return { verified: false, detail: 'no lab order reference returned' }
-        const o = await prisma.labOrder.findFirst({ where: { hospitalId, orderNumber: result.orderNumber } })
+        if (!result?.orderNumber)
+          return { verified: false, detail: 'no lab order reference returned' }
+        const o = await prisma.labOrder.findFirst({
+          where: { hospitalId, orderNumber: result.orderNumber },
+        })
         if (!o) return { verified: false, detail: 'lab order row not found' }
         const ok = o.hospitalId === hospitalId && o.status === 'CREATED'
         return { verified: ok, detail: `lab order ${o.orderNumber} status=${o.status}` }
@@ -354,7 +455,10 @@ async function verifyAction(action: string, result: any, hospitalId: string): Pr
         return { verified: true, detail: 'trusted executor result (no read-back defined)' }
     }
   } catch (err) {
-    return { verified: false, detail: `verification query failed: ${err instanceof Error ? err.message : 'unknown'}` }
+    return {
+      verified: false,
+      detail: `verification query failed: ${err instanceof Error ? err.message : 'unknown'}`,
+    }
   }
 }
 
@@ -472,7 +576,13 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
   }
 
   // 7 — Fingerprint (tenant + action + patient + policy version + params).
-  const fingerprint = computeFingerprint(hospitalId, policy.action, patientId, POLICY_VERSION, normalized)
+  const fingerprint = computeFingerprint(
+    hospitalId,
+    policy.action,
+    patientId,
+    POLICY_VERSION,
+    normalized
+  )
 
   // 8 — Approval gate (durable, bound to the exact validated request).
   // READ actions skip the ledger entirely (zero DB overhead per read).
@@ -496,8 +606,14 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
     if (needsApproval) {
       // No execution — the request is durable and waiting for an approver.
       await writeActionAudit({
-        hospitalId, actorId: actor.id, ledgerId: ledgerId!, policy, actorRole: actor.role, fingerprint,
-        status: 'PENDING_APPROVAL', amount,
+        hospitalId,
+        actorId: actor.id,
+        ledgerId: ledgerId!,
+        policy,
+        actorRole: actor.role,
+        fingerprint,
+        status: 'PENDING_APPROVAL',
+        amount,
       })
       return {
         status: 'APPROVAL_REQUIRED',
@@ -513,8 +629,14 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
     if (dup.blocked) {
       await markBlocked(ledgerId!, 'DUPLICATE')
       await writeActionAudit({
-        hospitalId, actorId: actor.id, ledgerId: ledgerId!, policy, actorRole: actor.role, fingerprint,
-        status: 'BLOCKED_DUPLICATE', amount,
+        hospitalId,
+        actorId: actor.id,
+        ledgerId: ledgerId!,
+        policy,
+        actorRole: actor.role,
+        fingerprint,
+        status: 'BLOCKED_DUPLICATE',
+        amount,
       })
       return block('DUPLICATE', MSG.duplicate, ledgerId!)
     }
@@ -524,14 +646,22 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
   let result: any
   try {
     result = policy.transactionRequired
-      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(policy.action, normalized, hospitalId, tx, patientId))
+      ? await prisma.$transaction(async (tx: any) =>
+          dispatchExecutor(policy.action, normalized, hospitalId, tx, patientId)
+        )
       : await dispatchExecutor(policy.action, normalized, hospitalId, undefined, patientId)
   } catch (err) {
     if (sensitive) {
       await markExecutionError(ledgerId!, err instanceof Error ? err.message : 'executor threw')
       await writeActionAudit({
-        hospitalId, actorId: actor.id, ledgerId: ledgerId!, policy, actorRole: actor.role, fingerprint,
-        status: 'EXECUTION_ERROR', amount,
+        hospitalId,
+        actorId: actor.id,
+        ledgerId: ledgerId!,
+        policy,
+        actorRole: actor.role,
+        fingerprint,
+        status: 'EXECUTION_ERROR',
+        amount,
       })
     }
     return block('EXECUTION_ERROR', MSG.executionFailed, ledgerId ?? undefined)
@@ -549,13 +679,20 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
   // READ actions: no ledger row, no audit row (auditRequired: false).
   if (sensitive) {
     await writeActionAudit({
-      hospitalId, actorId: actor.id, ledgerId: ledgerId!, policy, actorRole: actor.role, fingerprint,
-      status: result?.success ? 'EXECUTED' : 'EXECUTED_BUSINESS_FAILED', verified: verification?.verified, amount,
+      hospitalId,
+      actorId: actor.id,
+      ledgerId: ledgerId!,
+      policy,
+      actorRole: actor.role,
+      fingerprint,
+      status: result?.success ? 'EXECUTED' : 'EXECUTED_BUSINESS_FAILED',
+      verified: verification?.verified,
+      amount,
     })
-    const completed = await markExecuted(
-      ledgerId!,
-      { ...(typeof result === 'object' && result ? result : { result }), ...(verification ? { verification } : {}) }
-    )
+    const completed = await markExecuted(ledgerId!, {
+      ...(typeof result === 'object' && result ? result : { result }),
+      ...(verification ? { verification } : {}),
+    })
     if (!completed) {
       // The atomic transition lost (e.g. concurrently cancelled) — fail closed.
       return block('STATE_RACE', MSG.executionFailed, ledgerId!)
@@ -577,8 +714,7 @@ export async function runAiAction(args: RunAiActionArgs): Promise<AiActionResult
 // ---------------------------------------------------------------------------
 
 export type ApprovalDecisionOutcome =
-  | { ok: true; result: AiActionResult }
-  | { ok: false; code: string; message: string }
+  { ok: true; result: AiActionResult } | { ok: false; code: string; message: string }
 
 /**
  * Approve (if PENDING) then execute an approved request. The parameters come
@@ -594,7 +730,8 @@ export async function approveAndExecute(args: {
 }): Promise<ApprovalDecisionOutcome> {
   const { approvalId, actor, approvalRoles, note, mode } = args
 
-  const row = (await findApprovalForTenant(approvalId, actor.hospitalId)) as (LedgerRow & { requestedBy?: unknown }) | null
+  const row = (await findApprovalForTenant(approvalId, actor.hospitalId)) as
+    (LedgerRow & { requestedBy?: unknown }) | null
   if (!row) return { ok: false, code: 'NOT_FOUND', message: 'Approval not found' }
 
   const policy = resolvePolicy(row.action)
@@ -602,31 +739,55 @@ export async function approveAndExecute(args: {
 
   if (mode === 'approve') {
     if (!approvalRoles.includes(actor.role))
-      return { ok: false, code: 'NOT_APPROVER', message: 'You do not have permission to approve this request' }
-    const decision = await approveApproval(approvalId, { id: actor.id, hospitalId: actor.hospitalId }, note)
+      return {
+        ok: false,
+        code: 'NOT_APPROVER',
+        message: 'You do not have permission to approve this request',
+      }
+    const decision = await approveApproval(
+      approvalId,
+      { id: actor.id, hospitalId: actor.hospitalId },
+      note
+    )
     if (!decision.ok) {
       const message =
-        decision.code === 'EXPIRED' ? 'This approval has expired'
-        : decision.code === 'SELF_APPROVAL' ? 'An approver cannot approve their own request'
-        : decision.code === 'ALREADY_EXECUTED' ? 'This approval has already been executed'
-        : decision.code === 'WRONG_TENANT' ? 'Approval not found'
-        : 'This approval is no longer pending'
+        decision.code === 'EXPIRED'
+          ? 'This approval has expired'
+          : decision.code === 'SELF_APPROVAL'
+            ? 'An approver cannot approve their own request'
+            : decision.code === 'ALREADY_EXECUTED'
+              ? 'This approval has already been executed'
+              : decision.code === 'WRONG_TENANT'
+                ? 'Approval not found'
+                : 'This approval is no longer pending'
       return { ok: false, code: decision.code, message }
     }
   } else {
     // 'execute' on an APPROVED row: the caller (approver) re-runs after a
     // failed attempt. PENDING rows cannot be executed directly.
-    if (row.status === 'EXPIRED') return { ok: false, code: 'EXPIRED', message: 'This approval has expired' }
+    if (row.status === 'EXPIRED')
+      return { ok: false, code: 'EXPIRED', message: 'This approval has expired' }
     if (row.status !== 'APPROVED')
       return { ok: false, code: 'NOT_PENDING', message: 'This approval is no longer pending' }
     if (!approvalRoles.includes(actor.role) && actor.id !== row.requestedById)
-      return { ok: false, code: 'NOT_APPROVER', message: 'You do not have permission to approve this request' }
+      return {
+        ok: false,
+        code: 'NOT_APPROVER',
+        message: 'You do not have permission to approve this request',
+      }
   }
 
   // Fingerprint integrity: the stored row must still bind to exactly what it
   // claims (tamper detection).
-  const fp = computeFingerprint(row.hospitalId, row.action, row.patientId, row.policyVersion, row.params)
-  if (fp !== row.fingerprint) return { ok: false, code: 'FINGERPRINT_MISMATCH', message: MSG.executionFailed }
+  const fp = computeFingerprint(
+    row.hospitalId,
+    row.action,
+    row.patientId,
+    row.policyVersion,
+    row.params
+  )
+  if (fp !== row.fingerprint)
+    return { ok: false, code: 'FINGERPRINT_MISMATCH', message: MSG.executionFailed }
 
   // Re-authorize the ORIGINAL requester under the CURRENT policy (the actor's
   // role may have changed since the request).
@@ -644,7 +805,9 @@ export async function approveAndExecute(args: {
   let result: any
   try {
     result = policy.transactionRequired
-      ? await prisma.$transaction(async (tx: any) => dispatchExecutor(row.action, row.params, row.hospitalId, tx, row.patientId))
+      ? await prisma.$transaction(async (tx: any) =>
+          dispatchExecutor(row.action, row.params, row.hospitalId, tx, row.patientId)
+        )
       : await dispatchExecutor(row.action, row.params, row.hospitalId, undefined, row.patientId)
   } catch (err) {
     await markExecutionError(row.id, err instanceof Error ? err.message : 'executor threw')

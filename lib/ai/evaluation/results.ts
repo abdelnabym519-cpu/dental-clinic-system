@@ -5,7 +5,11 @@
  * `EvalCheck` always carries a typed code (on FAIL) and a PHI-free detail.
  */
 import type {
-  EvalCheck, EvalFailureCode, EvaluationMetric, EvaluationResult, EvalVerdict,
+  EvalCheck,
+  EvalFailureCode,
+  EvaluationMetric,
+  EvaluationResult,
+  EvalVerdict,
 } from './types'
 
 export function pass(id: string, detail: string): EvalCheck {
@@ -56,7 +60,7 @@ export function makeResult(
   suite: string,
   caseId: string | null,
   checks: EvalCheck[],
-  durationMs: number,
+  durationMs: number
 ): EvaluationResult {
   const agg = aggregateCheckVerdict(checks)
   return {
@@ -74,7 +78,11 @@ export function makeResult(
 // Metrics (§17) — canonical, computed only from observed outcomes.
 // ---------------------------------------------------------------------------
 
-export function ratioMetric(name: string, numerator: number, denominator: number): EvaluationMetric {
+export function ratioMetric(
+  name: string,
+  numerator: number,
+  denominator: number
+): EvaluationMetric {
   return {
     name,
     value: denominator > 0 ? numerator / denominator : 0,

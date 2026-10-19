@@ -278,7 +278,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">{t("First Name *")}</Label>
+                  <Label htmlFor="firstName">{t('First Name *')}</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
@@ -287,7 +287,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">{t("Last Name *")}</Label>
+                  <Label htmlFor="lastName">{t('Last Name *')}</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
@@ -298,7 +298,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">{t("Role *")}</Label>
+                <Label htmlFor="role">{t('Role *')}</Label>
                 <Select
                   value={formData.role}
                   onValueChange={(value) => handleChange('role', value)}
@@ -319,7 +319,9 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="newPassword">{t("New Password (leave blank to keep current)")}</Label>
+                <Label htmlFor="newPassword">
+                  {t('New Password (leave blank to keep current)')}
+                </Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -344,7 +346,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                 <div className="space-y-0.5">
                   <Label>{t('Account Status')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    {formData.isActive ? t("Active - Can log in") : t("Inactive - Cannot log in")}
+                    {formData.isActive ? t('Active - Can log in') : t('Inactive - Cannot log in')}
                   </p>
                 </div>
                 <Switch
@@ -364,7 +366,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t("Phone Number *")}</Label>
+                  <Label htmlFor="phone">{t('Phone Number *')}</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -458,7 +460,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="aadharNumber">{t("National ID (الرقم القومي)")}</Label>
+                  <Label htmlFor="aadharNumber">{t('National ID (الرقم القومي)')}</Label>
                   <Input
                     id="aadharNumber"
                     value={formData.aadharNumber}
@@ -466,7 +468,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="panNumber">{t("Commercial Register (السجل التجاري)")}</Label>
+                  <Label htmlFor="panNumber">{t('Commercial Register (السجل التجاري)')}</Label>
                   <Input
                     id="panNumber"
                     value={formData.panNumber}
@@ -536,7 +538,7 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="salary">{t("Monthly Salary (EGP )")}</Label>
+                <Label htmlFor="salary">{t('Monthly Salary (EGP )')}</Label>
                 <Input
                   id="salary"
                   type="number"
@@ -570,7 +572,9 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />{t('ui.work_schedule')}</CardTitle>
+                <Clock className="h-4 w-4" />
+                {t('ui.work_schedule')}
+              </CardTitle>
               <CardDescription>{t('Configure weekly work hours')}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -627,11 +631,13 @@ export default function EditStaffPage({ params }: { params: Promise<{ id: string
         {/* Actions */}
         <div className="flex justify-end gap-4 mt-6">
           <Link href={`/staff/${resolvedParams.id}`}>
-            <Button variant="outline" type="button">{t('ui.cancel')}</Button>
+            <Button variant="outline" type="button">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("Save Changes")}
+            {t('Save Changes')}
           </Button>
         </div>
       </form>

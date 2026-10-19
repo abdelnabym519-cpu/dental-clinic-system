@@ -37,7 +37,9 @@ describe('fixture STT (deterministic, replay/eval only)', () => {
 
 describe('browser Web Speech boundary (§8)', () => {
   it('refuses server-side transcription BY DESIGN (browser owns recognition)', async () => {
-    await expect(new WebSpeechBrowserSttProvider().transcribe()).rejects.toThrow('WEB_SPEECH_IS_CLIENT_SIDE')
+    await expect(new WebSpeechBrowserSttProvider().transcribe()).rejects.toThrow(
+      'WEB_SPEECH_IS_CLIENT_SIDE'
+    )
   })
 })
 
@@ -58,19 +60,23 @@ const TMP = os.tmpdir()
 describe('command STT provider (opt-in local engine boundary)', () => {
   it('rejects oversized WAV bytes (10 MB cap)', async () => {
     const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
-    await expect(p.transcribeBytes(Buffer.alloc(10 * 1024 * 1024 + 1), {})).rejects.toThrow('AUDIO_TOO_LARGE')
+    await expect(p.transcribeBytes(Buffer.alloc(10 * 1024 * 1024 + 1), {})).rejects.toThrow(
+      'AUDIO_TOO_LARGE'
+    )
   })
 
   it('surfaces non-JSON engine output honestly (COMMAND_STT_BAD_OUTPUT)', async () => {
     const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
-    await expect(p.transcribeBytes(Buffer.from('not json'), {})).rejects.toThrow('COMMAND_STT_BAD_OUTPUT')
+    await expect(p.transcribeBytes(Buffer.from('not json'), {})).rejects.toThrow(
+      'COMMAND_STT_BAD_OUTPUT'
+    )
   })
 
   it('parses JSON engine output (real local engine contract)', async () => {
     const p = new CommandSttProvider({ command: CAT_CMD, argsTemplate: CAT_ARGS, baseDir: TMP })
     const r = await p.transcribeBytes(
       Buffer.from(JSON.stringify({ text: 'show the queue', confidence: 0.8, isFinal: true })),
-      {},
+      {}
     )
     expect(r.text).toBe('show the queue')
     expect(r.isFinal).toBe(true)
@@ -126,12 +132,18 @@ describe('provider resolution (explicit config, fail closed)', () => {
 
 describe('voice transcript type guard', () => {
   it('accepts well-formed transcripts', () => {
-    expect(isVoiceTranscript({ text: 'hi', confidence: 0.9, isFinal: true, providerId: 'x' })).toBe(true)
+    expect(isVoiceTranscript({ text: 'hi', confidence: 0.9, isFinal: true, providerId: 'x' })).toBe(
+      true
+    )
   })
 
   it('rejects partial/missing fields (partial transcripts can never be submitted)', () => {
-    expect(isVoiceTranscript({ text: 'hi', confidence: 0.9, isFinal: false, providerId: 'x' })).toBe(true)
-    expect(isVoiceTranscript({ text: 'hi', confidence: 'high', isFinal: true, providerId: 'x' })).toBe(false)
+    expect(
+      isVoiceTranscript({ text: 'hi', confidence: 0.9, isFinal: false, providerId: 'x' })
+    ).toBe(true)
+    expect(
+      isVoiceTranscript({ text: 'hi', confidence: 'high', isFinal: true, providerId: 'x' })
+    ).toBe(false)
     expect(isVoiceTranscript(null)).toBe(false)
     expect(isVoiceTranscript('say this')).toBe(false)
   })
@@ -141,14 +153,17 @@ describe('provider registry audit (§7) — every entry is classified', () => {
   const registry = getVoiceProviderRegistry()
 
   it('has entries for both STT and TTS kinds', () => {
-    expect(registry.some((p) => p.type === "STT")).toBe(true)
-    expect(registry.some((p) => p.type === "TTS")).toBe(true)
+    expect(registry.some((p) => p.type === 'STT')).toBe(true)
+    expect(registry.some((p) => p.type === 'TTS')).toBe(true)
   })
 
   it('every blocked/unavailable entry carries a blocker or stated limitation (no silent gaps)', () => {
     for (const p of registry) {
       if (p.status !== 'VERIFIED' && p.status !== 'RUNTIME_VERIFIED') {
-        expect(p.limitations?.length ?? 0, `${p.providerId} must state its limitation`).toBeGreaterThan(0)
+        expect(
+          p.limitations?.length ?? 0,
+          `${p.providerId} must state its limitation`
+        ).toBeGreaterThan(0)
       }
     }
   })
@@ -156,7 +171,13 @@ describe('provider registry audit (§7) — every entry is classified', () => {
   it('the browser default STT exists and is clearly classified', () => {
     const web = registry.find((p) => p.providerId === 'web-speech-stt-browser')
     expect(web).toBeTruthy()
-    expect(['RUNTIME_VERIFIED', 'RUNTIME_DEPENDENT', 'BLOCKED', 'UNAVAILABLE', 'AUDIT_PLANNED']).toContain(web!.status)
+    expect([
+      'RUNTIME_VERIFIED',
+      'RUNTIME_DEPENDENT',
+      'BLOCKED',
+      'UNAVAILABLE',
+      'AUDIT_PLANNED',
+    ]).toContain(web!.status)
     expect(web!.verificationStatus).toBeTruthy()
   })
 
@@ -183,7 +204,9 @@ describe('speakable text shaping (§12)', () => {
   })
 
   it('removes markdown noise but KEEPS uncertainty wording', () => {
-    const out = speakableFromResponse('**Possible** caries on tooth 36.\n- May need `root canal` — *uncertain*.')
+    const out = speakableFromResponse(
+      '**Possible** caries on tooth 36.\n- May need `root canal` — *uncertain*.'
+    )
     expect(out).toContain('Possible')
     expect(out).toContain('uncertain')
     expect(out).not.toContain('**')

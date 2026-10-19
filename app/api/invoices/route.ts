@@ -227,7 +227,10 @@ export async function POST(request: NextRequest) {
         select: { id: true, patientId: true },
       })
       if (!appt || appt.patientId !== patientId) {
-        return NextResponse.json({ error: 'Appointment does not belong to this patient' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Appointment does not belong to this patient' },
+          { status: 400 }
+        )
       }
     }
     if (treatmentPlanId) {
@@ -236,7 +239,10 @@ export async function POST(request: NextRequest) {
         select: { id: true, patientId: true },
       })
       if (!plan || plan.patientId !== patientId) {
-        return NextResponse.json({ error: 'Treatment plan does not belong to this patient' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Treatment plan does not belong to this patient' },
+          { status: 400 }
+        )
       }
     }
 

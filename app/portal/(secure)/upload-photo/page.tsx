@@ -96,7 +96,9 @@ export default function UploadPhotoPage() {
               </div>
               <h2 className="text-xl font-semibold">{t('Photo Uploaded Successfully')}</h2>
               <p className="text-muted-foreground">
-                {t("Your photo has been sent to your dentist for review. They will get back to you if an in-person visit is needed.")}
+                {t(
+                  'Your photo has been sent to your dentist for review. They will get back to you if an in-person visit is needed.'
+                )}
               </p>
               <div className="flex gap-3 pt-4">
                 <Button
@@ -127,7 +129,9 @@ export default function UploadPhotoPage() {
       <div className="flex items-center gap-4">
         <Link href="/portal">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('ui.back')}
+          </Button>
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{t('ui.upload_photo')}</h1>
@@ -144,7 +148,9 @@ export default function UploadPhotoPage() {
             {t('Photo for Triage')}
           </CardTitle>
           <CardDescription>
-            {t("Take a clear photo of the area of concern. Your dentist will review it and advise whether an in-person visit is needed.")}
+            {t(
+              'Take a clear photo of the area of concern. Your dentist will review it and advise whether an in-person visit is needed.'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -181,7 +187,9 @@ export default function UploadPhotoPage() {
               >
                 <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                 <p className="font-medium">{t('Tap to take or select a photo')}</p>
-                <p className="text-sm text-muted-foreground mt-1">{t("JPEG, PNG, or WebP (max 10MB)")}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('JPEG, PNG, or WebP (max 10MB)')}
+                </p>
               </div>
             )}
           </div>
@@ -207,7 +215,7 @@ export default function UploadPhotoPage() {
 
           {/* Description */}
           <div className="space-y-2">
-            <Label>{t("Description (optional)")}</Label>
+            <Label>{t('Description (optional)')}</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -230,7 +238,9 @@ export default function UploadPhotoPage() {
               </>
             ) : (
               <>
-                <Upload className="h-4 w-4 mr-2" />{t('ui.upload_photo')}</>
+                <Upload className="h-4 w-4 mr-2" />
+                {t('ui.upload_photo')}
+              </>
             )}
           </Button>
         </CardContent>

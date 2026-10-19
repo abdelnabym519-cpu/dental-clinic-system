@@ -30,7 +30,10 @@ import {
 /** The only legal trust levels per write class (no escalation).
  *  EPHEMERAL is excluded — working memory is never persisted, so it has no
  *  durable trust level (consistent with CLASS_TO_ROLES). */
-export const CLASS_TO_TRUST: Record<Exclude<MemoryWriteClass, 'EPHEMERAL' | 'FORBIDDEN'>, MemoryTrust[]> = {
+export const CLASS_TO_TRUST: Record<
+  Exclude<MemoryWriteClass, 'EPHEMERAL' | 'FORBIDDEN'>,
+  MemoryTrust[]
+> = {
   CANDIDATE_MEMORY: ['AI_DERIVED', 'UNKNOWN'],
   USER_CONFIRMED: ['USER_PROVIDED'],
   DOCTOR_CONFIRMED: ['DOCTOR_CONFIRMED', 'CLINICALLY_VERIFIED'],
@@ -38,21 +41,41 @@ export const CLASS_TO_TRUST: Record<Exclude<MemoryWriteClass, 'EPHEMERAL' | 'FOR
 }
 
 /** Roles allowed to use each write class (deterministic, server-checked). */
-export const CLASS_TO_ROLES: Record<Exclude<MemoryWriteClass, 'EPHEMERAL' | 'FORBIDDEN'>, string[]> = {
-  CANDIDATE_MEMORY: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'ACCOUNTANT', 'LAB_TECH', 'PATIENT'],
-  USER_CONFIRMED: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'ACCOUNTANT', 'LAB_TECH', 'PATIENT'],
+export const CLASS_TO_ROLES: Record<
+  Exclude<MemoryWriteClass, 'EPHEMERAL' | 'FORBIDDEN'>,
+  string[]
+> = {
+  CANDIDATE_MEMORY: [
+    'SUPER_ADMIN',
+    'ADMIN',
+    'DOCTOR',
+    'RECEPTIONIST',
+    'ACCOUNTANT',
+    'LAB_TECH',
+    'PATIENT',
+  ],
+  USER_CONFIRMED: [
+    'SUPER_ADMIN',
+    'ADMIN',
+    'DOCTOR',
+    'RECEPTIONIST',
+    'ACCOUNTANT',
+    'LAB_TECH',
+    'PATIENT',
+  ],
   DOCTOR_CONFIRMED: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR'],
   SYSTEM_VERIFIED: ['SYSTEM'],
 }
 
 /** Domain → which scope columns MUST be set. */
-const DOMAIN_REQUIRED: Record<MemoryDomain, (keyof Omit<MemoryScope, 'hospitalId' | 'domain'>)[]> = {
-  CLINIC: [],
-  DOCTOR: ['doctorId'],
-  PATIENT: ['patientId'],
-  CASE: ['caseId'],
-  CONVERSATION: ['conversationId'],
-}
+const DOMAIN_REQUIRED: Record<MemoryDomain, (keyof Omit<MemoryScope, 'hospitalId' | 'domain'>)[]> =
+  {
+    CLINIC: [],
+    DOCTOR: ['doctorId'],
+    PATIENT: ['patientId'],
+    CASE: ['caseId'],
+    CONVERSATION: ['conversationId'],
+  }
 
 /** Domain → roles that may WRITE (retrieval has its own matrix). */
 export const DOMAIN_WRITE_ROLES: Record<MemoryDomain, string[]> = {
@@ -83,7 +106,7 @@ export function validateValue(value: unknown): void {
   if (json.length > MEMORY_LIMITS.maxValueChars) {
     throw new MemoryError(
       'MEMORY_CONTENT_INVALID',
-      `memory value exceeds ${MEMORY_LIMITS.maxValueChars} chars`,
+      `memory value exceeds ${MEMORY_LIMITS.maxValueChars} chars`
     )
   }
   if (json.length === 0) {
@@ -92,12 +115,17 @@ export function validateValue(value: unknown): void {
   // Never persist prototype-polluting members.
   for (const bad of ['__proto__', 'constructor', 'prototype']) {
     if (json.includes(`"${bad}"`)) {
-      throw new MemoryError('MEMORY_CONTENT_INVALID', `memory value may not contain "${bad}" members`)
+      throw new MemoryError(
+        'MEMORY_CONTENT_INVALID',
+        `memory value may not contain "${bad}" members`
+      )
     }
   }
 }
 
-export function validateConfidence(c: MemoryConfidence | null | undefined): MemoryConfidence | null {
+export function validateConfidence(
+  c: MemoryConfidence | null | undefined
+): MemoryConfidence | null {
   if (c === undefined || c === null) return null
   const ok =
     typeof c === 'object' &&
@@ -108,7 +136,8 @@ export function validateConfidence(c: MemoryConfidence | null | undefined): Memo
     c.source.trim().length > 0 &&
     typeof c.semantics === 'string' &&
     c.semantics.trim().length > 0 &&
-    (c.calibration === null || (typeof c.calibration === 'string' && c.calibration.trim().length > 0)) &&
+    (c.calibration === null ||
+      (typeof c.calibration === 'string' && c.calibration.trim().length > 0)) &&
     typeof c.version === 'string' &&
     c.version.trim().length > 0 &&
     typeof c.at === 'string' &&
@@ -116,7 +145,7 @@ export function validateConfidence(c: MemoryConfidence | null | undefined): Memo
   if (!ok) {
     throw new MemoryError(
       'MEMORY_CONFIDENCE_INVALID',
-      'confidence requires value(0..1), source, semantics, version, at; calibration null-or-string',
+      'confidence requires value(0..1), source, semantics, version, at; calibration null-or-string'
     )
   }
   return c
@@ -127,7 +156,10 @@ export function validateScope(scope: MemoryScope): void {
     throw new MemoryError('MEMORY_SCOPE_MISMATCH', 'memory scope requires a tenant (hospitalId)')
   }
   if (!MEMORY_DOMAINS.includes(scope.domain)) {
-    throw new MemoryError('MEMORY_SCOPE_MISMATCH', `unknown memory domain '${String(scope.domain)}'`)
+    throw new MemoryError(
+      'MEMORY_SCOPE_MISMATCH',
+      `unknown memory domain '${String(scope.domain)}'`
+    )
   }
   for (const col of DOMAIN_REQUIRED[scope.domain]) {
     const v = scope[col]
@@ -167,25 +199,37 @@ export function validateWrite({
   if (!MEMORY_TYPES.includes(memoryType as MemoryType)) {
     throw new MemoryError('MEMORY_CONTENT_INVALID', `unknown memory type '${String(memoryType)}'`)
   }
-  if (!actor || typeof actor.id !== 'string' || !actor.id || typeof actor.role !== 'string' || !actor.role) {
+  if (
+    !actor ||
+    typeof actor.id !== 'string' ||
+    !actor.id ||
+    typeof actor.role !== 'string' ||
+    !actor.role
+  ) {
     throw new MemoryError('MEMORY_UNAUTHORIZED', 'memory writes require a server-resolved actor')
   }
   // Role → class.
   const roles = CLASS_TO_ROLES[writeClass]
   if (!roles.includes(actor.role)) {
-    throw new MemoryError('MEMORY_UNAUTHORIZED', `role ${actor.role} cannot use write class ${writeClass}`)
+    throw new MemoryError(
+      'MEMORY_UNAUTHORIZED',
+      `role ${actor.role} cannot use write class ${writeClass}`
+    )
   }
   // Class → trust (no escalation).
   const allowedTrust = CLASS_TO_TRUST[writeClass]
   if (!allowedTrust.includes(trustLevel)) {
     throw new MemoryError(
       'MEMORY_TRUST_ESCALATION',
-      `write class ${writeClass} may only set trust ${allowedTrust.join('|')}, got ${trustLevel}`,
+      `write class ${writeClass} may only set trust ${allowedTrust.join('|')}, got ${trustLevel}`
     )
   }
   // Domain → roles.
   if (!DOMAIN_WRITE_ROLES[scope.domain].includes(actor.role)) {
-    throw new MemoryError('MEMORY_UNAUTHORIZED', `role ${actor.role} cannot write domain ${scope.domain}`)
+    throw new MemoryError(
+      'MEMORY_UNAUTHORIZED',
+      `role ${actor.role} cannot write domain ${scope.domain}`
+    )
   }
   // SYSTEM actor is reserved for system writes — and vice versa.
   if (actor.role === 'SYSTEM' && writeClass !== 'SYSTEM_VERIFIED') {

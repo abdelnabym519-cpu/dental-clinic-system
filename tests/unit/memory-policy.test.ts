@@ -42,36 +42,48 @@ describe('memory write policy', () => {
   it('rejects trust escalation: a patient cannot write DOCTOR_CONFIRMED', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ writeClass: 'DOCTOR_CONFIRMED', trustLevel: 'DOCTOR_CONFIRMED' }) as never),
+      store.write(
+        write({ writeClass: 'DOCTOR_CONFIRMED', trustLevel: 'DOCTOR_CONFIRMED' }) as never
+      )
     ).rejects.toThrow(MemoryError)
   })
 
   it('rejects class/trust mismatch (USER_CONFIRMED with DOCTOR_CONFIRMED trust)', async () => {
     expect(() =>
       validateWrite({
-        ...write({ writeClass: 'USER_CONFIRMED', trustLevel: 'DOCTOR_CONFIRMED', actor: { id: 'd1', role: 'DOCTOR' } }),
-      }),
+        ...write({
+          writeClass: 'USER_CONFIRMED',
+          trustLevel: 'DOCTOR_CONFIRMED',
+          actor: { id: 'd1', role: 'DOCTOR' },
+        }),
+      })
     ).toThrow(/trust/i)
   })
 
   it('rejects a patient writing to the CLINIC domain', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ scope: { hospitalId: HOSP, domain: 'CLINIC' } }) as never),
+      store.write(write({ scope: { hospitalId: HOSP, domain: 'CLINIC' } }) as never)
     ).rejects.toThrow(MemoryError)
   })
 
   it('rejects SYSTEM actor outside SYSTEM_VERIFIED', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ actor: { id: 'system', role: 'SYSTEM' }, writeClass: 'USER_CONFIRMED', trustLevel: 'USER_PROVIDED' }) as never),
+      store.write(
+        write({
+          actor: { id: 'system', role: 'SYSTEM' },
+          writeClass: 'USER_CONFIRMED',
+          trustLevel: 'USER_PROVIDED',
+        }) as never
+      )
     ).rejects.toThrow(MemoryError)
   })
 
   it('rejects a user acting as the system identity', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ actor: { id: 'system', role: 'PATIENT' } }) as never),
+      store.write(write({ actor: { id: 'system', role: 'PATIENT' } }) as never)
     ).rejects.toThrow(MemoryError)
   })
 
@@ -83,7 +95,7 @@ describe('memory write policy', () => {
         trustLevel: 'SYSTEM_DERIVED',
         sourceKind: 'ACTION_RESULT',
         actor: { id: 'system', role: 'SYSTEM' },
-      }) as never,
+      }) as never
     )
     expect(item.createdByIdType).toBe('SYSTEM')
   })
@@ -96,22 +108,26 @@ describe('memory write policy', () => {
           writeClass: 'DOCTOR_CONFIRMED',
           trustLevel: 'DOCTOR_CONFIRMED',
           actor: { id: 'rec-1', role: 'RECEPTIONIST' },
-        }) as never,
-      ),
+        }) as never
+      )
     ).rejects.toThrow(MemoryError)
   })
 
   it('rejects an AI_DERIVED trust from a user (LLM text cannot self-authorize)', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ writeClass: 'USER_CONFIRMED', trustLevel: 'AI_DERIVED' }) as never),
+      store.write(write({ writeClass: 'USER_CONFIRMED', trustLevel: 'AI_DERIVED' }) as never)
     ).rejects.toThrow(MemoryError)
   })
 
   it('accepts a CANDIDATE_MEMORY write as AI_DERIVED', async () => {
     const store = new InMemoryMemoryStore()
     const item = await store.write(
-      write({ writeClass: 'CANDIDATE_MEMORY', trustLevel: 'AI_DERIVED', sourceKind: 'CONVERSATION' }) as never,
+      write({
+        writeClass: 'CANDIDATE_MEMORY',
+        trustLevel: 'AI_DERIVED',
+        sourceKind: 'CONVERSATION',
+      }) as never
     )
     expect(item.trustLevel).toBe('AI_DERIVED')
   })
@@ -122,12 +138,16 @@ describe('memory write policy', () => {
     // through a literal would hit the setter and vanish).
     const poisoned = JSON.parse('{"__proto__":"x"}') as unknown
     await expect(store.write(write({ value: poisoned }) as never)).rejects.toThrow(MemoryError)
-    await expect(store.write(write({ value: JSON.parse('{"constructor":{"name":"x"}}') }) as never)).rejects.toThrow(MemoryError)
+    await expect(
+      store.write(write({ value: JSON.parse('{"constructor":{"name":"x"}}') }) as never)
+    ).rejects.toThrow(MemoryError)
   })
 
   it('rejects oversized values and bad keys', async () => {
     const store = new InMemoryMemoryStore()
-    await expect(store.write(write({ value: 'x'.repeat(3000) }) as never)).rejects.toThrow(MemoryError)
+    await expect(store.write(write({ value: 'x'.repeat(3000) }) as never)).rejects.toThrow(
+      MemoryError
+    )
     await expect(store.write(write({ key: 'Bad Key!' }) as never)).rejects.toThrow(MemoryError)
     await expect(store.write(write({ key: '' }) as never)).rejects.toThrow(MemoryError)
   })
@@ -135,10 +155,30 @@ describe('memory write policy', () => {
   it('rejects unsourced confidence (a number without provenance is fabricated)', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ confidence: { value: 0.9, source: '', semantics: '', version: '1', at: '2026-09-30T00:00:00Z' } }) as never),
+      store.write(
+        write({
+          confidence: {
+            value: 0.9,
+            source: '',
+            semantics: '',
+            version: '1',
+            at: '2026-09-30T00:00:00Z',
+          },
+        }) as never
+      )
     ).rejects.toThrow(MemoryError)
     await expect(
-      store.write(write({ confidence: { value: 1.4, source: 's', semantics: 'sem', version: '1', at: '2026-09-30T00:00:00Z' } }) as never),
+      store.write(
+        write({
+          confidence: {
+            value: 1.4,
+            source: 's',
+            semantics: 'sem',
+            version: '1',
+            at: '2026-09-30T00:00:00Z',
+          },
+        }) as never
+      )
     ).rejects.toThrow(MemoryError)
     const item = await store.write(
       write({
@@ -150,7 +190,7 @@ describe('memory write policy', () => {
           version: '1.0.0',
           at: '2026-09-30T00:00:00Z',
         },
-      }) as never,
+      }) as never
     )
     expect(item.confidence?.value).toBe(0.8)
   })
@@ -158,7 +198,7 @@ describe('memory write policy', () => {
   it('rejects scope/domain mismatches (PATIENT domain without patientId)', async () => {
     const store = new InMemoryMemoryStore()
     await expect(
-      store.write(write({ scope: { hospitalId: HOSP, domain: 'PATIENT' } }) as never),
+      store.write(write({ scope: { hospitalId: HOSP, domain: 'PATIENT' } }) as never)
     ).rejects.toThrow(MemoryError)
   })
 

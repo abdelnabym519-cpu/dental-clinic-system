@@ -24,7 +24,13 @@ import { VOICE_LOCALES, type VoiceLocale, type VoiceTurnResponse } from '@/lib/a
 import type { EvalCheck, EvalLanguage } from './types'
 import { pass, fail } from './results'
 import type { GoldenCase } from './types'
-import { buildReplayAgentDeps, tenantFor, ACTOR_FOR_ROLE, type LlmCallLog, type ReplayOverrides } from './replay'
+import {
+  buildReplayAgentDeps,
+  tenantFor,
+  ACTOR_FOR_ROLE,
+  type LlmCallLog,
+  type ReplayOverrides,
+} from './replay'
 import { NOW } from '@/tests/harness/agent-fixtures'
 import { runAgent } from '@/lib/ai/agent/loop'
 
@@ -121,7 +127,7 @@ export interface VoiceReplayOutcome {
  */
 export async function replayVoiceCase(
   c: VoiceGoldenCase,
-  overrides: ReplayOverrides = {},
+  overrides: ReplayOverrides = {}
 ): Promise<VoiceReplayOutcome> {
   resetDuplicateWindows()
   const hospitalId = tenantFor(c.tenant)
@@ -142,7 +148,7 @@ export async function replayVoiceCase(
       tags: c.tags,
     },
     overrides,
-    llmLog,
+    llmLog
   )
 
   const sessions = new InMemoryVoiceSessionStore()
@@ -167,7 +173,9 @@ export async function replayVoiceCase(
       session = sessions.create({
         userId: actor.id,
         tenantId: hospitalId,
-        locale: (VOICE_LOCALES as readonly string[]).includes(c.locale) ? c.locale as VoiceLocale : 'ar-EG',
+        locale: (VOICE_LOCALES as readonly string[]).includes(c.locale)
+          ? (c.locale as VoiceLocale)
+          : 'ar-EG',
         conversationId: 'conv-eval',
         now: new Date(clock),
       })
@@ -222,7 +230,11 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
   const checks: EvalCheck[] = []
   const id = (n: string) => `${c.caseId}.${n}`
   const mismatch = (what: string, expected: unknown, observed: unknown) =>
-    fail(id(what), 'EVAL_VOICE_BEHAVIOR_MISMATCH', `${what}: expected ${JSON.stringify(expected)}, observed ${JSON.stringify(observed)}`)
+    fail(
+      id(what),
+      'EVAL_VOICE_BEHAVIOR_MISMATCH',
+      `${what}: expected ${JSON.stringify(expected)}, observed ${JSON.stringify(observed)}`
+    )
 
   const e = c.expected
   if (e.states) {
@@ -230,7 +242,7 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
     checks.push(
       JSON.stringify(observed) === JSON.stringify(e.states)
         ? pass(id('states'), `states ${observed.join('→')}`)
-        : mismatch('states', e.states, observed),
+        : mismatch('states', e.states, observed)
     )
   }
   if (e.agentStatus !== undefined) {
@@ -239,7 +251,7 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
     checks.push(
       (e.agentStatus === null && observed === null) || observed === e.agentStatus
         ? pass(id('agentStatus'), `agentStatus ${observed}`)
-        : mismatch('agentStatus', e.agentStatus, observed),
+        : mismatch('agentStatus', e.agentStatus, observed)
     )
   }
   if (e.taskType !== undefined) {
@@ -248,30 +260,52 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
     checks.push(
       observed.some((t) => allowed.includes(t as string))
         ? pass(id('taskType'), `taskType ${[...new Set(observed)].join('/')}`)
-        : mismatch('taskType', allowed, observed),
+        : mismatch('taskType', allowed, observed)
     )
   }
   if (e.clarifications) {
     const observed = [...new Set(obs.observations.flatMap((o) => o.clarificationCodes))]
     const ok = e.clarifications.every((code) => observed.includes(code))
-    checks.push(ok ? pass(id('clarifications'), observed.join(',')) : mismatch('clarifications', e.clarifications, observed))
+    checks.push(
+      ok
+        ? pass(id('clarifications'), observed.join(','))
+        : mismatch('clarifications', e.clarifications, observed)
+    )
   }
   if (e.duplicateSuppressed !== undefined) {
     const observed = obs.observations.some((o) => o.duplicateSuppressed)
-    checks.push(observed === e.duplicateSuppressed ? pass(id('duplicateSuppressed'), String(observed)) : mismatch('duplicateSuppressed', e.duplicateSuppressed, observed))
+    checks.push(
+      observed === e.duplicateSuppressed
+        ? pass(id('duplicateSuppressed'), String(observed))
+        : mismatch('duplicateSuppressed', e.duplicateSuppressed, observed)
+    )
   }
   if (e.interrupted !== undefined) {
     const observed = obs.observations.some((o) => o.interrupted)
-    checks.push(observed === e.interrupted ? pass(id('interrupted'), String(observed)) : mismatch('interrupted', e.interrupted, observed))
+    checks.push(
+      observed === e.interrupted
+        ? pass(id('interrupted'), String(observed))
+        : mismatch('interrupted', e.interrupted, observed)
+    )
   }
   if (e.approvalRequired !== undefined) {
     const observed = obs.observations.some((o) => o.approvalRequired)
-    checks.push(observed === e.approvalRequired ? pass(id('approvalRequired'), String(observed)) : mismatch('approvalRequired', e.approvalRequired, observed))
+    checks.push(
+      observed === e.approvalRequired
+        ? pass(id('approvalRequired'), String(observed))
+        : mismatch('approvalRequired', e.approvalRequired, observed)
+    )
   }
   if (e.errorCodes) {
-    const observed = [...new Set(obs.observations.map((o) => o.errorCode).filter(Boolean))] as string[]
+    const observed = [
+      ...new Set(obs.observations.map((o) => o.errorCode).filter(Boolean)),
+    ] as string[]
     const ok = e.errorCodes.every((code) => observed.includes(code))
-    checks.push(ok ? pass(id('errorCodes'), observed.join(',')) : mismatch('errorCodes', e.errorCodes, observed))
+    checks.push(
+      ok
+        ? pass(id('errorCodes'), observed.join(','))
+        : mismatch('errorCodes', e.errorCodes, observed)
+    )
   }
   if (e.mustContain) {
     const haystack = obs.observations
@@ -288,7 +322,15 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
       } else {
         ok = haystack.includes(needle)
       }
-      checks.push(ok ? pass(id('mustContain'), needle) : fail(id('mustContain'), 'EVAL_VOICE_TEXT_MISMATCH', `expected text containing ${JSON.stringify(needle)}, got ${JSON.stringify(haystack.slice(0, 400))}`))
+      checks.push(
+        ok
+          ? pass(id('mustContain'), needle)
+          : fail(
+              id('mustContain'),
+              'EVAL_VOICE_TEXT_MISMATCH',
+              `expected text containing ${JSON.stringify(needle)}, got ${JSON.stringify(haystack.slice(0, 400))}`
+            )
+      )
     }
   }
   if (e.mustNotContain) {
@@ -297,7 +339,15 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
       .join(' \n ')
     for (const needle of e.mustNotContain) {
       const ok = !haystack.includes(needle)
-      checks.push(ok ? pass(id('mustNotContain'), needle) : fail(id('mustNotContain'), 'EVAL_VOICE_TEXT_MISMATCH', `forbidden text present: ${JSON.stringify(needle)}`))
+      checks.push(
+        ok
+          ? pass(id('mustNotContain'), needle)
+          : fail(
+              id('mustNotContain'),
+              'EVAL_VOICE_TEXT_MISMATCH',
+              `forbidden text present: ${JSON.stringify(needle)}`
+            )
+      )
     }
   }
   return checks
@@ -306,7 +356,7 @@ export function compareVoiceBehavior(c: VoiceGoldenCase, obs: VoiceReplayOutcome
 /** Convenience: replay + compare in one step (mirrors evaluateCase). */
 export async function evaluateVoiceCase(
   c: VoiceGoldenCase,
-  overrides: ReplayOverrides = {},
+  overrides: ReplayOverrides = {}
 ): Promise<{ checks: EvalCheck[]; outcome: VoiceReplayOutcome }> {
   const outcome = await replayVoiceCase(c, overrides)
   return { checks: compareVoiceBehavior(c, outcome), outcome }

@@ -30,9 +30,7 @@ async function orchestratorGet(path: string): Promise<Record<string, unknown>> {
       signal: AbortSignal.timeout(VIEW_TIMEOUT_MS),
     })
   } catch (err) {
-    throw new Error(
-      `orchestrator unreachable: ${err instanceof Error ? err.message : String(err)}`,
-    )
+    throw new Error(`orchestrator unreachable: ${err instanceof Error ? err.message : String(err)}`)
   }
   if (!res.ok) {
     throw new Error(`orchestrator ${path} returned HTTP ${res.status}`)
@@ -80,9 +78,14 @@ export function createOrchestratorCapabilitySource(): LocalAiCapabilitySource {
         status: h.status != null ? str(h.status) : null,
         error: h.error != null ? str(h.error) : null,
         modelChecksum: h.model_checksum != null ? str(h.model_checksum).toLowerCase() : null,
-        isStandin: Boolean(h.is_standin_not_meshsegnet ?? h.is_standin_not_liodon ??
-          h.is_standin_not_implant ?? h.is_standin_not_orthodontic),
-        lifecycleStatus: (str(h.lifecycle_status) || 'BLOCKED') as EngineHealthEntry['lifecycleStatus'],
+        isStandin: Boolean(
+          h.is_standin_not_meshsegnet ??
+          h.is_standin_not_liodon ??
+          h.is_standin_not_implant ??
+          h.is_standin_not_orthodontic
+        ),
+        lifecycleStatus: (str(h.lifecycle_status) ||
+          'BLOCKED') as EngineHealthEntry['lifecycleStatus'],
         lifecycleReason: str(h.lifecycle_reason),
       }))
     },

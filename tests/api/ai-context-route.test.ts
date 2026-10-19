@@ -24,7 +24,12 @@ const mockAuth = vi.hoisted(() => {
   }
   const requireAuthAndRole = vi.fn(async () => {
     if (state.error) return { error: state.error, user: null, hospitalId: null, session: null }
-    return { error: null, user: state.user, hospitalId: state.hospitalId, session: { user: state.user } }
+    return {
+      error: null,
+      user: state.user,
+      hospitalId: state.hospitalId,
+      session: { user: state.user },
+    }
   })
   return { requireAuthAndRole, state }
 })
@@ -97,7 +102,10 @@ describe('POST /api/ai/context (Phase 2 Context Inspector)', () => {
     expect((await POST(makeRequest({}))).status).toBe(400)
     expect((await POST(makeRequest({ patientId: PAT_A1, profile: 'NOPE' }))).status).toBe(400)
     expect((await POST(makeRequest({ patientId: PAT_A1, toothFdi: 99 }))).status).toBe(400)
-    const badJson = new Request('http://localhost/api/ai/context', { method: 'POST', body: '{oops' })
+    const badJson = new Request('http://localhost/api/ai/context', {
+      method: 'POST',
+      body: '{oops',
+    })
     expect((await POST(badJson)).status).toBe(400)
   })
 
@@ -165,7 +173,11 @@ describe('POST /api/ai/context (Phase 2 Context Inspector)', () => {
     // simulate an exploding delegate
     setPrisma({
       ...createFakePrisma(),
-      dentalChartEntry: { findMany: async () => { throw new Error('db down') } },
+      dentalChartEntry: {
+        findMany: async () => {
+          throw new Error('db down')
+        },
+      },
     })
     const { POST } = await loadRoute()
     const res = await POST(makeRequest({ patientId: PAT_A1, profile: 'CLINICAL' }))

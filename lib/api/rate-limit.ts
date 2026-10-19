@@ -36,11 +36,16 @@ export async function checkRateLimit(
   scope: { hospitalId: string; userId: string; action: string },
   limit: number,
   windowSec = 60,
-  now = new Date(),
+  now = new Date()
 ): Promise<RateLimitResult> {
   const since = new Date(now.getTime() - windowSec * 1000)
   const used = await deps.client.auditLog.count({
-    where: { hospitalId: scope.hospitalId, userId: scope.userId, action: scope.action, createdAt: { gte: since } },
+    where: {
+      hospitalId: scope.hospitalId,
+      userId: scope.userId,
+      action: scope.action,
+      createdAt: { gte: since },
+    },
   })
   return { allowed: used < limit, used, limit, windowSec }
 }

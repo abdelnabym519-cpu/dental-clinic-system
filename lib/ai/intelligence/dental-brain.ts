@@ -16,11 +16,7 @@
  * domains; the intelligence logic is the same for every domain.
  */
 
-import type {
-  CaseGraph,
-  GraphNode,
-  IntelligenceItem,
-} from './types'
+import type { CaseGraph, GraphNode, IntelligenceItem } from './types'
 import { KNOWLEDGE_DOMAINS, type KnowledgeDomain } from '@/lib/ai/knowledge/taxonomy'
 import { buildCaseGraph, type GraphPrisma } from './case-graph'
 
@@ -40,7 +36,12 @@ export interface CaseUnderstanding {
   }[]
   clinicianConfirmedFindings: string[]
   symptoms: string[]
-  imaging: { modality: string | null; studyType: string | null; status: string | null; aiJobs: number }[]
+  imaging: {
+    modality: string | null
+    studyType: string | null
+    status: string | null
+    aiJobs: number
+  }[]
   treatment: { done: string[]; pending: string[]; cancelled: string[] }
   followUps: { ref: string; date: string | null; overdue: boolean; notes: string | null }[]
   missingInformation: string[]
@@ -107,10 +108,7 @@ const PROCEDURE_CATEGORY_DOMAINS: Record<string, KnowledgeDomain> = {
   EMERGENCY: 'ORAL_MEDICINE',
 }
 
-export function domainsForCase(
-  graph: CaseGraph,
-  procedureCategories: string[]
-): KnowledgeDomain[] {
+export function domainsForCase(graph: CaseGraph, procedureCategories: string[]): KnowledgeDomain[] {
   const set = new Set<KnowledgeDomain>()
   set.add('DIAGNOSIS') // case understanding always sits under diagnosis support
   for (const n of graph.nodes) {
@@ -143,7 +141,7 @@ export function understandCase(
     insightClass: IntelligenceItem['insightClass'],
     titleKey: string,
     detail: Record<string, unknown>,
-    state: IntelligenceItem['state'] = 'AVAILABLE',
+    state: IntelligenceItem['state'] = 'AVAILABLE'
   ) => {
     itemN += 1
     items.push({
@@ -191,7 +189,10 @@ export function understandCase(
   for (const n of graph.nodes) {
     if (!n.id.startsWith('aifinding:')) continue
     const accepted = n.data.reviewDecision === 'ACCEPTED'
-    const prov = (n.data.provenanceRecord ?? {}) as { modelVersion?: string | null; modelChecksum?: string | null }
+    const prov = (n.data.provenanceRecord ?? {}) as {
+      modelVersion?: string | null
+      modelChecksum?: string | null
+    }
     aiFindings.push({
       ref: n.ref,
       engine: (n.data.engine as string | null) ?? null,
@@ -207,7 +208,7 @@ export function understandCase(
     item(
       accepted ? 'FACT' : 'AI_INTERPRETATION',
       accepted ? 'int.casing.aiFindingAccepted' : 'int.casing.aiFindingPending',
-      { ref: n.ref, engine: n.data.engine ?? null, reviewDecision: n.data.reviewDecision ?? null },
+      { ref: n.ref, engine: n.data.engine ?? null, reviewDecision: n.data.reviewDecision ?? null }
     )
   }
   if (aiFindings.length === 0) item('FACT', 'int.casing.noAiFindings', {}, 'NOT_AVAILABLE')
@@ -224,7 +225,9 @@ export function understandCase(
   const imaging = graph.nodes
     .filter((n) => n.id.startsWith('imaging:'))
     .map((n) => {
-      const jobCount = graph.edges.filter((e) => e.from === n.id && e.kind === 'IMAGING_HAS_AI_FINDING').length
+      const jobCount = graph.edges.filter(
+        (e) => e.from === n.id && e.kind === 'IMAGING_HAS_AI_FINDING'
+      ).length
       return {
         modality: (n.data.modality as string | null) ?? null,
         studyType: (n.data.studyType as string | null) ?? null,
@@ -243,10 +246,15 @@ export function understandCase(
     if (!n.id.startsWith('treatment:') && !n.id.startsWith('rx:')) continue
     const status = String(n.data.status ?? '')
     if (status === 'COMPLETED') done.push(n.ref)
-    else if (status === 'CANCELLED' || status === 'REJECTED' || status === 'CANCELLED_RX') cancelled.push(n.ref)
+    else if (status === 'CANCELLED' || status === 'REJECTED' || status === 'CANCELLED_RX')
+      cancelled.push(n.ref)
     else pending.push(n.ref)
   }
-  item('FACT', 'int.casing.treatment', { done: done.length, pending: pending.length, cancelled: cancelled.length })
+  item('FACT', 'int.casing.treatment', {
+    done: done.length,
+    pending: pending.length,
+    cancelled: cancelled.length,
+  })
 
   // Follow-ups (FACT + DERIVED_INSIGHT for overdue).
   const followUps: CaseUnderstanding['followUps'] = []
@@ -265,7 +273,8 @@ export function understandCase(
   const missingInformation: string[] = []
   if (symptoms.length === 0) missingInformation.push('chief_complaint')
   if (imaging.length === 0) missingInformation.push('imaging')
-  if (clinicianConfirmedFindings.length === 0 && aiFindings.length === 0) missingInformation.push('findings')
+  if (clinicianConfirmedFindings.length === 0 && aiFindings.length === 0)
+    missingInformation.push('findings')
   for (const n of graph.nodes) {
     if (n.kind === 'FOLLOW_UP' && !n.data.date) missingInformation.push('follow_up_date')
     if (n.kind === 'CASE' && n.data.status === 'DRAFT') missingInformation.push('case_plan_status')
@@ -276,8 +285,13 @@ export function understandCase(
   // Treatment plan states.
   for (const n of graph.nodes) {
     if (n.kind !== 'CASE') continue
-    item('FACT', 'int.casing.plan', { planNumber: n.ref, status: n.data.status ?? null, diagnosis: n.data.diagnosis ? 'recorded' : 'none' })
-    if (!n.data.consentGiven) item('DERIVED_INSIGHT', 'int.casing.consentMissing', { planNumber: n.ref })
+    item('FACT', 'int.casing.plan', {
+      planNumber: n.ref,
+      status: n.data.status ?? null,
+      diagnosis: n.data.diagnosis ? 'recorded' : 'none',
+    })
+    if (!n.data.consentGiven)
+      item('DERIVED_INSIGHT', 'int.casing.consentMissing', { planNumber: n.ref })
   }
   void nodeById
 
@@ -294,7 +308,11 @@ export function understandCase(
     followUps,
     missingInformation: missing,
     domains: domainsForCase(graph, opts.procedureCategories),
-    graph: { nodes: graph.nodes.length, edges: graph.edges.length, truncated: graph.limits.truncated },
+    graph: {
+      nodes: graph.nodes.length,
+      edges: graph.edges.length,
+      truncated: graph.limits.truncated,
+    },
   }
 }
 
@@ -339,7 +357,10 @@ export function differentialSupport(
       conditions.set(cond, entry)
     } else {
       conditions.set(cond, {
-        severity: (SEV_RANK[prev.severity] ?? 0) >= (SEV_RANK[entry.severity] ?? 0) ? prev.severity : entry.severity,
+        severity:
+          (SEV_RANK[prev.severity] ?? 0) >= (SEV_RANK[entry.severity] ?? 0)
+            ? prev.severity
+            : entry.severity,
         resolved: prev.resolved && entry.resolved,
         tooth: entry.tooth || prev.tooth,
       })
@@ -353,8 +374,16 @@ export function differentialSupport(
     supporting: string[],
     contradicting: string[],
     missing: string[],
-    suggested: string[],
-  ) => candidates.push({ candidate, domain, supportingEvidence: supporting, contradictingEvidence: contradicting, missingEvidence: missing, suggestedInformation: suggested })
+    suggested: string[]
+  ) =>
+    candidates.push({
+      candidate,
+      domain,
+      supportingEvidence: supporting,
+      contradictingEvidence: contradicting,
+      missingEvidence: missing,
+      suggestedInformation: suggested,
+    })
 
   const active = (c: string) => {
     const v = conditions.get(c)
@@ -366,10 +395,14 @@ export function differentialSupport(
     push(
       'Caries (restorative consideration)',
       'RESTORATIVE',
-      [`chart condition CARIES recorded${sev('CARIES') ? ` (severity ${sev('CARIES')})` : ''} — clinician-confirmed record`],
-      conditions.has('CARIES') && conditions.get('CARIES')?.resolved ? ['finding marked resolved'] : [],
+      [
+        `chart condition CARIES recorded${sev('CARIES') ? ` (severity ${sev('CARIES')})` : ''} — clinician-confirmed record`,
+      ],
+      conditions.has('CARIES') && conditions.get('CARIES')?.resolved
+        ? ['finding marked resolved']
+        : [],
       ['radiographic evidence (if not yet imaged)', 'extent/depth assessment'],
-      ['periapical or bitewing imaging of the affected tooth', 'clinical probing of the lesion'],
+      ['periapical or bitewing imaging of the affected tooth', 'clinical probing of the lesion']
     )
   }
   if (active('ROOT_CANAL') || active('ABSCESS')) {
@@ -379,7 +412,10 @@ export function differentialSupport(
       conditions.has('ABSCESS') ? ['ABSCESS recorded (clinician-confirmed)'] : [],
       conditions.has('ROOT_CANAL') ? ['prior root-canal treatment recorded'] : [],
       ['vitality testing result', 'periapical radiograph / CBCT if periapical lesion suspected'],
-      ['pulp vitality test (thermal/electric)', 'periapical imaging; CBCT for persistent periapical pathology'],
+      [
+        'pulp vitality test (thermal/electric)',
+        'periapical imaging; CBCT for persistent periapical pathology',
+      ]
     )
   }
   if (active('PERIODONTAL')) {
@@ -389,7 +425,7 @@ export function differentialSupport(
       ['PERIODONTAL condition recorded (clinician-confirmed)'],
       conditions.get('PERIODONTAL')?.resolved ? ['finding marked resolved'] : [],
       ['probing depths', 'radiographic bone levels'],
-      ['full-mouth periodontal charting', 'periapical/panoramic imaging for bone assessment'],
+      ['full-mouth periodontal charting', 'periapical/panoramic imaging for bone assessment']
     )
   }
   if (active('MOBILITY')) {
@@ -399,17 +435,17 @@ export function differentialSupport(
       ['MOBILITY recorded (clinician-confirmed)'],
       [],
       ['cause (periodontal vs traumatic)', 'probing depths', 'periapical imaging'],
-      ['history of trauma', 'periodontal charting', 'periapical imaging'],
+      ['history of trauma', 'periodontal charting', 'periapical imaging']
     )
   }
   if (active('CROWN') || active('BRIDGE')) {
     push(
       'Prosthetic maintenance (decision support)',
       'PROSTHODONTICS',
-      [`${[...new Set(['CROWN', 'BRIDGE'].filter(active))] } recorded (clinician-confirmed)`],
+      [`${[...new Set(['CROWN', 'BRIDGE'].filter(active))]} recorded (clinician-confirmed)`],
       [],
       ['marginal integrity assessment', 'occlusal check'],
-      ['clinical examination of the prosthesis margins', 'occlusal evaluation'],
+      ['clinical examination of the prosthesis margins', 'occlusal evaluation']
     )
   }
 
@@ -420,10 +456,15 @@ export function differentialSupport(
     push(
       `Model-suggested review (${n.data.engine ?? 'engine'}) — unconfirmed AI finding`,
       'DIAGNOSIS',
-      [`AI finding present (${Number(n.data.findingCount ?? 0)} item(s), engine ${n.data.engine ?? 'unknown'}) — UNCONFIRMED`],
+      [
+        `AI finding present (${Number(n.data.findingCount ?? 0)} item(s), engine ${n.data.engine ?? 'unknown'}) — UNCONFIRMED`,
+      ],
       [],
       ['clinician review of the AI output', 'correlating imaging'],
-      ['review the AI analysis with provenance in the imaging module', 'corroborate with clinical examination'],
+      [
+        'review the AI analysis with provenance in the imaging module',
+        'corroborate with clinical examination',
+      ]
     )
   }
 
@@ -447,7 +488,8 @@ export function buildClinicalSummary(
   const planStatuses = caseNodes.map((n) => `${n.ref}: ${n.data.status ?? 'unknown'}`)
   const diff = differentialSupport(graph, { procedureCategories: [] })
   const diffLines = diff.candidates.map(
-    (c) => `${c.candidate} — supporting: ${c.supportingEvidence.length} / contradicting: ${c.contradictingEvidence.length} / missing: ${c.missingEvidence.length}`,
+    (c) =>
+      `${c.candidate} — supporting: ${c.supportingEvidence.length} / contradicting: ${c.contradictingEvidence.length} / missing: ${c.missingEvidence.length}`
   )
 
   return {
@@ -458,21 +500,19 @@ export function buildClinicalSummary(
         : line('NOT_AVAILABLE', []),
     relevantHistory:
       understanding.imaging.length + understanding.aiFindings.length > 0
-        ? line(
-            'AVAILABLE',
-            [
-              `imaging studies: ${understanding.imaging.length}`,
-              `AI findings: ${understanding.aiFindings.length} (${understanding.clinicianConfirmedFindings.length} clinician-confirmed)`,
-            ],
-          )
+        ? line('AVAILABLE', [
+            `imaging studies: ${understanding.imaging.length}`,
+            `AI findings: ${understanding.aiFindings.length} (${understanding.clinicianConfirmedFindings.length} clinician-confirmed)`,
+          ])
         : line('NOT_AVAILABLE', []),
     affectedTeeth:
       understanding.teeth.length > 0
         ? line(
             'AVAILABLE',
             understanding.teeth.map(
-              (t) => `Tooth ${t.fdi}: ${t.conditions.map((c) => `${c.condition}/${c.severity}${c.resolved ? ' (resolved)' : ''}`).join(', ')}`,
-            ),
+              (t) =>
+                `Tooth ${t.fdi}: ${t.conditions.map((c) => `${c.condition}/${c.severity}${c.resolved ? ' (resolved)' : ''}`).join(', ')}`
+            )
           )
         : line('NOT_AVAILABLE', []),
     symptoms:
@@ -481,19 +521,30 @@ export function buildClinicalSummary(
         : line('NOT_AVAILABLE', []),
     clinicalFindings:
       understanding.teeth.length > 0
-        ? line('AVAILABLE', understanding.teeth.map((t) => `Tooth ${t.fdi} — ${t.conditions.map((c) => c.condition).join(', ')}`))
+        ? line(
+            'AVAILABLE',
+            understanding.teeth.map(
+              (t) => `Tooth ${t.fdi} — ${t.conditions.map((c) => c.condition).join(', ')}`
+            )
+          )
         : line('NOT_AVAILABLE', []),
     imaging:
       understanding.imaging.length > 0
-        ? line('AVAILABLE', understanding.imaging.map((i) => `${i.modality ?? 'study'} (${i.status ?? 'unknown'}), AI jobs: ${i.aiJobs}`))
+        ? line(
+            'AVAILABLE',
+            understanding.imaging.map(
+              (i) => `${i.modality ?? 'study'} (${i.status ?? 'unknown'}), AI jobs: ${i.aiJobs}`
+            )
+          )
         : line('NOT_AVAILABLE', []),
     aiFindings:
       understanding.aiFindings.length > 0
         ? line(
             'AVAILABLE',
             understanding.aiFindings.map(
-              (a) => `${a.engine ?? 'engine'}: ${a.findingCount} finding(s) — ${a.reviewDecision ?? 'UNREVIEWED'}`,
-            ),
+              (a) =>
+                `${a.engine ?? 'engine'}: ${a.findingCount} finding(s) — ${a.reviewDecision ?? 'UNREVIEWED'}`
+            )
           )
         : line('NOT_AVAILABLE', []),
     clinicianConfirmedFindings:
@@ -502,30 +553,44 @@ export function buildClinicalSummary(
         : line('NOT_AVAILABLE', []),
     differentialConsiderations:
       diffLines.length > 0
-        ? line('AVAILABLE', [...diffLines, 'STANCE: clinical decision support — candidates, not diagnoses'])
+        ? line('AVAILABLE', [
+            ...diffLines,
+            'STANCE: clinical decision support — candidates, not diagnoses',
+          ])
         : line('NOT_AVAILABLE', []),
     treatmentHistory:
       understanding.treatment.done.length > 0
-        ? line('AVAILABLE', [`completed: ${understanding.treatment.done.length}`, `cancelled: ${understanding.treatment.cancelled.length}`])
+        ? line('AVAILABLE', [
+            `completed: ${understanding.treatment.done.length}`,
+            `cancelled: ${understanding.treatment.cancelled.length}`,
+          ])
         : line('NOT_AVAILABLE', []),
-    currentTreatment:
-      caseNodes.some((n) => n.data.status === 'IN_PROGRESS')
-        ? line('AVAILABLE', caseNodes.filter((n) => n.data.status === 'IN_PROGRESS').map((n) => n.ref))
-        : line('NOT_AVAILABLE', []),
+    currentTreatment: caseNodes.some((n) => n.data.status === 'IN_PROGRESS')
+      ? line(
+          'AVAILABLE',
+          caseNodes.filter((n) => n.data.status === 'IN_PROGRESS').map((n) => n.ref)
+        )
+      : line('NOT_AVAILABLE', []),
     pendingItems:
       understanding.treatment.pending.length > 0
-        ? line('AVAILABLE', [`pending treatments/actions: ${understanding.treatment.pending.length}`])
+        ? line('AVAILABLE', [
+            `pending treatments/actions: ${understanding.treatment.pending.length}`,
+          ])
         : line('NOT_AVAILABLE', []),
     followUp:
       understanding.followUps.length > 0
         ? line(
             'AVAILABLE',
-            understanding.followUps.map((f) => `${f.date ?? 'date unknown'}${f.overdue ? ' — OVERDUE' : ''}`),
+            understanding.followUps.map(
+              (f) => `${f.date ?? 'date unknown'}${f.overdue ? ' — OVERDUE' : ''}`
+            )
           )
         : line('NOT_AVAILABLE', []),
     knownUncertainty:
       understanding.aiFindings.filter((a) => a.reviewDecision !== 'ACCEPTED').length > 0
-        ? line('AVAILABLE', [`${understanding.aiFindings.filter((a) => a.reviewDecision !== 'ACCEPTED').length} AI finding(s) unconfirmed by a clinician`])
+        ? line('AVAILABLE', [
+            `${understanding.aiFindings.filter((a) => a.reviewDecision !== 'ACCEPTED').length} AI finding(s) unconfirmed by a clinician`,
+          ])
         : line('NOT_AVAILABLE', []),
     missingInformation:
       understanding.missingInformation.length > 0

@@ -7,15 +7,15 @@ CI sandbox versus what requires a machine with MySQL.
 
 ## Sandbox verification status (what already ran)
 
-| Check | Result |
-| --- | --- |
-| Full test suite | 4449/4449 (192 files) |
-| Agenda unit (date/time/overlap math) | 16/16 |
-| Agenda API (RBAC, conflicts, tenant isolation, validation, cancellation, number-collision retry) | 21/21 |
-| Agenda components (workspace, dialog, calendar, mobile list) | 6 + 15 + 1 artifact |
-| ESLint / TypeScript (touched files) | 0 errors |
-| Route registered + auth-gated | `/agenda` → `307 → /login?callbackUrl=/agenda` (live server) |
-| Runtime render artifact | `tools/preview/agenda-week.html` (real CalendarView DOM, fixtures) |
+| Check                                                                                            | Result                                                             |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Full test suite                                                                                  | 4449/4449 (192 files)                                              |
+| Agenda unit (date/time/overlap math)                                                             | 16/16                                                              |
+| Agenda API (RBAC, conflicts, tenant isolation, validation, cancellation, number-collision retry) | 21/21                                                              |
+| Agenda components (workspace, dialog, calendar, mobile list)                                     | 6 + 15 + 1 artifact                                                |
+| ESLint / TypeScript (touched files)                                                              | 0 errors                                                           |
+| Route registered + auth-gated                                                                    | `/agenda` → `307 → /login?callbackUrl=/agenda` (live server)       |
+| Runtime render artifact                                                                          | `tools/preview/agenda-week.html` (real CalendarView DOM, fixtures) |
 
 **Environment blockers (documented, not code):** the CI sandbox has no MySQL,
 no root/Docker, and `binaries.prisma.sh` is network-blocked (the published

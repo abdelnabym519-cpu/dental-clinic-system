@@ -36,7 +36,9 @@ export class FawryGateway implements PaymentGateway {
   }
 
   private sign(fields: string[]): string {
-    return createHash('sha256').update(fields.join('') + this.secretKey).digest('hex')
+    return createHash('sha256')
+      .update(fields.join('') + this.secretKey)
+      .digest('hex')
   }
 
   async createOrder(params: CreateOrderParams): Promise<GatewayOrder> {
@@ -83,7 +85,9 @@ export class FawryGateway implements PaymentGateway {
       metadata: {
         merchantRefNum,
         // Fawry returns a payable checkout URL for hosted redirect.
-        redirectUrl: data.checkoutUrl ?? `${this.baseUrl}/checkout?merchantCode=${this.merchantCode}&merchantRefNum=${merchantRefNum}`,
+        redirectUrl:
+          data.checkoutUrl ??
+          `${this.baseUrl}/checkout?merchantCode=${this.merchantCode}&merchantRefNum=${merchantRefNum}`,
       },
     }
   }

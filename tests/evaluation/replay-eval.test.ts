@@ -13,24 +13,38 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import {
-  replayAgentCase, observe, compareBehavior, deterministicDiff, toEvaluationTrace,
-  loadGoldenDataset, selectCases,
+  replayAgentCase,
+  observe,
+  compareBehavior,
+  deterministicDiff,
+  toEvaluationTrace,
+  loadGoldenDataset,
+  selectCases,
 } from '@/lib/ai/evaluation'
 import { goldenPath } from './harness'
 import type { GoldenCase, ObservedBehavior } from '@/lib/ai/evaluation'
 
-const CLASSIFY_OPERATIONAL = '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
+const CLASSIFY_OPERATIONAL =
+  '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
 
 /** Deterministic subset: no LLM-fallback cases (scripted LLM is also
  *  deterministic, but the fingerprint proof is strongest on pure
  *  deterministic paths). */
-const DETERMINISTIC_TAGS = new Set(['no-guess', 'forged-id', 'tenant-isolation', 'rbac', 'modality'])
+const DETERMINISTIC_TAGS = new Set([
+  'no-guess',
+  'forged-id',
+  'tenant-isolation',
+  'rbac',
+  'modality',
+])
 
 let datasets: ReturnType<typeof loadGoldenDataset>[]
 let uploadDir: string
 let cases: GoldenCase[]
 
-async function runTwice(c: GoldenCase): Promise<{ first: ObservedBehavior; second: ObservedBehavior; traceA: string; traceB: string }> {
+async function runTwice(
+  c: GoldenCase
+): Promise<{ first: ObservedBehavior; second: ObservedBehavior; traceA: string; traceB: string }> {
   const o1 = await replayAgentCase(c, { uploadDir })
   const o2 = await replayAgentCase(c, { uploadDir })
   return {
@@ -49,7 +63,9 @@ describe('DETERMINISTIC REPLAY (Gate I)', () => {
       loadGoldenDataset(goldenPath('agent-routing.golden.json')),
       loadGoldenDataset(goldenPath('multimodal-attachments.golden.json')),
     ]
-    cases = selectCases(datasets, { tag: 'tenant-isolation' }).concat(selectCases(datasets, { tag: 'no-guess' }))
+    cases = selectCases(datasets, { tag: 'tenant-isolation' }).concat(
+      selectCases(datasets, { tag: 'no-guess' })
+    )
     expect(cases.length).toBeGreaterThanOrEqual(2)
   })
   afterAll(async () => {
@@ -78,7 +94,10 @@ describe('DETERMINISTIC REPLAY (Gate I)', () => {
     const outcome = await replayAgentCase(c, { uploadDir })
     const tampered: GoldenCase = {
       ...c,
-      expected: { ...c.expected, status: [c.expected.status?.[0] === 'CLARIFICATION_REQUIRED' ? 'FAILED' : 'COMPLETED'] },
+      expected: {
+        ...c.expected,
+        status: [c.expected.status?.[0] === 'CLARIFICATION_REQUIRED' ? 'FAILED' : 'COMPLETED'],
+      },
     }
     const checks = compareBehavior(tampered, outcome.observed)
     const failing = checks.filter((ch) => ch.verdict === 'FAIL')

@@ -21,14 +21,85 @@ import type { FactClass, KnowledgeCitation } from './types'
 const CITATION_MARKER = /\[c(\d+)\]/g
 
 const STOPWORDS = new Set([
-  'the', 'and', 'for', 'with', 'that', 'this', 'from', 'when', 'which', 'where',
-  'there', 'their', 'were', 'will', 'have', 'has', 'had', 'not', 'but', 'are',
-  'was', 'were', 'can', 'may', 'might', 'should', 'would', 'could', 'must',
-  'does', 'done', 'about', 'into', 'over', 'under', 'between', 'among', 'such',
-  'than', 'then', 'them', 'they', 'its', 'his', 'her', 'our', 'your', 'you',
-  'who', 'whom', 'whose', 'why', 'how', 'what', 'when', 'whoa', 'else',
-  'غير', 'كل', 'من', 'في', 'على', 'عن', 'إلى', 'أن', 'كان', 'كانت', 'هي', 'هو',
-  'هذا', 'هذه', 'ذلك', 'تلك', 'ما', 'ماذا', 'لماذا', 'كيف', 'متى', 'أين',
+  'the',
+  'and',
+  'for',
+  'with',
+  'that',
+  'this',
+  'from',
+  'when',
+  'which',
+  'where',
+  'there',
+  'their',
+  'were',
+  'will',
+  'have',
+  'has',
+  'had',
+  'not',
+  'but',
+  'are',
+  'was',
+  'were',
+  'can',
+  'may',
+  'might',
+  'should',
+  'would',
+  'could',
+  'must',
+  'does',
+  'done',
+  'about',
+  'into',
+  'over',
+  'under',
+  'between',
+  'among',
+  'such',
+  'than',
+  'then',
+  'them',
+  'they',
+  'its',
+  'his',
+  'her',
+  'our',
+  'your',
+  'you',
+  'who',
+  'whom',
+  'whose',
+  'why',
+  'how',
+  'what',
+  'when',
+  'whoa',
+  'else',
+  'غير',
+  'كل',
+  'من',
+  'في',
+  'على',
+  'عن',
+  'إلى',
+  'أن',
+  'كان',
+  'كانت',
+  'هي',
+  'هو',
+  'هذا',
+  'هذه',
+  'ذلك',
+  'تلك',
+  'ما',
+  'ماذا',
+  'لماذا',
+  'كيف',
+  'متى',
+  'أين',
 ])
 
 /**
@@ -107,18 +178,25 @@ export interface CheckGroundingInput {
  * function only measures.
  */
 export function checkGrounding(input: CheckGroundingInput): import('./types').GroundingReport {
-  const { answer, citations, chunkTextByCitation, modelGenerated, includesPatientFacts = false } = input
+  const {
+    answer,
+    citations,
+    chunkTextByCitation,
+    modelGenerated,
+    includesPatientFacts = false,
+  } = input
   const validIds = new Set(citations.map((c) => c.citationId))
   const citedIds = extractCitedIds(answer).filter((id) => validIds.has(id))
   const unsupportedCitations = extractCitedIds(answer).filter((id) => !validIds.has(id))
 
   const statements = splitStatements(answer)
-  const groundedStatements = statements.filter((s) => isStatementGrounded(s, citedIds, chunkTextByCitation)).length
+  const groundedStatements = statements.filter((s) =>
+    isStatementGrounded(s, citedIds, chunkTextByCitation)
+  ).length
 
   const hasEvidence = citations.length > 0
   const allCitedGrounded =
-    statements.filter((s) => extractCitedIds(s).length > 0).length === 0 ||
-    groundedStatements > 0
+    statements.filter((s) => extractCitedIds(s).length > 0).length === 0 || groundedStatements > 0
 
   const factClass = classifyFactClass({
     modelGenerated,

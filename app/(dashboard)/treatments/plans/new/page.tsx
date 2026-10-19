@@ -259,7 +259,9 @@ export default function NewTreatmentPlanPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
+              <User className="h-5 w-5" />
+              {t('ui.patient')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedPatient ? (
@@ -277,7 +279,9 @@ export default function NewTreatmentPlanPage() {
                     </div>
                   </div>
                 </div>
-                <Button type="button" variant="outline" onClick={() => setSelectedPatient(null)}>{t('ui.change')}</Button>
+                <Button type="button" variant="outline" onClick={() => setSelectedPatient(null)}>
+                  {t('ui.change')}
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -324,12 +328,12 @@ export default function NewTreatmentPlanPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">{t("Title *")}</Label>
+              <Label htmlFor="title">{t('Title *')}</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t("e.g., Full Mouth Rehabilitation, Orthodontic Treatment")}
+                placeholder={t('e.g., Full Mouth Rehabilitation, Orthodontic Treatment')}
               />
             </div>
 
@@ -406,7 +410,7 @@ export default function NewTreatmentPlanPage() {
                   <Input
                     value={itemToothNumbers}
                     onChange={(e) => setItemToothNumbers(e.target.value)}
-                    placeholder={t("e.g., 11,12,13 or 11-13")}
+                    placeholder={t('e.g., 11,12,13 or 11-13')}
                   />
                 </div>
               </div>
@@ -420,8 +424,13 @@ export default function NewTreatmentPlanPage() {
                     onChange={(e) => setItemCost(e.target.value)}
                     placeholder={
                       selectedProcedureId
-                        ? t("Default: {v1}", { v1: formatCurrency(procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0, locale) })
-                        : t("Enter cost")
+                        ? t('Default: {v1}', {
+                            v1: formatCurrency(
+                              procedures.find((p) => p.id === selectedProcedureId)?.basePrice || 0,
+                              locale
+                            ),
+                          })
+                        : t('Enter cost')
                     }
                   />
                 </div>
@@ -440,7 +449,9 @@ export default function NewTreatmentPlanPage() {
                 onClick={handleAddProcedure}
                 disabled={!selectedProcedureId}
               >
-                <Plus className="h-4 w-4 mr-2" />{t('ui.add_procedure')}</Button>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('ui.add_procedure')}
+              </Button>
             </div>
 
             {/* Procedures List */}
@@ -491,7 +502,7 @@ export default function NewTreatmentPlanPage() {
                     ))}
                     <TableRow>
                       <TableCell colSpan={3} className="text-right font-medium">
-                        {t("Total Estimated Cost:")}
+                        {t('Total Estimated Cost:')}
                       </TableCell>
                       <TableCell className="font-bold text-lg">
                         {formatCurrency(calculateTotalCost(), locale)}
@@ -508,14 +519,18 @@ export default function NewTreatmentPlanPage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/treatments/plans">
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={loading}>
             {loading ? (
               'Creating...'
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />{t('ui.create_treatment_plan')}</>
+                <Save className="h-4 w-4 mr-2" />
+                {t('ui.create_treatment_plan')}
+              </>
             )}
           </Button>
         </div>

@@ -15,8 +15,16 @@ import { createAttachmentService } from '@/lib/ai/multimodal/attachments'
 import { MultimodalError } from '@/lib/ai/multimodal/types'
 import { buildStorageKey, keyBelongsToHospital, resetStorage } from '@/lib/storage'
 import {
-  pngBuffer, jpegBuffer, dicomBuffer, asciiStlBuffer, objBuffer,
-  minimalPdfBuffer, textDocumentBuffer, elfBuffer, pixelBombPng, corruptedPng,
+  pngBuffer,
+  jpegBuffer,
+  dicomBuffer,
+  asciiStlBuffer,
+  objBuffer,
+  minimalPdfBuffer,
+  textDocumentBuffer,
+  elfBuffer,
+  pixelBombPng,
+  corruptedPng,
 } from '@/tests/fixtures/multimodal-fixture-buffers'
 
 const HOSP_A = 'hosp-a'
@@ -38,7 +46,9 @@ function makeTable(initial: Record<string, any>[] = []) {
       let out = rows.filter((r) => whereOk(r, args?.where))
       if (args?.orderBy && typeof args.orderBy === 'object') {
         const [field, dir] = Object.entries(args.orderBy)[0] ?? []
-        out = [...out].sort((a, b) => (dir === 'asc' ? String(a[field]) < String(b[field]) ? -1 : 1 : 1))
+        out = [...out].sort((a, b) =>
+          dir === 'asc' ? (String(a[field]) < String(b[field]) ? -1 : 1) : 1
+        )
       }
       if (typeof args?.take === 'number') out = out.slice(0, args.take)
       return out
@@ -60,7 +70,10 @@ function makeTable(initial: Record<string, any>[] = []) {
 let uploadDir: string
 let service: ReturnType<typeof createAttachmentService>
 let fake: {
-  patient: any; imagingStudy: any; multimodalAttachment: any; auditLog: any
+  patient: any
+  imagingStudy: any
+  multimodalAttachment: any
+  auditLog: any
 }
 
 const DOCTOR = { id: 'staff-doc-1', role: 'DOCTOR' }
@@ -68,10 +81,28 @@ const PATIENT_ACTOR = { id: 'user-portal-1', role: 'PATIENT' }
 
 function patientTable() {
   return makeTable([
-    { id: 'pat-a1', hospitalId: HOSP_A, portalUserId: 'user-portal-1', firstName: 'Ahmed', lastName: 'Ali' },
-    { id: 'pat-a2', hospitalId: HOSP_A, portalUserId: 'user-portal-2', firstName: 'Sara', lastName: 'Hassan' },
+    {
+      id: 'pat-a1',
+      hospitalId: HOSP_A,
+      portalUserId: 'user-portal-1',
+      firstName: 'Ahmed',
+      lastName: 'Ali',
+    },
+    {
+      id: 'pat-a2',
+      hospitalId: HOSP_A,
+      portalUserId: 'user-portal-2',
+      firstName: 'Sara',
+      lastName: 'Hassan',
+    },
     // Same portal user in ANOTHER tenant — the scope check must catch this.
-    { id: 'pat-b1', hospitalId: HOSP_B, portalUserId: 'user-portal-1', firstName: 'Omar', lastName: 'Farouk' },
+    {
+      id: 'pat-b1',
+      hospitalId: HOSP_B,
+      portalUserId: 'user-portal-1',
+      firstName: 'Omar',
+      lastName: 'Farouk',
+    },
   ])
 }
 
@@ -83,7 +114,13 @@ beforeEach(async () => {
   fake = {
     patient: patientTable(),
     imagingStudy: makeTable([
-      { id: 'study-a1', hospitalId: HOSP_A, patientId: 'pat-a1', modality: 'PERIAPICAL', status: 'UPLOADED' },
+      {
+        id: 'study-a1',
+        hospitalId: HOSP_A,
+        patientId: 'pat-a1',
+        modality: 'PERIAPICAL',
+        status: 'UPLOADED',
+      },
     ]),
     multimodalAttachment: makeTable(),
     auditLog: makeTable(),
@@ -115,7 +152,10 @@ async function upload(file: { buffer: Buffer; name: string }, over: Record<strin
 // ── 2D images ───────────────────────────────────────────────────────────────
 describe('attachment service — 2D images', () => {
   it('stores a PNG with DECLARED modality + creates the reused imaging study row', async () => {
-    const rec = await upload({ buffer: await pngBuffer(), name: 'pano.png' }, { patientId: 'pat-a1', declaredModality: 'PANORAMIC' })
+    const rec = await upload(
+      { buffer: await pngBuffer(), name: 'pano.png' },
+      { patientId: 'pat-a1', declaredModality: 'PANORAMIC' }
+    )
 
     expect(rec.status).toBe('PROCESSED')
     expect(rec.fileClass).toBe('IMAGE_2D')
@@ -139,7 +179,7 @@ describe('attachment service — 2D images', () => {
   it('an unclassified image from a PATIENT actor is UNKNOWN_DENTAL_IMAGE (never guessed)', async () => {
     const rec = await upload(
       { buffer: await pngBuffer(), name: 'pic.png' },
-      { actor: PATIENT_ACTOR, patientId: 'pat-a1', declaredModality: 'PANORAMIC' },
+      { actor: PATIENT_ACTOR, patientId: 'pat-a1', declaredModality: 'PANORAMIC' }
     )
     expect(rec.status).toBe('PROCESSED')
     // Patient actors cannot declare modality — and there is no classifier.
@@ -151,7 +191,10 @@ describe('attachment service — 2D images', () => {
   })
 
   it('a linked study supplies the TRUSTED modality (origin STUDY)', async () => {
-    const rec = await upload({ buffer: await jpegBuffer(), name: 'x.jpg' }, { linkedStudyId: 'study-a1' })
+    const rec = await upload(
+      { buffer: await jpegBuffer(), name: 'x.jpg' },
+      { linkedStudyId: 'study-a1' }
+    )
     expect(rec.patientId).toBe('pat-a1')
     expect(rec.dentalModality).toBe('PERIAPICAL')
     expect(rec.modalityOrigin).toBe('STUDY')
@@ -160,7 +203,10 @@ describe('attachment service — 2D images', () => {
   it('pixel bomb → OVERSIZED_INPUT, row marked FAILED, bytes cleaned up', async () => {
     const before = fake.multimodalAttachment.rows.length
     await expect(
-      upload({ buffer: await pixelBombPng(), name: 'bomb.png' }, { patientId: 'pat-a1', declaredModality: 'PANORAMIC' }),
+      upload(
+        { buffer: await pixelBombPng(), name: 'bomb.png' },
+        { patientId: 'pat-a1', declaredModality: 'PANORAMIC' }
+      )
     ).rejects.toMatchObject({ code: 'OVERSIZED_INPUT' })
     const rows = fake.multimodalAttachment.rows.slice(before)
     expect(rows).toHaveLength(1)
@@ -174,7 +220,10 @@ describe('attachment service — 2D images', () => {
   it('undecodable image bytes (signature ok, decode fails) → INVALID_FORMAT, FAILED row', async () => {
     const before = fake.multimodalAttachment.rows.length
     await expect(
-      upload({ buffer: corruptedPng(), name: 'bad.png' }, { patientId: 'pat-a1', declaredModality: 'PANORAMIC' }),
+      upload(
+        { buffer: corruptedPng(), name: 'bad.png' },
+        { patientId: 'pat-a1', declaredModality: 'PANORAMIC' }
+      )
     ).rejects.toMatchObject({ code: 'INVALID_FORMAT' })
     expect(fake.multimodalAttachment.rows.slice(before)[0].status).toBe('FAILED')
   })
@@ -201,19 +250,23 @@ describe('attachment service — bytes decide, names lie', () => {
     const buf = await pngBuffer()
     await expect(
       service.create({
-        hospitalId: HOSP_A, actor: DOCTOR,
+        hospitalId: HOSP_A,
+        actor: DOCTOR,
         file: { originalName: 'x.png', buffer: buf, declaredSize: buf.length + 100 },
-        patientId: null, caseId: null, conversationId: 'conv-1',
-        declaredModality: null, linkedStudyId: null,
-      }),
+        patientId: null,
+        caseId: null,
+        conversationId: 'conv-1',
+        declaredModality: null,
+        linkedStudyId: null,
+      })
     ).rejects.toMatchObject({ code: 'INVALID_FILE' })
   })
 
   it('oversized DICOM (declared) → OVERSIZED_INPUT', async () => {
     const big = Buffer.concat([dicomBuffer(), Buffer.alloc(501 * 1024 * 1024)])
-    await expect(
-      upload({ buffer: big, name: 'vol.dcm' }),
-    ).rejects.toMatchObject({ code: 'OVERSIZED_INPUT' })
+    await expect(upload({ buffer: big, name: 'vol.dcm' })).rejects.toMatchObject({
+      code: 'OVERSIZED_INPUT',
+    })
   })
 })
 
@@ -233,7 +286,7 @@ describe('attachment service — documents', () => {
   it('extracts PDF text with page provenance and stores it under the tenant key', async () => {
     const rec = await upload(
       { buffer: minimalPdfBuffer('patient said: I have pain in tooth 36.'), name: 'record.pdf' },
-      { patientId: 'pat-a1' },
+      { patientId: 'pat-a1' }
     )
     expect(rec.fileClass).toBe('DOCUMENT_PDF')
     expect(rec.status).toBe('PROCESSED')
@@ -256,7 +309,10 @@ describe('attachment service — documents', () => {
 // ── Meshes ──────────────────────────────────────────────────────────────────
 describe('attachment service — 3D meshes', () => {
   it('ASCII STL → MESH_3D, THREE_D_SCAN (deterministic, no guess)', async () => {
-    const rec = await upload({ buffer: asciiStlBuffer(), name: 'scan.stl' }, { patientId: 'pat-a1' })
+    const rec = await upload(
+      { buffer: asciiStlBuffer(), name: 'scan.stl' },
+      { patientId: 'pat-a1' }
+    )
     expect(rec.fileClass).toBe('MESH_3D')
     expect(rec.dentalModality).toBe('THREE_D_SCAN')
     expect(rec.status).toBe('PROCESSED')
@@ -264,7 +320,10 @@ describe('attachment service — 3D meshes', () => {
   })
 
   it('staff-declared CBCT mesh stays CBCT; OBJ detected by directives', async () => {
-    const rec = await upload({ buffer: objBuffer(), name: 'm.obj' }, { patientId: 'pat-a1', declaredModality: 'CBCT' })
+    const rec = await upload(
+      { buffer: objBuffer(), name: 'm.obj' },
+      { patientId: 'pat-a1', declaredModality: 'CBCT' }
+    )
     expect(rec.fileClass).toBe('MESH_3D')
     expect(rec.dentalModality).toBe('CBCT')
     expect(rec.modalityOrigin).toBe('DECLARED')
@@ -276,30 +335,42 @@ describe('attachment service — tenant and patient scope', () => {
   it('PATIENT actor may only attribute to their OWN portal patient', async () => {
     // pat-a2 belongs to a DIFFERENT portal user.
     await expect(
-      upload({ buffer: await pngBuffer(), name: 'p.png' }, { actor: PATIENT_ACTOR, patientId: 'pat-a2' }),
+      upload(
+        { buffer: await pngBuffer(), name: 'p.png' },
+        { actor: PATIENT_ACTOR, patientId: 'pat-a2' }
+      )
     ).rejects.toMatchObject({ code: 'PATIENT_SCOPE_MISMATCH' })
   })
 
   it('PATIENT actor attaching to own record works', async () => {
-    const rec = await upload({ buffer: await pngBuffer(), name: 'p.png' }, { actor: PATIENT_ACTOR, patientId: 'pat-a1' })
+    const rec = await upload(
+      { buffer: await pngBuffer(), name: 'p.png' },
+      { actor: PATIENT_ACTOR, patientId: 'pat-a1' }
+    )
     expect(rec.patientId).toBe('pat-a1')
   })
 
   it('staff referencing a foreign-tenant patient → PATIENT_SCOPE_MISMATCH', async () => {
     await expect(
-      upload({ buffer: await pngBuffer(), name: 'p.png' }, { patientId: 'pat-b1' }),
+      upload({ buffer: await pngBuffer(), name: 'p.png' }, { patientId: 'pat-b1' })
     ).rejects.toMatchObject({ code: 'PATIENT_SCOPE_MISMATCH' })
   })
 
   it('forged linked study id → FORGED_ATTACHMENT_ID', async () => {
     await expect(
-      upload({ buffer: await pngBuffer(), name: 'p.png' }, { linkedStudyId: 'study-does-not-exist' }),
+      upload(
+        { buffer: await pngBuffer(), name: 'p.png' },
+        { linkedStudyId: 'study-does-not-exist' }
+      )
     ).rejects.toMatchObject({ code: 'FORGED_ATTACHMENT_ID' })
   })
 
   it('linked study of a different patient than claimed → PATIENT_SCOPE_MISMATCH', async () => {
     await expect(
-      upload({ buffer: await pngBuffer(), name: 'p.png' }, { linkedStudyId: 'study-a1', patientId: 'pat-a2' }),
+      upload(
+        { buffer: await pngBuffer(), name: 'p.png' },
+        { linkedStudyId: 'study-a1', patientId: 'pat-a2' }
+      )
     ).rejects.toMatchObject({ code: 'PATIENT_SCOPE_MISMATCH' })
   })
 
@@ -315,12 +386,15 @@ describe('attachment service — tenant and patient scope', () => {
 describe('attachment service — filename sanitization (§33)', () => {
   it('path traversal in the name → PATH_TRAVERSAL_REJECTED', async () => {
     await expect(
-      upload({ buffer: await pngBuffer(), name: '../../etc/passwd.png' }),
+      upload({ buffer: await pngBuffer(), name: '../../etc/passwd.png' })
     ).rejects.toMatchObject({ code: 'PATH_TRAVERSAL_REJECTED' })
   })
 
   it('script/HTML in the name is neutralized (no tag/attribute structure remains)', async () => {
-    const rec = await upload({ buffer: await pngBuffer(), name: '<img src=x onerror=alert(1)>.png' })
+    const rec = await upload({
+      buffer: await pngBuffer(),
+      name: '<img src=x onerror=alert(1)>.png',
+    })
     expect(rec.originalName).not.toContain('<')
     expect(rec.originalName).not.toContain('>')
     expect(rec.originalName).not.toContain('"')

@@ -10,6 +10,7 @@ Phase 4 builds the **trusted, structured, provenance-aware Dental Knowledge Laye
 `Source → Ingestion → Normalization → Indexing → Retrieval → Evidence → Agent Context → Grounded Response`.
 
 In scope (§0):
+
 - Dentistry-only controlled knowledge (12 top-level domains, §4 taxonomy with subtopics).
 - Typed, no-`any` contracts for document/chunk/source/citation/result/query.
 - Source tiers TIER_1..TIER_4 with **clinical default T1+T2**, T3 educational-only, T4
@@ -27,6 +28,7 @@ In scope (§0):
   security matrix + performance bench, additive Prisma migration.
 
 Explicit non-goals (NOT done in Phase 4):
+
 - Phases 5–11 (local AI models, multimodal, eval expansion, engine completion, memory, voice, robot).
 - No LLM-provider replacement, no training/fine-tuning, no general-purpose RAG platform.
 - No second agent; no bypassing Phase 1 safety or Phase 2 context.
@@ -69,6 +71,7 @@ and its output is machine-checked against that package before the response is re
 ## 4. Contracts (spec §7)
 
 Key types (all in `lib/ai/knowledge/types.ts`, no `any`):
+
 - `KnowledgeSource` + `KnowledgeSourceMeta` — full §6 metadata; every unknown stays
   `null` (→ UNKNOWN), never invented. `scope: GLOBAL | TENANT` with tenant pinning.
 - `KnowledgeDocument` — versioned content, `contentHash` (sha256 of normalized text),
@@ -95,7 +98,7 @@ Key types (all in `lib/ai/knowledge/types.ts`, no `any`):
 ## 6. Patient-data separation & tenancy (spec §8)
 
 - `detectPatientData` runs in ingestion: patient ids/charts/notes → `REJECTED
-  PATIENT_DATA_DETECTED` (tested: the leak fixture never reaches the index).
+PATIENT_DATA_DETECTED` (tested: the leak fixture never reaches the index).
 - Global knowledge contains no patient rows (asserted over the whole corpus in the
   security suite).
 - TENANT-scope sources are pinned to the SESSION tenant in the API; a client-supplied
@@ -189,6 +192,7 @@ an unavailable knowledge base → "I have not checked any guidelines" (spec §36
 ## 12. Admin API (spec §30) — minimal, no CMS
 
 `app/api/ai/knowledge/route.ts` (ADMIN/SUPER_ADMIN only, session-resolved tenant):
+
 - `GET` — published sources + document versions for the tenant (observability, no raw content).
 - `POST` — deterministic ingestion: `{source, content, replaceVersion?}`. Server-side
   validation (enums, taxonomy domain, language, size); TENANT scope pinned to the session
@@ -200,19 +204,19 @@ templates — the pinned count is unchanged).
 
 ## 13. Performance (spec §34) — bench (`scripts/bench-knowledge-phase4.ts`, in-memory harness)
 
-| measurement | result |
-|---|---|
-| ingest guideline (2 sections) | 0.10 ms (PUBLISHED, 1 chunk) |
-| ingest version replacement | 0.13 ms (supersedes exactly 1 document) |
-| agent no-RAG (context only) | 1.03 ms, 1 tool |
-| agent RAG (knowledge only) | 1.16 ms, 1 tool |
-| agent hybrid (context + knowledge) | 1.71 ms, 2 tools (no double retrieval) |
-| index build 9 / 31 / 101 chunks | 0.49 / 1.29 / 5.02 ms (~linear) |
-| query latency 9 / 31 / 101 chunks | 0.63 / 1.47 / 4.58 ms |
-| bounded store loads (3× corpus) | exactly 3 per query — no N+1 |
-| embedding work (provider path) | chunks+1 per query — no per-candidate re-embed |
-| determinism (LEXICAL + HYBRID) | identical results + scores across runs |
-| evidence budget | ≤10 results, ≤12,000 chars, ≤2 chunks/source |
+| measurement                        | result                                         |
+| ---------------------------------- | ---------------------------------------------- |
+| ingest guideline (2 sections)      | 0.10 ms (PUBLISHED, 1 chunk)                   |
+| ingest version replacement         | 0.13 ms (supersedes exactly 1 document)        |
+| agent no-RAG (context only)        | 1.03 ms, 1 tool                                |
+| agent RAG (knowledge only)         | 1.16 ms, 1 tool                                |
+| agent hybrid (context + knowledge) | 1.71 ms, 2 tools (no double retrieval)         |
+| index build 9 / 31 / 101 chunks    | 0.49 / 1.29 / 5.02 ms (~linear)                |
+| query latency 9 / 31 / 101 chunks  | 0.63 / 1.47 / 4.58 ms                          |
+| bounded store loads (3× corpus)    | exactly 3 per query — no N+1                   |
+| embedding work (provider path)     | chunks+1 per query — no per-candidate re-embed |
+| determinism (LEXICAL + HYBRID)     | identical results + scores across runs         |
+| evidence budget                    | ≤10 results, ≤12,000 chars, ≤2 chunks/source   |
 
 No unnecessary retrieval: ordinary questions never touch the knowledge store
 (`trace.knowledge` stays null; tested). No duplicate index/embedding work (bench-asserted).
@@ -251,6 +255,7 @@ the structural client + fakes cover all tests.)
 ## 16. Independent adversarial security review
 
 Performed over the final code (after tests), findings and dispositions:
+
 - **AD-1 (fixed)**: early knowledge integration let the injected store bypass into the
   loop's tool runtime only if the route passed it — verified `deps.knowledgeStore` is the
   single injection point and production routes never accept a client store. The loop's rt
@@ -273,16 +278,17 @@ Performed over the final code (after tests), findings and dispositions:
 
 ## 17. Tests, gates, decisions
 
-| gate | result |
-|---|---|
-| full regression | **5456 passed / 0 failed / 12 skipped** (272 files) — baseline 5363 + 93 new |
-| new Phase 4 tests | taxonomy 7 · chunking 9 · ingestion 13 · retrieval 29 · security 13 · agent-knowledge-integration 14 · knowledge-route 8 = **93** |
-| Phase 3 agent suites | 109/109 (classifier, loop, planner, tools, route) — no regressions |
-| tsc --noEmit | **503** (exact baseline; 0 new errors) |
-| eslint | **0 errors** (tests eslint-ignored per repo convention) |
-| bench | all checks passed, exit 0 |
+| gate                 | result                                                                                                                            |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| full regression      | **5456 passed / 0 failed / 12 skipped** (272 files) — baseline 5363 + 93 new                                                      |
+| new Phase 4 tests    | taxonomy 7 · chunking 9 · ingestion 13 · retrieval 29 · security 13 · agent-knowledge-integration 14 · knowledge-route 8 = **93** |
+| Phase 3 agent suites | 109/109 (classifier, loop, planner, tools, route) — no regressions                                                                |
+| tsc --noEmit         | **503** (exact baseline; 0 new errors)                                                                                            |
+| eslint               | **0 errors** (tests eslint-ignored per repo convention)                                                                           |
+| bench                | all checks passed, exit 0                                                                                                         |
 
 Key decisions:
+
 - New `KNOWLEDGE` task type (additive) rather than hijacking INFORMATIONAL — keeps the
   deterministic split honest and the RAG trigger explicit (§38: no auto-routing of
   existing question types through RAG).

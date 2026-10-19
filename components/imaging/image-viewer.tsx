@@ -228,7 +228,9 @@ export function ImageViewer({
                     size="sm"
                     className="text-white hover:bg-white/20 text-xs"
                     onClick={onAnnotate}
-                  >{t('ui.annotate')}</Button>
+                  >
+                    {t('ui.annotate')}
+                  </Button>
                 )}
                 {onCompare && (
                   <Button
@@ -303,7 +305,7 @@ export function ImageViewer({
             <img
               ref={imgRef}
               src={displaySrc}
-              alt={displayTitle || t("Image")}
+              alt={displayTitle || t('Image')}
               style={imageStyle}
               draggable={false}
               onClick={(e) => e.stopPropagation()}
@@ -319,7 +321,7 @@ export function ImageViewer({
                 size="icon"
                 className="text-white hover:bg-white/20 h-8 w-8"
                 onClick={handleZoomOut}
-                title={t("Zoom out (-)")}
+                title={t('Zoom out (-)')}
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
@@ -329,7 +331,7 @@ export function ImageViewer({
                 size="icon"
                 className="text-white hover:bg-white/20 h-8 w-8"
                 onClick={handleZoomIn}
-                title={t("Zoom in (+)")}
+                title={t('Zoom in (+)')}
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -342,7 +344,7 @@ export function ImageViewer({
                 size="icon"
                 className="text-white hover:bg-white/20 h-8 w-8"
                 onClick={handleRotateCCW}
-                title={t("Rotate left")}
+                title={t('Rotate left')}
               >
                 <RotateCcw className="h-4 w-4" />
               </Button>
@@ -351,7 +353,7 @@ export function ImageViewer({
                 size="icon"
                 className="text-white hover:bg-white/20 h-8 w-8"
                 onClick={handleRotateCW}
-                title={t("Rotate right (R)")}
+                title={t('Rotate right (R)')}
               >
                 <RotateCw className="h-4 w-4" />
               </Button>
@@ -364,7 +366,7 @@ export function ImageViewer({
                 size="icon"
                 className={`hover:bg-white/20 h-8 w-8 ${flipH ? 'text-blue-400' : 'text-white'}`}
                 onClick={() => setFlipH((f) => !f)}
-                title={t("Flip horizontal")}
+                title={t('Flip horizontal')}
               >
                 <FlipHorizontal className="h-4 w-4" />
               </Button>
@@ -373,7 +375,7 @@ export function ImageViewer({
                 size="icon"
                 className={`hover:bg-white/20 h-8 w-8 ${flipV ? 'text-blue-400' : 'text-white'}`}
                 onClick={() => setFlipV((f) => !f)}
-                title={t("Flip vertical")}
+                title={t('Flip vertical')}
               >
                 <FlipVertical className="h-4 w-4" />
               </Button>
@@ -389,7 +391,7 @@ export function ImageViewer({
                 value={brightness}
                 onChange={(e) => setBrightness(Number(e.target.value))}
                 className="w-20 h-1 accent-white"
-                title={t("Brightness: {v1}%", { v1: brightness })}
+                title={t('Brightness: {v1}%', { v1: brightness })}
                 onClick={(e) => e.stopPropagation()}
               />
 
@@ -402,7 +404,7 @@ export function ImageViewer({
                 value={contrast}
                 onChange={(e) => setContrast(Number(e.target.value))}
                 className="w-20 h-1 accent-white"
-                title={t("Contrast: {v1}%", { v1: contrast })}
+                title={t('Contrast: {v1}%', { v1: contrast })}
                 onClick={(e) => e.stopPropagation()}
               />
 
@@ -414,7 +416,7 @@ export function ImageViewer({
                 size="icon"
                 className="text-white hover:bg-white/20 h-8 w-8"
                 onClick={handleFullscreen}
-                title={t("Fullscreen (F)")}
+                title={t('Fullscreen (F)')}
               >
                 {isFullscreen ? (
                   <Minimize2 className="h-4 w-4" />
@@ -429,7 +431,7 @@ export function ImageViewer({
                 size="sm"
                 className="text-white hover:bg-white/20 text-xs"
                 onClick={resetTransforms}
-                title={t("Reset (0)")}
+                title={t('Reset (0)')}
               >
                 {t('Reset')}
               </Button>

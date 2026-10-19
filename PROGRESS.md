@@ -1,6 +1,7 @@
 # Progress — Whole-Repository Stabilization
 
 ## Current State
+
 Baseline `a1ca14e` (Robot 76e944f + Dental Chart integration) carried **445 TypeScript
 errors** (Robot-side debt) which blocked `next build`. One Ralph iteration found and
 fixed the ROOT CAUSE (single upstream node); residual classes were then repaired with
@@ -10,6 +11,7 @@ lint 0 errors / 260 warnings · runtime smoke PASS.**
 ## Completed Iterations
 
 ### Iteration 1 — ROOT CAUSE: structural prisma client typing (P1)
+
 - Problem: 445 tsc errors across ~50 files; `next build` type-check FAILED.
 - Severity: P1 (build blocker).
 - Root Cause: `lib/prisma.ts` typed the client structurally (`[model: string]: any`),
@@ -25,8 +27,10 @@ lint 0 errors / 260 warnings · runtime smoke PASS.**
 - Evidence: tsc output before/after; command in FINAL_REPORT.md.
 
 ### Iteration 2 — Residual classes exposed by real types (P1/P2)
+
 One problem-class at a time, each adopted from the certified session lineage after
 diff-verification that it is the minimal correct fix:
+
 - `lib/billing/invoice-pdf.ts`: money type widened to `number | string | Prisma.Decimal`
   (runtime conversion stays centralized in money()/moneyLocal()) — fixed 28 errors at
   the consumer-type root.
@@ -55,6 +59,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 2 — ROOT CAUSE: dev-start ran its DB probe without DATABASE_URL (P1, user-reported)
+
 - Problem: `npm run dev:start` failed with "MySQL did not become ready within 180s /
   Environment variable not found: DATABASE_URL" while Docker reported mysql+redis Running.
 - Severity: P1 (startup path broken on the canonical command).
@@ -83,13 +88,14 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 3 — P1 follow-up: real-machine still failed; seam hardened + stale-checkout self-evidence (user-reported)
+
 - Problem: after 02448af the user's real `npm run dev:start` STILL showed the pre-fix
   failure signature (no `environment:` log line, old 'DATABASE_URL not found' probe error).
 - Root Cause (two layers):
   (1) DECISIVE: the executing script on the user's machine did NOT contain 02448af — the
-      output lacks BOTH new artifacts (v2 provenance line, new error message) while the
-      code at HEAD verifiably contains them (grep at HEAD). The runtime was a stale/locally
-      modified working tree.
+  output lacks BOTH new artifacts (v2 provenance line, new error message) while the
+  code at HEAD verifiably contains them (grep at HEAD). The runtime was a stale/locally
+  modified working tree.
   (2) LATENT: even with the loader, the probe client depended on process.env indirection.
 - Fix: belt-and-braces seam hardening — the probe client now receives the resolved URL
   EXPLICITLY (`new PrismaClient({ datasources: { db: { url } } })`), making readiness
@@ -105,6 +111,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 4 — P1 final bootstrap: the template itself was broken (user's env-doctor output)
+
 - Evidence: user's real machine — loader v2 banner + `.env loaded (+6 keys)` but
   `DATABASE_URL present = false` -> assertDatabaseConfigured fired exactly as designed.
   The loader is innocent; the CONFIGURATION CONTRACT was incomplete.
@@ -128,6 +135,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 5 — evidence refresh: external blocks re-probed exhaustively, §13 record completed (no code change)
+
 - Egress re-probe (2026-10-08): cdn.mysql.com, dev.mysql.com, registry.npmmirror.com,
   cdn.playwright.dev, playwright.azureedge.net, deb.debian.org — ALL unreachable (000);
   apt unusable; NO local mysqld/mariadb/docker/podman/mysql-client; npm-hosted
@@ -140,6 +148,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 6 — E2E repair: three stacked root causes behind the adminPage fixture failure (user's real browser run)
+
 - Baseline (user's machine, browsers installed): 122 passed / 8 skipped / 1917 did not
   run — every fixture-dependent spec died in beforeEach (`locator.fill` 45s timeout).
 - RC1 locale (fixture): the app is Arabic-first (`defaultLocale ar-EG`); fresh visitors
@@ -172,6 +181,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 7 — 3D Dental Chart mission: full-stack audit, 2 gaps closed, all layers validated
+
 - Phase 0/1 AUDIT (no premature writing): the interactive 2D/3D dental chart ALREADY
   exists as a complete architecture — DentalChartWorkspace (single summary fetch,
   single refetch point, client-mirrored RBAC enforced server-side), DentalChart3D
@@ -212,6 +222,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 8 — '12/12 dental-chart-3d failures': root cause = stale pre-8f5b972 spec on the executing machine
+
 - DECISIVE EVIDENCE (4 independent lines, all in-repo): (1) the reported failing test
   names ('open patient dental chart, switch to 3D, select a tooth, see the panel',
   'RECEPTIONIST is read-only on the chart') exist VERBATIM only in the b4f4082 version
@@ -222,11 +233,11 @@ diff-verification that it is the minimal correct fix:
   307 -> /login -> dental-chart-2d never renders -> 'element(s) not found'. The repair
   itself already shipped in 8f5b972 (fixture-based rewrite).
 - This iteration (hardening + proof, no production change):
-  * test.use desktop workstation viewport (1366x768) — the shared patients-list
+  - test.use desktop workstation viewport (1366x768) — the shared patients-list
     navigation helper is desktop-layout; all 6 ENGINE projects still run.
-  * isolation test made NON-VACUOUS: seed guarantees 10 patients, so the second row
+  - isolation test made NON-VACUOUS: seed guarantees 10 patients, so the second row
     is now asserted, not conditionally skipped.
-  * locale contract re-verified against locales/en.json (3D View / Split View /
+  - locale contract re-verified against locales/en.json (3D View / Split View /
     Add finding / Save / View Details all match the spec regexes with the pinned
     dentora-locale=en-EG cookie).
 - Honest execution status: sandbox cannot run browsers (chromium executable absent;
@@ -238,6 +249,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 9 — real-machine 16/18 failure classes: auth contract + Radix nav made engine-independent
+
 - User machine: 18 collected, 2 passed / 16 failed; auth.ts:40 waitForURL(/dashboard|onboarding/)
   timeouts on several engines; patients.ts menuitem (WebKit) + waitForURL (Firefox); 2 passed
   => one project authenticated fine => credentials/seed/secret VALID on real DB; the failing
@@ -273,6 +285,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 10 — real-machine 5/13 triage: parity forensics + Class C root fix + §8 audit
+
 - PARITY FORENSICS (decisive): the quoted failure lines (auth.ts:40 waitForURL
   dashboard|onboarding; patients.ts:22 waitForURL ^$-form) exist ONLY at 374fc85 —
   the run executed the PREVIOUS commit. b045b4b (auth CONTRACT fixture + Radix
@@ -309,6 +322,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 11 — V7 swarm self-attack: HttpOnly fixture defect caught and fixed (REPAIRER != VERIFIER applied to my own work)
+
 - SELF-ADVERSARIAL FINDING (the swarm's §21 rule caught my own b045b4b defect):
   the auth fixture proved the session via document.cookie in waitForFunction —
   but @auth/core issues the session token cookie with httpOnly: true (VERIFIED in
@@ -333,6 +347,7 @@ diff-verification that it is the minimal correct fix:
 - Commit: (this commit)
 
 ### Iteration 12 — attack-surface exhaustion pass: last tooth-class instance + a11y pin + DB-enforced vocab audit
+
 - PUT/DELETE finding boundary re-audited: tenant-404, ADMIN/DOCTOR Arabic-403,
   audit log (old+new values), tooth immutable on update — all verified in source.
 - condition/severity: Prisma ENUMS (schema 796-797) — invalid clinical vocabulary
@@ -349,9 +364,11 @@ diff-verification that it is the minimal correct fix:
   attack surface exhausted at this evidence level.
 
 ## Remaining Work
+
 None in-scope. See BLOCKERS.md for environment-dependent verification limits.
 
 ## Current Risks
+
 - Sandbox lacks MySQL/Redis/Docker/AUTH_SECRET/browser binaries → DB-backed runtime
   flows, authenticated UI walkthroughs and browser E2E are ENVIRONMENT-BLOCKED (tests
   cover them at unit/integration level with the real route handlers).

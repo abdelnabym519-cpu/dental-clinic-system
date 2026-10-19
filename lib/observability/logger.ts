@@ -15,7 +15,8 @@ import { versionStamp } from '@/lib/config/version'
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SECURITY' | 'AUDIT'
 
-const REDACT_KEY = /pass(word)?|secret|token|api[_-]?key|authorization|cookie|credential|audio|transcript|wav|ssn|national.?id/i
+const REDACT_KEY =
+  /pass(word)?|secret|token|api[_-]?key|authorization|cookie|credential|audio|transcript|wav|ssn|national.?id/i
 
 export type LogFields = Record<string, unknown>
 
@@ -44,7 +45,14 @@ export type Logger = {
   audit: (msg: string, fields?: LogFields) => void
 }
 
-const SEVERITY_EMITTED: Record<LogLevel, number> = { DEBUG: 10, INFO: 20, WARN: 30, ERROR: 40, SECURITY: 40, AUDIT: 20 }
+const SEVERITY_EMITTED: Record<LogLevel, number> = {
+  DEBUG: 10,
+  INFO: 20,
+  WARN: 30,
+  ERROR: 40,
+  SECURITY: 40,
+  AUDIT: 20,
+}
 
 function minSeverity(): number {
   const env = process.env.LOG_LEVEL?.toUpperCase()

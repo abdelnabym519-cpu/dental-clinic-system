@@ -168,7 +168,7 @@ export default function SegmentsPage() {
         <div>
           <h1 className="text-3xl font-bold">{t('ui.patient_segments')}</h1>
           <p className="text-muted-foreground mt-1">
-            {data?.totalPatients || 0} {t("total active patients")}
+            {data?.totalPatients || 0} {t('total active patients')}
           </p>
         </div>
         <Button variant="outline" onClick={fetchAiSegments} disabled={aiLoading}>
@@ -177,7 +177,7 @@ export default function SegmentsPage() {
           ) : (
             <Brain className="h-4 w-4 mr-2" />
           )}
-          {t("AI Churn Analysis")}
+          {t('AI Churn Analysis')}
         </Button>
       </div>
 
@@ -254,7 +254,7 @@ export default function SegmentsPage() {
                             <TableCell>
                               {patient.lastVisit
                                 ? new Date(patient.lastVisit).toLocaleDateString(locale)
-                                : t("Never")}
+                                : t('Never')}
                             </TableCell>
                             <TableCell className="text-right">
                               {t('EGP')} {patient.totalSpend.toLocaleString(locale)}
@@ -280,7 +280,8 @@ export default function SegmentsPage() {
               {t('AI Churn Prediction')}
             </CardTitle>
             <CardDescription>
-              {t("RFM analysis with churn risk scores — avg risk:")} {aiData.summary?.avgChurnRisk || 0}%
+              {t('RFM analysis with churn risk scores — avg risk:')}{' '}
+              {aiData.summary?.avgChurnRisk || 0}%
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -325,7 +326,9 @@ export default function SegmentsPage() {
               {/* Retention actions */}
               {aiData.summary?.topRetentionActions?.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-700 mb-1">{t('Top Retention Actions')}</p>
+                  <p className="text-sm font-medium text-blue-700 mb-1">
+                    {t('Top Retention Actions')}
+                  </p>
                   {aiData.summary.topRetentionActions.map((a: string, i: number) => (
                     <p key={i} className="text-xs text-blue-600">
                       • {a}
@@ -340,7 +343,7 @@ export default function SegmentsPage() {
                   <TableRow>
                     <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>{t('Segment')}</TableHead>
-                    <TableHead>{t("Recency (days)")}</TableHead>
+                    <TableHead>{t('Recency (days)')}</TableHead>
                     <TableHead>{t('ui.frequency')}</TableHead>
                     <TableHead>{t('Spend')}</TableHead>
                     <TableHead>{t('Churn Risk')}</TableHead>
@@ -368,7 +371,9 @@ export default function SegmentsPage() {
                         <TableCell>{p.rfm?.recency || 'N/A'}</TableCell>
                         <TableCell>{p.rfm?.frequency || 0}</TableCell>
                         <TableCell>
-                          {p.rfm?.monetary ? t("EGP {v1}", { v1: p.rfm.monetary.toLocaleString(locale) }) : t("EGP 0")}
+                          {p.rfm?.monetary
+                            ? t('EGP {v1}', { v1: p.rfm.monetary.toLocaleString(locale) })
+                            : t('EGP 0')}
                         </TableCell>
                         <TableCell>
                           <Badge

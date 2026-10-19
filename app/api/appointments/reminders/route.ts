@@ -118,7 +118,10 @@ export async function DELETE(request: NextRequest) {
     })
 
     // Tenant scope verified through the parent appointment.
-    if (!reminder || (reminder as { appointment?: { hospitalId?: string } }).appointment?.hospitalId !== hospitalId) {
+    if (
+      !reminder ||
+      (reminder as { appointment?: { hospitalId?: string } }).appointment?.hospitalId !== hospitalId
+    ) {
       return NextResponse.json({ error: 'Reminder not found' }, { status: 404 })
     }
     if (reminder.status === 'SENT') {

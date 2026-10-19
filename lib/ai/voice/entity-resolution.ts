@@ -30,26 +30,66 @@ import type {
 
 const INTERRUPT_PATTERNS = [
   // EN
-  'stop', 'wait', 'hold on', 'enough', 'quiet', 'cancel',
+  'stop',
+  'wait',
+  'hold on',
+  'enough',
+  'quiet',
+  'cancel',
   // AR (normalized: alef folded, tashkeel stripped)
-  'اسكت', 'استني', 'استنى', 'كفايه', 'قف', 'الغي', 'بردو لا',
+  'اسكت',
+  'استني',
+  'استنى',
+  'كفايه',
+  'قف',
+  'الغي',
+  'بردو لا',
 ]
 
 const CONFIRM_PATTERNS = [
   // EN — explicit verbs ONLY ("yes" alone is NOT a confirmation, §15)
-  'confirm', 'confirmed', 'yes confirm', 'i confirm', 'please confirm', 'do it', 'send it',
+  'confirm',
+  'confirmed',
+  'yes confirm',
+  'i confirm',
+  'please confirm',
+  'do it',
+  'send it',
   // AR — explicit confirmation verbs
-  'اكد', 'اتاكد', 'تاكيد', 'نعم اكد', 'ايوه اكد', 'ايوا اكد', 'موافق', 'انا موافق', 'ابعتها', 'ابعت',
+  'اكد',
+  'اتاكد',
+  'تاكيد',
+  'نعم اكد',
+  'ايوه اكد',
+  'ايوا اكد',
+  'موافق',
+  'انا موافق',
+  'ابعتها',
+  'ابعت',
 ]
 
 const CANCEL_PATTERNS = [
-  'cancel that', 'forget it', 'never mind', 'cancel request',
-  'الغاء', 'الغي ده', 'منساش', 'سيبها', 'خلاص مانساش', 'خلاص سيبها',
+  'cancel that',
+  'forget it',
+  'never mind',
+  'cancel request',
+  'الغاء',
+  'الغي ده',
+  'منساش',
+  'سيبها',
+  'خلاص مانساش',
+  'خلاص سيبها',
 ]
 
 function matchesAny(normalized: string, patterns: string[]): boolean {
   const words = ` ${normalized} `
-  return patterns.some((p) => words.includes(` ${p} `) || normalized === p || words.includes(` ${p}.`) || words.includes(` ${p}?`))
+  return patterns.some(
+    (p) =>
+      words.includes(` ${p} `) ||
+      normalized === p ||
+      words.includes(` ${p}.`) ||
+      words.includes(` ${p}?`)
+  )
 }
 
 /**
@@ -150,7 +190,9 @@ export function toothClarification(res: ToothResolution): VoiceClarification {
 export interface PatientLookupClient {
   patient: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    findMany(args: any): Promise<{ id: string; firstName: string | null; lastName: string | null }[]>
+    findMany(
+      args: any
+    ): Promise<{ id: string; firstName: string | null; lastName: string | null }[]>
   }
 }
 
@@ -177,8 +219,23 @@ function cleanHintToken(t: string | null | undefined): string | null {
 
 /** Common Arabic words that follow the name in clinical phrases (bounded). */
 const AR_NON_NAME = new Set([
-  'عنده', 'عندها', 'عندهم', 'عند', 'في', 'من', 'الي', 'الى',
-  'ده', 'دي', 'اللي', 'مع', 'عن', 'الذي', 'التي', 'لا', 'ما',
+  'عنده',
+  'عندها',
+  'عندهم',
+  'عند',
+  'في',
+  'من',
+  'الي',
+  'الى',
+  'ده',
+  'دي',
+  'اللي',
+  'مع',
+  'عن',
+  'الذي',
+  'التي',
+  'لا',
+  'ما',
 ])
 
 export function extractPatientNameHint(text: string): PatientNameHint | null {
@@ -187,7 +244,9 @@ export function extractPatientNameHint(text: string): PatientNameHint | null {
     const first = cleanHintToken(en[1])
     if (first) return { first, last: cleanHintToken(en[2]) }
   }
-  const ar = text.match(new RegExp('المريض\\s+(' + AR_NAME_CHARS + '+)(?:\\s+(' + AR_NAME_CHARS + '+))?'))
+  const ar = text.match(
+    new RegExp('المريض\\s+(' + AR_NAME_CHARS + '+)(?:\\s+(' + AR_NAME_CHARS + '+))?')
+  )
   if (ar) {
     const first = cleanHintToken(ar[1])
     const second = cleanHintToken(ar[2])
@@ -213,7 +272,7 @@ export function extractPatientNameHint(text: string): PatientNameHint | null {
 export async function resolvePatientReference(
   client: PatientLookupClient,
   hospitalId: string,
-  hint: PatientNameHint | null,
+  hint: PatientNameHint | null
 ): Promise<PatientResolutionResult> {
   if (!hint?.first) {
     return { status: 'NOT_REQUESTED', patientId: null, displayName: null, candidates: [] }
@@ -260,7 +319,7 @@ export async function resolvePatientReference(
   const contains = rows.filter((p) => {
     const nf = norm(p.firstName)
     const nl = norm(p.lastName)
-    if (hintLast) return (nf.includes(hintFirst) || nl.includes(hintLast))
+    if (hintLast) return nf.includes(hintFirst) || nl.includes(hintLast)
     return nf.includes(hintFirst)
   })
   if (contains.length === 1) {
@@ -278,9 +337,7 @@ export async function resolvePatientReference(
   return { status: 'NOT_FOUND', patientId: null, displayName: null, candidates: [] }
 }
 
-export function patientClarification(
-  res: PatientResolutionResult,
-): VoiceClarification | null {
+export function patientClarification(res: PatientResolutionResult): VoiceClarification | null {
   if (res.status === 'AMBIGUOUS') {
     return {
       code: 'PATIENT_AMBIGUOUS',
@@ -305,7 +362,10 @@ function displayOf(p: { id: string; firstName: string | null; lastName: string |
 }
 
 /** Convenience: sanitize + normalize in one typed step. */
-export function prepareTranscript(raw: string): { sanitize: SanitizeResult; normalized: ReturnType<typeof normalizeTranscript> } {
+export function prepareTranscript(raw: string): {
+  sanitize: SanitizeResult
+  normalized: ReturnType<typeof normalizeTranscript>
+} {
   const sanitize = sanitizeTranscript(raw)
   return { sanitize, normalized: normalizeTranscript(raw) }
 }

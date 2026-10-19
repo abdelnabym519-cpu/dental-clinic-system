@@ -226,7 +226,10 @@ describe('ImagingUpload — upload outcomes', () => {
     setFile(new File(['x'], 'xray.png', { type: 'image/png' }))
     fireEvent.click(screen.getAllByRole('button', { name: 'Upload X-ray' })[0])
     await waitFor(() => expect(FakeXHR.instances).toHaveLength(1))
-    FakeXHR.instances[0].complete(201, { study: { id: 'study-9' }, job: { id: 'job-9', status: 'PENDING' } })
+    FakeXHR.instances[0].complete(201, {
+      study: { id: 'study-9' },
+      job: { id: 'job-9', status: 'PENDING' },
+    })
 
     expect(screen.getByText('Analyzing...')).toBeTruthy()
 

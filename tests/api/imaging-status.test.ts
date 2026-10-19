@@ -117,10 +117,9 @@ describe('GET /api/imaging/studies/:id/status — derived status', () => {
   async function getStatus(study) {
     mockAuthed()
     prisma.imagingStudy.findFirst.mockResolvedValue(study)
-    const res = await GET(
-      new NextRequest('http://localhost/api/imaging/studies/study-1/status'),
-      { params: Promise.resolve({ id: 'study-1' }) }
-    )
+    const res = await GET(new NextRequest('http://localhost/api/imaging/studies/study-1/status'), {
+      params: Promise.resolve({ id: 'study-1' }),
+    })
     expect(res.status).toBe(200)
     return res.json()
   }
@@ -163,7 +162,11 @@ describe('GET /api/imaging/studies/:id/status — payload mapping', () => {
         aiJobs: [
           makeJob({
             findings: [
-              { condition: 'caries', confidence: 0.63, bounding_box: { x: 1, y: 2, width: 3, height: 4, x2: 4, y2: 6 } },
+              {
+                condition: 'caries',
+                confidence: 0.63,
+                bounding_box: { x: 1, y: 2, width: 3, height: 4, x2: 4, y2: 6 },
+              },
             ],
             provenance: { annotated_image_key: 'hosp-1/imaging/pat-1/study-1/annotated.png' },
           }),

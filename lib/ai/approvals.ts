@@ -110,7 +110,11 @@ export function computeFingerprint(
   params: Record<string, string>
 ): string {
   return createHash('sha256')
-    .update([hospitalId, action, patientId ?? '', String(policyVersion), canonicalizeParams(params)].join('|'))
+    .update(
+      [hospitalId, action, patientId ?? '', String(policyVersion), canonicalizeParams(params)].join(
+        '|'
+      )
+    )
     .digest('hex')
 }
 
@@ -181,7 +185,8 @@ export async function findDuplicateRequest(
   })
   if (!recent) return { blocked: false, reason: null, row: null }
   const r = recent as unknown as LedgerRow
-  if (r.status === 'EXECUTED' && r.result?.success !== false) return { blocked: true, reason: 'SUCCESS', row: r }
+  if (r.status === 'EXECUTED' && r.result?.success !== false)
+    return { blocked: true, reason: 'SUCCESS', row: r }
   if (r.status === 'PENDING' && Date.now() - r.createdAt.getTime() < 5 * 60 * 1000)
     return { blocked: true, reason: 'IN_FLIGHT', row: r }
   return { blocked: false, reason: null, row: null }
@@ -210,7 +215,19 @@ export async function enforceExpiry(row: LedgerRow): Promise<LedgerRow> {
 
 export type DecisionResult =
   | { ok: true; row: LedgerRow }
-  | { ok: false; code: 'NOT_FOUND' | 'WRONG_TENANT' | 'NOT_PENDING' | 'EXPIRED' | 'NOT_APPROVER' | 'SELF_APPROVAL' | 'ALREADY_EXECUTED' | 'REJECTED' | 'CANCELLED' }
+  | {
+      ok: false
+      code:
+        | 'NOT_FOUND'
+        | 'WRONG_TENANT'
+        | 'NOT_PENDING'
+        | 'EXPIRED'
+        | 'NOT_APPROVER'
+        | 'SELF_APPROVAL'
+        | 'ALREADY_EXECUTED'
+        | 'REJECTED'
+        | 'CANCELLED'
+    }
 
 async function decide(
   id: string,
@@ -249,7 +266,11 @@ async function decide(
 }
 
 /** Approve — caller has already verified role eligibility + not-self. */
-export async function approve(id: string, actor: { id: string; hospitalId: string }, note?: string): Promise<DecisionResult> {
+export async function approve(
+  id: string,
+  actor: { id: string; hospitalId: string },
+  note?: string
+): Promise<DecisionResult> {
   const row = await fetchRow(id)
   if (!row) return { ok: false, code: 'NOT_FOUND' }
   if (row.hospitalId !== actor.hospitalId) return { ok: false, code: 'WRONG_TENANT' }
@@ -257,7 +278,11 @@ export async function approve(id: string, actor: { id: string; hospitalId: strin
   return decide(id, actor, 'APPROVED', { approver: true, note })
 }
 
-export async function reject(id: string, actor: { id: string; hospitalId: string }, note?: string): Promise<DecisionResult> {
+export async function reject(
+  id: string,
+  actor: { id: string; hospitalId: string },
+  note?: string
+): Promise<DecisionResult> {
   const row = await fetchRow(id)
   if (!row) return { ok: false, code: 'NOT_FOUND' }
   if (row.hospitalId !== actor.hospitalId) return { ok: false, code: 'WRONG_TENANT' }
@@ -265,7 +290,10 @@ export async function reject(id: string, actor: { id: string; hospitalId: string
   return decide(id, actor, 'REJECTED', { approver: true, note })
 }
 
-export async function cancel(id: string, actor: { id: string; hospitalId: string }): Promise<DecisionResult> {
+export async function cancel(
+  id: string,
+  actor: { id: string; hospitalId: string }
+): Promise<DecisionResult> {
   return decide(id, actor, 'CANCELLED', { approver: false })
 }
 
@@ -302,7 +330,10 @@ export async function markExecutionError(id: string, error: string): Promise<voi
 }
 
 /** Fetch a row for the UI, scoped to a tenant. */
-export async function findApprovalForTenant(id: string, hospitalId: string): Promise<LedgerRow | null> {
+export async function findApprovalForTenant(
+  id: string,
+  hospitalId: string
+): Promise<LedgerRow | null> {
   const row = await fetchRow(id)
   if (!row || row.hospitalId !== hospitalId) return null
   return enforceExpiry(row)
@@ -315,13 +346,18 @@ export async function listApprovalsForTenant(hospitalId: string): Promise<Ledger
     take: 20,
   })
   const decided = await ledger().findMany({
-    where: { hospitalId, status: { in: ['EXECUTED', 'REJECTED', 'CANCELLED', 'EXPIRED', 'BLOCKED'] }, createdAt: { gte: new Date(Date.now() - 7 * 24 * 3600 * 1000) } },
+    where: {
+      hospitalId,
+      status: { in: ['EXECUTED', 'REJECTED', 'CANCELLED', 'EXPIRED', 'BLOCKED'] },
+      createdAt: { gte: new Date(Date.now() - 7 * 24 * 3600 * 1000) },
+    },
     orderBy: { createdAt: 'desc' },
     take: 10,
   })
   const all = [...(pending as LedgerRow[]), ...(decided as LedgerRow[])]
   // Lazily expire stale PENDING rows (fire and forget — list stays readable)
-  for (const row of all) if (row.status === 'PENDING' && row.expiresAt.getTime() < Date.now()) void enforceExpiry(row)
+  for (const row of all)
+    if (row.status === 'PENDING' && row.expiresAt.getTime() < Date.now()) void enforceExpiry(row)
   return all
 }
 
@@ -331,5 +367,8 @@ export async function monthFinancialTotal(hospitalId: string, since: Date): Prom
     where: { hospitalId, riskLevel: 'FINANCIAL', status: 'EXECUTED', executedAt: { gte: since } },
     select: { amount: true, result: true },
   })) as { amount: { toString: () => string } | null; result: any }[]
-  return rows.reduce((sum, r) => (r.result?.success !== false && r.amount ? sum + Number(r.amount.toString()) : sum), 0)
+  return rows.reduce(
+    (sum, r) => (r.result?.success !== false && r.amount ? sum + Number(r.amount.toString()) : sum),
+    0
+  )
 }

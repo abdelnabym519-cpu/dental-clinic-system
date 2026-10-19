@@ -40,7 +40,10 @@ export function sanitizeOriginalName(raw: string): string {
   // or script context in any UI that renders it (stored-XSS / injection).
   name = name.replace(/[<>`"'&]/g, '')
   // Collapse dot-dot / dot segments that could read as traversal in any UI
-  name = name.replace(/\.{2,}/g, '.').replace(/^\.+/, '').trim()
+  name = name
+    .replace(/\.{2,}/g, '.')
+    .replace(/^\.+/, '')
+    .trim()
   name = name.replace(/\s+/g, ' ')
   if (name.length > MULTIMODAL_LIMITS.maxOriginalNameLen) {
     name = name.slice(0, MULTIMODAL_LIMITS.maxOriginalNameLen).trim()
@@ -69,12 +72,15 @@ export function buildStorageFileName(
   fileClass: string,
   mediaType: string,
   clientExtension: string | null,
-  uuid: string,
+  uuid: string
 ): string {
   let ext: string
   if (fileClass === 'IMAGE_2D') {
     const detected = IMAGE_EXTS_BY_MIME[mediaType] ?? 'jpg'
-    ext = clientExtension && IMAGE_EXTS_BY_MIME[mediaType] === clientExtension ? clientExtension : detected
+    ext =
+      clientExtension && IMAGE_EXTS_BY_MIME[mediaType] === clientExtension
+        ? clientExtension
+        : detected
   } else {
     ext = SAFE_EXTENSIONS[fileClass] ?? 'bin'
   }

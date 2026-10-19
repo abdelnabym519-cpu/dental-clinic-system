@@ -13,7 +13,17 @@ const db = () => createFakePrisma()
 
 describe('Context contract validation', () => {
   it('a service-built context always passes its own contract', async () => {
-    for (const profile of ['MINIMAL', 'PATIENT_OVERVIEW', 'CLINICAL', 'TOOTH', 'CASE', 'IMAGING', 'TREATMENT', 'FOLLOW_UP', 'FULL_360'] as const) {
+    for (const profile of [
+      'MINIMAL',
+      'PATIENT_OVERVIEW',
+      'CLINICAL',
+      'TOOTH',
+      'CASE',
+      'IMAGING',
+      'TREATMENT',
+      'FOLLOW_UP',
+      'FULL_360',
+    ] as const) {
       const ctx = await buildClinicalContext(makeRequest({ profile }), db())
       expect(() => assertContextContract(ctx), profile).not.toThrow()
     }
@@ -98,7 +108,10 @@ describe('Serializer (prompt-safe view of the structured context)', () => {
     const clinicalOnly = await buildClinicalContext(makeRequest({ profile: 'CLINICAL' }), db())
     expect(serializeForPrompt(clinicalOnly)).toContain('excluded (role/tenant scope)')
     // missing data is explicit
-    const sparse = await buildClinicalContext(makeRequest({ profile: 'FULL_360', patientId: PAT_A2 }), db())
+    const sparse = await buildClinicalContext(
+      makeRequest({ profile: 'FULL_360', patientId: PAT_A2 }),
+      db()
+    )
     expect(serializeForPrompt(sparse)).toContain('no data on record')
   })
 

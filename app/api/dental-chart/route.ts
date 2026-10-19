@@ -101,10 +101,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
-      return NextResponse.json(
-        { error: "لا تملك صلاحية تعديل المخطط السني" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'لا تملك صلاحية تعديل المخطط السني' }, { status: 403 })
     }
 
     const body = await request.json()

@@ -67,7 +67,7 @@ services:
       # docker-compose.dev.yml exactly (root / MYSQL_ROOT_PASSWORD /
       # MYSQL_DATABASE); override with AI_MYSQL_* only if you change the core
       # stack (e.g. non-default port '3307:3306').
-      DATABASE_URL: "mysql://${AI_MYSQL_USER:-root}:${AI_MYSQL_PASSWORD:-dental}@mysql:${AI_MYSQL_PORT:-3306}/${AI_MYSQL_DATABASE:-dental_erp}"
+      DATABASE_URL: 'mysql://${AI_MYSQL_USER:-root}:${AI_MYSQL_PASSWORD:-dental}@mysql:${AI_MYSQL_PORT:-3306}/${AI_MYSQL_DATABASE:-dental_erp}'
       # Phase 19B engine routing (ADD — the 19A liodon line is unchanged):
       # the orchestrator dials each engine by this name inside
       # dentora-network.
@@ -82,7 +82,13 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8000/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8000/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -123,7 +129,13 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8001/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8001/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -165,11 +177,17 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8002/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8002/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 90s    # torch model loading + module import takes longer
+      start_period: 90s # torch model loading + module import takes longer
 
   # ---------------------------------------------------------------------
   # Phase 19B (Engine 2) — Implant AI, YOLOv8 instance segmentation for
@@ -206,11 +224,17 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8004/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8004/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 120s    # torch + ultralytics import + restricted checkpoint load
+      start_period: 120s # torch + ultralytics import + restricted checkpoint load
 
   meshsegnet-man-engine:
     build:
@@ -231,7 +255,13 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8003/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8003/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -262,7 +292,13 @@ services:
     networks:
       - dentora-network
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8005/health", timeout=3).status == 200 else 1)']
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen("http://localhost:8005/health", timeout=3).status == 200 else 1)',
+        ]
       interval: 15s
       timeout: 10s
       retries: 5

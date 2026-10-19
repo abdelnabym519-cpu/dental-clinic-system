@@ -5,14 +5,14 @@ image is committed to git (`.gitignore` excludes `input/*` except this note).
 
 ## Where the audited input comes from
 
-| field | value |
-| --- | --- |
-| repository | `szuboy/CL-Detection2023` — *CL-Detection2023 Challenge Official Repository*, **Apache-2.0** |
-| revision | `dc1ce2bd0a3f317de4160cde17e4a6f60371e67c` |
-| file | `step5_docker_and_upload/test/stack1.mha` (41,472,328 bytes) |
-| container | MetaImage · `MET_UCHAR` · `BinaryData = True` · `ElementDataFile = LOCAL` · `DimSize = 2880 2400 2` · `ElementNumberOfChannels = 3` |
-| slice extracted | 1 of 2 (each slice is one lateral cephalometric radiograph) |
-| output | `input/ceph_stack1_image1.png` — 2880×2400×3, sha256 `b663ed10bd190f8891e781b7e408b9e380c3a2f550a6bdca1c5414cee545d988` |
+| field           | value                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| repository      | `szuboy/CL-Detection2023` — _CL-Detection2023 Challenge Official Repository_, **Apache-2.0**                                        |
+| revision        | `dc1ce2bd0a3f317de4160cde17e4a6f60371e67c`                                                                                          |
+| file            | `step5_docker_and_upload/test/stack1.mha` (41,472,328 bytes)                                                                        |
+| container       | MetaImage · `MET_UCHAR` · `BinaryData = True` · `ElementDataFile = LOCAL` · `DimSize = 2880 2400 2` · `ElementNumberOfChannels = 3` |
+| slice extracted | 1 of 2 (each slice is one lateral cephalometric radiograph)                                                                         |
+| output          | `input/ceph_stack1_image1.png` — 2880×2400×3, sha256 `b663ed10bd190f8891e781b7e408b9e380c3a2f550a6bdca1c5414cee545d988`             |
 
 These are the organisers' own validation inputs for the baseline they published, distributed
 under the repository's Apache-2.0 licence together with their reference annotations

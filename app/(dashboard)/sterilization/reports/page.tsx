@@ -188,7 +188,7 @@ export default function ComplianceReportsPage() {
               {report.complianceRate}%
             </div>
             <p className="text-xs text-muted-foreground">
-              {report.passCount} {t("pass /")} {report.totalCycles} {t("total")}
+              {report.passCount} {t('pass /')} {report.totalCycles} {t('total')}
             </p>
           </CardContent>
         </Card>
@@ -199,7 +199,9 @@ export default function ComplianceReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{report.failCount}</div>
-            <p className="text-xs text-muted-foreground">{report.pendingCount} {t('pending')}</p>
+            <p className="text-xs text-muted-foreground">
+              {report.pendingCount} {t('pending')}
+            </p>
           </CardContent>
         </Card>
         <Card>

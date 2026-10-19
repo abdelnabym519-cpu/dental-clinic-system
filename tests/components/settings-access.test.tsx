@@ -19,7 +19,10 @@ vi.mock('@/components/providers/language-provider', async () => {
       dir: 'ltr',
       t: (key: string, vars?: Record<string, string | number>) => {
         let template: string = en[key] ?? key
-        if (vars) template = template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m))
+        if (vars)
+          template = template.replace(/\{(\w+)\}/g, (m, name) =>
+            name in vars ? String(vars[name]) : m
+          )
         return template
       },
       setLocale: vi.fn(),
@@ -42,10 +45,34 @@ import { AccessDenied } from '@/components/settings/access-denied'
 import { SettingsOverview, type SettingsCategory } from '@/components/settings/settings-overview'
 
 const adminCategories: SettingsCategory[] = [
-  { title: 'Setup Guide', description: 'd1', icon: 'Settings', href: '/settings/setup-guide', color: 'c' },
-  { title: 'Clinic Information', description: 'd2', icon: 'Settings', href: '/settings/clinic', color: 'c' },
-  { title: 'Billing Settings', description: 'd3', icon: 'Settings', href: '/settings/billing', color: 'c' },
-  { title: 'My Profile', description: 'd4', icon: 'Settings', href: '/settings/profile', color: 'c' },
+  {
+    title: 'Setup Guide',
+    description: 'd1',
+    icon: 'Settings',
+    href: '/settings/setup-guide',
+    color: 'c',
+  },
+  {
+    title: 'Clinic Information',
+    description: 'd2',
+    icon: 'Settings',
+    href: '/settings/clinic',
+    color: 'c',
+  },
+  {
+    title: 'Billing Settings',
+    description: 'd3',
+    icon: 'Settings',
+    href: '/settings/billing',
+    color: 'c',
+  },
+  {
+    title: 'My Profile',
+    description: 'd4',
+    icon: 'Settings',
+    href: '/settings/profile',
+    color: 'c',
+  },
 ]
 
 describe('AccessDenied', () => {
@@ -77,7 +104,12 @@ describe('SettingsOverview (role-filtered categories)', () => {
   it('renders one card per allowed category with the right links', () => {
     render(<SettingsOverview categories={adminCategories} />)
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
-    expect(links).toEqual(['/settings/setup-guide', '/settings/clinic', '/settings/billing', '/settings/profile'])
+    expect(links).toEqual([
+      '/settings/setup-guide',
+      '/settings/clinic',
+      '/settings/billing',
+      '/settings/profile',
+    ])
   })
 
   it('renders no category links when the role has none (profile hub only)', () => {

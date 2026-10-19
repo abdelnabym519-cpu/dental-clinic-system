@@ -5,13 +5,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import {
-  Smartphone,
-  CheckCircle,
-  Clock,
-  Copy,
-  Building2,
-} from 'lucide-react'
+import { Smartphone, CheckCircle, Clock, Copy, Building2 } from 'lucide-react'
 
 /**
  * InstaPay payment instructions page.
@@ -54,7 +48,9 @@ export default function InstaPayInstructionsPage() {
             <Smartphone className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-xl">{t('Pay with InstaPay')}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t('Complete your payment with InstaPay')}</p>
+          <p className="text-sm text-muted-foreground">
+            {t('Complete your payment with InstaPay')}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Amount */}
@@ -62,17 +58,22 @@ export default function InstaPayInstructionsPage() {
             <p className="text-xs text-muted-foreground">{t('Amount due')}</p>
             <p className="text-3xl font-bold">{amount ? `${amount} ${t('currency.egp')}` : '—'}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {amount ? t("EGP {v1}", { v1: Number(amount).toLocaleString(locale) }) : ''}
+              {amount ? t('EGP {v1}', { v1: Number(amount).toLocaleString(locale) }) : ''}
             </p>
           </div>
 
           {/* InstaPay handle */}
           <div>
-            <p className="text-sm font-medium mb-1">{t("Transfer to the clinic's InstaPay address")}</p>
+            <p className="text-sm font-medium mb-1">
+              {t("Transfer to the clinic's InstaPay address")}
+            </p>
             <p className="text-sm text-muted-foreground mb-2">
               {t("Transfer to the clinic's InstaPay address (IPA)")}
             </p>
-            <div className="flex items-center gap-2 rounded-md border p-3 font-mono text-lg" dir="ltr">
+            <div
+              className="flex items-center gap-2 rounded-md border p-3 font-mono text-lg"
+              dir="ltr"
+            >
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="truncate">{handle || '—'}</span>
             </div>
@@ -80,7 +81,9 @@ export default function InstaPayInstructionsPage() {
 
           {/* Reference */}
           <div>
-            <p className="text-sm font-medium mb-1">{t('Reference number (include it in the transfer note)')}</p>
+            <p className="text-sm font-medium mb-1">
+              {t('Reference number (include it in the transfer note)')}
+            </p>
             <p className="text-sm text-muted-foreground mb-2">
               {t('Payment reference — include it in the transfer note')}
             </p>

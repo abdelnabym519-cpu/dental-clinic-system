@@ -57,7 +57,9 @@ describe('voice session store', () => {
   it('throws a typed error on illegal transitions', () => {
     const { session } = makeStore()
     // IDLE → SPEAKING is not a legal edge.
-    expect(() => transitionSession(session, 'SPEAKING', { now: t0 })).toThrow(VoiceStateTransitionError)
+    expect(() => transitionSession(session, 'SPEAKING', { now: t0 })).toThrow(
+      VoiceStateTransitionError
+    )
     try {
       transitionSession(session, 'SPEAKING', { now: t0 })
     } catch (e) {
@@ -79,7 +81,12 @@ describe('voice session store', () => {
 
   it('clears pending approval on quiet states', () => {
     const { session } = makeStore()
-    const s = { ...session, state: 'COMPLETED' as const, pendingApprovalId: 'apr-1', pendingApprovalExpiresAt: new Date(t0.getTime() + 60_000).toISOString() }
+    const s = {
+      ...session,
+      state: 'COMPLETED' as const,
+      pendingApprovalId: 'apr-1',
+      pendingApprovalExpiresAt: new Date(t0.getTime() + 60_000).toISOString(),
+    }
     const completed = transitionSession(s, 'IDLE', { now: t0 })
     expect(completed.pendingApprovalId).toBeNull()
     expect(completed.pendingApprovalExpiresAt).toBeNull()

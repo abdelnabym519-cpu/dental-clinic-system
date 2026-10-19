@@ -68,7 +68,6 @@ vi.mock('@/components/ai/command-bar', () => ({
   CommandBar: () => <div data-testid="command-bar">CommandBar</div>,
 }))
 
-
 vi.mock('@/components/ui/breadcrumb', () => ({
   Breadcrumb: ({ className }: any) => (
     <nav data-testid="breadcrumb" className={className}>

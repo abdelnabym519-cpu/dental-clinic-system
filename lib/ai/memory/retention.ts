@@ -42,7 +42,7 @@ export const RETENTION_SETTING_KEYS: Record<MemoryDomain, string | null> = {
  */
 export function resolveRetentionDays(
   domain: MemoryDomain,
-  tenantOverride?: string | null,
+  tenantOverride?: string | null
 ): number | null {
   const key = RETENTION_SETTING_KEYS[domain]
   if (key && tenantOverride) {
@@ -56,7 +56,7 @@ export function resolveRetentionDays(
 export function expiryFromNow(
   domain: MemoryDomain,
   now: Date,
-  tenantOverride?: string | null,
+  tenantOverride?: string | null
 ): Date | null {
   const days = resolveRetentionDays(domain, tenantOverride)
   if (days === null) return null

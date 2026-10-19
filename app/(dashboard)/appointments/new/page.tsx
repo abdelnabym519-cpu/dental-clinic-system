@@ -254,7 +254,9 @@ export default function NewAppointmentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
+                <User className="h-5 w-5" />
+                {t('ui.patient')}
+              </CardTitle>
               <CardDescription>{t('Select the patient for this appointment')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -273,7 +275,9 @@ export default function NewAppointmentPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedPatient(null)}
-                    >{t('ui.change')}</Button>
+                    >
+                      {t('ui.change')}
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -328,12 +332,16 @@ export default function NewAppointmentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />{t('ui.schedule')}</CardTitle>
-              <CardDescription>{t('Select doctor, date, and time for the appointment')}</CardDescription>
+                <Calendar className="h-5 w-5" />
+                {t('ui.schedule')}
+              </CardTitle>
+              <CardDescription>
+                {t('Select doctor, date, and time for the appointment')}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>{t("Doctor *")}</Label>
+                <Label>{t('Doctor *')}</Label>
                 <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_a_doctor')} />
@@ -341,7 +349,7 @@ export default function NewAppointmentPage() {
                   <SelectContent>
                     {doctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id}>
-                        {t("Dr.")} {doctor.firstName} {doctor.lastName}
+                        {t('Dr.')} {doctor.firstName} {doctor.lastName}
                         {doctor.specialization && ` (${doctor.specialization})`}
                       </SelectItem>
                     ))}
@@ -369,12 +377,12 @@ export default function NewAppointmentPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="15">{t("15 minutes")}</SelectItem>
-                      <SelectItem value="30">{t("30 minutes")}</SelectItem>
-                      <SelectItem value="45">{t("45 minutes")}</SelectItem>
-                      <SelectItem value="60">{t("1 hour")}</SelectItem>
-                      <SelectItem value="90">{t("1.5 hours")}</SelectItem>
-                      <SelectItem value="120">{t("2 hours")}</SelectItem>
+                      <SelectItem value="15">{t('15 minutes')}</SelectItem>
+                      <SelectItem value="30">{t('30 minutes')}</SelectItem>
+                      <SelectItem value="45">{t('45 minutes')}</SelectItem>
+                      <SelectItem value="60">{t('1 hour')}</SelectItem>
+                      <SelectItem value="90">{t('1.5 hours')}</SelectItem>
+                      <SelectItem value="120">{t('2 hours')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -382,16 +390,20 @@ export default function NewAppointmentPage() {
 
               {/* Time Slots */}
               <div className="space-y-2">
-                <Label>{t("Time Slot *")}</Label>
+                <Label>{t('Time Slot *')}</Label>
                 {loadingSlots ? (
                   <div className="flex items-center gap-2 p-4 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />{t('ui.loading_available_slots')}</div>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('ui.loading_available_slots')}
+                  </div>
                 ) : !selectedDoctor || !selectedDate ? (
                   <p className="p-4 text-sm text-muted-foreground">
                     {t('Select doctor and date to see available slots')}
                   </p>
                 ) : timeSlots.length === 0 ? (
-                  <p className="p-4 text-sm text-muted-foreground">{t('ui.no_available_slots_for_this_date')}</p>
+                  <p className="p-4 text-sm text-muted-foreground">
+                    {t('ui.no_available_slots_for_this_date')}
+                  </p>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {timeSlots.map((slot) => (
@@ -424,7 +436,9 @@ export default function NewAppointmentPage() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />{t('ui.appointment_details')}</CardTitle>
+                <Clock className="h-5 w-5" />
+                {t('ui.appointment_details')}
+              </CardTitle>
               <CardDescription>{t('Additional information about the appointment')}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -467,11 +481,11 @@ export default function NewAppointmentPage() {
                       <SelectValue placeholder={t('ui.select_chair')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">{t("Chair 1")}</SelectItem>
-                      <SelectItem value="2">{t("Chair 2")}</SelectItem>
-                      <SelectItem value="3">{t("Chair 3")}</SelectItem>
-                      <SelectItem value="4">{t("Chair 4")}</SelectItem>
-                      <SelectItem value="5">{t("Chair 5")}</SelectItem>
+                      <SelectItem value="1">{t('Chair 1')}</SelectItem>
+                      <SelectItem value="2">{t('Chair 2')}</SelectItem>
+                      <SelectItem value="3">{t('Chair 3')}</SelectItem>
+                      <SelectItem value="4">{t('Chair 4')}</SelectItem>
+                      <SelectItem value="5">{t('Chair 5')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -480,10 +494,12 @@ export default function NewAppointmentPage() {
                   <div className="space-y-0.5">
                     <Label className="flex items-center gap-2">
                       <Video className="h-4 w-4 text-blue-600" />
-                      {t("Virtual Visit (Video Consultation)")}
+                      {t('Virtual Visit (Video Consultation)')}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      {t('Enable to create a tele-dentistry video consultation for this appointment')}
+                      {t(
+                        'Enable to create a tele-dentistry video consultation for this appointment'
+                      )}
                     </p>
                   </div>
                   <Switch checked={isVirtual} onCheckedChange={setIsVirtual} />
@@ -525,15 +541,21 @@ export default function NewAppointmentPage() {
 
         <div className="mt-6 flex justify-end gap-4">
           <Link href="/appointments">
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.creating')}</>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('ui.creating')}
+              </>
             ) : (
               <>
-                <Calendar className="mr-2 h-4 w-4" />{t('ui.book_appointment')}</>
+                <Calendar className="mr-2 h-4 w-4" />
+                {t('ui.book_appointment')}
+              </>
             )}
           </Button>
         </div>

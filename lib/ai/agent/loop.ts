@@ -23,24 +23,43 @@ import { resolvePolicy } from '@/lib/ai/action-policy'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import type { ContextProfile } from '@/lib/ai/context/types'
-import { classifyAgentTask, llmClassifyPrompt, parseLlmClassification, extractDateParam, detectCompareIntent } from './classifier'
+import {
+  classifyAgentTask,
+  llmClassifyPrompt,
+  parseLlmClassification,
+  extractDateParam,
+  detectCompareIntent,
+} from './classifier'
 import { detectInputLanguage } from '@/lib/ai/voice/language'
 import { buildPlan } from './planner'
 import { executeTool, extractSources, toolNamesByProfile, type ToolRuntime } from './tools'
-import { buildAttachmentContextBlock, attachmentClassLabel, attachmentOnlyAnswer } from '@/lib/ai/multimodal/context'
+import {
+  buildAttachmentContextBlock,
+  attachmentClassLabel,
+  attachmentOnlyAnswer,
+} from '@/lib/ai/multimodal/context'
 import { findingLabel } from '@/lib/ai/engines/local-ai-service'
 import { MULTIMODAL_LIMITS } from '@/lib/ai/multimodal/limits'
 import type { AttachmentRecord } from '@/lib/ai/multimodal/types'
 import type {
-  AgentFailure, AgentLimits, AgentResponse, AgentState, AgentTask,
-  AgentTrace, AgentDeps, AgentRequest, AgentToolResult, ActionProposed,
+  AgentFailure,
+  AgentLimits,
+  AgentResponse,
+  AgentState,
+  AgentTask,
+  AgentTrace,
+  AgentDeps,
+  AgentRequest,
+  AgentToolResult,
+  ActionProposed,
 } from './types'
 import { DEFAULT_AGENT_LIMITS, AGENT_FAILURES } from './types'
 import { failureAnswerText } from '@/lib/ai/knowledge/errors'
 import { extractCitedIds, stripUnsupportedCitations } from '@/lib/ai/knowledge/grounding'
 import type { KnowledgeEvidencePackage } from '@/lib/ai/knowledge/types'
 
-const TASK_ENUM = 'INFORMATIONAL, CLINICAL_ANALYSIS, IMAGING_ANALYSIS, OPERATIONAL, ACTION_REQUEST, MULTI_STEP, KNOWLEDGE, OUT_OF_DOMAIN'
+const TASK_ENUM =
+  'INFORMATIONAL, CLINICAL_ANALYSIS, IMAGING_ANALYSIS, OPERATIONAL, ACTION_REQUEST, MULTI_STEP, KNOWLEDGE, OUT_OF_DOMAIN'
 
 function hash(s: string): string {
   let h = 0
@@ -68,15 +87,27 @@ async function resolvePatient(
 
   // 1) Explicit id (client-suggested → re-verified against the tenant).
   if (request.patientId) {
-    const byId = await client.patient.findFirst({ where: { hospitalId, id: request.patientId }, select })
-    const byCode = byId ? byId : await client.patient.findFirst({ where: { hospitalId, patientId: request.patientId }, select })
-    if (byId || byCode) return { status: 'resolved', id: (byId ?? byCode).id, name: nameOf(byId ?? byCode) }
+    const byId = await client.patient.findFirst({
+      where: { hospitalId, id: request.patientId },
+      select,
+    })
+    const byCode = byId
+      ? byId
+      : await client.patient.findFirst({
+          where: { hospitalId, patientId: request.patientId },
+          select,
+        })
+    if (byId || byCode)
+      return { status: 'resolved', id: (byId ?? byCode).id, name: nameOf(byId ?? byCode) }
     return { status: 'notfound' }
   }
 
   // 2) PATIENT role — self-scope only (context engine re-enforces).
   if (rt.role === 'PATIENT') {
-    const self = await client.patient.findFirst({ where: { hospitalId, portalUserId: rt.actorId }, select })
+    const self = await client.patient.findFirst({
+      where: { hospitalId, portalUserId: rt.actorId },
+      select,
+    })
     return self ? { status: 'resolved', id: self.id, name: nameOf(self) } : { status: 'notfound' }
   }
 
@@ -87,12 +118,13 @@ async function resolvePatient(
     const want = nameHint.trim().toLowerCase()
     if (!want) return { status: 'notfound' }
     const rows = (await client.patient.findMany({
-      where: { hospitalId }, take: 100, select,
+      where: { hospitalId },
+      take: 100,
+      select,
     })) as { id: string; patientId: string; firstName: string; lastName: string }[]
     const exact = rows.filter((r) => nameOf(r).toLowerCase() === want)
-    const pick = exact.length === 1
-      ? exact
-      : rows.filter((r) => nameOf(r).toLowerCase().includes(want))
+    const pick =
+      exact.length === 1 ? exact : rows.filter((r) => nameOf(r).toLowerCase().includes(want))
     if (pick.length === 1) return { status: 'resolved', id: pick[0].id, name: nameOf(pick[0]) }
     if (pick.length > 1) return { status: 'ambiguous', candidates: pick.length }
     return { status: 'notfound' }
@@ -108,24 +140,33 @@ async function resolvePatient(
 function summarizeContextAnswer(ctx: any, task: AgentTask): string {
   const s = (k: string) => (ctx[k]?.status === 'included' ? ctx[k].data : null)
   const lines: string[] = []
-  lines.push(`Identity: ${ctx.meta.patient?.name ?? 'unknown'} (${ctx.meta.patient?.patientId ?? 'n/a'}).`)
+  lines.push(
+    `Identity: ${ctx.meta.patient?.name ?? 'unknown'} (${ctx.meta.patient?.patientId ?? 'n/a'}).`
+  )
   const med = s('medical')
   if (med) {
     const flags: string[] = []
     if (med.alerts?.length) flags.push(...med.alerts)
     if (med.conditions?.length) flags.push(`conditions: ${med.conditions.join(', ')}`)
     if (med.currentMedications) flags.push(`medications: ${med.currentMedications}`)
-    if (flags.length) lines.push(`Medical flags: ${flags.join('; ')} (recorded medical history — not a diagnosis).`)
+    if (flags.length)
+      lines.push(`Medical flags: ${flags.join('; ')} (recorded medical history — not a diagnosis).`)
   }
   const den = s('dental')
   if (den) {
     const active = den.active.map((t: any) => `tooth ${t.toothFdi} ${t.condition}`)
-    lines.push(`Dental chart: ${den.toothCount ?? den.active.length} active finding(s)${active.length ? ' — ' + active.join('; ') : ''}.`)
+    lines.push(
+      `Dental chart: ${den.toothCount ?? den.active.length} active finding(s)${active.length ? ' — ' + active.join('; ') : ''}.`
+    )
   }
   const appt = s('appointments')
-  if (appt) lines.push(`Appointments: ${appt.upcoming.length} upcoming, ${appt.recent.length} recent.`)
+  if (appt)
+    lines.push(`Appointments: ${appt.upcoming.length} upcoming, ${appt.recent.length} recent.`)
   const cl = s('clinical')
-  if (cl) lines.push(`Clinical records: ${cl.notes.length + cl.examinations.length + cl.followUpNotes.length} note(s)${cl.examinations.length ? `, ${cl.examinations.length} examination(s)` : ''}${cl.followUpNotes.length ? `, ${cl.followUpNotes.length} follow-up note(s)` : ''}.`)
+  if (cl)
+    lines.push(
+      `Clinical records: ${cl.notes.length + cl.examinations.length + cl.followUpNotes.length} note(s)${cl.examinations.length ? `, ${cl.examinations.length} examination(s)` : ''}${cl.followUpNotes.length ? `, ${cl.followUpNotes.length} follow-up note(s)` : ''}.`
+    )
   const cs = s('cases')
   if (cs) lines.push(`Cases: ${cs.plans.length} treatment plan(s).`)
   const trt = s('treatments')
@@ -133,14 +174,25 @@ function summarizeContextAnswer(ctx: any, task: AgentTask): string {
   const rx = s('prescriptions')
   if (rx) lines.push(`Prescriptions: ${rx.prescriptions.length} record(s).`)
   const img = s('imaging')
-  if (img) lines.push(`Imaging: ${img.studies.length} study(ies), ${img.studies.reduce((n: number, st: any) => n + st.analyses.length, 0)} AI analysis record(s).`)
+  if (img)
+    lines.push(
+      `Imaging: ${img.studies.length} study(ies), ${img.studies.reduce((n: number, st: any) => n + st.analyses.length, 0)} AI analysis record(s).`
+    )
   const fin = s('financial')
-  if (fin) lines.push(`Financial: open balance ${fin.openBalance.toFixed(2)} EGP across ${fin.openInvoices.length} open invoice(s).`)
+  if (fin)
+    lines.push(
+      `Financial: open balance ${fin.openBalance.toFixed(2)} EGP across ${fin.openInvoices.length} open invoice(s).`
+    )
   const risk = s('risk')
-  if (risk) lines.push(`Risk: overall score ${risk.overallScore} (MODEL_FINDING — model output, not a confirmed diagnosis).`)
+  if (risk)
+    lines.push(
+      `Risk: overall score ${risk.overallScore} (MODEL_FINDING — model output, not a confirmed diagnosis).`
+    )
   const tl = s('timeline')
   if (tl) lines.push(`Timeline: ${tl.events.length} event(s) across the recorded horizon.`)
-  const missing = Object.entries(ctx).filter(([, v]: any) => v?.status === 'missing').map(([k]) => k)
+  const missing = Object.entries(ctx)
+    .filter(([, v]: any) => v?.status === 'missing')
+    .map(([k]) => k)
   if (missing.length) lines.push(`Not recorded in the system: ${missing.join(', ')}.`)
   return lines.join(' ')
 }
@@ -160,7 +212,6 @@ function renderAttachmentToolFailure(error: string | null): string {
   return `Analysis could not be completed: ${msg}`
 }
 
-
 /**
  * Robot language policy (§6/§7): every user-facing fallback, clarification
  * and deterministic summary follows the CONVERSATION language — resolved
@@ -176,7 +227,12 @@ function byLang(lang: 'ar' | 'en', ar: string, en: string): string {
   return lang === 'ar' ? ar : en
 }
 
-function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang: 'ar' | 'en' = 'en'): string | null {
+function answerFromToolData(
+  task: AgentTask,
+  data: unknown,
+  role?: string,
+  lang: 'ar' | 'en' = 'en'
+): string | null {
   if (!data || typeof data !== 'object') return null
   const d = data as Record<string, any>
   switch (d.kind) {
@@ -190,14 +246,21 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       const findings: any[] = Array.isArray(env.findings) ? env.findings : []
       const isPatient = role === 'PATIENT'
       let visible = `Attachment: "${a.originalName ?? a.id}" — ${attachmentClassLabel(String(a.fileClass ?? ''))}, ${a.size ?? 0} bytes`
-      if (a.dentalModality) visible += `, dental modality ${a.dentalModality} (origin: ${String(a.modalityOrigin ?? 'UNKNOWN').toLowerCase()})`
+      if (a.dentalModality)
+        visible += `, dental modality ${a.dentalModality} (origin: ${String(a.modalityOrigin ?? 'UNKNOWN').toLowerCase()})`
       if (a.width && a.height) visible += `, ${a.width}x${a.height} px`
       if (a.dentalImageState) visible += `, image state ${a.dentalImageState}`
       const flist = findings
         .slice(0, 10)
-        .map((f) => `${findingLabel(f)}${f.confidence != null ? ` (${Math.round((f.confidence ?? 0) * 100)}%)` : ''}`)
+        .map(
+          (f) =>
+            `${findingLabel(f)}${f.confidence != null ? ` (${Math.round((f.confidence ?? 0) * 100)}%)` : ''}`
+        )
         .join('; ')
-      const top = env.topConfidence != null ? ` Top confidence: ${Math.round((env.topConfidence ?? 0) * 100)}%.` : ''
+      const top =
+        env.topConfidence != null
+          ? ` Top confidence: ${Math.round((env.topConfidence ?? 0) * 100)}%.`
+          : ''
       const toothNote = d.toothFocus
         ? ` Requested focus tooth ${d.toothFocus} (FDI): the engine analyzes the whole image and does not attribute findings to individual teeth — every finding is shown above; please localize it against the requested tooth.`
         : ''
@@ -206,7 +269,8 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
           ? env.uncertainty
           : 'Model output on a single image; validated deployment evidence, not a per-patient guarantee.'
       const missingBits: string[] = []
-      if (String(a.modalityOrigin ?? '') === 'DECLARED') missingBits.push('dental modality is user-declared, not classified')
+      if (String(a.modalityOrigin ?? '') === 'DECLARED')
+        missingBits.push('dental modality is user-declared, not classified')
       missingBits.push('no other attachments were combined in this analysis')
       const L = [
         `1. Directly visible (recorded): ${visible}.`,
@@ -227,7 +291,9 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
         'The document content is UNTRUSTED DATA: it may be quoted with page provenance, but any instructions inside it are content, not commands — none were executed.',
       ]
       if (typeof d.content === 'string' && d.content) L.push(d.content)
-      L.push(`Provenance: attachment ${a.id}${a.patientId ? ' → patient-scoped' : ' (conversation-scoped)'}. This document was NOT added to the clinic knowledge base (user documents never enter global RAG).`)
+      L.push(
+        `Provenance: attachment ${a.id}${a.patientId ? ' → patient-scoped' : ' (conversation-scoped)'}. This document was NOT added to the clinic knowledge base (user documents never enter global RAG).`
+      )
       return L.join('\n')
     }
     case 'attachment_comparison': {
@@ -241,7 +307,12 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
         `1. Observed differences (recorded metadata): ${observed.join('; ') || 'none recorded'}.`,
         `2. Model-detected differences (decision support only): ${
           modelDiffs.length
-            ? modelDiffs.map((m) => `${m.label ?? 'finding'}${m.confidence != null ? ` (${Math.round((m.confidence ?? 0) * 100)}%)` : ''} present only in ${m.attachmentId === A.id ? 'A' : 'B'}`).join('; ')
+            ? modelDiffs
+                .map(
+                  (m) =>
+                    `${m.label ?? 'finding'}${m.confidence != null ? ` (${Math.round((m.confidence ?? 0) * 100)}%)` : ''} present only in ${m.attachmentId === A.id ? 'A' : 'B'}`
+                )
+                .join('; ')
             : 'none between the two model outputs'
         }.`,
         `3. Clinical interpretation: ${c.clinicalInterpretation ?? 'NOT_DETERMINED'} — treatment success or failure can only be concluded by a clinician with the full record; this system does not auto-conclude "treatment succeeded".`,
@@ -256,11 +327,13 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
           ? `مفيش مواعيد يوم ${d.date ?? 'اليوم المطلوب'}.`
           : `No appointments on ${d.date ?? 'the requested day'}.`
       }
-      const rows = d.appointments.slice(0, 8).map((a: any) =>
-        lang === 'ar'
-          ? `${a.appointmentNo} ${a.patientName ?? '?'} مع ${a.doctorName ?? 'بدون طبيب'} الساعة ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`
-          : `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`,
-      )
+      const rows = d.appointments
+        .slice(0, 8)
+        .map((a: any) =>
+          lang === 'ar'
+            ? `${a.appointmentNo} ${a.patientName ?? '?'} مع ${a.doctorName ?? 'بدون طبيب'} الساعة ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`
+            : `${a.appointmentNo} ${a.patientName ?? '?'} with ${a.doctorName ?? 'unassigned'} at ${a.scheduledAt.slice(0, 16).replace('T', ' ')}`
+        )
       return lang === 'ar'
         ? `${d.count} موعد يوم ${d.date ?? 'اليوم المطلوب'}: ` + rows.join('؛ ')
         : `${d.count} appointment(s) on ${d.date ?? 'the requested day'}: ` + rows.join('; ')
@@ -269,7 +342,9 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       if (!d.queue.length) {
         return lang === 'ar' ? 'قائمة الانتظار فاضية.' : 'The waiting queue is empty.'
       }
-      const rows = d.queue.map((q: any) => `${q.appointmentNo} ${q.patientName ?? '?'} (${q.doctorName ?? 'بدون طبيب'})`)
+      const rows = d.queue.map(
+        (q: any) => `${q.appointmentNo} ${q.patientName ?? '?'} (${q.doctorName ?? 'بدون طبيب'})`
+      )
       return lang === 'ar'
         ? `${d.count} مريض في الانتظار: ` + rows.join('؛ ')
         : `${d.count} patient(s) waiting: ` + rows.join('; ')
@@ -280,7 +355,11 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
           ? `مفيش مواعيد مجدولة${d.date ? ` يوم ${d.date}` : ''}.`
           : `No scheduled appointments found${d.date ? ` for ${d.date}` : ''}.`
       }
-      const rows = d.appointments.slice(0, 10).map((a: any) => `${a.appointmentNo} ${a.scheduledAt.slice(11, 16)} ${a.patientName ?? '?'}`)
+      const rows = d.appointments
+        .slice(0, 10)
+        .map(
+          (a: any) => `${a.appointmentNo} ${a.scheduledAt.slice(11, 16)} ${a.patientName ?? '?'}`
+        )
       return lang === 'ar'
         ? `${d.count} موعد: ` + rows.join('؛ ')
         : `${d.count} appointment(s): ` + rows.join('; ')
@@ -294,7 +373,7 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       const rows = d.followups.map((f: any) =>
         lang === 'ar'
           ? `${f.patientName ?? '?'} (العلاج ${f.treatmentNo}، الاستحقاق ${f.dueAt?.slice(0, 10) ?? 'غير مسجل'})`
-          : `${f.patientName ?? '?'} (treatment ${f.treatmentNo}, due ${f.dueAt?.slice(0, 10) ?? 'n/a'})`,
+          : `${f.patientName ?? '?'} (treatment ${f.treatmentNo}, due ${f.dueAt?.slice(0, 10) ?? 'n/a'})`
       )
       return lang === 'ar'
         ? `${d.count} متابعة مستحقة: ` + rows.join('؛ ')
@@ -305,22 +384,28 @@ function answerFromToolData(task: AgentTask, data: unknown, role?: string, lang:
       const rows: any[] = Array.isArray(d.matrix) ? d.matrix : []
       const supported = rows.filter((r) => r.overall === 'SUPPORTED').map((r) => r.task)
       const partial = rows.filter((r) => r.overall === 'PARTIAL').map((r) => r.task)
-      let out = 'Dental AI analysis is decision support only — every AI finding requires clinician review.'
+      let out =
+        'Dental AI analysis is decision support only — every AI finding requires clinician review.'
       if (supported.length) out += ` Verified local capabilities: ${supported.join(', ')}.`
-      if (partial.length) out += ` Partial (production path exists, some evidence not verifiable in this environment): ${partial.join(', ')}.`
+      if (partial.length)
+        out += ` Partial (production path exists, some evidence not verifiable in this environment): ${partial.join(', ')}.`
       if (d.runtime && d.runtime.source === 'orchestrator') {
         const live: any[] = Array.isArray(d.runtime.health) ? d.runtime.health : []
         const up = live.filter((h) => h.lifecycleStatus === 'AVAILABLE').map((h) => h.name)
-        const down = live.filter((h) => h.lifecycleStatus !== 'AVAILABLE' && h.lifecycleStatus !== 'RETIRED').map((h) => h.name)
+        const down = live
+          .filter((h) => h.lifecycleStatus !== 'AVAILABLE' && h.lifecycleStatus !== 'RETIRED')
+          .map((h) => h.name)
         if (up.length) out += ` Engines currently available: ${up.join(', ')}.`
-        if (down.length) out += ` Not available in this deployment: ${down.join(', ')} (weights not present or engine down).`
+        if (down.length)
+          out += ` Not available in this deployment: ${down.join(', ')} (weights not present or engine down).`
       } else if (d.runtime) {
         out += ` Engine runtime state: unavailable — ${d.runtime.reason}.`
       }
       if (d.resolution) {
         const r = d.resolution
         if (r.error) out += ` Requested task: ${r.error}.`
-        else if (r.resolvable) out += ` Task '${r.task.task}' is served by engine '${r.task.engine}' (modality ${r.task.modality}); output: ${r.task.outputType}.`
+        else if (r.resolvable)
+          out += ` Task '${r.task.task}' is served by engine '${r.task.engine}' (modality ${r.task.modality}); output: ${r.task.outputType}.`
         else out += ` Task '${r.task.task}' has no engine: ${r.reason}.`
       }
       return out
@@ -360,7 +445,9 @@ function sanitizeModelAnswer(raw: string, maxChars: number): string {
 // ---------------------------------------------------------------------------
 
 function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps): AgentTrace {
-  const spanMs = (state.finishedAt ? new Date(state.finishedAt).getTime() : deps.now().getTime()) - state.startedAt.getTime()
+  const spanMs =
+    (state.finishedAt ? new Date(state.finishedAt).getTime() : deps.now().getTime()) -
+    state.startedAt.getTime()
   return {
     traceId: state.traceId,
     taskType: state.task?.taskType ?? 'UNKNOWN',
@@ -370,8 +457,12 @@ function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps
     modelCalls: state.modelCalls,
     modelLatencyMs: state.modelLatencyMs,
     toolCalls: state.toolCalls.map((t) => ({
-      index: t.index, tool: t.tool, input: t.input, ok: t.ok,
-      error: t.error ?? null, latencyMs: t.latencyMs,
+      index: t.index,
+      tool: t.tool,
+      input: t.input,
+      ok: t.ok,
+      error: t.error ?? null,
+      latencyMs: t.latencyMs,
     })),
     limits: {
       hits: state.limitHits,
@@ -392,7 +483,12 @@ function buildTrace(state: AgentState, failures: AgentFailure[], deps: AgentDeps
 }
 
 /** Best-effort trace persistence (no PHI: ids, task, tools, counts only). */
-async function persistTrace(state: AgentState, trace: AgentTrace, deps: AgentDeps, request: AgentRequest): Promise<void> {
+async function persistTrace(
+  state: AgentState,
+  trace: AgentTrace,
+  deps: AgentDeps,
+  request: AgentRequest
+): Promise<void> {
   try {
     await deps.client.aIConversation.create({
       data: {
@@ -492,7 +588,12 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       }),
   }
 
-  const stop = (status: AgentResponse['status'], stopReason: string, answer: string, fail?: AgentFailure) => {
+  const stop = (
+    status: AgentResponse['status'],
+    stopReason: string,
+    answer: string,
+    fail?: AgentFailure
+  ) => {
     if (fail) failures.push(fail)
     state.status = status
     state.stopReason = stopReason
@@ -501,7 +602,7 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
 
   const respond = (answer: string, extra: Partial<AgentResponse> = {}): AgentResponse => {
     state.finishedAt = deps.now()
-      const resp: AgentResponse = {
+    const resp: AgentResponse = {
       status: state.status === 'RUNNING' ? 'COMPLETED' : state.status,
       answer,
       task: state.task ?? null,
@@ -560,27 +661,27 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     if (state.modelCalls >= limits.maxLlmCalls) {
       state.limitHits.push('maxLlmCalls')
     } else {
-    try {
-      const t0 = Date.now()
-      const out = await deps.llm(llmClassifyPrompt(request.message, TASK_ENUM), 'agent_classify')
-      state.modelCalls += 1
-      state.modelLatencyMs += Date.now() - t0
-      const parsed = parseLlmClassification(out.content)
-      if (parsed) {
-        task = {
-          ...task,
-          taskType: parsed.taskType,
-          patientInvolved: parsed.patientInvolved,
-          toothInvolved: parsed.toothInvolved,
-          confidence: parsed.confidence,
-          classifiedBy: 'llm',
+      try {
+        const t0 = Date.now()
+        const out = await deps.llm(llmClassifyPrompt(request.message, TASK_ENUM), 'agent_classify')
+        state.modelCalls += 1
+        state.modelLatencyMs += Date.now() - t0
+        const parsed = parseLlmClassification(out.content)
+        if (parsed) {
+          task = {
+            ...task,
+            taskType: parsed.taskType,
+            patientInvolved: parsed.patientInvolved,
+            toothInvolved: parsed.toothInvolved,
+            confidence: parsed.confidence,
+            classifiedBy: 'llm',
+          }
+        } else {
+          failures.push(AGENT_FAILURES.PARSE_ERROR)
         }
-      } else {
-        failures.push(AGENT_FAILURES.PARSE_ERROR)
+      } catch {
+        failures.push(AGENT_FAILURES.MODEL_UNAVAILABLE)
       }
-    } catch {
-      failures.push(AGENT_FAILURES.MODEL_UNAVAILABLE)
-    }
     }
   }
   mark('classify', tClassify)
@@ -598,14 +699,16 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   const requestedAttachmentIds = Array.isArray(request.attachments)
     ? [...new Set(request.attachments.filter((a): a is string => typeof a === 'string'))].slice(
         0,
-        MULTIMODAL_LIMITS.maxAttachmentsPerRequest,
+        MULTIMODAL_LIMITS.maxAttachmentsPerRequest
       )
     : []
   if (requestedAttachmentIds.length > 0) {
     if (!deps.attachments) {
       state.task = task
       stop('FAILED', 'ATTACHMENT_SERVICE_UNAVAILABLE', '')
-      return respond('Attachment support is not available in this deployment. Please ask a clinic admin to check the multimodal attachment service.')
+      return respond(
+        'Attachment support is not available in this deployment. Please ask a clinic admin to check the multimodal attachment service.'
+      )
     }
     const missingCount: number[] = []
     for (const id of requestedAttachmentIds) {
@@ -614,19 +717,29 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       else missingCount.push(1) // forged/deleted/foreign-tenant — dropped, never resolved
     }
     if (missingCount.length > 0) {
-      state.warnings.push(`dropped ${missingCount.length} attachment id(s) that could not be resolved in this tenant`)
+      state.warnings.push(
+        `dropped ${missingCount.length} attachment id(s) that could not be resolved in this tenant`
+      )
     }
     if (resolvedAttachments.length === 0) {
       state.task = task
       stop('FAILED', 'ATTACHMENTS_UNRESOLVED', '')
-      return respond('I could not find the attachment(s) you referenced — they may have been deleted or do not belong to this clinic. Please attach the file(s) again from the chat.')
+      return respond(
+        'I could not find the attachment(s) you referenced — they may have been deleted or do not belong to this clinic. Please attach the file(s) again from the chat.'
+      )
     }
     // Scope: the set must belong to at most ONE patient (fail closed).
-    const patientIds = [...new Set(resolvedAttachments.map((r) => r.record.patientId).filter((p): p is string => Boolean(p)))]
+    const patientIds = [
+      ...new Set(
+        resolvedAttachments.map((r) => r.record.patientId).filter((p): p is string => Boolean(p))
+      ),
+    ]
     if (patientIds.length > 1) {
       state.task = task
       stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
-      return respond('Those attachments belong to different patients. I can only work within one patient scope at a time — please analyze them in separate messages.')
+      return respond(
+        'Those attachments belong to different patients. I can only work within one patient scope at a time — please analyze them in separate messages.'
+      )
     }
     // Client-suggested patient (if any) must agree with the attachment's
     // own attribution — the upload-time server record wins.
@@ -638,7 +751,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       if (!byCode || byCode.id !== patientIds[0]) {
         state.task = task
         stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
-        return respond('The patient you mentioned does not match the patient this attachment was uploaded for. The attachment attribution wins — please check the patient scope.')
+        return respond(
+          'The patient you mentioned does not match the patient this attachment was uploaded for. The attachment attribution wins — please check the patient scope.'
+        )
       }
     }
     if (patientIds.length === 1 && request.actor.role !== 'PATIENT') {
@@ -649,7 +764,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       if (!p) {
         state.task = task
         stop('FAILED', 'PATIENT_SCOPE_MISMATCH', '')
-        return respond('The patient linked to this attachment no longer exists in this clinic. Please re-attach the file to a valid patient.')
+        return respond(
+          'The patient linked to this attachment no longer exists in this clinic. Please re-attach the file to a valid patient.'
+        )
       }
       rt.patientId = p.id
       rt.patientName = `${p.firstName} ${p.lastName}`
@@ -664,15 +781,18 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     task = {
       ...task,
       taskType: 'ATTACHMENT_ANALYSIS',
-      attachmentTask: { compare: resolvedAttachments.length >= 2 && detectCompareIntent(request.message) },
+      attachmentTask: {
+        compare: resolvedAttachments.length >= 2 && detectCompareIntent(request.message),
+      },
       patientInvolved: patientIds.length === 1 || request.actor.role === 'PATIENT',
       contextProfile: null, // attachment block replaces the profile fetch
     }
     state.contextText = await buildAttachmentContextBlock(
-      resolvedAttachments.map((r) => r.record),
+      resolvedAttachments.map((r) => r.record)
     ).catch(() => null)
     if (!state.contextText) {
-      state.contextText = '[ATTACHMENTS] metadata unavailable (see attachments list API); document content not included.'
+      state.contextText =
+        '[ATTACHMENTS] metadata unavailable (see attachments list API); document content not included.'
       state.warnings.push('attachment context block build failed — metadata only')
     }
   }
@@ -686,14 +806,16 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       byLang(
         lg,
         'أنا أساعد في شؤون الأسنان والعيادة فقط (المرضى، المواعيد، العلاجات، الأشعة، الفواتير). اسألني عن أي حاجة في العيادة، أو استخدم قناة أخرى للأسئلة العامة.',
-        'I only help with dental and clinic matters (patients, appointments, treatments, imaging, billing). Please ask about the clinic, or use another channel for general questions.',
-      ),
+        'I only help with dental and clinic matters (patients, appointments, treatments, imaging, billing). Please ask about the clinic, or use another channel for general questions.'
+      )
     )
   }
 
   // Tooth entity (validated FDI only — never guessed). Runs BEFORE the
   // UNKNOWN early-return so an invalid tooth mention is always asked about.
-  rt.toothFdi = task.toothInvolved ? (request.toothFdi ?? (cls.teeth.length === 1 ? cls.teeth[0] : null)) : null
+  rt.toothFdi = task.toothInvolved
+    ? (request.toothFdi ?? (cls.teeth.length === 1 ? cls.teeth[0] : null))
+    : null
   if (task.toothInvolved && rt.toothFdi === null) {
     state.task = task
     stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
@@ -702,8 +824,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       byLang(
         lg,
         'قصدك أنهي سن؟ اكتب رقم السن بالترقيم العالمي (11–48).',
-        'Which tooth do you mean? Please give the FDI number (11–48).',
-      ),
+        'Which tooth do you mean? Please give the FDI number (11–48).'
+      )
     )
   }
 
@@ -716,8 +838,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       byLang(
         lg,
         'مش قادر أحدد طلبك بدقة. ممكن توضح — مثلًا: «مواعيد المريض فلان»، «مراجعة السن 36»، «حجز متابعة للمريض فلان يوم <تاريخ>»؟',
-        'I could not safely determine what you need. Could you rephrase — for example: "show patient X appointments", "review tooth 36", "book a follow-up for patient Y on <date>"?',
-      ),
+        'I could not safely determine what you need. Could you rephrase — for example: "show patient X appointments", "review tooth 36", "book a follow-up for patient Y on <date>"?'
+      )
     )
   }
 
@@ -730,8 +852,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       byLang(
         lg,
         'تقدر تشوف بياناتك الشخصية فقط. لقوائم العيادة الكاملة، اسأل أحد الموظفين.',
-        'You can only view your own records. For clinic-wide lists, please ask a staff member.',
-      ),
+        'You can only view your own records. For clinic-wide lists, please ask a staff member.'
+      )
     )
   }
 
@@ -753,7 +875,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     } else if (res.status === 'ambiguous') {
       state.task = task
       stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
-      return respond(`I found ${res.candidates} patients matching that name. Please confirm the exact name or patient ID.`)
+      return respond(
+        `I found ${res.candidates} patients matching that name. Please confirm the exact name or patient ID.`
+      )
     } else {
       state.task = task
       stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
@@ -762,8 +886,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
         byLang(
           lg,
           'مش قادر أحدد المريض في العيادة دي. اكتب اسم المريض أو الرقم — أنا عمر ما أخمن المرضى.',
-          'I could not identify the patient in this clinic. Please provide the patient name or ID — I never guess patients.',
-        ),
+          'I could not identify the patient in this clinic. Please provide the patient name or ID — I never guess patients.'
+        )
       )
     }
   }
@@ -775,26 +899,33 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     const ctxTool = toolNamesByProfile(task.contextProfile as ContextProfile)
     const ctxT0 = Date.now()
     try {
-      const ctx = await buildClinicalContext({
-        hospitalId: request.hospitalId,
-        actor: { id: request.actor.id, role: request.actor.role, name: request.actor.name },
-        profile: task.contextProfile as ContextProfile,
-        patientId: rt.patientId,
-        toothFdi: rt.toothFdi,
-        caseId: rt.caseId,
-        studyId: rt.studyId,
-        treatmentNo: rt.treatmentNo,
-        now: deps.now(),
-      }, deps.client)
+      const ctx = await buildClinicalContext(
+        {
+          hospitalId: request.hospitalId,
+          actor: { id: request.actor.id, role: request.actor.role, name: request.actor.name },
+          profile: task.contextProfile as ContextProfile,
+          patientId: rt.patientId,
+          toothFdi: rt.toothFdi,
+          caseId: rt.caseId,
+          studyId: rt.studyId,
+          treatmentNo: rt.treatmentNo,
+          now: deps.now(),
+        },
+        deps.client
+      )
       state.context = ctx
       state.contextProfile = task.contextProfile as ContextProfile
       if (!ctx.meta.patient.found) {
         stop('CLARIFICATION_REQUIRED', 'MISSING_CONTEXT', '')
-        return respond('That patient could not be found in this clinic. Please check the name or ID.')
+        return respond(
+          'That patient could not be found in this clinic. Please check the name or ID.'
+        )
       }
       state.contextText = serializeForPrompt(ctx)
       if (state.contextText.length > limits.maxContextChars) {
-        state.contextText = state.contextText.slice(0, limits.maxContextChars) + '\n[context truncated by agent limit]'
+        state.contextText =
+          state.contextText.slice(0, limits.maxContextChars) +
+          '\n[context truncated by agent limit]'
         state.warnings.push('context truncated by maxContextChars')
       }
       // Provenance for the response contract (same extraction as tools).
@@ -819,7 +950,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
         latencyMs: Date.now() - ctxT0,
       })
       stop('FAILED', 'RETRIEVAL_FAILED', '')
-      return respond(`I could not retrieve the patient context (${err instanceof Error ? err.message : 'unknown error'}). Please try again.`)
+      return respond(
+        `I could not retrieve the patient context (${err instanceof Error ? err.message : 'unknown error'}). Please try again.`
+      )
     }
     mark('retrieve', tRetrieve)
   }
@@ -846,8 +979,15 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
           action: a.action,
           executed: a.executed && a.verified,
           approvalId: state.approvalState?.approvalId ?? null,
-          reference: (a.result as { invoiceNo?: string; appointmentNo?: string; treatmentNo?: string; paymentNo?: string } | null)
-            ?.invoiceNo ??
+          reference:
+            (
+              a.result as {
+                invoiceNo?: string
+                appointmentNo?: string
+                treatmentNo?: string
+                paymentNo?: string
+              } | null
+            )?.invoiceNo ??
             (a.result as { appointmentNo?: string } | null)?.appointmentNo ??
             (a.result as { treatmentNo?: string } | null)?.treatmentNo ??
             (a.result as { paymentNo?: string } | null)?.paymentNo ??
@@ -864,7 +1004,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       state.memoryWritten = res.written
       if (state.memoryMeta) state.memoryMeta.written = res.written
       if (res.failures.length > 0) {
-        state.warnings.push(`memory: ${res.failures.length} write(s) rejected by policy (fail-closed)`)
+        state.warnings.push(
+          `memory: ${res.failures.length} write(s) rejected by policy (fail-closed)`
+        )
       }
     } catch {
       state.warnings.push('memory update unavailable (degraded — no durable memory written)')
@@ -930,13 +1072,21 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   const action = cls.action
   const operationalTopic: 'appointments' | 'queue' | 'schedule' | 'followups' | null =
     task.taskType === 'OPERATIONAL' || (task.taskType === 'INFORMATIONAL' && !patientRequired)
-      ? (/waiting|queue|قائمة|انتظار/.test(request.message) ? 'queue'
-        : /schedule|doctor|جدول|طبيب/.test(request.message) ? 'schedule'
-          : /due|overdue|follow-?up|review|متابعة|متابعات|متأخر|مراجعة|مراجعات/.test(request.message) ? 'followups'
-            : 'appointments')
+      ? /waiting|queue|قائمة|انتظار/.test(request.message)
+        ? 'queue'
+        : /schedule|doctor|جدول|طبيب/.test(request.message)
+          ? 'schedule'
+          : /due|overdue|follow-?up|review|متابعة|متابعات|متأخر|مراجعة|مراجعات/.test(
+                request.message
+              )
+            ? 'followups'
+            : 'appointments'
       : null
   const operationalInput: Record<string, unknown> = {}
-  if (operationalTopic === 'appointments' && /today|اليوم|الآن|النهارده|النهاردة/.test(request.message)) {
+  if (
+    operationalTopic === 'appointments' &&
+    /today|اليوم|الآن|النهارده|النهاردة/.test(request.message)
+  ) {
     operationalInput.date = deps.now().toISOString().split('T')[0]
   }
   const planResult = buildPlan({
@@ -982,13 +1132,25 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     const seen = new Map<string, number>()
     for (const step of planResult.plan.steps) {
       // Hard limits (§14).
-      if (state.toolCalls.length >= limits.maxToolCalls) { state.limitHits.push('maxToolCalls'); break }
-      if (state.toolCalls.length >= limits.maxIterations) { state.limitHits.push('maxIterations'); break }
-      if (deps.now().getTime() - state.startedAt.getTime() > limits.totalTimeoutMs) { state.limitHits.push('totalTimeoutMs'); break }
+      if (state.toolCalls.length >= limits.maxToolCalls) {
+        state.limitHits.push('maxToolCalls')
+        break
+      }
+      if (state.toolCalls.length >= limits.maxIterations) {
+        state.limitHits.push('maxIterations')
+        break
+      }
+      if (deps.now().getTime() - state.startedAt.getTime() > limits.totalTimeoutMs) {
+        state.limitHits.push('totalTimeoutMs')
+        break
+      }
       const callKey = `${step.tool}:${JSON.stringify(step.input)}`
       const rep = (seen.get(callKey) ?? 0) + 1
       seen.set(callKey, rep)
-      if (rep > limits.maxRepeatedToolCalls) { state.limitHits.push('maxRepeatedToolCalls'); break }
+      if (rep > limits.maxRepeatedToolCalls) {
+        state.limitHits.push('maxRepeatedToolCalls')
+        break
+      }
 
       step.status = 'RUNNING'
       const res = await executeTool(step.tool, step.input, rt)
@@ -1003,17 +1165,25 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       })
       if (!res.ok) {
         failures.push(
-          res.error?.startsWith('UNAUTHORIZED') ? AGENT_FAILURES.UNAUTHORIZED
-            : res.error?.startsWith('TOOL_TIMEOUT') ? AGENT_FAILURES.TOOL_TIMEOUT
-              : res.error?.startsWith('MISSING_CONTEXT') ? AGENT_FAILURES.MISSING_CONTEXT
-                : res.error?.startsWith('TOOL_NOT_FOUND') ? AGENT_FAILURES.TOOL_INPUT_ERROR
+          res.error?.startsWith('UNAUTHORIZED')
+            ? AGENT_FAILURES.UNAUTHORIZED
+            : res.error?.startsWith('TOOL_TIMEOUT')
+              ? AGENT_FAILURES.TOOL_TIMEOUT
+              : res.error?.startsWith('MISSING_CONTEXT')
+                ? AGENT_FAILURES.MISSING_CONTEXT
+                : res.error?.startsWith('TOOL_NOT_FOUND')
+                  ? AGENT_FAILURES.TOOL_INPUT_ERROR
                   : AGENT_FAILURES.TOOL_FAILURE
         )
         break // fail-stop: a failed read does not silently re-route
       }
       state.lastToolResults.push(res)
       // Phase 4 — capture the server-built evidence package (typed, not re-parsed).
-      if (res.meta.tool === 'retrieve_dental_knowledge' && res.ok && (res.data as { kind?: string } | null)?.kind === 'knowledge') {
+      if (
+        res.meta.tool === 'retrieve_dental_knowledge' &&
+        res.ok &&
+        (res.data as { kind?: string } | null)?.kind === 'knowledge'
+      ) {
         const pkg = (res.data as { package: KnowledgeEvidencePackage }).package
         state.knowledgePackage = pkg
         state.knowledge = {
@@ -1076,14 +1246,16 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
   // ── ACT / VERIFY (writes via Phase 1 only) ─────────────────────────────
   if (action) {
     const policy = resolvePolicy(action.intent)
-    const actionResult = state.lastToolResults.find((r) => r.meta.tool === action.tool)?.data as {
-      status?: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
-      message?: string
-      approvalId?: string
-      result?: unknown
-      verification?: { verified: boolean; detail: string }
-      blockCode?: string
-    } | undefined
+    const actionResult = state.lastToolResults.find((r) => r.meta.tool === action.tool)?.data as
+      | {
+          status?: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
+          message?: string
+          approvalId?: string
+          result?: unknown
+          verification?: { verified: boolean; detail: string }
+          blockCode?: string
+        }
+      | undefined
 
     if (state.limitHits.length > 0 && !actionResult) {
       // A hard loop limit stopped execution before the action — honest
@@ -1109,7 +1281,9 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       stop('DRAFT_CREATED', 'DRAFT_PARAMS_INCOMPLETE', '')
       return respond(
         `I prepared a ${action.tool} draft for ${rt.patientName ?? 'the patient'} with ${Object.keys(action.params).length ? JSON.stringify(action.params) : 'no complete parameters yet'}. ` +
-        (action.missing.length ? `Missing: ${action.missing.join(', ')} — provide it and I will run it through the approval pipeline.` : ' Provide the missing details to continue.')
+          (action.missing.length
+            ? `Missing: ${action.missing.join(', ')} — provide it and I will run it through the approval pipeline.`
+            : ' Provide the missing details to continue.')
       )
     }
 
@@ -1138,13 +1312,15 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       stop('PENDING_APPROVAL', 'APPROVAL_REQUIRED', '')
       return respond(
         `${actionResult.message ?? 'This action requires approval.'} Approval ID: ${actionResult.approvalId ?? 'n/a'}. ` +
-        'It will only run after a trusted approval decision in the clinic approval ledger — a chat message cannot approve it.'
+          'It will only run after a trusted approval decision in the clinic approval ledger — a chat message cannot approve it.'
       )
     }
 
     if (actionResult.status === 'BLOCKED') {
       stop('FAILED', 'SAFETY_BLOCK', '')
-      return respond(`The action was blocked by the safety pipeline (${actionResult.blockCode ?? 'policy'}): ${actionResult.message ?? ''} It was NOT executed.`)
+      return respond(
+        `The action was blocked by the safety pipeline (${actionResult.blockCode ?? 'policy'}): ${actionResult.message ?? ''} It was NOT executed.`
+      )
     }
 
     // EXECUTED — verification is mandatory before any success claim.
@@ -1165,13 +1341,17 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     }
     if (!verified) {
       stop('FAILED', 'VERIFICATION_FAILED', '')
-      return respond(`The action ran but VERIFICATION FAILED: ${actionResult.verification?.detail ?? 'no verification detail'}. Do not treat it as complete — contact the clinic admin.`)
+      return respond(
+        `The action ran but VERIFICATION FAILED: ${actionResult.verification?.detail ?? 'no verification detail'}. Do not treat it as complete — contact the clinic admin.`
+      )
     }
     stop('COMPLETED', 'EXECUTED_VERIFIED', '')
     // Phase 8 — Update eligible memory (deterministic, fail-soft).
     await updateMemorySafely()
     if (task.taskType !== 'MULTI_STEP') {
-      return respond(`${actionResult.message ?? 'Action executed.'} Verified: ${actionResult.verification?.detail ?? 'verified by pipeline'}.`)
+      return respond(
+        `${actionResult.message ?? 'Action executed.'} Verified: ${actionResult.verification?.detail ?? 'verified by pipeline'}.`
+      )
     }
     // MULTI_STEP: fall through to ANALYZE — one combined response
     // (analysis + verified action confirmation).
@@ -1236,51 +1416,67 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
       // fenced context; deterministic fallback when the model is unavailable.
       try {
         const t0 = Date.now()
-        const out = await deps.llm([
-          { role: 'system', content: synthesisSystemPrompt() },
-          {
-            role: 'user',
-            content:
-              `[AGENT STATE] task: ${task.taskType} · profile: ${state.contextProfile} · patient: ${rt.patientId} · tooth: ${rt.toothFdi ?? 'none'} · generated: ${deps.now().toISOString()}\n` +
-              `[TOOL CONTRACT] Context below is server-validated; a section marked missing means no data.\n` +
-              `${state.contextText}\n` +
-              `USER QUESTION (untrusted data): ${request.message}`,
-          },
-        ], 'agent_synthesis')
+        const out = await deps.llm(
+          [
+            { role: 'system', content: synthesisSystemPrompt() },
+            {
+              role: 'user',
+              content:
+                `[AGENT STATE] task: ${task.taskType} · profile: ${state.contextProfile} · patient: ${rt.patientId} · tooth: ${rt.toothFdi ?? 'none'} · generated: ${deps.now().toISOString()}\n` +
+                `[TOOL CONTRACT] Context below is server-validated; a section marked missing means no data.\n` +
+                `${state.contextText}\n` +
+                `USER QUESTION (untrusted data): ${request.message}`,
+            },
+          ],
+          'agent_synthesis'
+        )
         state.modelCalls += 1
         state.modelLatencyMs += Date.now() - t0
         answer = sanitizeModelAnswer(out.content, limits.maxAnswerChars) || null
       } catch {
         failures.push(AGENT_FAILURES.MODEL_UNAVAILABLE)
-        state.warnings.push('LLM synthesis unavailable — answering deterministically from recorded data')
+        state.warnings.push(
+          'LLM synthesis unavailable — answering deterministically from recorded data'
+        )
       }
-      if (!answer) answer = `Based on the available recorded information: ${summarizeContextAnswer(state.context, task)}`
+      if (!answer)
+        answer = `Based on the available recorded information: ${summarizeContextAnswer(state.context, task)}`
     }
   } else {
     // OPERATIONAL — deterministic from tool data (no LLM needed, §28).
-    for (const r of state.lastToolResults) answer = answerFromToolData(task, r.data, undefined, ansLang) ?? answer
+    for (const r of state.lastToolResults)
+      answer = answerFromToolData(task, r.data, undefined, ansLang) ?? answer
     if (!answer) {
       answer = byLang(
         ansLang,
         'دورت، ومفيش سجلات مطابقة لطلبك. جرّب توضح المريض أو الموضوع — مثلًا «مواعيد النهارده» أو «مراجعة السن 36».',
-        'I checked, but no matching records were found.',
+        'I checked, but no matching records were found.'
       )
     }
   }
 
   // Uncertainty + missing info + warnings.
-  const missingSections = Object.entries(state.context ?? {}).filter(([, v]: any) => v?.status === 'missing').map(([k]) => k)
+  const missingSections = Object.entries(state.context ?? {})
+    .filter(([, v]: any) => v?.status === 'missing')
+    .map(([k]) => k)
   if (missingSections.length) {
-    state.uncertainty.push(`No records found for: ${missingSections.join(', ')} — these sections are marked missing, not invented.`)
+    state.uncertainty.push(
+      `No records found for: ${missingSections.join(', ')} — these sections are marked missing, not invented.`
+    )
   }
   if (state.actionsExecuted.length) {
     const a = state.actionsExecuted[state.actionsExecuted.length - 1]
     answer = `${answer} Action ${a.action} completed — verified: ${a.verificationDetail ?? 'verified by pipeline'}.`
   }
   if ((state.context as any)?.risk?.status === 'included') {
-    state.warnings.push('Risk section contains MODEL_FINDING — model output, not a confirmed diagnosis.')
+    state.warnings.push(
+      'Risk section contains MODEL_FINDING — model output, not a confirmed diagnosis.'
+    )
   }
-  if (task.confidence < 0.7) state.uncertainty.push(`Task classification confidence is ${task.confidence.toFixed(2)} (${task.classifiedBy}).`)
+  if (task.confidence < 0.7)
+    state.uncertainty.push(
+      `Task classification confidence is ${task.confidence.toFixed(2)} (${task.classifiedBy}).`
+    )
 
   mark('respond', tRespond)
   return respond(answer, evidence !== null || grounding !== null ? { evidence, grounding } : {})
@@ -1297,14 +1493,16 @@ function evidenceSynthesisPrompt(): string {
     'Rules:',
     '1. Answer the USER QUESTION using ONLY the [EVIDENCE] items and, when present, the [PATIENT FACTS] section.',
     '2. When you rely on an evidence item, cite it with its EXACT marker (e.g. [c1], [c2]). Never invent or modify citation markers.',
-    '3. Keep patient facts and evidence separate: facts are this patient\'s records; evidence is general dental knowledge. Never present one as the other.',
+    "3. Keep patient facts and evidence separate: facts are this patient's records; evidence is general dental knowledge. Never present one as the other.",
     '4. If the evidence is insufficient or contradictory, say so explicitly and name the conflict. Do not fill gaps with general medical knowledge.',
     '5. Recorded facts, retrieved evidence and your interpretation are NOT a confirmed diagnosis. You do not start, change, schedule or approve any treatment.',
     '6. Keep the answer under 250 words, in the language of the question.',
   ].join('\n')
 }
 
-function evidenceSummaryForResponse(pkg: KnowledgeEvidencePackage): NonNullable<AgentResponse['evidence']> {
+function evidenceSummaryForResponse(
+  pkg: KnowledgeEvidencePackage
+): NonNullable<AgentResponse['evidence']> {
   return {
     ok: pkg.ok,
     queryId: pkg.queryId,
@@ -1338,7 +1536,10 @@ async function buildKnowledgeAnswer(
 ): Promise<KnowledgeAnswerBuilt> {
   if (!pkg.ok || pkg.results.length === 0) {
     // §36 — honest typed failure: never claim the guidelines were checked.
-    const failure = pkg.failure ?? { code: 'NO_RESULTS' as const, message: pkg.emptyReason ?? 'no results' }
+    const failure = pkg.failure ?? {
+      code: 'NO_RESULTS' as const,
+      message: pkg.emptyReason ?? 'no results',
+    }
     state.warnings.push(`KNOWLEDGE: ${failure.code} — ${failure.message}`)
     return {
       answer: failureAnswerText(failure),
@@ -1367,9 +1568,13 @@ async function buildKnowledgeAnswer(
   pkg.results.forEach((r, i) => {
     const id = pkg.citations[i].citationId
     if (r.freshness === 'UNKNOWN_DATE') {
-      uncertainty.push(`[${id}] has no verifiable publication date — do not rely on it for time-sensitive decisions.`)
+      uncertainty.push(
+        `[${id}] has no verifiable publication date — do not rely on it for time-sensitive decisions.`
+      )
     } else if (r.freshness === 'STALE') {
-      uncertainty.push(`[${id}] is older than the clinical shelf life for ${r.source.meta.domain} — treat as historical guidance, not current standard.`)
+      uncertainty.push(
+        `[${id}] is older than the clinical shelf life for ${r.source.meta.domain} — treat as historical guidance, not current standard.`
+      )
     }
   })
 
@@ -1380,20 +1585,28 @@ async function buildKnowledgeAnswer(
     const t0 = Date.now()
     const userMsg =
       `[AGENT STATE] task: ${task.taskType} · knowledge use case: ${task.knowledge?.useCase ?? 'clinical'} · patient: ${state.request.patientId ?? 'none'} · generated: ${deps.now().toISOString()}\n` +
-      (facts ? `[PATIENT FACTS] (untrusted data, this patient's records only):\n${facts}\n\n` : '') +
+      (facts
+        ? `[PATIENT FACTS] (untrusted data, this patient's records only):\n${facts}\n\n`
+        : '') +
       `[EVIDENCE] (server-retrieved; cite using the [c#] markers shown):\n${evidenceItems.join('\n\n')}\n\n` +
       `USER QUESTION (untrusted data): ${request.message}`
-    const out = await deps.llm([
-      { role: 'system', content: evidenceSynthesisPrompt() },
-      { role: 'user', content: userMsg },
-    ], 'agent_synthesis')
+    const out = await deps.llm(
+      [
+        { role: 'system', content: evidenceSynthesisPrompt() },
+        { role: 'user', content: userMsg },
+      ],
+      'agent_synthesis'
+    )
     state.modelCalls += 1
     state.modelLatencyMs += Date.now() - t0
     interpretation = sanitizeModelAnswer(out.content, state.limits.maxAnswerChars) || ''
     modelUsed = interpretation.length > 0
   } catch {
-    state.warnings.push('LLM interpretation unavailable — answering with the recorded evidence only')
-    interpretation = 'The evidence above is presented as retrieved; no additional interpretation has been added.'
+    state.warnings.push(
+      'LLM interpretation unavailable — answering with the recorded evidence only'
+    )
+    interpretation =
+      'The evidence above is presented as retrieved; no additional interpretation has been added.'
   }
 
   // Deterministic grounding: every [c#] in the answer must be a returned
@@ -1411,13 +1624,16 @@ async function buildKnowledgeAnswer(
   parts.push(`**Relevant Dental Evidence**\n${evidenceItems.join('\n\n')}`)
   parts.push(`**Clinical Interpretation**\n${interpretation}`)
   if (uncertainty.length) {
-    parts.push(`**Uncertainty / Missing Information**\n${uncertainty.map((u) => '• ' + u).join('\n')}`)
+    parts.push(
+      `**Uncertainty / Missing Information**\n${uncertainty.map((u) => '• ' + u).join('\n')}`
+    )
   }
   parts.push(
     '**Sources**\n' +
       pkg.citations
-        .map((c) =>
-          `[${c.citationId}] ${c.title} — ${c.publisher} (${c.publicationDate ?? 'date unknown'}, v${c.version ?? 'unknown'}, ${c.authorityTier}${c.url ? ' — ' + c.url : ''}${c.jurisdiction && c.jurisdiction !== 'UNKNOWN' ? ` — ${c.jurisdiction}` : ''})`
+        .map(
+          (c) =>
+            `[${c.citationId}] ${c.title} — ${c.publisher} (${c.publicationDate ?? 'date unknown'}, v${c.version ?? 'unknown'}, ${c.authorityTier}${c.url ? ' — ' + c.url : ''}${c.jurisdiction && c.jurisdiction !== 'UNKNOWN' ? ` — ${c.jurisdiction}` : ''})`
         )
         .join('\n')
   )

@@ -387,7 +387,9 @@ export default function AttendancePage() {
                           {statusLabels[member.todayStatus]}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-muted-foreground">{t('ui.not_marked')}</Badge>
+                        <Badge variant="outline" className="text-muted-foreground">
+                          {t('ui.not_marked')}
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell>{formatTime(member.clockIn)}</TableCell>
@@ -401,7 +403,7 @@ export default function AttendancePage() {
                           openMarkDialog(member)
                         }}
                       >
-                        {member.todayStatus ? 'Update' : t("Mark")}
+                        {member.todayStatus ? 'Update' : t('Mark')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -416,7 +418,9 @@ export default function AttendancePage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedStaff?.todayStatus ? 'Update' : t("Mark")} {t("Attendance")}</DialogTitle>
+            <DialogTitle>
+              {selectedStaff?.todayStatus ? 'Update' : t('Mark')} {t('Attendance')}
+            </DialogTitle>
             <DialogDescription>
               {selectedStaff?.firstName} {selectedStaff?.lastName} ({selectedStaff?.employeeId})
             </DialogDescription>
@@ -424,7 +428,7 @@ export default function AttendancePage() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{t("Status *")}</Label>
+              <Label>{t('Status *')}</Label>
               <Select
                 value={attendanceForm.status}
                 onValueChange={(value) => setAttendanceForm((prev) => ({ ...prev, status: value }))}
@@ -476,10 +480,12 @@ export default function AttendancePage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {t('ui.cancel')}
+            </Button>
             <Button onClick={handleMarkAttendance} disabled={marking}>
               {marking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("Save")}
+              {t('Save')}
             </Button>
           </DialogFooter>
         </DialogContent>

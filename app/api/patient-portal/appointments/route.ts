@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Double-booking: doctor already has an overlapping appointment
     type DoctorApt = { scheduledTime: string; duration: number; patientId: string }
-const doctorAppointments = await prisma.appointment.findMany({
+    const doctorAppointments = await prisma.appointment.findMany({
       where: {
         hospitalId: patient!.hospitalId,
         doctorId,

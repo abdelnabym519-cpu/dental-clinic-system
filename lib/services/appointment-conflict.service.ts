@@ -1,5 +1,11 @@
 import { prisma } from '@/lib/prisma'
-import { isValidTime, parseDateKey, toDateKey, timeToMinutes, timeRangesOverlap } from '@/lib/agenda-utils'
+import {
+  isValidTime,
+  parseDateKey,
+  toDateKey,
+  timeToMinutes,
+  timeRangesOverlap,
+} from '@/lib/agenda-utils'
 import {
   isWithinWorkingHours,
   overlapsBreak,
@@ -11,7 +17,13 @@ import {
   type HolidayEntry,
 } from '@/lib/agenda-availability'
 
-const ACTIVE_STATUSES = ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'] as const
+const ACTIVE_STATUSES = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'CHECKED_IN',
+  'IN_PROGRESS',
+  'COMPLETED',
+] as const
 
 export interface ConflictCheckInput {
   hospitalId: string
@@ -53,21 +65,21 @@ export async function findConflictingAppointment(input: ConflictCheckInput) {
     throw new Error('Invalid duration')
   }
 
-  const sameDay = (await prisma.appointment.findMany({
-    where: {
-      hospitalId,
-      doctorId,
-      scheduledDate,
-      status: { in: [...ACTIVE_STATUSES] },
-      ...(excludeId ? { id: { not: excludeId } } : {}),
-    },
-    select: { id: true, appointmentNo: true, scheduledTime: true, duration: true },
-  })) ?? []
+  const sameDay =
+    (await prisma.appointment.findMany({
+      where: {
+        hospitalId,
+        doctorId,
+        scheduledDate,
+        status: { in: [...ACTIVE_STATUSES] },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true, appointmentNo: true, scheduledTime: true, duration: true },
+    })) ?? []
 
   const start = timeToMinutes(scheduledTime)
-  const conflict = sameDay.find(
-    (apt: { scheduledTime: string; duration: number }) =>
-      timeRangesOverlap(start, duration, timeToMinutes(apt.scheduledTime), apt.duration)
+  const conflict = sameDay.find((apt: { scheduledTime: string; duration: number }) =>
+    timeRangesOverlap(start, duration, timeToMinutes(apt.scheduledTime), apt.duration)
   )
   return conflict ?? null
 }
@@ -80,18 +92,19 @@ export async function findConflictingRoomBooking(input: ConflictCheckInput) {
   if (!input.roomId) return null
   if (!isValidTime(scheduledTime)) throw new Error('Invalid time format')
 
-  const sameDay = (await prisma.appointment.findMany({
-    where: {
-      hospitalId,
-      roomId: input.roomId,
-      scheduledDate,
-      status: { in: [...ACTIVE_STATUSES] },
-      ...(excludeId ? { id: { not: excludeId } } : {}),
-    },
-    select: { id: true, appointmentNo: true, scheduledTime: true, duration: true },
-  })) ?? []
+  const sameDay =
+    (await prisma.appointment.findMany({
+      where: {
+        hospitalId,
+        roomId: input.roomId,
+        scheduledDate,
+        status: { in: [...ACTIVE_STATUSES] },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true, appointmentNo: true, scheduledTime: true, duration: true },
+    })) ?? []
 
-  return roomOverlapExists(scheduledTime, duration, sameDay) ? sameDay[0] ?? null : null
+  return roomOverlapExists(scheduledTime, duration, sameDay) ? (sameDay[0] ?? null) : null
 }
 
 /**
@@ -111,46 +124,63 @@ export async function findAvailabilityViolation(
 
   // 1. Clinic-wide holiday
   const holidays = (await prisma.holiday.findMany({ where: { hospitalId } })) ?? []
-  const holidayEntries: HolidayEntry[] = holidays.map((h: { date: Date; isRecurring: boolean }) => ({
-    date: toDateKey(h.date),
-    isRecurring: h.isRecurring,
-  }))
+  const holidayEntries: HolidayEntry[] = holidays.map(
+    (h: { date: Date; isRecurring: boolean }) => ({
+      date: toDateKey(h.date),
+      isRecurring: h.isRecurring,
+    })
+  )
   if (isClinicHoliday(dateKey, holidayEntries)) {
     const hit = holidays.find(
       (h: { date: Date; isRecurring: boolean }) =>
         toDateKey(h.date) === dateKey ||
         (h.isRecurring && toDateKey(h.date).slice(5) === dateKey.slice(5))
     )
-    return { code: 'CLINIC_HOLIDAY', message: `Clinic closed on this date (${hit?.name ?? 'holiday'})` }
+    return {
+      code: 'CLINIC_HOLIDAY',
+      message: `Clinic closed on this date (${hit?.name ?? 'holiday'})`,
+    }
   }
 
   // 2. Approved doctor leave (vacation / blocked period)
-  const leaves = (await prisma.leave.findMany({
-    where: { hospitalId, staffId: doctorId, status: 'APPROVED' },
-    select: { startDate: true, endDate: true, leaveType: true, status: true },
-  })) ?? []
-  const leaveWindows: LeaveWindow[] = leaves.map((l: { startDate: Date; endDate: Date; leaveType: string; status: string }) => ({
-    startDate: toDateKey(l.startDate),
-    endDate: toDateKey(l.endDate),
-    leaveType: l.leaveType,
-    status: l.status,
-  }))
+  const leaves =
+    (await prisma.leave.findMany({
+      where: { hospitalId, staffId: doctorId, status: 'APPROVED' },
+      select: { startDate: true, endDate: true, leaveType: true, status: true },
+    })) ?? []
+  const leaveWindows: LeaveWindow[] = leaves.map(
+    (l: { startDate: Date; endDate: Date; leaveType: string; status: string }) => ({
+      startDate: toDateKey(l.startDate),
+      endDate: toDateKey(l.endDate),
+      leaveType: l.leaveType,
+      status: l.status,
+    })
+  )
   if (isOnApprovedLeave(dateKey, leaveWindows)) {
-    return { code: 'DOCTOR_ON_LEAVE', message: 'Doctor is unavailable on this date (approved leave)' }
+    return {
+      code: 'DOCTOR_ON_LEAVE',
+      message: 'Doctor is unavailable on this date (approved leave)',
+    }
   }
 
   // 2b. Recurring per-doctor break (Agenda Phase 2b) — same overlap math.
   const dayOfWeek0 = parseDateKey(dateKey).getDay()
-  const breaks = (await prisma.doctorBreak.findMany({
-    where: { hospitalId, staffId: doctorId, dayOfWeek: dayOfWeek0, isActive: true },
-    select: { startTime: true, endTime: true, label: true },
-  })) ?? []
+  const breaks =
+    (await prisma.doctorBreak.findMany({
+      where: { hospitalId, staffId: doctorId, dayOfWeek: dayOfWeek0, isActive: true },
+      select: { startTime: true, endTime: true, label: true },
+    })) ?? []
   const startMin0 = timeToMinutes(scheduledTime)
   const hittingBreak = breaks.find(
     (b: { startTime: string; endTime: string }) =>
       isValidTime(b.startTime) &&
       isValidTime(b.endTime) &&
-      timeRangesOverlap(startMin0, duration, timeToMinutes(b.startTime), Math.max(timeToMinutes(b.endTime) - timeToMinutes(b.startTime), 0))
+      timeRangesOverlap(
+        startMin0,
+        duration,
+        timeToMinutes(b.startTime),
+        Math.max(timeToMinutes(b.endTime) - timeToMinutes(b.startTime), 0)
+      )
   )
   if (hittingBreak) {
     return {
@@ -165,16 +195,17 @@ export async function findAvailabilityViolation(
   const slotStart = new Date(scheduledDate)
   slotStart.setHours(hours || 0, minutes || 0, 0, 0)
   const slotEnd = new Date(slotStart.getTime() + duration * 60000)
-  const blocked = (await prisma.blockedSlot.findMany({
-    where: {
-      hospitalId,
-      isActive: true,
-      OR: [{ staffId: doctorId }, { staffId: null }],
-      startAt: { lt: slotEnd },
-      endAt: { gt: slotStart },
-    },
-    select: { id: true, reason: true },
-  })) ?? []
+  const blocked =
+    (await prisma.blockedSlot.findMany({
+      where: {
+        hospitalId,
+        isActive: true,
+        OR: [{ staffId: doctorId }, { staffId: null }],
+        startAt: { lt: slotEnd },
+        endAt: { gt: slotStart },
+      },
+      select: { id: true, reason: true },
+    })) ?? []
   if (blocked.length > 0) {
     const reason = blocked[0]?.reason ? ` (${blocked[0].reason})` : ''
     return { code: 'SLOT_BLOCKED', message: `The requested time is blocked${reason}` }

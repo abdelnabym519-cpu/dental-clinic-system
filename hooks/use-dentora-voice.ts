@@ -48,13 +48,13 @@ type SpeechRecognitionInstanceT = EventTarget & {
 
 function getSpeechRecognition(): (new () => SpeechRecognitionInstanceT) | null {
   if (typeof window === 'undefined') return null
-  return (window as unknown as Record<string, unknown>).SpeechRecognition as
-    | (new () => SpeechRecognitionInstanceT)
-    | undefined
-  || (window as unknown as Record<string, unknown>).webkitSpeechRecognition as
-    | (new () => SpeechRecognitionInstanceT)
-    | undefined
-  || null
+  return (
+    ((window as unknown as Record<string, unknown>).SpeechRecognition as
+      (new () => SpeechRecognitionInstanceT) | undefined) ||
+    ((window as unknown as Record<string, unknown>).webkitSpeechRecognition as
+      (new () => SpeechRecognitionInstanceT) | undefined) ||
+    null
+  )
 }
 
 export interface DentoraVoiceTurn {
@@ -94,7 +94,11 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
   }, [ttsEnabled])
 
   useEffect(() => {
-    setSupported(Boolean(getSpeechRecognition()) && typeof window !== 'undefined' && 'speechSynthesis' in window)
+    setSupported(
+      Boolean(getSpeechRecognition()) &&
+        typeof window !== 'undefined' &&
+        'speechSynthesis' in window
+    )
   }, [])
 
   // ---- Session lifecycle -------------------------------------------------
@@ -114,7 +118,11 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         // (and spoken, when voice replies are on) exactly once, at new-session
         // start, in the session language. Never prepended to other answers.
         const greeting = robotGreeting(locale)
-        setTurns((t) => (t.length ? t : [...t, { role: 'assistant', content: greeting, at: new Date().toISOString() }]))
+        setTurns((t) =>
+          t.length
+            ? t
+            : [...t, { role: 'assistant', content: greeting, at: new Date().toISOString() }]
+        )
         if (ttsEnabledRef.current) speakRef.current(greeting)
       }
       return sessionRef.current
@@ -143,7 +151,8 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
 
   const speak = useCallback(
     (text: string) => {
-      if (!ttsEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window)) return
+      if (!ttsEnabledRef.current || typeof window === 'undefined' || !('speechSynthesis' in window))
+        return
       stopSpeaking()
       const u = new SpeechSynthesisUtterance(text)
       // Language consistency (§10/§14): the voice must match the language of
@@ -168,7 +177,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
       }
       window.speechSynthesis.speak(u)
     },
-    [locale, stopSpeaking],
+    [locale, stopSpeaking]
   )
   useEffect(() => {
     speakRef.current = speak
@@ -198,21 +207,41 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         }
         const data = (await res.json()) as VoiceTurnResponse
         if (userTurnText) {
-          setTurns((t) => [...t.slice(-40), { role: 'user', content: userTurnText, at: new Date().toISOString() }])
+          setTurns((t) => [
+            ...t.slice(-40),
+            { role: 'user', content: userTurnText, at: new Date().toISOString() },
+          ])
         }
         setInteractionState(data.state)
         setApproval(data.approval)
-        setClarification(data.clarification ? (locale === 'ar-EG' ? data.clarification.questionAr : data.clarification.questionEn) : null)
+        setClarification(
+          data.clarification
+            ? locale === 'ar-EG'
+              ? data.clarification.questionAr
+              : data.clarification.questionEn
+            : null
+        )
         if (data.error) setError(data.error.code)
         else setError(null)
         if (data.speakableText) {
           if (userTurnText) {
-            setTurns((t) => [...t, { role: 'assistant', content: data.speakableText ?? '', at: new Date().toISOString(), state: data.state }])
+            setTurns((t) => [
+              ...t,
+              {
+                role: 'assistant',
+                content: data.speakableText ?? '',
+                at: new Date().toISOString(),
+                state: data.state,
+              },
+            ])
           }
           setInteractionState(data.state)
           speak(data.speakableText)
         }
-        if (data.clarification) onClarification?.(locale === 'ar-EG' ? data.clarification.questionAr : data.clarification.questionEn)
+        if (data.clarification)
+          onClarification?.(
+            locale === 'ar-EG' ? data.clarification.questionAr : data.clarification.questionEn
+          )
       } catch {
         setError('VOICE_TURN_NETWORK')
         setInteractionState('ERROR')
@@ -220,7 +249,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         busyRef.current = false
       }
     },
-    [ensureSession, locale, onClarification, speak],
+    [ensureSession, locale, onClarification, speak]
   )
 
   // ---- Recognition ---------------------------------------------------------
@@ -260,7 +289,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
                 capturedAt: new Date().toISOString(),
               },
             },
-            finalText.trim(),
+            finalText.trim()
           )
         }
       }
@@ -329,10 +358,10 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
             capturedAt: new Date().toISOString(),
           },
         },
-        trimmed,
+        trimmed
       )
     },
-    [locale, postTurn],
+    [locale, postTurn]
   )
 
   /** Approval decision → existing approvals API (explicit UI action, §33). */
@@ -366,7 +395,7 @@ export function useDentoraVoice({ locale, onClarification }: UseDentoraVoiceOpti
         setError('APPROVAL_DECISION_FAILED')
       }
     },
-    [locale],
+    [locale]
   )
 
   // Cleanup recognition on unmount.

@@ -32,7 +32,13 @@ import {
 import { speakableFromResponse } from './tts'
 import { prepareAgentMessage } from './normalize'
 import { detectInputLanguage } from './language'
-import { assessDuplicate, assessVoiceConfirmation, transcriptFingerprint, validateTranscriptSafety, type DuplicateWindowEntry } from './security'
+import {
+  assessDuplicate,
+  assessVoiceConfirmation,
+  transcriptFingerprint,
+  validateTranscriptSafety,
+  type DuplicateWindowEntry,
+} from './security'
 import { isSessionExpired, transitionSession, type VoiceSessionStore } from './session'
 import {
   VOICE_CONFIRM_WINDOW_MS,
@@ -60,7 +66,9 @@ export interface VoiceActorContext {
 }
 
 export interface VoiceAgentRunner {
-  runAgent: (request: import('@/lib/ai/agent/types').AgentRequest) => Promise<import('@/lib/ai/agent/types').AgentResponse>
+  runAgent: (
+    request: import('@/lib/ai/agent/types').AgentRequest
+  ) => Promise<import('@/lib/ai/agent/types').AgentResponse>
 }
 
 export interface VoiceTurnDeps {
@@ -69,7 +77,11 @@ export interface VoiceTurnDeps {
   // never writes and never sees any other table.
   client: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    patient: { findMany(args: any): Promise<{ id: string; firstName: string | null; lastName: string | null }[]> }
+    patient: {
+      findMany(
+        args: any
+      ): Promise<{ id: string; firstName: string | null; lastName: string | null }[]>
+    }
   }
   agent: VoiceAgentRunner
   now: () => Date
@@ -89,7 +101,10 @@ function clarificationText(c: VoiceClarification, session: VoiceSession): string
 }
 
 function ackFor(kind: 'INTERRUPT' | 'CANCEL', session: VoiceSession): string {
-  if (kind === 'CANCEL') return session.locale === 'ar-EG' ? 'تم إلغاء الطلب. في خدمتك.' : 'Cancelled. I am here when you need me.'
+  if (kind === 'CANCEL')
+    return session.locale === 'ar-EG'
+      ? 'تم إلغاء الطلب. في خدمتك.'
+      : 'Cancelled. I am here when you need me.'
   return session.locale === 'ar-EG' ? 'تم التوقف. أنا سامعك.' : 'Stopped. I am listening.'
 }
 
@@ -135,7 +150,6 @@ function fingerprintOf(normalized: string, tenantId: string, userId: string): st
   return transcriptFingerprint(normalized, tenantId, userId)
 }
 
-
 // ---------------------------------------------------------------------------
 // Telemetry skeleton (PHI-minimized, §22)
 // ---------------------------------------------------------------------------
@@ -164,7 +178,9 @@ function baseTelemetry(session: VoiceSession, turnIndex: number): VoiceTurnTelem
   }
 }
 
-function approvalViewFromAgent(agent: import('@/lib/ai/agent/types').AgentResponse): VoiceApprovalView | null {
+function approvalViewFromAgent(
+  agent: import('@/lib/ai/agent/types').AgentResponse
+): VoiceApprovalView | null {
   const st = agent.approvalState
   if (!st || st.state !== 'PENDING' || !st.approvalId) return null
   const first = agent.actionsProposed?.[0]
@@ -178,7 +194,15 @@ function approvalViewFromAgent(agent: import('@/lib/ai/agent/types').AgentRespon
   }
 }
 
-function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: VoiceTurnCall, message: string, patientId: string | null, toothFdi: number | null, now: Date): import('@/lib/ai/agent/types').AgentRequest {
+function agentRequest(
+  session: VoiceSession,
+  actor: VoiceActorContext,
+  call: VoiceTurnCall,
+  message: string,
+  patientId: string | null,
+  toothFdi: number | null,
+  now: Date
+): import('@/lib/ai/agent/types').AgentRequest {
   return {
     requestId: `vturn-${session.voiceSessionId}-${session.turnCount}`,
     conversationId: session.conversationId,
@@ -201,7 +225,10 @@ function agentRequest(session: VoiceSession, actor: VoiceActorContext, call: Voi
 // The pipeline
 // ---------------------------------------------------------------------------
 
-export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Promise<VoiceTurnResponse> {
+export async function runVoiceTurn(
+  deps: VoiceTurnDeps,
+  call: VoiceTurnCall
+): Promise<VoiceTurnResponse> {
   const t0 = deps.now()
   const nowMs = t0.getTime()
   const op: VoiceTurnInput['op'] = call.op ?? 'SPEAK'
@@ -210,11 +237,21 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   const sessions = deps.sessions
   const session = sessions.get(call.voiceSessionId, call.actor.userId, call.actor.tenantId)
   if (!session) {
-    return rejected(call.voiceSessionId, 'VOICE_SESSION_INVALID', 'Unknown or foreign voice session', deps.env ?? 'SANDBOX')
+    return rejected(
+      call.voiceSessionId,
+      'VOICE_SESSION_INVALID',
+      'Unknown or foreign voice session',
+      deps.env ?? 'SANDBOX'
+    )
   }
   if (isSessionExpired(session, t0)) {
     sessions.delete(session.voiceSessionId, session.userId, session.tenantId)
-    return rejected(session.voiceSessionId, 'VOICE_SESSION_EXPIRED', 'Voice session expired', deps.env ?? 'SANDBOX')
+    return rejected(
+      session.voiceSessionId,
+      'VOICE_SESSION_EXPIRED',
+      'Voice session expired',
+      deps.env ?? 'SANDBOX'
+    )
   }
 
   // ---- 2. Lifecycle ops (robot/voice client) ------------------------------
@@ -231,7 +268,10 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     sessions.save(next)
     return respond(next, 'INTERRUPT', {
       interrupted: next.state === 'INTERRUPTED',
-      telemetry: { ...baseTelemetry(next, next.turnCount), interruptionCount: next.interruptionCount },
+      telemetry: {
+        ...baseTelemetry(next, next.turnCount),
+        interruptionCount: next.interruptionCount,
+      },
     })
   }
   if (op === 'PLAYBACK_ENDED') {
@@ -257,7 +297,12 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   // ---- 3. SPEAK: typed transcript validation ------------------------------
   const transcript: VoiceTranscript | undefined = call.transcript
   if (!transcript) {
-    return rejected(session.voiceSessionId, 'VOICE_TRANSCRIPT_EMPTY', 'transcript is required for SPEAK', deps.env ?? 'SANDBOX')
+    return rejected(
+      session.voiceSessionId,
+      'VOICE_TRANSCRIPT_EMPTY',
+      'transcript is required for SPEAK',
+      deps.env ?? 'SANDBOX'
+    )
   }
   const safety = validateTranscriptSafety(transcript)
   if (!safety.ok) {
@@ -292,7 +337,11 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   if (!detected.mixed && working.locale !== detectedSessionLocale) {
     working = { ...working, locale: detectedSessionLocale }
   }
-  const languageContext = { detected: detected.lang, mixed: detected.mixed, session: working.locale }
+  const languageContext = {
+    detected: detected.lang,
+    mixed: detected.mixed,
+    session: working.locale,
+  }
 
   // ---- 4. Control phrases BEFORE the agent (§16) --------------------------
   const control = matchControlPhrase(normalized)
@@ -342,7 +391,15 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
       let agent: import('@/lib/ai/agent/types').AgentResponse
       try {
         agent = await deps.agent.runAgent(
-          agentRequest(next, call.actor, call, agentMessage, next.patientScope?.patientId ?? null, null, t0),
+          agentRequest(
+            next,
+            call.actor,
+            call,
+            agentMessage,
+            next.patientScope?.patientId ?? null,
+            null,
+            t0
+          )
         )
       } catch {
         const failed = transitionSession(next, 'ERROR', { now: t0 })
@@ -353,15 +410,33 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
           speakableText: spoken,
           displayText: spoken,
           error: { code: 'VOICE_AGENT_ERROR', message: 'Agent invocation failed' },
-          telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+          telemetry: {
+            ...baseTelemetry(failed, turnIndex),
+            transcriptChars: normalized.length,
+            language: safety.language,
+            sttProviderId: transcript.providerId,
+            sttConfidence: transcript.confidence,
+            totalMs: deps.now().getTime() - nowMs,
+            error: 'VOICE_AGENT_ERROR',
+            transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId),
+          },
         })
       }
       const agentMs = deps.now().getTime() - agentMsStart
       // The agent re-evaluates; if the action still needs the human ledger
       // decision it answers PENDING_APPROVAL again (voice cannot grant it).
       return finishAgentTurn(deps, {
-        deps, call, t0, nowMs, turnIndex, normalized, safety, transcript,
-        session: next, agent, agentMs,
+        deps,
+        call,
+        t0,
+        nowMs,
+        turnIndex,
+        normalized,
+        safety,
+        transcript,
+        session: next,
+        agent,
+        agentMs,
         entityResolutionMs: 0,
         confirmedApprovalId: approvalId,
         language: languageContext,
@@ -389,7 +464,16 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
       speakableText: spoken,
       displayText: spoken,
       duplicateSuppressed: true,
-      telemetry: { ...baseTelemetry(next, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, duplicateSuppressed: true, totalMs: deps.now().getTime() - nowMs, transcriptFingerprint: dup.fingerprint },
+      telemetry: {
+        ...baseTelemetry(next, turnIndex),
+        transcriptChars: normalized.length,
+        language: safety.language,
+        sttProviderId: transcript.providerId,
+        sttConfidence: transcript.confidence,
+        duplicateSuppressed: true,
+        totalMs: deps.now().getTime() - nowMs,
+        transcriptFingerprint: dup.fingerprint,
+      },
     })
   }
 
@@ -412,12 +496,19 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     // typed failure — it never throws past the pipeline boundary and never
     // degrades into a guessed answer.
     try {
-      const resolved = await resolvePatientReference(deps.client as Parameters<typeof resolvePatientReference>[0], working.tenantId, hint)
+      const resolved = await resolvePatientReference(
+        deps.client as Parameters<typeof resolvePatientReference>[0],
+        working.tenantId,
+        hint
+      )
       if (resolved.status === 'RESOLVED' && resolved.patientId) {
         patientId = resolved.patientId
         working = {
           ...working,
-          patientScope: { patientId: resolved.patientId, displayName: resolved.displayName ?? resolved.patientId },
+          patientScope: {
+            patientId: resolved.patientId,
+            displayName: resolved.displayName ?? resolved.patientId,
+          },
         }
       } else if (resolved.status === 'AMBIGUOUS' || resolved.status === 'NOT_FOUND') {
         clarification = patientClarification(resolved)
@@ -433,7 +524,15 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
         speakableText: spoken,
         displayText: 'A temporary data-access problem occurred. Please try again shortly.',
         error: { code: 'VOICE_DEPENDENCY_ERROR', message: 'Patient data store unavailable' },
-        telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, entityResolutionMs: deps.now().getTime() - entityStart, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_DEPENDENCY_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+        telemetry: {
+          ...baseTelemetry(failed, turnIndex),
+          transcriptChars: normalized.length,
+          language: safety.language,
+          entityResolutionMs: deps.now().getTime() - entityStart,
+          totalMs: deps.now().getTime() - nowMs,
+          error: 'VOICE_DEPENDENCY_ERROR',
+          transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId),
+        },
       })
     }
   }
@@ -443,14 +542,28 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
     // Ask — never guess (§10). State returns to LISTENING for the answer.
     const next = transitionSession(working, 'LISTENING', { now: t0 })
     sessions.save(next)
-    window.push({ fingerprint: fingerprintOf(normalized, next.tenantId, next.userId), atMs: nowMs, ledToAction: false })
+    window.push({
+      fingerprint: fingerprintOf(normalized, next.tenantId, next.userId),
+      atMs: nowMs,
+      ledToAction: false,
+    })
     const spoken = clarificationText(clarification, next)
     return respond(next, 'SPEAK', {
       language: languageContext,
       speakableText: spoken,
       displayText: spoken,
       clarification,
-      telemetry: { ...baseTelemetry(next, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, state: 'LISTENING', transcriptFingerprint: fingerprintOf(normalized, next.tenantId, next.userId) },
+      telemetry: {
+        ...baseTelemetry(next, turnIndex),
+        transcriptChars: normalized.length,
+        language: safety.language,
+        sttProviderId: transcript.providerId,
+        sttConfidence: transcript.confidence,
+        entityResolutionMs,
+        totalMs: deps.now().getTime() - nowMs,
+        state: 'LISTENING',
+        transcriptFingerprint: fingerprintOf(normalized, next.tenantId, next.userId),
+      },
     })
   }
 
@@ -466,7 +579,7 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
   let agent: import('@/lib/ai/agent/types').AgentResponse
   try {
     agent = await deps.agent.runAgent(
-      agentRequest(processing, call.actor, call, agentMessage, patientId, toothFdi, t0),
+      agentRequest(processing, call.actor, call, agentMessage, patientId, toothFdi, t0)
     )
   } catch {
     const failed = transitionSession(processing, 'ERROR', { now: t0 })
@@ -476,14 +589,35 @@ export async function runVoiceTurn(deps: VoiceTurnDeps, call: VoiceTurnCall): Pr
       speakableText: spoken,
       displayText: spoken,
       error: { code: 'VOICE_AGENT_ERROR', message: 'Agent invocation failed' },
-      telemetry: { ...baseTelemetry(failed, turnIndex), transcriptChars: normalized.length, language: safety.language, sttProviderId: transcript.providerId, sttConfidence: transcript.confidence, entityResolutionMs, totalMs: deps.now().getTime() - nowMs, error: 'VOICE_AGENT_ERROR', transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId) },
+      telemetry: {
+        ...baseTelemetry(failed, turnIndex),
+        transcriptChars: normalized.length,
+        language: safety.language,
+        sttProviderId: transcript.providerId,
+        sttConfidence: transcript.confidence,
+        entityResolutionMs,
+        totalMs: deps.now().getTime() - nowMs,
+        error: 'VOICE_AGENT_ERROR',
+        transcriptFingerprint: fingerprintOf(normalized, failed.tenantId, failed.userId),
+      },
     })
   }
   const agentMs = deps.now().getTime() - agentMsStart
 
   return finishAgentTurn(deps, {
-    deps, call, t0, nowMs, turnIndex, normalized, safety, transcript,
-    session: processing, agent, agentMs, entityResolutionMs, confirmedApprovalId: null,
+    deps,
+    call,
+    t0,
+    nowMs,
+    turnIndex,
+    normalized,
+    safety,
+    transcript,
+    session: processing,
+    agent,
+    agentMs,
+    entityResolutionMs,
+    confirmedApprovalId: null,
     language: languageContext,
   })
 }
@@ -509,11 +643,19 @@ interface FinishArgs {
   language: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
 }
 
-function finishAgentTurn(
-  deps: VoiceTurnDeps,
-  a: FinishArgs,
-): VoiceTurnResponse {
-  const { call, t0, nowMs, turnIndex, normalized, transcript, session, agent, agentMs, entityResolutionMs } = a
+function finishAgentTurn(deps: VoiceTurnDeps, a: FinishArgs): VoiceTurnResponse {
+  const {
+    call,
+    t0,
+    nowMs,
+    turnIndex,
+    normalized,
+    transcript,
+    session,
+    agent,
+    agentMs,
+    entityResolutionMs,
+  } = a
   const languageContext = a.language
   const approval = approvalViewFromAgent(agent)
   let endState: InteractionState
@@ -574,7 +716,8 @@ function finishAgentTurn(
     })
   }
   if (endState === 'LISTENING') {
-    const spoken = agent.answer || (ended.locale === 'ar-EG' ? 'ممكن توضح أكتر؟' : 'Could you clarify?')
+    const spoken =
+      agent.answer || (ended.locale === 'ar-EG' ? 'ممكن توضح أكتر؟' : 'Could you clarify?')
     return respond(ended, 'SPEAK', {
       language: languageContext,
       speakableText: spoken,
@@ -628,9 +771,13 @@ interface RespondExtras {
   error?: { code: VoiceErrorCode; message: string } | null
 }
 
-function respond(session: VoiceSession, op: VoiceTurnInput['op'], extras: RespondExtras & {
-  language?: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
-}): VoiceTurnResponse {
+function respond(
+  session: VoiceSession,
+  op: VoiceTurnInput['op'],
+  extras: RespondExtras & {
+    language?: { detected: 'ar' | 'en'; mixed: boolean; session: 'ar-EG' | 'en-US' }
+  }
+): VoiceTurnResponse {
   return {
     voiceSessionId: session.voiceSessionId,
     state: session.state,
@@ -649,7 +796,12 @@ function respond(session: VoiceSession, op: VoiceTurnInput['op'], extras: Respon
   }
 }
 
-function rejected(voiceSessionId: string, code: VoiceErrorCode, message: string, env: 'SANDBOX' | 'TARGET_MACHINE' | 'CI'): VoiceTurnResponse {
+function rejected(
+  voiceSessionId: string,
+  code: VoiceErrorCode,
+  message: string,
+  env: 'SANDBOX' | 'TARGET_MACHINE' | 'CI'
+): VoiceTurnResponse {
   return {
     voiceSessionId,
     state: 'ERROR',
@@ -663,10 +815,25 @@ function rejected(voiceSessionId: string, code: VoiceErrorCode, message: string,
     duplicateSuppressed: false,
     interrupted: false,
     telemetry: {
-      voiceSessionId, locale: 'en-US', turnIndex: 0, transcriptChars: 0, transcriptFingerprint: '',
-      language: 'en', sttProviderId: '', sttConfidence: 0, normalizeMs: 0, entityResolutionMs: 0,
-      agentMs: 0, totalMs: 0, interruptionCount: 0, duplicateSuppressed: false, state: 'ERROR',
-      agentStatus: null, approvalRequired: false, error: code, env,
+      voiceSessionId,
+      locale: 'en-US',
+      turnIndex: 0,
+      transcriptChars: 0,
+      transcriptFingerprint: '',
+      language: 'en',
+      sttProviderId: '',
+      sttConfidence: 0,
+      normalizeMs: 0,
+      entityResolutionMs: 0,
+      agentMs: 0,
+      totalMs: 0,
+      interruptionCount: 0,
+      duplicateSuppressed: false,
+      state: 'ERROR',
+      agentStatus: null,
+      approvalRequired: false,
+      error: code,
+      env,
     },
     error: { code, message },
   }

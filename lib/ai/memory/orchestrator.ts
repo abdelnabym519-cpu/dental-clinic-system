@@ -16,12 +16,7 @@
 import { expiryFromNow } from './retention'
 import { serializeMemoryBlock } from './retrieval'
 import type { MemoryStore } from './store'
-import {
-  type MemoryActor,
-  type MemoryBlock,
-  type MemoryDomain,
-  type MemoryScope,
-} from './types'
+import { type MemoryActor, type MemoryBlock, type MemoryDomain, type MemoryScope } from './types'
 
 // ---------------------------------------------------------------------------
 // Deterministic triggers
@@ -76,7 +71,9 @@ export interface MemoryAgentInput {
  * Decide WHICH memory domains to retrieve (deterministic, bounded to the
  * resolved scope). Returns null when no memory retrieval is warranted.
  */
-export function planMemoryRetrieval(input: MemoryAgentInput): { domains: MemoryDomain[]; includeCandidate: boolean } | null {
+export function planMemoryRetrieval(
+  input: MemoryAgentInput
+): { domains: MemoryDomain[]; includeCandidate: boolean } | null {
   const intent = hasMemoryIntent(input.message)
   const caseLevel = input.contextProfile !== null && CASE_PROFILES.has(input.contextProfile)
   if (!intent && !caseLevel) return null
@@ -125,7 +122,7 @@ export class MemoryOrchestrator implements MemoryService {
           maxItems: input.maxItems,
           maxChars: input.maxChars,
         },
-        input.now,
+        input.now
       )
       if (block.items.length > 0) {
         blocks.push({ block, serialized: serializeMemoryBlock(block), domains: [domain] })
@@ -133,7 +130,13 @@ export class MemoryOrchestrator implements MemoryService {
     }
     if (blocks.length === 0) return null
     // Merge (order: CASE, PATIENT, DOCTOR, CONVERSATION — deterministic).
-    const order: Record<MemoryDomain, number> = { CASE: 0, PATIENT: 1, DOCTOR: 2, CONVERSATION: 3, CLINIC: 4 }
+    const order: Record<MemoryDomain, number> = {
+      CASE: 0,
+      PATIENT: 1,
+      DOCTOR: 2,
+      CONVERSATION: 3,
+      CLINIC: 4,
+    }
     blocks.sort((a, b) => order[a.domains[0]] - order[b.domains[0]])
     const items = blocks.flatMap((b) => b.block.items)
     const mergedBlock: MemoryBlock = {
@@ -219,12 +222,15 @@ const SYSTEM_ACTOR: MemoryActor = { id: 'system', role: 'SYSTEM' }
 
 export async function updateMemoryAfterExecution(
   store: MemoryStore,
-  update: MemoryAgentUpdate,
+  update: MemoryAgentUpdate
 ): Promise<MemoryUpdateResult> {
   const result: MemoryUpdateResult = { written: 0, failures: [] }
   const push = (e: unknown) => {
     result.failures.push({
-      code: e instanceof Error && 'code' in e ? String((e as { code: string }).code) : 'MEMORY_WRITE_FAILED',
+      code:
+        e instanceof Error && 'code' in e
+          ? String((e as { code: string }).code)
+          : 'MEMORY_WRITE_FAILED',
       detail: e instanceof Error ? e.message : String(e),
     })
   }
@@ -232,12 +238,16 @@ export async function updateMemoryAfterExecution(
   // 1) Executed actions → EPISODIC system-verified events.
   for (const a of update.actionsExecuted) {
     if (!a.executed) continue
-    const scope: MemoryScope | null =
-      update.caseId
-        ? { hospitalId: update.hospitalId, domain: 'CASE', caseId: update.caseId, patientId: update.patientId }
-        : update.patientId
-          ? { hospitalId: update.hospitalId, domain: 'PATIENT', patientId: update.patientId }
-          : null
+    const scope: MemoryScope | null = update.caseId
+      ? {
+          hospitalId: update.hospitalId,
+          domain: 'CASE',
+          caseId: update.caseId,
+          patientId: update.patientId,
+        }
+      : update.patientId
+        ? { hospitalId: update.hospitalId, domain: 'PATIENT', patientId: update.patientId }
+        : null
     if (!scope) continue
     try {
       await store.write(
@@ -258,7 +268,7 @@ export async function updateMemoryAfterExecution(
           actor: SYSTEM_ACTOR,
           expiresAt: expiryFromNow(scope.domain, update.now),
         },
-        update.now,
+        update.now
       )
       result.written += 1
     } catch (e) {
@@ -269,19 +279,28 @@ export async function updateMemoryAfterExecution(
   // 2) Engine runs → EPISODIC system-verified (safe identity only).
   for (const e of update.engineRuns) {
     if (!e.jobId) continue // comparison-style runs have no job — not persisted
-    const scope: MemoryScope | null =
-      update.caseId
-        ? { hospitalId: update.hospitalId, domain: 'CASE', caseId: update.caseId, patientId: update.patientId }
-        : update.patientId
-          ? { hospitalId: update.hospitalId, domain: 'PATIENT', patientId: update.patientId }
-          : null
+    const scope: MemoryScope | null = update.caseId
+      ? {
+          hospitalId: update.hospitalId,
+          domain: 'CASE',
+          caseId: update.caseId,
+          patientId: update.patientId,
+        }
+      : update.patientId
+        ? { hospitalId: update.hospitalId, domain: 'PATIENT', patientId: update.patientId }
+        : null
     if (!scope) continue
     try {
       await store.write(
         {
           scope,
           key: `engine.${e.engine}`,
-          value: { engine: e.engine, jobId: e.jobId, modality: e.modality ?? null, at: update.now.toISOString() },
+          value: {
+            engine: e.engine,
+            jobId: e.jobId,
+            modality: e.modality ?? null,
+            at: update.now.toISOString(),
+          },
           memoryType: 'EPISODIC',
           writeClass: 'SYSTEM_VERIFIED',
           trustLevel: 'SYSTEM_DERIVED',
@@ -290,7 +309,7 @@ export async function updateMemoryAfterExecution(
           actor: SYSTEM_ACTOR,
           expiresAt: expiryFromNow(scope.domain, update.now),
         },
-        update.now,
+        update.now
       )
       result.written += 1
     } catch (e) {
@@ -300,7 +319,8 @@ export async function updateMemoryAfterExecution(
 
   // 3) Explicit user preference statements → STRUCTURED USER_PROVIDED.
   for (const p of update.userPreferenceStatements) {
-    const scopeCol = p.domain === 'DOCTOR' ? { doctorId: update.doctorId } : { patientId: update.patientId }
+    const scopeCol =
+      p.domain === 'DOCTOR' ? { doctorId: update.doctorId } : { patientId: update.patientId }
     if (!scopeCol.doctorId && !scopeCol.patientId) continue
     const scope: MemoryScope = {
       hospitalId: update.hospitalId,
@@ -324,7 +344,7 @@ export async function updateMemoryAfterExecution(
           actor: update.actor,
           expiresAt: expiryFromNow(p.domain, update.now),
         },
-        update.now,
+        update.now
       )
       result.written += 1
     } catch (e) {
@@ -349,12 +369,16 @@ const EXPLICIT_PREFERENCE_PATTERNS: RegExp[] = [
 
 export function extractUserPreferenceStatement(
   message: string,
-  role: string,
+  role: string
 ): { domain: 'PATIENT' | 'DOCTOR'; text: string } | null {
-  if (typeof message !== 'string' || !EXPLICIT_PREFERENCE_PATTERNS.some((re) => re.test(message.trim()))) {
+  if (
+    typeof message !== 'string' ||
+    !EXPLICIT_PREFERENCE_PATTERNS.some((re) => re.test(message.trim()))
+  ) {
     return null
   }
-  if (role !== 'PATIENT' && role !== 'DOCTOR' && role !== 'ADMIN' && role !== 'SUPER_ADMIN') return null
+  if (role !== 'PATIENT' && role !== 'DOCTOR' && role !== 'ADMIN' && role !== 'SUPER_ADMIN')
+    return null
   const domain: 'PATIENT' | 'DOCTOR' = role === 'DOCTOR' ? 'DOCTOR' : 'PATIENT'
   return { domain, text: message.trim().slice(0, 500) }
 }

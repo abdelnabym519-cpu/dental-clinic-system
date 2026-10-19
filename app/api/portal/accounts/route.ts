@@ -30,17 +30,11 @@ export async function POST(request: NextRequest) {
     const { patientId, password } = body as { patientId?: string; password?: string }
 
     if (!patientId || !password) {
-      return NextResponse.json(
-        { error: 'Patient and password are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Patient and password are required' }, { status: 400 })
     }
 
     if (typeof password !== 'string' || password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
     }
 
     const patient = await prisma.patient.findUnique({
@@ -61,10 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (patient.portalUserId) {
-      return NextResponse.json(
-        { error: 'Portal account already exists' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Portal account already exists' }, { status: 409 })
     }
 
     // User.email is @unique and patients often have no email — derive a

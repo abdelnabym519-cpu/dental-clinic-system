@@ -18,28 +18,28 @@ and `xtcocotools` breaks on NumPy 2.x, and setuptools ≥ 81 removed `pkg_resour
 
 ## The repairs (torch 2.6 kept — no downgrade)
 
-| repair | why |
-| --- | --- |
-| `mmcv-lite==2.1.0` instead of `mmcv` | prebuilt wheel, inside the fork's window; the model path needs only `mmcv.cnn`/registry, and the fork's two `mmcv.ops` imports are optional and unused |
-| `setuptools<81` | `mmengine.utils.package_utils.get_installed_path` imports `pkg_resources` |
-| `numpy==1.26.4` | `xtcocotools` is built against NumPy 1.x (`numpy.dtype size changed` on 2.x) |
-| allow-listed `add_safe_globals` + strict `weights_only=True` | loads an mmpose-1.0 checkpoint on torch 2.6 **without** disabling the guard |
-| bounded allow-list additions (AUDIT.md §10) | the real checkpoint's own two globals (`HistoryBuffer`, `getattr` — used once, as `getattr(Class, 'min')`) + torch 2.6's storage reader, each resolved from the pinned runtime with recorded evidence; `weights_only=False` never used |
-| `opencv-python-headless` (Linux only) | `xtcocotools` pulls full `opencv-python`, whose wheel needs `libGL.so.1` |
+| repair                                                       | why                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mmcv-lite==2.1.0` instead of `mmcv`                         | prebuilt wheel, inside the fork's window; the model path needs only `mmcv.cnn`/registry, and the fork's two `mmcv.ops` imports are optional and unused                                                                                 |
+| `setuptools<81`                                              | `mmengine.utils.package_utils.get_installed_path` imports `pkg_resources`                                                                                                                                                              |
+| `numpy==1.26.4`                                              | `xtcocotools` is built against NumPy 1.x (`numpy.dtype size changed` on 2.x)                                                                                                                                                           |
+| allow-listed `add_safe_globals` + strict `weights_only=True` | loads an mmpose-1.0 checkpoint on torch 2.6 **without** disabling the guard                                                                                                                                                            |
+| bounded allow-list additions (AUDIT.md §10)                  | the real checkpoint's own two globals (`HistoryBuffer`, `getattr` — used once, as `getattr(Class, 'min')`) + torch 2.6's storage reader, each resolved from the pinned runtime with recorded evidence; `weights_only=False` never used |
+| `opencv-python-headless` (Linux only)                        | `xtcocotools` pulls full `opencv-python`, whose wheel needs `libGL.so.1`                                                                                                                                                               |
 
 ## Files
 
-| path | what it is |
-| --- | --- |
-| `AUDIT.md` | the 10-step audit: repository, dataset constraint, checkpoint, input provenance, dependency matrix, findings, evidence, runtime plan |
-| `scripts/check_environment.py` | verifies the stack against the fork's own declared ranges (12 checks) |
-| `scripts/inspect_checkpoint.py` | reads the checkpoint's pickle globals **without executing anything** (`--context` prints each reference's usage context); exits non-zero on an unexpected global or an identity mismatch |
-| `scripts/pickle_scan.py` | the canonical non-executing scanner (protocol 0–5, stack/memo-faithful — no phantom globals); shared by the two scripts above |
-| `scripts/diagnose_globals.py` | the AUDIT.md §10 mandated sequence on a structurally-equivalent probe (needs the ML venv) |
-| `scripts/extract_input.py` | turns the organisers' `stack1.mha` into a real cephalogram PNG, with provenance and hashes |
-| `scripts/run_inference.py` | the real CPU inference: gate → allow-list → `init_model` → real image → landmarks → JSON report + overlay |
-| `tests/test_engine6_contract.py` | 32 tests, runnable with a bare Python 3 (no torch needed) |
-| `reports/` | environment checks, the §10 diagnostics record, the control run, and this engine's validation report |
+| path                             | what it is                                                                                                                                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUDIT.md`                       | the 10-step audit: repository, dataset constraint, checkpoint, input provenance, dependency matrix, findings, evidence, runtime plan                                                     |
+| `scripts/check_environment.py`   | verifies the stack against the fork's own declared ranges (12 checks)                                                                                                                    |
+| `scripts/inspect_checkpoint.py`  | reads the checkpoint's pickle globals **without executing anything** (`--context` prints each reference's usage context); exits non-zero on an unexpected global or an identity mismatch |
+| `scripts/pickle_scan.py`         | the canonical non-executing scanner (protocol 0–5, stack/memo-faithful — no phantom globals); shared by the two scripts above                                                            |
+| `scripts/diagnose_globals.py`    | the AUDIT.md §10 mandated sequence on a structurally-equivalent probe (needs the ML venv)                                                                                                |
+| `scripts/extract_input.py`       | turns the organisers' `stack1.mha` into a real cephalogram PNG, with provenance and hashes                                                                                               |
+| `scripts/run_inference.py`       | the real CPU inference: gate → allow-list → `init_model` → real image → landmarks → JSON report + overlay                                                                                |
+| `tests/test_engine6_contract.py` | 32 tests, runnable with a bare Python 3 (no torch needed)                                                                                                                                |
+| `reports/`                       | environment checks, the §10 diagnostics record, the control run, and this engine's validation report                                                                                     |
 
 ## Run it (Windows, from this folder)
 
@@ -85,7 +85,7 @@ Exit codes from `run_inference.py`: `0` inference completed, `6` checkpoint iden
   accuracy and clinical usefulness are **untested**, and the run above says nothing about them.
 - **Proven here (AUDIT.md §10, 2026-09-28):** the loading gate now accepts the real file's
   global signature — a structurally-equivalent probe (same model, same 1,969-tensor contract,
-  same `torch.save`) enumerates *exactly* the two globals the operator's scan flagged, is
+  same `torch.save`) enumerates _exactly_ the two globals the operator's scan flagged, is
   refused by the pre-repair policy, and loads under the repaired one with `weights_only=True`
   through both the direct `torch.load` and the engine's own `init_model` path, with structure
   verified intact (`reports/diagnostics_globals.json`). What remains is the operator's real

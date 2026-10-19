@@ -16,7 +16,10 @@ import { translate, translateText } from '@/lib/i18n/dictionary'
 import ar from '../../locales/ar.json'
 import en from '../../locales/en.json'
 
-const hoisted = vi.hoisted(() => ({ path: '/settings/profile', locale: 'ar-EG' as string | undefined }))
+const hoisted = vi.hoisted(() => ({
+  path: '/settings/profile',
+  locale: 'ar-EG' as string | undefined,
+}))
 
 vi.mock('next/navigation', () => ({
   usePathname: () => hoisted.path,
@@ -296,7 +299,16 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
   })
 
   it('has Arabic for every setup-guide duration label', () => {
-    const durations = ['2 min', '5 min', '10 min', '15 min', '5 min per staff', '10 min per device', '15-30 min', '20-60 min']
+    const durations = [
+      '2 min',
+      '5 min',
+      '10 min',
+      '15 min',
+      '5 min per staff',
+      '10 min per device',
+      '15-30 min',
+      '20-60 min',
+    ]
     for (const d of durations) {
       expect(ar[d], `ar:${d}`).toBeTruthy()
       expect(ar[d]).toMatch(/[\u0600-\u06FF]/)
@@ -305,7 +317,14 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
   })
 
   it('localizes every payment-terms label offered on the new-invoice form', () => {
-    const terms = ['Due on Receipt', 'Net 7 Days', 'Net 15 Days', 'Net 30 Days', 'Net 45 Days', 'Net 60 Days']
+    const terms = [
+      'Due on Receipt',
+      'Net 7 Days',
+      'Net 15 Days',
+      'Net 30 Days',
+      'Net 45 Days',
+      'Net 60 Days',
+    ]
     for (const term of terms) {
       expect(ar[term], `ar:${term}`).toMatch(/[\u0600-\u06FF]/)
       expect(translate('ar-EG', term)).toBe(ar[term])
@@ -336,12 +355,17 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     const invoiceForm = readFileSync('app/(dashboard)/billing/invoices/new/page.tsx', 'utf8')
     expect(invoiceForm).toContain("t('Fixed Amount (EGP)')")
     expect(invoiceForm).not.toContain("t('EGP  Fixed')")
-    for (const f of ['app/(auth)/pricing/page.tsx', 'app/(dashboard)/settings/subscription/page.tsx']) {
+    for (const f of [
+      'app/(auth)/pricing/page.tsx',
+      'app/(dashboard)/settings/subscription/page.tsx',
+    ]) {
       const src = readFileSync(f, 'utf8')
       expect(src, f).toContain('{t(plan.price)}')
       expect(src, f).not.toContain('{plan.price}\n')
     }
-    expect(readFileSync('app/(dashboard)/settings/subscription/page.tsx', 'utf8')).toContain('{t(plan.priceNote)}')
+    expect(readFileSync('app/(dashboard)/settings/subscription/page.tsx', 'utf8')).toContain(
+      '{t(plan.priceNote)}'
+    )
   })
 
   it('resolves every audited breadcrumb crumb to Arabic (no slug fallback leaks)', () => {
@@ -364,7 +388,9 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     const src = readFileSync('components/ui/breadcrumb.tsx', 'utf8')
     for (const segment of Object.keys(crumbs)) {
       // keys may be written quoted or bare in the map literal
-      expect(new RegExp(`^\\s*'?${segment}'?:`, 'm').test(src), `ROUTE_LABELS:${segment}`).toBe(true)
+      expect(new RegExp(`^\\s*'?${segment}'?:`, 'm').test(src), `ROUTE_LABELS:${segment}`).toBe(
+        true
+      )
     }
   })
 
@@ -425,8 +451,11 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
       expect(ar[key as keyof typeof ar], key).toBe(arabic)
       expect(en[key as keyof typeof en], key).toBe(key)
     }
-    expect(ar['We\'ve sent a verification email to {v1}. Please check your inbox and click the verification link.'])
-      .toContain('{v1}')
+    expect(
+      ar[
+        "We've sent a verification email to {v1}. Please check your inbox and click the verification link."
+      ]
+    ).toContain('{v1}')
     const page = readFileSync('app/(auth)/verify-email/page.tsx', 'utf8')
     // no user-visible message may be assigned as a raw literal any more
     expect(page).not.toMatch(/setMessage\(\s*['"`][^'"`]*['"`]\s*\)/)
@@ -435,7 +464,12 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     // exists as dictionary values, e.g. "Email verified!" -> تم تأكيد البريد)
     expect(page).not.toMatch(/title:\s*['"`]/)
     expect(page).not.toMatch(/description:\s*['"`]/)
-    for (const label of ['Email verified!', 'You can now log in to your account.', 'Verification email sent', 'Please check your inbox for the verification link.']) {
+    for (const label of [
+      'Email verified!',
+      'You can now log in to your account.',
+      'Verification email sent',
+      'Please check your inbox for the verification link.',
+    ]) {
       expect(translateText('ar-EG', label), label).toMatch(/[\u0600-\u06FF]/)
     }
   })
@@ -464,7 +498,14 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     // The recurring defect: a component renders {obj.label} straight from a
     // config array, so the dictionary is bypassed even though the Arabic
     // wording already exists as a value. Wrapping is key-free and safe.
-    const labels = ['Dental Chair', 'Pulse Oximeter', 'BP Monitor', 'Autoclave', 'Patients', 'Invoices']
+    const labels = [
+      'Dental Chair',
+      'Pulse Oximeter',
+      'BP Monitor',
+      'Autoclave',
+      'Patients',
+      'Invoices',
+    ]
     for (const label of labels) {
       expect(translateText('ar-EG', label), label).toMatch(/[\u0600-\u06FF]/)
       expect(translateText('en-EG', label), label).toBe(label)
@@ -489,7 +530,9 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(ar['No invite token provided.']).toBe('لم يتم توفير رمز دعوة.')
     expect(translateText('ar-EG', 'No invite token provided.')).toBe('لم يتم توفير رمز دعوة.')
     expect(translateText('ar-EG', 'Account created!')).toBe('تم إنشاء الحساب!')
-    expect(translateText('ar-EG', 'Something went wrong. Please try again.')).toBe('حدث خطأ ما. حاول مرة أخرى.')
+    expect(translateText('ar-EG', 'Something went wrong. Please try again.')).toBe(
+      'حدث خطأ ما. حاول مرة أخرى.'
+    )
     expect(ar['Critical (stockout \u22647d)'.replace(/\u2264/, '\u2264')]).toBeDefined()
     expect(translateText('ar-EG', 'WhatsApp contact number override')).toMatch(/[\u0600-\u06FF]/)
     // templated search-empty key: {q} must survive substitution
@@ -511,7 +554,9 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(invite).not.toContain('setErrorMessage(t(')
     expect(ar['Invalid invite link.']).toBe('رابط الدعوة غير صالح.')
     expect(translateText('ar-EG', 'Invalid invite link.')).toBe('رابط الدعوة غير صالح.')
-    expect(translateText('ar-EG', 'An error occurred. Please try again.')).toBe('حدث خطأ ما. حاول مرة أخرى.')
+    expect(translateText('ar-EG', 'An error occurred. Please try again.')).toBe(
+      'حدث خطأ ما. حاول مرة أخرى.'
+    )
     expect(invite).not.toMatch(/title: 'Account created!'/)
     expect(readFileSync('components/layout/global-search.tsx', 'utf8')).toContain(
       "t('No results found for {q}', { q: query })"
@@ -545,19 +590,27 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     const walk = (d: string): string[] =>
       fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
         const f2 = `${d}/${e.name}`
-        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        if (e.isDirectory())
+          return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
         return /\.(tsx|ts)$/.test(e.name) ? [f2] : []
       })
     // Client components only: an API route's `error:` field is a JSON payload or an
     // email subject, not a label in the Arabic UI, and it is already covered by the
     // suite that asserts the API responses.
-    const files = dirs.flatMap(walk).filter((f2) => fs.readFileSync(f2, 'utf8').includes("'use client'"))
+    const files = dirs
+      .flatMap(walk)
+      .filter((f2) => fs.readFileSync(f2, 'utf8').includes("'use client'"))
     const SLOT = /\b(?:title|description|message|label)\s*[:=]\s*/g
-    const CALL = /\b(?:toast|notify)\s*(?:\.\w+)?\s*\(\s*|\bset[A-Za-z]{0,12}Error[A-Za-z]{0,8}\s*\(\s*/g
+    const CALL =
+      /\b(?:toast|notify)\s*(?:\.\w+)?\s*\(\s*|\bset[A-Za-z]{0,12}Error[A-Za-z]{0,8}\s*\(\s*/g
     const readLiteral = (src: string, i: number, q: string): string | null => {
       let out = ''
       while (i < src.length) {
-        if (src[i] === '\\') { out += src[i + 1]; i += 2; continue }
+        if (src[i] === '\\') {
+          out += src[i + 1]
+          i += 2
+          continue
+        }
         if (src[i] === q) return out
         if (src[i] === '\n' && out.length > 400) return null
         out += src[i++]
@@ -580,7 +633,10 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
           const lit = readLiteral(src, i + 1, q)
           if (lit === null) continue
           audited++
-          const probe = lit.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          const probe = lit
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
           if (probe.length < 4 || !/[A-Za-z]{3}/.test(probe)) continue
           if (/^(?:\/|https?:|@)/.test(probe)) continue
           const translated = translateText('ar-EG', probe)
@@ -630,7 +686,8 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     const walk = (d: string): string[] =>
       fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => {
         const f2 = `${d}/${e.name}`
-        if (e.isDirectory()) return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
+        if (e.isDirectory())
+          return e.name === 'node_modules' || e.name.startsWith('.') ? [] : walk(f2)
         return /\.(tsx|ts)$/.test(e.name) ? [f2] : []
       })
     const PATS = [
@@ -727,11 +784,18 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
         let j = i + 1
         let buf = ''
         while (j < body.length) {
-          if (body[j] === '\\') { buf += body[j] + body[j + 1]; j += 2; continue }
+          if (body[j] === '\\') {
+            buf += body[j] + body[j + 1]
+            j += 2
+            continue
+          }
           if (body[j] === q) break
           buf += body[j++]
         }
-        if (j < body.length) { out.push(decode(buf)); i = j }
+        if (j < body.length) {
+          out.push(decode(buf))
+          i = j
+        }
       }
       return out
     }
@@ -745,12 +809,20 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
         for (let j = start; j < src.length; j++) {
           const c = src[j]
           if ('[{('.includes(c)) depth++
-          else if (']})'.includes(c)) { depth--; if (depth === 0) { blocks.push(src.slice(start + 1, j)); break } }
+          else if (']})'.includes(c)) {
+            depth--
+            if (depth === 0) {
+              blocks.push(src.slice(start + 1, j))
+              break
+            }
+          }
         }
       }
       return blocks
     }
-    const steps = blocksOf('steps').flatMap(literalsOf).map((s) => s.replace(/^\s+/, ''))
+    const steps = blocksOf('steps')
+      .flatMap(literalsOf)
+      .map((s) => s.replace(/^\s+/, ''))
     const tips = blocksOf('tips').flatMap(literalsOf)
     const lines = [...steps, ...tips]
     expect(lines.length).toBeGreaterThan(250)
@@ -765,7 +837,10 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
     expect(src).toContain('<span>{t(tip)}</span>')
     // the same must hold for every other guide field: titles, descriptions, labels
     for (const prop of ['title', 'description', 'label', 'estimatedTime']) {
-      const re = new RegExp(`\\b${prop}\\s*:\\s*\\n?\\s*(['"])((?:\\\\.|((?!\\1)[^\\s])){4,400})\\1`, 'g')
+      const re = new RegExp(
+        `\\b${prop}\\s*:\\s*\\n?\\s*(['"])((?:\\\\.|((?!\\1)[^\\s])){4,400})\\1`,
+        'g'
+      )
       const fieldRe = new RegExp(`\\b${prop}\\s*:\\s*\\n?\\s*(["'])([\\s\\S]{4,400}?)\\1`, 'g')
       let mm
       const unresolved: string[] = []
@@ -773,7 +848,8 @@ describe('phase-9 audit regressions (English leaked into Arabic mode)', () => {
         const raw = mm[2]
         if (raw.includes('\n')) continue
         const val = raw.replace(/\\'/g, "'").replace(/\\"/g, '"')
-        if (/[A-Za-z]{3}/.test(val) && !/[\u0600-\u06FF]/.test(translateText('ar-EG', val))) unresolved.push(val)
+        if (/[A-Za-z]{3}/.test(val) && !/[\u0600-\u06FF]/.test(translateText('ar-EG', val)))
+          unresolved.push(val)
       }
       expect(unresolved).toEqual([])
     }

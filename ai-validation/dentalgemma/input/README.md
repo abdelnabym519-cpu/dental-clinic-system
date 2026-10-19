@@ -36,19 +36,19 @@ Copy-Item "C:\path\to\deidentified\panoramic.png" .\input\panoramic.png
 
 **Expectation management:** the model card makes no claim about panoramic
 radiography specifically. A run that produces a sensible-looking paragraph is a
-pipeline success; it is *not* evidence that the model reads panoramic radiographs
+pipeline success; it is _not_ evidence that the model reads panoramic radiographs
 well. A run that produces something vague is a plausible and reportable outcome.
 
 ## Acceptable image types
 
-| Format | Extensions | Notes |
-| --- | --- | --- |
-| PNG | `.png` | best choice: lossless, and the lab can read its dimensions |
-| JPEG | `.jpg`, `.jpeg` | fine; avoid re-compressing an already-compressed radiograph |
-| BMP | `.bmp` | accepted |
-| TIFF | `.tif`, `.tiff` | accepted; dimensions not read by the lab's header probe |
-| GIF | `.gif` | accepted, rarely useful |
-| WebP | `.webp` | accepted by llama.cpp; dimensions not read by the probe |
+| Format | Extensions      | Notes                                                       |
+| ------ | --------------- | ----------------------------------------------------------- |
+| PNG    | `.png`          | best choice: lossless, and the lab can read its dimensions  |
+| JPEG   | `.jpg`, `.jpeg` | fine; avoid re-compressing an already-compressed radiograph |
+| BMP    | `.bmp`          | accepted                                                    |
+| TIFF   | `.tif`, `.tiff` | accepted; dimensions not read by the lab's header probe     |
+| GIF    | `.gif`          | accepted, rarely useful                                     |
+| WebP   | `.webp`         | accepted by llama.cpp; dimensions not read by the probe     |
 
 Anything else is rejected before the model is loaded. The runner reads the image
 header itself (no imaging library) to report format, dimensions and colour mode,

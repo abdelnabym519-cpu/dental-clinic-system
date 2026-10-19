@@ -335,7 +335,9 @@ export default function LabWorkPage() {
             {t('Manage Vendors')}
           </Button>
           <Button onClick={() => router.push('/lab/orders/new')}>
-            <Plus className="mr-2 h-4 w-4" />{t('ui.new_lab_order')}</Button>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('ui.new_lab_order')}
+          </Button>
         </div>
       </div>
 
@@ -497,9 +499,13 @@ export default function LabWorkPage() {
             <div className="text-center py-12">
               <FlaskConical className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">{t('No lab orders found')}</h3>
-              <p className="text-muted-foreground">{t('Get started by creating your first lab order')}</p>
+              <p className="text-muted-foreground">
+                {t('Get started by creating your first lab order')}
+              </p>
               <Button className="mt-4" onClick={() => router.push('/lab/orders/new')}>
-                <Plus className="mr-2 h-4 w-4" />{t('ui.create_lab_order')}</Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('ui.create_lab_order')}
+              </Button>
             </div>
           ) : (
             <>
@@ -551,7 +557,9 @@ export default function LabWorkPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/lab/orders/${order.id}`)}
                             >
-                              <Eye className="mr-2 h-4 w-4" />{t('ui.view_details')}</DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              {t('ui.view_details')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => router.push(`/lab/orders/${order.id}/edit`)}
                             >
@@ -569,9 +577,9 @@ export default function LabWorkPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                  {pagination.total} {t("orders")}
+                  {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                  {pagination.total} {t('orders')}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -580,13 +588,17 @@ export default function LabWorkPage() {
                     disabled={pagination.page === 1}
                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   >
-                    <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                    <ChevronLeft className="h-4 w-4" />
+                    {t('ui.previous')}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={pagination.page === pagination.pages}
                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                  >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                  >
+                    {t('ui.next')}
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

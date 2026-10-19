@@ -243,7 +243,9 @@ export default function LabVendorsPage() {
 
       toast({
         title: 'Success',
-        description: editingVendor ? t('Lab vendor updated successfully') : t('Lab vendor created successfully'),
+        description: editingVendor
+          ? t('Lab vendor updated successfully')
+          : t('Lab vendor created successfully'),
       })
 
       setIsDialogOpen(false)
@@ -338,7 +340,9 @@ export default function LabVendorsPage() {
             {t('Back to Lab Orders')}
           </Button>
           <Button onClick={() => handleOpenDialog()}>
-            <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('ui.add_vendor')}
+          </Button>
         </div>
       </div>
 
@@ -360,7 +364,7 @@ export default function LabVendorsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vendors.filter((v) => v.status === t("active")).length}
+              {vendors.filter((v) => v.status === t('active')).length}
             </div>
           </CardContent>
         </Card>
@@ -420,9 +424,13 @@ export default function LabVendorsPage() {
             <div className="text-center py-12">
               <FlaskConical className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">{t('No vendors found')}</h3>
-              <p className="text-muted-foreground">{t('Get started by adding your first lab vendor')}</p>
+              <p className="text-muted-foreground">
+                {t('Get started by adding your first lab vendor')}
+              </p>
               <Button className="mt-4" onClick={() => handleOpenDialog()}>
-                <Plus className="mr-2 h-4 w-4" />{t('ui.add_vendor')}</Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('ui.add_vendor')}
+              </Button>
             </div>
           ) : (
             <>
@@ -475,7 +483,7 @@ export default function LabVendorsPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <Clock className="mr-1 h-3 w-3" />
-                          {vendor.avgTurnaround} {t("days")}
+                          {vendor.avgTurnaround} {t('days')}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -494,13 +502,17 @@ export default function LabVendorsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleOpenDialog(vendor)}>
-                              <Edit className="mr-2 h-4 w-4" />{t('ui.edit')}</DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              {t('ui.edit')}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDelete(vendor.id)}
                               className="text-red-600"
                             >
-                              <Trash className="mr-2 h-4 w-4" />{t('ui.delete')}</DropdownMenuItem>
+                              <Trash className="mr-2 h-4 w-4" />
+                              {t('ui.delete')}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -512,9 +524,9 @@ export default function LabVendorsPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                  {pagination.total} {t("vendors")}
+                  {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                  {pagination.total} {t('vendors')}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -523,13 +535,17 @@ export default function LabVendorsPage() {
                     disabled={pagination.page === 1}
                     onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                   >
-                    <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                    <ChevronLeft className="h-4 w-4" />
+                    {t('ui.previous')}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     disabled={pagination.page === pagination.pages}
                     onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                  >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                  >
+                    {t('ui.next')}
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -542,13 +558,13 @@ export default function LabVendorsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingVendor ? t("Edit Lab Vendor") : t("Add Lab Vendor")}</DialogTitle>
+            <DialogTitle>{editingVendor ? t('Edit Lab Vendor') : t('Add Lab Vendor')}</DialogTitle>
             <DialogDescription>{t('Enter the vendor information below')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="code">{t("Vendor Code *")}</Label>
+                <Label htmlFor="code">{t('Vendor Code *')}</Label>
                 <Input
                   id="code"
                   value={formData.code}
@@ -557,7 +573,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">{t("Vendor Name *")}</Label>
+                <Label htmlFor="name">{t('Vendor Name *')}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -577,7 +593,7 @@ export default function LabVendorsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">{t("Phone *")}</Label>
+                <Label htmlFor="phone">{t('Phone *')}</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -657,13 +673,13 @@ export default function LabVendorsPage() {
                 id="specializations"
                 value={formData.specializations}
                 onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
-                placeholder={t("crown, bridge, denture, etc. (comma-separated)")}
+                placeholder={t('crown, bridge, denture, etc. (comma-separated)')}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="avgTurnaround">{t("Avg. Turnaround (days)")}</Label>
+                <Label htmlFor="avgTurnaround">{t('Avg. Turnaround (days)')}</Label>
                 <Input
                   id="avgTurnaround"
                   type="number"
@@ -727,7 +743,9 @@ export default function LabVendorsPage() {
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>{t('ui.cancel')}</Button>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                {t('ui.cancel')}
+              </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving...' : editingVendor ? 'Update' : 'Create'}
               </Button>

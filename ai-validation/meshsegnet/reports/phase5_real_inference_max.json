@@ -41,11 +41,7 @@
     "cells_original": 328581,
     "downsampled_to_official_cap": true,
     "inference_cells": 9999,
-    "probabilities_shape": [
-      1,
-      9999,
-      15
-    ],
+    "probabilities_shape": [1, 9999, 15],
     "engine_processing_time_ms": 11187
   },
   "output": {
@@ -134,13 +130,7 @@
   "performance_ms": {
     "cold_first_inference": 12495.7,
     "warm_median_of_5": 11347.9,
-    "warm_all": [
-      11246.5,
-      11292.3,
-      11347.9,
-      11460.5,
-      11607.0
-    ],
+    "warm_all": [11246.5, 11292.3, 11347.9, 11460.5, 11607.0],
     "note": "sandbox hardware (2 vCPU / ~4 GB RAM), NOT the target Windows machine; infrastructure baseline only \u2014 no accuracy implied"
   },
   "memory": {

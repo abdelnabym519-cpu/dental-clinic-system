@@ -9,13 +9,24 @@
  * so an empty tool sequence means zero patient records fetched.
  */
 import { describe, it, expect } from 'vitest'
-import { loadSuiteDatasets, evaluateDataset, assertNoFailures, type CaseEvaluation } from './harness'
+import {
+  loadSuiteDatasets,
+  evaluateDataset,
+  assertNoFailures,
+  type CaseEvaluation,
+} from './harness'
 import { gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 
 const CONTEXT_TOOLS = new Set([
-  'get_patient_360', 'get_clinical_summary', 'get_tooth_context',
-  'get_imaging_context', 'get_patient_overview', 'get_treatment_context',
-  'get_case_context', 'get_followup_context', 'get_timeline_context',
+  'get_patient_360',
+  'get_clinical_summary',
+  'get_tooth_context',
+  'get_imaging_context',
+  'get_patient_overview',
+  'get_treatment_context',
+  'get_case_context',
+  'get_followup_context',
+  'get_timeline_context',
 ])
 
 let checks: EvalCheck[] = []
@@ -51,7 +62,9 @@ describe('PATIENT-360 golden replay (smallest sufficient context)', () => {
 
   it('gate: smallest-sufficient-context contract holds', () => {
     const gateChecks: EvalCheck[] = [
-      checks.length > 0 ? pass('P360.minimal', `${evaluations.length} cases incl. negatives`) : fail('P360.minimal', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
+      checks.length > 0
+        ? pass('P360.minimal', `${evaluations.length} cases incl. negatives`)
+        : fail('P360.minimal', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
     ]
     const report = gateReport('B_AGENT', gateChecks)
     expect(report.verdict).toBe('PASS')

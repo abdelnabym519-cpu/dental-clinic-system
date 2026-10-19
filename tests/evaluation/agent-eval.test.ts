@@ -10,7 +10,8 @@ import { describe, it, expect } from 'vitest'
 import { loadSuiteDatasets, evaluateDataset, assertNoFailures, failureCodeCounts } from './harness'
 import { gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 
-const CLASSIFY_OPERATIONAL = '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
+const CLASSIFY_OPERATIONAL =
+  '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
 
 describe('AGENT golden replay (Gate B)', () => {
   const datasets = loadSuiteDatasets(['agent-routing.golden.json'])
@@ -18,9 +19,9 @@ describe('AGENT golden replay (Gate B)', () => {
   let results: Awaited<ReturnType<typeof evaluateDataset>>['results'] = []
 
   it('all agent-routing golden cases satisfy their contract', async () => {
-    const out = await evaluateDataset('AGENT', datasets, {}, (c) => (
+    const out = await evaluateDataset('AGENT', datasets, {}, (c) =>
       c.tags?.includes('llm-fallback') ? { llm: { classifyReply: CLASSIFY_OPERATIONAL } } : {}
-    ))
+    )
     checks = out.checks
     results = out.results
     expect(results.length).toBeGreaterThanOrEqual(12)
@@ -35,7 +36,9 @@ describe('AGENT golden replay (Gate B)', () => {
 
   it('gate B verdict', () => {
     const gateChecks: EvalCheck[] = [
-      checks.length > 0 ? pass('B.replay', `${results.length} golden cases, ${checks.length} checks`) : fail('B.replay', 'EVAL_CONTRACT_MISMATCH', 'no checks recorded'),
+      checks.length > 0
+        ? pass('B.replay', `${results.length} golden cases, ${checks.length} checks`)
+        : fail('B.replay', 'EVAL_CONTRACT_MISMATCH', 'no checks recorded'),
     ]
     const report = gateReport('B_AGENT', gateChecks)
     expect(report.verdict).toBe('PASS')

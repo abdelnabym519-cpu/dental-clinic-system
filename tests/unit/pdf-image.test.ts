@@ -34,7 +34,9 @@ const BASE = {
 // Minimal SOI + SOF0 marker with a single component (grayscale). Encoders
 // like jimp emit YCbCr for "greyscale" images, so a synthetic SOF is used to
 // pin the 1-component branch of the colour-space routing precisely.
-const GRAY_SOF = Buffer.from([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01, 0x00, 0x01, 0x01, 0x01])
+const GRAY_SOF = Buffer.from([
+  0xff, 0xd8, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x01, 0x00, 0x01, 0x01, 0x01,
+])
 
 describe('jpegInfo', () => {
   it('reads SOF dimensions and component count from a real JPEG', () => {

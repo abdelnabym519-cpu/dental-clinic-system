@@ -406,7 +406,7 @@ describe('CalendarView fill-height layout (§ viewport stretch)', () => {
     return utils
   }
 
-  const styleOf = (el: Element | null) => (el ? el.getAttribute('style') ?? '' : '')
+  const styleOf = (el: Element | null) => (el ? (el.getAttribute('style') ?? '') : '')
 
   it('roots the layout in a flex column that absorbs the remaining height', async () => {
     const { container } = await renderLoaded()

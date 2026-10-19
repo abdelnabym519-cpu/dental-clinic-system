@@ -8,7 +8,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
-import type { EvalActorRole, EvalCategory, EvalLanguage, EvalVerdict, GoldenCase, GoldenDataset } from './types'
+import type {
+  EvalActorRole,
+  EvalCategory,
+  EvalLanguage,
+  EvalVerdict,
+  GoldenCase,
+  GoldenDataset,
+} from './types'
 import { EVAL_ACTOR_ROLES, EVAL_CATEGORIES, EVAL_LANGUAGES } from './types'
 
 export const GOLDEN_DATASET_VERSION = '1.0.0'
@@ -72,20 +79,28 @@ const goldenCaseSchema = z.object({
     .array(
       z.object({
         id: z.string().min(1),
-        fileClass: z.enum(['IMAGE_2D', 'MESH_3D', 'DOCUMENT_PDF', 'DOCUMENT_TEXT', 'VOLUME_DICOM', 'UNKNOWN']),
+        fileClass: z.enum([
+          'IMAGE_2D',
+          'MESH_3D',
+          'DOCUMENT_PDF',
+          'DOCUMENT_TEXT',
+          'VOLUME_DICOM',
+          'UNKNOWN',
+        ]),
         dentalModality: z.string().nullable(),
         patientId: z.string().nullable(),
         originalName: z.string().min(1),
         extractedText: z.string().optional(),
         studyId: z.string().nullable().optional(),
-      }),
+      })
     )
     .optional(),
   expected: expectedSchema,
   tags: z.array(z.string()).optional(),
 })
 
-export const GoldenCaseSchema: z.ZodType<GoldenCase> = goldenCaseSchema as unknown as z.ZodType<GoldenCase>
+export const GoldenCaseSchema: z.ZodType<GoldenCase> =
+  goldenCaseSchema as unknown as z.ZodType<GoldenCase>
 
 export const datasetSchema = z.object({
   datasetVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
@@ -104,19 +119,26 @@ export function loadGoldenDataset(filePath: string): GoldenDataset {
   try {
     parsed = JSON.parse(raw)
   } catch (err) {
-    throw new Error(`EVAL_DATASET_INVALID: ${filePath}: JSON parse error: ${(err as Error).message}`)
+    throw new Error(
+      `EVAL_DATASET_INVALID: ${filePath}: JSON parse error: ${(err as Error).message}`
+    )
   }
   const result = datasetSchema.safeParse(parsed)
   if (!result.success) {
     const first = result.error.issues[0]
     throw new Error(
-      `EVAL_DATASET_INVALID: ${filePath}: schema violation at ${first.path.join('.')}: ${first.message}`,
+      `EVAL_DATASET_INVALID: ${filePath}: schema violation at ${first.path.join('.')}: ${first.message}`
     )
   }
-  const data = result.data as unknown as { datasetVersion: string; phiPolicy: 'SYNTHETIC_ONLY'; cases: GoldenCase[] }
+  const data = result.data as unknown as {
+    datasetVersion: string
+    phiPolicy: 'SYNTHETIC_ONLY'
+    cases: GoldenCase[]
+  }
   const ids = new Set<string>()
   for (const c of data.cases) {
-    if (ids.has(c.caseId)) throw new Error(`EVAL_DATASET_INVALID: ${filePath}: duplicate caseId ${c.caseId}`)
+    if (ids.has(c.caseId))
+      throw new Error(`EVAL_DATASET_INVALID: ${filePath}: duplicate caseId ${c.caseId}`)
     ids.add(c.caseId)
   }
   return data as GoldenDataset
@@ -130,7 +152,7 @@ export function loadGoldenDatasets(paths: string[]): GoldenDataset[] {
 /** Case-selection helper used by the suites. */
 export function selectCases(
   datasets: GoldenDataset[],
-  filter: { category?: EvalCategory; tag?: string; caseIds?: string[] } = {},
+  filter: { category?: EvalCategory; tag?: string; caseIds?: string[] } = {}
 ): GoldenCase[] {
   const out: GoldenCase[] = []
   for (const ds of datasets) {

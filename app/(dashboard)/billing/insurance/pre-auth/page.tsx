@@ -154,7 +154,9 @@ export default function PreAuthorizationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('Pre-Authorizations')}</h1>
-          <p className="text-muted-foreground">{t('Manage insurance pre-authorization requests')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage insurance pre-authorization requests')}
+          </p>
         </div>
         <Button asChild>
           <Link href="/billing/insurance/pre-auth/new">
@@ -236,7 +238,7 @@ export default function PreAuthorizationsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("Auth #")}</TableHead>
+                    <TableHead>{t('Auth #')}</TableHead>
                     <TableHead>{t('ui.patient')}</TableHead>
                     <TableHead>{t('ui.provider')}</TableHead>
                     <TableHead>{t('ui.procedures')}</TableHead>
@@ -275,7 +277,9 @@ export default function PreAuthorizationsPage() {
                         {formatCurrency(Number(pa.estimatedCost), locale)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {pa.approvedAmount ? formatCurrency(Number(pa.approvedAmount), locale) : '—'}
+                        {pa.approvedAmount
+                          ? formatCurrency(Number(pa.approvedAmount), locale)
+                          : '—'}
                       </TableCell>
                       <TableCell>{getStatusBadge(pa.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -294,7 +298,8 @@ export default function PreAuthorizationsPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("Showing")} {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} {t("of")} {total}
+                  {t('Showing')} {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} {t('of')}{' '}
+                  {total}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -306,7 +311,7 @@ export default function PreAuthorizationsPage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    {t("Page")} {page} {t("of")} {totalPages}
+                    {t('Page')} {page} {t('of')} {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -356,7 +361,9 @@ export default function PreAuthorizationsPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('ui.estimated_cost')}</p>
-                  <p className="font-medium">{formatCurrency(Number(viewItem.estimatedCost), locale)}</p>
+                  <p className="font-medium">
+                    {formatCurrency(Number(viewItem.estimatedCost), locale)}
+                  </p>
                 </div>
                 {viewItem.approvedAmount && (
                   <div>
@@ -417,7 +424,7 @@ export default function PreAuthorizationsPage() {
                       onClick={() => handleUpdateStatus(viewItem.id, 'SUBMITTED')}
                       disabled={updating}
                     >
-                      <FileCheck className="h-4 w-4 mr-1" /> {t("Mark Submitted")}
+                      <FileCheck className="h-4 w-4 mr-1" /> {t('Mark Submitted')}
                     </Button>
                   )}
                   <Button
@@ -435,7 +442,7 @@ export default function PreAuthorizationsPage() {
                     }}
                     disabled={updating}
                   >
-                    <CheckCircle className="h-4 w-4 mr-1" /> {t("Approve")}
+                    <CheckCircle className="h-4 w-4 mr-1" /> {t('Approve')}
                   </Button>
                   <Button
                     size="sm"
@@ -448,7 +455,7 @@ export default function PreAuthorizationsPage() {
                     }}
                     disabled={updating}
                   >
-                    <XCircle className="h-4 w-4 mr-1" /> {t("Deny")}
+                    <XCircle className="h-4 w-4 mr-1" /> {t('Deny')}
                   </Button>
                 </div>
               )}

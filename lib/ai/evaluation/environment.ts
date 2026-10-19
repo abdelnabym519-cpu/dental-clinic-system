@@ -23,7 +23,8 @@ export function detectEnvLabel(): { label: EnvLabel; source: 'env-var' | 'heuris
   // Heuristics (conservative — anything uncertain is UNKNOWN, never
   // silently claimed as the target machine).
   const host = os.hostname().toLowerCase()
-  if (TARGET_HOST_HINTS.some((h) => host.includes(h))) return { label: 'TARGET_MACHINE', source: 'heuristic' }
+  if (TARGET_HOST_HINTS.some((h) => host.includes(h)))
+    return { label: 'TARGET_MACHINE', source: 'heuristic' }
   if (
     process.env.E2B_SANDBOX === 'true' ||
     process.env.EVAL_SANDBOX === '1' ||

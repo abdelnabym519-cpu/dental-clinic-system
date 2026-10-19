@@ -9,7 +9,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { loadSuiteDatasets, evaluateDataset, assertNoFailures, type CaseEvaluation } from './harness'
+import {
+  loadSuiteDatasets,
+  evaluateDataset,
+  assertNoFailures,
+  type CaseEvaluation,
+} from './harness'
 import { gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 
 // The §12 attack matrix — each row is an adversarial technique we MUST

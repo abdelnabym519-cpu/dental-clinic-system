@@ -124,7 +124,7 @@ export default function BillingSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="cgstRate">{t("VAT Rate (%)")}</Label>
+                <Label htmlFor="cgstRate">{t('VAT Rate (%)')}</Label>
                 <Input
                   id="cgstRate"
                   type="number"
@@ -133,14 +133,14 @@ export default function BillingSettingsPage() {
                   onChange={(e) => setSettings({ ...settings, cgstRate: e.target.value })}
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("Egyptian standard VAT rate is 14% (medical services may be exempt)")}
+                  {t('Egyptian standard VAT rate is 14% (medical services may be exempt)')}
                 </p>
               </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>{t("Applied VAT rate:")}</strong> {settings.cgstRate}%
+                <strong>{t('Applied VAT rate:')}</strong> {settings.cgstRate}%
               </p>
             </div>
           </CardContent>
@@ -189,7 +189,7 @@ export default function BillingSettingsPage() {
 
             <div className="bg-muted/50 border rounded-lg p-3">
               <p className="text-sm text-muted-foreground">
-                <strong>{t("Preview:")}</strong> {settings.invoicePrefix}
+                <strong>{t('Preview:')}</strong> {settings.invoicePrefix}
                 {settings.invoiceStartingNumber}
               </p>
             </div>
@@ -205,7 +205,7 @@ export default function BillingSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="defaultPaymentTerms">{t("Payment Due (days)")}</Label>
+                <Label htmlFor="defaultPaymentTerms">{t('Payment Due (days)')}</Label>
                 <Input
                   id="defaultPaymentTerms"
                   type="number"
@@ -214,11 +214,13 @@ export default function BillingSettingsPage() {
                     setSettings({ ...settings, defaultPaymentTerms: e.target.value })
                   }
                 />
-                <p className="text-sm text-muted-foreground mt-1">{t('Days until payment is due')}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('Days until payment is due')}
+                </p>
               </div>
 
               <div>
-                <Label htmlFor="lateFeePercentage">{t("Late Fee (%)")}</Label>
+                <Label htmlFor="lateFeePercentage">{t('Late Fee (%)')}</Label>
                 <Input
                   id="lateFeePercentage"
                   type="number"
@@ -304,7 +306,9 @@ export default function BillingSettingsPage() {
                 rows={4}
                 placeholder={t('Payment is due within 30 days...')}
               />
-              <p className="text-sm text-muted-foreground mt-1">{t('Payment terms and conditions')}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t('Payment terms and conditions')}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -313,7 +317,7 @@ export default function BillingSettingsPage() {
         <div className="flex justify-end">
           <Button onClick={handleSaveSettings} disabled={saving} size="lg">
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : t("Save Billing Settings")}
+            {saving ? 'Saving...' : t('Save Billing Settings')}
           </Button>
         </div>
       </div>

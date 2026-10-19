@@ -11,7 +11,10 @@
       "description": "Phase 8 §22: a memory-intent message (deterministic trigger) with a server-resolved patient retrieves the PATIENT-domain memory. The block is bounded, provenance-labeled, and injected as a distinct section — never flattened into the structured record.",
       "actorRole": "DOCTOR",
       "tenant": "A",
-      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "input": {
+        "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?",
+        "patientId": "pat-A1"
+      },
       "expected": { "status": ["COMPLETED"] },
       "tags": ["memory", "retrieval", "provenance"]
     },
@@ -24,7 +27,10 @@
       "description": "Phase 8 §17: conversation-scoped candidates (AI_DERIVED) are allowed when a conversation exists, but are ALWAYS rendered with the UNVERIFIED candidate label — never silently promoted to verified fact.",
       "actorRole": "DOCTOR",
       "tenant": "A",
-      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "input": {
+        "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?",
+        "patientId": "pat-A1"
+      },
       "expected": { "status": ["COMPLETED"] },
       "tags": ["memory", "candidate", "trust"]
     },
@@ -63,7 +69,10 @@
       "description": "Phase 8 §9/§25: memory is an optional enhancement. Without a memory service the loop runs exactly as before (no retrieval, no update, no error).",
       "actorRole": "DOCTOR",
       "tenant": "A",
-      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "input": {
+        "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?",
+        "patientId": "pat-A1"
+      },
       "expected": { "status": ["COMPLETED"] },
       "tags": ["memory", "degraded"]
     },
@@ -76,7 +85,10 @@
       "description": "Phase 8 §21: untrusted/poisoned text stored in memory is rendered ONLY as a provenance-labeled data line. The deterministic agent does not follow instructions embedded in memory content (no cross-patient tools, no other patient's data in the answer).",
       "actorRole": "DOCTOR",
       "tenant": "A",
-      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "input": {
+        "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?",
+        "patientId": "pat-A1"
+      },
       "expected": { "status": ["COMPLETED"] },
       "tags": ["memory", "adversarial", "poisoning"]
     },
@@ -89,7 +101,10 @@
       "description": "Phase 8 §15: memory queries are ALWAYS tenant-pinned. A tenant-B patient memory must never appear for a tenant-A actor, even when the message has a memory trigger.",
       "actorRole": "DOCTOR",
       "tenant": "A",
-      "input": { "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?", "patientId": "pat-A1" },
+      "input": {
+        "message": "Previously, what did we discuss about Ahmed Ali's follow-up plan?",
+        "patientId": "pat-A1"
+      },
       "expected": { "status": ["COMPLETED"] },
       "tags": ["memory", "tenant-isolation"]
     },

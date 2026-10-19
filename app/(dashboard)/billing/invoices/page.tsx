@@ -174,7 +174,9 @@ export default function InvoicesPage() {
         </div>
         <Link href="/billing/invoices/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />{t('ui.new_invoice')}</Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('ui.new_invoice')}
+          </Button>
         </Link>
       </div>
 
@@ -364,12 +366,16 @@ export default function InvoicesPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/billing/invoices/${invoice.id}`)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />
+                              {t('ui.view_details')}
+                            </DropdownMenuItem>
                             {invoice.status === 'DRAFT' && (
                               <DropdownMenuItem
                                 onClick={() => router.push(`/billing/invoices/${invoice.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />
+                                {t('ui.edit')}
+                              </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             {['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(invoice.status) && (
@@ -378,13 +384,19 @@ export default function InvoicesPage() {
                                   router.push(`/billing/invoices/${invoice.id}?action=payment`)
                                 }
                               >
-                                <CreditCard className="h-4 w-4 mr-2" />{t('ui.record_payment')}</DropdownMenuItem>
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                {t('ui.record_payment')}
+                              </DropdownMenuItem>
                             )}
                             <DropdownMenuItem onClick={() => window.print()}>
-                              <Printer className="h-4 w-4 mr-2" />{t('ui.print_invoice')}</DropdownMenuItem>
+                              <Printer className="h-4 w-4 mr-2" />
+                              {t('ui.print_invoice')}
+                            </DropdownMenuItem>
                             {invoice.patient.email && (
                               <DropdownMenuItem>
-                                <Mail className="h-4 w-4 mr-2" />{t('ui.send_via_email')}</DropdownMenuItem>
+                                <Mail className="h-4 w-4 mr-2" />
+                                {t('ui.send_via_email')}
+                              </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             {invoice.status !== 'PAID' && invoice.status !== 'CANCELLED' && (
@@ -410,9 +422,9 @@ export default function InvoicesPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("invoices")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('invoices')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -421,16 +433,20 @@ export default function InvoicesPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

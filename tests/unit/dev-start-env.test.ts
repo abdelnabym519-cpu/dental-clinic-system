@@ -18,7 +18,15 @@ import { runSafeStartup, type DevStartDeps } from '@/scripts/dev-start'
 describe('parseEnvFileContent (Next.js-style subset)', () => {
   it('parses KEY=VALUE with quotes, comments, export prefix and CRLF', () => {
     const out = parseEnvFileContent(
-      ['# comment\r\n', '', 'export DATABASE_URL="mysql://u:p@localhost:3306/db"', "AUTH_SECRET='abc'", 'CRON_SECRET=xyz', 'EMPTY=', '# trailing'].join('\r\n')
+      [
+        '# comment\r\n',
+        '',
+        'export DATABASE_URL="mysql://u:p@localhost:3306/db"',
+        "AUTH_SECRET='abc'",
+        'CRON_SECRET=xyz',
+        'EMPTY=',
+        '# trailing',
+      ].join('\r\n')
     )
     expect(out.DATABASE_URL).toBe('mysql://u:p@localhost:3306/db')
     expect(out.AUTH_SECRET).toBe('abc')
@@ -48,7 +56,10 @@ describe('loadDevEnvIntoProcess (precedence: shell > .env.local > .env)', () => 
   })
 
   it('loads .env, then .env.local overriding it, never overwriting the shell', () => {
-    writeFileSync(path.join(root, '.env'), 'DATABASE_URL="mysql://from-env-file@localhost/db"\nSHARED=from-env\n')
+    writeFileSync(
+      path.join(root, '.env'),
+      'DATABASE_URL="mysql://from-env-file@localhost/db"\nSHARED=from-env\n'
+    )
     writeFileSync(path.join(root, '.env.local'), 'DATABASE_URL="mysql://from-local@localhost/db"\n')
     const resolution = loadDevEnvIntoProcess(root)
     expect(resolution.databaseUrl).toBe('mysql://from-local@localhost/db')
@@ -73,7 +84,10 @@ describe('loadDevEnvIntoProcess (precedence: shell > .env.local > .env)', () => 
   })
 
   it('the actionable error names the sources and precedence but never secret values', () => {
-    writeFileSync(path.join(root, '.env.local'), 'DATABASE_URL="mysql://user:super-secret-value@localhost/db"\n')
+    writeFileSync(
+      path.join(root, '.env.local'),
+      'DATABASE_URL="mysql://user:super-secret-value@localhost/db"\n'
+    )
     const resolution = loadDevEnvIntoProcess(root)
     resolution.databaseUrl = undefined // force the failure path
     try {
@@ -99,7 +113,10 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
     rmSync(root, { recursive: true, force: true })
   })
 
-  function fakeDeps(): DevStartDeps & { seenDatabaseUrl: () => string | undefined; probeUrl: () => string | undefined } {
+  function fakeDeps(): DevStartDeps & {
+    seenDatabaseUrl: () => string | undefined
+    probeUrl: () => string | undefined
+  } {
     let seen: string | undefined
     let probeUrl: string | undefined
     let commands = 0
@@ -126,7 +143,10 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
   }
 
   it('hands the RESOLVED DATABASE_URL explicitly to the probe client constructor (no env-var indirection)', async () => {
-    writeFileSync(path.join(root, '.env'), 'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n')
+    writeFileSync(
+      path.join(root, '.env'),
+      'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n'
+    )
     writeFileSync(path.join(root, 'docker-compose.dev.yml'), 'services: {}\n')
     const deps = fakeDeps()
     // the fake probe client throws its marker error the moment it is created —
@@ -139,7 +159,10 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
   })
 
   it('DATABASE_URL from .env is present in the process before the first command runs', async () => {
-    writeFileSync(path.join(root, '.env'), 'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n')
+    writeFileSync(
+      path.join(root, '.env'),
+      'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n'
+    )
     writeFileSync(path.join(root, 'docker-compose.dev.yml'), 'services: {}\n')
     const deps = fakeDeps()
     // the fake docker succeeds -> the flow proceeds to the probe construction,
@@ -152,9 +175,9 @@ describe('runSafeStartup — the orchestrator loads the environment before any d
 
   it('fails fast with the actionable message when no configuration exists at all', async () => {
     const deps = fakeDeps()
-    await expect(runSafeStartup(deps, { root, readinessTimeoutMs: 10, intervalMs: 5 })).rejects.toThrow(
-      /DATABASE_URL is not configured/
-    )
+    await expect(
+      runSafeStartup(deps, { root, readinessTimeoutMs: 10, intervalMs: 5 })
+    ).rejects.toThrow(/DATABASE_URL is not configured/)
     expect(deps.seenDatabaseUrl()).toBeUndefined() // never proceeded past the environment step
   })
 })
@@ -167,7 +190,9 @@ describe('the REAL PrismaClient receives the explicit datasource URL without pro
     try {
       const { PrismaClient } = await import('@prisma/client')
       const client = new PrismaClient({
-        datasources: { db: { url: 'mysql://sentinel-user:not-a-secret@127.0.0.1:3306/dental_erp' } },
+        datasources: {
+          db: { url: 'mysql://sentinel-user:not-a-secret@127.0.0.1:3306/dental_erp' },
+        },
       } as never)
       try {
         await client.$queryRawUnsafe('SELECT 1')
@@ -177,7 +202,9 @@ describe('the REAL PrismaClient receives the explicit datasource URL without pro
         // The URL was DELIVERED: the failure class is the URL/transport itself,
         // never the missing environment variable.
         expect(msg).not.toContain('Environment variable not found: DATABASE_URL')
-        expect(/prisma:\/\/|Can't reach|Connect|ECONNREFUSED|getaddrinfo|protocol/i.test(msg)).toBe(true)
+        expect(/prisma:\/\/|Can't reach|Connect|ECONNREFUSED|getaddrinfo|protocol/i.test(msg)).toBe(
+          true
+        )
       } finally {
         await client.$disconnect().catch(() => {})
       }

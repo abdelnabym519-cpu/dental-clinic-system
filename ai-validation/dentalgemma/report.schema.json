@@ -59,57 +59,35 @@
       "description": "Pinned repository revision, so results are tied to exact bytes."
     },
     "main_artifact": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "Path to the main language-model GGUF."
     },
     "mmproj_artifact": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "Path to the multimodal projector GGUF."
     },
     "main_size_bytes": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Observed size of the main GGUF in bytes."
     },
     "mmproj_size_bytes": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Observed size of the projector GGUF in bytes."
     },
     "main_sha256": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "pattern": "^[0-9a-f]{64}$",
       "description": "LOCAL SHA-256 of the main GGUF. Null when not computed."
     },
     "mmproj_sha256": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "pattern": "^[0-9a-f]{64}$",
       "description": "LOCAL SHA-256 of the projector GGUF. Null when not computed."
     },
     "runtime": {
-      "type": [
-        "object",
-        "string",
-        "null"
-      ],
+      "type": ["object", "string", "null"],
       "description": "The inference runtime: name, binary path and version line.",
       "properties": {
         "name": {
@@ -119,10 +97,7 @@
           "type": "string"
         },
         "version": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "obsolete_tools_present": {
           "type": "array",
@@ -133,60 +108,36 @@
       }
     },
     "cpu": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "CPU model string of the machine that ran the job."
     },
     "ram_gb": {
-      "type": [
-        "number",
-        "null"
-      ],
+      "type": ["number", "null"],
       "minimum": 0,
       "description": "Total physical RAM in GiB."
     },
     "cuda": {
-      "type": [
-        "boolean",
-        "null"
-      ],
+      "type": ["boolean", "null"],
       "description": "Whether an NVIDIA CUDA-capable GPU was detected on the machine that ran the inference. This lab never requires one. null in a template, because no machine has been measured yet."
     },
     "intel_gpu": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "Intel display adapter detection (Iris Xe and friends)."
     },
     "input": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "Path to the image sent to the model."
     },
     "input_sha256": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "SHA-256 of the input image, for reproducibility. Never commit the image itself."
     },
     "input_image": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "Probed properties of the input image (format, width, height, mode)."
     },
     "command": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": ["array", "null"],
       "items": {
         "type": "string"
       },
@@ -201,56 +152,35 @@
       "description": "True only when the runtime exited 0 AND non-empty generated text exists. Never set from intention."
     },
     "inference_seconds": {
-      "type": [
-        "number",
-        "null"
-      ],
+      "type": ["number", "null"],
       "minimum": 0,
       "description": "Wall-clock duration of the process, in seconds."
     },
     "peak_ram_gb": {
-      "type": [
-        "number",
-        "null"
-      ],
+      "type": ["number", "null"],
       "minimum": 0,
       "description": "Peak resident/working set of the child process in GiB. Sampled, not profiled; null when no probe worked."
     },
     "cpu_seconds": {
-      "type": [
-        "number",
-        "null"
-      ],
+      "type": ["number", "null"],
       "minimum": 0,
       "description": "CPU time consumed by the child process, in seconds, where measurable."
     },
     "memory_probe": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "Which probe produced the memory figure, so it is never quoted without its origin."
     },
     "output_path": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "Path to the generated text. Null when nothing was generated."
     },
     "output_chars": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": ["integer", "null"],
       "minimum": 0,
       "description": "Length of the generated text, in characters."
     },
     "exit_code": {
-      "type": [
-        "integer",
-        "null"
-      ],
+      "type": ["integer", "null"],
       "description": "Exit code of the runtime process."
     },
     "timed_out": {
@@ -259,12 +189,7 @@
     },
     "status": {
       "type": "string",
-      "enum": [
-        "UNKNOWN",
-        "BLOCKED",
-        "FAILED",
-        "OPERATIONAL"
-      ],
+      "enum": ["UNKNOWN", "BLOCKED", "FAILED", "OPERATIONAL"],
       "description": "UNKNOWN: not attempted. BLOCKED: a prerequisite is missing. FAILED: attempted and did not produce usable text. OPERATIONAL: exited 0 with non-empty generated text on disk."
     },
     "notes": {
@@ -275,17 +200,11 @@
       "description": "Human-readable notes about anything unusual, including why a status was chosen."
     },
     "generated_text_preview": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "description": "First part of the generated text, for quick inspection. The full text lives in the response file."
     },
     "capture": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "How the runtime's bytes were captured, decoded and preserved. The .raw files hold the child's bytes unmodified; the readable .txt/.log files have ANSI escapes removed and invalid UTF-8 replaced, and both of those steps are counted here so a substitution made by this lab can never be mistaken for text the model produced.",
       "properties": {
         "encoding": {
@@ -293,243 +212,144 @@
           "description": "Encoding used to decode the captured bytes."
         },
         "stdout_bytes": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "stdout_sha256": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "stderr_bytes": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "stderr_sha256": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "stdout_decode_replacements": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Byte sequences on stdout that were not valid UTF-8 and became U+FFFD."
         },
         "stderr_decode_replacements": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "invalid_utf8_sequences": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "object"
           }
         },
         "ansi_stripped_from_readable_text": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "readable_text_is_raw": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "raw_stdout_path": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "raw_stderr_path": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "note": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     "output_integrity": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "What the runtime did to the text before this lab saw it. llama.cpp writes [UNK_BYTE_0x...] into the generated text when its detokenizer cannot map a token piece (see OUTPUT_DECODING.md); those markers are counted and preserved, never removed. `decoding_clean` false does not change `status`.",
       "properties": {
         "count": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "codes": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           }
         },
         "codepoints": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           }
         },
         "unresolved_codes": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           }
         },
         "markers_preserved": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "decoding_clean": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "True only when the runtime emitted no markers and no byte needed replacing."
         },
         "explanation": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "note": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     "execution": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "How the runtime was invoked: the CPU-only policy, whether any GPU flag was requested, which compatibility workarounds were applied, and — once a run has happened — what the runtime's own log said about the device it used. `device_evidence` is null before a run: the request is recorded, the runtime's confirmation is not assumed. The CPU-only pins (-ngl 0, -dev none, --no-mmproj-offload) exist because a run that believed it was CPU-only still submitted vision-encoder work to the machine's Vulkan device, which lost the device and killed the process. The tokenizer override named here is applied in memory only and recorded as a workaround, never as a repair: the GGUF on disk is read-only and its digest is recorded in this same report.",
       "properties": {
         "cpu_only": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "True when the run is pinned to the CPU."
         },
         "reason": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Why that mode was chosen, including the flag that switched CPU-only off, if any was given."
         },
         "gpu_requested_by": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           },
           "description": "The exact command-line flags that asked for GPU work. Empty means none did."
         },
         "ngl": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Layer count passed as -ngl (0 in CPU-only mode; null when the flag is omitted)."
         },
         "device": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Value passed as -dev ('none' in CPU-only mode; null when the flag is omitted)."
         },
         "mmproj_offload": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Whether the projector is allowed on a GPU device."
         },
         "workarounds": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           },
           "description": "The compatibility settings this run depends on, spelled out. A run that needs them is not the same as a run without them."
         },
         "tokenizer_metadata": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "description": "The GGUF's own tokenizer.ggml.model / tokenizer.ggml.pre and the decode path they select, read from the file. Evidence, not an input: a metadata quirk cannot switch the workaround off silently."
         },
         "override_matches_metadata": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Whether the applied override addresses the decode path the file's own metadata selects. Null when the metadata could not be read."
         },
         "device_evidence": {
-          "type": [
-            "object",
-            "null"
-          ],
+          "type": ["object", "null"],
           "description": "What the runtime's own log said about the device it used, with a verdict of cpu-only-confirmed-by-log, gpu-work-observed, or not-stated-in-log. Vulkan mentions are counted because the backend DLL is enumerated at startup even when nothing is submitted."
         },
         "notes": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           },
@@ -538,29 +358,17 @@
       }
     },
     "validation_scope": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "description": "What this report does and does not establish. `functional_inference` is true only when a real run exited 0 with non-empty text; `clinical_validation` is always false — no ground truth, no accuracy metric, and the publisher does not release this model as a medical device. A produced answer is not a correct answer, and nothing here may be read as a diagnosis.",
       "properties": {
         "functional_inference": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "clinical_validation": {
-          "type": [
-            "boolean",
-            "null"
-          ]
+          "type": ["boolean", "null"]
         },
         "statement": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     }

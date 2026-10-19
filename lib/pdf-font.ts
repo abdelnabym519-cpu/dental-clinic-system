@@ -158,7 +158,9 @@ function glyphRange(font: ParsedFont, gid: number): [number, number] | null {
   if (!loca || !glyf || gid < 0 || gid >= font.numGlyphs) return null
   const shortFormat = font.indexToLocFormat === 0
   const read = (index: number) =>
-    shortFormat ? font.buffer.readUInt16BE(loca.offset + index * 2) * 2 : font.buffer.readUInt32BE(loca.offset + index * 4)
+    shortFormat
+      ? font.buffer.readUInt16BE(loca.offset + index * 2) * 2
+      : font.buffer.readUInt32BE(loca.offset + index * 4)
   const start = read(gid)
   const end = read(gid + 1)
   if (end <= start) return null
@@ -179,8 +181,10 @@ function compositeComponents(font: ParsedFont, gid: number): number[] {
     components.push(glyphIndex)
     cursor += 4
     cursor += flags & 0x0001 ? 4 : 2 // ARG_1_AND_2_ARE_WORDS
-    if (flags & 0x0008) cursor += 2 // WE_HAVE_A_SCALE
-    else if (flags & 0x0040) cursor += 4 // WE_HAVE_AN_X_AND_Y_SCALE
+    if (flags & 0x0008)
+      cursor += 2 // WE_HAVE_A_SCALE
+    else if (flags & 0x0040)
+      cursor += 4 // WE_HAVE_AN_X_AND_Y_SCALE
     else if (flags & 0x0080) cursor += 8 // WE_HAVE_A_TWO_BY_TWO
     if (!(flags & 0x0020)) break // MORE_COMPONENTS
   }
@@ -285,25 +289,38 @@ export function subsetFontFor(codePoints: Iterable<number>): EmbeddedFont {
     } else {
       // Monospaced tail: metrics for glyph ids beyond numberOfHMetrics are
       // implied by the last entry, so lsb still has to be read.
-      const lsb = font.buffer.readInt16BE(hmtxSource.offset + originalMetricsCount * 4 + (gid - originalMetricsCount) * 2)
+      const lsb = font.buffer.readInt16BE(
+        hmtxSource.offset + originalMetricsCount * 4 + (gid - originalMetricsCount) * 2
+      )
       hmtx.writeUInt16BE(lastAdvance, gid * 4)
       hmtx.writeInt16BE(lsb, gid * 4 + 2)
     }
   }
 
   // head — copy, then fix the fields the rebuild invalidates.
-  const head = Buffer.from(font.buffer.subarray(font.tables.head.offset, font.tables.head.offset + font.tables.head.length))
+  const head = Buffer.from(
+    font.buffer.subarray(font.tables.head.offset, font.tables.head.offset + font.tables.head.length)
+  )
   head.writeInt32BE(0, 8) // checkSumAdjustment, recomputed after assembly
   head.writeInt16BE(1, 50) // indexToLocFormat: long, matching loca above
 
-  const hhea = Buffer.from(font.buffer.subarray(font.tables.hhea.offset, font.tables.hhea.offset + font.tables.hhea.length))
+  const hhea = Buffer.from(
+    font.buffer.subarray(font.tables.hhea.offset, font.tables.hhea.offset + font.tables.hhea.length)
+  )
   hhea.writeUInt16BE(numGlyphs, 34) // numberOfHMetrics
 
-  const maxp = Buffer.from(font.buffer.subarray(font.tables.maxp.offset, font.tables.maxp.offset + font.tables.maxp.length))
+  const maxp = Buffer.from(
+    font.buffer.subarray(font.tables.maxp.offset, font.tables.maxp.offset + font.tables.maxp.length)
+  )
   maxp.writeUInt16BE(numGlyphs, 4)
 
   const os2 = font.tables['OS/2']
-    ? Buffer.from(font.buffer.subarray(font.tables['OS/2'].offset, font.tables['OS/2'].offset + font.tables['OS/2'].length))
+    ? Buffer.from(
+        font.buffer.subarray(
+          font.tables['OS/2'].offset,
+          font.tables['OS/2'].offset + font.tables['OS/2'].length
+        )
+      )
     : null
 
   // name — a minimal, valid table (family/subfamily/full/postscript).
@@ -396,7 +413,11 @@ export function subsetFontFor(codePoints: Iterable<number>): EmbeddedFont {
 }
 
 /** Flate-compressed font stream plus its uncompressed length, for /FontFile2. */
-export function fontStream(font: EmbeddedFont): { data: Buffer; length1: number; compressed: boolean } {
+export function fontStream(font: EmbeddedFont): {
+  data: Buffer
+  length1: number
+  compressed: boolean
+} {
   const deflated = deflateSync(font.ttf)
   // Only worth compressing if it actually shrinks.
   if (deflated.length < font.ttf.length) {

@@ -43,7 +43,10 @@ export function freshnessOf(latest: Date | string | null | undefined, now: Date)
   return 'historical'
 }
 
-export function newestTimestamp<T>(rows: T[], pick: (r: T) => Date | string | null | undefined): Date | string | null {
+export function newestTimestamp<T>(
+  rows: T[],
+  pick: (r: T) => Date | string | null | undefined
+): Date | string | null {
   let best: number | null = null
   let value: Date | string | null = null
   for (const r of rows) {
@@ -51,7 +54,10 @@ export function newestTimestamp<T>(rows: T[], pick: (r: T) => Date | string | nu
     if (!t) continue
     const ms = new Date(t).getTime()
     if (Number.isNaN(ms)) continue
-    if (best === null || ms > best) { best = ms; value = t }
+    if (best === null || ms > best) {
+      best = ms
+      value = t
+    }
   }
   return value
 }

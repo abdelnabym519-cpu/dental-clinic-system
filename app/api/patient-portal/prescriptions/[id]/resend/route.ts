@@ -14,10 +14,7 @@ import { prescriptionSent } from '@/lib/messaging/templates'
  * SECURITY: looked up by { id, hospitalId, patientId } from the portal
  * token — another patient's prescription is a 404.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, patient } = await requirePatientAuth(req)
   if (error) return error
 
@@ -52,9 +49,7 @@ export async function POST(
         text: prescriptionSent(
           { name: hospital?.name ?? '', address: hospital?.address ?? null },
           `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}`,
-          (prescription.issuedAt ?? prescription.createdAt)
-            .toISOString()
-            .slice(0, 10)
+          (prescription.issuedAt ?? prescription.createdAt).toISOString().slice(0, 10)
         ),
       },
     })
@@ -64,10 +59,7 @@ export async function POST(
       data: { sentViaWhatsApp: true, whatsappSentAt: new Date() },
     })
 
-    return NextResponse.json(
-      { success: true, queued: queueId !== null, queueId },
-      { status: 200 }
-    )
+    return NextResponse.json({ success: true, queued: queueId !== null, queueId }, { status: 200 })
   } catch (err: unknown) {
     console.error('Patient prescription resend error:', err)
     return NextResponse.json({ error: 'Failed to queue the prescription message' }, { status: 500 })

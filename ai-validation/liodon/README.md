@@ -64,16 +64,16 @@ activation and call the interpreter directly, e.g.
 
 ## What is being validated
 
-| | |
-| --- | --- |
-| Model | Liodon Dental Panoramic Detector |
-| Repository | `liodon-ai/dental-panoramic-detector` (Hugging Face) |
-| Artifact | `best.onnx` — 10,605,711 bytes |
-| SHA-256 | `4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71` |
-| Architecture | YOLO11-N (Ultralytics), ONNX export |
-| Classes | `caries`, `periapical_lesion`, `impacted_tooth` |
-| Runtime | ONNX Runtime **CPU** only — `CPUExecutionProvider` |
-| Licence | CC-BY-NC-4.0 (non-commercial) |
+|              |                                                                    |
+| ------------ | ------------------------------------------------------------------ |
+| Model        | Liodon Dental Panoramic Detector                                   |
+| Repository   | `liodon-ai/dental-panoramic-detector` (Hugging Face)               |
+| Artifact     | `best.onnx` — 10,605,711 bytes                                     |
+| SHA-256      | `4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71` |
+| Architecture | YOLO11-N (Ultralytics), ONNX export                                |
+| Classes      | `caries`, `periapical_lesion`, `impacted_tooth`                    |
+| Runtime      | ONNX Runtime **CPU** only — `CPUExecutionProvider`                 |
+| Licence      | CC-BY-NC-4.0 (non-commercial)                                      |
 
 Full provenance, including every sibling file's hash and the publisher's own
 stated limitations: [`MODEL_PROVENANCE.md`](MODEL_PROVENANCE.md).
@@ -241,16 +241,16 @@ exactly what the reference implementation uses.
 
 Per image, `timings_ms` contains:
 
-| Key | Meaning |
-| --- | --- |
-| `decode_ms` | reading and converting the image to RGB |
-| `preprocess_ms` | letterbox + normalise + NCHW |
-| `inference_ms` | the measured model call (after warmup) |
+| Key                 | Meaning                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `decode_ms`         | reading and converting the image to RGB                      |
+| `preprocess_ms`     | letterbox + normalise + NCHW                                 |
+| `inference_ms`      | the measured model call (after warmup)                       |
 | `inference_cold_ms` | the first call, before warmup — the honest cold-start number |
-| `inference_all_ms` | every call, in order |
-| `postprocess_ms` | decode + confidence filter + NMS |
-| `draw_ms` | annotation overlay (cosmetic, not part of the model) |
-| `total_ms` | full per-image wall clock |
+| `inference_all_ms`  | every call, in order                                         |
+| `postprocess_ms`    | decode + confidence filter + NMS                             |
+| `draw_ms`           | annotation overlay (cosmetic, not part of the model)         |
+| `total_ms`          | full per-image wall clock                                    |
 
 Plus model load time, the active execution provider, process RSS before/after,
 and peak working set on Windows.
@@ -299,8 +299,8 @@ The Space's `_nms` is:
 order = order[1:][[_iou(boxes[i], boxes[j]) < iou_thresh for j in order]]
 ```
 
-`order[1:]` is evaluated before the comprehension, so the slice has *n−1*
-elements while the mask is built over the untruncated `order` and has *n*.
+`order[1:]` is evaluated before the comprehension, so the slice has _n−1_
+elements while the mask is built over the untruncated `order` and has _n_.
 NumPy raises `IndexError`.
 
 This was reproduced in Arena by running the publisher's `_iou`/`_nms` snippet
@@ -317,17 +317,17 @@ silent.
 
 ## Verification status
 
-| Claim | Status |
-| --- | --- |
-| Model repository, revision, licence, class list | verified against the HF registry API |
-| `best.onnx` size and SHA-256 | verified against the HF registry API (LFS metadata) |
-| Preprocessing/postprocessing semantics | verified from the publisher's reference `app.py` |
-| Reference NMS raises `IndexError` | **reproduced in Arena** against the verbatim snippet |
+| Claim                                                                     | Status                                                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Model repository, revision, licence, class list                           | verified against the HF registry API                                      |
+| `best.onnx` size and SHA-256                                              | verified against the HF registry API (LFS metadata)                       |
+| Preprocessing/postprocessing semantics                                    | verified from the publisher's reference `app.py`                          |
+| Reference NMS raises `IndexError`                                         | **reproduced in Arena** against the verbatim snippet                      |
 | Runner plumbing (letterbox, decode, NMS, output writing, instrumentation) | **verified in Arena** end-to-end against the stand-in graph, 20/20 checks |
-| Stop-paths (missing model, hash mismatch, stand-in guard) | **verified in Arena**, exit codes as designed |
-| **Model actually loads and infers on this artifact, on Windows** | **NOT YET TESTED** — first real evidence comes from your machine |
-| Inference speed / RAM on the target laptop | **UNKNOWN** until you run it |
-| Detection quality on your images | **UNKNOWN** until you run it |
+| Stop-paths (missing model, hash mismatch, stand-in guard)                 | **verified in Arena**, exit codes as designed                             |
+| **Model actually loads and infers on this artifact, on Windows**          | **NOT YET TESTED** — first real evidence comes from your machine          |
+| Inference speed / RAM on the target laptop                                | **UNKNOWN** until you run it                                              |
+| Detection quality on your images                                          | **UNKNOWN** until you run it                                              |
 
 Known gap: `huggingface.co` was not reachable from the Arena sandbox, so the
 `.onnx` bytes could not be downloaded or hashed there. The hash used for
@@ -355,16 +355,16 @@ substitute, convert, re-export, quantise or retrain a weight file.
 ## Where this could go later
 
 **Nothing is integrated, and nothing here is a plan to integrate.** This section
-records where a future, separately-scoped task *might* connect Liodon to the ERP,
+records where a future, separately-scoped task _might_ connect Liodon to the ERP,
 for reference only.
 
-| Candidate | Why it fits | Honest gap |
-| --- | --- | --- |
-| `Document.annotations` (`Json?`) + existing `GET/PUT /api/patients/[id]/documents/[documentId]/annotations` | A detection (`class`, `confidence`, `bbox`) maps naturally onto the existing `Annotation` shape; `DocumentType` already has `XRAY` | That field holds **clinician** annotations; machine output needs a source/method marker or a reviewer can't tell which is which |
-| A new model, e.g. `DocumentAIAnalysis` linked to `Document` | Keeps model id, revision, weights hash, params and runtime — auditable and separable from clinician work | Requires a Prisma schema change (out of scope) |
-| `AISkillExecution` | Already the generic "an AI thing ran" ledger (`skill`, `input`, `output`, `duration`, `cost`) | Generic log, not a clinical record; no `Document` foreign key |
-| `DentalChartEntry` | `ToothCondition` already includes `CARIES`, `ABSCESS`, `PERIODONTAL`; per-tooth | **Liodon emits pixel boxes, not FDI tooth numbers.** Bridging that needs a tooth-numbering step neither the model nor the ERP currently provides |
-| `Patient.aiSummary` / `aiSummaryAt` | Already exists | Free-text summary; a list of boxes does not fit |
+| Candidate                                                                                                   | Why it fits                                                                                                                        | Honest gap                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Document.annotations` (`Json?`) + existing `GET/PUT /api/patients/[id]/documents/[documentId]/annotations` | A detection (`class`, `confidence`, `bbox`) maps naturally onto the existing `Annotation` shape; `DocumentType` already has `XRAY` | That field holds **clinician** annotations; machine output needs a source/method marker or a reviewer can't tell which is which                  |
+| A new model, e.g. `DocumentAIAnalysis` linked to `Document`                                                 | Keeps model id, revision, weights hash, params and runtime — auditable and separable from clinician work                           | Requires a Prisma schema change (out of scope)                                                                                                   |
+| `AISkillExecution`                                                                                          | Already the generic "an AI thing ran" ledger (`skill`, `input`, `output`, `duration`, `cost`)                                      | Generic log, not a clinical record; no `Document` foreign key                                                                                    |
+| `DentalChartEntry`                                                                                          | `ToothCondition` already includes `CARIES`, `ABSCESS`, `PERIODONTAL`; per-tooth                                                    | **Liodon emits pixel boxes, not FDI tooth numbers.** Bridging that needs a tooth-numbering step neither the model nor the ERP currently provides |
+| `Patient.aiSummary` / `aiSummaryAt`                                                                         | Already exists                                                                                                                     | Free-text summary; a list of boxes does not fit                                                                                                  |
 
 Constraints any future work must respect:
 

@@ -102,7 +102,9 @@ export default function PatientDashboard() {
         <h1 className="text-2xl font-bold">{t('Dashboard')}</h1>
         <Link href="/portal/book">
           <Button>
-            <CalendarPlus className="h-4 w-4 mr-2" />{t('ui.book_appointment')}</Button>
+            <CalendarPlus className="h-4 w-4 mr-2" />
+            {t('ui.book_appointment')}
+          </Button>
         </Link>
       </div>
 
@@ -170,7 +172,9 @@ export default function PatientDashboard() {
             <Link
               href="/portal/appointments"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
+            >
+              {t('ui.view_all')}
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -189,13 +193,13 @@ export default function PatientDashboard() {
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3 text-muted-foreground" />
                         <span className="text-sm font-medium">
-                          {formatDate(apt.scheduledDate)} {t("at")} {apt.scheduledTime}
+                          {formatDate(apt.scheduledDate)} {t('at')} {apt.scheduledTime}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">
-                          {t("Dr.")} {apt.doctor.firstName} {apt.doctor.lastName}
+                          {t('Dr.')} {apt.doctor.firstName} {apt.doctor.lastName}
                         </span>
                       </div>
                     </div>
@@ -216,12 +220,16 @@ export default function PatientDashboard() {
             <Link
               href="/portal/bills"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
+            >
+              {t('ui.view_all')}
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
             {data.outstandingInvoices.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">{t('All bills are paid!')}</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {t('All bills are paid!')}
+              </p>
             ) : (
               <div className="space-y-3">
                 {data.outstandingInvoices.map((inv) => (
@@ -233,7 +241,7 @@ export default function PatientDashboard() {
                       <p className="text-sm font-medium">{inv.invoiceNo}</p>
                       {inv.dueDate && (
                         <p className="text-xs text-muted-foreground">
-                          {t("Due:")} {formatDate(inv.dueDate)}
+                          {t('Due:')} {formatDate(inv.dueDate)}
                         </p>
                       )}
                     </div>
@@ -260,7 +268,9 @@ export default function PatientDashboard() {
             <Link
               href="/portal/records"
               className="text-xs text-primary hover:underline flex items-center gap-1"
-            >{t('ui.view_all')}<ArrowRight className="h-3 w-3" />
+            >
+              {t('ui.view_all')}
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
           <CardContent>
@@ -278,7 +288,7 @@ export default function PatientDashboard() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium">{opt.procedure.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t("Dr.")} {opt.doctor.firstName} {opt.doctor.lastName} &middot;{' '}
+                        {t('Dr.')} {opt.doctor.firstName} {opt.doctor.lastName} &middot;{' '}
                         {formatDate(opt.createdAt)}
                       </p>
                     </div>

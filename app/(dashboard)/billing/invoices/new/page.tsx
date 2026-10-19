@@ -372,7 +372,9 @@ export default function NewInvoicePage() {
                       setSelectedPatient(null)
                       setItems([])
                     }}
-                  >{t('ui.change')}</Button>
+                  >
+                    {t('ui.change')}
+                  </Button>
                 </div>
               ) : (
                 <div className="relative">
@@ -438,7 +440,9 @@ export default function NewInvoicePage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <div className="font-medium">{formatCurrency(treatment.unitPrice, locale)}</div>
+                            <div className="font-medium">
+                              {formatCurrency(treatment.unitPrice, locale)}
+                            </div>
                           </div>
                           <Button
                             variant="outline"
@@ -559,7 +563,7 @@ export default function NewInvoicePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>{t("Notes (visible on invoice)")}</Label>
+                <Label>{t('Notes (visible on invoice)')}</Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -602,7 +606,7 @@ export default function NewInvoicePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="FIXED">{t('Fixed Amount (EGP)')}</SelectItem>
-                      <SelectItem value="PERCENTAGE">{t("% Percent")}</SelectItem>
+                      <SelectItem value="PERCENTAGE">{t('% Percent')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
@@ -647,7 +651,10 @@ export default function NewInvoicePage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span>{t("VAT (")}{vatConfig.rate}%)</span>
+                  <span>
+                    {t('VAT (')}
+                    {vatConfig.rate}%)
+                  </span>
                   <span>{formatCurrency(totals.cgstAmount, locale)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
@@ -663,7 +670,7 @@ export default function NewInvoicePage() {
                   onClick={() => handleSubmit('PENDING')}
                   disabled={submitting || !selectedPatient || items.length === 0}
                 >
-                  {submitting ? 'Creating...' : t("Create & Send Invoice")}
+                  {submitting ? 'Creating...' : t('Create & Send Invoice')}
                 </Button>
                 <Button
                   variant="outline"

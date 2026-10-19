@@ -59,7 +59,13 @@ export function FindingsViewer({
   const [natural, setNatural] = useState({ width: 0, height: 0 })
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const panState = useRef<{ active: boolean; startX: number; startY: number; baseX: number; baseY: number }>({
+  const panState = useRef<{
+    active: boolean
+    startX: number
+    startY: number
+    baseX: number
+    baseY: number
+  }>({
     active: false,
     startX: 0,
     startY: 0,
@@ -87,12 +93,9 @@ export function FindingsViewer({
     setNatural({ width: 0, height: 0 })
   }, [activeSrc])
 
-  const zoomBy = useCallback(
-    (factor: number) => {
-      setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z * factor)))
-    },
-    []
-  )
+  const zoomBy = useCallback((factor: number) => {
+    setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z * factor)))
+  }, [])
 
   // Wheel zoom with a non-passive listener so the page never scrolls along
   // with the viewer.
@@ -110,7 +113,13 @@ export function FindingsViewer({
 
   const onMouseDown = (e: React.MouseEvent) => {
     if (zoom <= 1) return
-    panState.current = { active: true, startX: e.clientX, startY: e.clientY, baseX: pan.x, baseY: pan.y }
+    panState.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: pan.x,
+      baseY: pan.y,
+    }
   }
   const onMouseMove = (e: React.MouseEvent) => {
     const s = panState.current
@@ -147,14 +156,22 @@ export function FindingsViewer({
     for (const f of findings) {
       if (isBoxFinding(f) && !boxSeen.has(f.condition)) {
         boxSeen.add(f.condition)
-        items.push({ key: `box-${f.condition}`, label: conditionLabel(f.condition), color: findingColor(f.condition) })
+        items.push({
+          key: `box-${f.condition}`,
+          label: conditionLabel(f.condition),
+          color: findingColor(f.condition),
+        })
       } else if (isLandmarkFinding(f)) {
         landmarks = true
       } else if (isSegmentFinding(f) && !segSeen.has(f.class_id)) {
         // MeshSegNet's neutral vocabulary is the recorded identity (no
         // official label-to-tooth-name map exists) — shown as-is.
         segSeen.add(f.class_id)
-        items.push({ key: `seg-${f.class_id}`, label: f.class_name, color: findingColor(f.class_name) })
+        items.push({
+          key: `seg-${f.class_id}`,
+          label: f.class_name,
+          color: findingColor(f.class_name),
+        })
       }
     }
     if (landmarks) {
@@ -199,21 +216,42 @@ export function FindingsViewer({
           </div>
 
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="outline" onClick={() => zoomBy(1 / 1.25)} title={t('imaging.zoom_out')}>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => zoomBy(1 / 1.25)}
+              title={t('imaging.zoom_out')}
+            >
               <Minus className="h-4 w-4" />
             </Button>
-            <span className="w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)}%</span>
-            <Button size="icon" variant="outline" onClick={() => zoomBy(1.25)} title={t('imaging.zoom_in')}>
+            <span className="w-12 text-center text-xs text-muted-foreground">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => zoomBy(1.25)}
+              title={t('imaging.zoom_in')}
+            >
               <Plus className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="outline" onClick={resetView} title={t('imaging.zoom_reset')}>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={resetView}
+              title={t('imaging.zoom_reset')}
+            >
               <Maximize2 className="h-4 w-4" />
             </Button>
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={showFindings} onCheckedChange={setShowFindings} disabled={readonly && findings.length === 0} />
+              <Switch
+                checked={showFindings}
+                onCheckedChange={setShowFindings}
+                disabled={readonly && findings.length === 0}
+              />
               {showFindings ? t('imaging.hide_findings') : t('imaging.show_findings')}
             </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -321,7 +359,8 @@ export function FindingsViewer({
                     condition: conditionLabel(f.condition),
                     pct: Math.round((f.confidence ?? 0) * 100),
                   })
-                  const labelY = bb.y > labelSize * 1.6 ? bb.y - labelSize * 0.4 : bb.y + bb.height + labelSize
+                  const labelY =
+                    bb.y > labelSize * 1.6 ? bb.y - labelSize * 0.4 : bb.y + bb.height + labelSize
                   return (
                     <g key={`${bb.x}-${bb.y}-${vi}`}>
                       <rect
@@ -366,7 +405,10 @@ export function FindingsViewer({
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
             {legend.map((item) => (
               <span key={item.key} className="flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.color }} />
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-sm"
+                  style={{ backgroundColor: item.color }}
+                />
                 {item.label}
               </span>
             ))}

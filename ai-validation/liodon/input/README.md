@@ -11,6 +11,7 @@ Panoramic radiographs are wide (typically ~2:1 to 3:1). The runner letterboxes
 them to 640x640 and maps boxes back to original pixel coordinates.
 
 Notes
+
 - All processing is local. Nothing is uploaded.
 - Panoramic images can contain burned-in patient identifiers — check before
   sharing any output.

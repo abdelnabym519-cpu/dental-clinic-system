@@ -47,7 +47,8 @@ export interface OrchestratorSegment {
  * Every result shape the orchestrator can return (per-engine validation in
  * ai/orchestrator/app/validation.py is the authority on each one).
  */
-export type OrchestratorResultFinding = OrchestratorFinding | OrchestratorLandmark | OrchestratorSegment
+export type OrchestratorResultFinding =
+  OrchestratorFinding | OrchestratorLandmark | OrchestratorSegment
 
 export function isBoxFinding(f: OrchestratorResultFinding): f is OrchestratorFinding {
   const bb = (f as OrchestratorFinding).bounding_box
@@ -156,7 +157,10 @@ export async function requestOrchestratorAnalyze(params: AnalyzeParams): Promise
 
   const data = (await res.json().catch(() => ({}))) as { detail?: string } & AnalyzeResult
   if (!res.ok) {
-    throw new OrchestratorError(res.status, data.detail || `orchestrator error (HTTP ${res.status})`)
+    throw new OrchestratorError(
+      res.status,
+      data.detail || `orchestrator error (HTTP ${res.status})`
+    )
   }
   return data
 }

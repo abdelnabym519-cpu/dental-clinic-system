@@ -25,10 +25,7 @@ import { uploadUrl } from '@/lib/storage'
 
 const VIEW_ROLES = ['DOCTOR', 'ADMIN', 'RECEPTIONIST']
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole(VIEW_ROLES)
 
   if (error || !hospitalId) {
@@ -83,10 +80,7 @@ export async function GET(
   let status: 'UPLOADED' | 'PROCESSING' | 'ANALYZED' | 'REVIEWED'
   if (study.status === 'ANALYZED' || study.status === 'REVIEWED') {
     status = study.status
-  } else if (
-    latestJob &&
-    (latestJob.status === 'PENDING' || latestJob.status === 'PROCESSING')
-  ) {
+  } else if (latestJob && (latestJob.status === 'PENDING' || latestJob.status === 'PROCESSING')) {
     status = 'PROCESSING'
   } else {
     status = 'UPLOADED'

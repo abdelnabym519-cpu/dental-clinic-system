@@ -14,22 +14,15 @@
         "message": "Record a payment of 500 egp for Ahmed Ali"
       },
       "expected": {
-        "status": [
-          "FAILED"
-        ],
+        "status": ["FAILED"],
         "stopReason": "SAFETY_BLOCK",
         "actionsExecuted": {
           "min": 0,
           "max": 0
         },
-        "mustContain": [
-          "not permitted for your role (DOCTOR)"
-        ]
+        "mustContain": ["not permitted for your role (DOCTOR)"]
       },
-      "tags": [
-        "phase-1",
-        "rbac"
-      ]
+      "tags": ["phase-1", "rbac"]
     },
     {
       "caseId": "RGN-002",
@@ -44,20 +37,12 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "CLINICAL_ANALYSIS",
         "contextProfile": "CLINICAL",
-        "tools": [
-          "get_clinical_summary",
-          "retrieve_dental_knowledge"
-        ]
+        "tools": ["get_clinical_summary", "retrieve_dental_knowledge"]
       },
-      "tags": [
-        "phase-2",
-        "profile"
-      ]
+      "tags": ["phase-2", "profile"]
     },
     {
       "caseId": "RGN-003",
@@ -71,22 +56,15 @@
         "message": "Please handle the dental chair 4 maintenance checklist"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
         "llmCalls": {
           "min": 1,
           "max": 1
         },
-        "tools": [
-          "get_appointments"
-        ]
+        "tools": ["get_appointments"]
       },
-      "tags": [
-        "phase-3",
-        "llm-fallback"
-      ]
+      "tags": ["phase-3", "llm-fallback"]
     },
     {
       "caseId": "RGN-004",
@@ -100,13 +78,9 @@
         "message": "What are the indications for a root canal treatment?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMin": 1,
           "failureCode": null
@@ -116,10 +90,7 @@
           "unsupportedMax": 0
         }
       },
-      "tags": [
-        "phase-4",
-        "rag"
-      ]
+      "tags": ["phase-4", "rag"]
     },
     {
       "caseId": "RGN-005",
@@ -133,24 +104,13 @@
         "message": "Can AI analyze panoramic x-rays to detect caries?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "patientInvolved": false,
-        "tools": [
-          "local_ai_capabilities"
-        ],
-        "mustContain": [
-          "decision support only"
-        ],
-        "mustNotContain": [
-          "engine selected"
-        ]
+        "tools": ["local_ai_capabilities"],
+        "mustContain": ["decision support only"],
+        "mustNotContain": ["engine selected"]
       },
-      "tags": [
-        "phase-5",
-        "capability"
-      ]
+      "tags": ["phase-5", "capability"]
     },
     {
       "caseId": "RGN-006",
@@ -164,22 +124,12 @@
         "message": "ما الذي يمكن للذكاء الاصطناعي تحليله من الأشعة؟"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "patientInvolved": false,
-        "tools": [
-          "local_ai_capabilities"
-        ],
-        "mustContain": [
-          "decision support only"
-        ]
+        "tools": ["local_ai_capabilities"],
+        "mustContain": ["decision support only"]
       },
-      "tags": [
-        "phase-5",
-        "capability",
-        "bilingual"
-      ]
+      "tags": ["phase-5", "capability", "bilingual"]
     },
     {
       "caseId": "RGN-007",
@@ -199,29 +149,17 @@
       ],
       "input": {
         "message": "Analyze this 3D dental scan",
-        "attachments": [
-          "att-rgn-mesh"
-        ],
+        "attachments": ["att-rgn-mesh"],
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "ATTACHMENT_ANALYSIS",
-        "tools": [
-          "analyze_attachment"
-        ],
+        "tools": ["analyze_attachment"],
         "attachmentsResolved": 1,
-        "mustContain": [
-          "Provenance:",
-          "PENDING CLINICIAN REVIEW"
-        ]
+        "mustContain": ["Provenance:", "PENDING CLINICIAN REVIEW"]
       },
-      "tags": [
-        "phase-6",
-        "provenance"
-      ],
+      "tags": ["phase-6", "provenance"],
       "tenant": "A",
       "actorRole": "DOCTOR"
     },
@@ -238,20 +176,12 @@
         "patientId": "pat-B1"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "tools": [],
-        "mustContain": [
-          "never guess patients"
-        ],
-        "mustNotContain": [
-          "Omar"
-        ]
+        "mustContain": ["never guess patients"],
+        "mustNotContain": ["Omar"]
       },
-      "tags": [
-        "tenant-isolation"
-      ]
+      "tags": ["tenant-isolation"]
     },
     {
       "caseId": "RGN-009",
@@ -266,18 +196,12 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "toothInvolved": true,
         "contextProfile": "TOOTH",
-        "tools": [
-          "get_tooth_context"
-        ]
+        "tools": ["get_tooth_context"]
       },
-      "tags": [
-        "fdi"
-      ]
+      "tags": ["fdi"]
     },
     {
       "caseId": "RGN-010",
@@ -291,23 +215,15 @@
         "message": "Create an invoice for Ahmed Ali"
       },
       "expected": {
-        "status": [
-          "PENDING_APPROVAL"
-        ],
+        "status": ["PENDING_APPROVAL"],
         "stopReason": "APPROVAL_REQUIRED",
         "actionsExecuted": {
           "min": 0,
           "max": 0
         },
-        "mustContain": [
-          "pending approval"
-        ]
+        "mustContain": ["pending approval"]
       },
-      "tags": [
-        "approval",
-        "f1-server-resolved-patient",
-        "regression-phase7-gap-closed"
-      ],
+      "tags": ["approval", "f1-server-resolved-patient", "regression-phase7-gap-closed"],
       "description": "Phase 7 recorded PATIENT_NOT_FOUND (patient-scope gap). Phase 8 (F-1) fixed it: the server-resolved patientId flows through the pipeline, and the invoice approval floor is now the effective gate — PENDING_APPROVAL, nothing executed, chat cannot approve."
     },
     {
@@ -322,17 +238,11 @@
         "message": "مين في قائمة الانتظار بالعيادة دلوقتي؟"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
-        "tools": [
-          "get_waiting_queue"
-        ]
+        "tools": ["get_waiting_queue"]
       },
-      "tags": [
-        "i18n"
-      ]
+      "tags": ["i18n"]
     },
     {
       "caseId": "RGN-012",
@@ -346,21 +256,13 @@
         "message": "Show my upcoming appointment"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "patientInvolved": true,
         "contextProfile": "PATIENT_OVERVIEW",
-        "tools": [
-          "get_patient_overview"
-        ],
-        "mustNotContain": [
-          "Sara Hassan"
-        ]
+        "tools": ["get_patient_overview"],
+        "mustNotContain": ["Sara Hassan"]
       },
-      "tags": [
-        "portal"
-      ]
+      "tags": ["portal"]
     }
   ]
 }

@@ -65,11 +65,7 @@ export function reminder1h(clinic: TemplateClinic, appointment: TemplateAppointm
   ])
 }
 
-export function prescriptionSent(
-  clinic: TemplateClinic,
-  doctorName: string,
-  date: string
-): string {
+export function prescriptionSent(clinic: TemplateClinic, doctorName: string, date: string): string {
   return joinNonEmpty([
     `وصفتك الطبية من ${clinic.name} 💊`,
     `الطبيب: ${doctorName}`,
@@ -93,11 +89,7 @@ export function invoiceSent(
   ])
 }
 
-export function radiologySent(
-  clinic: TemplateClinic,
-  doctorName: string,
-  date: string
-): string {
+export function radiologySent(clinic: TemplateClinic, doctorName: string, date: string): string {
   return joinNonEmpty([
     `نتيجة الأشعة من ${clinic.name} 🦷`,
     `الطبيب: ${doctorName}`,

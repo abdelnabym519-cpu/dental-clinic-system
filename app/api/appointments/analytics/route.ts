@@ -27,8 +27,14 @@ export async function GET(request: NextRequest) {
 
     const fromParam = searchParams.get('from')
     const toParam = searchParams.get('to')
-    const fromDate = fromParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam) ? new Date(fromParam + 'T00:00:00') : defaultFrom
-    const toDate = toParam && /^\d{4}-\d{2}-\d{2}$/.test(toParam) ? new Date(toParam + 'T23:59:59') : new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
+    const fromDate =
+      fromParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam)
+        ? new Date(fromParam + 'T00:00:00')
+        : defaultFrom
+    const toDate =
+      toParam && /^\d{4}-\d{2}-\d{2}$/.test(toParam)
+        ? new Date(toParam + 'T23:59:59')
+        : new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
 
     if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
       return NextResponse.json({ error: 'Invalid date range' }, { status: 400 })
@@ -55,24 +61,28 @@ export async function GET(request: NextRequest) {
     ])
 
     const analytics = computeSchedulingAnalytics(
-      appointments.map((a: { status: string; duration: number; doctorId: string; scheduledDate: Date }) => ({
-        status: a.status,
-        duration: a.duration,
-        doctorId: a.doctorId,
-        scheduledDate: toDateKey(a.scheduledDate),
-      })) as AnalyticsAppointment[]
+      appointments.map(
+        (a: { status: string; duration: number; doctorId: string; scheduledDate: Date }) => ({
+          status: a.status,
+          duration: a.duration,
+          doctorId: a.doctorId,
+          scheduledDate: toDateKey(a.scheduledDate),
+        })
+      ) as AnalyticsAppointment[]
     )
 
     const weeklyAvailable = weeklyMinutesFromShifts(
       shifts as Array<{ staffId: string; startTime: string; endTime: string; isActive: boolean }>
     )
     const doctorUtilization = computeDoctorUtilization(
-      appointments.map((a: { status: string; duration: number; doctorId: string; scheduledDate: Date }) => ({
-        status: a.status,
-        duration: a.duration,
-        doctorId: a.doctorId,
-        scheduledDate: toDateKey(a.scheduledDate),
-      })),
+      appointments.map(
+        (a: { status: string; duration: number; doctorId: string; scheduledDate: Date }) => ({
+          status: a.status,
+          duration: a.duration,
+          doctorId: a.doctorId,
+          scheduledDate: toDateKey(a.scheduledDate),
+        })
+      ),
       weeklyAvailable,
       periodDays
     )
@@ -98,7 +108,8 @@ export async function GET(request: NextRequest) {
     }
 
     const activeBookedMinutes = analytics.bookedMinutes
-    const occupancy = capacityMinutes === 0 ? 0 : Math.round((activeBookedMinutes / capacityMinutes) * 1000) / 10
+    const occupancy =
+      capacityMinutes === 0 ? 0 : Math.round((activeBookedMinutes / capacityMinutes) * 1000) / 10
 
     return NextResponse.json({
       period: { from: toDateKey(fromDate), to: toDateKey(toDate), days: periodDays },

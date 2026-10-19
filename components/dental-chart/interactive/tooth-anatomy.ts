@@ -92,7 +92,7 @@ function occlusalOutline(group: ToothGroup): THREE.Shape {
 export function buildCrownGeometry(group: ToothGroup): THREE.BufferGeometry {
   const d = toothDimensions(
     // map the group back to a representative FDI tooth for dimensions
-    group === 'incisor' ? 11 : group === 'canine' ? 13 : group === 'premolar' ? 14 : 16,
+    group === 'incisor' ? 11 : group === 'canine' ? 13 : group === 'premolar' ? 14 : 16
   )
   const f = faciolingual(group)
   const shape = occlusalOutline(group)

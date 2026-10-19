@@ -29,7 +29,11 @@ interface EvidenceReport {
   status: string
   model: { parameter_count?: number; load_time_ms?: number; sha256: string }
   health_gate: { model_load_time_ms: number; parameter_count: number; is_standin: boolean }
-  preprocessing: { cells_original: number; inference_cells: number; engine_processing_time_ms: number }
+  preprocessing: {
+    cells_original: number
+    inference_cells: number
+    engine_processing_time_ms: number
+  }
   performance_ms: {
     cold_first_inference: number
     warm_median_of_5: number
@@ -37,8 +41,17 @@ interface EvidenceReport {
     note?: string
   }
   memory: { engine_process_peak_rss_mb: number }
-  runtime: { execution_provider: string; cuda_available: boolean; host: string; python: string; torch: string }
-  determinism_check: { labels_identical_cold_vs_warm: boolean; segments_identical_cold_vs_warm: boolean }
+  runtime: {
+    execution_provider: string
+    cuda_available: boolean
+    host: string
+    python: string
+    torch: string
+  }
+  determinism_check: {
+    labels_identical_cold_vs_warm: boolean
+    segments_identical_cold_vs_warm: boolean
+  }
 }
 
 function loadAll(): EvidenceReport[] {
@@ -104,7 +117,10 @@ function main() {
   const summary = {
     kind: 'phase5_local_ai_benchmark_summary',
     generated_at: new Date().toISOString(),
-    source: reports.map((r) => `ai-validation/meshsegnet/reports/phase5_real_inference_${r.engine.replace('meshsegnet-', '')}.json`),
+    source: reports.map(
+      (r) =>
+        `ai-validation/meshsegnet/reports/phase5_real_inference_${r.engine.replace('meshsegnet-', '')}.json`
+    ),
     scope: 'INFRASTRUCTURE BASELINE ONLY',
     disclaimers: [
       'Numbers were measured in the Phase 5 validation sandbox (2 vCPU / ~4 GB RAM), NOT on the target Windows i9-13900H / 16 GB machine.',
@@ -119,7 +135,7 @@ function main() {
   console.log(`wrote ${OUT}`)
   for (const e of perEngine) {
     console.log(
-      `  ${e.engine}: cold ${e.performance_ms.cold_first_inference.toFixed(0)} ms | warm median ${e.performance_ms.warm.median.toFixed(0)} ms | p95 ${e.performance_ms.warm.p95.toFixed(0)} ms | peak RSS ${e.memory_mb.engine_process_peak_rss.toFixed(0)} MB | params ${e.model.parameter_count.toLocaleString()}`,
+      `  ${e.engine}: cold ${e.performance_ms.cold_first_inference.toFixed(0)} ms | warm median ${e.performance_ms.warm.median.toFixed(0)} ms | p95 ${e.performance_ms.warm.p95.toFixed(0)} ms | peak RSS ${e.memory_mb.engine_process_peak_rss.toFixed(0)} MB | params ${e.model.parameter_count.toLocaleString()}`
     )
   }
 }

@@ -156,9 +156,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
   useEffect(() => {
     if (!appointment || viewerRole === 'ACCOUNTANT') return
     let cancelled = false
-    fetch(
-      `/api/imaging/studies?patientId=${appointment.patient.id}&appointmentId=${id}`
-    )
+    fetch(`/api/imaging/studies?patientId=${appointment.patient.id}&appointmentId=${id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled) setLinkedStudies((data?.studies ?? []) as LinkedStudyRow[])
@@ -388,9 +386,7 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
           {/* Phase 20 (D8) — jump straight to the patient's imaging page with
               this appointment pre-filled in the upload form. */}
           {canEditClinical && (
-            <Link
-              href={`/patients/${appointment.patient.id}/imaging?appointmentId=${id}`}
-            >
+            <Link href={`/patients/${appointment.patient.id}/imaging?appointmentId=${id}`}>
               <Button variant="outline">
                 <Camera className="h-4 w-4 mr-2" />
                 {t('imaging.add_xray')}
@@ -677,16 +673,16 @@ export default function AppointmentDetailsPage({ params }: { params: Promise<{ i
               {linkedStudies === null ? (
                 <p className="text-sm text-muted-foreground">…</p>
               ) : linkedStudies.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t('imaging.no_linked_studies')}
-                </p>
+                <p className="text-sm text-muted-foreground">{t('imaging.no_linked_studies')}</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {linkedStudies.map((s) => {
                     const modalityKey = `imaging.modality.${s.modality}`
                     const modalityLabel = t(modalityKey)
                     const statusKey = `imaging.status.${
-                      s.latestJob && (s.latestJob.status === 'PENDING' || s.latestJob.status === 'PROCESSING') && s.status === 'UPLOADED'
+                      s.latestJob &&
+                      (s.latestJob.status === 'PENDING' || s.latestJob.status === 'PROCESSING') &&
+                      s.status === 'UPLOADED'
                         ? 'PROCESSING'
                         : s.status
                     }`

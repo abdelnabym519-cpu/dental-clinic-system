@@ -166,7 +166,7 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
-                        {s.signedAt && t(" (Signed)")}
+                        {s.signedAt && t(' (Signed)')}
                       </div>
                     </div>
                     <Badge variant={sc.variant} className="flex items-center gap-1">
@@ -229,10 +229,12 @@ export function PatientFormSubmissions({ patientId }: PatientFormSubmissionsProp
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setViewSubmission(null)}>{t('ui.close')}</Button>
+              <Button variant="outline" onClick={() => setViewSubmission(null)}>
+                {t('ui.close')}
+              </Button>
               <Button onClick={handleReview} disabled={reviewing}>
                 {reviewing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t("Save Review")}
+                {t('Save Review')}
               </Button>
             </div>
           </div>

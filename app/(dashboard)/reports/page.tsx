@@ -263,7 +263,9 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('Reports & Analytics Dashboard')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t('Reports & Analytics Dashboard')}
+          </h1>
           <p className="text-muted-foreground">
             {t('Comprehensive analytics and insights for your dental practice')}
           </p>
@@ -304,7 +306,7 @@ export default function ReportsPage() {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="w-[140px]"
-                placeholder={t("To")}
+                placeholder={t('To')}
               />
             </>
           )}
@@ -369,7 +371,7 @@ export default function ReportsPage() {
                             (patientAnalytics.newPatients / patientAnalytics.totalPatients) * 100
                           )
                         : '0%'}{' '}
-                      {t("of total")}
+                      {t('of total')}
                     </p>
                   </>
                 )}
@@ -396,7 +398,7 @@ export default function ReportsPage() {
                               100
                           )
                         : '0%'}{' '}
-                      {t("of total")}
+                      {t('of total')}
                     </p>
                   </>
                 )}
@@ -430,7 +432,9 @@ export default function ReportsPage() {
                     <div className="text-2xl font-bold text-green-600">
                       {formatPercentage(patientAnalytics?.retentionRate || 0)}
                     </div>
-                    <p className="text-xs text-muted-foreground">{t('Patients with repeat visits')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('Patients with repeat visits')}
+                    </p>
                   </>
                 )}
               </CardContent>
@@ -527,7 +531,7 @@ export default function ReportsPage() {
                   patientAnalytics?.acquisitionSources.map((source) => (
                     <div key={source.source} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{source.source || t("Unknown")}</span>
+                        <span className="font-medium">{source.source || t('Unknown')}</span>
                         <span className="text-muted-foreground">
                           {source.count} ({formatPercentage(source.percentage)})
                         </span>
@@ -573,7 +577,9 @@ export default function ReportsPage() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-center text-muted-foreground py-8">{t('No age data available')}</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {t('No age data available')}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -612,7 +618,8 @@ export default function ReportsPage() {
                       {clinicalAnalytics?.completedTreatments || 0}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {formatPercentage(clinicalAnalytics?.completionRate || 0)} {t("completion rate")}
+                      {formatPercentage(clinicalAnalytics?.completionRate || 0)}{' '}
+                      {t('completion rate')}
                     </p>
                   </>
                 )}
@@ -648,7 +655,7 @@ export default function ReportsPage() {
                     <div className="text-2xl font-bold">
                       {clinicalAnalytics?.avgTreatmentDuration || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">{t("minutes per treatment")}</p>
+                    <p className="text-xs text-muted-foreground">{t('minutes per treatment')}</p>
                   </>
                 )}
               </CardContent>
@@ -670,7 +677,9 @@ export default function ReportsPage() {
                     ))}
                   </>
                 ) : clinicalAnalytics?.commonProcedures.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">{t('ui.no_procedure_data_available')}</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    {t('ui.no_procedure_data_available')}
+                  </p>
                 ) : (
                   clinicalAnalytics?.commonProcedures.map((proc, index) => (
                     <div key={proc.code} className="flex items-center justify-between">
@@ -686,7 +695,7 @@ export default function ReportsPage() {
                       <div className="text-right">
                         <div className="font-bold">{proc.count}</div>
                         <div className="text-xs text-green-600">
-                          {formatPercentage(proc.successRate)} {t("success")}
+                          {formatPercentage(proc.successRate)} {t('success')}
                         </div>
                       </div>
                     </div>
@@ -827,7 +836,8 @@ export default function ReportsPage() {
                       {formatPercentage(financialAnalytics?.collectionEfficiency || 0)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {t("Outstanding:")} {formatCurrency(financialAnalytics?.outstandingAmount || 0)}
+                      {t('Outstanding:')}{' '}
+                      {formatCurrency(financialAnalytics?.outstandingAmount || 0)}
                     </p>
                   </>
                 )}
@@ -905,7 +915,9 @@ export default function ReportsPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">{t('No payment data available')}</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {t('No payment data available')}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -944,7 +956,9 @@ export default function ReportsPage() {
                   </ComposedChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-center text-muted-foreground py-8">{t('No revenue data available')}</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {t('No revenue data available')}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -984,7 +998,7 @@ export default function ReportsPage() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {formatPercentage(operationalAnalytics?.appointmentUtilization || 0)}{' '}
-                      {t("utilization")}
+                      {t('utilization')}
                     </p>
                   </>
                 )}
@@ -1005,7 +1019,7 @@ export default function ReportsPage() {
                       {formatPercentage(operationalAnalytics?.noShowRate || 0)}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {operationalAnalytics?.noShowCount || 0} {t("appointments")}
+                      {operationalAnalytics?.noShowCount || 0} {t('appointments')}
                     </p>
                   </>
                 )}
@@ -1025,7 +1039,7 @@ export default function ReportsPage() {
                     <div className="text-2xl font-bold">
                       {operationalAnalytics?.avgWaitTime || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground">{t("minutes")}</p>
+                    <p className="text-xs text-muted-foreground">{t('minutes')}</p>
                   </>
                 )}
               </CardContent>
@@ -1058,7 +1072,9 @@ export default function ReportsPage() {
                       </div>
                       <div className="flex gap-8 text-center">
                         <div>
-                          <div className="text-sm text-muted-foreground">{t('ui.appointments')}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {t('ui.appointments')}
+                          </div>
                           <div className="text-xl font-bold">{staff.appointmentsHandled}</div>
                         </div>
                         <div>
@@ -1115,7 +1131,9 @@ export default function ReportsPage() {
                     <div className="text-3xl font-bold text-orange-600">
                       {operationalAnalytics?.lowStockItems || 0}
                     </div>
-                    <p className="text-sm text-muted-foreground">{t('Items below reorder level')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('Items below reorder level')}
+                    </p>
                   </div>
                 )}
               </CardContent>

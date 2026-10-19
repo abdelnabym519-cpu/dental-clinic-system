@@ -17,10 +17,7 @@ import { requirePatientAuth } from '@/lib/patient-auth'
  * Body: (optional) { method: 'FAWRY' | 'PAYMOB' } — informational only;
  * the gateway page offers the configured methods.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, patient } = await requirePatientAuth(req)
   if (error) return error
 
@@ -45,10 +42,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invoice is already fully paid' }, { status: 400 })
     }
     if (invoice.status === 'CANCELLED' || invoice.status === 'REFUNDED') {
-      return NextResponse.json(
-        { error: 'This invoice cannot be paid' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'This invoice cannot be paid' }, { status: 400 })
     }
 
     const gatewayConfig = await prisma.paymentGatewayConfig.findUnique({

@@ -96,21 +96,25 @@ export function AgendaOperationsPanel({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={capabilities.canCheckIn ? 'queue' : capabilities.canWaitlist ? 'waitlist' : 'analytics'}>
+        <Tabs
+          defaultValue={
+            capabilities.canCheckIn ? 'queue' : capabilities.canWaitlist ? 'waitlist' : 'analytics'
+          }
+        >
           <TabsList className="mb-3">
             {capabilities.canCheckIn && (
               <TabsTrigger value="queue" className="gap-2">
-                <ClipboardList className="h-4 w-4" /> {t("Queue")}
+                <ClipboardList className="h-4 w-4" /> {t('Queue')}
               </TabsTrigger>
             )}
             {capabilities.canWaitlist && (
               <TabsTrigger value="waitlist" className="gap-2">
-                <Hourglass className="h-4 w-4" /> {t("Waiting list")}
+                <Hourglass className="h-4 w-4" /> {t('Waiting list')}
               </TabsTrigger>
             )}
             {capabilities.canViewAnalytics && (
               <TabsTrigger value="analytics" className="gap-2">
-                <BarChart3 className="h-4 w-4" /> {t("Analytics")}
+                <BarChart3 className="h-4 w-4" /> {t('Analytics')}
               </TabsTrigger>
             )}
           </TabsList>
@@ -213,7 +217,7 @@ function TodayQueue({
       )}
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading queue…")}
+          <Loader2 className="h-4 w-4 animate-spin" /> {t('Loading queue…')}
         </div>
       ) : items.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
@@ -232,7 +236,7 @@ function TodayQueue({
                 {getPatientName(apt.patient)}
               </button>
               <span className="text-xs text-muted-foreground">
-                {t("Dr.")} {getDoctorName(apt.doctor)} · {apt.duration}m
+                {t('Dr.')} {getDoctorName(apt.doctor)} · {apt.duration}m
               </span>
               <Badge variant="outline" className="ml-auto text-[10px]">
                 {appointmentStatusConfig[apt.status]?.label ?? apt.status}
@@ -245,9 +249,11 @@ function TodayQueue({
                       variant="outline"
                       className="h-7 px-2 text-xs"
                       disabled={busyId === apt.id}
-                      aria-label={t("Check in {v1}", { v1: getPatientName(apt.patient) })}
+                      aria-label={t('Check in {v1}', { v1: getPatientName(apt.patient) })}
                       onClick={() => setStatus(apt, 'CHECKED_IN')}
-                    >{t('ui.check_in_2')}</Button>
+                    >
+                      {t('ui.check_in_2')}
+                    </Button>
                   )}
                 {capabilities.canAdvance && apt.status === 'CHECKED_IN' && (
                   <Button
@@ -255,9 +261,11 @@ function TodayQueue({
                     variant="outline"
                     className="h-7 px-2 text-xs"
                     disabled={busyId === apt.id}
-                    aria-label={t("Start visit for {v1}", { v1: getPatientName(apt.patient) })}
+                    aria-label={t('Start visit for {v1}', { v1: getPatientName(apt.patient) })}
                     onClick={() => setStatus(apt, 'IN_PROGRESS')}
-                  >{t('ui.start')}</Button>
+                  >
+                    {t('ui.start')}
+                  </Button>
                 )}
                 {capabilities.canAdvance && apt.status === 'IN_PROGRESS' && (
                   <Button
@@ -265,9 +273,11 @@ function TodayQueue({
                     variant="outline"
                     className="h-7 px-2 text-xs"
                     disabled={busyId === apt.id}
-                    aria-label={t("Complete visit for {v1}", { v1: getPatientName(apt.patient) })}
+                    aria-label={t('Complete visit for {v1}', { v1: getPatientName(apt.patient) })}
                     onClick={() => setStatus(apt, 'COMPLETED')}
-                  >{t('ui.complete')}</Button>
+                  >
+                    {t('ui.complete')}
+                  </Button>
                 )}
               </span>
             </li>
@@ -342,7 +352,7 @@ function WaitingListPanel({
       )}
       {loading ? (
         <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {t("Loading waiting list…")}
+          <Loader2 className="h-4 w-4 animate-spin" /> {t('Loading waiting list…')}
         </div>
       ) : entries.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
@@ -358,31 +368,38 @@ function WaitingListPanel({
                   {entry.doctor ? (
                     <span className="text-muted-foreground">
                       {' '}
-                      {t("· prefers Dr.")} {getDoctorName(entry.doctor)}
+                      {t('· prefers Dr.')} {getDoctorName(entry.doctor)}
                     </span>
                   ) : null}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {entry.preferredTime ? t("Preferred: {v1}", { v1: entry.preferredTime.toLowerCase() }) : 'Any time'}
+                  {entry.preferredTime
+                    ? t('Preferred: {v1}', { v1: entry.preferredTime.toLowerCase() })
+                    : 'Any time'}
                   {entry.notes ? ` · ${entry.notes}` : ''}
                 </p>
               </div>
               <div className="ml-auto flex items-center gap-1">
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" asChild>
                   <Link href={`/patients/${entry.patient.id}`}>
-                    <UserPlus className="h-3.5 w-3.5 mr-1" />{t('ui.patient')}</Link>
+                    <UserPlus className="h-3.5 w-3.5 mr-1" />
+                    {t('ui.patient')}
+                  </Link>
                 </Button>
                 <Button
                   size="sm"
                   className="h-7 px-2 text-xs"
                   disabled={busyId === entry.id}
-                  aria-label={t("Book {v1} {v2} from the waiting list", { v1: entry.patient.firstName, v2: entry.patient.lastName })}
+                  aria-label={t('Book {v1} {v2} from the waiting list', {
+                    v1: entry.patient.firstName,
+                    v2: entry.patient.lastName,
+                  })}
                   onClick={() => promote(entry)}
                 >
                   {busyId === entry.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    t("Book next slot")
+                    t('Book next slot')
                   )}
                 </Button>
               </div>
@@ -429,14 +446,14 @@ function AnalyticsSummary() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> {t("Computing analytics…")}
+        <Loader2 className="h-4 w-4 animate-spin" /> {t('Computing analytics…')}
       </div>
     )
   }
   if (error || !data) {
     return (
       <p role="alert" className="py-2 text-sm text-destructive">
-        {error || t("Analytics unavailable")}
+        {error || t('Analytics unavailable')}
       </p>
     )
   }
@@ -467,7 +484,7 @@ function AnalyticsSummary() {
       {data.doctorUtilization.length > 0 && (
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            {t("Doctor utilization (booked vs. published shift minutes)")}
+            {t('Doctor utilization (booked vs. published shift minutes)')}
           </p>
           <ul className="space-y-2">
             {data.doctorUtilization.map((d) => (
@@ -486,7 +503,8 @@ function AnalyticsSummary() {
         </div>
       )}
       <p className="mt-3 text-[10px] text-muted-foreground">
-        {t("Period")} {data.period.from} → {data.period.to} {t("· computed from live appointment records")}
+        {t('Period')} {data.period.from} → {data.period.to}{' '}
+        {t('· computed from live appointment records')}
       </p>
     </div>
   )

@@ -270,7 +270,7 @@ export default function ChatPage() {
           <p className="text-xs text-muted-foreground">
             {voice.handsFreeMode
               ? t("Hands-free mode — speak naturally, I'll respond and keep listening")
-              : t("Type or speak to manage your clinic")}
+              : t('Type or speak to manage your clinic')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -299,10 +299,12 @@ export default function ChatPage() {
                 ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800'
                 : 'text-muted-foreground hover:bg-muted border-border'
             )}
-            title={voice.ttsEnabled ? t("Voice responses ON") : t("Voice responses OFF")}
+            title={voice.ttsEnabled ? t('Voice responses ON') : t('Voice responses OFF')}
           >
             <SpeakerIcon active={voice.ttsEnabled} />
-            <span className="hidden sm:inline">{voice.ttsEnabled ? t("Voice on") : t("Voice off")}</span>
+            <span className="hidden sm:inline">
+              {voice.ttsEnabled ? t('Voice on') : t('Voice off')}
+            </span>
           </button>
           {/* New chat */}
           {hasMessages && (
@@ -357,7 +359,7 @@ export default function ChatPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                 </span>
-                {voice.interimTranscript || voice.transcript || t("Listening...")}
+                {voice.interimTranscript || voice.transcript || t('Listening...')}
               </div>
             )}
             {orbState === 'processing' && (
@@ -365,7 +367,7 @@ export default function ChatPage() {
             )}
             {orbState === 'speaking' && (
               <p className="text-sm text-blue-500 font-medium mb-4">
-                {t("Speaking... (click orb to stop)")}
+                {t('Speaking... (click orb to stop)')}
               </p>
             )}
 
@@ -394,15 +396,21 @@ export default function ChatPage() {
                 )}
                 <h2 className="text-xl font-semibold mb-2">{t('How can I help you today?')}</h2>
                 <p className="text-sm text-muted-foreground mb-2 text-center max-w-md">
-                  {t("I can look up patients, check appointments, show revenue, manage inventory, and more.")}
+                  {t(
+                    'I can look up patients, check appointments, show revenue, manage inventory, and more.'
+                  )}
                 </p>
                 {voice.voiceSupported && (
                   <p className="text-xs text-primary mb-6 text-center">
-                    {t("Tap the orb to speak, or type below. Enable Hands-free for continuous conversation.")}
+                    {t(
+                      'Tap the orb to speak, or type below. Enable Hands-free for continuous conversation.'
+                    )}
                   </p>
                 )}
                 {!voice.voiceSupported && (
-                  <p className="text-xs text-muted-foreground mb-6">{t('Just ask in plain English.')}</p>
+                  <p className="text-xs text-muted-foreground mb-6">
+                    {t('Just ask in plain English.')}
+                  </p>
                 )}
               </>
             )}
@@ -549,7 +557,7 @@ export default function ChatPage() {
                 )}
                 {orbState === 'listening' && (
                   <p className="text-xs text-red-500 font-medium mt-2">
-                    {voice.interimTranscript || voice.transcript || t("Listening...")}
+                    {voice.interimTranscript || voice.transcript || t('Listening...')}
                   </p>
                 )}
                 {orbState === 'processing' && (
@@ -579,7 +587,7 @@ export default function ChatPage() {
                 handleSend()
               }
             }}
-            placeholder={voice.state === 'listening' ? t('Listening...') : t("Type a message...")}
+            placeholder={voice.state === 'listening' ? t('Listening...') : t('Type a message...')}
             rows={1}
             className="flex-1 resize-none rounded-xl border bg-muted px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
           />
@@ -606,17 +614,17 @@ export default function ChatPage() {
               )}
               aria-label={
                 voice.state === 'listening'
-                  ? t("Stop listening")
+                  ? t('Stop listening')
                   : voice.state === 'speaking'
-                    ? t("Stop speaking")
-                    : t("Start voice input")
+                    ? t('Stop speaking')
+                    : t('Start voice input')
               }
               title={
                 voice.state === 'listening'
-                  ? t("Stop listening")
+                  ? t('Stop listening')
                   : voice.state === 'speaking'
-                    ? t("Stop speaking")
-                    : t("Speak your message")
+                    ? t('Stop speaking')
+                    : t('Speak your message')
               }
             >
               <span className="relative flex items-center justify-center">

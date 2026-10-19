@@ -5,8 +5,13 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  KNOWLEDGE_DOMAINS, TAXONOMY_SUBTOPICS, DOMAIN_LABELS,
-  isKnowledgeDomain, isSubtopic, detectDomains, primaryDomain,
+  KNOWLEDGE_DOMAINS,
+  TAXONOMY_SUBTOPICS,
+  DOMAIN_LABELS,
+  isKnowledgeDomain,
+  isSubtopic,
+  detectDomains,
+  primaryDomain,
 } from '@/lib/ai/knowledge/taxonomy'
 
 describe('knowledge taxonomy', () => {
@@ -33,10 +38,22 @@ describe('knowledge taxonomy', () => {
   })
 
   it('detects domains deterministically from English text', () => {
-    expect(primaryDomain('diagnosis and treatment of periodontitis with probing depths and attachment loss')).toBe('PERIODONTOLOGY')
-    expect(primaryDomain('root canal treatment for irreversible pulpitis with sodium hypochlorite irrigation')).toBe('ENDODONTICS')
-    expect(primaryDomain('glass ionomer and composite restorative materials for caries')).toBe('RESTORATIVE')
-    expect(primaryDomain('fluoride varnish and sealants for pediatric caries prevention in children')).toBe('PEDIATRIC_SPECIAL_CARE')
+    expect(
+      primaryDomain(
+        'diagnosis and treatment of periodontitis with probing depths and attachment loss'
+      )
+    ).toBe('PERIODONTOLOGY')
+    expect(
+      primaryDomain(
+        'root canal treatment for irreversible pulpitis with sodium hypochlorite irrigation'
+      )
+    ).toBe('ENDODONTICS')
+    expect(primaryDomain('glass ionomer and composite restorative materials for caries')).toBe(
+      'RESTORATIVE'
+    )
+    expect(
+      primaryDomain('fluoride varnish and sealants for pediatric caries prevention in children')
+    ).toBe('PEDIATRIC_SPECIAL_CARE')
     expect(primaryDomain('panoramic radiograph and CBCT interpretation')).toBe('IMAGING_DIGITAL')
   })
 

@@ -5,10 +5,10 @@ total 3.47 GiB. They are git-ignored, and nothing here should ever be committed.
 
 ## What belongs here
 
-| File | Size | Role |
-| --- | --- | --- |
-| `dentalgemma-4b-Q4_K_M.gguf` | 2,875,676,064 B | the language model |
-| `dentalgemma-mmproj-f16.gguf` | 851,251,232 B | the multimodal projector |
+| File                          | Size            | Role                     |
+| ----------------------------- | --------------- | ------------------------ |
+| `dentalgemma-4b-Q4_K_M.gguf`  | 2,875,676,064 B | the language model       |
+| `dentalgemma-mmproj-f16.gguf` | 851,251,232 B   | the multimodal projector |
 
 ## How to get them
 
@@ -42,9 +42,9 @@ size the language model expects.
 
 ## Integrity values
 
-| File | SHA-256 | Source of the expectation |
-| --- | --- | --- |
-| `dentalgemma-4b-Q4_K_M.gguf` | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` | Hugging Face LFS `oid` for the pinned revision |
+| File                          | SHA-256                                                            | Source of the expectation                      |
+| ----------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
+| `dentalgemma-4b-Q4_K_M.gguf`  | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` | Hugging Face LFS `oid` for the pinned revision |
 | `dentalgemma-mmproj-f16.gguf` | `3d03262e058316c318c6dd4868c11fdccef68ec4af6d2ebea54bd1865b8c8113` | Hugging Face LFS `oid` for the pinned revision |
 
 These are the publisher's recorded digests. The lab computes its own and prints it

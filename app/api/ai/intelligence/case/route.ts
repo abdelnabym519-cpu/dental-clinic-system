@@ -34,7 +34,11 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const auth = await requireAuthAndRole([...STAFF_ROLES, 'PATIENT'])
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return intErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return intErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId, user } = auth
   const url = new URL(req.url)
@@ -68,7 +72,12 @@ export async function GET(req: Request) {
       entityId: caseScope ?? patient.id,
       newValues: { missing: understanding.missingInformation.length, role: user.role },
     })
-    return NextResponse.json({ hospitalId, patientId: patient.id, caseId: caseScope, understanding })
+    return NextResponse.json({
+      hospitalId,
+      patientId: patient.id,
+      caseId: caseScope,
+      understanding,
+    })
   } catch (e) {
     if (e instanceof IntelligenceError) return intErr(e.code, e.message, 400)
     console.error('AI intelligence case error:', e)

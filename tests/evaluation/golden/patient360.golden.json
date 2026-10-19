@@ -15,22 +15,13 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "MULTI_STEP",
         "contextProfile": "FULL_360",
-        "tools": [
-          "get_patient_360"
-        ],
-        "mustNotContain": [
-          "Sara Hassan"
-        ]
+        "tools": ["get_patient_360"],
+        "mustNotContain": ["Sara Hassan"]
       },
-      "tags": [
-        "profile",
-        "full-360"
-      ]
+      "tags": ["profile", "full-360"]
     },
     {
       "caseId": "P360-002",
@@ -45,19 +36,12 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "IMAGING_ANALYSIS",
         "contextProfile": "IMAGING",
-        "tools": [
-          "get_imaging_context"
-        ]
+        "tools": ["get_imaging_context"]
       },
-      "tags": [
-        "profile",
-        "imaging"
-      ]
+      "tags": ["profile", "imaging"]
     },
     {
       "caseId": "P360-003",
@@ -72,20 +56,13 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "CLINICAL_ANALYSIS",
         "toothInvolved": true,
         "contextProfile": "TOOTH",
-        "tools": [
-          "get_tooth_context"
-        ]
+        "tools": ["get_tooth_context"]
       },
-      "tags": [
-        "profile",
-        "tooth"
-      ]
+      "tags": ["profile", "tooth"]
     },
     {
       "caseId": "P360-004",
@@ -100,19 +77,12 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "INFORMATIONAL",
         "contextProfile": "PATIENT_OVERVIEW",
-        "tools": [
-          "get_patient_overview"
-        ]
+        "tools": ["get_patient_overview"]
       },
-      "tags": [
-        "profile",
-        "minimal"
-      ]
+      "tags": ["profile", "minimal"]
     },
     {
       "caseId": "P360-005",
@@ -126,19 +96,11 @@
         "message": "Show my appointments and my clinical notes"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "patientInvolved": true,
-        "mustNotContain": [
-          "Sara Hassan",
-          "PAT-A2"
-        ]
+        "mustNotContain": ["Sara Hassan", "PAT-A2"]
       },
-      "tags": [
-        "portal",
-        "isolation"
-      ]
+      "tags": ["portal", "isolation"]
     },
     {
       "caseId": "P360-N1",
@@ -153,22 +115,15 @@
         "message": "Tell me a short joke about a dentist"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
-        "taskType": [
-          "UNKNOWN"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
+        "taskType": ["UNKNOWN"],
         "tools": [],
         "llmCalls": {
           "min": 0,
           "max": 1
         }
       },
-      "tags": [
-        "negative",
-        "no-retrieval"
-      ]
+      "tags": ["negative", "no-retrieval"]
     },
     {
       "caseId": "P360-N2",
@@ -182,24 +137,13 @@
         "message": "What are the indications for a root canal treatment?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
         "patientInvolved": false,
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
-        "mustNotContain": [
-          "PAT-A1",
-          "Ahmed Ali"
-        ]
+        "tools": ["retrieve_dental_knowledge"],
+        "mustNotContain": ["PAT-A1", "Ahmed Ali"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval",
-        "knowledge"
-      ]
+      "tags": ["negative", "no-retrieval", "knowledge"]
     },
     {
       "caseId": "P360-N3",
@@ -213,22 +157,12 @@
         "message": "Who is waiting in the queue right now?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
-        "tools": [
-          "get_waiting_queue"
-        ],
-        "mustNotContain": [
-          "Penicillin",
-          "Diabetes"
-        ]
+        "tools": ["get_waiting_queue"],
+        "mustNotContain": ["Penicillin", "Diabetes"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval"
-      ]
+      "tags": ["negative", "no-retrieval"]
     },
     {
       "caseId": "P360-N4",
@@ -243,19 +177,11 @@
         "patientId": "pat-B1"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "tools": [],
-        "mustContain": [
-          "never guess patients"
-        ]
+        "mustContain": ["never guess patients"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval",
-        "tenant-isolation"
-      ]
+      "tags": ["negative", "no-retrieval", "tenant-isolation"]
     },
     {
       "caseId": "P360-N5",
@@ -269,18 +195,11 @@
         "message": "Show the chart for BobNotExist"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "tools": [],
-        "mustContain": [
-          "never guess patients"
-        ]
+        "mustContain": ["never guess patients"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval"
-      ]
+      "tags": ["negative", "no-retrieval"]
     },
     {
       "caseId": "P360-N6",
@@ -294,20 +213,12 @@
         "message": "Check my tooth"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "tools": [],
         "toothInvolved": true,
-        "mustContain": [
-          "FDI number"
-        ]
+        "mustContain": ["FDI number"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval",
-        "fdi"
-      ]
+      "tags": ["negative", "no-retrieval", "fdi"]
     },
     {
       "caseId": "P360-N7",
@@ -339,19 +250,11 @@
         "message": "Show the chart for Ahmed Ali"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "tools": [],
-        "mustContain": [
-          "2 patients matching"
-        ]
+        "mustContain": ["2 patients matching"]
       },
-      "tags": [
-        "negative",
-        "no-retrieval",
-        "ambiguity"
-      ],
+      "tags": ["negative", "no-retrieval", "ambiguity"],
       "tenant": "A",
       "actorRole": "DOCTOR"
     }

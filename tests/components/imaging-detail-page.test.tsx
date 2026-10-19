@@ -105,8 +105,8 @@ describe('Imaging study detail — MeshSegNet (Phase 20B)', () => {
     expect(screen.getByText('63.2%')).toBeTruthy()
     expect(screen.getAllByText('2.6%')).toHaveLength(14)
     // The classes label + total share one <p> — match by substring.
-    const summary = screen.getByText((content, el) =>
-      el?.tagName === 'P' && content?.includes('Total points: 19000')
+    const summary = screen.getByText(
+      (content, el) => el?.tagName === 'P' && content?.includes('Total points: 19000')
     )
     expect(summary.textContent).toContain('Detected classes: 15')
     expect(summary.textContent).toContain('Total points: 19000')

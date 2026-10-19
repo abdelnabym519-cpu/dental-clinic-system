@@ -31,10 +31,22 @@ export interface MemoryStore {
     id: string,
     replacement: MemoryWriteRequest,
     reason: string,
-    now?: Date,
+    now?: Date
   ): Promise<MemoryItem>
-  invalidate(id: string, hospitalId: string, actor: MemoryActor, reason: string, now?: Date): Promise<MemoryItem>
-  delete(id: string, hospitalId: string, actor: MemoryActor, reason: string, now?: Date): Promise<MemoryItem>
+  invalidate(
+    id: string,
+    hospitalId: string,
+    actor: MemoryActor,
+    reason: string,
+    now?: Date
+  ): Promise<MemoryItem>
+  delete(
+    id: string,
+    hospitalId: string,
+    actor: MemoryActor,
+    reason: string,
+    now?: Date
+  ): Promise<MemoryItem>
   applyRetention(hospitalId: string, now: Date): Promise<number>
   events(memoryId: string, hospitalId: string): Promise<MemoryEvent[]>
 }
@@ -63,7 +75,7 @@ export class PrismaMemoryStore implements MemoryStore {
     actor: MemoryActor | null,
     reason: string | null,
     oldValue: unknown,
-    newValue: unknown,
+    newValue: unknown
   ): Promise<void> {
     await this.eventDelegate().create({
       data: {
@@ -120,7 +132,7 @@ export class PrismaMemoryStore implements MemoryStore {
     if (dup) {
       throw new MemoryError(
         'MEMORY_DUPLICATE_ACTIVE',
-        `an ACTIVE ${req.scope.domain} memory with key '${req.key}' and trust ${req.trustLevel} already exists — correct or supersede it`,
+        `an ACTIVE ${req.scope.domain} memory with key '${req.key}' and trust ${req.trustLevel} already exists — correct or supersede it`
       )
     }
     const row = await del.create({
@@ -145,15 +157,7 @@ export class PrismaMemoryStore implements MemoryStore {
         expiresAt: req.expiresAt ?? null,
       },
     })
-    await this.recordEvent(
-      req.scope.hospitalId,
-      row.id,
-      'WRITE',
-      req.actor,
-      null,
-      null,
-      req.value,
-    )
+    await this.recordEvent(req.scope.hospitalId, row.id, 'WRITE', req.actor, null, null, req.value)
     return this.rowToItem(row)
   }
 
@@ -177,12 +181,16 @@ export class PrismaMemoryStore implements MemoryStore {
     id: string,
     replacement: MemoryWriteRequest,
     reason: string,
-    now: Date = new Date(),
+    now: Date = new Date()
   ): Promise<MemoryItem> {
     const old = await this.itemDelegate().findFirst({
       where: { id, hospitalId: replacement.scope.hospitalId, status: 'ACTIVE' },
     })
-    if (!old) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot supersede a non-ACTIVE or foreign-tenant item')
+    if (!old)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot supersede a non-ACTIVE or foreign-tenant item'
+      )
     // The corrected fact keeps the ORIGINAL item's identity (key + scope).
     const fresh: MemoryWriteRequest = {
       ...replacement,
@@ -223,7 +231,10 @@ export class PrismaMemoryStore implements MemoryStore {
         correctionReason: reason,
       },
     })
-    await del.update({ where: { id: old.id }, data: { status: 'SUPERSEDED', supersededBy: row.id } })
+    await del.update({
+      where: { id: old.id },
+      data: { status: 'SUPERSEDED', supersededBy: row.id },
+    })
     await this.recordEvent(
       replacement.scope.hospitalId,
       old.id,
@@ -231,7 +242,7 @@ export class PrismaMemoryStore implements MemoryStore {
       replacement.actor,
       reason,
       old.value,
-      replacement.value,
+      replacement.value
     )
     return this.rowToItem(row)
   }
@@ -241,12 +252,16 @@ export class PrismaMemoryStore implements MemoryStore {
     hospitalId: string,
     actor: MemoryActor,
     reason: string,
-    now: Date = new Date(),
+    now: Date = new Date()
   ): Promise<MemoryItem> {
     void now
     const del = this.itemDelegate()
     const old = await del.findFirst({ where: { id, hospitalId, status: 'ACTIVE' } })
-    if (!old) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot invalidate a non-ACTIVE or foreign-tenant item')
+    if (!old)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot invalidate a non-ACTIVE or foreign-tenant item'
+      )
     assertScopePermission(actor, this.rowToItem(old))
     const row = await del.update({ where: { id }, data: { status: 'INVALIDATED' } })
     await this.recordEvent(hospitalId, id, 'INVALIDATE', actor, reason, old.value, null)
@@ -258,12 +273,16 @@ export class PrismaMemoryStore implements MemoryStore {
     hospitalId: string,
     actor: MemoryActor,
     reason: string,
-    now: Date = new Date(),
+    now: Date = new Date()
   ): Promise<MemoryItem> {
     void now
     const del = this.itemDelegate()
     const old = await del.findFirst({ where: { id, hospitalId, status: 'ACTIVE' } })
-    if (!old) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot delete a non-ACTIVE or foreign-tenant item')
+    if (!old)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot delete a non-ACTIVE or foreign-tenant item'
+      )
     assertScopePermission(actor, this.rowToItem(old))
     const row = await del.update({ where: { id }, data: { status: 'DELETED' } })
     // PHI policy: the DELETED event keeps only the key + old value snapshot
@@ -394,7 +413,7 @@ export class InMemoryMemoryStore implements MemoryStore {
         i.domain === scope.domain &&
         i.key === req.key &&
         i.trustLevel === req.trustLevel &&
-        scopeMatch(i, scope),
+        scopeMatch(i, scope)
     )
     if (dup) {
       throw new MemoryError('MEMORY_DUPLICATE_ACTIVE', `duplicate ACTIVE item (key ${req.key})`)
@@ -441,7 +460,10 @@ export class InMemoryMemoryStore implements MemoryStore {
   }
 
   async getActive(id: string, hospitalId: string): Promise<MemoryItem | null> {
-    return this.items.find((i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE') ?? null
+    return (
+      this.items.find((i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE') ??
+      null
+    )
   }
 
   async query(q: MemoryQuery, now: Date = this.now): Promise<MemoryBlock> {
@@ -455,7 +477,7 @@ export class InMemoryMemoryStore implements MemoryStore {
         (!q.keys || q.keys.length === 0 || q.keys.includes(i.key)) &&
         (!q.memoryTypes || q.memoryTypes.length === 0 || q.memoryTypes.includes(i.memoryType)) &&
         (!q.since || i.validFrom >= q.since) &&
-        (q.includeCandidate || (i.trustLevel !== 'AI_DERIVED' && i.trustLevel !== 'UNKNOWN')),
+        (q.includeCandidate || (i.trustLevel !== 'AI_DERIVED' && i.trustLevel !== 'UNKNOWN'))
     )
     rows.sort((a, b) => b.validFrom.getTime() - a.validFrom.getTime())
     return retrieveMemory(rows, q)
@@ -465,12 +487,16 @@ export class InMemoryMemoryStore implements MemoryStore {
     id: string,
     replacement: MemoryWriteRequest,
     reason: string,
-    now: Date = this.now,
+    now: Date = this.now
   ): Promise<MemoryItem> {
     const old = this.items.find(
-      (i) => i.id === id && i.hospitalId === replacement.scope.hospitalId && i.status === 'ACTIVE',
+      (i) => i.id === id && i.hospitalId === replacement.scope.hospitalId && i.status === 'ACTIVE'
     )
-    if (!old) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot supersede a non-ACTIVE or foreign-tenant item')
+    if (!old)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot supersede a non-ACTIVE or foreign-tenant item'
+      )
     const scope: MemoryScope = {
       hospitalId: old.hospitalId,
       domain: old.domain,
@@ -507,10 +533,16 @@ export class InMemoryMemoryStore implements MemoryStore {
     hospitalId: string,
     actor: MemoryActor,
     reason: string,
-    now: Date = this.now,
+    now: Date = this.now
   ): Promise<MemoryItem> {
-    const item = this.items.find((i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE')
-    if (!item) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot invalidate a non-ACTIVE or foreign-tenant item')
+    const item = this.items.find(
+      (i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE'
+    )
+    if (!item)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot invalidate a non-ACTIVE or foreign-tenant item'
+      )
     assertScopePermission(actor, item)
     item.status = 'INVALIDATED'
     this.eventLog.push({
@@ -533,10 +565,16 @@ export class InMemoryMemoryStore implements MemoryStore {
     hospitalId: string,
     actor: MemoryActor,
     reason: string,
-    now: Date = this.now,
+    now: Date = this.now
   ): Promise<MemoryItem> {
-    const item = this.items.find((i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE')
-    if (!item) throw new MemoryError('MEMORY_NOT_ACTIVE', 'cannot delete a non-ACTIVE or foreign-tenant item')
+    const item = this.items.find(
+      (i) => i.id === id && i.hospitalId === hospitalId && i.status === 'ACTIVE'
+    )
+    if (!item)
+      throw new MemoryError(
+        'MEMORY_NOT_ACTIVE',
+        'cannot delete a non-ACTIVE or foreign-tenant item'
+      )
     assertScopePermission(actor, item)
     item.status = 'DELETED'
     this.eventLog.push({
@@ -557,7 +595,12 @@ export class InMemoryMemoryStore implements MemoryStore {
   async applyRetention(hospitalId: string, now: Date): Promise<number> {
     let n = 0
     for (const item of this.items) {
-      if (item.hospitalId === hospitalId && item.status === 'ACTIVE' && item.expiresAt && item.expiresAt < now) {
+      if (
+        item.hospitalId === hospitalId &&
+        item.status === 'ACTIVE' &&
+        item.expiresAt &&
+        item.expiresAt < now
+      ) {
         item.status = 'DELETED'
         n += 1
         this.eventLog.push({

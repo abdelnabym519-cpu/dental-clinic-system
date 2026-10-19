@@ -18,11 +18,11 @@ was checked, not assumed.
 
 Related but distinct paths:
 
-| Path | Link | Note |
-| --- | --- | --- |
-| ToothFairy4 | https://ditto.ing.unimore.it/toothfairy4/ | `P` and `F` sets overlap ToothFairy2 |
+| Path        | Link                                      | Note                                        |
+| ----------- | ----------------------------------------- | ------------------------------------------- |
+| ToothFairy4 | https://ditto.ing.unimore.it/toothfairy4/ | `P` and `F` sets overlap ToothFairy2        |
 | ToothFairy3 | https://ditto.ing.unimore.it/toothfairy3/ | publishes the official `fix_orientation.py` |
-| ToothFairy2 | https://ditto.ing.unimore.it/toothfairy2/ | `.mha`; most direct provenance match |
+| ToothFairy2 | https://ditto.ing.unimore.it/toothfairy2/ | `.mha`; most direct provenance match        |
 
 Prefer a **`P`** case (Set A, the largest verified-overlapping set), fall back to
 **`F`**. Do **not** use `S` — never in ToothFairy2 — or `A` — not 0.3 mm isotropic
@@ -35,17 +35,17 @@ and from different scanners.
 
 Once you have a volume, place it in `input/source/` and record:
 
-| Field | Where it comes from |
-| --- | --- |
-| filename | the publisher's name, e.g. `P381.mha` |
-| dimensions | `scripts/inspect_cbct.py` |
-| spacing | `scripts/inspect_cbct.py` |
-| datatype | `scripts/inspect_cbct.py` |
-| size | `scripts/inspect_cbct.py` |
-| orientation | `scripts/inspect_cbct.py` |
-| intensity range | `scripts/inspect_cbct.py` |
-| source | the official page it came from |
-| SHA-256 | `scripts/inspect_cbct.py` |
+| Field           | Where it comes from                   |
+| --------------- | ------------------------------------- |
+| filename        | the publisher's name, e.g. `P381.mha` |
+| dimensions      | `scripts/inspect_cbct.py`             |
+| spacing         | `scripts/inspect_cbct.py`             |
+| datatype        | `scripts/inspect_cbct.py`             |
+| size            | `scripts/inspect_cbct.py`             |
+| orientation     | `scripts/inspect_cbct.py`             |
+| intensity range | `scripts/inspect_cbct.py`             |
+| source          | the official page it came from        |
+| SHA-256         | `scripts/inspect_cbct.py`             |
 
 `scripts/inspect_cbct.py` writes all of that into `output/input_provenance.json`,
 so the input to a run is identified by hash rather than by filename.
@@ -59,7 +59,7 @@ No conversion is needed on that route.
 ToothFairy2 itself publishes **`.mha`**; if you use that fallback route, the
 runner converts it. The model expects **NIfTI**.
 
-Converting the *input format* with SimpleITK is not model conversion. It
+Converting the _input format_ with SimpleITK is not model conversion. It
 preserves geometry: origin, spacing and direction are carried across and are
 re-asserted afterwards by the inspector. The original `.mha` is always kept
 alongside; it is never replaced.
@@ -67,7 +67,7 @@ alongside; it is never replaced.
 ## On synthetic volumes
 
 No synthetic or fabricated volume may be used as the input to a real
-validation. A synthetic file may exercise the *inspector script* — that is a
+validation. A synthetic file may exercise the _inspector script_ — that is a
 test of the script, not of the model — but it must never be presented as
 evidence that ToothFairy2 works. The distinction is the whole point of this lab.
 

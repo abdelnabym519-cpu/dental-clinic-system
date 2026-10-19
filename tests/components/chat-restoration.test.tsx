@@ -26,7 +26,7 @@ const streamedResponse = (text: string) =>
         c.close()
       },
     }),
-    { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
+    { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
   )
 
 describe('WS-A RESTORATION: the previous AI assistant is the primary surface again', () => {
@@ -44,7 +44,7 @@ describe('WS-A RESTORATION: the previous AI assistant is the primary surface aga
     render(
       <Providers>
         <ChatWidget />
-      </Providers>,
+      </Providers>
     )
     // the floating launcher is present by default (closed widget)
     const launcher = screen.getByRole('button', { name: /open ai chat/i })
@@ -68,7 +68,7 @@ describe('WS-A RESTORATION: the previous AI assistant is the primary surface aga
     render(
       <Providers>
         <ChatPage />
-      </Providers>,
+      </Providers>
     )
     // the page mounts the voice orb + composer (previous assistant experience)
     await waitFor(() => expect(screen.getByRole('textbox')).toBeTruthy())

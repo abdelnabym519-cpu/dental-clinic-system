@@ -8,12 +8,7 @@
  */
 
 export type ToothTreatmentStatus =
-  | 'healthy'
-  | 'affected'
-  | 'planned'
-  | 'in_progress'
-  | 'completed'
-  | 'missing'
+  'healthy' | 'affected' | 'planned' | 'in_progress' | 'completed' | 'missing'
 
 /** Chart palette (contract from the clinical spec — do not change casually). */
 export const TOOTH_COLORS: Record<ToothTreatmentStatus, string> = {

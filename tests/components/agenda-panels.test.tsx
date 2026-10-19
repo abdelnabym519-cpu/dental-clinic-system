@@ -116,17 +116,32 @@ describe('AgendaOperationsPanel — today queue', () => {
         return {
           ok: true,
           json: async () => ({
-            total: 0, completed: 0, cancelled: 0, noShow: 0, upcoming: 0,
-            completedRate: 0, cancellationRate: 0, noShowRate: 0, bookedMinutes: 0,
+            total: 0,
+            completed: 0,
+            cancelled: 0,
+            noShow: 0,
+            upcoming: 0,
+            completedRate: 0,
+            cancellationRate: 0,
+            noShowRate: 0,
+            bookedMinutes: 0,
             clinic: { occupancyPercent: 0, availablePercent: 100, capacityMinutes: 0 },
-            doctorUtilization: [], period: { from: '', to: '', days: 30 },
+            doctorUtilization: [],
+            period: { from: '', to: '', days: 30 },
           }),
         }
       }
       return { ok: true, json: async () => ({}) }
     })
 
-    render(<AgendaOperationsPanel capabilities={adminCapabilities} refreshKey={0} onChanged={vi.fn()} onOpenAppointment={vi.fn()} />)
+    render(
+      <AgendaOperationsPanel
+        capabilities={adminCapabilities}
+        refreshKey={0}
+        onChanged={vi.fn()}
+        onOpenAppointment={vi.fn()}
+      />
+    )
 
     // Cancelled appointments never appear in the queue; order is by time.
     await waitFor(() => expect(screen.getByText('First Case')).toBeTruthy())
@@ -149,7 +164,12 @@ describe('AgendaOperationsPanel — today queue', () => {
   it('hides itself entirely for roles with no operations rights', () => {
     render(
       <AgendaOperationsPanel
-        capabilities={{ canCheckIn: false, canAdvance: false, canWaitlist: false, canViewAnalytics: false }}
+        capabilities={{
+          canCheckIn: false,
+          canAdvance: false,
+          canWaitlist: false,
+          canViewAnalytics: false,
+        }}
         refreshKey={0}
         onChanged={vi.fn()}
         onOpenAppointment={vi.fn()}
@@ -163,8 +183,16 @@ describe('AgendaOperationsPanel — today queue', () => {
 describe('AgendaOperationsPanel — waiting list', () => {
   it('promotes an ACTIVE entry through the promote endpoint and refreshes', async () => {
     fetchMock.mockImplementation(async (url: string, init?: any) => {
-      if (typeof url === 'string' && url.includes('/api/appointments/waitlist/') && init?.method === 'POST') {
-        return { ok: true, status: 201, json: async () => ({ status: 'BOOKED', appointment: { id: 'apt-new' } }) }
+      if (
+        typeof url === 'string' &&
+        url.includes('/api/appointments/waitlist/') &&
+        init?.method === 'POST'
+      ) {
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ status: 'BOOKED', appointment: { id: 'apt-new' } }),
+        }
       }
       if (typeof url === 'string' && url.includes('/api/appointments/waitlist')) {
         return {
@@ -187,10 +215,18 @@ describe('AgendaOperationsPanel — waiting list', () => {
         return {
           ok: true,
           json: async () => ({
-            total: 0, completed: 0, cancelled: 0, noShow: 0, upcoming: 0,
-            completedRate: 0, cancellationRate: 0, noShowRate: 0, bookedMinutes: 0,
+            total: 0,
+            completed: 0,
+            cancelled: 0,
+            noShow: 0,
+            upcoming: 0,
+            completedRate: 0,
+            cancellationRate: 0,
+            noShowRate: 0,
+            bookedMinutes: 0,
             clinic: { occupancyPercent: 0, availablePercent: 100, capacityMinutes: 0 },
-            doctorUtilization: [], period: { from: '', to: '', days: 30 },
+            doctorUtilization: [],
+            period: { from: '', to: '', days: 30 },
           }),
         }
       }
@@ -198,7 +234,14 @@ describe('AgendaOperationsPanel — waiting list', () => {
     })
 
     const onChanged = vi.fn()
-    render(<AgendaOperationsPanel capabilities={adminCapabilities} refreshKey={0} onChanged={onChanged} onOpenAppointment={vi.fn()} />)
+    render(
+      <AgendaOperationsPanel
+        capabilities={adminCapabilities}
+        refreshKey={0}
+        onChanged={onChanged}
+        onOpenAppointment={vi.fn()}
+      />
+    )
 
     const book = await screen.findByRole('button', { name: /book Queue Waiter/i })
     fireEvent.click(book)
@@ -234,17 +277,32 @@ describe('AgendaOperationsPanel — waiting list', () => {
         return {
           ok: true,
           json: async () => ({
-            total: 0, completed: 0, cancelled: 0, noShow: 0, upcoming: 0,
-            completedRate: 0, cancellationRate: 0, noShowRate: 0, bookedMinutes: 0,
+            total: 0,
+            completed: 0,
+            cancelled: 0,
+            noShow: 0,
+            upcoming: 0,
+            completedRate: 0,
+            cancellationRate: 0,
+            noShowRate: 0,
+            bookedMinutes: 0,
             clinic: { occupancyPercent: 0, availablePercent: 100, capacityMinutes: 0 },
-            doctorUtilization: [], period: { from: '', to: '', days: 30 },
+            doctorUtilization: [],
+            period: { from: '', to: '', days: 30 },
           }),
         }
       }
       return { ok: true, json: async () => ({}) }
     })
 
-    render(<AgendaOperationsPanel capabilities={adminCapabilities} refreshKey={0} onChanged={vi.fn()} onOpenAppointment={vi.fn()} />)
+    render(
+      <AgendaOperationsPanel
+        capabilities={adminCapabilities}
+        refreshKey={0}
+        onChanged={vi.fn()}
+        onOpenAppointment={vi.fn()}
+      />
+    )
     const book = await screen.findByRole('button', { name: /book Queue Waiter/i })
     fireEvent.click(book)
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/No free slot/))
@@ -275,7 +333,14 @@ describe('AgendaOperationsPanel — analytics', () => {
       return { ok: true, json: async () => ({}) }
     })
 
-    render(<AgendaOperationsPanel capabilities={adminCapabilities} refreshKey={0} onChanged={vi.fn()} onOpenAppointment={vi.fn()} />)
+    render(
+      <AgendaOperationsPanel
+        capabilities={adminCapabilities}
+        refreshKey={0}
+        onChanged={vi.fn()}
+        onOpenAppointment={vi.fn()}
+      />
+    )
     await waitFor(() => expect(screen.getByTestId('analytics-summary')).toBeTruthy())
     expect(screen.getByText('20')).toBeTruthy()
     expect(screen.getByText('12 (60%)')).toBeTruthy()
@@ -290,7 +355,16 @@ describe('AgendaOperationsPanel — analytics', () => {
       }
       return { ok: true, json: async () => ({}) }
     })
-    render(<AgendaOperationsPanel capabilities={adminCapabilities} refreshKey={0} onChanged={vi.fn()} onOpenAppointment={vi.fn()} />)
-    await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/Failed to load analytics/))
+    render(
+      <AgendaOperationsPanel
+        capabilities={adminCapabilities}
+        refreshKey={0}
+        onChanged={vi.fn()}
+        onOpenAppointment={vi.fn()}
+      />
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toMatch(/Failed to load analytics/)
+    )
   })
 })

@@ -5,10 +5,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { getStorage, buildStorageKey, uploadUrl } from '@/lib/storage'
-import {
-  OrchestratorError,
-  requestOrchestratorAnalyze,
-} from '@/lib/ai-orchestrator'
+import { OrchestratorError, requestOrchestratorAnalyze } from '@/lib/ai-orchestrator'
 
 // Phase 19A (D10) — imaging study upload + AI trigger.
 // Phase 19B (D14) — modality → engine map:
@@ -171,9 +168,7 @@ export async function GET(req: NextRequest) {
     studies: (studies as unknown as StudyListItem[]).map((s) => ({
       id: s.id,
       patientId: s.patient?.patientId ?? null,
-      patientName: s.patient
-        ? `${s.patient.firstName} ${s.patient.lastName}`.trim()
-        : null,
+      patientName: s.patient ? `${s.patient.firstName} ${s.patient.lastName}`.trim() : null,
       modality: s.modality,
       studyType: s.studyType,
       status: s.status,
@@ -296,7 +291,13 @@ export async function POST(req: NextRequest) {
 
   // Unique, tenant-scoped object key. Originals are IMMUTABLE after this
   // put: nothing in the AI stack writes to this key (spec section 14).
-  const originalKey = buildStorageKey(hospitalId, 'imaging', body.patientId, studyId, `original.${ext}`)
+  const originalKey = buildStorageKey(
+    hospitalId,
+    'imaging',
+    body.patientId,
+    studyId,
+    `original.${ext}`
+  )
 
   await getStorage().put(originalKey, bytes, { contentType: file.type })
 
@@ -333,7 +334,7 @@ export async function POST(req: NextRequest) {
         originalHash,
         originalSize: study.originalSize,
         // Phase 20B — which jaw a 3D scan belongs to (null for 2D modalities).
-        jaw: isMesh ? body.jaw ?? 'max' : null,
+        jaw: isMesh ? (body.jaw ?? 'max') : null,
       }),
     },
   })

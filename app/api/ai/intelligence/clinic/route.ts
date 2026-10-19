@@ -19,7 +19,11 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { buildClinicMetrics, buildCommandCenter, type ClinicPrisma } from '@/lib/ai/intelligence/clinic-brain'
+import {
+  buildClinicMetrics,
+  buildCommandCenter,
+  type ClinicPrisma,
+} from '@/lib/ai/intelligence/clinic-brain'
 import { IntelligenceError } from '@/lib/ai/intelligence/types'
 import { intErr, writeAudit } from '@/lib/ai/intelligence/route-utils'
 
@@ -30,7 +34,11 @@ const CLINIC_ROLES = ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'ACCOUNT
 export async function GET() {
   const auth = await requireAuthAndRole(CLINIC_ROLES)
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return intErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return intErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId, user } = auth
 

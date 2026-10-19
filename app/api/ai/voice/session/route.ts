@@ -18,7 +18,7 @@ import { voiceSessions } from '@/lib/ai/voice/session-store'
 import { VOICE_LOCALES, type VoiceLocale } from '@/lib/ai/voice/types'
 import type { VoiceSession } from '@/lib/ai/voice/types'
 
-export const dynamic = 'force-dynamic' 
+export const dynamic = 'force-dynamic'
 
 function publicView(s: VoiceSession) {
   return {

@@ -195,12 +195,14 @@ export default function TransactionsPage() {
           <Link
             href="/inventory"
             className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
-          >{t('ui.back_to_inventory')}</Link>
+          >
+            {t('ui.back_to_inventory')}
+          </Link>
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            {t("+ New Transaction")}
+            {t('+ New Transaction')}
           </button>
         </div>
       </div>
@@ -245,20 +247,36 @@ export default function TransactionsPage() {
         {loading ? (
           <div className="p-8 text-center">{t('ui.loading')}</div>
         ) : transactions.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">{t('ui.no_transactions_found')}</div>
+          <div className="p-8 text-center text-muted-foreground">
+            {t('ui.no_transactions_found')}
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-border">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.date')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.type')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.item')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.quantity')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.unit_price')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.total_amount')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.supplier')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.date')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.type')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.item')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.quantity')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.unit_price')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.total_amount')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.supplier')}
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {t('Performed By')}
                     </th>
@@ -303,9 +321,11 @@ export default function TransactionsPage() {
             <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> {t("of")}{' '}
+                  <p className="text-sm text-foreground">
+                    {t('ui.showing_page')}
+                    <span className="font-medium">{pagination.page}</span> {t('of')}{' '}
                     <span className="font-medium">{pagination.pages}</span> ({pagination.total}{' '}
-                    {t("total transactions)")}
+                    {t('total transactions)')}
                   </p>
                 </div>
                 <div>
@@ -314,12 +334,16 @@ export default function TransactionsPage() {
                       onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                       disabled={pagination.page === 1}
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >{t('ui.previous')}</button>
+                    >
+                      {t('ui.previous')}
+                    </button>
                     <button
                       onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                       disabled={pagination.page === pagination.pages}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >{t('ui.next')}</button>
+                    >
+                      {t('ui.next')}
+                    </button>
                   </nav>
                 </div>
               </div>
@@ -337,7 +361,7 @@ export default function TransactionsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t("Transaction Type")} <span className="text-red-500">*</span>
+                    {t('Transaction Type')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="type"
@@ -355,7 +379,9 @@ export default function TransactionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">{t('ui.item')}<span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {t('ui.item')}
+                    <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="itemId"
@@ -374,7 +400,9 @@ export default function TransactionsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">{t('ui.quantity')}<span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {t('ui.quantity')}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -389,7 +417,7 @@ export default function TransactionsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t("Unit Price (EGP )")}
+                    {t('Unit Price (EGP )')}
                   </label>
                   <input
                     type="number"
@@ -403,7 +431,7 @@ export default function TransactionsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    {t("Transaction Date")} <span className="text-red-500">*</span>
+                    {t('Transaction Date')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
@@ -417,7 +445,9 @@ export default function TransactionsPage() {
 
                 {formData.type === 'purchase' && (
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">{t('ui.supplier')}</label>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      {t('ui.supplier')}
+                    </label>
                     <select
                       name="supplierId"
                       value={formData.supplierId}
@@ -436,7 +466,9 @@ export default function TransactionsPage() {
               </div>
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-foreground mb-2">{t('ui.notes')}</label>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  {t('ui.notes')}
+                </label>
                 <textarea
                   name="notes"
                   value={formData.notes}
@@ -451,7 +483,9 @@ export default function TransactionsPage() {
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   className="px-6 py-2 border border-border rounded-lg hover:bg-muted/50"
-                >{t('ui.cancel')}</button>
+                >
+                  {t('ui.cancel')}
+                </button>
                 <button
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

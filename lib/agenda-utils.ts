@@ -33,7 +33,12 @@ export function minutesToTime(mins: number): string {
  * when each starts before the other ends. Touching ranges (09:00-09:30 and
  * 09:30-10:00) do NOT overlap.
  */
-export function timeRangesOverlap(aStart: number, aDuration: number, bStart: number, bDuration: number): boolean {
+export function timeRangesOverlap(
+  aStart: number,
+  aDuration: number,
+  bStart: number,
+  bDuration: number
+): boolean {
   if (aDuration <= 0 || bDuration <= 0) return false
   return aStart < bStart + bDuration && bStart < aStart + aDuration
 }

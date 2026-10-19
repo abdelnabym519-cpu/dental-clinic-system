@@ -24,9 +24,15 @@ import type { GraphPrisma } from './case-graph'
 
 export type AlertPrisma = GraphPrisma & {
   aIInsight: {
-    findMany: (args?: { where?: Record<string, unknown>; take?: number }) => Promise<Record<string, any>[]>
+    findMany: (args?: {
+      where?: Record<string, unknown>
+      take?: number
+    }) => Promise<Record<string, any>[]>
     create: (args: { data: Record<string, any> }) => Promise<Record<string, any>>
-    updateMany: (args: { where: Record<string, any>; data: Record<string, any> }) => Promise<{ count: number }>
+    updateMany: (args: {
+      where: Record<string, any>
+      data: Record<string, any>
+    }) => Promise<{ count: number }>
   }
 }
 
@@ -64,12 +70,14 @@ export interface AlertRunResult {
  */
 export async function runProactiveIntelligence(
   prisma: AlertPrisma,
-  p: { hospitalId: string; now: Date; actorId: string },
+  p: { hospitalId: string; now: Date; actorId: string }
 ): Promise<AlertRunResult> {
   const { start, end } = dayBounds(p.now)
   const [treatments, appts, aiJobs] = await Promise.all([
     prisma.treatment.findMany({ where: { hospitalId: p.hospitalId, followUpRequired: true } }),
-    prisma.appointment.findMany({ where: { hospitalId: p.hospitalId, scheduledDate: { gte: start, lt: end } } }),
+    prisma.appointment.findMany({
+      where: { hospitalId: p.hospitalId, scheduledDate: { gte: start, lt: end } },
+    }),
     prisma.aiAnalysisJob.findMany({ where: { hospitalId: p.hospitalId, status: 'COMPLETED' } }),
   ])
 
@@ -80,7 +88,7 @@ export async function runProactiveIntelligence(
     trigger: string,
     evidence: Record<string, unknown>,
     scope: { patientId: string | null; caseId: string | null },
-    dedupKey: string,
+    dedupKey: string
   ) => {
     detected.push({
       alertType,
@@ -101,14 +109,39 @@ export async function runProactiveIntelligence(
     if (!t.followUpRequired || t.status !== 'COMPLETED') continue
     const due = t.followUpDate ? new Date(t.followUpDate) : null
     if (!due) {
-      push('CASE_INCOMPLETE', 'WARNING', 'follow_up_required_without_date', { treatmentNo: t.treatmentNo ?? t.id }, { patientId: t.patientId, caseId: null }, `CASE_INCOMPLETE|${t.id}|followup_date`)
+      push(
+        'CASE_INCOMPLETE',
+        'WARNING',
+        'follow_up_required_without_date',
+        { treatmentNo: t.treatmentNo ?? t.id },
+        { patientId: t.patientId, caseId: null },
+        `CASE_INCOMPLETE|${t.id}|followup_date`
+      )
       continue
     }
     const overdueMs = p.now.getTime() - due.getTime()
     if (overdueMs > 0) {
-      push('FOLLOW_UP_DUE', overdueMs > 7 * 86_400_000 ? 'CRITICAL' : 'WARNING', 'follow_up_overdue', { treatmentNo: t.treatmentNo ?? t.id, due: due.toISOString(), overdueDays: Math.ceil(overdueMs / 86_400_000) }, { patientId: t.patientId, caseId: null }, `FOLLOW_UP_DUE|${t.id}`)
+      push(
+        'FOLLOW_UP_DUE',
+        overdueMs > 7 * 86_400_000 ? 'CRITICAL' : 'WARNING',
+        'follow_up_overdue',
+        {
+          treatmentNo: t.treatmentNo ?? t.id,
+          due: due.toISOString(),
+          overdueDays: Math.ceil(overdueMs / 86_400_000),
+        },
+        { patientId: t.patientId, caseId: null },
+        `FOLLOW_UP_DUE|${t.id}`
+      )
     } else if (overdueMs > -3 * 86_400_000) {
-      push('FOLLOW_UP_DUE', 'INFO', 'follow_up_due_within_3d', { treatmentNo: t.treatmentNo ?? t.id, due: due.toISOString() }, { patientId: t.patientId, caseId: null }, `FOLLOW_UP_DUE|${t.id}`)
+      push(
+        'FOLLOW_UP_DUE',
+        'INFO',
+        'follow_up_due_within_3d',
+        { treatmentNo: t.treatmentNo ?? t.id, due: due.toISOString() },
+        { patientId: t.patientId, caseId: null },
+        `FOLLOW_UP_DUE|${t.id}`
+      )
     }
   }
 
@@ -117,11 +150,29 @@ export async function runProactiveIntelligence(
   for (const a of appts) {
     const sched = a.scheduledDate ? new Date(a.scheduledDate) : null
     if (!sched) continue
-    if (['SCHEDULED', 'CONFIRMED'].includes(a.status ?? '') && sched.getTime() < p.now.getTime() - 30 * 60_000 && !a.checkedInAt) {
-      push('MISSED_APPOINTMENT', 'WARNING', 'appointment_past_due_not_checked_in', { appointmentNo: a.appointmentNo ?? a.id, patientId: a.patientId }, { patientId: a.patientId, caseId: null }, `MISSED_APPOINTMENT|${a.id}`)
+    if (
+      ['SCHEDULED', 'CONFIRMED'].includes(a.status ?? '') &&
+      sched.getTime() < p.now.getTime() - 30 * 60_000 &&
+      !a.checkedInAt
+    ) {
+      push(
+        'MISSED_APPOINTMENT',
+        'WARNING',
+        'appointment_past_due_not_checked_in',
+        { appointmentNo: a.appointmentNo ?? a.id, patientId: a.patientId },
+        { patientId: a.patientId, caseId: null },
+        `MISSED_APPOINTMENT|${a.id}`
+      )
     }
     if (a.status === 'NO_SHOW') {
-      push('MISSED_APPOINTMENT', 'INFO', 'appointment_no_show_recorded', { appointmentNo: a.appointmentNo ?? a.id }, { patientId: a.patientId, caseId: null }, `MISSED_APPOINTMENT|${a.id}|noshown`)
+      push(
+        'MISSED_APPOINTMENT',
+        'INFO',
+        'appointment_no_show_recorded',
+        { appointmentNo: a.appointmentNo ?? a.id },
+        { patientId: a.patientId, caseId: null },
+        `MISSED_APPOINTMENT|${a.id}|noshown`
+      )
     }
   }
   void dayStart
@@ -129,22 +180,42 @@ export async function runProactiveIntelligence(
   // Rule 3 — AI findings awaiting clinician review.
   for (const j of aiJobs) {
     if (!j.reviewDecision) {
-      push('AI_REVIEW_REQUIRED', 'WARNING', 'ai_job_completed_unreviewed', { jobId: j.id, engine: j.engine ?? null }, { patientId: null, caseId: null }, `AI_REVIEW_REQUIRED|${j.id}`)
+      push(
+        'AI_REVIEW_REQUIRED',
+        'WARNING',
+        'ai_job_completed_unreviewed',
+        { jobId: j.id, engine: j.engine ?? null },
+        { patientId: null, caseId: null },
+        `AI_REVIEW_REQUIRED|${j.id}`
+      )
     }
   }
 
   // Rule 4 — queue bottleneck (deterministic threshold).
   const waiting = appts.filter((a) => a.status === 'CHECKED_IN').length
   if (waiting >= 4) {
-    push('QUEUE_BOTTLENECK', waiting >= 8 ? 'CRITICAL' : 'WARNING', 'queue_waiting_threshold', { waiting }, { patientId: null, caseId: null }, 'QUEUE_BOTTLENECK|day')
+    push(
+      'QUEUE_BOTTLENECK',
+      waiting >= 8 ? 'CRITICAL' : 'WARNING',
+      'queue_waiting_threshold',
+      { waiting },
+      { patientId: null, caseId: null },
+      'QUEUE_BOTTLENECK|day'
+    )
   }
 
   // Deduplicate against existing ACTIVE alerts (data.dedupKey), then persist.
-  const existing = await prisma.aIInsight.findMany({ where: { hospitalId: p.hospitalId, dismissed: false } })
+  const existing = await prisma.aIInsight.findMany({
+    where: { hospitalId: p.hospitalId, dismissed: false },
+  })
   const activeKeys = new Set(
     existing
-      .map((r) => (r.data && typeof r.data === 'object' && r.data.dedupKey ? String((r.data as Record<string, unknown>).dedupKey) : null))
-      .filter((k): k is string => Boolean(k)),
+      .map((r) =>
+        r.data && typeof r.data === 'object' && r.data.dedupKey
+          ? String((r.data as Record<string, unknown>).dedupKey)
+          : null
+      )
+      .filter((k): k is string => Boolean(k))
   )
 
   let created = 0
@@ -189,16 +260,25 @@ export async function runProactiveIntelligence(
 /** Dismiss an alert (state change — never deletes the audit row). */
 export async function dismissAlert(
   prisma: AlertPrisma,
-  p: { hospitalId: string; alertId: string; actorId: string },
+  p: { hospitalId: string; alertId: string; actorId: string }
 ): Promise<{ ok: boolean; state: 'DISMISSED' | 'NOT_FOUND' }> {
-  const rows = await prisma.aIInsight.findMany({ where: { hospitalId: p.hospitalId, id: p.alertId } })
+  const rows = await prisma.aIInsight.findMany({
+    where: { hospitalId: p.hospitalId, id: p.alertId },
+  })
   const row = rows[0]
   if (!row) return { ok: false, state: 'NOT_FOUND' }
   // Tenant-pinned update (never a bare-id update: a foreign id must not
   // touch another tenant's row — fail closed instead).
   const updated = await prisma.aIInsight.updateMany({
     where: { id: p.alertId, hospitalId: p.hospitalId },
-    data: { dismissed: true, data: { ...(row.data as Record<string, unknown> ?? {}), dismissedById: p.actorId, dismissedAt: new Date().toISOString() } },
+    data: {
+      dismissed: true,
+      data: {
+        ...((row.data as Record<string, unknown>) ?? {}),
+        dismissedById: p.actorId,
+        dismissedAt: new Date().toISOString(),
+      },
+    },
   })
   if (updated.count === 0) return { ok: false, state: 'NOT_FOUND' }
   return { ok: true, state: 'DISMISSED' }

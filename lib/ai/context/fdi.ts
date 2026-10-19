@@ -14,22 +14,38 @@ export const FDI_QUADRANTS: Record<1 | 2 | 3 | 4, number[]> = {
 }
 
 export const TOOTH_NAMES: Record<number, string> = {
-  11: 'Upper Right Central Incisor', 12: 'Upper Right Lateral Incisor',
-  13: 'Upper Right Canine', 14: 'Upper Right First Premolar',
-  15: 'Upper Right Second Premolar', 16: 'Upper Right First Molar',
-  17: 'Upper Right Second Molar', 18: 'Upper Right Third Molar (Wisdom)',
-  21: 'Upper Left Central Incisor', 22: 'Upper Left Lateral Incisor',
-  23: 'Upper Left Canine', 24: 'Upper Left First Premolar',
-  25: 'Upper Left Second Premolar', 26: 'Upper Left First Molar',
-  27: 'Upper Left Second Molar', 28: 'Upper Left Third Molar (Wisdom)',
-  31: 'Lower Left Central Incisor', 32: 'Lower Left Lateral Incisor',
-  33: 'Lower Left Canine', 34: 'Lower Left First Premolar',
-  35: 'Lower Left Second Premolar', 36: 'Lower Left First Molar',
-  37: 'Lower Left Second Molar', 38: 'Lower Left Third Molar (Wisdom)',
-  41: 'Lower Right Central Incisor', 42: 'Lower Right Lateral Incisor',
-  43: 'Lower Right Canine', 44: 'Lower Right First Premolar',
-  45: 'Lower Right Second Premolar', 46: 'Lower Right First Molar',
-  47: 'Lower Right Second Molar', 48: 'Lower Right Third Molar (Wisdom)',
+  11: 'Upper Right Central Incisor',
+  12: 'Upper Right Lateral Incisor',
+  13: 'Upper Right Canine',
+  14: 'Upper Right First Premolar',
+  15: 'Upper Right Second Premolar',
+  16: 'Upper Right First Molar',
+  17: 'Upper Right Second Molar',
+  18: 'Upper Right Third Molar (Wisdom)',
+  21: 'Upper Left Central Incisor',
+  22: 'Upper Left Lateral Incisor',
+  23: 'Upper Left Canine',
+  24: 'Upper Left First Premolar',
+  25: 'Upper Left Second Premolar',
+  26: 'Upper Left First Molar',
+  27: 'Upper Left Second Molar',
+  28: 'Upper Left Third Molar (Wisdom)',
+  31: 'Lower Left Central Incisor',
+  32: 'Lower Left Lateral Incisor',
+  33: 'Lower Left Canine',
+  34: 'Lower Left First Premolar',
+  35: 'Lower Left Second Premolar',
+  36: 'Lower Left First Molar',
+  37: 'Lower Left Second Molar',
+  38: 'Lower Left Third Molar (Wisdom)',
+  41: 'Lower Right Central Incisor',
+  42: 'Lower Right Lateral Incisor',
+  43: 'Lower Right Canine',
+  44: 'Lower Right First Premolar',
+  45: 'Lower Right Second Premolar',
+  46: 'Lower Right First Molar',
+  47: 'Lower Right Second Molar',
+  48: 'Lower Right Third Molar (Wisdom)',
 }
 
 /** True for a valid permanent FDI number (11-48). */
@@ -67,9 +83,7 @@ export function parseToothNumbers(raw: string | null | undefined): number[] {
 
 /** Deterministic FDI sort (arch order: 18..11, 21..28, 38..31, 41..48). */
 const ARCH_ORDER: number[] = [
-  18, 17, 16, 15, 14, 13, 12, 11,
-  21, 22, 23, 24, 25, 26, 27, 28,
-  38, 37, 36, 35, 34, 33, 32, 31,
+  18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28, 38, 37, 36, 35, 34, 33, 32, 31,
   41, 42, 43, 44, 45, 46, 47, 48,
 ]
 export function sortFdi(fd: number[]): number[] {

@@ -25,25 +25,43 @@ import { cn } from '@/lib/utils'
 import type { InteractionState } from '@/lib/ai/voice/types'
 
 export type RobotState =
-  | 'idle' | 'listening' | 'thinking' | 'speaking'
-  | 'interrupted' | 'waiting-approval' | 'warning' | 'error' | 'success'
+  | 'idle'
+  | 'listening'
+  | 'thinking'
+  | 'speaking'
+  | 'interrupted'
+  | 'waiting-approval'
+  | 'warning'
+  | 'error'
+  | 'success'
 
 /** Canonical interaction state → robot visual state (one mapping, §34). */
 export function robotStateFor(s: InteractionState): RobotState {
   switch (s) {
-    case 'IDLE': return 'idle'
-    case 'LISTENING': return 'listening'
+    case 'IDLE':
+      return 'idle'
+    case 'LISTENING':
+      return 'listening'
     case 'TRANSCRIBING':
     case 'UNDERSTANDING':
-    case 'PROCESSING': return 'thinking'
-    case 'WAITING_APPROVAL': return 'waiting-approval'
-    case 'SPEAKING': return 'speaking'
-    case 'INTERRUPTED': return 'interrupted'
-    case 'WARNING': return 'warning'
-    case 'ERROR': return 'error'
-    case 'COMPLETED': return 'success'
-    case 'CANCELLED': return 'idle'
-    default: return 'idle'
+    case 'PROCESSING':
+      return 'thinking'
+    case 'WAITING_APPROVAL':
+      return 'waiting-approval'
+    case 'SPEAKING':
+      return 'speaking'
+    case 'INTERRUPTED':
+      return 'interrupted'
+    case 'WARNING':
+      return 'warning'
+    case 'ERROR':
+      return 'error'
+    case 'COMPLETED':
+      return 'success'
+    case 'CANCELLED':
+      return 'idle'
+    default:
+      return 'idle'
   }
 }
 
@@ -109,15 +127,18 @@ export function DentoraRobot({
     let alive = true
     let timer: ReturnType<typeof setTimeout>
     const loop = () => {
-      timer = setTimeout(() => {
-        if (!alive) return
-        setBlink(true)
-        setTimeout(() => {
+      timer = setTimeout(
+        () => {
           if (!alive) return
-          setBlink(false)
-          loop()
-        }, 140)
-      }, 2600 + Math.random() * 2600)
+          setBlink(true)
+          setTimeout(() => {
+            if (!alive) return
+            setBlink(false)
+            loop()
+          }, 140)
+        },
+        2600 + Math.random() * 2600
+      )
     }
     loop()
     return () => {
@@ -126,7 +147,8 @@ export function DentoraRobot({
     }
   }, [robot, still])
 
-  const anim = (name: string) => (still ? undefined : `${name} var(--robot-anim-dur, 1.8s) ease-in-out infinite`)
+  const anim = (name: string) =>
+    still ? undefined : `${name} var(--robot-anim-dur, 1.8s) ease-in-out infinite`
 
   return (
     <div
@@ -145,7 +167,11 @@ export function DentoraRobot({
         <div
           aria-hidden="true"
           className="absolute inset-0 rounded-full blur-2xl"
-          style={{ background: meta.glow, opacity: still ? 0.5 : 1, animation: anim('robot-breathe') }}
+          style={{
+            background: meta.glow,
+            opacity: still ? 0.5 : 1,
+            animation: anim('robot-breathe'),
+          }}
         />
         <svg
           viewBox="0 0 200 240"
@@ -171,47 +197,99 @@ export function DentoraRobot({
           </defs>
 
           {/* Antenna — dental-blue tip pulse while listening */}
-          <line x1="100" y1="18" x2="100" y2="34" stroke="#94A3B8" strokeWidth="4" strokeLinecap="round" />
+          <line
+            x1="100"
+            y1="18"
+            x2="100"
+            y2="34"
+            stroke="#94A3B8"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
           <circle cx="100" cy="14" r="7" fill={meta.eye} opacity={robot === 'listening' ? 1 : 0.75}>
             {(robot === 'listening' || robot === 'thinking') && (
-              <animate attributeName="opacity" values={still ? undefined : '0.4;1;0.4'} dur="1.4s" repeatCount="indefinite" />
+              <animate
+                attributeName="opacity"
+                values={still ? undefined : '0.4;1;0.4'}
+                dur="1.4s"
+                repeatCount="indefinite"
+              />
             )}
           </circle>
 
           {/* Head */}
-          <rect x="42" y="34" width="116" height="96" rx="30" fill="url(#robotBody)" stroke="#94A3B8" strokeWidth="2" />
+          <rect
+            x="42"
+            y="34"
+            width="116"
+            height="96"
+            rx="30"
+            fill="url(#robotBody)"
+            stroke="#94A3B8"
+            strokeWidth="2"
+          />
           {/* Visor */}
           <rect x="54" y="50" width="92" height="56" rx="22" fill="url(#robotVisor)" />
 
           {/* Eyes — expressive digital eyes */}
           <g>
-            {(robot === 'listening') && (
+            {robot === 'listening' && (
               <>
                 <circle cx="82" cy="78" r="9" fill={meta.eye}>
-                  {!still && <animate attributeName="r" values="7;11;7" dur="1s" repeatCount="indefinite" />}
+                  {!still && (
+                    <animate attributeName="r" values="7;11;7" dur="1s" repeatCount="indefinite" />
+                  )}
                 </circle>
                 <circle cx="118" cy="78" r="9" fill={meta.eye}>
-                  {!still && <animate attributeName="r" values="7;11;7" dur="1s" repeatCount="indefinite" />}
+                  {!still && (
+                    <animate attributeName="r" values="7;11;7" dur="1s" repeatCount="indefinite" />
+                  )}
                 </circle>
               </>
             )}
-            {(robot === 'thinking') && (
+            {robot === 'thinking' && (
               <>
                 <rect x="72" y="72" width="20" height="12" rx="6" fill={meta.eye}>
-                  {!still && <animate attributeName="x" values="72;84;72" dur="1.6s" repeatCount="indefinite" />}
+                  {!still && (
+                    <animate
+                      attributeName="x"
+                      values="72;84;72"
+                      dur="1.6s"
+                      repeatCount="indefinite"
+                    />
+                  )}
                 </rect>
                 <rect x="108" y="72" width="20" height="12" rx="6" fill={meta.eye}>
-                  {!still && <animate attributeName="x" values="108;120;108" dur="1.6s" repeatCount="indefinite" />}
+                  {!still && (
+                    <animate
+                      attributeName="x"
+                      values="108;120;108"
+                      dur="1.6s"
+                      repeatCount="indefinite"
+                    />
+                  )}
                 </rect>
               </>
             )}
             {(robot === 'speaking' || robot === 'success') && (
               <>
-                <path d="M74 78 q8 -12 16 0" stroke={meta.eye} strokeWidth="5" fill="none" strokeLinecap="round" />
-                <path d="M110 78 q8 -12 16 0" stroke={meta.eye} strokeWidth="5" fill="none" strokeLinecap="round" />
+                <path
+                  d="M74 78 q8 -12 16 0"
+                  stroke={meta.eye}
+                  strokeWidth="5"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M110 78 q8 -12 16 0"
+                  stroke={meta.eye}
+                  strokeWidth="5"
+                  fill="none"
+                  strokeLinecap="round"
+                />
               </>
             )}
-            {(robot === 'idle') && (
+            {robot === 'idle' && (
               <>
                 <circle cx="82" cy="78" r={blink ? 2.5 : 8} fill={meta.eye} />
                 <circle cx="118" cy="78" r={blink ? 2.5 : 8} fill={meta.eye} />
@@ -225,10 +303,20 @@ export function DentoraRobot({
                 <circle cx="115" cy="75" r="2.5" fill="#0F172A" />
               </>
             )}
-            {(robot === 'error') && (
+            {robot === 'error' && (
               <>
-                <path d="M74 72 l16 12 M90 72 l-16 12" stroke={meta.eye} strokeWidth="5" strokeLinecap="round" />
-                <path d="M110 72 l16 12 M126 72 l-16 12" stroke={meta.eye} strokeWidth="5" strokeLinecap="round" />
+                <path
+                  d="M74 72 l16 12 M90 72 l-16 12"
+                  stroke={meta.eye}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M110 72 l16 12 M126 72 l-16 12"
+                  stroke={meta.eye}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                />
               </>
             )}
           </g>
@@ -238,8 +326,24 @@ export function DentoraRobot({
             {robot === 'speaking' ? (
               <>
                 {[92, 100, 108].map((x, i) => (
-                  <rect key={x} x={x - 2} y="92" width="4" height={i === 1 ? 10 : 7} rx="2" fill={meta.eye}>
-                    {!still && <animate attributeName="height" values="4;10;4" dur="0.6s" begin={`${i * 0.15}s`} repeatCount="indefinite" />}
+                  <rect
+                    key={x}
+                    x={x - 2}
+                    y="92"
+                    width="4"
+                    height={i === 1 ? 10 : 7}
+                    rx="2"
+                    fill={meta.eye}
+                  >
+                    {!still && (
+                      <animate
+                        attributeName="height"
+                        values="4;10;4"
+                        dur="0.6s"
+                        begin={`${i * 0.15}s`}
+                        repeatCount="indefinite"
+                      />
+                    )}
                   </rect>
                 ))}
               </>
@@ -249,12 +353,39 @@ export function DentoraRobot({
           </g>
 
           {/* Ears */}
-          <rect x="30" y="66" width="10" height="30" rx="5" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
-          <rect x="160" y="66" width="10" height="30" rx="5" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
+          <rect
+            x="30"
+            y="66"
+            width="10"
+            height="30"
+            rx="5"
+            fill="#CBD5E1"
+            stroke="#94A3B8"
+            strokeWidth="1.5"
+          />
+          <rect
+            x="160"
+            y="66"
+            width="10"
+            height="30"
+            rx="5"
+            fill="#CBD5E1"
+            stroke="#94A3B8"
+            strokeWidth="1.5"
+          />
 
           {/* Neck + body */}
           <rect x="88" y="128" width="24" height="10" fill="#CBD5E1" />
-          <rect x="52" y="138" width="96" height="74" rx="24" fill="url(#robotChest)" stroke="#94A3B8" strokeWidth="2" />
+          <rect
+            x="52"
+            y="138"
+            width="96"
+            height="74"
+            rx="24"
+            fill="url(#robotChest)"
+            stroke="#94A3B8"
+            strokeWidth="2"
+          />
 
           {/* Chest: subtle tooth motif (DenToRa branding — subtle, §23) */}
           <g transform="translate(84,150) scale(1.35)">
@@ -270,7 +401,12 @@ export function DentoraRobot({
           {/* Chest status dot */}
           <circle cx="128" cy="196" r="5" fill={meta.eye}>
             {(robot === 'waiting-approval' || robot === 'warning' || robot === 'error') && (
-              <animate attributeName="opacity" values={still ? undefined : '1;0.3;1'} dur="1s" repeatCount="indefinite" />
+              <animate
+                attributeName="opacity"
+                values={still ? undefined : '1;0.3;1'}
+                dur="1s"
+                repeatCount="indefinite"
+              />
             )}
           </circle>
 

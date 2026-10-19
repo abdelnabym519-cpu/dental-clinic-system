@@ -43,7 +43,7 @@ tests (unit/API/adversarial/eval/perf), this report.
 
 **Out (explicit):** Phase 10 (voice, STT/TTS, robot UI/hardware) — clean
 interfaces only, none implemented; Phase 11/12; any new Agent/Brain/Memory/RAG/
-graph/observability/eval *framework*; Neo4j or any graph DB; duplicate
+graph/observability/eval _framework_; Neo4j or any graph DB; duplicate
 entities; production-readiness claims.
 
 **Reuse (not recreated):** Phase 1 approval/action pipeline
@@ -57,21 +57,21 @@ schema already models the entities.
 Audit of `prisma/schema.prisma` confirmed **every required entity already
 exists** — no duplicate entities were created:
 
-| Graph concept | Existing table | Notes |
-|---|---|---|
-| Patient | `Patient` | portal-linked, tenant-pinned |
-| Tooth / finding / symptom | `DentalChartEntry` | FDI `toothNumber`, condition, severity, resolved |
-| Case | `TreatmentPlan` (+ items) | **Case = TreatmentPlan** (decision §4.1) |
-| Treatment | `Treatment` | follow-up fields on the row |
-| Prescription | `Prescription` (+ meds) | |
-| Imaging | `ImagingStudy` | modality/studyType/studyDate |
-| AI Finding | `AIAnalysisJob` | engine, modelVersion, modelChecksum, reviewDecision, acceptedFindings |
-| Diagnosis support | `DentalChartEntry` + AI job review | no separate `diagnosis` entity (6-phase rule) |
-| Follow-up | `Treatment.followUpDate/Required/Notes` | |
-| Outcome | `Treatment.status` + complications | |
-| Memory ref | `AiMemoryItem` (Phase 8) | references only, content stays in Memory layer |
-| Conversation | `AIconversation` (Phase 3/8) | cross-relation, not re-modeled |
-| Appointment | `Appointment` | queue statuses (CHECKED_IN etc.) |
+| Graph concept             | Existing table                          | Notes                                                                 |
+| ------------------------- | --------------------------------------- | --------------------------------------------------------------------- |
+| Patient                   | `Patient`                               | portal-linked, tenant-pinned                                          |
+| Tooth / finding / symptom | `DentalChartEntry`                      | FDI `toothNumber`, condition, severity, resolved                      |
+| Case                      | `TreatmentPlan` (+ items)               | **Case = TreatmentPlan** (decision §4.1)                              |
+| Treatment                 | `Treatment`                             | follow-up fields on the row                                           |
+| Prescription              | `Prescription` (+ meds)                 |                                                                       |
+| Imaging                   | `ImagingStudy`                          | modality/studyType/studyDate                                          |
+| AI Finding                | `AIAnalysisJob`                         | engine, modelVersion, modelChecksum, reviewDecision, acceptedFindings |
+| Diagnosis support         | `DentalChartEntry` + AI job review      | no separate `diagnosis` entity (6-phase rule)                         |
+| Follow-up                 | `Treatment.followUpDate/Required/Notes` |                                                                       |
+| Outcome                   | `Treatment.status` + complications      |                                                                       |
+| Memory ref                | `AiMemoryItem` (Phase 8)                | references only, content stays in Memory layer                        |
+| Conversation              | `AIconversation` (Phase 3/8)            | cross-relation, not re-modeled                                        |
+| Appointment               | `Appointment`                           | queue statuses (CHECKED_IN etc.)                                      |
 
 The **only additive DDL** is `AiWorkflowRun` (workflow observability — a new
 concern with no existing table): migration
@@ -83,8 +83,8 @@ concern with no existing table): migration
 1. **Case = TreatmentPlan.** A "case" in this clinic is a treatment plan with
    items/consent/status; modeling a second Case entity would have violated the
    no-duplicate-entities rule.
-2. **In-process relational graph.** A graph is a *query shape over
-   relations*, not a new DB. `buildCaseGraph` performs ~10 tenant-pinned
+2. **In-process relational graph.** A graph is a _query shape over
+   relations_, not a new DB. `buildCaseGraph` performs ~10 tenant-pinned
    `findMany` calls (bounded `take`s) and assembles typed nodes/edges in
    memory. Traversal is pure, bounded, deterministic (BFS, max depth/nodes,
    edge-kind filter). No Neo4j, no new job queue, no new framework.
@@ -92,7 +92,7 @@ concern with no existing table): migration
    / `buildClinicMetrics` are imported by the existing agent tool surface and
    by the API routes; there is no second agent and no second brain.
 4. **Alerts = AIInsight rows** (category/severity/title/data), `data.kind =
-   'PROACTIVE_ALERT'`. Reuses the existing insight store + notification
+'PROACTIVE_ALERT'`. Reuses the existing insight store + notification
    architecture; no new alert table.
 5. **Sensitive steps have no direct write path.** `schedule_followup` maps to
    the Phase-1 `book_appointment` action; `create_finding` has **no** pipeline
@@ -118,16 +118,16 @@ concern with no existing table): migration
   another tenant → `INT_SCOPE_MISMATCH`; case not of this patient/tenant →
   `INT_CASE_NOT_FOUND`. No partial graph is ever returned.
 - **Node kinds** (typed, `GRAPH_NODE_KINDS`): `PATIENT, DOCTOR, TOOTH,
-  CASE, FINDING, SYMPTOM, IMAGING, AI_FINDING, DIAGNOSIS_SUPPORT,
-  TREATMENT, PRESCRIPTION, FOLLOW_UP, OUTCOME, MEMORY, APPOINTMENT`.
+CASE, FINDING, SYMPTOM, IMAGING, AI_FINDING, DIAGNOSIS_SUPPORT,
+TREATMENT, PRESCRIPTION, FOLLOW_UP, OUTCOME, MEMORY, APPOINTMENT`.
 - **Edge kinds** (typed, `GRAPH_EDGE_KINDS`) with per-edge **provenance**:
   `{source, actor, at, sourceType, version?}` + **trust class** (see §6).
 - **Limits:** `maxNodes/maxEdges` + per-table `take`s (`maxAppointments`,
   `maxTreatments`, `maxImaging`, `maxChartEntries`, `maxMemory`) — bounded by
   construction; truncation is reported on the graph object.
 - **Traversal:** `traverseGraph(graph, {startId, maxDepth≤limits, maxNodes≤
-  limits, direction, edgeKinds?})` → `{nodes, edges, depth, truncated,
-  queryCount, resultCount, maxDepthReached}`. Unknown start → empty result.
+limits, direction, edgeKinds?})` → `{nodes, edges, depth, truncated,
+queryCount, resultCount, maxDepthReached}`. Unknown start → empty result.
   Pure function: no I/O, deterministic.
 - **AI jobs** come from the **standalone `AIAnalysisJob` table**, re-pinned to
   the patient's studies (`studyId ∈ patient's study ids`) — the embedded
@@ -141,20 +141,20 @@ concern with no existing table): migration
 `GRAPH_TRUSTS` (7 classes, distinct semantics — interpretation never silently
 becomes fact):
 
-| Class | Meaning | Produced by |
-|---|---|---|
-| `RECORD_FACT` | Structured record fact | chart/treatment/plan/appt rows |
-| `USER_PROVIDED` | Patient/portal statement | memory (USER_PROVIDED), chief complaint |
-| `DOCTOR_CONFIRMED` | Clinician confirmed | **ACCEPTED** AI review, clinical notes |
-| `AI_DERIVED` | Model output, unconfirmed | unreviewed/rejected AI findings |
-| `KNOWLEDGE_EVIDENCE` | RAG guideline evidence | (reserved; Phase-4 surface) |
-| `SYSTEM_INFERRED` | Deterministic derivation | follow-up overdue, utilization, bottlenecks |
-| `UNKNOWN` | Unresolvable | unmapped sources |
+| Class                | Meaning                   | Produced by                                 |
+| -------------------- | ------------------------- | ------------------------------------------- |
+| `RECORD_FACT`        | Structured record fact    | chart/treatment/plan/appt rows              |
+| `USER_PROVIDED`      | Patient/portal statement  | memory (USER_PROVIDED), chief complaint     |
+| `DOCTOR_CONFIRMED`   | Clinician confirmed       | **ACCEPTED** AI review, clinical notes      |
+| `AI_DERIVED`         | Model output, unconfirmed | unreviewed/rejected AI findings             |
+| `KNOWLEDGE_EVIDENCE` | RAG guideline evidence    | (reserved; Phase-4 surface)                 |
+| `SYSTEM_INFERRED`    | Deterministic derivation  | follow-up overdue, utilization, bottlenecks |
+| `UNKNOWN`            | Unresolvable              | unmapped sources                            |
 
 Rules enforced and tested:
 
 - **Every edge has provenance** (source/actor/at/sourceType); an edge without
-  it is *reported* by the consistency checker, never silently completed (§32).
+  it is _reported_ by the consistency checker, never silently completed (§32).
 - **AI finding → FACT only on `reviewDecision = 'ACCEPTED'`** (job-level
   clinician decision). Unreviewed/rejected findings stay `AI_DERIVED` /
   `AI_INTERPRETATION`. Forged `acceptedFindings` without a decision confirm
@@ -177,7 +177,7 @@ Rules enforced and tested:
 - **Revalidation at the tool/application-service boundary**: the graph is
   rebuilt server-side per request; patient AI re-checks graph membership;
   workflow `RESOLVE_PATIENT` re-validates the context patient against the
-  tenant (a forged id fails the *run*, producing zero output items).
+  tenant (a forged id fails the _run_, producing zero output items).
 - **Store tenant-pinning:** `createWorkflowRunStore(prisma, hospitalId)`
   captures the tenant; every read/write includes `hospitalId` in the where
   clause — a foreign run id is invisible, not an error.
@@ -203,13 +203,13 @@ questions with **explicit availability per item**:
 ## 9. Dental Brain — summary & differential
 
 - **Fixed 16-section clinical summary** (`patientContext … missingInformation`)
-  + `disclaimerKey` (`int.summary.disclaimer`), every section typed
-  `{state: AVAILABLE|NOT_AVAILABLE|NOT_MEASURED, lines[]}`. No section is
-  omitted; gaps are explicit.
+  - `disclaimerKey` (`int.summary.disclaimer`), every section typed
+    `{state: AVAILABLE|NOT_AVAILABLE|NOT_MEASURED, lines[]}`. No section is
+    omitted; gaps are explicit.
 - **Differential support = CDS stance only**: `stance:
-  'clinical_decision_support'` is a structural constant; candidates carry
+'clinical_decision_support'` is a structural constant; candidates carry
   supporting/contradicting/missing evidence arrays; the summary never emits a
-  `diagnosis` field; a plan's *recorded* diagnosis (clinician record) is a
+  `diagnosis` field; a plan's _recorded_ diagnosis (clinician record) is a
   flag, not an AI claim.
 - **Domains**: condition→domain mapping (`CARIES/FILLED/FRACTURED→RESTORATIVE`,
   `ROOT_CANAL/SENSITIVE→ENDODONTICS`, …) + procedure categories.
@@ -237,8 +237,8 @@ Phases 5–8; Phase 9 connects, not duplicates:
 `buildPatientIntelligence(graph, now)`:
 
 - **Timeline**: typed events `{id: ev:{nodeId}, at (top-level, ISO), kind ∈
-  APPOINTMENT|TREATMENT|IMAGING|AI_FINDING|AI_REVIEW|FOLLOW_UP|OUTCOME|CASE|
-  MEMORY, labelKey, labelParams, insightClass, provenance, data}`.
+APPOINTMENT|TREATMENT|IMAGING|AI_FINDING|AI_REVIEW|FOLLOW_UP|OUTCOME|CASE|
+MEMORY, labelKey, labelParams, insightClass, provenance, data}`.
   Sorted **time desc (stable) → kind → id**; hard `TIMELINE_LIMIT = 50` with
   `timelineTruncated` flag.
 - **Trust preserved end-to-end**: ACCEPTED AI finding → `FACT` + AI_REVIEW
@@ -256,7 +256,7 @@ recentFindings, unresolvedIssues, memoryRefs }`:
   `ACTIVE`** (tolerant read of pre-enum rows — report, don't drop; real
   fixture-compat fix).
 - `currentTreatments`: treatment/rx nodes `IN_PROGRESS|PENDING|SCHEDULED|
-  PLANNED|DRAFT`; ref = `treatmentNo` (display id) when present.
+PLANNED|DRAFT`; ref = `treatmentNo` (display id) when present.
 - `pendingItems`: current treatments + missing consent for
   PROPOSED/ACCEPTED plans.
 - `followUpsDue`: date-asc; `overdue` only when `date < now` (d+30 fixture is
@@ -305,7 +305,7 @@ unresolvedTasks, financialItems, doctorWorkload`):
 
 1. **FOLLOW_UP_DUE**: overdue `>7d` → `CRITICAL`, else `WARNING`;
    due-within-3d → `INFO`; required-without-date → `CASE_INCOMPLETE
-   WARNING`.
+WARNING`.
 2. **MISSED_APPOINTMENT**: past-due (−30 min) SCHEDULED/CONFIRMED without
    check-in → `WARNING`; recorded NO_SHOW → `INFO`.
 3. **AI_REVIEW_REQUIRED**: per unreviewed COMPLETED job → `WARNING`.
@@ -332,11 +332,11 @@ detectedAt, detectedById, kind: 'PROACTIVE_ALERT', action: null}` + 14-day
 ## 17. Insight classes & alert types (§20–§21)
 
 - Insight classes (`FACT, AI_INTERPRETATION, DERIVED_INSIGHT, RECOMMENDATION,
-  ACTION`) are typed on every brain/center/workflow output item and asserted
+ACTION`) are typed on every brain/center/workflow output item and asserted
   in tests — never mixed, never implicit.
 - Alert types are the closed typed set
   `FOLLOW_UP_DUE | MISSED_APPOINTMENT | AI_REVIEW_REQUIRED | CASE_INCOMPLETE |
-  TREATMENT_PENDING | QUEUE_BOTTLENECK | TASK_OVERDUE` (Phase 9 implements
+TREATMENT_PENDING | QUEUE_BOTTLENECK | TASK_OVERDUE` (Phase 9 implements
   rules for the first five; `TREATMENT_PENDING`/`TASK_OVERDUE` extend the same
   typed envelope via the existing notification/task/event architecture).
 - Bounded: fixed rules, fixed severity mapping, fixed dedup keys, 14-day
@@ -347,12 +347,12 @@ detectedAt, detectedById, kind: 'PROACTIVE_ALERT', action: null}` + 14-day
 Four canonical definitions (`lib/ai/workflows/definitions.ts`) in a closed
 registry (`WORKFLOWS`):
 
-| id | steps | maxSteps | maxToolCalls | timeout | retry | allowedRoles | approval steps |
-|---|---|---|---|---|---|---|---|
-| `case_review` | 9 | 9 | 8 | 30s | 1× `RETRIEVAL_TIMEOUT` | SA/A/D/R | — |
-| `imaging_review` | 6 | 7 | 7 | 120s | 1× `ENGINE_TIMEOUT` | SA/A/D/LAB | `create_finding` |
-| `follow_up` | 6 | 7 | 6 | 30s | 1× `RETRIEVAL_TIMEOUT` | SA/A/D/R | `propose_action` |
-| `daily_clinic_review` | 7 | 7 | 5 | 20s | 0 | SA/A/D | — |
+| id                    | steps | maxSteps | maxToolCalls | timeout | retry                  | allowedRoles | approval steps   |
+| --------------------- | ----- | -------- | ------------ | ------- | ---------------------- | ------------ | ---------------- |
+| `case_review`         | 9     | 9        | 8            | 30s     | 1× `RETRIEVAL_TIMEOUT` | SA/A/D/R     | —                |
+| `imaging_review`      | 6     | 7        | 7            | 120s    | 1× `ENGINE_TIMEOUT`    | SA/A/D/LAB   | `create_finding` |
+| `follow_up`           | 6     | 7        | 6            | 30s     | 1× `RETRIEVAL_TIMEOUT` | SA/A/D/R     | `propose_action` |
+| `daily_clinic_review` | 7     | 7        | 5            | 20s     | 0                      | SA/A/D       | —                |
 
 Each definition: `{workflowId, version, nameKey, trigger, allowedRoles,
 allowedTools, maxSteps, maxToolCalls, timeoutMs, retry{maxRetries, retryOn},
@@ -393,7 +393,7 @@ FAILED | CANCELLED | EXPIRED`:
 - **Persistence**: every run persists to `AiWorkflowRun` (id, workflowId,
   version, status, tenant, patient/case, actor, currentStep, bounded
   `stepLog[]` with per-step `{stepId, ok, toolCalls, latencyMs,
-  verification, detail, error?}`, approvalId, context, result, attempts,
+verification, detail, error?}`, approvalId, context, result, attempts,
   timestamps) — **observable, replayable, auditable**.
 - **Deterministic replay**: injected `now`/`nextRunId`; same input →
   identical step sequence, result and output keys (golden WF-001).
@@ -429,14 +429,14 @@ FAILED | CANCELLED | EXPIRED`:
 
 ## 23. API surface (§37)
 
-| Route | Verb | Scope | Behavior |
-|---|---|---|---|
-| `/api/ai/intelligence/case` | GET | staff+PATIENT, revalidated patient/case | `understanding` (dental brain) |
-| `/api/ai/intelligence/summary` | GET | same | 16-section `summary` + CDS `differential` |
-| `/api/ai/intelligence/patient` | GET | same | `intelligence` (timeline + current + unknownAreas) |
-| `/api/ai/intelligence/clinic` | GET | staff (incl. ACCOUNTANT) | `metrics` + `commandCenter` (financials role-gated) |
-| `/api/ai/intelligence/alerts` | GET/POST | staff | active alerts / `run` sweep / `dismiss` |
-| `/api/ai/workflows` | GET/POST | union of workflow roles | definitions / `run`/`cancel`/`get`/`list` |
+| Route                          | Verb     | Scope                                   | Behavior                                            |
+| ------------------------------ | -------- | --------------------------------------- | --------------------------------------------------- |
+| `/api/ai/intelligence/case`    | GET      | staff+PATIENT, revalidated patient/case | `understanding` (dental brain)                      |
+| `/api/ai/intelligence/summary` | GET      | same                                    | 16-section `summary` + CDS `differential`           |
+| `/api/ai/intelligence/patient` | GET      | same                                    | `intelligence` (timeline + current + unknownAreas)  |
+| `/api/ai/intelligence/clinic`  | GET      | staff (incl. ACCOUNTANT)                | `metrics` + `commandCenter` (financials role-gated) |
+| `/api/ai/intelligence/alerts`  | GET/POST | staff                                   | active alerts / `run` sweep / `dismiss`             |
+| `/api/ai/workflows`            | GET/POST | union of workflow roles                 | definitions / `run`/`cancel`/`get`/`list`           |
 
 Conventions (identical class to Phase 4/6/8 additive routes): `force-dynamic`;
 session-resolved actor/tenant; typed `INT_*` error envelope
@@ -589,13 +589,13 @@ adversarial tests #13–#15; none auto-corrects clinical data.
 `tests/evaluation/intelligence-performance-eval.test.ts` (Phase-7/8
 benchmark harness, environment-label contract):
 
-| Benchmark | Scope | Invariants |
-|---|---|---|
-| `phase9_graph_build_traverse` | graph build + bounded traversal (depth 3) | labeled, 0 failures, p95 ≥ median |
-| `phase9_brains_latency` | understanding + summary + differential + patient AI | labeled, 0 failures |
-| `phase9_clinic_command_center` | metrics + command center | labeled, 0 failures |
-| `phase9_workflow_case_review` | full run (total/steps/tool calls) | 9 steps, 0 < toolCalls ≤ 8 |
-| `phase9_alerts_sweep_dedup` | sweep + idempotent re-run | labeled, 0 failures |
+| Benchmark                      | Scope                                               | Invariants                        |
+| ------------------------------ | --------------------------------------------------- | --------------------------------- |
+| `phase9_graph_build_traverse`  | graph build + bounded traversal (depth 3)           | labeled, 0 failures, p95 ≥ median |
+| `phase9_brains_latency`        | understanding + summary + differential + patient AI | labeled, 0 failures               |
+| `phase9_clinic_command_center` | metrics + command center                            | labeled, 0 failures               |
+| `phase9_workflow_case_review`  | full run (total/steps/tool calls)                   | 9 steps, 0 < toolCalls ≤ 8        |
+| `phase9_alerts_sweep_dedup`    | sweep + idempotent re-run                           | labeled, 0 failures               |
 
 Label for this run: **SANDBOX** (never TARGET_MACHINE unless forced);
 summaries always emit the label; no target-machine/production claims. All 6
@@ -614,19 +614,19 @@ unchanged).
 
 ## 34. Test matrix (§39/§40)
 
-| Suite | File | Tests |
-|---|---|---|
-| Case graph (scope/isolation/trust/traversal/consistency) | `tests/unit/intelligence-case-graph.test.ts` | 16 |
-| Dental brain (understanding/summary/differential/NOT_AVAILABLE/injection) | `tests/unit/intelligence-dental-brain.test.ts` | 11 |
-| Patient AI (timeline/current/trust/bounds) | `tests/unit/intelligence-patient-ai.test.ts` | 8 |
-| Clinic brain + command center (metrics/gating/determinism) | `tests/unit/intelligence-clinic-brain.test.ts` | 7 |
-| Proactive (rules/severity/dedup/dismiss/signal-only) | `tests/unit/intelligence-proactive.test.ts` | 9 |
-| Workflow engine + definitions (state machine/RBAC/budgets/retry/replay) | `tests/unit/workflows-engine.test.ts` | 25 |
-| API routes (6 routes: auth/scope/errors/gating/run/cancel/audit) | `tests/api/ai-intelligence-routes.test.ts` | 18 |
-| Adversarial (22 attack scenarios, fail-closed) | `tests/unit/intelligence-adversarial.test.ts` | 22 |
-| Evaluation goldens (15 synthetic cases) | `tests/evaluation/intelligence-eval.test.ts` | 2 |
-| Performance (SANDBOX-labeled) | `tests/evaluation/intelligence-performance-eval.test.ts` | 6 |
-| **Phase 9 total** | | **124** |
+| Suite                                                                     | File                                                     | Tests   |
+| ------------------------------------------------------------------------- | -------------------------------------------------------- | ------- |
+| Case graph (scope/isolation/trust/traversal/consistency)                  | `tests/unit/intelligence-case-graph.test.ts`             | 16      |
+| Dental brain (understanding/summary/differential/NOT_AVAILABLE/injection) | `tests/unit/intelligence-dental-brain.test.ts`           | 11      |
+| Patient AI (timeline/current/trust/bounds)                                | `tests/unit/intelligence-patient-ai.test.ts`             | 8       |
+| Clinic brain + command center (metrics/gating/determinism)                | `tests/unit/intelligence-clinic-brain.test.ts`           | 7       |
+| Proactive (rules/severity/dedup/dismiss/signal-only)                      | `tests/unit/intelligence-proactive.test.ts`              | 9       |
+| Workflow engine + definitions (state machine/RBAC/budgets/retry/replay)   | `tests/unit/workflows-engine.test.ts`                    | 25      |
+| API routes (6 routes: auth/scope/errors/gating/run/cancel/audit)          | `tests/api/ai-intelligence-routes.test.ts`               | 18      |
+| Adversarial (22 attack scenarios, fail-closed)                            | `tests/unit/intelligence-adversarial.test.ts`            | 22      |
+| Evaluation goldens (15 synthetic cases)                                   | `tests/evaluation/intelligence-eval.test.ts`             | 2       |
+| Performance (SANDBOX-labeled)                                             | `tests/evaluation/intelligence-performance-eval.test.ts` | 6       |
+| **Phase 9 total**                                                         |                                                          | **124** |
 
 Supporting harness change (additive, backward-compatible):
 `tests/harness/context-fixtures.ts` now creates delegates for `extraRows`
@@ -697,6 +697,7 @@ fonts.googleapis.com egress blocked (build font fetch); api.github.com 401
 (token) — push uses the configured sandbox git auth.
 
 **Real bugs found & fixed by Phase 9 tests (differential/honesty wins):**
+
 1. `differentialSupport` per-condition aggregation was overwritten by the
    latest finding — a RESOLVED history entry hid the ACTIVE condition (0
    candidates on a valid caries case). Now: severity = max, `resolved` = AND
@@ -715,14 +716,16 @@ fonts.googleapis.com egress blocked (build font fetch); api.github.com 401
 working tree and excluded from the Phase 9 commit.
 
 **Phase 10 interfaces (exposed, not implemented):**
+
 - Voice/STT-TTS: no surface added (explicit boundary).
 - Robot/UI/hardware: none.
-- What Phase 10 *can* attach to: the `AiWorkflowRun` observation API
+- What Phase 10 _can_ attach to: the `AiWorkflowRun` observation API
   (run/step/approval state), the alerts GET (push channel candidate), and the
   patient intelligence bundle (timeline/current) — all already typed and
   tenant-scoped.
 
 **Files changed (Phase 9 commit):**
+
 - `lib/ai/intelligence/` — types, case-graph, dental-brain, patient-ai,
   clinic-brain, proactive, route-utils (7 files, ~2,539 LOC)
 - `lib/ai/workflows/` — types, definitions, engine, run-store (4 files, ~894 LOC)

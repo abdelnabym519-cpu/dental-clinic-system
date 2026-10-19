@@ -21,13 +21,15 @@ export function OdontogramLegend({ activeFilter = 'ALL', onFilterChange }: Odont
     <div className="bg-muted/30 rounded-xl p-3 border border-border/60">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          {t("Condition Legend")} </span>
+          {t('Condition Legend')}{' '}
+        </span>
         {activeFilter !== 'ALL' && onFilterChange && (
           <button
             onClick={() => onFilterChange('ALL')}
             className="text-[11px] text-primary hover:underline font-medium"
           >
-            {t("Reset filter")} </button>
+            {t('Reset filter')}{' '}
+          </button>
         )}
       </div>
 

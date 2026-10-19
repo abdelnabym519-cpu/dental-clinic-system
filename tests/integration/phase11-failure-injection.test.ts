@@ -26,7 +26,13 @@ const doctor = { userId: 'u-doc', name: 'Dr Test', role: 'DOCTOR', tenantId: 'ho
 const t0 = new Date('2026-09-30T10:00:00Z')
 
 function say(text: string) {
-  return { text, confidence: 0.95, isFinal: true, providerId: 'web-speech-stt-browser', locale: 'ar-EG' }
+  return {
+    text,
+    confidence: 0.95,
+    isFinal: true,
+    providerId: 'web-speech-stt-browser',
+    locale: 'ar-EG',
+  }
 }
 
 function depsWith(opts: { clientError?: Error; agentError?: Error } = {}) {
@@ -58,9 +64,21 @@ beforeEach(() => resetDuplicateWindows())
 
 describe('DATABASE unavailable (§59)', () => {
   it('patient lookup failure → typed honest error, session recoverable, no fake answer', async () => {
-    const { deps, sessions } = depsWith({ clientError: Object.assign(new Error('Connection refused'), { code: 'ECONNREFUSED' }) })
-    const session = sessions.create({ userId: doctor.userId, tenantId: doctor.tenantId, locale: 'ar-EG', now: t0 })
-    const r = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('إيه حالة المريض احمد؟'), actor: doctor })
+    const { deps, sessions } = depsWith({
+      clientError: Object.assign(new Error('Connection refused'), { code: 'ECONNREFUSED' }),
+    })
+    const session = sessions.create({
+      userId: doctor.userId,
+      tenantId: doctor.tenantId,
+      locale: 'ar-EG',
+      now: t0,
+    })
+    const r = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('إيه حالة المريض احمد؟'),
+      actor: doctor,
+    })
     // Safe failure: typed error + honest Arabic apology — never a fabricated
     // clinical answer, never a crash.
     expect(r.error?.code).toBe('VOICE_DEPENDENCY_ERROR')
@@ -77,8 +95,18 @@ describe('DATABASE unavailable (§59)', () => {
 describe('AGENT crash (§59)', () => {
   it('agent exception → typed error, session ERROR, next turn may retry', async () => {
     const { deps, sessions } = depsWith({ agentError: new Error('loop exploded') })
-    const session = sessions.create({ userId: doctor.userId, tenantId: doctor.tenantId, locale: 'ar-EG', now: t0 })
-    const r = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('مرحبا'), actor: doctor })
+    const session = sessions.create({
+      userId: doctor.userId,
+      tenantId: doctor.tenantId,
+      locale: 'ar-EG',
+      now: t0,
+    })
+    const r = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('مرحبا'),
+      actor: doctor,
+    })
     expect(r.error?.code).toBe('VOICE_AGENT_ERROR')
     expect(r.agentStatus).toBeNull() // the agent never completed — no fake status
   })
@@ -86,7 +114,9 @@ describe('AGENT crash (§59)', () => {
 
 describe('STORAGE unavailable (§59/§12)', () => {
   it('unknown STORAGE_DRIVER fails at construction with a named error (fail fast)', () => {
-    expect(() => createStorage({ STORAGE_DRIVER: 'gcs', UPLOAD_DIR: '/tmp/x' })).toThrow(/STORAGE_DRIVER/)
+    expect(() => createStorage({ STORAGE_DRIVER: 'gcs', UPLOAD_DIR: '/tmp/x' })).toThrow(
+      /STORAGE_DRIVER/
+    )
   })
 
   it('s3 driver without S3_BUCKET fails at construction naming the variable (never mid-upload)', () => {
@@ -111,7 +141,11 @@ describe('STORAGE unavailable (§59/§12)', () => {
 
 describe('STT unavailable (§59/§19 — degraded mode)', () => {
   it('a missing local engine binary → typed error (no fabricated transcript)', async () => {
-    const p = new CommandSttProvider({ command: '/nonexistent/dentora-stt', argsTemplate: [], baseDir: os.tmpdir() })
+    const p = new CommandSttProvider({
+      command: '/nonexistent/dentora-stt',
+      argsTemplate: [],
+      baseDir: os.tmpdir(),
+    })
     await expect(p.transcribeBytes(Buffer.alloc(10), {})).rejects.toThrow()
   })
 
@@ -152,20 +186,74 @@ describe('DUPLICATE JOB (§16/§59 — never execute the same sensitive action t
         runAgent: (async () => {
           agentCalls += 1
           return {
-            answer: 'refused', status: 'FAILED', warnings: [], toolsUsed: [], actionsProposed: [], actionsExecuted: [], sources: [],
-            uncertainty: [], missingInfo: [], contextProfileUsed: null, failureCodes: ['SAFETY_BLOCK'],
-            task: { taskType: 'ACTION_REQUEST', actionRequested: true, domains: ['billing'], riskLevel: 'HIGH', executionMode: 'FORBIDDEN', patientInvolved: true, toothInvolved: false, caseInvolved: false, readOnly: false, multiStep: false, confidence: 0.9, classifiedBy: 'deterministic', missingInfo: [], contextProfile: null },
-            trace: { traceId: 't', taskType: 'ACTION_REQUEST', stages: {}, totalMs: 1, modelCalls: 0, modelLatencyMs: 0, toolCalls: [], limits: { hits: [], maxPlanSteps: 8, maxToolCalls: 8, maxIterations: 6, totalTimeoutMs: 20000 } },
+            answer: 'refused',
+            status: 'FAILED',
+            warnings: [],
+            toolsUsed: [],
+            actionsProposed: [],
+            actionsExecuted: [],
+            sources: [],
+            uncertainty: [],
+            missingInfo: [],
+            contextProfileUsed: null,
+            failureCodes: ['SAFETY_BLOCK'],
+            task: {
+              taskType: 'ACTION_REQUEST',
+              actionRequested: true,
+              domains: ['billing'],
+              riskLevel: 'HIGH',
+              executionMode: 'FORBIDDEN',
+              patientInvolved: true,
+              toothInvolved: false,
+              caseInvolved: false,
+              readOnly: false,
+              multiStep: false,
+              confidence: 0.9,
+              classifiedBy: 'deterministic',
+              missingInfo: [],
+              contextProfile: null,
+            },
+            trace: {
+              traceId: 't',
+              taskType: 'ACTION_REQUEST',
+              stages: {},
+              totalMs: 1,
+              modelCalls: 0,
+              modelLatencyMs: 0,
+              toolCalls: [],
+              limits: {
+                hits: [],
+                maxPlanSteps: 8,
+                maxToolCalls: 8,
+                maxIterations: 6,
+                totalTimeoutMs: 20000,
+              },
+            },
           }
         }) as never,
       },
       now: () => new Date((ms += 50)),
       env: 'SANDBOX',
     }
-    const session = sessions.create({ userId: doctor.userId, tenantId: doctor.tenantId, locale: 'ar-EG', now: t0 })
-    const r1 = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('سجل دفعة 500 للمريض احمد'), actor: doctor })
+    const session = sessions.create({
+      userId: doctor.userId,
+      tenantId: doctor.tenantId,
+      locale: 'ar-EG',
+      now: t0,
+    })
+    const r1 = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('سجل دفعة 500 للمريض احمد'),
+      actor: doctor,
+    })
     expect(['ERROR', 'SPEAKING', 'LISTENING']).toContain(r1.state) // refusal surfaced, not swallowed
-    const r2 = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('سجل دفعة 500 للمريض احمد'), actor: doctor })
+    const r2 = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('سجل دفعة 500 للمريض احمد'),
+      actor: doctor,
+    })
     expect(r2.duplicateSuppressed).toBe(true)
     expect(agentCalls).toBe(1)
   })
@@ -183,11 +271,22 @@ describe('EXPIRED APPROVAL binding (§33/§59)', () => {
     // approval-safety-eval; here the VOICE seam is what is injected.)
     const { assessVoiceConfirmation } = await import('@/lib/ai/voice/security')
     const session = {
-      voiceSessionId: 'vs-x', userId: 'u', tenantId: 't', locale: 'ar-EG', state: 'WAITING_APPROVAL',
-      startedAt: t0.toISOString(), lastActivityAt: new Date(t0.getTime() - 120_000).toISOString(),
-      conversationId: null, patientScope: null, caseScope: null,
-      pendingApprovalId: 'apr-1', pendingApprovalExpiresAt: new Date(t0.getTime() - 1000).toISOString(),
-      interruptionCount: 0, retryCount: 0, turnCount: 0, expiresAt: new Date(t0.getTime() + 600_000).toISOString(),
+      voiceSessionId: 'vs-x',
+      userId: 'u',
+      tenantId: 't',
+      locale: 'ar-EG',
+      state: 'WAITING_APPROVAL',
+      startedAt: t0.toISOString(),
+      lastActivityAt: new Date(t0.getTime() - 120_000).toISOString(),
+      conversationId: null,
+      patientScope: null,
+      caseScope: null,
+      pendingApprovalId: 'apr-1',
+      pendingApprovalExpiresAt: new Date(t0.getTime() - 1000).toISOString(),
+      interruptionCount: 0,
+      retryCount: 0,
+      turnCount: 0,
+      expiresAt: new Date(t0.getTime() + 600_000).toISOString(),
     }
     const v = assessVoiceConfirmation('أكد', session, t0.getTime())
     expect(v.valid).toBe(false)

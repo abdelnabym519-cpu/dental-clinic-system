@@ -40,13 +40,23 @@ function sessionWith(partial: Partial<VoiceSession>): VoiceSession {
 
 describe('transcript trust (§9)', () => {
   it('partial transcripts are NEVER valid for action (§37)', () => {
-    const r = validateTranscriptSafety({ text: 'book appointment', confidence: 0.9, isFinal: false, providerId: 'x' })
+    const r = validateTranscriptSafety({
+      text: 'book appointment',
+      confidence: 0.9,
+      isFinal: false,
+      providerId: 'x',
+    })
     expect(r.ok).toBe(false)
     expect(r.code).toBe('VOICE_TRANSCRIPT_PARTIAL')
   })
 
   it('control characters / bidi cannot smuggle content', () => {
-    const r = validateTranscriptSafety({ text: 'send\u202E money\u200F', confidence: 1, isFinal: true, providerId: 'x' })
+    const r = validateTranscriptSafety({
+      text: 'send\u202E money\u200F',
+      confidence: 1,
+      isFinal: true,
+      providerId: 'x',
+    })
     // Controls stripped; the remaining TEXT is still treated as untrusted data
     // downstream (the agent treats message text as DATA, never instructions).
     expect(r.ok).toBe(true)
@@ -54,7 +64,12 @@ describe('transcript trust (§9)', () => {
   })
 
   it('oversized transcripts are rejected', () => {
-    const r = validateTranscriptSafety({ text: 'ا'.repeat(700), confidence: 1, isFinal: true, providerId: 'x' })
+    const r = validateTranscriptSafety({
+      text: 'ا'.repeat(700),
+      confidence: 1,
+      isFinal: true,
+      providerId: 'x',
+    })
     expect(r.ok).toBe(false)
     expect(r.code).toBe('VOICE_TRANSCRIPT_TOO_LONG')
   })
@@ -66,7 +81,9 @@ describe('duplicate-action protection (§17)', () => {
   it('same transcript inside the window with action history is suppressed', () => {
     const now = 1_000_000
     const fp = transcriptFingerprint('record payment 500', 't1', 'u1')
-    const history: DuplicateWindowEntry[] = [{ fingerprint: fp, atMs: now - 1000, ledToAction: true }]
+    const history: DuplicateWindowEntry[] = [
+      { fingerprint: fp, atMs: now - 1000, ledToAction: true },
+    ]
     const v = assessDuplicate('record payment 500', 't1', 'u1', history, now)
     expect(v.duplicate).toBe(true)
     expect(base.length).toBe(0)
@@ -75,14 +92,18 @@ describe('duplicate-action protection (§17)', () => {
   it('informational repeats are allowed (read-only)', () => {
     const now = 1_000_000
     const fp = transcriptFingerprint('who is in the queue', 't1', 'u1')
-    const history: DuplicateWindowEntry[] = [{ fingerprint: fp, atMs: now - 1000, ledToAction: false }]
+    const history: DuplicateWindowEntry[] = [
+      { fingerprint: fp, atMs: now - 1000, ledToAction: false },
+    ]
     expect(assessDuplicate('who is in the queue', 't1', 'u1', history, now).duplicate).toBe(false)
   })
 
   it('after the window the same command may be tried again deliberately', () => {
     const now = 1_000_000
     const fp = transcriptFingerprint('record payment 500', 't1', 'u1')
-    const history: DuplicateWindowEntry[] = [{ fingerprint: fp, atMs: now - 60_000, ledToAction: true }]
+    const history: DuplicateWindowEntry[] = [
+      { fingerprint: fp, atMs: now - 60_000, ledToAction: true },
+    ]
     expect(assessDuplicate('record payment 500', 't1', 'u1', history, now).duplicate).toBe(false)
   })
 
@@ -171,7 +192,9 @@ describe('local-audio boundary (opt-in command provider)', () => {
 
 describe('TTS speakable shaping preserves clinical meaning (§12)', () => {
   it('removes markdown noise but KEEPS uncertainty wording', () => {
-    const out = speakableFromResponse('**Possible** caries on tooth 36.\n- May need `root canal` — *uncertain*.')
+    const out = speakableFromResponse(
+      '**Possible** caries on tooth 36.\n- May need `root canal` — *uncertain*.'
+    )
     expect(out).toContain('Possible')
     expect(out).toContain('uncertain')
     expect(out).not.toContain('**')

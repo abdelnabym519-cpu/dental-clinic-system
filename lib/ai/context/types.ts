@@ -72,9 +72,19 @@ export const FACT_CATEGORIES = [
 export type FactCategory = (typeof FACT_CATEGORIES)[number]
 
 export interface Provenance {
-  sourceType: 'patient' | 'medical_history' | 'dental_chart' | 'appointment' | 'clinical_note'
-    | 'treatment_plan' | 'treatment' | 'prescription' | 'imaging_study' | 'ai_job'
-    | 'invoice' | 'risk_score'
+  sourceType:
+    | 'patient'
+    | 'medical_history'
+    | 'dental_chart'
+    | 'appointment'
+    | 'clinical_note'
+    | 'treatment_plan'
+    | 'treatment'
+    | 'prescription'
+    | 'imaging_study'
+    | 'ai_job'
+    | 'invoice'
+    | 'risk_score'
   sourceId: string
   entityType: string
   entityId: string
@@ -126,7 +136,13 @@ export interface ToothChartEntryView {
   toothName: string
   condition: string
   severity: string
-  surfaces: { mesial: boolean; distal: boolean; occlusal: boolean; buccal: boolean; lingual: boolean }
+  surfaces: {
+    mesial: boolean
+    distal: boolean
+    occlusal: boolean
+    buccal: boolean
+    lingual: boolean
+  }
   notes: string | null
   diagnosedAt: string
   resolvedAt: string | null
@@ -173,7 +189,11 @@ export interface ClinicalContextSection {
   notes: NoteView[]
   examinations: NoteView[]
   followUpNotes: NoteView[]
-  complaints: { text: string | null; from: 'appointment' | 'treatment' | 'treatment_plan'; at: string }[]
+  complaints: {
+    text: string | null
+    from: 'appointment' | 'treatment' | 'treatment_plan'
+    at: string
+  }[]
 }
 
 export interface PlanItemView {
@@ -232,7 +252,12 @@ export interface PrescriptionView {
   diagnosis: string | null
   issuedAt: string | null
   validUntil: string | null
-  medications: { name: string; dosage: string | null; frequency: string | null; duration: string | null }[]
+  medications: {
+    name: string
+    dosage: string | null
+    frequency: string | null
+    duration: string | null
+  }[]
   doctor: string | null
   provenance: Provenance
 }

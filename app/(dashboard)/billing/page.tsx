@@ -182,7 +182,9 @@ export default function BillingPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('billing.title')}</h1>
-          <p className="text-muted-foreground">{t('Manage invoices, payments, and financial reports')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage invoices, payments, and financial reports')}
+          </p>
         </div>
         <div className="flex gap-2">
           <Select value={datePreset} onValueChange={setDatePreset}>
@@ -298,7 +300,7 @@ export default function BillingPage() {
                   {formatCurrency(data?.summary.totalBilled || 0, locale)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {data?.summary.invoiceCount || 0} {t("invoices")}
+                  {data?.summary.invoiceCount || 0} {t('invoices')}
                 </p>
               </>
             )}
@@ -320,7 +322,7 @@ export default function BillingPage() {
                   {formatCurrency(data?.summary.totalCollected || 0, locale)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {data?.summary.paymentCount || 0} {t("payments received")}
+                  {data?.summary.paymentCount || 0} {t('payments received')}
                 </p>
               </>
             )}
@@ -364,7 +366,7 @@ export default function BillingPage() {
                   {formatCurrency(data?.summary.insuranceClaimed || 0, locale)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {formatCurrency(data?.summary.insuranceSettled || 0, locale)} {t("settled")}
+                  {formatCurrency(data?.summary.insuranceSettled || 0, locale)} {t('settled')}
                 </p>
               </>
             )}
@@ -456,7 +458,9 @@ export default function BillingPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-medium">{formatCurrency(method.amount, locale)}</div>
-                        <div className="text-xs text-muted-foreground">{method.count} {t('payments')}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {method.count} {t('payments')}
+                        </div>
                       </div>
                     </div>
                   ))
@@ -514,7 +518,7 @@ export default function BillingPage() {
                         <div className="text-right">
                           <div className="font-medium">{formatCurrency(status.amount, locale)}</div>
                           <div className="text-xs text-muted-foreground">
-                            {status.count} {t("invoices")}
+                            {status.count} {t('invoices')}
                           </div>
                         </div>
                       </div>
@@ -567,7 +571,9 @@ export default function BillingPage() {
               <div className="flex gap-6 text-sm">
                 <div>
                   <div className="text-muted-foreground">{t('Billed')}</div>
-                  <div className="font-medium">{formatCurrency(data.summary.totalBilled, locale)}</div>
+                  <div className="font-medium">
+                    {formatCurrency(data.summary.totalBilled, locale)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">{t('Collected')}</div>
@@ -609,7 +615,7 @@ export default function BillingPage() {
               ) : (
                 <Brain className="h-4 w-4 mr-2" />
               )}
-              {cashFlowData ? 'Refresh' : t("Generate Forecast")}
+              {cashFlowData ? 'Refresh' : t('Generate Forecast')}
             </Button>
           </div>
         </CardHeader>
@@ -626,7 +632,7 @@ export default function BillingPage() {
                   <div className="text-lg font-bold text-green-700">
                     {formatCurrency(cashFlowData.summary?.total30Day || 0, locale)}
                   </div>
-                  <div className="text-xs text-green-600">{t("30-Day Projected")}</div>
+                  <div className="text-xs text-green-600">{t('30-Day Projected')}</div>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-blue-50">
                   <div className="text-lg font-bold text-blue-700">
@@ -663,7 +669,7 @@ export default function BillingPage() {
                   {cashFlowData.weeklyTotals.map((week: any) => (
                     <div key={week.week} className="flex items-center justify-between text-sm">
                       <span>
-                        {t("Week")} {week.week}: {week.startDate} — {week.endDate}
+                        {t('Week')} {week.week}: {week.startDate} — {week.endDate}
                       </span>
                       <span className="font-medium">{formatCurrency(week.projected, locale)}</span>
                     </div>
@@ -709,10 +715,14 @@ export default function BillingPage() {
               <div className="space-y-3">
                 {[
                   { label: 'Current', data: agingData.aging.current, color: 'bg-green-500' },
-                  { label: t("1–30 days"), data: agingData.aging.days1_30, color: 'bg-yellow-500' },
-                  { label: t("31–60 days"), data: agingData.aging.days31_60, color: 'bg-orange-500' },
-                  { label: t("61–90 days"), data: agingData.aging.days61_90, color: 'bg-red-400' },
-                  { label: t("90+ days"), data: agingData.aging.over90, color: 'bg-red-600' },
+                  { label: t('1–30 days'), data: agingData.aging.days1_30, color: 'bg-yellow-500' },
+                  {
+                    label: t('31–60 days'),
+                    data: agingData.aging.days31_60,
+                    color: 'bg-orange-500',
+                  },
+                  { label: t('61–90 days'), data: agingData.aging.days61_90, color: 'bg-red-400' },
+                  { label: t('90+ days'), data: agingData.aging.over90, color: 'bg-red-600' },
                 ].map((bucket) => {
                   const total = agingData.totals.totalOutstanding || 1
                   const pct = Math.round((bucket.data.amount / total) * 100)
@@ -721,7 +731,9 @@ export default function BillingPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span>{t(bucket.label)}</span>
                         <div className="text-right">
-                          <span className="font-medium">{formatCurrency(bucket.data.amount, locale)}</span>
+                          <span className="font-medium">
+                            {formatCurrency(bucket.data.amount, locale)}
+                          </span>
                           <span className="text-muted-foreground ml-2">({bucket.data.count})</span>
                         </div>
                       </div>

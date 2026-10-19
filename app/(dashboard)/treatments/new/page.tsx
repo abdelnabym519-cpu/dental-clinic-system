@@ -232,7 +232,9 @@ export default function NewTreatmentPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />{t('ui.patient_information')}</CardTitle>
+              <User className="h-5 w-5" />
+              {t('ui.patient_information')}
+            </CardTitle>
             <CardDescription>{t('Select the patient for this treatment')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -258,7 +260,9 @@ export default function NewTreatmentPage() {
                     setSelectedPatient(null)
                     setFormData({ ...formData, patientId: '' })
                   }}
-                >{t('ui.change')}</Button>
+                >
+                  {t('ui.change')}
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -273,7 +277,9 @@ export default function NewTreatmentPage() {
                 </div>
                 <div className="max-h-60 overflow-y-auto border rounded-lg">
                   {filteredPatients.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">{t('ui.no_patients_found')}</div>
+                    <div className="p-4 text-center text-muted-foreground">
+                      {t('ui.no_patients_found')}
+                    </div>
                   ) : (
                     filteredPatients.slice(0, 10).map((patient) => (
                       <button
@@ -314,7 +320,7 @@ export default function NewTreatmentPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="doctor">{t("Doctor *")}</Label>
+                <Label htmlFor="doctor">{t('Doctor *')}</Label>
                 <Select
                   value={formData.doctorId}
                   onValueChange={(value) => setFormData({ ...formData, doctorId: value })}
@@ -325,7 +331,7 @@ export default function NewTreatmentPage() {
                   <SelectContent>
                     {doctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id}>
-                        {t("Dr.")} {doctor.firstName} {doctor.lastName}
+                        {t('Dr.')} {doctor.firstName} {doctor.lastName}
                         {doctor.specialization && ` - ${doctor.specialization}`}
                       </SelectItem>
                     ))}
@@ -334,7 +340,7 @@ export default function NewTreatmentPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="procedure">{t("Procedure *")}</Label>
+                <Label htmlFor="procedure">{t('Procedure *')}</Label>
                 <Select value={formData.procedureId} onValueChange={handleProcedureSelect}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_procedure')} />
@@ -366,8 +372,12 @@ export default function NewTreatmentPage() {
                   </p>
                 )}
                 <div className="flex gap-4 mt-2 text-sm">
-                  <span>{t("Duration:")} {selectedProcedure.defaultDuration} {t('min')}</span>
-                  <span>{t("Base Price:")} {formatCurrency(selectedProcedure.basePrice, locale)}</span>
+                  <span>
+                    {t('Duration:')} {selectedProcedure.defaultDuration} {t('min')}
+                  </span>
+                  <span>
+                    {t('Base Price:')} {formatCurrency(selectedProcedure.basePrice, locale)}
+                  </span>
                 </div>
               </div>
             )}
@@ -399,7 +409,9 @@ export default function NewTreatmentPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('ui.clinical_notes')}</CardTitle>
-            <CardDescription>{t('Document the clinical findings and treatment notes')}</CardDescription>
+            <CardDescription>
+              {t('Document the clinical findings and treatment notes')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -451,7 +463,9 @@ export default function NewTreatmentPage() {
                 id="procedureNotes"
                 value={formData.procedureNotes}
                 onChange={(e) => setFormData({ ...formData, procedureNotes: e.target.value })}
-                placeholder={t('Details of the procedure performed... (use mic for voice dictation)')}
+                placeholder={t(
+                  'Details of the procedure performed... (use mic for voice dictation)'
+                )}
                 rows={3}
               />
             </div>
@@ -515,7 +529,9 @@ export default function NewTreatmentPage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/treatments">
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={loading}>
             {loading ? (

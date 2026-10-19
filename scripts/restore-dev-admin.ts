@@ -80,7 +80,11 @@ async function loadPrisma(): Promise<RestoreTarget & { $disconnect(): Promise<vo
   // Same guard as dev-start: the generated client, never a silent fallback.
   let mod: { PrismaClient?: new (options?: Record<string, unknown>) => unknown }
   try {
-    mod = { PrismaClient: (await import('@prisma/client')).PrismaClient as unknown as new (options?: Record<string, unknown>) => unknown }
+    mod = {
+      PrismaClient: (await import('@prisma/client')).PrismaClient as unknown as new (
+        options?: Record<string, unknown>
+      ) => unknown,
+    }
   } catch {
     fail('The generated Prisma client could not be loaded. Run "npm install" first.')
   }

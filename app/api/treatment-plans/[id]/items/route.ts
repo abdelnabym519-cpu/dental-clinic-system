@@ -8,10 +8,7 @@ import { isValidFdi } from '@/lib/dental-chart/fdi'
  * a plan. DOCTOR/ADMIN. The procedure must exist in the tenant's catalog
  * (the repo's TreatmentPlanItem design links to Procedure, not free text).
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId, user } = await requireAuthAndRole(['ADMIN', 'DOCTOR'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -78,9 +75,13 @@ export async function POST(
     // create with a raw Prisma 500. The certified Phase-11 contract is that a
     // procedure item created without an explicit cost is priced from the
     // procedure catalog (basePrice) — the fallback the plan totals already use.
-    const explicitCost = estimatedCost === undefined || estimatedCost === null ? null : Number(estimatedCost)
+    const explicitCost =
+      estimatedCost === undefined || estimatedCost === null ? null : Number(estimatedCost)
     if (explicitCost !== null && (Number.isNaN(explicitCost) || explicitCost < 0)) {
-      return NextResponse.json({ error: 'التكلفة المقدرة يجب أن تكون رقمًا غير سالب' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'التكلفة المقدرة يجب أن تكون رقمًا غير سالب' },
+        { status: 400 }
+      )
     }
     if (explicitCost !== null && explicitCost > 99999999.99) {
       return NextResponse.json({ error: 'التكلفة المقدرة أكبر من الحد المسموح' }, { status: 400 })
@@ -130,7 +131,10 @@ export async function POST(
     let totalCost = 0
     let totalDuration = 0
     for (const it of allItems) {
-      totalCost += Number(it.estimatedCost) > 0 ? Number(it.estimatedCost) : Number(it.procedure.basePrice) || 0
+      totalCost +=
+        Number(it.estimatedCost) > 0
+          ? Number(it.estimatedCost)
+          : Number(it.procedure.basePrice) || 0
       totalDuration += Number(it.procedure.defaultDuration) || 0
     }
     await prisma.treatmentPlan.update({

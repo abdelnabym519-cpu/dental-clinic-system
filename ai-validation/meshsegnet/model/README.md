@@ -5,10 +5,10 @@ git-ignored; download them with the official command below.
 
 ## The two official pretrained models
 
-| Jaw | Official filename | Size (bytes) | SHA-256 |
-| --- | --- | --- | --- |
-| **Lower** (mandible) | `MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip` | 28,866,886 | `d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf` |
-| **Upper** (maxilla) | `MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip` | 28,860,102 | `727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2` |
+| Jaw                  | Official filename                                     | Size (bytes) | SHA-256                                                            |
+| -------------------- | ----------------------------------------------------- | ------------ | ------------------------------------------------------------------ |
+| **Lower** (mandible) | `MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip` | 28,866,886   | `d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf` |
+| **Upper** (maxilla)  | `MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip` | 28,860,102   | `727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2` |
 
 `Man` = mandible (lower jaw), `Max` = maxilla (upper jaw). Both are published by
 the authors in the `models/` folder of the official repository and are committed
@@ -38,15 +38,15 @@ Both files are **PyTorch `torch.save()` archives** (a zip container holding
 refers to a `.tar` filename, which no longer matches what the repository ships;
 load them directly with `torch.load()`.
 
-| Field | Value |
-| --- | --- |
-| Framework | PyTorch — load with `torch.load(path, map_location="cpu")` |
-| Top-level keys | `epoch`, `model_state_dict`, `optimizer_state_dict`, `losses`, `mdsc`, `msen` |
-| `model_state_dict` entries | 151 |
-| Output head | `output_conv.weight` shape `(15, 128, 1)` → **15 classes** |
-| Parameters | 1,799,140 (≈7.2 MB fp32) |
-| Trained epochs | 500 (`epoch = 499`) |
-| Training data | 72 samples |
+| Field                      | Value                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| Framework                  | PyTorch — load with `torch.load(path, map_location="cpu")`                    |
+| Top-level keys             | `epoch`, `model_state_dict`, `optimizer_state_dict`, `losses`, `mdsc`, `msen` |
+| `model_state_dict` entries | 151                                                                           |
+| Output head                | `output_conv.weight` shape `(15, 128, 1)` → **15 classes**                    |
+| Parameters                 | 1,799,140 (≈7.2 MB fp32)                                                      |
+| Trained epochs             | 500 (`epoch = 499`)                                                           |
+| Training data              | 72 samples                                                                    |
 
 Roughly 21 MB of each 28.8 MB archive is `optimizer_state_dict`, which inference
 does not need.

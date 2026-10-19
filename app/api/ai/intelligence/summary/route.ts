@@ -34,7 +34,11 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const auth = await requireAuthAndRole([...STAFF_ROLES, 'PATIENT'])
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return intErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return intErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId, user } = auth
   const url = new URL(req.url)

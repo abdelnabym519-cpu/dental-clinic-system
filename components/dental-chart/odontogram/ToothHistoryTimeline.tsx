@@ -17,7 +17,8 @@ export function ToothHistoryTimeline({ entries }: ToothHistoryTimelineProps) {
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center py-4 text-xs text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
-        {t("No prior historical records for this tooth.")} </div>
+        {t('No prior historical records for this tooth.')}{' '}
+      </div>
     )
   }
 
@@ -76,10 +77,12 @@ export function ToothHistoryTimeline({ entries }: ToothHistoryTimelineProps) {
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 {isResolved ? (
                   <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-3 h-3" /> {t("Resolved")} </span>
+                    <CheckCircle2 className="w-3 h-3" /> {t('Resolved')}{' '}
+                  </span>
                 ) : (
                   <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                    <Clock className="w-3 h-3" /> {t("Active")} </span>
+                    <Clock className="w-3 h-3" /> {t('Active')}{' '}
+                  </span>
                 )}
                 <span>•</span>
                 <span>{format(new Date(entry.diagnosedDate), 'MMM d, yyyy')}</span>
@@ -94,7 +97,7 @@ export function ToothHistoryTimeline({ entries }: ToothHistoryTimelineProps) {
 
             {entry.recordedBy && (
               <p className="text-[10px] text-muted-foreground/70 mt-1">
-                {t("Recorded by Dr.")} {entry.recordedBy.firstName} {entry.recordedBy.lastName}
+                {t('Recorded by Dr.')} {entry.recordedBy.firstName} {entry.recordedBy.lastName}
               </p>
             )}
           </div>

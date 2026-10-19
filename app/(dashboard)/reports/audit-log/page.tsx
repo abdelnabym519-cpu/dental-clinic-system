@@ -118,12 +118,14 @@ export default function AuditLogPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Shield className="h-6 w-6" /> {t("Audit Log")}
+            <Shield className="h-6 w-6" /> {t('Audit Log')}
           </h1>
-          <p className="text-muted-foreground">{total.toLocaleString()} {t('total events')}</p>
+          <p className="text-muted-foreground">
+            {total.toLocaleString()} {t('total events')}
+          </p>
         </div>
         <Button variant="outline" onClick={exportLogs}>
-          <Download className="h-4 w-4 mr-2" /> {t("Export CSV")}
+          <Download className="h-4 w-4 mr-2" /> {t('Export CSV')}
         </Button>
       </div>
 
@@ -185,7 +187,9 @@ export default function AuditLogPage() {
         <EmptyState
           icon={Activity}
           title={t('No audit logs found')}
-          description={t('No activity matches your current filters. Try adjusting your search criteria.')}
+          description={t(
+            'No activity matches your current filters. Try adjusting your search criteria.'
+          )}
         />
       ) : (
         <Card>
@@ -233,7 +237,7 @@ export default function AuditLogPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {t("Page")} {page} {t("of")} {totalPages}
+            {t('Page')} {page} {t('of')} {totalPages}
           </p>
           <div className="flex gap-2">
             <Button
@@ -242,13 +246,17 @@ export default function AuditLogPage() {
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />{t('ui.previous')}</Button>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              {t('ui.previous')}
+            </Button>
             <Button
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
-            >{t('ui.next')}<ChevronRight className="h-4 w-4 ml-1" />
+            >
+              {t('ui.next')}
+              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>

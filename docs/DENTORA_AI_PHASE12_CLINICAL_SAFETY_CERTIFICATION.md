@@ -9,21 +9,21 @@
 
 ## 1. Executive Certification Verdict
 
-| Gate | Result |
-|---|---|
+| Gate                                                                                | Result                                                                                                                                        |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Regression vs Phase 11 baseline (6036 passed / 12 skipped / 0 failed / 0 unhandled) | 🟢 **6103 passed / 12 skipped / 0 failed / 0 unhandled** (324 baseline files + 3 new certification files = 327; +67 new tests, 0 regressions) |
-| TypeScript | 🟢 502 pre-existing errors, **byte-identical** error list to baseline (0 new, 0 resolved) |
-| Lint | 🟢 0 errors / 274 warnings (identical to baseline) |
-| §24 clinical-safety golden suite (20 categories) | 🟢 24/24 (20 goldens + global denylist + honesty markers + no-mutating-tools) |
-| §25/§26/§27 hallucination / contradiction / uncertainty harnesses | 🟢 14/14 |
-| §46 28-class adversarial certification | 🟢 28/28 PASS (`docs/phase12/adversarial-results.json`) |
-| Provenance (checksum/engine mismatch, PENDING_REVIEW birth state) | 🟢 enforced (`docs/phase12/provenance-results.json`) |
-| Secret scan | 🟢 clean |
-| npm audit | 🟡 12 findings — **identical count to Phase 11**; all require MAJOR upgrades, deferred with rationale (§30) |
-| `next build` | 🔴 ENVIRONMENT-BLOCKED (stub `@prisma/client`; prisma postinstall TLS-blocked in sandbox) — §31 |
-| Playwright Chromium E2E | 🔴 ENVIRONMENT-BLOCKED (browser download TLS-blocked) — §31 |
-| Backup/restore drill | 🔴 ENVIRONMENT-BLOCKED (no MySQL server in sandbox) — §29 |
-| Clinical accuracy | ⚪ **NOT MEASURED** — no validated clinical datasets exist; never claimed — §23 |
+| TypeScript                                                                          | 🟢 502 pre-existing errors, **byte-identical** error list to baseline (0 new, 0 resolved)                                                     |
+| Lint                                                                                | 🟢 0 errors / 274 warnings (identical to baseline)                                                                                            |
+| §24 clinical-safety golden suite (20 categories)                                    | 🟢 24/24 (20 goldens + global denylist + honesty markers + no-mutating-tools)                                                                 |
+| §25/§26/§27 hallucination / contradiction / uncertainty harnesses                   | 🟢 14/14                                                                                                                                      |
+| §46 28-class adversarial certification                                              | 🟢 28/28 PASS (`docs/phase12/adversarial-results.json`)                                                                                       |
+| Provenance (checksum/engine mismatch, PENDING_REVIEW birth state)                   | 🟢 enforced (`docs/phase12/provenance-results.json`)                                                                                          |
+| Secret scan                                                                         | 🟢 clean                                                                                                                                      |
+| npm audit                                                                           | 🟡 12 findings — **identical count to Phase 11**; all require MAJOR upgrades, deferred with rationale (§30)                                   |
+| `next build`                                                                        | 🔴 ENVIRONMENT-BLOCKED (stub `@prisma/client`; prisma postinstall TLS-blocked in sandbox) — §31                                               |
+| Playwright Chromium E2E                                                             | 🔴 ENVIRONMENT-BLOCKED (browser download TLS-blocked) — §31                                                                                   |
+| Backup/restore drill                                                                | 🔴 ENVIRONMENT-BLOCKED (no MySQL server in sandbox) — §29                                                                                     |
+| Clinical accuracy                                                                   | ⚪ **NOT MEASURED** — no validated clinical datasets exist; never claimed — §23                                                               |
 
 **Certification statement.** The clinical-AI control system (Agent, Graph, Memory, Safety, Approval, Evaluation, Multimodal, Voice, Robot, RAG, Local AI, Workflows, Deployment hardening) is certified for sandbox-verified clinical-safety behavior: every one of the 20 risk classes C1–C20 has a verified mitigation and a named verification test; all critical attack classes fail closed; uncertainty is never converted into certainty anywhere in the Engine→Finding→Graph→Memory→Agent→Response→Workflow chain; the agent cannot self-grant approval, verification, provenance, or authority. Two deployment gates and the backup drill remain **ENVIRONMENT-BLOCKED** and MUST be re-run on the target environment before production go-live (§31/§32); this is an environment limitation, not a product defect — and is labeled as such, never converted into a pass.
 
@@ -36,34 +36,34 @@
 
 ## 3. §6 Baseline Audit (Revalidated Against Code This Phase)
 
-| Item | Evidence |
-|---|---|
-| Commit / branch | HEAD == origin tip `45b188b0…` at Phase start; work on `arena/01a0f3e0-…` only |
-| Working tree | Phase 11 final: clean; this phase adds 3 test files, 1 golden dataset, 7 artifacts, 1 report |
-| Tests (baseline) | 6036 passed / 12 skipped / 0 failed / 0 unhandled (324 files) — reconfirmed at Phase 12 start |
-| tsc (baseline) | 502 errors — reconfirmed, normalized list `/tmp/p12.norm`; final list byte-identical |
-| Lint (baseline) | 0 errors / 274 warnings — reconfirmed unchanged |
-| Build | Phase 11: reached page-data generation with real client; Phase 12 sandbox: ENVIRONMENT-BLOCKED at type-check stage (stub client, TLS) |
-| E2E | 53 specs present; Chromium download TLS-blocked → ENVIRONMENT-BLOCKED |
-| Migrations / seed | `prisma/schema.prisma` unchanged this phase; `migrate deploy` only for production DB (never reset); seed preserved |
-| Engine status | Capability matrix unchanged: blocked engines stay BLOCKED/UNAVAILABLE (no upgrade without evidence) |
-| Blockers | Environment-only: prisma postinstall, Playwright CDN, MySQL server (all documented §31) |
+| Item                     | Evidence                                                                                                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commit / branch          | HEAD == origin tip `45b188b0…` at Phase start; work on `arena/01a0f3e0-…` only                                                                                                                                    |
+| Working tree             | Phase 11 final: clean; this phase adds 3 test files, 1 golden dataset, 7 artifacts, 1 report                                                                                                                      |
+| Tests (baseline)         | 6036 passed / 12 skipped / 0 failed / 0 unhandled (324 files) — reconfirmed at Phase 12 start                                                                                                                     |
+| tsc (baseline)           | 502 errors — reconfirmed, normalized list `/tmp/p12.norm`; final list byte-identical                                                                                                                              |
+| Lint (baseline)          | 0 errors / 274 warnings — reconfirmed unchanged                                                                                                                                                                   |
+| Build                    | Phase 11: reached page-data generation with real client; Phase 12 sandbox: ENVIRONMENT-BLOCKED at type-check stage (stub client, TLS)                                                                             |
+| E2E                      | 53 specs present; Chromium download TLS-blocked → ENVIRONMENT-BLOCKED                                                                                                                                             |
+| Migrations / seed        | `prisma/schema.prisma` unchanged this phase; `migrate deploy` only for production DB (never reset); seed preserved                                                                                                |
+| Engine status            | Capability matrix unchanged: blocked engines stay BLOCKED/UNAVAILABLE (no upgrade without evidence)                                                                                                               |
+| Blockers                 | Environment-only: prisma postinstall, Playwright CDN, MySQL server (all documented §31)                                                                                                                           |
 | Prior-claim revalidation | Phase 11 §63/§66 claims spot-revalidated: CORS allowlist+echo+Vary, ready payload DB-only 503, `NEXTAUTH_SECRET` required in staging/production, approval ledger guards, memory class gates — all present in code |
 
 ## 4. Evidence Protocol & Machine-Readable Artifact Index
 
 Every claim in this report cites a committed artifact or a named test. All artifacts use deterministic schemas, carry `datasetVersion: 1.0.0` and `phiPolicy: SYNTHETIC_ONLY` (no PHI anywhere — synthetic fixtures only).
 
-| Artifact | Content | Live source |
-|---|---|---|
-| `docs/phase12/clinical-safety-results.json` | 20-category golden results (failed must equal 0; must agree with live runs) | `tests/evaluation/clinical-safety-eval.test.ts` |
-| `docs/phase12/adversarial-results.json` | 28 classes: attack, result, evidence | `tests/evaluation/adversarial-certification.test.ts` |
-| `docs/phase12/provenance-results.json` | Live envelope fields + provenance checks | `tests/unit/phase12-clinical-hallucination.test.ts` |
-| `docs/phase12/clinical-risk-register.json` | C1–C20 register (machine + human readable) | this report §7–§8 |
-| `docs/phase12/certification-matrix.json` | 28-domain certification matrix | this report §32 |
-| `docs/phase12/deployment-gate-results.json` | Gate-by-gate status incl. ENVIRONMENT-BLOCKED protocol | this report §30–§31 |
-| `docs/phase12/performance-results.json` | SANDBOX-labeled benchmarks | `tests/evaluation/integration-perf.test.ts` (`DENTORA_WRITE_BENCH=1`) |
-| `tests/evaluation/golden/clinical-safety.golden.json` | 20-case golden dataset | schema-validated by `lib/ai/evaluation/dataset.ts` |
+| Artifact                                              | Content                                                                     | Live source                                                           |
+| ----------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `docs/phase12/clinical-safety-results.json`           | 20-category golden results (failed must equal 0; must agree with live runs) | `tests/evaluation/clinical-safety-eval.test.ts`                       |
+| `docs/phase12/adversarial-results.json`               | 28 classes: attack, result, evidence                                        | `tests/evaluation/adversarial-certification.test.ts`                  |
+| `docs/phase12/provenance-results.json`                | Live envelope fields + provenance checks                                    | `tests/unit/phase12-clinical-hallucination.test.ts`                   |
+| `docs/phase12/clinical-risk-register.json`            | C1–C20 register (machine + human readable)                                  | this report §7–§8                                                     |
+| `docs/phase12/certification-matrix.json`              | 28-domain certification matrix                                              | this report §32                                                       |
+| `docs/phase12/deployment-gate-results.json`           | Gate-by-gate status incl. ENVIRONMENT-BLOCKED protocol                      | this report §30–§31                                                   |
+| `docs/phase12/performance-results.json`               | SANDBOX-labeled benchmarks                                                  | `tests/evaluation/integration-perf.test.ts` (`DENTORA_WRITE_BENCH=1`) |
+| `tests/evaluation/golden/clinical-safety.golden.json` | 20-case golden dataset                                                      | schema-validated by `lib/ai/evaluation/dataset.ts`                    |
 
 ## 5. Regression Gate (Baseline → Final)
 
@@ -189,11 +189,11 @@ Phase 11 failure-injection 14/14 reconfirmed at baseline (MySQL/Redis/storage/en
 
 ## 31. ENVIRONMENT-BLOCKED Protocol (§55) — Deployment Gates (§38–§46)
 
-| Gate | Command | Exact failure | Limitation | Target env | Remediation | Impact |
-|---|---|---|---|---|---|---|
-| `next build` | `npm run build` | type-check stage fails on stub `@prisma/client` (“did not initialize yet”) | prisma postinstall `binaries.prisma.sh` TLS-blocked in sandbox | target build host | `npm install` (postinstall allowed) or `npx prisma generate`, then `npm run build` | build cert incomplete in sandbox; Phase 11 reached page-data gen with real client |
-| E2E | `npm run test:e2e` | browser download from cdn.playwright.dev blocked (TLS) | no chromium binary in sandbox | CI/target with browsers | install browsers, re-run 53 specs | E2E re-run required before go-live |
-| Backup drill | documented runbook vs MySQL | no MySQL server installable (TLS) | sandbox-only | staging/target DB | execute restore drill | operational, not product |
+| Gate         | Command                     | Exact failure                                                              | Limitation                                                     | Target env              | Remediation                                                                        | Impact                                                                            |
+| ------------ | --------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `next build` | `npm run build`             | type-check stage fails on stub `@prisma/client` (“did not initialize yet”) | prisma postinstall `binaries.prisma.sh` TLS-blocked in sandbox | target build host       | `npm install` (postinstall allowed) or `npx prisma generate`, then `npm run build` | build cert incomplete in sandbox; Phase 11 reached page-data gen with real client |
+| E2E          | `npm run test:e2e`          | browser download from cdn.playwright.dev blocked (TLS)                     | no chromium binary in sandbox                                  | CI/target with browsers | install browsers, re-run 53 specs                                                  | E2E re-run required before go-live                                                |
+| Backup drill | documented runbook vs MySQL | no MySQL server installable (TLS)                                          | sandbox-only                                                   | staging/target DB       | execute restore drill                                                              | operational, not product                                                          |
 
 These are environment limitations **of the sandbox**, reported verbatim — never relabeled as passes, and no product defect is dismissed as environment (none were). `docs/phase12/deployment-gate-results.json` records all gates with these protocols.
 

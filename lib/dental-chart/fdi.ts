@@ -94,7 +94,6 @@ const SIDE_AR: Record<ToothSideRL, string> = { right: 'الأيمن', left: 'ا�
 const ARCH_AR_F = { upper: 'العلوية', lower: 'السفلية' } as const
 const SIDE_AR_F = { right: 'اليمنى', left: 'اليسرى' } as const
 
-
 const TYPE_EN: Record<number, string> = {
   1: 'central incisor',
   2: 'lateral incisor',
@@ -137,7 +136,12 @@ export function opposingTooth(n: number): number {
 }
 
 /** Neighbors for arrow-key navigation: adjacent teeth + the antagonist. */
-export function navigationTargets(n: number): { left: number; right: number; up: number; down: number } {
+export function navigationTargets(n: number): {
+  left: number
+  right: number
+  up: number
+  down: number
+} {
   const q = quadrantOf(n)
   const t = toothIndexOf(n)
   // In-quadrant horizontal direction follows the FDI arc toward the midline.

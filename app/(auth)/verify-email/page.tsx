@@ -26,7 +26,10 @@ function VerifyEmailContent() {
     } else if (email) {
       setStatus('pending')
       setMessage(
-        t('We\'ve sent a verification email to {v1}. Please check your inbox and click the verification link.', { v1: email })
+        t(
+          "We've sent a verification email to {v1}. Please check your inbox and click the verification link.",
+          { v1: email }
+        )
       )
     } else {
       setStatus('error')
@@ -79,7 +82,7 @@ function VerifyEmailContent() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}
-          {status === t("success") && (
+          {status === t('success') && (
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
@@ -96,15 +99,15 @@ function VerifyEmailContent() {
           )}
         </div>
         <CardTitle className="text-2xl font-bold">
-          {status === 'loading' && t("Verifying...")}
-          {status === t("success") && t("Email Verified!")}
-          {status === 'error' && t("Verification Failed")}
-          {status === 'pending' && t("Check Your Email")}
+          {status === 'loading' && t('Verifying...')}
+          {status === t('success') && t('Email Verified!')}
+          {status === 'error' && t('Verification Failed')}
+          {status === 'pending' && t('Check Your Email')}
         </CardTitle>
         <CardDescription className="text-base">{message}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {status === t("success") && (
+        {status === t('success') && (
           <Button asChild className="w-full">
             <Link href="/login">{t('ui.continue_to_login')}</Link>
           </Button>

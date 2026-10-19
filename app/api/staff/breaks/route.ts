@@ -46,7 +46,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { staffId, dayOfWeek, startTime, endTime, label } = body
-    if (!staffId || !VALID_DAYS.includes(dayOfWeek) || !isValidTime(startTime) || !isValidTime(endTime)) {
+    if (
+      !staffId ||
+      !VALID_DAYS.includes(dayOfWeek) ||
+      !isValidTime(startTime) ||
+      !isValidTime(endTime)
+    ) {
       return NextResponse.json(
         { error: 'staffId, dayOfWeek (0–6) and HH:MM startTime/endTime are required' },
         { status: 400 }
@@ -62,7 +67,10 @@ export async function POST(request: NextRequest) {
         select: { id: true },
       })
       if (!own || own.id !== staffId) {
-        return NextResponse.json({ error: 'Doctors can only manage their own breaks' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Doctors can only manage their own breaks' },
+          { status: 403 }
+        )
       }
     }
     const staff = await prisma.staff.findFirst({ where: { id: staffId, hospitalId } })
@@ -83,7 +91,9 @@ export async function POST(request: NextRequest) {
     })
     if (overlap) {
       return NextResponse.json(
-        { error: `This doctor already has a break overlapping ${startTime}–${endTime} on that day` },
+        {
+          error: `This doctor already has a break overlapping ${startTime}–${endTime} on that day`,
+        },
         { status: 409 }
       )
     }
@@ -125,7 +135,10 @@ export async function DELETE(request: NextRequest) {
         select: { id: true },
       })
       if (!own || own.id !== row.staffId) {
-        return NextResponse.json({ error: 'Doctors can only remove their own breaks' }, { status: 403 })
+        return NextResponse.json(
+          { error: 'Doctors can only remove their own breaks' },
+          { status: 403 }
+        )
       }
     }
 

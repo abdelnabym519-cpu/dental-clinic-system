@@ -7,10 +7,21 @@
  */
 import path from 'node:path'
 import {
-  loadGoldenDataset, selectCases,
-  type GoldenDataset, type GoldenCase, type EvaluationResult, type EvalCheck,
+  loadGoldenDataset,
+  selectCases,
+  type GoldenDataset,
+  type GoldenCase,
+  type EvaluationResult,
+  type EvalCheck,
 } from '@/lib/ai/evaluation'
-import { replayAgentCase, compareBehavior, observe, makeScriptedLlm, makeFakeLocalAiService, type ReplayOverrides } from '@/lib/ai/evaluation/replay'
+import {
+  replayAgentCase,
+  compareBehavior,
+  observe,
+  makeScriptedLlm,
+  makeFakeLocalAiService,
+  type ReplayOverrides,
+} from '@/lib/ai/evaluation/replay'
 import { makeResult } from '@/lib/ai/evaluation/results'
 
 export function goldenPath(name: string): string {
@@ -31,7 +42,7 @@ export interface CaseEvaluation {
 export async function evaluateCase(
   suite: string,
   c: GoldenCase,
-  overrides: ReplayOverrides = {},
+  overrides: ReplayOverrides = {}
 ): Promise<CaseEvaluation> {
   const t0 = Date.now()
   const outcome = await replayAgentCase(c, overrides)
@@ -45,7 +56,7 @@ export async function evaluateDataset(
   suite: string,
   datasets: GoldenDataset[],
   filter: { category?: GoldenCase['category']; tag?: string; caseIds?: string[] } = {},
-  overridesFor?: (c: GoldenCase) => ReplayOverrides,
+  overridesFor?: (c: GoldenCase) => ReplayOverrides
 ): Promise<{ evaluations: CaseEvaluation[]; checks: EvalCheck[]; results: EvaluationResult[] }> {
   const cases = selectCases(datasets, filter)
   const evaluations: CaseEvaluation[] = []
@@ -63,7 +74,7 @@ export async function evaluateDataset(
  *  allowed only when the caller explicitly expects them). */
 export function assertNoFailures(
   checks: EvalCheck[],
-  opts: { allowBlocked?: boolean; allowNotApplicable?: boolean } = {},
+  opts: { allowBlocked?: boolean; allowNotApplicable?: boolean } = {}
 ): void {
   const bad = checks.filter((c) => c.verdict === 'FAIL')
   if (bad.length > 0) {
@@ -73,7 +84,9 @@ export function assertNoFailures(
   if (!opts.allowBlocked) {
     const blocked = checks.filter((c) => c.verdict === 'BLOCKED_ENVIRONMENT')
     if (blocked.length > 0) {
-      throw new Error(`Unexpected BLOCKED_ENVIRONMENT checks:\n${blocked.map((c) => `  ⛔ ${c.id}: ${c.reason ?? c.detail}`).join('\n')}`)
+      throw new Error(
+        `Unexpected BLOCKED_ENVIRONMENT checks:\n${blocked.map((c) => `  ⛔ ${c.id}: ${c.reason ?? c.detail}`).join('\n')}`
+      )
     }
   }
 }
@@ -89,8 +102,14 @@ export function failureCodeCounts(results: EvaluationResult[]): Record<string, n
 // In-memory KnowledgeStore (synthetic dental knowledge only)
 // ---------------------------------------------------------------------------
 import type {
-  KnowledgeSource, KnowledgeDocument, KnowledgeChunk, KnowledgeStore,
-  KnowledgeSourceMeta, CommitBatch, CommitReceipt, IngestionReport,
+  KnowledgeSource,
+  KnowledgeDocument,
+  KnowledgeChunk,
+  KnowledgeStore,
+  KnowledgeSourceMeta,
+  CommitBatch,
+  CommitReceipt,
+  IngestionReport,
 } from '@/lib/ai/knowledge/types'
 
 export interface SeedSource {
@@ -147,7 +166,11 @@ export function createInMemoryKnowledgeStore(seeds: SeedSource[]): KnowledgeStor
       hospitalId: s.hospitalId ?? null,
     }
     const source: KnowledgeSource = {
-      id: s.id, meta, status: 'PUBLISHED', rejectReason: null, createdAt: '2024-01-01T00:00:00.000Z',
+      id: s.id,
+      meta,
+      status: 'PUBLISHED',
+      rejectReason: null,
+      createdAt: '2024-01-01T00:00:00.000Z',
     }
     const contentText = s.chunks.join('\n\n')
     const doc: KnowledgeDocument = {
@@ -184,24 +207,33 @@ export function createInMemoryKnowledgeStore(seeds: SeedSource[]): KnowledgeStor
   }
 
   return {
-    findSourceByKey: async (sourceKey) => sources.find((s) => s.meta.sourceKey === sourceKey) ?? null,
+    findSourceByKey: async (sourceKey) =>
+      sources.find((s) => s.meta.sourceKey === sourceKey) ?? null,
     listDocumentsBySource: async (sourceId) => documents.filter((d) => d.sourceId === sourceId),
-    findPublishedByContentHash: async (hash) => documents.find((d) => d.contentHash === hash && d.status === 'PUBLISHED') ?? null,
+    findPublishedByContentHash: async (hash) =>
+      documents.find((d) => d.contentHash === hash && d.status === 'PUBLISHED') ?? null,
     listPublishedSources: async (hospitalId) =>
       sources.filter((s) => {
         if (s.status !== 'PUBLISHED') return false
-        if (s.meta.scope === 'TENANT') return hospitalId !== null && s.meta.hospitalId === hospitalId
+        if (s.meta.scope === 'TENANT')
+          return hospitalId !== null && s.meta.hospitalId === hospitalId
         return true
       }),
     listDocumentsForSources: async (sourceIds, includeSuperseded) =>
-      documents.filter((d) => sourceIds.includes(d.sourceId) && (includeSuperseded || d.status === 'PUBLISHED')),
+      documents.filter(
+        (d) => sourceIds.includes(d.sourceId) && (includeSuperseded || d.status === 'PUBLISHED')
+      ),
     listChunks: async (documentIds) => chunks.filter((c) => documentIds.includes(c.documentId)),
     listAllChunks: async () => chunks,
     commit: async (batch: CommitBatch): Promise<CommitReceipt> => {
       throw new Error('in-memory eval store is read-only')
     },
-    recordRejectedSource: async () => { /* observability no-op */ },
-    updateDocumentIngestion: async (_documentId: string, _report: IngestionReport) => { /* no-op */ },
+    recordRejectedSource: async () => {
+      /* observability no-op */
+    },
+    updateDocumentIngestion: async (_documentId: string, _report: IngestionReport) => {
+      /* no-op */
+    },
   }
 }
 

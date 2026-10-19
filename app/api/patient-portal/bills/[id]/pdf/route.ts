@@ -14,10 +14,7 @@ import { getStorage, StorageNotFoundError } from '@/lib/storage'
  * SECURITY: looked up by { id, hospitalId, patientId } from the portal
  * token — another patient's invoice is a 404.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, patient } = await requirePatientAuth(req)
   if (error) return error
 

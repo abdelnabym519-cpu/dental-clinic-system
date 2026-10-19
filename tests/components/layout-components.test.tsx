@@ -322,7 +322,9 @@ describe('MobileSidebar', () => {
 
   it('renders nothing when closed', () => {
     mockMobileOpen = false
-    const { container } = render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
+    const { container } = render(
+      withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    )
     expect(container.innerHTML).toBe('')
   })
 
@@ -340,7 +342,9 @@ describe('MobileSidebar', () => {
   })
 
   it('closes on backdrop click', () => {
-    const { container } = render(withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />))
+    const { container } = render(
+      withEnglish(<MobileSidebar role="ADMIN" hospitalName="Test Clinic" />)
+    )
     // Backdrop is the first child div inside the fixed overlay
     const backdrop = container.querySelector('.fixed.inset-0.bg-background\\/80')
     if (backdrop) {

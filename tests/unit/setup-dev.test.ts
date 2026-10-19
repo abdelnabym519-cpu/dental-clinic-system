@@ -31,7 +31,10 @@ describe('the environment contract: .env.example must match docker-compose.dev.y
         .split(/\r?\n/)
         .some((l) => {
           const t = l.trim()
-          return !t.startsWith('#') && new RegExp(`^${key}=`).test(t.startsWith('export ') ? t.slice(7).trim() : t)
+          return (
+            !t.startsWith('#') &&
+            new RegExp(`^${key}=`).test(t.startsWith('export ') ? t.slice(7).trim() : t)
+          )
         })
       expect(active, `template key: ${key}`).toBe(true)
     }
@@ -119,15 +122,19 @@ describe('planDevEnv — the deterministic bootstrap core', () => {
 
   it('a .env.local is never consulted nor modified by the plan (it only sees .env)', () => {
     // structural proof: planDevEnv takes ONLY template + existing .env content
-    const plan = planDevEnv(template(), 'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n', gen)
+    const plan = planDevEnv(
+      template(),
+      'DATABASE_URL="mysql://root:dental@localhost:3306/dental_erp"\n',
+      gen
+    )
     expect(plan.entries.find((e) => e.key === 'DATABASE_URL')?.action).toBe('kept')
     expect(plan.content).not.toContain('.env.local')
   })
 
   it('a template without an active DATABASE_URL cannot silently bootstrap (fail loud)', () => {
     const brokenTemplate = 'NEXTAUTH_URL="http://localhost:3000"\n# DATABASE_URL="commented-out"\n'
-    expect(() =>
-      planDevEnv(brokenTemplate, 'NEXTAUTH_URL="http://localhost:3000"\n', gen)
-    ).toThrow(/No DATABASE_URL available/)
+    expect(() => planDevEnv(brokenTemplate, 'NEXTAUTH_URL="http://localhost:3000"\n', gen)).toThrow(
+      /No DATABASE_URL available/
+    )
   })
 })

@@ -49,13 +49,13 @@ export interface ImagingSegmentFinding {
 }
 
 /** Every finding shape an AI job can carry (19A + 19B). */
-export type ImagingFinding =
-  | ImagingBoxFinding
-  | ImagingLandmarkFinding
-  | ImagingSegmentFinding
+export type ImagingFinding = ImagingBoxFinding | ImagingLandmarkFinding | ImagingSegmentFinding
 
 export function isBoxFinding(f: ImagingFinding): f is ImagingBoxFinding {
-  return typeof (f as ImagingBoxFinding).bounding_box === 'object' && (f as ImagingBoxFinding).bounding_box !== null
+  return (
+    typeof (f as ImagingBoxFinding).bounding_box === 'object' &&
+    (f as ImagingBoxFinding).bounding_box !== null
+  )
 }
 
 export function isLandmarkFinding(f: ImagingFinding): f is ImagingLandmarkFinding {

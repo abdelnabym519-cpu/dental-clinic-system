@@ -16,10 +16,7 @@ import { doctorCancellation } from '@/lib/messaging/templates'
  *   - the appointment must start more than 24 hours from now
  * On success the doctor is notified via the existing WhatsApp MessageQueue.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, patient } = await requirePatientAuth(req)
   if (error) return error
 

@@ -252,7 +252,9 @@ export default function InventoryPage() {
           </Link>
           <Link href="/inventory/reports">
             <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />{t('ui.reports')}</Button>
+              <FileText className="h-4 w-4 mr-2" />
+              {t('ui.reports')}
+            </Button>
           </Link>
           <ExportMenu
             filename="inventory"
@@ -281,7 +283,7 @@ export default function InventoryPage() {
             ) : (
               <Brain className="h-4 w-4 mr-2" />
             )}
-            {t("AI Forecast")}
+            {t('AI Forecast')}
           </Button>
           <Link href="/inventory/new">
             <Button>
@@ -404,7 +406,7 @@ export default function InventoryPage() {
                             }
                           >
                             {forecast.daysUntilStockout > 365 ? '365+' : forecast.daysUntilStockout}{' '}
-                            {t("days")}
+                            {t('days')}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -593,7 +595,7 @@ export default function InventoryPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">{item.categoryName || t("Uncategorized")}</div>
+                      <div className="text-sm">{item.categoryName || t('Uncategorized')}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{formatItemType(item.itemType)}</Badge>
@@ -604,7 +606,7 @@ export default function InventoryPage() {
                           {item.currentStock} {item.unit}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {t("Min:")} {item.minimumStock}
+                          {t('Min:')} {item.minimumStock}
                         </div>
                       </div>
                     </TableCell>
@@ -612,7 +614,7 @@ export default function InventoryPage() {
                       <div className="font-medium">{formatCurrency(item.purchasePrice)}</div>
                       {item.sellingPrice > 0 && (
                         <div className="text-xs text-muted-foreground">
-                          {t("Selling:")} {formatCurrency(item.sellingPrice)}
+                          {t('Selling:')} {formatCurrency(item.sellingPrice)}
                         </div>
                       )}
                     </TableCell>
@@ -620,7 +622,9 @@ export default function InventoryPage() {
                       <div className="flex flex-col gap-1">
                         {getStockStatusBadge(item.stockStatus)}
                         {!item.isActive && (
-                          <Badge className="bg-muted text-muted-foreground border-0">{t('ui.inactive')}</Badge>
+                          <Badge className="bg-muted text-muted-foreground border-0">
+                            {t('ui.inactive')}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
@@ -633,11 +637,15 @@ export default function InventoryPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/inventory/${item.id}`)}>
-                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            {t('ui.view_details')}
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => router.push(`/inventory/${item.id}/edit`)}
                           >
-                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            {t('ui.edit')}
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => router.push(`/inventory/transactions?item=${item.id}`)}
@@ -658,9 +666,9 @@ export default function InventoryPage() {
           {!loading && pagination.pages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("items")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('items')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -669,16 +677,20 @@ export default function InventoryPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.pages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.pages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.pages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

@@ -45,7 +45,9 @@ describe('VOICE golden replay (Phase 10 gate)', () => {
     }
     const bad = checks.filter((c) => c.verdict === 'FAIL')
     if (bad.length > 0) {
-      throw new Error(`VOICE EVALUATION FAILURES:\n${bad.map((c) => `  ✗ [${c.code}] ${c.id}: ${c.detail}`).join('\n')}`)
+      throw new Error(
+        `VOICE EVALUATION FAILURES:\n${bad.map((c) => `  ✗ [${c.code}] ${c.id}: ${c.detail}`).join('\n')}`
+      )
     }
     expect(checks.length).toBeGreaterThanOrEqual(20)
   }, 180000)

@@ -180,7 +180,9 @@ export default async function PricingPage() {
             {t('Simple, transparent pricing')}
           </h1>
           <p className="mt-4 text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('Choose the perfect plan for your dental practice. Start free and scale as you grow.')}
+            {t(
+              'Choose the perfect plan for your dental practice. Start free and scale as you grow.'
+            )}
           </p>
         </div>
 
@@ -214,7 +216,7 @@ export default async function PricingPage() {
                   <CardDescription>{t(plan.description)}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
-                      {plan.price === 'Custom' ? '' : t("EGP ")}
+                      {plan.price === 'Custom' ? '' : t('EGP ')}
                       {t(plan.price)}
                     </span>
                     {plan.priceNote ? (
@@ -248,7 +250,9 @@ export default async function PricingPage() {
 
         {/* FAQ Section */}
         <div className="mt-24 max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">{t('Frequently asked questions')}</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            {t('Frequently asked questions')}
+          </h2>
           <div className="space-y-6">
             {faqs.map((faq) => (
               <Card key={faq.question}>

@@ -18,10 +18,7 @@ const read = (p: string) => readFileSync(p, 'utf8')
 
 describe('WS-B: orchestrator secret single-source contract', () => {
   it('every app-side consumer reads process.env.ORCHESTRATOR_SECRET (no alternate names)', () => {
-    const consumers = [
-      'lib/ai/engines/orchestrator-source.ts',
-      'lib/ai-orchestrator.ts',
-    ]
+    const consumers = ['lib/ai/engines/orchestrator-source.ts', 'lib/ai-orchestrator.ts']
     for (const f of consumers) {
       const src = read(f)
       expect(src, f).toContain('process.env.ORCHESTRATOR_SECRET')
@@ -29,7 +26,7 @@ describe('WS-B: orchestrator secret single-source contract', () => {
     }
     // the app-side fail-closed error message is the user-reported contract
     expect(read('lib/ai/engines/orchestrator-source.ts')).toContain(
-      "'ORCHESTRATOR_SECRET is not configured'",
+      "'ORCHESTRATOR_SECRET is not configured'"
     )
   })
 

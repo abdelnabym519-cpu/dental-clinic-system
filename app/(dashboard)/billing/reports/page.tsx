@@ -174,7 +174,9 @@ export default function FinancialReportsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('Financial Reports')}</h1>
-          <p className="text-muted-foreground">{t('View detailed financial analytics and reports')}</p>
+          <p className="text-muted-foreground">
+            {t('View detailed financial analytics and reports')}
+          </p>
         </div>
         <div className="flex gap-2">
           <Select
@@ -213,7 +215,9 @@ export default function FinancialReportsPage() {
             </>
           )}
           <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />{t('ui.export')}</Button>
+            <Download className="h-4 w-4 mr-2" />
+            {t('ui.export')}
+          </Button>
         </div>
       </div>
 
@@ -221,7 +225,9 @@ export default function FinancialReportsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="outstanding" className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />{t('ui.outstanding')}</TabsTrigger>
+            <AlertCircle className="h-4 w-4" />
+            {t('ui.outstanding')}
+          </TabsTrigger>
           <TabsTrigger value="procedure_revenue" className="flex items-center gap-2">
             <Stethoscope className="h-4 w-4" />
             {t('By Procedure')}
@@ -252,7 +258,9 @@ export default function FinancialReportsPage() {
               <>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-green-600">{t('ui.current')}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-green-600">
+                      {t('ui.current')}
+                    </CardTitle>
                     <CardDescription>{t('Not yet due')}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -260,13 +268,15 @@ export default function FinancialReportsPage() {
                       {formatCurrency(outstandingData.aging.current.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.current.count} {t("invoices")}
+                      {outstandingData.aging.current.count} {t('invoices')}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-yellow-600">{t("1-30 Days")}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-yellow-600">
+                      {t('1-30 Days')}
+                    </CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -274,14 +284,14 @@ export default function FinancialReportsPage() {
                       {formatCurrency(outstandingData.aging.days1_30.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days1_30.count} {t("invoices")}
+                      {outstandingData.aging.days1_30.count} {t('invoices')}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-orange-600">
-                      {t("31-60 Days")}
+                      {t('31-60 Days')}
                     </CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
@@ -290,13 +300,15 @@ export default function FinancialReportsPage() {
                       {formatCurrency(outstandingData.aging.days31_60.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days31_60.count} {t("invoices")}
+                      {outstandingData.aging.days31_60.count} {t('invoices')}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-red-500">{t("61-90 Days")}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-red-500">
+                      {t('61-90 Days')}
+                    </CardTitle>
                     <CardDescription>{t('ui.overdue')}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -304,13 +316,15 @@ export default function FinancialReportsPage() {
                       {formatCurrency(outstandingData.aging.days61_90.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.days61_90.count} {t("invoices")}
+                      {outstandingData.aging.days61_90.count} {t('invoices')}
                     </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-red-700">{t("90+ Days")}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-red-700">
+                      {t('90+ Days')}
+                    </CardTitle>
                     <CardDescription>{t('Critical')}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -318,7 +332,7 @@ export default function FinancialReportsPage() {
                       {formatCurrency(outstandingData.aging.over90.amount, locale)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {outstandingData.aging.over90.count} {t("invoices")}
+                      {outstandingData.aging.over90.count} {t('invoices')}
                     </p>
                   </CardContent>
                 </Card>
@@ -331,8 +345,9 @@ export default function FinancialReportsPage() {
             <CardHeader>
               <CardTitle>{t('Outstanding Invoices')}</CardTitle>
               <CardDescription>
-                {t("Total:")} {formatCurrency(outstandingData?.totals.totalOutstanding || 0, locale)} {t("from")}{' '}
-                {outstandingData?.totals.invoiceCount || 0} {t("invoices")}
+                {t('Total:')}{' '}
+                {formatCurrency(outstandingData?.totals.totalOutstanding || 0, locale)} {t('from')}{' '}
+                {outstandingData?.totals.invoiceCount || 0} {t('invoices')}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
@@ -385,7 +400,9 @@ export default function FinancialReportsPage() {
                           {invoice.patient.firstName} {invoice.patient.lastName}
                         </TableCell>
                         <TableCell>{formatDate(invoice.invoiceDate, locale)}</TableCell>
-                        <TableCell>{invoice.dueDate ? formatDate(invoice.dueDate, locale) : '-'}</TableCell>
+                        <TableCell>
+                          {invoice.dueDate ? formatDate(invoice.dueDate, locale) : '-'}
+                        </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(invoice.totalAmount, locale)}
                         </TableCell>
@@ -472,7 +489,9 @@ export default function FinancialReportsPage() {
                     ))
                   ) : procedureData?.byProcedure.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">{t('ui.no_procedure_data_available')}</TableCell>
+                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                        {t('ui.no_procedure_data_available')}
+                      </TableCell>
                     </TableRow>
                   ) : (
                     procedureData?.byProcedure.map((proc) => (
@@ -585,7 +604,9 @@ export default function FinancialReportsPage() {
                     doctorData?.byDoctor.map((doc) => (
                       <TableRow key={doc.doctorId}>
                         <TableCell>
-                          <div className="font-medium">{t("Dr.")} {doc.name}</div>
+                          <div className="font-medium">
+                            {t('Dr.')} {doc.name}
+                          </div>
                           {doc.specialization && (
                             <div className="text-sm text-muted-foreground">
                               {doc.specialization}
@@ -650,11 +671,15 @@ export default function FinancialReportsPage() {
                     <TableHead>{t('ui.date')}</TableHead>
                     <TableHead className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Banknote className="h-4 w-4" />{t('ui.cash')}</div>
+                        <Banknote className="h-4 w-4" />
+                        {t('ui.cash')}
+                      </div>
                     </TableHead>
                     <TableHead className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <CreditCard className="h-4 w-4" />{t('ui.card')}</div>
+                        <CreditCard className="h-4 w-4" />
+                        {t('ui.card')}
+                      </div>
                     </TableHead>
                     <TableHead className="text-right">{t('ui.instapay')}</TableHead>
                     <TableHead className="text-right">{t('ui.bank_transfer')}</TableHead>
@@ -698,10 +723,18 @@ export default function FinancialReportsPage() {
                   ) : (
                     dailyData?.dailyData.map((day) => (
                       <TableRow key={day.date}>
-                        <TableCell className="font-medium">{formatDate(day.date, locale)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.cash, locale)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.card, locale)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(day.instapay, locale)}</TableCell>
+                        <TableCell className="font-medium">
+                          {formatDate(day.date, locale)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(day.cash, locale)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(day.card, locale)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(day.instapay, locale)}
+                        </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(day.bankTransfer, locale)}
                         </TableCell>

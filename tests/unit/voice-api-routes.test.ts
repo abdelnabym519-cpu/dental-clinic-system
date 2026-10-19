@@ -12,14 +12,21 @@ const auditCount = vi.fn(async () => 0)
 const auditCreate = vi.fn(async () => ({}))
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    auditLog: { count: (...a: unknown[]) => auditCount(...(a as [])), create: (...a: unknown[]) => auditCreate(...(a as [])) },
+    auditLog: {
+      count: (...a: unknown[]) => auditCount(...(a as [])),
+      create: (...a: unknown[]) => auditCreate(...(a as [])),
+    },
     aIConversation: { findFirst: vi.fn(async () => null) },
     create: vi.fn(async () => ({ id: 'conv-x' })),
   },
 }))
 
 // ---- auth mock: DOCTOR session by default ---------------------------------
-const authResult = { error: null, user: { id: 'u1', name: 'Dr Test', role: 'DOCTOR' }, hospitalId: 'hosp-A' }
+const authResult = {
+  error: null,
+  user: { id: 'u1', name: 'Dr Test', role: 'DOCTOR' },
+  hospitalId: 'hosp-A',
+}
 vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: vi.fn(async () => authResult),
 }))
@@ -38,7 +45,16 @@ const pipelineResponse: VoiceTurnResponse = {
   taskType: 'OPERATIONAL',
   duplicateSuppressed: false,
   interrupted: false,
-  telemetry: { env: 'SANDBOX', transcriptChars: 5, totalMs: 3, sttMs: null, agentMs: 2, ttsMs: null, interruptionCount: 0, approvalRequired: false },
+  telemetry: {
+    env: 'SANDBOX',
+    transcriptChars: 5,
+    totalMs: 3,
+    sttMs: null,
+    agentMs: 2,
+    ttsMs: null,
+    interruptionCount: 0,
+    approvalRequired: false,
+  },
   error: null,
 }
 const runVoiceTurnMock = vi.fn(async (_deps: unknown, input: unknown) => {
@@ -70,20 +86,42 @@ beforeEach(() => {
 
 describe('POST /api/ai/voice/turn', () => {
   it('forwards a bound actor (server session — client cannot spoof tenant/role)', async () => {
-    const res = await turnPOST(jsonReq({ voiceSessionId: 'vs-abc', op: 'SPEAK', transcript: { text: 'مرحبا', confidence: 0.9, isFinal: true, providerId: 'web-speech-stt-browser' } }))
+    const res = await turnPOST(
+      jsonReq({
+        voiceSessionId: 'vs-abc',
+        op: 'SPEAK',
+        transcript: {
+          text: 'مرحبا',
+          confidence: 0.9,
+          isFinal: true,
+          providerId: 'web-speech-stt-browser',
+        },
+      })
+    )
     expect(res.status).toBe(200)
-    expect(lastPipelineInput).toMatchObject({ voiceSessionId: 'vs-abc', actor: { userId: 'u1', role: 'DOCTOR', tenantId: 'hosp-A' } })
+    expect(lastPipelineInput).toMatchObject({
+      voiceSessionId: 'vs-abc',
+      actor: { userId: 'u1', role: 'DOCTOR', tenantId: 'hosp-A' },
+    })
   })
 
   it('rejects unauthenticated calls', async () => {
     const { requireAuthAndRole } = await import('@/lib/api-helpers')
-    vi.mocked(requireAuthAndRole).mockResolvedValueOnce({ error: new Response('no', { status: 401 }), user: null, hospitalId: null } as never)
+    vi.mocked(requireAuthAndRole).mockResolvedValueOnce({
+      error: new Response('no', { status: 401 }),
+      user: null,
+      hospitalId: null,
+    } as never)
     const res = await turnPOST(jsonReq({ voiceSessionId: 'vs-abc' }))
     expect(res.status).toBe(401)
   })
 
   it('rejects malformed JSON', async () => {
-    const req = new Request('http://localhost/x', { method: 'POST', body: '{oops', headers: { 'content-type': 'application/json' } })
+    const req = new Request('http://localhost/x', {
+      method: 'POST',
+      body: '{oops',
+      headers: { 'content-type': 'application/json' },
+    })
     expect((await turnPOST(req)).status).toBe(400)
   })
 
@@ -93,7 +131,9 @@ describe('POST /api/ai/voice/turn', () => {
   })
 
   it('REQUIRES a typed transcript for SPEAK — raw audio can never enter (§41)', async () => {
-    const res = await turnPOST(jsonReq({ voiceSessionId: 'vs-abc', op: 'SPEAK', audioBase64: 'UklGRg==' }))
+    const res = await turnPOST(
+      jsonReq({ voiceSessionId: 'vs-abc', op: 'SPEAK', audioBase64: 'UklGRg==' })
+    )
     expect(res.status).toBe(400)
     expect(runVoiceTurnMock).not.toHaveBeenCalled()
   })
@@ -101,7 +141,13 @@ describe('POST /api/ai/voice/turn', () => {
   it('SPEAK with a partial transcript still reaches the pipeline — which fails closed', async () => {
     // The route passes typed transcripts; the PIPELINE owns trust decisions
     // (isFinal=false → VOICE_TRANSCRIPT_PARTIAL). Route-level: contract only.
-    const res = await turnPOST(jsonReq({ voiceSessionId: 'vs-abc', op: 'SPEAK', transcript: { text: 'مرحبا', confidence: 0.5, isFinal: false, providerId: 'x' } }))
+    const res = await turnPOST(
+      jsonReq({
+        voiceSessionId: 'vs-abc',
+        op: 'SPEAK',
+        transcript: { text: 'مرحبا', confidence: 0.5, isFinal: false, providerId: 'x' },
+      })
+    )
     expect(res.status).toBe(200)
   })
 
@@ -118,7 +164,13 @@ describe('POST /api/ai/voice/turn', () => {
   })
 
   it('writes a PHI-minimized audit entry (no transcript text, no audio)', async () => {
-    await turnPOST(jsonReq({ voiceSessionId: 'vs-abc', op: 'SPEAK', transcript: { text: 'بيانات حساسة سريريا', confidence: 1, isFinal: true, providerId: 'x' } }))
+    await turnPOST(
+      jsonReq({
+        voiceSessionId: 'vs-abc',
+        op: 'SPEAK',
+        transcript: { text: 'بيانات حساسة سريريا', confidence: 1, isFinal: true, providerId: 'x' },
+      })
+    )
     await vi.waitFor(() => expect(auditCreate).toHaveBeenCalled())
     const arg = auditCreate.mock.calls[0][0] as { data: { newValues: string } }
     const payload = JSON.parse(arg.data.newValues)

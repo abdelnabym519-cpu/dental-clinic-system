@@ -15,16 +15,15 @@
 import type { ContextSectionKey } from './types'
 
 export type RoleName =
-  | 'SUPER_ADMIN'
-  | 'ADMIN'
-  | 'DOCTOR'
-  | 'RECEPTIONIST'
-  | 'LAB_TECH'
-  | 'ACCOUNTANT'
-  | 'PATIENT'
+  'SUPER_ADMIN' | 'ADMIN' | 'DOCTOR' | 'RECEPTIONIST' | 'LAB_TECH' | 'ACCOUNTANT' | 'PATIENT'
 
 export const STAFF_ROLES: RoleName[] = [
-  'SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECH', 'ACCOUNTANT',
+  'SUPER_ADMIN',
+  'ADMIN',
+  'DOCTOR',
+  'RECEPTIONIST',
+  'LAB_TECH',
+  'ACCOUNTANT',
 ]
 
 const CAN_SEE_SECTION: Record<ContextSectionKey, RoleName[]> = {
@@ -72,7 +71,8 @@ export type FieldScope = 'full' | 'operational' | 'billing' | 'self'
 
 export function fieldScope(role: string, section: ContextSectionKey): FieldScope {
   if (role === 'PATIENT') return 'self'
-  if (role === 'RECEPTIONIST' && (section === 'treatments' || section === 'cases')) return 'operational'
+  if (role === 'RECEPTIONIST' && (section === 'treatments' || section === 'cases'))
+    return 'operational'
   if (role === 'ACCOUNTANT' && (section === 'cases' || section === 'treatments')) return 'billing'
   return 'full'
 }

@@ -89,14 +89,17 @@ Respond ONLY with JSON:
  * deliberately unambiguous: the model must never present a pending, blocked
  * or failed action as completed.
  */
-function formatActionResult(action: string, result: {
-  status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
-  success: boolean
-  message: string
-  approvalId?: string
-  result?: any
-  verification?: { verified: boolean; detail: string }
-}): string {
+function formatActionResult(
+  action: string,
+  result: {
+    status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
+    success: boolean
+    message: string
+    approvalId?: string
+    result?: any
+    verification?: { verified: boolean; detail: string }
+  }
+): string {
   if (result.status === 'EXECUTED' && result.success) {
     return `
 --- ACTION RESULT ---
@@ -339,7 +342,11 @@ ${contextStr}`
         // loop injects it from its tenant-scoped resolution; LLM text can
         // never grant a patient scope on this path).
         const rawParams = (parsed.params || {}) as Record<string, string>
-        const { patientId: _untrustedPatientId, __resolvedPatientId: _untrustedReserved, ...sanitizedParams } = rawParams
+        const {
+          patientId: _untrustedPatientId,
+          __resolvedPatientId: _untrustedReserved,
+          ...sanitizedParams
+        } = rawParams
         const result = await runAiAction({
           action: parsed.action,
           params: sanitizedParams,

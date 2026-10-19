@@ -46,12 +46,18 @@ import { IntelligenceError } from '@/lib/ai/intelligence/types'
 export const dynamic = 'force-dynamic'
 
 /** Union of every workflow's allowedRoles (the engine re-checks per def). */
-const ALL_WORKFLOW_ROLES = Array.from(new Set(Object.values(WORKFLOWS).flatMap((d) => d.allowedRoles)))
+const ALL_WORKFLOW_ROLES = Array.from(
+  new Set(Object.values(WORKFLOWS).flatMap((d) => d.allowedRoles))
+)
 
 export async function GET() {
   const auth = await requireAuthAndRole(ALL_WORKFLOW_ROLES)
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return wfErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return wfErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const workflows = Object.values(WORKFLOWS).map((d) => ({
     workflowId: d.workflowId,
@@ -71,7 +77,11 @@ export async function GET() {
 export async function POST(req: Request) {
   const auth = await requireAuthAndRole(ALL_WORKFLOW_ROLES)
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return wfErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return wfErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId, user } = auth
   let body: Record<string, unknown>
@@ -125,7 +135,11 @@ export async function POST(req: Request) {
       if (!runId) return wfErr('INT_INVALID_PARAMS', 'runId required', 400)
       const store = createWorkflowRunStore(prisma as unknown as WorkflowRunPrisma, hospitalId)
       const now = () => new Date()
-      const run = await cancelWorkflow({ prisma: prisma as unknown as GraphPrisma, now, store }, runId, hospitalId)
+      const run = await cancelWorkflow(
+        { prisma: prisma as unknown as GraphPrisma, now, store },
+        runId,
+        hospitalId
+      )
       writeAudit(prisma, {
         hospitalId,
         userId: user.id,
@@ -143,7 +157,11 @@ export async function POST(req: Request) {
       const def = workflowId ? getWorkflow(workflowId) : undefined
       if (!def) return wfErr('INT_WORKFLOW_NOT_FOUND', 'unknown workflowId', 404)
       if (!def.allowedRoles.includes(user.role)) {
-        return wfErr('INT_WORKFLOW_ROLE_DENIED', `role ${user.role} not allowed for ${workflowId}`, 403)
+        return wfErr(
+          'INT_WORKFLOW_ROLE_DENIED',
+          `role ${user.role} not allowed for ${workflowId}`,
+          403
+        )
       }
 
       // Scope re-validation (server-side; the client never asserts).
@@ -168,7 +186,11 @@ export async function POST(req: Request) {
         nextRunId: () => `wfrun-${randomUUID()}`,
         // THE existing Phase-1 action pipeline — sensitive steps park at
         // approval inside it; the engine never executes directly.
-        runAction: (action: string, params: Record<string, string>, ctx: { hospitalId: string; actor: { id: string; role: string; name?: string } }) =>
+        runAction: (
+          action: string,
+          params: Record<string, string>,
+          ctx: { hospitalId: string; actor: { id: string; role: string; name?: string } }
+        ) =>
           runAiAction({
             action,
             params,
@@ -197,7 +219,11 @@ export async function POST(req: Request) {
         action: def.audit.action,
         entityType: 'AiWorkflowRun',
         entityId: result.run.id,
-        newValues: { status: result.run.status, steps: result.run.stepLog.length, attempts: result.run.attempts },
+        newValues: {
+          status: result.run.status,
+          steps: result.run.stepLog.length,
+          attempts: result.run.attempts,
+        },
       })
 
       return NextResponse.json({
@@ -211,10 +237,13 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof IntelligenceError) {
       const status =
-        e.code === 'INT_WORKFLOW_ROLE_DENIED' ? 403
-        : e.code === 'INT_WORKFLOW_NOT_FOUND' || e.code === 'INT_PATIENT_NOT_FOUND' ? 404
-        : e.code === 'INT_WORKFLOW_INVALID_TRANSITION' ? 409
-        : 400
+        e.code === 'INT_WORKFLOW_ROLE_DENIED'
+          ? 403
+          : e.code === 'INT_WORKFLOW_NOT_FOUND' || e.code === 'INT_PATIENT_NOT_FOUND'
+            ? 404
+            : e.code === 'INT_WORKFLOW_INVALID_TRANSITION'
+              ? 409
+              : 400
       return wfErr(e.code, e.message, status)
     }
     console.error('AI workflow error:', e)

@@ -11,10 +11,7 @@ import { uploadUrl } from '@/lib/storage'
 // The study must belong to the caller's hospital; a foreign or missing id is
 // a plain 404 (no existence oracle for other tenants).
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole()
 
   if (error || !hospitalId) {

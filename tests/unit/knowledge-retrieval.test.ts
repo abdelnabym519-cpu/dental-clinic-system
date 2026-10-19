@@ -6,14 +6,19 @@
  * citation correctness, tenant isolation, bilingual bridge.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
-import { buildKnowledgeTestWorld, type TestKnowledgeWorld } from '@/tests/harness/knowledge-fixtures'
+import {
+  buildKnowledgeTestWorld,
+  type TestKnowledgeWorld,
+} from '@/tests/harness/knowledge-fixtures'
 import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
 import { HOSP_A } from '@/tests/harness/context-fixtures'
 
 let w: TestKnowledgeWorld
 const N = () => new Date('2026-09-29T12:00:00Z')
 const q = (question: string, over: Record<string, any> = {}) =>
-  retrieveKnowledge({ question, hospitalId: HOSP_A, useCase: 'clinical', ...over }, w.mem.store, { now: N })
+  retrieveKnowledge({ question, hospitalId: HOSP_A, useCase: 'clinical', ...over }, w.mem.store, {
+    now: N,
+  })
 const keys = (p: any) => p.results.map((r: any) => r.source.meta.sourceKey)
 
 beforeAll(async () => {
@@ -50,13 +55,19 @@ describe('retrieval — core behavior', () => {
     expect(recall).toBe(1) // ground-truth source retrieved within k
     expect(precision).toBeGreaterThanOrEqual(0.34)
     // the TIER_1 guideline chunk ranks in the top 2
-    expect(p.results.slice(0, 2).some((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')).toBe(true)
+    expect(
+      p.results
+        .slice(0, 2)
+        .some((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')
+    ).toBe(true)
   })
 
   it('ranking is deterministic (identical query → identical order, twice)', async () => {
     const a = await q('root canal treatment for irreversible pulpitis', { maxResults: 5 })
     const b = await q('root canal treatment for irreversible pulpitis', { maxResults: 5 })
-    expect(a.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(b.results.map((r: any) => [r.chunk.id, r.relevanceScore]))
+    expect(a.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(
+      b.results.map((r: any) => [r.chunk.id, r.relevanceScore])
+    )
   })
 
   it('bilingual bridge: Arabic query retrieves the English guideline and vice versa', async () => {
@@ -65,7 +76,9 @@ describe('retrieval — core behavior', () => {
     const en = await q('root canal')
     expect(keys(en)).toContain('synthetic-endodontic-guideline')
     // the matched chunk reports which canonical term bridged it (عصب السن → root-canal)
-    const hit = ar.results.find((r: any) => r.source.meta.sourceKey === 'synthetic-endodontic-guideline')
+    const hit = ar.results.find(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-endodontic-guideline'
+    )
     expect(hit.matchedTerms).toContain('root-canal')
   })
 
@@ -110,7 +123,9 @@ describe('retrieval — authority, version, freshness', () => {
     expect(clinicalUlcers.results.every((r: any) => r.authorityTier !== 'TIER_3')).toBe(true)
     // …but educational use admits it
     const edu = await q('oral ulcers that persist', { useCase: 'educational', maxResults: 10 })
-    expect(edu.results.some((r: any) => r.source.meta.sourceKey === 'synthetic-oral-medicine-unknown')).toBe(true)
+    expect(
+      edu.results.some((r: any) => r.source.meta.sourceKey === 'synthetic-oral-medicine-unknown')
+    ).toBe(true)
   })
 
   it('allowTier4 (explicit config) includes TIER_4 but labels lowAuthority', async () => {
@@ -121,13 +136,17 @@ describe('retrieval — authority, version, freshness', () => {
     // authoritative evidence still outranks the low-tier source on the same topic
     const t1 = p.results.filter((r: any) => r.authorityTier === 'TIER_1')
     expect(t1.length).toBeGreaterThan(0)
-    expect(Math.max(...t1.map((r: any) => r.rank))).toBeLessThan(Math.min(...t4.map((r: any) => r.rank)))
+    expect(Math.max(...t1.map((r: any) => r.rank))).toBeLessThan(
+      Math.min(...t4.map((r: any) => r.rank))
+    )
   })
 
   it('poisoning: low-authority malicious source cannot outrank authoritative evidence', async () => {
     const p = await q('root canal treatment', { allowTier4: true, maxResults: 10 })
     const blog = p.results.find((r: any) => r.source.meta.sourceKey === 'synthetic-dental-blog')
-    const endo = p.results.find((r: any) => r.source.meta.sourceKey === 'synthetic-endodontic-guideline')
+    const endo = p.results.find(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-endodontic-guideline'
+    )
     expect(blog).toBeTruthy()
     expect(endo).toBeTruthy()
     expect(endo.rank).toBeLessThan(blog.rank)
@@ -135,7 +154,9 @@ describe('retrieval — authority, version, freshness', () => {
 
   it('version attack: superseded v1 cannot masquerade as latest', async () => {
     const p = await q('should a tooth with a 6mm pocket be extracted', { maxResults: 10 })
-    const periodo = p.results.filter((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')
+    const periodo = p.results.filter(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline'
+    )
     expect(periodo.length).toBeGreaterThan(0)
     // every returned document of this source is the PUBLISHED v2
     expect(periodo.every((r: any) => r.document.version === '2')).toBe(true)
@@ -144,7 +165,9 @@ describe('retrieval — authority, version, freshness', () => {
 
   it('includeSuperseded explicitly reveals version history (latest wins by rank)', async () => {
     const p = await q('probing depths and extraction', { includeSuperseded: true, maxResults: 10 })
-    const periodo = p.results.filter((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')
+    const periodo = p.results.filter(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline'
+    )
     if (periodo.length >= 2) {
       const versions = periodo.map((r: any) => r.document.version)
       expect(new Set(versions).size).toBeGreaterThan(1)
@@ -154,12 +177,16 @@ describe('retrieval — authority, version, freshness', () => {
 
   it('freshness status is computed from stored dates; UNKNOWN_DATE never claims "latest"', async () => {
     const p = await q('oral ulcers that persist', { useCase: 'educational' })
-    const unknown = p.results.find((r: any) => r.source.meta.sourceKey === 'synthetic-oral-medicine-unknown')
+    const unknown = p.results.find(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-oral-medicine-unknown'
+    )
     expect(unknown).toBeTruthy()
     expect(unknown.freshness).toBe('UNKNOWN_DATE')
     expect(unknown.document.version).toBeTruthy() // version label is factual, not a "latest" claim
     const dated = await q('periodontitis diagnosis')
-    const current = dated.results.find((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')
+    const current = dated.results.find(
+      (r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline'
+    )
     expect(current).toBeTruthy()
     expect(['CURRENT', 'AGING']).toContain(current.freshness)
   })
@@ -174,7 +201,9 @@ describe('retrieval — authority, version, freshness', () => {
 describe('retrieval — dedup, diversity, budget, citations, conflicts', () => {
   it('near-duplicate selected chunks are dropped (counted)', async () => {
     // force both the copied diagnosis chunk and the original into the result set
-    const p = await q('periodontitis diagnostic criteria probing depths attachment loss', { maxResults: 10 })
+    const p = await q('periodontitis diagnostic criteria probing depths attachment loss', {
+      maxResults: 10,
+    })
     expect(p.stats.duplicateChunksDropped).toBeGreaterThanOrEqual(0)
     // the partial-dup source may appear, but never both its copy AND an
     // identical chunk at adjacent ranks
@@ -220,13 +249,20 @@ describe('retrieval — dedup, diversity, budget, citations, conflicts', () => {
   it('URL spoofing: fake citation text inside a document never becomes citation metadata', async () => {
     const p = await q('root canal myth', { allowTier4: true, maxResults: 10 })
     // the blog citation url must be the STORED reference, not the fake in-body one
-    const blog = p.citations.filter((c: any) => c.url === 'https://blog.test.example.org/root-canal')
+    const blog = p.citations.filter(
+      (c: any) => c.url === 'https://blog.test.example.org/root-canal'
+    )
     expect(blog.length).toBeGreaterThan(0)
-    expect(p.citations.every((c: any) => !String(c.url ?? '').includes('fake.example/citation'))).toBe(true)
+    expect(
+      p.citations.every((c: any) => !String(c.url ?? '').includes('fake.example/citation'))
+    ).toBe(true)
   })
 
   it('conflicting evidence is surfaced explicitly (never merged into fake consensus)', async () => {
-    const p = await q('amalgam for a child under 6 years', { useCase: 'educational', maxResults: 10 })
+    const p = await q('amalgam for a child under 6 years', {
+      useCase: 'educational',
+      maxResults: 10,
+    })
     expect(p.conflicts.length).toBeGreaterThan(0)
     const c = p.conflicts[0]
     expect(c.sourceIds.length).toBeGreaterThanOrEqual(2)
@@ -239,13 +275,22 @@ describe('retrieval — dedup, diversity, budget, citations, conflicts', () => {
 describe('retrieval — tenant isolation & availability', () => {
   it('tenant A cannot see tenant B private knowledge', async () => {
     const a = await q('dry socket after extraction', { maxResults: 10 })
-    expect(a.results.every((r: any) => r.source.meta.sourceKey !== 'clinic-b-private-protocol')).toBe(true)
+    expect(
+      a.results.every((r: any) => r.source.meta.sourceKey !== 'clinic-b-private-protocol')
+    ).toBe(true)
   })
 
   it('tenant B can see its own private knowledge (plus global)', async () => {
     const b = await retrieveKnowledge(
-      { question: 'dry socket after extraction', hospitalId: 'hosp-B', useCase: 'clinical', maxResults: 10 },
-      w.mem.store, { now: N })
+      {
+        question: 'dry socket after extraction',
+        hospitalId: 'hosp-B',
+        useCase: 'clinical',
+        maxResults: 10,
+      },
+      w.mem.store,
+      { now: N }
+    )
     const own = b.results.find((r: any) => r.source.meta.sourceKey === 'clinic-b-private-protocol')
     expect(own).toBeTruthy()
     expect(own.source.meta.scope).toBe('TENANT')
@@ -254,7 +299,11 @@ describe('retrieval — tenant isolation & availability', () => {
   it('empty corpus → KNOWLEDGE_NOT_AVAILABLE (agent must report honestly)', async () => {
     const { createMemoryKnowledgeStore } = await import('@/lib/ai/knowledge/store')
     const empty = createMemoryKnowledgeStore().store
-    const p = await retrieveKnowledge({ question: 'root canal', hospitalId: HOSP_A, useCase: 'clinical' }, empty, { now: N })
+    const p = await retrieveKnowledge(
+      { question: 'root canal', hospitalId: HOSP_A, useCase: 'clinical' },
+      empty,
+      { now: N }
+    )
     expect(p.ok).toBe(false)
     expect(p.failure.code).toBe('KNOWLEDGE_NOT_AVAILABLE')
   })
@@ -266,9 +315,18 @@ describe('retrieval — tenant isolation & availability', () => {
       listChunks: w.mem.store.listChunks.bind(w.mem.store),
     }
     let loads = 0
-    ;(w.mem.store as any).listPublishedSources = (...a: any[]) => { loads += 1; return real.listPublishedSources(...a) }
-    ;(w.mem.store as any).listDocumentsForSources = (...a: any[]) => { loads += 1; return real.listDocumentsForSources(...a) }
-    ;(w.mem.store as any).listChunks = (...a: any[]) => { loads += 1; return real.listChunks(...a) }
+    ;(w.mem.store as any).listPublishedSources = (...a: any[]) => {
+      loads += 1
+      return real.listPublishedSources(...a)
+    }
+    ;(w.mem.store as any).listDocumentsForSources = (...a: any[]) => {
+      loads += 1
+      return real.listDocumentsForSources(...a)
+    }
+    ;(w.mem.store as any).listChunks = (...a: any[]) => {
+      loads += 1
+      return real.listChunks(...a)
+    }
     try {
       await q('root canal treatment', {})
       expect(loads).toBe(3) // sources + documents + chunks — nothing else
@@ -292,7 +350,10 @@ describe('retrieval — hybrid provider path (§13/§14/§17)', () => {
     dimensions: DIM,
     embed: async (text: string): Promise<number[]> => {
       const v = new Array(DIM).fill(0)
-      for (const tok of text.toLowerCase().split(/[^a-z0-9\u0600-\u06ff]+/i).filter((t) => t.length > 2)) {
+      for (const tok of text
+        .toLowerCase()
+        .split(/[^a-z0-9\u0600-\u06ff]+/i)
+        .filter((t) => t.length > 2)) {
         let h = seed
         for (let i = 0; i < tok.length; i++) h = (h * 31 + tok.charCodeAt(i)) >>> 0
         v[h % DIM] += 1
@@ -314,21 +375,34 @@ describe('retrieval — hybrid provider path (§13/§14/§17)', () => {
     expect(p.stats.method).toBe('HYBRID')
     expect(p.results.every((r: any) => r.matchType === 'HYBRID')).toBe(true)
     // lexical recall floor holds: ground-truth TIER_1 guideline in top-2
-    expect(p.results.slice(0, 2).some((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')).toBe(true)
+    expect(
+      p.results
+        .slice(0, 2)
+        .some((r: any) => r.source.meta.sourceKey === 'synthetic-periodontitis-guideline')
+    ).toBe(true)
     const p2 = await hybridQ('What are the diagnostic criteria for periodontitis?', hashProvider(7))
-    expect(p.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(p2.results.map((r: any) => [r.chunk.id, r.relevanceScore]))
+    expect(p.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(
+      p2.results.map((r: any) => [r.chunk.id, r.relevanceScore])
+    )
   })
 
   it('default (no provider) is unchanged LEXICAL', async () => {
     const a = await q('root canal treatment for irreversible pulpitis', { maxResults: 5 })
     const b = await retrieveKnowledge(
-      { question: 'root canal treatment for irreversible pulpitis', hospitalId: HOSP_A, useCase: 'clinical', maxResults: 5 },
+      {
+        question: 'root canal treatment for irreversible pulpitis',
+        hospitalId: HOSP_A,
+        useCase: 'clinical',
+        maxResults: 5,
+      },
       w.mem.store,
       { now: N, embeddingProvider: null }
     )
     expect(a.stats.method).toBe('LEXICAL')
     expect(b.stats.method).toBe('LEXICAL')
-    expect(a.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(b.results.map((r: any) => [r.chunk.id, r.relevanceScore]))
+    expect(a.results.map((r: any) => [r.chunk.id, r.relevanceScore])).toEqual(
+      b.results.map((r: any) => [r.chunk.id, r.relevanceScore])
+    )
   })
 })
 

@@ -36,7 +36,8 @@ export const MULTIMODAL_LIMITS = {
   analyzeTimeoutMs: 120_000,
 } as const
 
-export type FileClassLimitKey = 'IMAGE_2D' | 'MESH_3D' | 'DOCUMENT_PDF' | 'DOCUMENT_TEXT' | 'VOLUME_DICOM' | 'UNKNOWN'
+export type FileClassLimitKey =
+  'IMAGE_2D' | 'MESH_3D' | 'DOCUMENT_PDF' | 'DOCUMENT_TEXT' | 'VOLUME_DICOM' | 'UNKNOWN'
 
 export function maxBytesFor(fileClass: FileClassLimitKey): number {
   return MULTIMODAL_LIMITS.maxBytes[fileClass]

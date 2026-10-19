@@ -10,8 +10,11 @@
  */
 
 import {
-  type ContextProfile, type TimelineEvent,
-  type Provenance, type AiFindingView, type AiAnalysisView,
+  type ContextProfile,
+  type TimelineEvent,
+  type Provenance,
+  type AiFindingView,
+  type AiAnalysisView,
 } from './types'
 import type { SectionBudget } from './profiles'
 import { isValidFdi, parseToothNumbers, sortFdi, toothName } from './fdi'
@@ -79,19 +82,24 @@ export function buildMedical(p: ResolvedPatient, budget: SectionBudget) {
   const conditions: string[] = []
   if (h.hasDiabetes) conditions.push('Diabetes' + (h.diabetesType ? ` (${h.diabetesType})` : ''))
   if (h.hasHypertension) conditions.push('Hypertension')
-  if (h.hasHeartDisease) conditions.push('Heart disease' + (h.heartCondition ? ` (${h.heartCondition})` : ''))
+  if (h.hasHeartDisease)
+    conditions.push('Heart disease' + (h.heartCondition ? ` (${h.heartCondition})` : ''))
   if (h.hasBleedingDisorder) conditions.push('Bleeding disorder')
   if (h.hasAsthma) conditions.push('Asthma')
   if (h.hasThyroid) conditions.push('Thyroid' + (h.thyroidType ? ` (${h.thyroidType})` : ''))
-  if (h.hasHepatitis) conditions.push('Hepatitis' + (h.hepatitisType ? ` (${h.hepatitisType})` : ''))
+  if (h.hasHepatitis)
+    conditions.push('Hepatitis' + (h.hepatitisType ? ` (${h.hepatitisType})` : ''))
   if (h.hasHiv) conditions.push('HIV positive')
   if (h.hasEpilepsy) conditions.push('Epilepsy')
   if (h.otherConditions) conditions.push(truncateText(h.otherConditions, budget.maxTextChars) || '')
 
   const alerts: string[] = []
-  if (h.drugAllergies) alerts.push(`Drug allergy: ${truncateText(h.drugAllergies, budget.maxTextChars)}`)
-  if (h.foodAllergies) alerts.push(`Food allergy: ${truncateText(h.foodAllergies, budget.maxTextChars)}`)
-  if (h.materialAllergies) alerts.push(`Material allergy: ${truncateText(h.materialAllergies, budget.maxTextChars)}`)
+  if (h.drugAllergies)
+    alerts.push(`Drug allergy: ${truncateText(h.drugAllergies, budget.maxTextChars)}`)
+  if (h.foodAllergies)
+    alerts.push(`Food allergy: ${truncateText(h.foodAllergies, budget.maxTextChars)}`)
+  if (h.materialAllergies)
+    alerts.push(`Material allergy: ${truncateText(h.materialAllergies, budget.maxTextChars)}`)
   if (h.isPregnant) alerts.push(`Pregnant${h.pregnancyWeeks ? ` (${h.pregnancyWeeks} weeks)` : ''}`)
 
   return {
@@ -107,8 +115,11 @@ export function buildMedical(p: ResolvedPatient, budget: SectionBudget) {
     pregnancy: { isPregnant: h.isPregnant, weeks: h.pregnancyWeeks },
     alerts,
     provenance: makeProvenance({
-      sourceType: 'medical_history', sourceId: h.id,
-      entityType: 'MedicalHistory', entityId: h.id, timestamp: h.updatedAt ?? h.createdAt,
+      sourceType: 'medical_history',
+      sourceId: h.id,
+      entityType: 'MedicalHistory',
+      entityId: h.id,
+      timestamp: h.updatedAt ?? h.createdAt,
     }),
   }
 }
@@ -118,9 +129,18 @@ export function buildMedical(p: ResolvedPatient, budget: SectionBudget) {
 // ---------------------------------------------------------------------------
 
 interface ChartRow {
-  id: string; toothNumber: number; condition: string; severity: string
-  mesial: boolean; distal: boolean; occlusal: boolean; buccal: boolean; lingual: boolean
-  notes: string | null; diagnosedDate: Date; resolvedDate: Date | null
+  id: string
+  toothNumber: number
+  condition: string
+  severity: string
+  mesial: boolean
+  distal: boolean
+  occlusal: boolean
+  buccal: boolean
+  lingual: boolean
+  notes: string | null
+  diagnosedDate: Date
+  resolvedDate: Date | null
 }
 
 function chartEntryView(r: ChartRow, budget: SectionBudget, active: boolean) {
@@ -129,14 +149,23 @@ function chartEntryView(r: ChartRow, budget: SectionBudget, active: boolean) {
     toothName: toothName(r.toothNumber),
     condition: r.condition,
     severity: r.severity,
-    surfaces: { mesial: r.mesial, distal: r.distal, occlusal: r.occlusal, buccal: r.buccal, lingual: r.lingual },
+    surfaces: {
+      mesial: r.mesial,
+      distal: r.distal,
+      occlusal: r.occlusal,
+      buccal: r.buccal,
+      lingual: r.lingual,
+    },
     notes: truncateText(r.notes, budget.maxTextChars),
     diagnosedAt: new Date(r.diagnosedDate).toISOString(),
     resolvedAt: r.resolvedDate ? new Date(r.resolvedDate).toISOString() : null,
     active,
     provenance: makeProvenance({
-      sourceType: 'dental_chart', sourceId: r.id,
-      entityType: 'DentalChartEntry', entityId: r.id, timestamp: r.diagnosedDate,
+      sourceType: 'dental_chart',
+      sourceId: r.id,
+      entityType: 'DentalChartEntry',
+      entityId: r.id,
+      timestamp: r.diagnosedDate,
     }),
   }
 }
@@ -184,8 +213,13 @@ export async function buildDental(a: BuildArgs) {
 // ---------------------------------------------------------------------------
 
 interface ApptRow {
-  id: string; appointmentNo: string; appointmentType: string; status: string
-  scheduledDate: Date; chiefComplaint: string | null; doctor?: { firstName: string; lastName: string } | null
+  id: string
+  appointmentNo: string
+  appointmentType: string
+  status: string
+  scheduledDate: Date
+  chiefComplaint: string | null
+  doctor?: { firstName: string; lastName: string } | null
 }
 
 function apptView(r: ApptRow, budget: SectionBudget) {
@@ -195,10 +229,14 @@ function apptView(r: ApptRow, budget: SectionBudget) {
     status: r.status,
     scheduledAt: new Date(r.scheduledDate).toISOString(),
     chiefComplaint: truncateText(r.chiefComplaint, budget.maxTextChars),
-    category: (r.chiefComplaint ? FACT.patientReported : FACT.systemEvent) as 'PATIENT_REPORTED' | 'SYSTEM_EVENT',
+    category: (r.chiefComplaint ? FACT.patientReported : FACT.systemEvent) as
+      'PATIENT_REPORTED' | 'SYSTEM_EVENT',
     provenance: makeProvenance({
-      sourceType: 'appointment', sourceId: r.id,
-      entityType: 'Appointment', entityId: r.id, timestamp: r.scheduledDate,
+      sourceType: 'appointment',
+      sourceId: r.id,
+      entityType: 'Appointment',
+      entityId: r.id,
+      timestamp: r.scheduledDate,
     }),
   }
 }
@@ -219,14 +257,18 @@ export async function buildAppointments(a: BuildArgs) {
   const classify = (r: ApptRow): 'upcoming' | 'recent' | 'cancelled' | 'missed' => {
     const d = new Date(r.scheduledDate)
     d.setHours(0, 0, 0, 0)
-    if (['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'].includes(r.status) && d >= today) return 'upcoming'
+    if (['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS'].includes(r.status) && d >= today)
+      return 'upcoming'
     if (r.status === 'COMPLETED') return 'recent'
     if (r.status === 'CANCELLED' || r.status === 'RESCHEDULED') return 'cancelled'
     if (r.status === 'NO_SHOW') return 'missed'
     return 'recent'
   }
   const grouped: Record<'upcoming' | 'recent' | 'cancelled' | 'missed', unknown[]> = {
-    upcoming: [], recent: [], cancelled: [], missed: [],
+    upcoming: [],
+    recent: [],
+    cancelled: [],
+    missed: [],
   }
   for (const r of rows) {
     const d = new Date(r.scheduledDate)
@@ -245,8 +287,12 @@ export async function buildAppointments(a: BuildArgs) {
 // ---------------------------------------------------------------------------
 
 interface NoteRow {
-  id: string; noteType: string; content: string; isPrivate: boolean
-  createdAt: Date; doctor?: { firstName: string; lastName: string } | null
+  id: string
+  noteType: string
+  content: string
+  isPrivate: boolean
+  createdAt: Date
+  doctor?: { firstName: string; lastName: string } | null
   treatmentPlanId: string | null
 }
 
@@ -258,8 +304,11 @@ function noteView(r: NoteRow, budget: SectionBudget) {
     createdAt: new Date(r.createdAt).toISOString(),
     doctorName: r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : null,
     provenance: makeProvenance({
-      sourceType: 'clinical_note', sourceId: r.id,
-      entityType: 'ClinicalNote', entityId: r.id, timestamp: r.createdAt,
+      sourceType: 'clinical_note',
+      sourceId: r.id,
+      entityType: 'ClinicalNote',
+      entityId: r.id,
+      timestamp: r.createdAt,
       actor: r.doctor?.firstName ? 'doctor' : null,
     }),
   }
@@ -281,7 +330,8 @@ export async function buildClinical(a: BuildArgs): Promise<ClinicalBuild> {
     include: { doctor: { select: { firstName: true, lastName: true } } },
   })
   const inWindow = (r: NoteRow) =>
-    a.budget.windowDays === null || new Date(r.createdAt) >= new Date(a.now.getTime() - a.budget.windowDays * 86400000)
+    a.budget.windowDays === null ||
+    new Date(r.createdAt) >= new Date(a.now.getTime() - a.budget.windowDays * 86400000)
   const kept = rows.filter(inWindow).slice(0, a.budget.maxRecords)
   const views = kept.map((r) => noteView(r, a.budget))
   return {
@@ -301,15 +351,24 @@ export async function buildClinical(a: BuildArgs): Promise<ClinicalBuild> {
 // ---------------------------------------------------------------------------
 
 interface PlanRow {
-  id: string; planNumber: string; title: string; status: string
-  diagnosis: string | null; chiefComplaint: string | null; consentGiven: boolean
+  id: string
+  planNumber: string
+  title: string
+  status: string
+  diagnosis: string | null
+  chiefComplaint: string | null
+  consentGiven: boolean
   estimatedCost: { toString(): string } | null
   appointmentId: string | null
   doctor: { firstName: string; lastName: string } | null
   createdAt: Date
   items: {
-    id: string; procedureId: string; toothNumbers: string | null
-    priority: number; status: string; estimatedCost: { toString(): string } | null
+    id: string
+    procedureId: string
+    toothNumbers: string | null
+    priority: number
+    status: string
+    estimatedCost: { toString(): string } | null
     procedure: { name: string }
   }[]
 }
@@ -333,10 +392,15 @@ function caseView(r: PlanRow, scope: FieldScope, budget: SectionBudget) {
       status: it.status,
       estimatedCost: it.estimatedCost ? Number(it.estimatedCost.toString()) : null,
     })),
-    teeth: sortFdi([...new Set((r.items ?? []).flatMap((it) => parseToothNumbers(it.toothNumbers)))]),
+    teeth: sortFdi([
+      ...new Set((r.items ?? []).flatMap((it) => parseToothNumbers(it.toothNumbers))),
+    ]),
     provenance: makeProvenance({
-      sourceType: 'treatment_plan', sourceId: r.id,
-      entityType: 'TreatmentPlan', entityId: r.id, timestamp: r.createdAt,
+      sourceType: 'treatment_plan',
+      sourceId: r.id,
+      entityType: 'TreatmentPlan',
+      entityId: r.id,
+      timestamp: r.createdAt,
     }),
   }
 }
@@ -368,17 +432,32 @@ export async function buildCases(a: BuildArgs, scope: FieldScope): Promise<Cases
 // ---------------------------------------------------------------------------
 
 interface TreatmentRow {
-  id: string; treatmentNo: string; status: string; toothNumbers: string | null
-  diagnosis: string | null; findings: string | null; chiefComplaint: string | null
-  procedureNotes: string | null; complications: string | null
-  startTime: Date | null; endTime: Date | null; createdAt: Date
-  followUpRequired: boolean; followUpDate: Date | null; followUpNotes: string | null
+  id: string
+  treatmentNo: string
+  status: string
+  toothNumbers: string | null
+  diagnosis: string | null
+  findings: string | null
+  chiefComplaint: string | null
+  procedureNotes: string | null
+  complications: string | null
+  startTime: Date | null
+  endTime: Date | null
+  createdAt: Date
+  followUpRequired: boolean
+  followUpDate: Date | null
+  followUpNotes: string | null
   procedure: { name: string }
   doctor: { firstName: string; lastName: string } | null
   appointmentId: string | null
 }
 
-function treatmentView(r: TreatmentRow, scope: FieldScope, budget: SectionBudget, caseIdByAppointment: Map<string, string>) {
+function treatmentView(
+  r: TreatmentRow,
+  scope: FieldScope,
+  budget: SectionBudget,
+  caseIdByAppointment: Map<string, string>
+) {
   const operational = scope === 'operational'
   const billing = scope === 'billing'
   return {
@@ -390,7 +469,8 @@ function treatmentView(r: TreatmentRow, scope: FieldScope, budget: SectionBudget
     toothSource: 'confirmed' as const,
     diagnosis: operational || billing ? null : truncateText(r.diagnosis, budget.maxTextChars),
     findings: operational || billing ? null : truncateText(r.findings, budget.maxTextChars),
-    chiefComplaint: operational || billing ? null : truncateText(r.chiefComplaint, budget.maxTextChars),
+    chiefComplaint:
+      operational || billing ? null : truncateText(r.chiefComplaint, budget.maxTextChars),
     startedAt: r.startTime ? new Date(r.startTime).toISOString() : null,
     endedAt: r.endTime ? new Date(r.endTime).toISOString() : null,
     doctor: r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : null,
@@ -399,10 +479,14 @@ function treatmentView(r: TreatmentRow, scope: FieldScope, budget: SectionBudget
       date: r.followUpDate ? new Date(r.followUpDate).toISOString() : null,
       notes: billing ? null : truncateText(r.followUpNotes, budget.maxTextChars),
     },
-    complications: operational || billing ? null : truncateText(r.complications, budget.maxTextChars),
+    complications:
+      operational || billing ? null : truncateText(r.complications, budget.maxTextChars),
     provenance: makeProvenance({
-      sourceType: 'treatment', sourceId: r.id,
-      entityType: 'Treatment', entityId: r.id, timestamp: r.startTime ?? r.createdAt,
+      sourceType: 'treatment',
+      sourceId: r.id,
+      entityType: 'Treatment',
+      entityId: r.id,
+      timestamp: r.startTime ?? r.createdAt,
     }),
   }
 }
@@ -413,7 +497,11 @@ export interface TreatmentsBuild {
   treatmentRows: TreatmentRow[]
 }
 
-export async function buildTreatments(a: BuildArgs, scope: FieldScope, caseIdByAppointment: Map<string, string>): Promise<TreatmentsBuild> {
+export async function buildTreatments(
+  a: BuildArgs,
+  scope: FieldScope,
+  caseIdByAppointment: Map<string, string>
+): Promise<TreatmentsBuild> {
   const where: Record<string, unknown> = { hospitalId: a.hospitalId, patientId: a.patientId }
   if (a.scope.treatmentNo) where.treatmentNo = a.scope.treatmentNo
   const rows: TreatmentRow[] = await a.client.treatment.findMany({
@@ -448,10 +536,21 @@ export async function buildTreatments(a: BuildArgs, scope: FieldScope, caseIdByA
 // ---------------------------------------------------------------------------
 
 interface RxRow {
-  id: string; prescriptionNo: string; status: string; diagnosis: string | null
-  issuedAt: Date | null; validUntil: Date | null; createdAt: Date
+  id: string
+  prescriptionNo: string
+  status: string
+  diagnosis: string | null
+  issuedAt: Date | null
+  validUntil: Date | null
+  createdAt: Date
   doctor: { firstName: string; lastName: string } | null
-  medications: { medicationId: string; dosage: string | null; frequency: string | null; duration: string | null; medication: { name: string } }[]
+  medications: {
+    medicationId: string
+    dosage: string | null
+    frequency: string | null
+    duration: string | null
+    medication: { name: string }
+  }[]
 }
 
 export async function buildPrescriptions(a: BuildArgs) {
@@ -485,8 +584,11 @@ export async function buildPrescriptions(a: BuildArgs) {
         })),
         doctor: r.doctor ? `${r.doctor.firstName} ${r.doctor.lastName}` : null,
         provenance: makeProvenance({
-          sourceType: 'prescription', sourceId: r.id,
-          entityType: 'Prescription', entityId: r.id, timestamp: r.issuedAt ?? r.createdAt,
+          sourceType: 'prescription',
+          sourceId: r.id,
+          entityType: 'Prescription',
+          entityId: r.id,
+          timestamp: r.issuedAt ?? r.createdAt,
         }),
       })),
     },
@@ -537,7 +639,12 @@ export function normalizeAiFinding(raw: unknown): AiFindingView {
   return {
     kind,
     summary,
-    confidence: typeof f.confidence === 'number' ? f.confidence : (typeof f.score === 'number' ? f.score : null),
+    confidence:
+      typeof f.confidence === 'number'
+        ? f.confidence
+        : typeof f.score === 'number'
+          ? f.score
+          : null,
     toothFdi: toothValid ? (f.tooth_number as number) : null,
     toothLink: toothValid ? 'confirmed' : 'unknown',
     category: 'MODEL_FINDING',
@@ -545,18 +652,31 @@ export function normalizeAiFinding(raw: unknown): AiFindingView {
 }
 
 interface JobRow {
-  id: string; engine: string; status: string; modelVersion: string | null
-  modelChecksum: string | null; orchestratorVersion: string | null
-  completedAt: Date | null; createdAt: Date
-  findings: unknown[] | null; confidence: number | null
-  reviewedById: string | null; reviewedAt: Date | null; reviewDecision: string | null
+  id: string
+  engine: string
+  status: string
+  modelVersion: string | null
+  modelChecksum: string | null
+  orchestratorVersion: string | null
+  completedAt: Date | null
+  createdAt: Date
+  findings: unknown[] | null
+  confidence: number | null
+  reviewedById: string | null
+  reviewedAt: Date | null
+  reviewDecision: string | null
   acceptedFindings: unknown[] | null
   reviewedBy: { firstName: string; lastName: string } | null
 }
 
 interface StudyRow {
-  id: string; studyType: string; modality: string; studyDate: Date | null
-  status: string; description: string | null; createdAt: Date
+  id: string
+  studyType: string
+  modality: string
+  studyDate: Date | null
+  status: string
+  description: string | null
+  createdAt: Date
   appointmentId: string | null
   appointment: { appointmentNo: string } | null
   uploadedBy: { firstName: string; lastName: string } | null
@@ -591,8 +711,11 @@ function jobView(j: JobRow, maxFindings: number, toothFdi: number | null): AiAna
         }
       : null,
     provenance: makeProvenance({
-      sourceType: 'ai_job', sourceId: j.id,
-      entityType: 'AIAnalysisJob', entityId: j.id, timestamp: j.completedAt ?? j.createdAt,
+      sourceType: 'ai_job',
+      sourceId: j.id,
+      entityType: 'AIAnalysisJob',
+      entityId: j.id,
+      timestamp: j.completedAt ?? j.createdAt,
     }),
   }
 }
@@ -631,8 +754,11 @@ export async function buildImaging(a: BuildArgs): Promise<ImagingBuild> {
       uploadedByName: s.uploadedBy ? `${s.uploadedBy.firstName} ${s.uploadedBy.lastName}` : null,
       analyses: (s.aiJobs ?? []).map((j) => jobView(j, maxFindings, a.scope.toothFdi)),
       provenance: makeProvenance({
-        sourceType: 'imaging_study', sourceId: s.id,
-        entityType: 'ImagingStudy', entityId: s.id, timestamp: s.studyDate ?? s.createdAt,
+        sourceType: 'imaging_study',
+        sourceId: s.id,
+        entityType: 'ImagingStudy',
+        entityId: s.id,
+        timestamp: s.studyDate ?? s.createdAt,
       }),
     }))
     .filter((s) => s.analyses.length > 0 || a.scope.toothFdi === null) // tooth scope: keep only linked studies
@@ -652,10 +778,17 @@ export async function buildFinancial(a: BuildArgs) {
     status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
   }
   const agg = await a.client.invoice.aggregate({ where, _sum: { balanceAmount: true } })
-  const rows: { id: string; invoiceNo: string; balanceAmount: { toString(): string }; status: string; createdAt: Date }[] =
-    await a.client.invoice.findMany({
-      where, orderBy: { createdAt: 'desc' }, take: a.budget.maxRecords,
-    })
+  const rows: {
+    id: string
+    invoiceNo: string
+    balanceAmount: { toString(): string }
+    status: string
+    createdAt: Date
+  }[] = await a.client.invoice.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: a.budget.maxRecords,
+  })
   return {
     data: {
       openBalance: Number(agg?._sum?.balanceAmount ?? 0),
@@ -665,8 +798,11 @@ export async function buildFinancial(a: BuildArgs) {
         status: r.status,
       })),
       provenance: makeProvenance({
-        sourceType: 'invoice', sourceId: 'patient-invoices',
-        entityType: 'Invoice', entityId: a.patientId, timestamp: rows[0]?.createdAt ?? a.now,
+        sourceType: 'invoice',
+        sourceId: 'patient-invoices',
+        entityType: 'Invoice',
+        entityId: a.patientId,
+        timestamp: rows[0]?.createdAt ?? a.now,
       }),
     },
     latest: rows[0]?.createdAt ?? null,
@@ -691,8 +827,11 @@ export async function buildRisk(a: BuildArgs) {
       calculatedAt: new Date(row.calculatedAt).toISOString(),
       category: 'MODEL_FINDING' as const,
       provenance: makeProvenance({
-        sourceType: 'risk_score', sourceId: row.id,
-        entityType: 'PatientRiskScore', entityId: row.id, timestamp: row.calculatedAt,
+        sourceType: 'risk_score',
+        sourceId: row.id,
+        entityType: 'PatientRiskScore',
+        entityId: row.id,
+        timestamp: row.calculatedAt,
       }),
     },
     latest: row.calculatedAt,
@@ -714,15 +853,26 @@ export interface TimelineInputs {
 }
 
 const TYPE_ORDER: Record<string, number> = {
-  FINDING: 0, DIAGNOSIS: 1, TREATMENT: 2, IMAGING: 3, AI_ANALYSIS: 4,
-  EXAMINATION: 5, PRESCRIPTION: 6, APPOINTMENT: 7, FOLLOW_UP: 8, OUTCOME: 9,
+  FINDING: 0,
+  DIAGNOSIS: 1,
+  TREATMENT: 2,
+  IMAGING: 3,
+  AI_ANALYSIS: 4,
+  EXAMINATION: 5,
+  PRESCRIPTION: 6,
+  APPOINTMENT: 7,
+  FOLLOW_UP: 8,
+  OUTCOME: 9,
 }
 
 /**
  * Unified clinical timeline: deterministic ordering (timestamp desc, then
  * type priority, then eventId), deduplicated by eventId, bounded.
  */
-export function buildTimeline(inputs: TimelineInputs, budget: SectionBudget): {
+export function buildTimeline(
+  inputs: TimelineInputs,
+  budget: SectionBudget
+): {
   data: { events: TimelineEvent[]; eventCount: number; truncated: boolean }
   latest: Date | string | null
 } {
@@ -755,16 +905,20 @@ export function buildTimeline(inputs: TimelineInputs, budget: SectionBudget): {
       provenance: t.provenance,
     })
   }
-  for (const n of [...(inputs.clinical?.examinations ?? []), ...(inputs.clinical?.followUpNotes ?? [])]) {
+  for (const n of [
+    ...(inputs.clinical?.examinations ?? []),
+    ...(inputs.clinical?.followUpNotes ?? []),
+  ]) {
     push({
       eventId: `${n.noteType === 'FOLLOW_UP' ? 'FOLLOW_UP' : 'EXAMINATION'}:${n.provenance.sourceId}`,
       timestamp: n.createdAt,
       type: n.noteType === 'FOLLOW_UP' ? 'FOLLOW_UP' : 'EXAMINATION',
       toothFdi: null,
       caseId: null,
-      summary: n.noteType === 'FOLLOW_UP'
-        ? `Follow-up note: ${truncateText(n.content, 80)}`
-        : `Examination note: ${truncateText(n.content, 80)}`,
+      summary:
+        n.noteType === 'FOLLOW_UP'
+          ? `Follow-up note: ${truncateText(n.content, 80)}`
+          : `Examination note: ${truncateText(n.content, 80)}`,
       category: FACT.clinicalFact,
       significance: 'normal',
       provenance: n.provenance,

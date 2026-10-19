@@ -8,7 +8,11 @@ import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import { parseToothNumbers, sortFdi, isValidFdi, toothName } from '@/lib/ai/context/fdi'
 import {
-  createFakePrisma, makeRequest, PAT_A1, PAT_A2, ACTORS,
+  createFakePrisma,
+  makeRequest,
+  PAT_A1,
+  PAT_A2,
+  ACTORS,
 } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
@@ -106,10 +110,7 @@ describe('Tooth 360 context (TOOTH profile, scope toothFdi=36)', () => {
     expect(isValidFdi(9)).toBe(false)
     expect(isValidFdi(49)).toBe(false)
     // and the service itself never silently treats 0/9 as a scope
-    const ctx = await buildClinicalContext(
-      makeRequest({ profile: 'TOOTH', toothFdi: 36 }),
-      db()
-    )
+    const ctx = await buildClinicalContext(makeRequest({ profile: 'TOOTH', toothFdi: 36 }), db())
     expect(ctx.meta.scope.toothFdi).toBe(36)
   })
 

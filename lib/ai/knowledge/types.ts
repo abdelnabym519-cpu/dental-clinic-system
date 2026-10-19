@@ -25,8 +25,14 @@ export const TIER_ELIGIBILITY: Record<'clinical' | 'educational', SourceTier[]> 
 }
 
 export const SOURCE_TYPES = [
-  'GUIDELINE', 'TEXTBOOK', 'JOURNAL_ARTICLE', 'CONSENSUS_STATEMENT',
-  'REGULATORY', 'SYSTEMATIC_REVIEW', 'EDUCATIONAL', 'OTHER',
+  'GUIDELINE',
+  'TEXTBOOK',
+  'JOURNAL_ARTICLE',
+  'CONSENSUS_STATEMENT',
+  'REGULATORY',
+  'SYSTEMATIC_REVIEW',
+  'EDUCATIONAL',
+  'OTHER',
 ] as const
 export type SourceType = (typeof SOURCE_TYPES)[number]
 
@@ -149,8 +155,16 @@ export type IngestionFailureCode = (typeof INGESTION_FAILURE_CODES)[number]
 
 export interface IngestionStageReport {
   stage:
-    | 'validate' | 'normalize' | 'metadata' | 'domain' | 'chunking'
-    | 'dedup' | 'checksum' | 'index' | 'validate_publish' | 'publish'
+    | 'validate'
+    | 'normalize'
+    | 'metadata'
+    | 'domain'
+    | 'chunking'
+    | 'dedup'
+    | 'checksum'
+    | 'index'
+    | 'validate_publish'
+    | 'publish'
   ok: boolean
   detail?: string
   durationMs: number
@@ -190,7 +204,10 @@ export interface KnowledgeStore {
   /** Any published document with this content hash (any source). */
   findPublishedByContentHash(hash: string): Promise<KnowledgeDocument | null>
   listPublishedSources(hospitalId: string | null): Promise<KnowledgeSource[]>
-  listDocumentsForSources(sourceIds: string[], includeSuperseded: boolean): Promise<KnowledgeDocument[]>
+  listDocumentsForSources(
+    sourceIds: string[],
+    includeSuperseded: boolean
+  ): Promise<KnowledgeDocument[]>
   listChunks(documentIds: string[]): Promise<KnowledgeChunk[]>
   listAllChunks(hospitalId: string | null): Promise<KnowledgeChunk[]>
   /** Atomic batch: source + document + chunks (+ version supersede). */

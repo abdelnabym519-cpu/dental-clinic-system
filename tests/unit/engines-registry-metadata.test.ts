@@ -52,13 +52,26 @@ describe('engine registry metadata — consistency', () => {
   it('every registry entry carries the full §6 evidence profile (never collapsed)', () => {
     for (const e of ENGINE_REGISTRY) {
       const s = e.status
-      for (const k of ['discovered', 'artifactVerified', 'runtimeVerified', 'realInferenceVerified', 'targetHardwareVerified', 'clinicalEvidenceAvailable'] as const) {
+      for (const k of [
+        'discovered',
+        'artifactVerified',
+        'runtimeVerified',
+        'realInferenceVerified',
+        'targetHardwareVerified',
+        'clinicalEvidenceAvailable',
+      ] as const) {
         expect(typeof s[k]).toBe('boolean')
       }
       expect(ENGINE_EVIDENCE_STATES.length).toBe(8)
-      expect(['AVAILABLE', 'PARTIAL', 'RESOURCE_BLOCKED', 'UNAVAILABLE', 'BLOCKED']).toContain(e.availability)
+      expect(['AVAILABLE', 'PARTIAL', 'RESOURCE_BLOCKED', 'UNAVAILABLE', 'BLOCKED']).toContain(
+        e.availability
+      )
       // A BLOCKED/UNAVAILABLE engine MUST carry an explicit blocker.
-      if (e.availability === 'BLOCKED' || e.availability === 'UNAVAILABLE' || e.availability === 'RESOURCE_BLOCKED') {
+      if (
+        e.availability === 'BLOCKED' ||
+        e.availability === 'UNAVAILABLE' ||
+        e.availability === 'RESOURCE_BLOCKED'
+      ) {
         expect(s.blocker).toBeTruthy()
       }
       // Real-inference verified implies artifact verified (never the reverse).
@@ -78,11 +91,21 @@ describe('engine registry metadata — consistency', () => {
   })
 
   it('weight SHAs are pinned to the audited artifacts', () => {
-    expect(getEngineEntry('liodon')!.weightSha256).toBe('4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71')
-    expect(getEngineEntry('implant-ai')!.weightSha256).toBe('e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98')
-    expect(getEngineEntry('orthodontic-ai')!.weightSha256).toBe('fb1a781ac1c83149b379cb15724e3b0fae06ba2d567978f35c61e9d06b46fdcc')
-    expect(getEngineEntry('meshsegnet-max')!.weightSha256).toBe('727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2')
-    expect(getEngineEntry('meshsegnet-man')!.weightSha256).toBe('d74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf')
+    expect(getEngineEntry('liodon')!.weightSha256).toBe(
+      '4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71'
+    )
+    expect(getEngineEntry('implant-ai')!.weightSha256).toBe(
+      'e7cc137766f44c3dad86138a1b37622a25c496a32cca2e7dab1bec1bccf0ce98'
+    )
+    expect(getEngineEntry('orthodontic-ai')!.weightSha256).toBe(
+      'fb1a781ac1c83149b379cb15724e3b0fae06ba2d567978f35c61e9d06b46fdcc'
+    )
+    expect(getEngineEntry('meshsegnet-max')!.weightSha256).toBe(
+      '727cd3c52fc85c55271782b5d432d2cc8199ec2445cfb39570249e3ea99675d2'
+    )
+    expect(getEngineEntry('meshsegnet-man')!.weightSha256).toBe(
+      'd74c87e0c1cbc47fcedcc6f8574c1ad484dd2e21a98cabfb3465a42a2760a0cf'
+    )
   })
 })
 

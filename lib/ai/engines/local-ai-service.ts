@@ -93,7 +93,7 @@ export class LocalAIService {
   constructor(
     private readonly source: LocalAiCapabilitySource | null,
     private readonly transport: OrchestratorTransport | null,
-    private readonly now: () => Date = () => new Date(),
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   /** Static policy data — deterministic, no I/O. */
@@ -149,19 +149,19 @@ export class LocalAIService {
     if (!engine) {
       throw new LocalAiError(
         'UNSUPPORTED_CAPABILITY',
-        `no verified local engine supports modality '${p.modality}'`,
+        `no verified local engine supports modality '${p.modality}'`
       )
     }
     if (taskRow && taskRow.engine !== engine) {
       throw new LocalAiError(
         'MODALITY_MISMATCH',
-        `task '${p.task}' is served by ${taskRow.engine}, but modality '${p.modality}' resolves to ${engine}`,
+        `task '${p.task}' is served by ${taskRow.engine}, but modality '${p.modality}' resolves to ${engine}`
       )
     }
     const task =
       taskRow ??
       CAPABILITY_MATRIX.find(
-        (r) => r.engine === engine && r.modality === p.modality.toUpperCase(),
+        (r) => r.engine === engine && r.modality === p.modality.toUpperCase()
       ) ??
       CAPABILITY_MATRIX.find((r) => r.engine === engine)
     if (!task) {
@@ -178,7 +178,7 @@ export class LocalAIService {
     if (!this.transport) {
       throw new LocalAiError(
         'ORCHESTRATOR_UNREACHABLE',
-        'no orchestrator transport configured (AI_ORCHESTRATOR_URL/ORCHESTRATOR_SECRET unset)',
+        'no orchestrator transport configured (AI_ORCHESTRATOR_URL/ORCHESTRATOR_SECRET unset)'
       )
     }
     const { engine } = this.resolveEngine(p)
@@ -202,7 +202,7 @@ export class LocalAIService {
         msg.includes('unreachable') || msg.includes('not configured')
           ? 'ORCHESTRATOR_UNREACHABLE'
           : 'VALIDATION_FAILED',
-        msg,
+        msg
       )
     }
 
@@ -211,9 +211,16 @@ export class LocalAIService {
     if (res.job_id !== p.jobId) {
       throw new LocalAiError('JOB_TENANT_MISMATCH', `job id mismatch: ${res.job_id} != ${p.jobId}`)
     }
-    if (res.is_standin_not_meshsegnet || res.is_standin_not_liodon ||
-        res.is_standin_not_implant || res.is_standin_not_orthodontic) {
-      throw new LocalAiError('STANDIN_REJECTED', 'engine returned synthetic stand-in results — refusing')
+    if (
+      res.is_standin_not_meshsegnet ||
+      res.is_standin_not_liodon ||
+      res.is_standin_not_implant ||
+      res.is_standin_not_orthodontic
+    ) {
+      throw new LocalAiError(
+        'STANDIN_REJECTED',
+        'engine returned synthetic stand-in results — refusing'
+      )
     }
     const prov = res.provenance as Record<string, unknown>
     const checksum = String(prov.model_checksum ?? '').toLowerCase()
@@ -221,11 +228,14 @@ export class LocalAIService {
     if (!checksum || checksum !== expected) {
       throw new LocalAiError(
         'PROVENANCE_MISMATCH',
-        `model checksum ${checksum || '<none>'} != registry expected ${expected}`,
+        `model checksum ${checksum || '<none>'} != registry expected ${expected}`
       )
     }
     if (String(prov.engine ?? '') !== engine) {
-      throw new LocalAiError('PROVENANCE_MISMATCH', `provenance engine mismatch: ${String(prov.engine)}`)
+      throw new LocalAiError(
+        'PROVENANCE_MISMATCH',
+        `provenance engine mismatch: ${String(prov.engine)}`
+      )
     }
 
     const localProv: LocalAiProvenance = {
@@ -235,13 +245,18 @@ export class LocalAIService {
       modelChecksumExpected: expected,
       modelSource: typeof prov.model_source === 'string' ? prov.model_source : '',
       modelLicense: typeof prov.model_license === 'string' ? prov.model_license : '',
-      orchestratorVersion: typeof prov.orchestrator_version === 'string' ? prov.orchestrator_version : '',
+      orchestratorVersion:
+        typeof prov.orchestrator_version === 'string' ? prov.orchestrator_version : '',
       inputSha256: String(prov.image_sha256 ?? '').toLowerCase(),
       device: typeof prov.device === 'string' ? prov.device : 'cpu',
       runtime: typeof prov.runtime === 'string' ? prov.runtime : '',
       processingTimeMs: Number(prov.processing_time_ms ?? res.processing_time_ms),
-      rawOutputKey: typeof prov.raw_output_key === 'string' ? prov.raw_output_key : res.raw_output_key,
-      annotatedImageKey: typeof prov.annotated_image_key === 'string' ? prov.annotated_image_key : res.annotated_image_key,
+      rawOutputKey:
+        typeof prov.raw_output_key === 'string' ? prov.raw_output_key : res.raw_output_key,
+      annotatedImageKey:
+        typeof prov.annotated_image_key === 'string'
+          ? prov.annotated_image_key
+          : res.annotated_image_key,
       timestamp: typeof prov.timestamp === 'string' ? prov.timestamp : this.now().toISOString(),
     }
 
@@ -268,10 +283,7 @@ function capabilityByTask(task: string) {
 }
 
 /** Engine-native rows -> typed normalized findings (§12 fact classes). */
-function normalizeFindings(
-  raw: Record<string, unknown>[],
-  engine: string,
-): NormalizedFinding[] {
+function normalizeFindings(raw: Record<string, unknown>[], engine: string): NormalizedFinding[] {
   return raw.map((f, i) => {
     const detail: Record<string, string | number | null> = {}
     let confidence: number | null = null

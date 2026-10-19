@@ -18,32 +18,75 @@
 import { describe, it, expect } from 'vitest'
 import { createFakePrisma, HOSP_A, PAT_A1, NOW, ACTORS } from '@/tests/harness/context-fixtures'
 import { buildCaseGraph, type GraphPrisma } from '@/lib/ai/intelligence/case-graph'
-import { understandCase, buildClinicalSummary, differentialSupport, domainsForCase, runDentalBrain } from '@/lib/ai/intelligence/dental-brain'
+import {
+  understandCase,
+  buildClinicalSummary,
+  differentialSupport,
+  domainsForCase,
+  runDentalBrain,
+} from '@/lib/ai/intelligence/dental-brain'
 import type { CaseGraph, ClinicalSummary } from '@/lib/ai/intelligence/types'
 
-const STAFF = [{ id: 'staff-doctor-1', hospitalId: HOSP_A, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR' }]
-const AI_JOBS = [{
-  id: 'job-A1', hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-  requestedById: 'staff-doctor-1', modelVersion: 'v1.2.0', modelChecksum: 'c0ffee0000000000000000000000000000000000',
-  orchestratorVersion: '2.1.0', startedAt: NOW, completedAt: NOW, confidence: 0.87,
-  findings: [{ condition: 'caries', tooth_number: 36 }],
-  reviewedById: 'staff-doctor-1', reviewedAt: NOW, reviewDecision: 'ACCEPTED',
-  acceptedFindings: [{ condition: 'caries', tooth_number: 36 }], createdAt: NOW,
-}]
+const STAFF = [
+  {
+    id: 'staff-doctor-1',
+    hospitalId: HOSP_A,
+    firstName: 'Hana',
+    lastName: 'Shalaby',
+    role: 'DOCTOR',
+  },
+]
+const AI_JOBS = [
+  {
+    id: 'job-A1',
+    hospitalId: HOSP_A,
+    studyId: 'study-A1',
+    engine: 'clm',
+    status: 'COMPLETED',
+    requestedById: 'staff-doctor-1',
+    modelVersion: 'v1.2.0',
+    modelChecksum: 'c0ffee0000000000000000000000000000000000',
+    orchestratorVersion: '2.1.0',
+    startedAt: NOW,
+    completedAt: NOW,
+    confidence: 0.87,
+    findings: [{ condition: 'caries', tooth_number: 36 }],
+    reviewedById: 'staff-doctor-1',
+    reviewedAt: NOW,
+    reviewDecision: 'ACCEPTED',
+    acceptedFindings: [{ condition: 'caries', tooth_number: 36 }],
+    createdAt: NOW,
+  },
+]
 
 async function graph(): Promise<CaseGraph> {
   const fake = createFakePrisma({ staff: STAFF, aiAnalysisJob: AI_JOBS, aiMemoryItem: [] } as never)
   return buildCaseGraph(fake as unknown as GraphPrisma, {
-    hospitalId: HOSP_A, patientId: PAT_A1, caseId: null,
-    actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+    hospitalId: HOSP_A,
+    patientId: PAT_A1,
+    caseId: null,
+    actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+    now: NOW,
   })
 }
 
 const SUMMARY_SECTIONS = [
-  'patientContext', 'chiefComplaint', 'relevantHistory', 'affectedTeeth', 'symptoms',
-  'clinicalFindings', 'imaging', 'aiFindings', 'clinicianConfirmedFindings',
-  'differentialConsiderations', 'treatmentHistory', 'currentTreatment',
-  'pendingItems', 'followUp', 'knownUncertainty', 'missingInformation',
+  'patientContext',
+  'chiefComplaint',
+  'relevantHistory',
+  'affectedTeeth',
+  'symptoms',
+  'clinicalFindings',
+  'imaging',
+  'aiFindings',
+  'clinicianConfirmedFindings',
+  'differentialConsiderations',
+  'treatmentHistory',
+  'currentTreatment',
+  'pendingItems',
+  'followUp',
+  'knownUncertainty',
+  'missingInformation',
 ] as const
 
 describe('Phase 9 — dental brain: case understanding (§11)', () => {
@@ -92,17 +135,36 @@ describe('Phase 9 — dental brain: case understanding (§11)', () => {
 
   it('an EMPTY case reports explicit NOT_AVAILABLE items (never fabricated)', async () => {
     const fake = createFakePrisma({
-      staff: STAFF, aiAnalysisJob: [], aiMemoryItem: [],
-      patient: [{
-        id: 'pat-empty', hospitalId: HOSP_A, patientId: 'PAT-EMPTY',
-        firstName: 'Empty', lastName: 'Record', age: 30, dateOfBirth: new Date('1996-01-01'),
-        gender: 'MALE', bloodGroup: 'O+', phone: null, alternatePhone: null,
-        email: null, locale: 'ar', portalUserId: null, createdAt: NOW, medicalHistory: null,
-      }],
+      staff: STAFF,
+      aiAnalysisJob: [],
+      aiMemoryItem: [],
+      patient: [
+        {
+          id: 'pat-empty',
+          hospitalId: HOSP_A,
+          patientId: 'PAT-EMPTY',
+          firstName: 'Empty',
+          lastName: 'Record',
+          age: 30,
+          dateOfBirth: new Date('1996-01-01'),
+          gender: 'MALE',
+          bloodGroup: 'O+',
+          phone: null,
+          alternatePhone: null,
+          email: null,
+          locale: 'ar',
+          portalUserId: null,
+          createdAt: NOW,
+          medicalHistory: null,
+        },
+      ],
     } as never)
     const g = await buildCaseGraph(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: 'pat-empty', caseId: null,
-      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+      hospitalId: HOSP_A,
+      patientId: 'pat-empty',
+      caseId: null,
+      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+      now: NOW,
     })
     const u = understandCase(g, { procedureCategories: [], now: NOW })
     expect(u.teeth).toHaveLength(0)
@@ -132,7 +194,13 @@ describe('Phase 9 — dental brain: case understanding (§11)', () => {
     // Every item carries its trust class; nothing becomes DOCTOR_CONFIRMED
     // merely because the patient "said" it.
     for (const i of u.items) {
-      expect(['FACT', 'AI_INTERPRETATION', 'DERIVED_INSIGHT', 'RECOMMENDATION', 'ACTION']).toContain(i.insightClass)
+      expect([
+        'FACT',
+        'AI_INTERPRETATION',
+        'DERIVED_INSIGHT',
+        'RECOMMENDATION',
+        'ACTION',
+      ]).toContain(i.insightClass)
     }
   })
 
@@ -176,17 +244,36 @@ describe('Phase 9 — dental brain: clinical summary (§12–§13)', () => {
 
   it('empty case → NOT_AVAILABLE sections (explicit, never invented)', async () => {
     const fake = createFakePrisma({
-      staff: STAFF, aiAnalysisJob: [], aiMemoryItem: [],
-      patient: [{
-        id: 'pat-empty', hospitalId: HOSP_A, patientId: 'PAT-EMPTY',
-        firstName: 'Empty', lastName: 'Record', age: 30, dateOfBirth: new Date('1996-01-01'),
-        gender: 'MALE', bloodGroup: 'O+', phone: null, alternatePhone: null,
-        email: null, locale: 'ar', portalUserId: null, createdAt: NOW, medicalHistory: null,
-      }],
+      staff: STAFF,
+      aiAnalysisJob: [],
+      aiMemoryItem: [],
+      patient: [
+        {
+          id: 'pat-empty',
+          hospitalId: HOSP_A,
+          patientId: 'PAT-EMPTY',
+          firstName: 'Empty',
+          lastName: 'Record',
+          age: 30,
+          dateOfBirth: new Date('1996-01-01'),
+          gender: 'MALE',
+          bloodGroup: 'O+',
+          phone: null,
+          alternatePhone: null,
+          email: null,
+          locale: 'ar',
+          portalUserId: null,
+          createdAt: NOW,
+          medicalHistory: null,
+        },
+      ],
     } as never)
     const g = await buildCaseGraph(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: 'pat-empty', caseId: null,
-      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+      hospitalId: HOSP_A,
+      patientId: 'pat-empty',
+      caseId: null,
+      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+      now: NOW,
     })
     const u = understandCase(g, { procedureCategories: [], now: NOW })
     const s = buildClinicalSummary(u, g, 'Empty Record')
@@ -216,17 +303,36 @@ describe('Phase 9 — dental brain: differential SUPPORT (CDS, §13)', () => {
 
   it('no recorded findings → zero candidates (no invented differentials)', async () => {
     const fake = createFakePrisma({
-      staff: STAFF, aiAnalysisJob: [], aiMemoryItem: [],
-      patient: [{
-        id: 'pat-empty', hospitalId: HOSP_A, patientId: 'PAT-EMPTY',
-        firstName: 'Empty', lastName: 'Record', age: 30, dateOfBirth: new Date('1996-01-01'),
-        gender: 'MALE', bloodGroup: 'O+', phone: null, alternatePhone: null,
-        email: null, locale: 'ar', portalUserId: null, createdAt: NOW, medicalHistory: null,
-      }],
+      staff: STAFF,
+      aiAnalysisJob: [],
+      aiMemoryItem: [],
+      patient: [
+        {
+          id: 'pat-empty',
+          hospitalId: HOSP_A,
+          patientId: 'PAT-EMPTY',
+          firstName: 'Empty',
+          lastName: 'Record',
+          age: 30,
+          dateOfBirth: new Date('1996-01-01'),
+          gender: 'MALE',
+          bloodGroup: 'O+',
+          phone: null,
+          alternatePhone: null,
+          email: null,
+          locale: 'ar',
+          portalUserId: null,
+          createdAt: NOW,
+          medicalHistory: null,
+        },
+      ],
     } as never)
     const g = await buildCaseGraph(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: 'pat-empty', caseId: null,
-      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' }, now: NOW,
+      hospitalId: HOSP_A,
+      patientId: 'pat-empty',
+      caseId: null,
+      actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
+      now: NOW,
     })
     const d = differentialSupport(g, { procedureCategories: [] })
     expect(d.stance).toBe('clinical_decision_support')
@@ -236,11 +342,19 @@ describe('Phase 9 — dental brain: differential SUPPORT (CDS, §13)', () => {
 
 describe('Phase 9 — dental brain: one-call entry (§10)', () => {
   it('runDentalBrain = graph + understanding + summary + differential in one bounded call', async () => {
-    const fake = createFakePrisma({ staff: STAFF, aiAnalysisJob: AI_JOBS, aiMemoryItem: [] } as never)
+    const fake = createFakePrisma({
+      staff: STAFF,
+      aiAnalysisJob: AI_JOBS,
+      aiMemoryItem: [],
+    } as never)
     const out = await runDentalBrain(fake as unknown as GraphPrisma, {
-      hospitalId: HOSP_A, patientId: PAT_A1, caseId: null,
+      hospitalId: HOSP_A,
+      patientId: PAT_A1,
+      caseId: null,
       actor: { id: ACTORS.doctorA.id, role: 'DOCTOR' },
-      procedureCategories: [], now: NOW, patientName: 'Ahmed Ali',
+      procedureCategories: [],
+      now: NOW,
+      patientName: 'Ahmed Ali',
     })
     expect(out.understanding.aiFindings).toHaveLength(1)
     expect(out.summary.disclaimerKey).toBe('int.summary.disclaimer')

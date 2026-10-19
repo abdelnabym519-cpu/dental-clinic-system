@@ -13,8 +13,7 @@ export async function POST(
   try {
     const { provider } = await params
     const rawBody = await req.text()
-    const signature =
-      req.headers.get('x-fawry-signature') || req.headers.get('x-paymob-hmac') || ''
+    const signature = req.headers.get('x-fawry-signature') || req.headers.get('x-paymob-hmac') || ''
 
     // Parse the webhook payload
     let payload: Record<string, unknown>
@@ -30,7 +29,8 @@ export async function POST(
     switch (provider) {
       case 'fawry': {
         // Fawry charge-status callbacks carry the merchant reference directly.
-        gatewayOrderId = (payload.merchantRefNum as string) || (payload.referenceNumber as string) || null
+        gatewayOrderId =
+          (payload.merchantRefNum as string) || (payload.referenceNumber as string) || null
         break
       }
       case 'paymob': {

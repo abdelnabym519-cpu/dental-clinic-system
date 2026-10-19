@@ -76,7 +76,11 @@ const MESH_EXTENSIONS = ['.obj', '.stl', '.vtk', '.ply'] as const
 const MESH_ACCEPT = '.obj,.stl,.vtk,.ply'
 const MAX_MESH_SIZE = 200 * 1024 * 1024 // 200 MB
 
-export function ImagingUpload({ patientId, appointmentId = null, onUploadComplete }: ImagingUploadProps) {
+export function ImagingUpload({
+  patientId,
+  appointmentId = null,
+  onUploadComplete,
+}: ImagingUploadProps) {
   const { t } = useLanguage()
   const { toast } = useToast()
 
@@ -91,7 +95,9 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isMesh = (MESH_MODALITIES as readonly string[]).includes(modality)
-  const analyzingLocked = !AI_ANALYZABLE_MODALITIES.includes(modality as (typeof AI_ANALYZABLE_MODALITIES)[number])
+  const analyzingLocked = !AI_ANALYZABLE_MODALITIES.includes(
+    modality as (typeof AI_ANALYZABLE_MODALITIES)[number]
+  )
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -252,7 +258,18 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
       }
       xhr.send(form)
     },
-    [patientId, appointmentId, modality, analyze, jaw, isMesh, onUploadComplete, startPolling, t, toast]
+    [
+      patientId,
+      appointmentId,
+      modality,
+      analyze,
+      jaw,
+      isMesh,
+      onUploadComplete,
+      startPolling,
+      t,
+      toast,
+    ]
   )
 
   const reset = () => {
@@ -302,7 +319,11 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
           >
             <Upload className="h-5 w-5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">{t('imaging.drop_zone')}</p>
-            {file && <p className="text-xs font-medium">{file.name} · {(file.size / 1024 / 1024).toFixed(1)}MB</p>}
+            {file && (
+              <p className="text-xs font-medium">
+                {file.name} · {(file.size / 1024 / 1024).toFixed(1)}MB
+              </p>
+            )}
             <input
               ref={inputRef}
               type="file"
@@ -316,33 +337,41 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
           <div className="flex flex-col justify-between gap-3">
             <div className="space-y-2">
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">{t('imaging.study_type')}</label>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  {t('imaging.study_type')}
+                </label>
                 <Select
-                value={modality}
-                onValueChange={(v) => {
-                  // Phase 20B: a file valid for one family (image / mesh) is
-                  // invalid for the other — drop it when the family changes.
-                  const wasMesh = (MESH_MODALITIES as readonly string[]).includes(modality)
-                  const nowMesh = (MESH_MODALITIES as readonly string[]).includes(v)
-                  if (wasMesh !== nowMesh) {
-                    stopPolling()
-                    setFile(null)
-                    setPhase({ kind: 'idle' })
-                    if (inputRef.current) inputRef.current.value = ''
-                  }
-                  setModality(v)
-                  if (!AI_ANALYZABLE_MODALITIES.includes(v as (typeof AI_ANALYZABLE_MODALITIES)[number])) {
-                    setAnalyze(false)
-                  }
-                }}
-              >
+                  value={modality}
+                  onValueChange={(v) => {
+                    // Phase 20B: a file valid for one family (image / mesh) is
+                    // invalid for the other — drop it when the family changes.
+                    const wasMesh = (MESH_MODALITIES as readonly string[]).includes(modality)
+                    const nowMesh = (MESH_MODALITIES as readonly string[]).includes(v)
+                    if (wasMesh !== nowMesh) {
+                      stopPolling()
+                      setFile(null)
+                      setPhase({ kind: 'idle' })
+                      if (inputRef.current) inputRef.current.value = ''
+                    }
+                    setModality(v)
+                    if (
+                      !AI_ANALYZABLE_MODALITIES.includes(
+                        v as (typeof AI_ANALYZABLE_MODALITIES)[number]
+                      )
+                    ) {
+                      setAnalyze(false)
+                    }
+                  }}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {MODALITIES.map((m) => (
                       <SelectItem key={m} value={m}>
-                        {t(`imaging.modality.${m}`) === `imaging.modality.${m}` ? m : t(`imaging.modality.${m}`)}
+                        {t(`imaging.modality.${m}`) === `imaging.modality.${m}`
+                          ? m
+                          : t(`imaging.modality.${m}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -353,7 +382,9 @@ export function ImagingUpload({ patientId, appointmentId = null, onUploadComplet
                   man → meshsegnet-man). */}
               {isMesh && (
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">{t('imaging.jaw_selection')}</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    {t('imaging.jaw_selection')}
+                  </label>
                   <Select value={jaw} onValueChange={(v) => setJaw(v as 'max' | 'man')}>
                     <SelectTrigger className="w-full">
                       <SelectValue />

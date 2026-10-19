@@ -267,7 +267,7 @@ export type IntelligenceErrorCode = (typeof INTELLIGENCE_ERROR_CODES)[number]
 export class IntelligenceError extends Error {
   constructor(
     public readonly code: IntelligenceErrorCode,
-    message: string,
+    message: string
   ) {
     super(message)
     this.name = 'IntelligenceError'

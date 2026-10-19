@@ -15,7 +15,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { loadSuiteDatasets, evaluateDataset, assertNoFailures, type CaseEvaluation } from './harness'
+import {
+  loadSuiteDatasets,
+  evaluateDataset,
+  assertNoFailures,
+  type CaseEvaluation,
+} from './harness'
 import { gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 
 let checks: EvalCheck[] = []
@@ -64,7 +69,9 @@ describe('MULTIMODAL golden replay (Gate E)', () => {
 
   it('gate E verdict', () => {
     const gateChecks: EvalCheck[] = [
-      checks.length > 0 ? pass('E.multimodal', `${evaluations.length} cases across the modality table`) : fail('E.multimodal', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
+      checks.length > 0
+        ? pass('E.multimodal', `${evaluations.length} cases across the modality table`)
+        : fail('E.multimodal', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
     ]
     const report = gateReport('E_MULTIMODAL', gateChecks)
     expect(report.verdict).toBe('PASS')

@@ -49,10 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
-      return NextResponse.json(
-        { error: "لا تملك صلاحية تعديل المخطط السني" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'لا تملك صلاحية تعديل المخطط السني' }, { status: 403 })
     }
 
     const { id } = await params
@@ -135,7 +132,7 @@ export async function DELETE(
     // Check if user has permission
     if (!['ADMIN', 'DOCTOR'].includes(session?.user?.role || '')) {
       return NextResponse.json(
-        { error: "لا تملك صلاحية حذف إدخالات المخطط السني" },
+        { error: 'لا تملك صلاحية حذف إدخالات المخطط السني' },
         { status: 403 }
       )
     }

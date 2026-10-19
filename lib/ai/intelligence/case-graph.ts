@@ -103,7 +103,12 @@ const DEFAULT_LIMITS = {
 // ---------------------------------------------------------------------------
 
 function recProvenance(entity: string, id: string, at: Date | string): GraphProvenance {
-  return { source: `${entity}:${id}`, actor: 'SYSTEM', at: new Date(at).toISOString(), sourceType: 'RECORD' }
+  return {
+    source: `${entity}:${id}`,
+    actor: 'SYSTEM',
+    at: new Date(at).toISOString(),
+    sourceType: 'RECORD',
+  }
 }
 function derivedProvenance(rule: string, at: Date): GraphProvenance {
   return { source: `derived:${rule}`, actor: 'SYSTEM', at: at.toISOString(), sourceType: 'DERIVED' }
@@ -112,7 +117,12 @@ function aiProvenance(source: string, at: Date | string | null): GraphProvenance
   return { source, actor: 'SYSTEM', at: new Date(at ?? Date.now()).toISOString(), sourceType: 'AI' }
 }
 function userProvenance(source: string, at: Date | string | null): GraphProvenance {
-  return { source, actor: 'SYSTEM', at: new Date(at ?? Date.now()).toISOString(), sourceType: 'USER' }
+  return {
+    source,
+    actor: 'SYSTEM',
+    at: new Date(at ?? Date.now()).toISOString(),
+    sourceType: 'USER',
+  }
 }
 
 const MEMORY_TRUST_MAP: Record<string, GraphTrust> = {
@@ -129,7 +139,10 @@ const MEMORY_TRUST_MAP: Record<string, GraphTrust> = {
 // Builder
 // ---------------------------------------------------------------------------
 
-export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParams): Promise<CaseGraph> {
+export async function buildCaseGraph(
+  prisma: GraphPrisma,
+  p: BuildCaseGraphParams
+): Promise<CaseGraph> {
   const limits = { ...DEFAULT_LIMITS, ...(p.limits ?? {}) }
   const at = p.now.toISOString()
 
@@ -150,47 +163,49 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
   }
 
   // 3 — Tenant-pinned collection reads (bounded).
-  const [plans, treatments, chart, appts, imaging, aiJobs, memItems, notes, rx] = await Promise.all([
-    prisma.treatmentPlan.findMany({
-      where: p.caseId ? { id: p.caseId } : { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ createdAt: 'desc' }],
-    }),
-    prisma.treatment.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ createdAt: 'desc' }],
-      take: limits.maxTreatments,
-    }),
-    prisma.dentalChartEntry.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ diagnosedDate: 'desc' }],
-      take: limits.maxChartEntries,
-    }),
-    prisma.appointment.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ scheduledDate: 'desc' }],
-      take: limits.maxAppointments,
-    }),
-    prisma.imagingStudy.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ createdAt: 'desc' }],
-      take: limits.maxImaging,
-    }),
-    prisma.aiAnalysisJob.findMany({ where: { hospitalId: p.hospitalId } }),
-    prisma.aiMemoryItem.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId, status: 'ACTIVE' },
-      take: limits.maxMemory,
-    }),
-    prisma.clinicalNote.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ createdAt: 'desc' }],
-      take: limits.maxTreatments,
-    }),
-    prisma.prescription.findMany({
-      where: { hospitalId: p.hospitalId, patientId: p.patientId },
-      orderBy: [{ createdAt: 'desc' }],
-      take: limits.maxTreatments,
-    }),
-  ])
+  const [plans, treatments, chart, appts, imaging, aiJobs, memItems, notes, rx] = await Promise.all(
+    [
+      prisma.treatmentPlan.findMany({
+        where: p.caseId ? { id: p.caseId } : { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ createdAt: 'desc' }],
+      }),
+      prisma.treatment.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limits.maxTreatments,
+      }),
+      prisma.dentalChartEntry.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ diagnosedDate: 'desc' }],
+        take: limits.maxChartEntries,
+      }),
+      prisma.appointment.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ scheduledDate: 'desc' }],
+        take: limits.maxAppointments,
+      }),
+      prisma.imagingStudy.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limits.maxImaging,
+      }),
+      prisma.aiAnalysisJob.findMany({ where: { hospitalId: p.hospitalId } }),
+      prisma.aiMemoryItem.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId, status: 'ACTIVE' },
+        take: limits.maxMemory,
+      }),
+      prisma.clinicalNote.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limits.maxTreatments,
+      }),
+      prisma.prescription.findMany({
+        where: { hospitalId: p.hospitalId, patientId: p.patientId },
+        orderBy: [{ createdAt: 'desc' }],
+        take: limits.maxTreatments,
+      }),
+    ]
+  )
 
   // AI jobs must belong to THIS patient's studies (tenant pin is not enough —
   // revalidate against the study set: cross-patient jobs never enter the graph).
@@ -203,11 +218,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
   const addNode = (n: GraphNode) => nodes.push(n)
   const addEdge = (e: GraphEdge) => edges.push(e)
 
-  const doctorIds = new Set<string>([
-    ...treatments.map((t) => t.doctorId),
-    ...appts.map((a) => a.doctorId),
-    ...plans.map((pl) => pl.doctorId).filter(Boolean),
-  ].filter(Boolean) as string[])
+  const doctorIds = new Set<string>(
+    [
+      ...treatments.map((t) => t.doctorId),
+      ...appts.map((a) => a.doctorId),
+      ...plans.map((pl) => pl.doctorId).filter(Boolean),
+    ].filter(Boolean) as string[]
+  )
   for (const docId of [...doctorIds].slice(0, 10)) {
     const doc = await prisma.staff.findUnique({ where: { id: docId } })
     if (!doc || doc.hospitalId !== p.hospitalId) continue
@@ -220,7 +237,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
       provenance: recProvenance('Staff', doc.id, p.now),
       data: { role: 'doctor' },
     })
-    addEdge({ kind: 'DOCTOR_SEES_PATIENT', from: `doctor:${doc.id}`, to: `patient:${p.patientId}`, trust: 'RECORD_FACT', provenance: derivedProvenance('doctor_from_treatment_appointment', p.now) })
+    addEdge({
+      kind: 'DOCTOR_SEES_PATIENT',
+      from: `doctor:${doc.id}`,
+      to: `patient:${p.patientId}`,
+      trust: 'RECORD_FACT',
+      provenance: derivedProvenance('doctor_from_treatment_appointment', p.now),
+    })
   }
 
   addNode({
@@ -235,7 +258,12 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
 
   // Symptoms — patient words (chief complaints) are USER_PROVIDED.
   const seenSymptoms = new Set<string>()
-  const addSymptom = (text: string | null | undefined, source: string, at: Date | string | null, toCaseId: string | null) => {
+  const addSymptom = (
+    text: string | null | undefined,
+    source: string,
+    at: Date | string | null,
+    toCaseId: string | null
+  ) => {
     if (!text || !text.trim()) return
     const key = text.trim().slice(0, 120)
     if (seenSymptoms.has(key)) return
@@ -250,9 +278,21 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
       provenance: userProvenance(source, at),
       data: { text: key },
     })
-    addEdge({ kind: 'PATIENT_HAS_SYMPTOM', from: `patient:${p.patientId}`, to: id, trust: 'USER_PROVIDED', provenance: userProvenance(source, at) })
+    addEdge({
+      kind: 'PATIENT_HAS_SYMPTOM',
+      from: `patient:${p.patientId}`,
+      to: id,
+      trust: 'USER_PROVIDED',
+      provenance: userProvenance(source, at),
+    })
     if (toCaseId) {
-      addEdge({ kind: 'CASE_HAS_SYMPTOM', from: toCaseId, to: id, trust: 'USER_PROVIDED', provenance: userProvenance(source, at) })
+      addEdge({
+        kind: 'CASE_HAS_SYMPTOM',
+        from: toCaseId,
+        to: id,
+        trust: 'USER_PROVIDED',
+        provenance: userProvenance(source, at),
+      })
     }
   }
 
@@ -274,13 +314,32 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
         expectedEndDate: pl.expectedEndDate ? new Date(pl.expectedEndDate).toISOString() : null,
       },
     })
-    addEdge({ kind: 'PATIENT_HAS_CASE', from: `patient:${p.patientId}`, to: caseId, trust: 'RECORD_FACT', provenance: recProvenance('TreatmentPlan', pl.id, pl.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_CASE',
+      from: `patient:${p.patientId}`,
+      to: caseId,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('TreatmentPlan', pl.id, pl.createdAt ?? p.now),
+    })
     if (pl.appointmentId) {
-      addEdge({ kind: 'CASE_HAS_APPOINTMENT', from: caseId, to: `appointment:${pl.appointmentId}`, trust: 'RECORD_FACT', provenance: recProvenance('TreatmentPlan.appointmentId', pl.id, pl.createdAt ?? p.now) })
+      addEdge({
+        kind: 'CASE_HAS_APPOINTMENT',
+        from: caseId,
+        to: `appointment:${pl.appointmentId}`,
+        trust: 'RECORD_FACT',
+        provenance: recProvenance('TreatmentPlan.appointmentId', pl.id, pl.createdAt ?? p.now),
+      })
     }
     if (pl.doctorId) {
       const doc = doctorIds.has(pl.doctorId) ? pl.doctorId : null
-      if (doc) addEdge({ kind: 'CASE_HAS_DOCTOR_LINK', from: caseId, to: `doctor:${doc}`, trust: 'RECORD_FACT', provenance: recProvenance('TreatmentPlan.doctorId', pl.id, pl.createdAt ?? p.now) })
+      if (doc)
+        addEdge({
+          kind: 'CASE_HAS_DOCTOR_LINK',
+          from: caseId,
+          to: `doctor:${doc}`,
+          trust: 'RECORD_FACT',
+          provenance: recProvenance('TreatmentPlan.doctorId', pl.id, pl.createdAt ?? p.now),
+        })
     }
     // Diagnosis support — ONLY when the clinician recorded one (RECORD_FACT,
     // never AI-derived). No diagnosis → no node (never fabricated).
@@ -298,7 +357,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
           source: 'TREATMENT_PLAN',
         },
       })
-      addEdge({ kind: 'CASE_HAS_DIAGNOSIS_SUPPORT', from: caseId, to: `diag:${pl.id}`, trust: 'DOCTOR_CONFIRMED', provenance: recProvenance('TreatmentPlan.diagnosis', pl.id, pl.createdAt ?? p.now) })
+      addEdge({
+        kind: 'CASE_HAS_DIAGNOSIS_SUPPORT',
+        from: caseId,
+        to: `diag:${pl.id}`,
+        trust: 'DOCTOR_CONFIRMED',
+        provenance: recProvenance('TreatmentPlan.diagnosis', pl.id, pl.createdAt ?? p.now),
+      })
     }
     addSymptom(pl.chiefComplaint, `TreatmentPlan:${pl.id}`, pl.createdAt, caseId)
   }
@@ -343,7 +408,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
           resolved: c.resolvedDate ? new Date(c.resolvedDate).toISOString() : null,
         },
       })
-      addEdge({ kind: 'TOOTH_HAS_FINDING', from: toothId, to: findingId, trust: 'DOCTOR_CONFIRMED', provenance: recProvenance('DentalChartEntry', c.id, c.diagnosedDate ?? p.now) })
+      addEdge({
+        kind: 'TOOTH_HAS_FINDING',
+        from: toothId,
+        to: findingId,
+        trust: 'DOCTOR_CONFIRMED',
+        provenance: recProvenance('DentalChartEntry', c.id, c.diagnosedDate ?? p.now),
+      })
     }
   }
 
@@ -365,7 +436,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
         priority: a.priority ?? null,
       },
     })
-    addEdge({ kind: 'PATIENT_HAS_APPOINTMENT', from: `patient:${p.patientId}`, to: apptId, trust: 'RECORD_FACT', provenance: recProvenance('Appointment', a.id, a.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_APPOINTMENT',
+      from: `patient:${p.patientId}`,
+      to: apptId,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('Appointment', a.id, a.createdAt ?? p.now),
+    })
     addSymptom(a.chiefComplaint, `Appointment:${a.id}`, a.createdAt, null)
   }
 
@@ -388,9 +465,21 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
         endTime: t.endTime ? new Date(t.endTime).toISOString() : null,
       },
     })
-    addEdge({ kind: 'PATIENT_HAS_TREATMENT', from: `patient:${p.patientId}`, to: trtId, trust: 'RECORD_FACT', provenance: recProvenance('Treatment', t.id, t.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_TREATMENT',
+      from: `patient:${p.patientId}`,
+      to: trtId,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('Treatment', t.id, t.createdAt ?? p.now),
+    })
     if (t.appointmentId) {
-      addEdge({ kind: 'CASE_HAS_APPOINTMENT', from: `appointment:${t.appointmentId}`, to: trtId, trust: 'SYSTEM_INFERRED', provenance: derivedProvenance('treatment_from_appointment', p.now) })
+      addEdge({
+        kind: 'CASE_HAS_APPOINTMENT',
+        from: `appointment:${t.appointmentId}`,
+        to: trtId,
+        trust: 'SYSTEM_INFERRED',
+        provenance: derivedProvenance('treatment_from_appointment', p.now),
+      })
     }
     addSymptom(t.chiefComplaint, `Treatment:${t.id}`, t.createdAt, null)
 
@@ -412,10 +501,22 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
           notes: t.followUpNotes ?? null,
         },
       })
-      addEdge({ kind: 'TREATMENT_HAS_FOLLOW_UP', from: trtId, to: fuId, trust: 'RECORD_FACT', provenance: recProvenance('Treatment.followUpRequired', t.id, t.createdAt ?? p.now) })
+      addEdge({
+        kind: 'TREATMENT_HAS_FOLLOW_UP',
+        from: trtId,
+        to: fuId,
+        trust: 'RECORD_FACT',
+        provenance: recProvenance('Treatment.followUpRequired', t.id, t.createdAt ?? p.now),
+      })
       const linkedCase = plans.find((pl) => planLinksTreatment(pl, t))
       if (linkedCase) {
-        addEdge({ kind: 'CASE_HAS_FOLLOW_UP', from: `case:${linkedCase.id}`, to: fuId, trust: 'SYSTEM_INFERRED', provenance: derivedProvenance('followup_linked_to_case', p.now) })
+        addEdge({
+          kind: 'CASE_HAS_FOLLOW_UP',
+          from: `case:${linkedCase.id}`,
+          to: fuId,
+          trust: 'SYSTEM_INFERRED',
+          provenance: derivedProvenance('followup_linked_to_case', p.now),
+        })
       }
     }
 
@@ -429,9 +530,19 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
         label: `Completed ${t.treatmentNo ?? t.id}`,
         trust: 'RECORD_FACT',
         provenance: recProvenance('Treatment.status', t.id, t.updatedAt ?? p.now),
-        data: { status: 'COMPLETED', complications: t.complications ?? null, completedAt: t.endTime ? new Date(t.endTime).toISOString() : null },
+        data: {
+          status: 'COMPLETED',
+          complications: t.complications ?? null,
+          completedAt: t.endTime ? new Date(t.endTime).toISOString() : null,
+        },
       })
-      addEdge({ kind: 'TREATMENT_HAS_OUTCOME', from: trtId, to: ocId, trust: 'RECORD_FACT', provenance: recProvenance('Treatment.status', t.id, t.updatedAt ?? p.now) })
+      addEdge({
+        kind: 'TREATMENT_HAS_OUTCOME',
+        from: trtId,
+        to: ocId,
+        trust: 'RECORD_FACT',
+        provenance: recProvenance('Treatment.status', t.id, t.updatedAt ?? p.now),
+      })
     }
   }
 
@@ -452,7 +563,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
         studyDate: s.studyDate ? new Date(s.studyDate).toISOString() : null,
       },
     })
-    addEdge({ kind: 'PATIENT_HAS_IMAGING', from: `patient:${p.patientId}`, to: stId, trust: 'RECORD_FACT', provenance: recProvenance('ImagingStudy', s.id, s.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_IMAGING',
+      from: `patient:${p.patientId}`,
+      to: stId,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('ImagingStudy', s.id, s.createdAt ?? p.now),
+    })
 
     const jobs = patientJobs.filter((j) => j.studyId === s.id)
     for (const j of jobs) {
@@ -479,11 +596,23 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
           findingCount: countFindings(j.findings),
         },
       })
-      addEdge({ kind: 'IMAGING_HAS_AI_FINDING', from: stId, to: jobId, trust: j.reviewDecision === 'ACCEPTED' ? 'DOCTOR_CONFIRMED' : 'AI_DERIVED', provenance: aiProvenance(`AIAnalysisJob:${j.id}`, j.completedAt ?? j.createdAt) })
+      addEdge({
+        kind: 'IMAGING_HAS_AI_FINDING',
+        from: stId,
+        to: jobId,
+        trust: j.reviewDecision === 'ACCEPTED' ? 'DOCTOR_CONFIRMED' : 'AI_DERIVED',
+        provenance: aiProvenance(`AIAnalysisJob:${j.id}`, j.completedAt ?? j.createdAt),
+      })
       if (j.reviewDecision === 'ACCEPTED') {
         const reviewer = j.reviewedById ? `doctor:${j.reviewedById}` : null
         if (reviewer) {
-          addEdge({ kind: 'AI_FINDING_CONFIRMED_BY', from: jobId, to: reviewer, trust: 'DOCTOR_CONFIRMED', provenance: recProvenance('AIAnalysisJob.reviewDecision', j.id, j.reviewedAt ?? p.now) })
+          addEdge({
+            kind: 'AI_FINDING_CONFIRMED_BY',
+            from: jobId,
+            to: reviewer,
+            trust: 'DOCTOR_CONFIRMED',
+            provenance: recProvenance('AIAnalysisJob.reviewDecision', j.id, j.reviewedAt ?? p.now),
+          })
         }
       }
     }
@@ -516,9 +645,21 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
     })
     const caseScoped = m.domain === 'CASE' && m.caseId && plans.some((pl) => pl.id === m.caseId)
     if (caseScoped) {
-      addEdge({ kind: 'CASE_HAS_MEMORY', from: `case:${m.caseId}`, to: memId, trust: 'RECORD_FACT', provenance: recProvenance('AiMemoryItem', m.id, m.createdAt ?? p.now) })
+      addEdge({
+        kind: 'CASE_HAS_MEMORY',
+        from: `case:${m.caseId}`,
+        to: memId,
+        trust: 'RECORD_FACT',
+        provenance: recProvenance('AiMemoryItem', m.id, m.createdAt ?? p.now),
+      })
     } else {
-      addEdge({ kind: 'PATIENT_HAS_MEMORY', from: `patient:${p.patientId}`, to: memId, trust: 'RECORD_FACT', provenance: recProvenance('AiMemoryItem', m.id, m.createdAt ?? p.now) })
+      addEdge({
+        kind: 'PATIENT_HAS_MEMORY',
+        from: `patient:${p.patientId}`,
+        to: memId,
+        trust: 'RECORD_FACT',
+        provenance: recProvenance('AiMemoryItem', m.id, m.createdAt ?? p.now),
+      })
     }
   }
 
@@ -531,9 +672,18 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
       label: `Clinical note ${new Date(n.createdAt ?? p.now).toISOString().slice(0, 10)}`,
       trust: 'DOCTOR_CONFIRMED',
       provenance: recProvenance('ClinicalNote', n.id, n.createdAt ?? p.now),
-      data: { createdAt: new Date(n.createdAt ?? p.now).toISOString(), hasContent: Boolean(n.content) },
+      data: {
+        createdAt: new Date(n.createdAt ?? p.now).toISOString(),
+        hasContent: Boolean(n.content),
+      },
     })
-    addEdge({ kind: 'PATIENT_HAS_FINDING_LINK', from: `patient:${p.patientId}`, to: `note:${n.id}`, trust: 'RECORD_FACT', provenance: recProvenance('ClinicalNote', n.id, n.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_FINDING_LINK',
+      from: `patient:${p.patientId}`,
+      to: `note:${n.id}`,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('ClinicalNote', n.id, n.createdAt ?? p.now),
+    })
   }
   for (const r of rx) {
     addNode({
@@ -545,7 +695,13 @@ export async function buildCaseGraph(prisma: GraphPrisma, p: BuildCaseGraphParam
       provenance: recProvenance('Prescription', r.id, r.createdAt ?? p.now),
       data: { status: r.status ?? null, prescriptionNo: r.prescriptionNo ?? null },
     })
-    addEdge({ kind: 'PATIENT_HAS_TREATMENT', from: `patient:${p.patientId}`, to: `rx:${r.id}`, trust: 'RECORD_FACT', provenance: recProvenance('Prescription', r.id, r.createdAt ?? p.now) })
+    addEdge({
+      kind: 'PATIENT_HAS_TREATMENT',
+      from: `patient:${p.patientId}`,
+      to: `rx:${r.id}`,
+      trust: 'RECORD_FACT',
+      provenance: recProvenance('Prescription', r.id, r.createdAt ?? p.now),
+    })
   }
 
   // 5 — Apply bounded limits (truncate deterministically; never silently).
@@ -603,7 +759,15 @@ export function traverseGraph(graph: CaseGraph, input: GraphTraversalInput): Gra
   let truncated = false
 
   if (!nodeById.has(input.startId)) {
-    return { nodes: [], edges: [], depth: 0, truncated: false, queryCount: 0, resultCount: 0, maxDepthReached: 0 }
+    return {
+      nodes: [],
+      edges: [],
+      depth: 0,
+      truncated: false,
+      queryCount: 0,
+      resultCount: 0,
+      maxDepthReached: 0,
+    }
   }
   outNodes.push(nodeById.get(input.startId)!)
 
@@ -663,12 +827,18 @@ export function checkGraphConsistency(graph: CaseGraph): GraphInconsistency[] {
   for (const e of graph.edges) {
     // Orphan edges (endpoint missing).
     if (!nodeIds.has(e.from) || !nodeIds.has(e.to)) {
-      issues.push({ code: 'ORPHAN_EDGE', detail: `edge ${e.kind} ${e.from} -> ${e.to} has missing endpoint` })
+      issues.push({
+        code: 'ORPHAN_EDGE',
+        detail: `edge ${e.kind} ${e.from} -> ${e.to} has missing endpoint`,
+      })
     }
     // Cross-tenant edges are impossible by construction (tenant-pinned reads) —
     // but a patient node referencing a foreign patient id is an impossibility:
     if (e.from.startsWith('patient:') && e.to.startsWith('patient:') && e.from !== e.to) {
-      issues.push({ code: 'IMPOSSIBLE_PATIENT_CASE_LINK', detail: `two distinct patient nodes in one patient graph: ${e.from}, ${e.to}` })
+      issues.push({
+        code: 'IMPOSSIBLE_PATIENT_CASE_LINK',
+        detail: `two distinct patient nodes in one patient graph: ${e.from}, ${e.to}`,
+      })
     }
     // Missing provenance.
     if (!e.provenance?.source || !e.provenance.at) {
@@ -679,7 +849,12 @@ export function checkGraphConsistency(graph: CaseGraph): GraphInconsistency[] {
     seen.set(k, (seen.get(k) ?? 0) + 1)
   }
   for (const [k, count] of seen) {
-    if (count > 1) issues.push({ code: 'DUPLICATE_EDGE', detail: `edge ${k} appears ${count} times`, edges: count })
+    if (count > 1)
+      issues.push({
+        code: 'DUPLICATE_EDGE',
+        detail: `edge ${k} appears ${count} times`,
+        edges: count,
+      })
   }
 
   // Node-level checks.
@@ -691,15 +866,27 @@ export function checkGraphConsistency(graph: CaseGraph): GraphInconsistency[] {
   for (const [ref, list] of byRef) {
     const statuses = new Set(list.map((n) => String(n.data.status ?? '')))
     if (list.length > 1 && statuses.size > 1 && list.every((n) => n.kind === 'CASE')) {
-      issues.push({ code: 'CONFLICTING_STATE', detail: `case ref ${ref} has conflicting states: ${[...statuses].join(', ')}`, nodes: list.length })
+      issues.push({
+        code: 'CONFLICTING_STATE',
+        detail: `case ref ${ref} has conflicting states: ${[...statuses].join(', ')}`,
+        nodes: list.length,
+      })
     }
   }
   // Stale derived follow-ups (date in the past with no completed link —
   // reported as a finding, NOT auto-corrected).
   const nowIso = graph.builtAt
   for (const n of graph.nodes) {
-    if (n.kind === 'FOLLOW_UP' && n.provenance.sourceType === 'RECORD' && n.data.date && n.data.date < nowIso) {
-      issues.push({ code: 'STALE_DERIVED_RELATIONSHIP', detail: `follow-up ${n.ref} is overdue (date ${n.data.date}) — needs review` })
+    if (
+      n.kind === 'FOLLOW_UP' &&
+      n.provenance.sourceType === 'RECORD' &&
+      n.data.date &&
+      n.data.date < nowIso
+    ) {
+      issues.push({
+        code: 'STALE_DERIVED_RELATIONSHIP',
+        detail: `follow-up ${n.ref} is overdue (date ${n.data.date}) — needs review`,
+      })
     }
   }
   void patientNodes
@@ -715,15 +902,27 @@ function planMentionsTooth(plan: Record<string, any>, toothNumber: number): bool
   // The plan row itself does not carry items in a flat read — a tooth links to
   // the case when the case focus IS this plan, or when the plan's toothNumbers
   // reference (denormalized in fixtures) mentions it. Deterministic + bounded.
-  if (plan.toothNumbers && String(plan.toothNumbers).split(/[\s,]+/).includes(String(toothNumber))) return true
+  if (
+    plan.toothNumbers &&
+    String(plan.toothNumbers)
+      .split(/[\s,]+/)
+      .includes(String(toothNumber))
+  )
+    return true
   return false
 }
 
 function planLinksTreatment(plan: Record<string, any>, treatment: Record<string, any>): boolean {
   // A treatment links to the focused case when the case was given explicitly
   // (single plan) or the plan's appointment matches the treatment's.
-  if (plan.appointmentId && treatment.appointmentId && plan.appointmentId === treatment.appointmentId) return true
-  if (plan.treatmentNos && String(plan.treatmentNos).includes(treatment.treatmentNo ?? '')) return true
+  if (
+    plan.appointmentId &&
+    treatment.appointmentId &&
+    plan.appointmentId === treatment.appointmentId
+  )
+    return true
+  if (plan.treatmentNos && String(plan.treatmentNos).includes(treatment.treatmentNo ?? ''))
+    return true
   return false
 }
 

@@ -15,14 +15,10 @@
         "message": "What are the indications for a root canal treatment?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
         "patientInvolved": false,
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMin": 1,
           "failureCode": null
@@ -31,15 +27,9 @@
           "ok": true,
           "unsupportedMax": 0
         },
-        "mustContain": [
-          "Relevant Dental Evidence"
-        ]
+        "mustContain": ["Relevant Dental Evidence"]
       },
-      "tags": [
-        "retrieval",
-        "grounding",
-        "bilingual-parity-base"
-      ]
+      "tags": ["retrieval", "grounding", "bilingual-parity-base"]
     },
     {
       "caseId": "CLN-002",
@@ -53,13 +43,9 @@
         "message": "What are the diagnostic criteria for periodontitis?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMin": 1,
           "failureCode": null
@@ -69,10 +55,7 @@
           "unsupportedMax": 0
         }
       },
-      "tags": [
-        "retrieval",
-        "grounding"
-      ]
+      "tags": ["retrieval", "grounding"]
     },
     {
       "caseId": "CLN-003",
@@ -86,14 +69,10 @@
         "message": "ما هي معايير علاج قناة الجذر؟"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
         "patientInvolved": false,
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMin": 1,
           "failureCode": null
@@ -103,10 +82,7 @@
           "unsupportedMax": 0
         }
       },
-      "tags": [
-        "retrieval",
-        "bilingual"
-      ]
+      "tags": ["retrieval", "bilingual"]
     },
     {
       "caseId": "CLN-004",
@@ -120,14 +96,10 @@
         "message": "ما هي دواعي تقويم الأسنان؟"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
         "patientInvolved": false,
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMin": 1,
           "failureCode": null
@@ -137,10 +109,7 @@
           "unsupportedMax": 0
         }
       },
-      "tags": [
-        "retrieval",
-        "bilingual"
-      ]
+      "tags": ["retrieval", "bilingual"]
     },
     {
       "caseId": "CLN-005",
@@ -154,29 +123,15 @@
         "message": "What are the contraindications for laser treatment of cavities? What does the evidence say about composite restorations?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
-        "taskType": [
-          "KNOWLEDGE"
-        ],
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "status": ["COMPLETED"],
+        "taskType": ["KNOWLEDGE"],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMax": 5
         },
-        "mustNotContain": [
-          "proven cure",
-          "cures cavities",
-          "guaranteed cure",
-          "100% effective"
-        ]
+        "mustNotContain": ["proven cure", "cures cavities", "guaranteed cure", "100% effective"]
       },
-      "tags": [
-        "no-certainty",
-        "retrieval"
-      ]
+      "tags": ["no-certainty", "retrieval"]
     },
     {
       "caseId": "CLN-006",
@@ -191,24 +146,15 @@
         "message": "What are the guidelines for fluoride varnish application?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMax": 0
         },
-        "mustContain": [
-          "no matching evidence"
-        ]
+        "mustContain": ["no matching evidence"]
       },
-      "tags": [
-        "no-evidence",
-        "honesty"
-      ]
+      "tags": ["no-evidence", "honesty"]
     },
     {
       "caseId": "CLN-007",
@@ -222,27 +168,16 @@
         "message": "What are the guidelines for osseointegration in implant dentistry?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMax": 0
         },
-        "mustContain": [
-          "no matching evidence"
-        ],
-        "mustNotContain": [
-          "diagnosis"
-        ]
+        "mustContain": ["no matching evidence"],
+        "mustNotContain": ["diagnosis"]
       },
-      "tags": [
-        "no-evidence",
-        "honesty"
-      ]
+      "tags": ["no-evidence", "honesty"]
     },
     {
       "caseId": "CLN-008",
@@ -256,26 +191,15 @@
         "message": "What is the standard protocol for managing dry socket after extraction?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
-        "taskType": [
-          "KNOWLEDGE"
-        ],
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "status": ["COMPLETED"],
+        "taskType": ["KNOWLEDGE"],
+        "tools": ["retrieve_dental_knowledge"],
         "evidence": {
           "citationsMax": 0
         },
-        "mustContain": [
-          "no matching evidence"
-        ]
+        "mustContain": ["no matching evidence"]
       },
-      "tags": [
-        "no-evidence",
-        "honesty"
-      ]
+      "tags": ["no-evidence", "honesty"]
     }
   ]
 }

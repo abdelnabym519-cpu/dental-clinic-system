@@ -120,7 +120,7 @@ export interface TouchOptions {
 export function transitionSession(
   session: VoiceSession,
   to: InteractionState,
-  opts: TouchOptions,
+  opts: TouchOptions
 ): VoiceSession {
   if (!canTransitionInteractionState(session.state, to)) {
     throw new VoiceStateTransitionError(session.state, to)

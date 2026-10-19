@@ -21,7 +21,9 @@ function main(): void {
   const envPath = path.join(root, '.env')
 
   if (!existsSync(templatePath)) {
-    console.error('[setup] .env.example is missing — cannot bootstrap (it is the canonical template).')
+    console.error(
+      '[setup] .env.example is missing — cannot bootstrap (it is the canonical template).'
+    )
     process.exit(1)
   }
   const templateContent = readFileSync(templatePath, 'utf8')
@@ -31,7 +33,9 @@ function main(): void {
   const plan = planDevEnv(templateContent, existingContent)
   writeFileSync(envPath, plan.content, 'utf8')
 
-  console.log(`[setup] .env ${existed ? 'updated (missing keys only — nothing overwritten)' : 'created from .env.example'}`)
+  console.log(
+    `[setup] .env ${existed ? 'updated (missing keys only — nothing overwritten)' : 'created from .env.example'}`
+  )
   for (const e of plan.entries) {
     const detail =
       e.action === 'kept'

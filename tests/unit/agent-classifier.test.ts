@@ -33,7 +33,12 @@ const base = (message: string, over = {}) =>
 
 describe('domain gate (§27)', () => {
   it('rejects general questions as OUT_OF_DOMAIN', () => {
-    for (const m of ['What is the weather like in Cairo?', 'Write a poem about the ocean', '2+2=?', 'How do I bake bread?']) {
+    for (const m of [
+      'What is the weather like in Cairo?',
+      'Write a poem about the ocean',
+      '2+2=?',
+      'How do I bake bread?',
+    ]) {
       expect(base(m).task.taskType).toBe('OUT_OF_DOMAIN')
     }
   })
@@ -82,7 +87,9 @@ describe('action signals (Phase 1 intents only)', () => {
   })
 
   it('detects relative dates deterministically', () => {
-    expect(detectActionSignal('Schedule a follow-up for tomorrow', NOW).params.date).toBe('2026-09-30')
+    expect(detectActionSignal('Schedule a follow-up for tomorrow', NOW).params.date).toBe(
+      '2026-09-30'
+    )
     expect(detectActionSignal('book appointment next week', NOW).params.date).toBe('2026-10-06')
   })
 
@@ -108,7 +115,9 @@ describe('action signals (Phase 1 intents only)', () => {
 
   it('detects invoice and prescription intents', () => {
     expect(detectActionSignal('Create an invoice for Ahmed', NOW).intent).toBe('create_invoice')
-    expect(detectActionSignal('Write a prescription for Ahmed', NOW).intent).toBe('create_prescription')
+    expect(detectActionSignal('Write a prescription for Ahmed', NOW).intent).toBe(
+      'create_prescription'
+    )
   })
 
   it('does not fire without an action verb', () => {
@@ -189,7 +198,9 @@ describe('LLM fallback contract (enum-constrained)', () => {
   })
 
   it('parses valid enum output', () => {
-    const p = parseLlmClassification('{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.7}')
+    const p = parseLlmClassification(
+      '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.7}'
+    )
     expect(p.taskType).toBe('OPERATIONAL')
     expect(p.confidence).toBe(0.7)
   })

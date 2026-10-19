@@ -4,14 +4,7 @@ import { useCallback, useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import {
-  ArrowLeft,
-  Camera,
-  Download,
-  Loader2,
-  ScanEye,
-  ShieldAlert,
-} from 'lucide-react'
+import { ArrowLeft, Camera, Download, Loader2, ScanEye, ShieldAlert } from 'lucide-react'
 
 import { useLanguage } from '@/components/providers/language-provider'
 import { useToast } from '@/hooks/use-toast'
@@ -280,10 +273,10 @@ export default function PatientImagingPage({ params }: { params: Promise<{ id: s
               <Card>
                 <CardContent className="flex flex-wrap items-center gap-x-4 gap-y-1 p-3 text-sm">
                   <span className="font-medium">{t(`imaging.modality.${detail.modality}`)}</span>
-                  <Badge variant="outline">{formatDate(detail.studyDate ?? detail.createdAt)}</Badge>
-                  {status && (
-                    <Badge variant="secondary">{t(`imaging.status.${status}`)}</Badge>
-                  )}
+                  <Badge variant="outline">
+                    {formatDate(detail.studyDate ?? detail.createdAt)}
+                  </Badge>
+                  {status && <Badge variant="secondary">{t(`imaging.status.${status}`)}</Badge>}
                   {job?.processingTimeMs != null && (
                     <span className="text-xs text-muted-foreground">
                       {t('imaging.processing_time')}: {job.processingTimeMs} ms
@@ -342,7 +335,9 @@ export default function PatientImagingPage({ params }: { params: Promise<{ id: s
                           finding={f}
                           index={i}
                           selected={selectedFinding === i}
-                          onSelect={(idx) => setSelectedFinding(idx === selectedFinding ? null : idx)}
+                          onSelect={(idx) =>
+                            setSelectedFinding(idx === selectedFinding ? null : idx)
+                          }
                         />
                       ))}
                     </div>
@@ -364,9 +359,14 @@ export default function PatientImagingPage({ params }: { params: Promise<{ id: s
                           {decisionOut === decisionKey ? job.reviewDecision : decisionOut}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {t('imaging.review.reviewed_by')}: {job.reviewedBy?.name ?? '—'} - {formatDate(job.reviewedAt)}
+                          {t('imaging.review.reviewed_by')}: {job.reviewedBy?.name ?? '—'} -{' '}
+                          {formatDate(job.reviewedAt)}
                           {Array.isArray(job.acceptedFindings) && (
-                            <> · {t('imaging.findings_count', { count: job.acceptedFindings.length })}</>
+                            <>
+                              {' '}
+                              ·{' '}
+                              {t('imaging.findings_count', { count: job.acceptedFindings.length })}
+                            </>
                           )}
                         </p>
                         {job.reviewNotes && (

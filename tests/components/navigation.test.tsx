@@ -142,7 +142,9 @@ describe('Navigation Structure', () => {
       const patientCare = navigation.find((s) => s.title === 'Patient Care')
       const pcItems = patientCare?.items ?? []
       expect(pcItems.some((i) => i.href.startsWith('/appointments'))).toBe(false)
-      expect(pcItems.some((i) => i.subItems?.some((sub) => sub.href.startsWith('/appointments')))).toBe(false)
+      expect(
+        pcItems.some((i) => i.subItems?.some((sub) => sub.href.startsWith('/appointments')))
+      ).toBe(false)
     })
 
     it('ADMIN gets all navigation items', () => {

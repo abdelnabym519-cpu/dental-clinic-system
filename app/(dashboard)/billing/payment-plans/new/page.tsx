@@ -276,7 +276,9 @@ export default function NewPaymentPlanPage() {
                   </div>
                   {searchLoading && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />{t('ui.searching')}</div>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('ui.searching')}
+                    </div>
                   )}
                   {invoices.length > 0 && (
                     <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
@@ -303,7 +305,7 @@ export default function NewPaymentPlanPage() {
                                 {formatCurrency(inv.balanceAmount)}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {t("of")} {formatCurrency(inv.totalAmount)}
+                                {t('of')} {formatCurrency(inv.totalAmount)}
                               </div>
                             </div>
                           </div>
@@ -321,7 +323,9 @@ export default function NewPaymentPlanPage() {
                         {selectedInvoice.patient.firstName} {selectedInvoice.patient.lastName}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(null)}>{t('ui.change')}</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedInvoice(null)}>
+                      {t('ui.change')}
+                    </Button>
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
                     <div>
@@ -352,7 +356,9 @@ export default function NewPaymentPlanPage() {
           <Card>
             <CardHeader>
               <CardTitle>{t('Plan Configuration')}</CardTitle>
-              <CardDescription>{t('Configure installment frequency, count, and terms')}</CardDescription>
+              <CardDescription>
+                {t('Configure installment frequency, count, and terms')}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -383,7 +389,7 @@ export default function NewPaymentPlanPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t("Down Payment (EGP )")}</Label>
+                  <Label>{t('Down Payment (EGP )')}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -392,7 +398,7 @@ export default function NewPaymentPlanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("Interest Rate (%)")}</Label>
+                  <Label>{t('Interest Rate (%)')}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -414,7 +420,7 @@ export default function NewPaymentPlanPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t("Notes (Optional)")}</Label>
+                <Label>{t('Notes (Optional)')}</Label>
                 <Textarea
                   placeholder={t('Any additional terms or notes...')}
                   value={notes}
@@ -433,7 +439,9 @@ export default function NewPaymentPlanPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5" />{t('ui.plan_summary')}</CardTitle>
+                  <Calculator className="h-5 w-5" />
+                  {t('ui.plan_summary')}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -483,7 +491,9 @@ export default function NewPaymentPlanPage() {
             <Card>
               <CardHeader>
                 <CardTitle>{t('ui.installment_schedule')}</CardTitle>
-                <CardDescription>{t("Preview of")} {installments} {t('installments')}</CardDescription>
+                <CardDescription>
+                  {t('Preview of')} {installments} {t('installments')}
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[400px] overflow-y-auto">

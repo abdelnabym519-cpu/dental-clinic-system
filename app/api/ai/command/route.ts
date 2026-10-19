@@ -182,7 +182,11 @@ export async function POST(req: Request) {
       // loop injects it from its tenant-scoped resolution; LLM text can
       // never grant a patient scope on this path).
       const rawParams = (parsed.params || {}) as Record<string, string>
-      const { patientId: _untrustedPatientId, __resolvedPatientId: _untrustedReserved, ...sanitizedParams } = rawParams
+      const {
+        patientId: _untrustedPatientId,
+        __resolvedPatientId: _untrustedReserved,
+        ...sanitizedParams
+      } = rawParams
       const pipelineResult = await runAiAction({
         action: parsed.intent,
         params: sanitizedParams,

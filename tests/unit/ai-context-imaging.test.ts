@@ -7,15 +7,18 @@ import { describe, it, expect } from 'vitest'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { normalizeAiFinding } from '@/lib/ai/context/builders'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
-import {
-  createFakePrisma, makeRequest, PAT_B1, ACTORS,
-} from '@/tests/harness/context-fixtures'
+import { createFakePrisma, makeRequest, PAT_B1, ACTORS } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
 
 describe('Finding normalization (all engine shapes)', () => {
   it('box findings: condition + bbox summary, confirmed tooth link when valid FDI', () => {
-    const f = normalizeAiFinding({ condition: 'caries', tooth_number: 36, confidence: 0.87, bounding_box: { x: 1, y: 2, width: 3, height: 4 } })
+    const f = normalizeAiFinding({
+      condition: 'caries',
+      tooth_number: 36,
+      confidence: 0.87,
+      bounding_box: { x: 1, y: 2, width: 3, height: 4 },
+    })
     expect(f.kind).toBe('box')
     expect(f.summary.condition).toBe('caries')
     expect(f.summary.box).toBe('1,2,3,4')
@@ -26,14 +29,24 @@ describe('Finding normalization (all engine shapes)', () => {
   })
 
   it('box finding with null tooth_number → tooth link UNKNOWN (never fabricated)', () => {
-    const f = normalizeAiFinding({ condition: 'unknown', tooth_number: null, confidence: 0.31, bounding_box: { x: 10, y: 10, width: 8, height: 8 } })
+    const f = normalizeAiFinding({
+      condition: 'unknown',
+      tooth_number: null,
+      confidence: 0.31,
+      bounding_box: { x: 10, y: 10, width: 8, height: 8 },
+    })
     expect(f.kind).toBe('box')
     expect(f.toothFdi).toBeNull()
     expect(f.toothLink).toBe('unknown')
   })
 
   it('invalid tooth numbers are not presented as confirmed (99 → unknown)', () => {
-    const f = normalizeAiFinding({ condition: 'x', tooth_number: 99, confidence: 0.5, bounding_box: { x: 0, y: 0, width: 1, height: 1 } })
+    const f = normalizeAiFinding({
+      condition: 'x',
+      tooth_number: 99,
+      confidence: 0.5,
+      bounding_box: { x: 0, y: 0, width: 1, height: 1 },
+    })
     expect(f.toothLink).toBe('unknown')
     expect(f.toothFdi).toBeNull()
   })
@@ -140,25 +153,47 @@ describe('Imaging context (IMAGING profile)', () => {
 
   it('findings are bounded (≤8 per analysis) — raw count preserved', async () => {
     const db2 = createFakePrisma({
-      imagingStudy: [{
-        id: 'study-MANY', hospitalId: 'hosp-A', patientId: 'pat-A1',
-        studyType: 'CBCT', modality: 'CBCT', studyDate: new Date('2026-09-20'),
-        status: 'COMPLETED', description: 'CBCT', appointmentId: null, appointment: null,
-        uploadedById: 'staff-doctor-1', uploadedBy: { firstName: 'Hana', lastName: 'Shalaby' },
-        createdAt: new Date('2026-09-20'),
-        aiJobs: [{
-          id: 'job-MANY', engine: 'clm', status: 'COMPLETED',
-          modelVersion: 'v1.2.0', modelChecksum: null, orchestratorVersion: null,
-          completedAt: new Date('2026-09-21'), createdAt: new Date('2026-09-20'),
-          confidence: null,
-          findings: Array.from({ length: 20 }, (_, i) => ({
-            condition: `caries-${i}`, tooth_number: 11 + i, confidence: 0.5,
-            bounding_box: { x: i, y: i, width: 2, height: 2 },
-          })),
-          reviewedById: null, reviewedAt: null, reviewDecision: null,
-          reviewedBy: null, acceptedFindings: null,
-        }],
-      }],
+      imagingStudy: [
+        {
+          id: 'study-MANY',
+          hospitalId: 'hosp-A',
+          patientId: 'pat-A1',
+          studyType: 'CBCT',
+          modality: 'CBCT',
+          studyDate: new Date('2026-09-20'),
+          status: 'COMPLETED',
+          description: 'CBCT',
+          appointmentId: null,
+          appointment: null,
+          uploadedById: 'staff-doctor-1',
+          uploadedBy: { firstName: 'Hana', lastName: 'Shalaby' },
+          createdAt: new Date('2026-09-20'),
+          aiJobs: [
+            {
+              id: 'job-MANY',
+              engine: 'clm',
+              status: 'COMPLETED',
+              modelVersion: 'v1.2.0',
+              modelChecksum: null,
+              orchestratorVersion: null,
+              completedAt: new Date('2026-09-21'),
+              createdAt: new Date('2026-09-20'),
+              confidence: null,
+              findings: Array.from({ length: 20 }, (_, i) => ({
+                condition: `caries-${i}`,
+                tooth_number: 11 + i,
+                confidence: 0.5,
+                bounding_box: { x: i, y: i, width: 2, height: 2 },
+              })),
+              reviewedById: null,
+              reviewedAt: null,
+              reviewDecision: null,
+              reviewedBy: null,
+              acceptedFindings: null,
+            },
+          ],
+        },
+      ],
     })
     const ctx = await buildClinicalContext(
       makeRequest({ profile: 'IMAGING', studyId: 'study-MANY' }),

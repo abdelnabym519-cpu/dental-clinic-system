@@ -23,7 +23,11 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { runProactiveIntelligence, dismissAlert, type AlertPrisma } from '@/lib/ai/intelligence/proactive'
+import {
+  runProactiveIntelligence,
+  dismissAlert,
+  type AlertPrisma,
+} from '@/lib/ai/intelligence/proactive'
 import { IntelligenceError } from '@/lib/ai/intelligence/types'
 import { STAFF_ROLES, asString, intErr, writeAudit } from '@/lib/ai/intelligence/route-utils'
 
@@ -32,7 +36,11 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const auth = await requireAuthAndRole(STAFF_ROLES)
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return intErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return intErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId } = auth
   const now = new Date()
@@ -64,7 +72,11 @@ export async function GET() {
 export async function POST(req: Request) {
   const auth = await requireAuthAndRole(STAFF_ROLES)
   if (auth.error || !auth.user || !auth.hospitalId) {
-    return intErr('INT_UNAUTHORIZED', 'unauthorized', auth.error ? (auth.error as { status?: number }).status ?? 401 : 401)
+    return intErr(
+      'INT_UNAUTHORIZED',
+      'unauthorized',
+      auth.error ? ((auth.error as { status?: number }).status ?? 401) : 401
+    )
   }
   const { hospitalId, user } = auth
   let body: Record<string, unknown>
@@ -78,7 +90,11 @@ export async function POST(req: Request) {
   try {
     if (op === 'run') {
       const now = new Date()
-      const result = await runProactiveIntelligence(prisma as unknown as AlertPrisma, { hospitalId, now, actorId: user.id })
+      const result = await runProactiveIntelligence(prisma as unknown as AlertPrisma, {
+        hospitalId,
+        now,
+        actorId: user.id,
+      })
       writeAudit(prisma, {
         hospitalId,
         userId: user.id,
@@ -89,14 +105,22 @@ export async function POST(req: Request) {
       })
       return NextResponse.json({
         hospitalId,
-        result: { detected: result.detected.length, created: result.created, deduplicated: result.deduplicated },
+        result: {
+          detected: result.detected.length,
+          created: result.created,
+          deduplicated: result.deduplicated,
+        },
       })
     }
 
     if (op === 'dismiss') {
       const alertId = asString(body.alertId)
       if (!alertId) return intErr('INT_INVALID_PARAMS', 'alertId required', 400)
-      const res = await dismissAlert(prisma as unknown as AlertPrisma, { hospitalId, alertId, actorId: user.id })
+      const res = await dismissAlert(prisma as unknown as AlertPrisma, {
+        hospitalId,
+        alertId,
+        actorId: user.id,
+      })
       if (!res.ok) return intErr('INT_ALERT_NOT_FOUND', 'alert not found', 404)
       writeAudit(prisma, {
         hospitalId,

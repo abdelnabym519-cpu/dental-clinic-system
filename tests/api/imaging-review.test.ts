@@ -69,7 +69,8 @@ describe('auth & validation', () => {
       user: null,
       hospitalId: null,
     })
-    const a = makeReq(); expect((await POST(a.req, a.ctx)).status).toBe(401)
+    const a = makeReq()
+    expect((await POST(a.req, a.ctx)).status).toBe(401)
   })
 
   it('returns 403 for non-doctor roles', async () => {
@@ -78,12 +79,14 @@ describe('auth & validation', () => {
       user: null,
       hospitalId: null,
     })
-    const a = makeReq(); expect((await POST(a.req, a.ctx)).status).toBe(403)
+    const a = makeReq()
+    expect((await POST(a.req, a.ctx)).status).toBe(403)
   })
 
   it('rejects invalid decision values', async () => {
     prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
-    const m = makeReq('MAYBE'); const res = await POST(m.req, m.ctx)
+    const m = makeReq('MAYBE')
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(400)
   })
 
@@ -91,28 +94,52 @@ describe('auth & validation', () => {
     // findFirst is called with where {id, hospitalId: HOSPITAL}; a foreign job
     // simply does not match.
     prisma.aIAnalysisJob.findFirst.mockResolvedValue(null)
-    const m = makeReq(); const res = await POST(m.req, m.ctx)
+    const m = makeReq()
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(404)
     expect(prisma.aIAnalysisJob.update).not.toHaveBeenCalled()
   })
 
   it('refuses review of non-completed jobs with 409', async () => {
     prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob('PROCESSING'))
-    const m = makeReq(); const res = await POST(m.req, m.ctx)
+    const m = makeReq()
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(409)
   })
 
   it('requires acceptedFindings for MODIFIED', async () => {
     prisma.aIAnalysisJob.findFirst.mockResolvedValue(makeJob())
-    const m = makeReq('MODIFIED'); const res = await POST(m.req, m.ctx)
+    const m = makeReq('MODIFIED')
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(400)
   })
 })
 
 const LANDMARKS = [
-  { landmark_id: 0, landmark_name: '0', x: 100, y: 150, score: 0.91, coordinate_space: 'cropped_original_image' },
-  { landmark_id: 1, landmark_name: '1', x: 220, y: 340, score: null, coordinate_space: 'cropped_original_image' },
-  { landmark_id: 2, landmark_name: '2', x: 431.5, y: 87, score: 0.77, coordinate_space: 'cropped_original_image' },
+  {
+    landmark_id: 0,
+    landmark_name: '0',
+    x: 100,
+    y: 150,
+    score: 0.91,
+    coordinate_space: 'cropped_original_image',
+  },
+  {
+    landmark_id: 1,
+    landmark_name: '1',
+    x: 220,
+    y: 340,
+    score: null,
+    coordinate_space: 'cropped_original_image',
+  },
+  {
+    landmark_id: 2,
+    landmark_name: '2',
+    x: 431.5,
+    y: 87,
+    score: 0.77,
+    coordinate_space: 'cropped_original_image',
+  },
 ]
 
 const SEGMENTS = [
@@ -135,7 +162,8 @@ describe('review decisions (D11 + D12)', () => {
     prisma.imagingStudy.update.mockResolvedValue({})
     prisma.auditLog.create.mockResolvedValue({})
 
-    const m2 = makeReq('ACCEPTED'); const res = await POST(m2.req, m2.ctx)
+    const m2 = makeReq('ACCEPTED')
+    const res = await POST(m2.req, m2.ctx)
     const body = await res.json()
 
     expect(res.status).toBe(200)
@@ -183,7 +211,8 @@ describe('review decisions (D11 + D12)', () => {
     prisma.imagingStudy.update.mockResolvedValue({})
     prisma.auditLog.create.mockResolvedValue({})
 
-    const m = makeReq('MODIFIED', { acceptedFindings: modified }); const res = await POST(m.req, m.ctx)
+    const m = makeReq('MODIFIED', { acceptedFindings: modified })
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(200)
 
     const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
@@ -204,7 +233,8 @@ describe('review decisions (D11 + D12)', () => {
     prisma.imagingStudy.update.mockResolvedValue({})
     prisma.auditLog.create.mockResolvedValue({})
 
-    const m = makeReq('REJECTED'); const res = await POST(m.req, m.ctx)
+    const m = makeReq('REJECTED')
+    const res = await POST(m.req, m.ctx)
     expect(res.status).toBe(200)
 
     const upd = prisma.aIAnalysisJob.update.mock.calls[0][0]
@@ -226,7 +256,8 @@ describe('review decisions (D11 + D12)', () => {
     prisma.imagingStudy.update.mockResolvedValue({})
     prisma.auditLog.create.mockResolvedValue({})
 
-    const m2 = makeReq('ACCEPTED'); await POST(m2.req, m2.ctx)
+    const m2 = makeReq('ACCEPTED')
+    await POST(m2.req, m2.ctx)
     const nv = JSON.parse(prisma.auditLog.create.mock.calls[0][0].data.newValues)
     expect(nv.studyId).toBe('study-1')
     expect(nv.engine).toBe('liodon')
@@ -237,7 +268,11 @@ describe('review decisions (D11 + D12)', () => {
   // (Orthodontic landmarks, MeshSegNet segments), not just 19A boxes.
 
   it('MODIFIED with Orthodontic landmark findings (38-point shape) persists them', async () => {
-    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'orthodontic-ai', findings: LANDMARKS })
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({
+      ...makeJob(),
+      engine: 'orthodontic-ai',
+      findings: LANDMARKS,
+    })
     prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
@@ -261,7 +296,11 @@ describe('review decisions (D11 + D12)', () => {
   })
 
   it('MODIFIED with MeshSegNet segment findings (15-class shape) persists them', async () => {
-    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'meshsegnet-max', findings: SEGMENTS })
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({
+      ...makeJob(),
+      engine: 'meshsegnet-max',
+      findings: SEGMENTS,
+    })
     prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
@@ -279,11 +318,19 @@ describe('review decisions (D11 + D12)', () => {
 
     expect(res.status).toBe(200)
     expect(body.job.acceptedFindings).toHaveLength(3)
-    expect(body.job.acceptedFindings[0]).toMatchObject({ class_id: 0, class_name: 'Gingiva', point_count: 12345 })
+    expect(body.job.acceptedFindings[0]).toMatchObject({
+      class_id: 0,
+      class_name: 'Gingiva',
+      point_count: 12345,
+    })
   })
 
   it('ACCEPTED on a MeshSegNet segment job stores the segments as-is', async () => {
-    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'meshsegnet-man', findings: SEGMENTS })
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({
+      ...makeJob(),
+      engine: 'meshsegnet-man',
+      findings: SEGMENTS,
+    })
     prisma.aIAnalysisJob.update.mockResolvedValue({
       id: 'job-1',
       status: 'COMPLETED',
@@ -304,7 +351,11 @@ describe('review decisions (D11 + D12)', () => {
   })
 
   it('rejects malformed landmark findings (out-of-range landmark_id) with 400', async () => {
-    prisma.aIAnalysisJob.findFirst.mockResolvedValue({ ...makeJob(), engine: 'orthodontic-ai', findings: LANDMARKS })
+    prisma.aIAnalysisJob.findFirst.mockResolvedValue({
+      ...makeJob(),
+      engine: 'orthodontic-ai',
+      findings: LANDMARKS,
+    })
 
     const { req, ctx } = makeReq('MODIFIED', {
       acceptedFindings: [{ landmark_id: 38, landmark_name: 'x', x: 1, y: 2, score: null }],

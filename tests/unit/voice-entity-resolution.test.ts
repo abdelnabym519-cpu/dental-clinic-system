@@ -86,11 +86,20 @@ describe('control phrases (§16)', () => {
 
 describe('patient resolution (tenant-scoped, normalization-aware)', () => {
   const clientWith = (rows: Record<string, unknown>[]) =>
-    createAgentFakePrisma({ patient: rows }) as unknown as Parameters<typeof resolvePatientReference>[0]
+    createAgentFakePrisma({ patient: rows }) as unknown as Parameters<
+      typeof resolvePatientReference
+    >[0]
 
   it('resolves a unique exact match (normalization-aware: منى matches منى)', async () => {
     const client = clientWith([
-      { id: 'p1', hospitalId: HOSP_A, firstName: 'منى', lastName: 'سعيد', patientId: 'PAT-1', phone: '010' },
+      {
+        id: 'p1',
+        hospitalId: HOSP_A,
+        firstName: 'منى',
+        lastName: 'سعيد',
+        patientId: 'PAT-1',
+        phone: '010',
+      },
     ])
     const r = await resolvePatientReference(client, HOSP_A, { first: 'منى', last: null })
     expect(r.status).toBe('RESOLVED')
@@ -100,8 +109,22 @@ describe('patient resolution (tenant-scoped, normalization-aware)', () => {
 
   it('multiple same-name patients are AMBIGUOUS with bounded candidates', async () => {
     const client = clientWith([
-      { id: 'p1', hospitalId: HOSP_A, firstName: 'احمد', lastName: 'علي', patientId: 'PAT-1', phone: '010' },
-      { id: 'p2', hospitalId: HOSP_A, firstName: 'احمد', lastName: 'سعيد', patientId: 'PAT-2', phone: '011' },
+      {
+        id: 'p1',
+        hospitalId: HOSP_A,
+        firstName: 'احمد',
+        lastName: 'علي',
+        patientId: 'PAT-1',
+        phone: '010',
+      },
+      {
+        id: 'p2',
+        hospitalId: HOSP_A,
+        firstName: 'احمد',
+        lastName: 'سعيد',
+        patientId: 'PAT-2',
+        phone: '011',
+      },
     ])
     const r = await resolvePatientReference(client, HOSP_A, { first: 'احمد', last: null })
     expect(r.status).toBe('AMBIGUOUS')
@@ -113,7 +136,14 @@ describe('patient resolution (tenant-scoped, normalization-aware)', () => {
 
   it('never leaks across tenants', async () => {
     const client = clientWith([
-      { id: 'pb', hospitalId: HOSP_B, firstName: 'منى', lastName: 'سعيد', patientId: 'PAT-B', phone: '010' },
+      {
+        id: 'pb',
+        hospitalId: HOSP_B,
+        firstName: 'منى',
+        lastName: 'سعيد',
+        patientId: 'PAT-B',
+        phone: '010',
+      },
     ])
     const r = await resolvePatientReference(client, HOSP_A, { first: 'منى', last: null })
     expect(r.status).toBe('NOT_FOUND')
@@ -121,7 +151,14 @@ describe('patient resolution (tenant-scoped, normalization-aware)', () => {
 
   it('a missing name is NOT_FOUND with an explicit ask', async () => {
     const client = clientWith([
-      { id: 'p1', hospitalId: HOSP_A, firstName: 'منى', lastName: 'سعيد', patientId: 'PAT-1', phone: '010' },
+      {
+        id: 'p1',
+        hospitalId: HOSP_A,
+        firstName: 'منى',
+        lastName: 'سعيد',
+        patientId: 'PAT-1',
+        phone: '010',
+      },
     ])
     const r = await resolvePatientReference(client, HOSP_A, { first: 'غيرموجود', last: null })
     expect(r.status).toBe('NOT_FOUND')
@@ -143,7 +180,10 @@ describe('patient name hints (bounded lexicon, punctuation-safe)', () => {
   })
 
   it('extracts from English phrases', () => {
-    expect(extractPatientNameHint('show patient Ahmed Ali')).toEqual({ first: 'Ahmed', last: 'Ali' })
+    expect(extractPatientNameHint('show patient Ahmed Ali')).toEqual({
+      first: 'Ahmed',
+      last: 'Ali',
+    })
   })
 
   it('returns null when no marker exists', () => {

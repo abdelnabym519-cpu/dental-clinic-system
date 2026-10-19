@@ -20,6 +20,7 @@ the real defects it surfaced, and validated everything with **67 new tests**
 (full suite **6,036 passed / 12 skipped / 0 failed**, up from 5,969/12).
 
 Highlights:
+
 - **Environment contract** (`lib/config/env.ts`): every production-sensitive
   variable named, classified, validated; production preflight **fails fast**
   naming variables, never values.
@@ -28,7 +29,7 @@ Highlights:
 - **Structured logging** (`lib/observability/logger.ts`): JSON lines,
   6 severities, recursive secret/PHI redaction before serialization.
 - **Typed API error contract** (`lib/api/errors.ts`): `{code,message,
-  requestId,details?}`, Arabic/English catalog, no stacks/DB errors/paths.
+requestId,details?}`, Arabic/English catalog, no stacks/DB errors/paths.
 - **Canonical timeouts + retry classification** (`lib/config/limits.ts`):
   9 finite timeout classes; security/user-action failures are NEVER retried.
 - **Reusable rate limiter** (`lib/api/rate-limit.ts`) + **CORS policy**
@@ -98,16 +99,16 @@ optional-by-exception only where a local/honest path exists (local-first, §14).
 
 ## 6. Configuration Matrix
 
-| subsystem | Local/Dev | Test/CI | Staging | Production | notes |
-|---|---|---|---|---|---|
-| App | `next dev` | vitest (no DB) | docker `app` | docker `app` | standalone output |
-| Database | MySQL local (`DATABASE_URL` devDefault) | **not required** (fake boundary) | required | required | `migrate deploy` only |
-| Auth | NextAuth dev | mocked | `NEXTAUTH_SECRET` required | required + `NEXTAUTH_URL` | protected WIP untouched |
-| Storage | local driver `UPLOAD_DIR` | tmp dirs | s3 or local | s3 (`S3_*` required when `STORAGE_DRIVER=s3`) | driver-validated at construction |
-| AI provider | optional | fixture | optional | optional (local-first) | absent ⇒ honest degradation |
-| Voice | browser Web Speech | fixture STT | +opt-in command STT/TTS | same | `DENTORA_VOICE_STT_CMD/TTS_CMD` |
-| Redis | not used | not used | not used | not used | compose profile exists, **app does not depend on it** |
-| CORS | `*` (no credentials claim) | n/a | `CORS_ALLOWED_ORIGINS` allowlist | allowlist recommended | §27 |
+| subsystem   | Local/Dev                               | Test/CI                          | Staging                          | Production                                    | notes                                                 |
+| ----------- | --------------------------------------- | -------------------------------- | -------------------------------- | --------------------------------------------- | ----------------------------------------------------- |
+| App         | `next dev`                              | vitest (no DB)                   | docker `app`                     | docker `app`                                  | standalone output                                     |
+| Database    | MySQL local (`DATABASE_URL` devDefault) | **not required** (fake boundary) | required                         | required                                      | `migrate deploy` only                                 |
+| Auth        | NextAuth dev                            | mocked                           | `NEXTAUTH_SECRET` required       | required + `NEXTAUTH_URL`                     | protected WIP untouched                               |
+| Storage     | local driver `UPLOAD_DIR`               | tmp dirs                         | s3 or local                      | s3 (`S3_*` required when `STORAGE_DRIVER=s3`) | driver-validated at construction                      |
+| AI provider | optional                                | fixture                          | optional                         | optional (local-first)                        | absent ⇒ honest degradation                           |
+| Voice       | browser Web Speech                      | fixture STT                      | +opt-in command STT/TTS          | same                                          | `DENTORA_VOICE_STT_CMD/TTS_CMD`                       |
+| Redis       | not used                                | not used                         | not used                         | not used                                      | compose profile exists, **app does not depend on it** |
+| CORS        | `*` (no credentials claim)              | n/a                              | `CORS_ALLOWED_ORIGINS` allowlist | allowlist recommended                         | §27                                                   |
 
 ## 7. Database Hardening
 
@@ -319,8 +320,7 @@ No Phase 11 code executes financial or sensitive actions directly.
 
 Fake/stale/expired/wrong-tenant/wrong-patient/replay/mutation/escalation
 approvals: covered by the existing approval-safety evaluation suite (green)
-PLUS new Phase 11 route-level tests (non-approver → 403; cross-tenant id →
-404) and the voice binding tests (expired binding → inert). The robot panel
+PLUS new Phase 11 route-level tests (non-approver → 403; cross-tenant id → 404) and the voice binding tests (expired binding → inert). The robot panel
 can only POST decisions to the ledger route — params always come from the
 stored row.
 
@@ -602,17 +602,17 @@ datasets remain committed for byte-stable replays.
 
 ## 60. Test Results
 
-| suite | pre-P11 | new | post-P11 |
-|---|---|---|---|
-| full vitest | 5,969 passed / 12 skipped / 0 failed | **+67** (5 new files + extensions) | **6,036 passed / 12 skipped / 0 failed** (324 files) |
-| phase11 failure injection | — | 14 | green |
-| phase11 adversarial cross-layer | — | 13 | green |
-| integration scenarios A–E | — | 6 | green |
-| integration perf | — | 5 | green |
-| config-env + platform contracts | — | 30 | green |
-| Phase 7 eval gates (regression) | 4/4 | — | 4/4 |
-| voice gates (regression) | 14/14 + 4 | — | green |
-| Playwright E2E (§67) | not run | — | **BLOCKED** (see below) |
+| suite                           | pre-P11                              | new                                | post-P11                                             |
+| ------------------------------- | ------------------------------------ | ---------------------------------- | ---------------------------------------------------- |
+| full vitest                     | 5,969 passed / 12 skipped / 0 failed | **+67** (5 new files + extensions) | **6,036 passed / 12 skipped / 0 failed** (324 files) |
+| phase11 failure injection       | —                                    | 14                                 | green                                                |
+| phase11 adversarial cross-layer | —                                    | 13                                 | green                                                |
+| integration scenarios A–E       | —                                    | 6                                  | green                                                |
+| integration perf                | —                                    | 5                                  | green                                                |
+| config-env + platform contracts | —                                    | 30                                 | green                                                |
+| Phase 7 eval gates (regression) | 4/4                                  | —                                  | 4/4                                                  |
+| voice gates (regression)        | 14/14 + 4                            | —                                  | green                                                |
+| Playwright E2E (§67)            | not run                              | —                                  | **BLOCKED** (see below)                              |
 
 No unrelated regression. Baseline numbers are from the actual pre-phase run
 (`git stash`-free: measured at 8bd8d87 and after; never fabricated).
@@ -658,21 +658,21 @@ npm run test:e2e` (with MySQL provisioned).
 
 ## 63. Production Readiness Matrix
 
-| Area | Status | Evidence | Blocker | Next Action |
-|---|---|---|---|---|
-| Application | PARTIAL | 6,036 tests green; tsc parity | build type-check needs real prisma client | run `prisma generate` on target machine |
-| Database | VERIFIED (contract) | migrate-deploy path; tenant scope tests | sandbox cannot run MySQL | exercise migrations + smoke on target |
-| Redis | UNAVAILABLE (by design) | no consumer; ready reports honestly | n/a | introduce only with §8 rules |
-| Storage | PARTIAL | driver/tenant tests green | S3 untested live (no MinIO here) | MinIO round-trip on target |
-| AI | PARTIAL | capability matrix honest; local STT/TTS evidence (Phase 10) | Arabic models blocked (hosts) | validate on networked machine |
-| Voice | VERIFIED (sandbox) | Phase 10 gates + Phase 11 fail-safe | session store single-node | Phase 12+ durable store if multi-node |
-| Robot | VERIFIED (component) | component tests; presentation-only | none | — |
-| Security | PARTIAL | adversarial suites green; headers/CORS hardened; scan clean | login rate-limit gap; 12 audit majors | auth wrapper + dep track |
-| Observability | VERIFIED (sandbox) | trace/log/correlation/bench | no external collector configured | wire collector on target |
-| Backup | BLOCKED | scripts exist and are audited | no Docker daemon here | execute + verify restore on target |
-| Recovery | PARTIAL | failure-injection evidence | live restore not run here | §54 procedure on target |
-| Performance | PARTIAL | SANDBOX-labeled bench | no target-machine numbers | re-run (label flips) |
-| Deployment | PARTIAL | deploy.sh + smoke.sh ready | not executed end-to-end here | run on target |
+| Area          | Status                  | Evidence                                                    | Blocker                                   | Next Action                             |
+| ------------- | ----------------------- | ----------------------------------------------------------- | ----------------------------------------- | --------------------------------------- |
+| Application   | PARTIAL                 | 6,036 tests green; tsc parity                               | build type-check needs real prisma client | run `prisma generate` on target machine |
+| Database      | VERIFIED (contract)     | migrate-deploy path; tenant scope tests                     | sandbox cannot run MySQL                  | exercise migrations + smoke on target   |
+| Redis         | UNAVAILABLE (by design) | no consumer; ready reports honestly                         | n/a                                       | introduce only with §8 rules            |
+| Storage       | PARTIAL                 | driver/tenant tests green                                   | S3 untested live (no MinIO here)          | MinIO round-trip on target              |
+| AI            | PARTIAL                 | capability matrix honest; local STT/TTS evidence (Phase 10) | Arabic models blocked (hosts)             | validate on networked machine           |
+| Voice         | VERIFIED (sandbox)      | Phase 10 gates + Phase 11 fail-safe                         | session store single-node                 | Phase 12+ durable store if multi-node   |
+| Robot         | VERIFIED (component)    | component tests; presentation-only                          | none                                      | —                                       |
+| Security      | PARTIAL                 | adversarial suites green; headers/CORS hardened; scan clean | login rate-limit gap; 12 audit majors     | auth wrapper + dep track                |
+| Observability | VERIFIED (sandbox)      | trace/log/correlation/bench                                 | no external collector configured          | wire collector on target                |
+| Backup        | BLOCKED                 | scripts exist and are audited                               | no Docker daemon here                     | execute + verify restore on target      |
+| Recovery      | PARTIAL                 | failure-injection evidence                                  | live restore not run here                 | §54 procedure on target                 |
+| Performance   | PARTIAL                 | SANDBOX-labeled bench                                       | no target-machine numbers                 | re-run (label flips)                    |
+| Deployment    | PARTIAL                 | deploy.sh + smoke.sh ready                                  | not executed end-to-end here              | run on target                           |
 
 ## 64. Known Limitations
 
@@ -696,13 +696,13 @@ npm run test:e2e` (with MySQL provisioned).
 
 ## 65. Blockers
 
-| blocker | proof | closes with |
-|---|---|---|
+| blocker                            | proof                                                                           | closes with                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | prisma engine download TLS-refused | `npx prisma generate` + `--no-engine` + raw HTTPS probe all fail (this sandbox) | target machine: `npm install && npx prisma generate && npm run build` |
-| Docker daemon absent | no `docker` socket in sandbox | target: `./scripts/deploy.sh` |
-| fonts.googleapis.com unreachable | direct fetch probe fails | FIXED (self-hosted Inter) |
-| binaries for Arabic AI models | huggingface/alphacephei unreachable | FIXED path: command boundary; validate on networked machine |
-| Playwright browser download | cdn.playwright.dev TLS-refused (3 retries, `npx playwright install chromium`) | target machine: `npx playwright install chromium && npm run test:e2e` |
+| Docker daemon absent               | no `docker` socket in sandbox                                                   | target: `./scripts/deploy.sh`                                         |
+| fonts.googleapis.com unreachable   | direct fetch probe fails                                                        | FIXED (self-hosted Inter)                                             |
+| binaries for Arabic AI models      | huggingface/alphacephei unreachable                                             | FIXED path: command boundary; validate on networked machine           |
+| Playwright browser download        | cdn.playwright.dev TLS-refused (3 retries, `npx playwright install chromium`)   | target machine: `npx playwright install chromium && npm run test:e2e` |
 
 ## 66. Phase 12 Interfaces
 
@@ -722,7 +722,7 @@ correlation ids + PHI-minimized telemetry); certification evidence
 
 - Pre-phase: HEAD `8bd8d87` == origin; tree clean.
 - Post-phase: ONE focused commit `feat(ai): harden full integration and
-  deployment`; pushed to `arena/01a0f3e0-dental-clinic-system`;
+deployment`; pushed to `arena/01a0f3e0-dental-clinic-system`;
   `git rev-parse HEAD` == `git ls-remote` HEAD; working tree clean.
 - Protected WIP files: **zero diff** vs `8bd8d87` (verified pre-commit).
 - Forbidden commands unused: no `reset --hard`, no `clean -fd`, no `push --force`.

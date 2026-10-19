@@ -200,7 +200,9 @@ export default function StaffPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('Staff Management')}</h1>
-          <p className="text-muted-foreground">{t('Manage staff members, roles, and permissions')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage staff members, roles, and permissions')}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <ExportMenu
@@ -222,7 +224,9 @@ export default function StaffPage() {
           />
           <Link href="/staff/attendance">
             <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />{t('ui.attendance')}</Button>
+              <Calendar className="h-4 w-4 mr-2" />
+              {t('ui.attendance')}
+            </Button>
           </Link>
           <Link href="/staff/leaves">
             <Button variant="outline">
@@ -232,7 +236,9 @@ export default function StaffPage() {
           </Link>
           <Link href="/staff/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />{t('ui.add_staff')}</Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('ui.add_staff')}
+            </Button>
           </Link>
         </div>
       </div>
@@ -333,7 +339,9 @@ export default function StaffPage() {
                       <p className="text-muted-foreground">{t('ui.no_staff_members_found')}</p>
                       <Link href="/staff/new">
                         <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-2" />{t('ui.add_staff')}</Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          {t('ui.add_staff')}
+                        </Button>
                       </Link>
                     </div>
                   </TableCell>
@@ -395,9 +403,13 @@ export default function StaffPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/staff/${member.id}`)}>
-                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            {t('ui.view_details')}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => router.push(`/staff/${member.id}/edit`)}>
-                            <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            {t('ui.edit')}
+                          </DropdownMenuItem>
                           {member.user.role === 'DOCTOR' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/staff/${member.id}/performance`)}
@@ -415,7 +427,9 @@ export default function StaffPage() {
                                 setDeleteDialogOpen(true)
                               }}
                             >
-                              <UserX className="h-4 w-4 mr-2" />{t('ui.deactivate')}</DropdownMenuItem>
+                              <UserX className="h-4 w-4 mr-2" />
+                              {t('ui.deactivate')}
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -430,9 +444,9 @@ export default function StaffPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("staff members")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('staff members')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -441,16 +455,20 @@ export default function StaffPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -464,16 +482,18 @@ export default function StaffPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('Deactivate Staff Member')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("Are you sure you want to deactivate")}{' '}
+              {t('Are you sure you want to deactivate')}{' '}
               <strong>
                 {staffToDelete?.firstName} {staffToDelete?.lastName}
               </strong>
-              {t("? They will no longer be able to log in to the system.")}
+              {t('? They will no longer be able to log in to the system.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('ui.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700">{t('ui.deactivate')}</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeactivate} className="bg-red-600 hover:bg-red-700">
+              {t('ui.deactivate')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

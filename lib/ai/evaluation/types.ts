@@ -278,7 +278,13 @@ export interface EvaluationTrace {
   taskType: string | null
   /** Per-stage latency (existing AgentTrace.stages — structured only). */
   stages: Record<string, number>
-  toolSummary: { index: number; tool: string; ok: boolean; latencyMs: number; inputKeys: string[] }[]
+  toolSummary: {
+    index: number
+    tool: string
+    ok: boolean
+    latencyMs: number
+    inputKeys: string[]
+  }[]
   routingDecision: { taskType: string | null; stopReason: string | null; deterministic: boolean }
   contextProfile: string | null
   knowledgeRetrievalSummary: {
@@ -291,9 +297,18 @@ export interface EvaluationTrace {
     retrievalMs: number
   } | null
   attachmentSummary: { requested: number; resolved: number; byClass: Record<string, number> }
-  engineIdentity: { tool: string; engine: string | null; jobId: string | null; modality: string | null }[]
+  engineIdentity: {
+    tool: string
+    engine: string | null
+    jobId: string | null
+    modality: string | null
+  }[]
   approvalState: string | null
-  safetyDecision: { blocked: boolean; mode: string | null; verification: { verified: boolean; result: 'PASS' | 'FAIL' } | null }
+  safetyDecision: {
+    blocked: boolean
+    mode: string | null
+    verification: { verified: boolean; result: 'PASS' | 'FAIL' } | null
+  }
   latencyMs: number
   failureCode: string | null
   fallback: 'DETERMINISTIC' | 'LLM_FALLBACK_USED'
@@ -325,12 +340,7 @@ export interface EvaluationMetric {
   unit: 'ratio' | 'ms' | 'count'
 }
 
-export const ENV_LABELS = [
-  'SANDBOX',
-  'DEVELOPMENT_MACHINE',
-  'TARGET_MACHINE',
-  'UNKNOWN',
-] as const
+export const ENV_LABELS = ['SANDBOX', 'DEVELOPMENT_MACHINE', 'TARGET_MACHINE', 'UNKNOWN'] as const
 export type EnvLabel = (typeof ENV_LABELS)[number]
 
 export interface EnvironmentFacts {

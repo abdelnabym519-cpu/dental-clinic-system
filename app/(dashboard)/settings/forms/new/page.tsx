@@ -165,15 +165,21 @@ export default function NewFormTemplatePage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{t("Preview:")} {name || t("Untitled")}</h1>
-              <p className="text-muted-foreground">{t('ui.this_is_how_the_form_will_appear_to_patients')}</p>
+              <h1 className="text-2xl font-bold">
+                {t('Preview:')} {name || t('Untitled')}
+              </h1>
+              <p className="text-muted-foreground">
+                {t('ui.this_is_how_the_form_will_appear_to_patients')}
+              </p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => setShowPreview(false)}>{t('ui.back_to_editor')}</Button>
+          <Button variant="outline" onClick={() => setShowPreview(false)}>
+            {t('ui.back_to_editor')}
+          </Button>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>{name || t("Untitled Form")}</CardTitle>
+            <CardTitle>{name || t('Untitled Form')}</CardTitle>
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
           </CardHeader>
           <CardContent>
@@ -206,14 +212,16 @@ export default function NewFormTemplatePage() {
             onClick={() => setShowPreview(true)}
             disabled={fields.length === 0}
           >
-            <Eye className="h-4 w-4 mr-2" />{t('ui.preview')}</Button>
+            <Eye className="h-4 w-4 mr-2" />
+            {t('ui.preview')}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {t("Save Template")}
+            {t('Save Template')}
           </Button>
         </div>
       </div>
@@ -228,12 +236,12 @@ export default function NewFormTemplatePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t("Template Name *")}</Label>
+                  <Label htmlFor="name">{t('Template Name *')}</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder={t("e.g. General Consent Form")}
+                    placeholder={t('e.g. General Consent Form')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -268,7 +276,10 @@ export default function NewFormTemplatePage() {
           {/* Field List */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("Form Fields (")}{fields.length})</CardTitle>
+              <CardTitle>
+                {t('Form Fields (')}
+                {fields.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {fields.length === 0 && (
@@ -288,10 +299,12 @@ export default function NewFormTemplatePage() {
                       {FIELD_TYPES.find((opt) => opt.value === field.type)?.label || field.type}
                     </Badge>
                     <span className="font-medium text-sm truncate flex-1">
-                      {field.label || t("(no label)")}
+                      {field.label || t('(no label)')}
                     </span>
                     {field.required && (
-                      <Badge variant="destructive" className="text-xs">{t('ui.required')}</Badge>
+                      <Badge variant="destructive" className="text-xs">
+                        {t('ui.required')}
+                      </Badge>
                     )}
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
@@ -395,7 +408,9 @@ export default function NewFormTemplatePage() {
                             </div>
                           ))}
                           <Button variant="outline" size="sm" onClick={() => addOption(field.id)}>
-                            <Plus className="h-3 w-3 mr-1" />{t('ui.add_option')}</Button>
+                            <Plus className="h-3 w-3 mr-1" />
+                            {t('ui.add_option')}
+                          </Button>
                         </div>
                       )}
 
