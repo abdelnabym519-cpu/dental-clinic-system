@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, isPrismaFallback } from '@/lib/prisma'
 import { getStorage } from '@/lib/storage'
 import { appVersion, releaseRevision } from '@/lib/config/version'
 import { currentEnvironment } from '@/lib/config/env'
@@ -32,6 +32,38 @@ function storageCheck(): 'ok' | 'not_configured' {
 export async function GET() {
   const version = appVersion()
   const sha = releaseRevision()
+
+  // Fail closed BEFORE probing the database.
+  //
+  // When the generated Prisma client is missing or unusable, lib/prisma hands
+  // out a stand-in client whose every query resolves to an empty result
+  // instead of throwing — deliberate, because it keeps routes from crashing.
+  // But it also means the `SELECT 1` below "succeeds" against no database at
+  // all, so probing first would advertise a broken instance as ready and a
+  // load balancer would happily send it traffic it cannot serve: login and
+  // every data page fail in that mode.
+  //
+  // The flag is the only honest signal available here, so it gates readiness
+  // on its own. This deliberately does NOT change the fallback client's query
+  // semantics — routes still get their null/empty results.
+  if (isPrismaFallback()) {
+    return NextResponse.json(
+      {
+        status: 'not_ready',
+        version,
+        environment: currentEnvironment(),
+        checks: {
+          // Distinct from the 'error' below: the database was never asked,
+          // because there is no client capable of asking.
+          database: 'unavailable',
+          storage: storageCheck(),
+          redis: 'not_configured',
+        },
+      },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
+
   try {
     // Cheapest possible round trip that proves the connection pool works.
     await prisma.$queryRaw`SELECT 1`

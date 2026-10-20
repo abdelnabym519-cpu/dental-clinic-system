@@ -39,14 +39,12 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
     },
     hospital: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue({
-          name: 'عيادة دنتورا',
-          address: 'القاهرة',
-          phone: null,
-          workingHours: null,
-        }),
+      findUnique: vi.fn().mockResolvedValue({
+        name: 'عيادة دنتورا',
+        address: 'القاهرة',
+        phone: null,
+        workingHours: null,
+      }),
     },
     room: {
       findFirst: vi.fn().mockResolvedValue(null),
