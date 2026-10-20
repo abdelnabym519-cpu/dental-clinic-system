@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    # dentora-unified is the consolidation branch this project works from. It
+    # is neither `main` nor `develop`, so without it here pushing to it ran no
+    # checks at all — the branch went its whole life unverified by CI.
+    branches: [main, develop, dentora-unified]
   # Deliberately unfiltered by base branch. With a `branches:` filter here, a
   # stacked pull request (one targeting another feature branch rather than
   # main) gets no checks at all — and a required status check that never runs
