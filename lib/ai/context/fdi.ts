@@ -10,12 +10,19 @@
  * Reuses the application's existing FDI representation
  * (`DentalChartEntry.toothNumber` = FDI int). No second numbering system.
  */
-import { isValidFdi, quadrantOf as sharedQuadrantOf } from '@/lib/dental-chart/fdi'
+import {
+  isValidFdi,
+  isPermanentFdi,
+  isPrimaryFdi,
+  quadrantOf as sharedQuadrantOf,
+} from '@/lib/dental-chart/fdi'
 import type { FdiQuadrant } from '@/lib/dental-chart/fdi'
 
 // Re-exported so the server-side AI layer and the chart layer can never
-// drift: there is exactly one FDI validator in the codebase.
-export { isValidFdi }
+// drift: there is exactly one FDI validator in the codebase. The dentition
+// helpers are re-exported too, so the voice/STT layer can apply dentition
+// rules without importing a second module.
+export { isValidFdi, isPermanentFdi, isPrimaryFdi }
 export type {
   FdiDentition,
   FdiQuadrant,

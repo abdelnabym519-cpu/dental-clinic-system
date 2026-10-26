@@ -57,6 +57,74 @@ describe('tooth resolution (FDI via the existing contract)', () => {
   it('spoken English numbers resolve (thirty six → 36)', () => {
     expect(resolveToothReference('tooth thirty six').fdi).toBe(36)
   })
+
+  it('flags the 16 primary numbers whose reversal is a valid PERMANENT number (FDI-52 Option B)', () => {
+    // Each pair crosses a dentition boundary when its digits are swapped:
+    // 51↔15, 52↔25, 53↔35, 54↔45, 61↔16, 62↔26, 63↔36, 64↔46,
+    // 71↔17, 72↔27, 73↔37, 74↔47, 81↔18, 82↔28, 83↔38, 84↔48.
+    const PRIMARY_WITH_PERMANENT_REVERSAL = [
+      [51, 15],
+      [52, 25],
+      [53, 35],
+      [54, 45],
+      [61, 16],
+      [62, 26],
+      [63, 36],
+      [64, 46],
+      [71, 17],
+      [72, 27],
+      [73, 37],
+      [74, 47],
+      [81, 18],
+      [82, 28],
+      [83, 38],
+      [84, 48],
+    ]
+    expect(PRIMARY_WITH_PERMANENT_REVERSAL).toHaveLength(16)
+    for (const [heard, permanent] of PRIMARY_WITH_PERMANENT_REVERSAL) {
+      const r = resolveToothReference(`tooth ${heard}`)
+      expect(r.status, `heard ${heard}`).toBe('AMBIGUOUS')
+      expect(r.fdi, `heard ${heard}`).toBeNull()
+      expect(r.candidates, `heard ${heard}`).toContain(heard)
+      expect(r.candidates, `heard ${heard}`).toContain(permanent)
+      const q = toothClarification(r)
+      expect(q.code, `heard ${heard}`).toBe('TOOTH_AMBIGUOUS')
+      expect(q.questionAr, `heard ${heard}`).toContain(String(heard))
+      expect(q.questionAr, `heard ${heard}`).toContain(String(permanent))
+    }
+  })
+
+  it('resolves the 4 primary second molars 55/65/75/85 (no permanent reversal exists)', () => {
+    // 55 reverses to itself; 65→56, 75→57, 85→58 are all invalid (no index 6-8
+    // in a primary quadrant), so there is nothing to disambiguate.
+    for (const heard of [55, 65, 75, 85]) {
+      const r = resolveToothReference(`tooth ${heard}`)
+      expect(r.status, `heard ${heard}`).toBe('RESOLVED')
+      expect(r.fdi, `heard ${heard}`).toBe(heard)
+      expect(r.candidates, `heard ${heard}`).toEqual([heard])
+    }
+  })
+
+  it('covers all 20 primary identifiers: 16 AMBIGUOUS + 4 RESOLVED, exactly', () => {
+    const all = [5, 6, 7, 8].flatMap((q) => [1, 2, 3, 4, 5].map((t) => q * 10 + t))
+    expect(all).toEqual([
+      51, 52, 53, 54, 55, 61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85,
+    ])
+    const ambiguous = all.filter((n) => resolveToothReference(`tooth ${n}`).status === 'AMBIGUOUS')
+    const resolved = all.filter((n) => resolveToothReference(`tooth ${n}`).status === 'RESOLVED')
+    expect(ambiguous).toEqual([51, 52, 53, 54, 61, 62, 63, 64, 71, 72, 73, 74, 81, 82, 83, 84])
+    expect(resolved).toEqual([55, 65, 75, 85])
+    expect(ambiguous.length + resolved.length).toBe(20)
+  })
+
+  it('never flags a heard PERMANENT number — 36 and 42 stay literal (pinned)', () => {
+    expect(resolveToothReference('ركز على السن 36').status).toBe('RESOLVED')
+    expect(resolveToothReference('ركز على السن 36').fdi).toBe(36)
+    expect(resolveToothReference('tooth 42').status).toBe('RESOLVED')
+    expect(resolveToothReference('tooth 42').fdi).toBe(42)
+    // 42's reversal 24 is permanent and 36's reversal 63 is primary: neither
+    // satisfies "heard is primary AND reversal is permanent".
+  })
 })
 
 describe('control phrases (§16)', () => {

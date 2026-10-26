@@ -10,7 +10,7 @@
  * (the same DB the agent uses) and only ever return id + display name.
  */
 
-import { isValidFdi } from '@/lib/ai/context/fdi'
+import { isValidFdi, isPermanentFdi, isPrimaryFdi } from '@/lib/ai/context/fdi'
 import {
   extractToothCandidates,
   normalizeTranscript,
@@ -120,6 +120,10 @@ export function matchControlPhrase(text: string): ControlPhraseKind {
  * AMBIGUOUS with both candidates — the pipeline asks instead of guessing.
  * A number that is valid FDI stays a single candidate (still confirmed
  * implicitly by the agent's own clarification path for clinical actions).
+ *
+ * EXCEPTION (FDI-52): a heard PRIMARY number whose reversal is a valid
+ * PERMANENT number is reported AMBIGUOUS rather than resolved literally —
+ * the swap now crosses a dentition boundary. See the guard below.
  */
 export function resolveToothReference(rawTranscript: string): ToothResolution {
   const n = normalizeTranscript(rawTranscript)
@@ -139,8 +143,25 @@ export function resolveToothReference(rawTranscript: string): ToothResolution {
     if (isValidFdi(h.fdi)) push(h.fdi)
   }
 
+  // Primary -> permanent digit-reversal guard (FDI-52, Option B).
+  // The digit swap that turns 36 into 63 (or 18 into 81) is the classic dental
+  // STT failure. Under 52 identifiers both forms are valid, so the old
+  // "invalid number -> reversal rescue" path no longer sees them and would
+  // silently record a primary tooth for what was said as a permanent one.
+  // A heard PRIMARY number whose reversal is a valid PERMANENT number is
+  // therefore reported AMBIGUOUS with BOTH candidates — the pipeline asks
+  // instead of guessing. This never fires for a heard PERMANENT number:
+  // 42 -> 42 and 36 -> 36 keep resolving literally, because their reversals
+  // (24 and 63) do not satisfy "heard is primary AND reversal is permanent".
   if (candidates.length === 1) {
-    return { status: 'RESOLVED', fdi: candidates[0]!, candidates }
+    const heard = candidates[0]!
+    if (isPrimaryFdi(heard)) {
+      const rev = Number(String(heard).split('').reverse().join(''))
+      if (Number.isInteger(rev) && rev !== heard && isPermanentFdi(rev)) {
+        return { status: 'AMBIGUOUS', fdi: null, candidates: [heard, rev] }
+      }
+    }
+    return { status: 'RESOLVED', fdi: heard, candidates }
   }
   if (candidates.length === 0) {
     // Reversal rescue: one non-FDI number whose reversal is valid FDI.
