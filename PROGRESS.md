@@ -1,95 +1,173 @@
 # PROGRESS.md — DenToRa chart/AI/anatomy run
 
-> Sandbox resets between turns have been observed. **Trust this file + git, not memory.**
-> Re-anchor with `git status && git log --oneline -3` at the start of every turn.
+> Sandbox resets between turns have been observed **twice**, destroying local commits each time.
+> **Trust this file + git, not memory.** Re-anchor with `git status && git log --oneline -3` at the
+> start of every turn, and push early — pushes survived every reset.
 
-## Session / branch constraints (READ FIRST)
+## Session / branch constraints
 
 | Item | Value |
 |---|---|
 | Session branch | `arena/91dddda0-dental-clinic-system` |
-| Local HEAD | `d5c32bc` (Step 3 restored) |
-| HEAD tree | see `git rev-parse HEAD^{tree}` |
-| Requested target branch | `wip/realistic-teeth-anatomy` @ `d8c28ae58cb18c76026c04cf72e8b2153f427be7` |
-| Target branch on origin? | **YES — verified** via `git ls-remote --heads origin wip/realistic-teeth-anatomy` |
-| Can we check it out? | **NO.** This session is pinned to `arena/91dddda0`; switching/creating branches is not permitted. User chose (2026-10-26) to proceed on `arena/91dddda0` anyway. |
-| `arena/91dddda0` on origin? | **No** — local-only (confirmed absent from the 11 remote heads). |
+| On origin | **YES** — pushed, tracks `origin/arena/91dddda0-dental-clinic-system` |
+| Requested target | `wip/realistic-teeth-anatomy` @ `d8c28ae58cb18c76026c04cf72e8b2153f427be7` |
+| Target on origin | **YES — verified** via `git ls-remote --heads origin wip/realistic-teeth-anatomy` |
+| Can we check it out? | **NO.** Session is pinned; user chose to proceed here anyway. |
 | Environment | Linux sandbox clone. **Not** `C:/Projects/dental-erp-dental-chart`. Docker absent. |
 
-**Consequence:** the WIP rewrite at `d8c28ae` (tooth-anatomy.ts +833/−110) is **NOT present** on this branch.
-WP1 hypotheses H1/H4 that depend on `d8c28ae` vs `eba87b7` do not apply here.
+**Consequence:** the `d8c28ae` tooth-anatomy rewrite is **NOT** on this branch, so WP1 H1/H4
+(d8c28ae vs eba87b7) cannot be reproduced here.
 
-## BASELINE (measured at commit `d5c32bc`, not assumed)
+## BASELINE (measured at `2ebafa3`, the FDI-52 commit)
 
 | Command | Result |
 |---|---|
-| `node_modules/.bin/tsc --noEmit` | **498 errors**, exit 2 |
+| `tsc --noEmit` | **498 errors**, exit 2 |
 | `npm run lint` | **0 errors, 274 warnings**, exit 0 |
-| `npm run test` | **6263 passed / 12 skipped / 8 failed** (345 files: 338 passed, 6 failed, 1 skipped), exit 1 |
-| `npm run build` | see `BLOCKERS.md` (Prisma client absent) |
-| Full-suite duration | 322.72s |
+| `npm run test` | **6263 passed / 12 skipped / 8 failed** (345 files), exit 1, 322s |
+| `npm run build` | `✓ Compiled successfully in 44s` → TypeScript fails → **exit 1** |
 
-Historical reference from the master prompt (older commit `512a028`): 6462 passed / 12 skipped / 0 failed.
-**Not comparable** — different commit and different branch. Do not treat 6462 as our baseline.
+The master prompt's 6462/12/0 figure is from `512a028` — a different commit and branch. Not comparable.
 
-## Pre-existing failures (verified at base worktree `8f3429c8`)
+## CS-RESTO-007 — ROOT CAUSE **PROVEN** (golden deliberately untouched)
 
-| Test | Cause |
-|---|---|
-| `tests/api/imaging-review.test.ts` | collection error — Prisma client not generated |
-| `tests/unit/dev-start-env.test.ts` → "the REAL PrismaClient receives…" | Prisma client not generated |
+**Symptom:** status went `COMPLETED` → `CLARIFICATION_REQUIRED`; `mustContain: "Identity:"` lost.
 
-Both fail identically WITHOUT the FDI-52 change. Confirmed by running the same files in a detached
-worktree at `8f3429c8` (`/tmp/basewt`): `Test Files 2 failed | 4 passed (6)`, `Tests 1 failed | 71 passed (72)`.
+**Probe** (`replayAgentCase` on the single golden case, run in detached worktrees):
 
-## REGRESSIONS INTRODUCED BY FDI-52 (7 tests) — UNRESOLVED
-
-Root cause: broadening the valid set from 32 → 52 makes numbers **63** and **81** valid
-(primary upper-left canine / primary lower-right central incisor). The voice layer's
-STT-confusion safety net only fires for numbers that are **invalid**, so it is now bypassed.
-
-| Test file | Test | Observed |
+| | BASE `8f3429c` | CURRENT `2ebafa3` |
 |---|---|---|
-| `tests/unit/voice-entity-resolution.test.ts` | flags the classic 36/63 STT confusion as AMBIGUOUS | `RESOLVED` ≠ `AMBIGUOUS` |
-| `tests/unit/voice-entity-resolution.test.ts` | rescues the invalid heard form 81 → 18 | `RESOLVED` ≠ `AMBIGUOUS` |
-| `tests/unit/voice-pipeline.test.ts` | ambiguous tooth number never reaches the agent | `undefined` ≠ `TOOTH_AMBIGUOUS` |
-| `tests/evaluation/voice-robot-eval.test.ts` | all voice golden cases satisfy their contract | (same cause) |
-| `tests/evaluation/clinical-safety-eval.test.ts` | CS-RESTO-007 | `CLARIFICATION_REQUIRED` ∉ `[COMPLETED]` |
-| `tests/evaluation/clinical-safety-eval.test.ts` | global invariants across ALL cases | aggregates CS-RESTO-007 |
-| `tests/evaluation/clinical-safety-eval.test.ts` | writes machine-readable artifact | `expected 20 to be 19` |
+| status | `COMPLETED` | `CLARIFICATION_REQUIRED` |
+| taskType | `CLINICAL_ANALYSIS` | `INFORMATIONAL` |
+| tools | `["get_tooth_context"]` | `[]` |
+| answer | `"Based on the available recorded information: Identity: Ahmed Ali (PAT-A1)…"` | `"Which tooth do you mean? Please give the FDI number (11–48)."` |
 
-**Contract in force** (`lib/ai/voice/entity-resolution.ts:112-159`):
-> "A number that is valid FDI stays a single candidate." Reversal rescue applies **only** to
-> non-FDI numbers. Existing test `both-valid reversals stay literal (42 IS a valid FDI number)`
-> pins this: 42 resolves literally even though 24 is also valid.
+**File bisect** (scratch worktree `/tmp/wt_cur`, one file reverted at a time):
 
-So under FDI-52 the *rule* is unchanged; only the *outcome* for 63/81 changed.
-**This silently disables the 36↔63 and 18↔81 disambiguation prompts** — described in the source
-as "the classic dental failure". Clinical-safety relevant. NOT yet fixed; NOT touched.
-
-**CS-RESTO-007 root cause: NOT yet established.** Input is `"Assess the restoration on tooth 30."`
-(US numbering; 30 is invalid in both the 32- and 52-ID worlds), yet the agent moved from
-`COMPLETED` (base) to `CLARIFICATION_REQUIRED` (current). Broadening the valid set should not
-reduce resolution, so the mechanism is not yet understood. **The golden file will not be edited
-until the mechanism is proven.**
-
-## Work packages
-
-| WP | Status |
+| Variant | Result |
 |---|---|
-| WP0 preflight | **PARTIAL** — git state ✅, env detection ✅, baseline ✅, tooth-anatomy diff **N/A** (d8c28ae not on this branch) |
-| WP1 chart load error | **NOT STARTED** — depends on d8c28ae; cannot reproduce here |
-| WP2 AI runtime | **BLOCKED** — no Docker, no model files |
-| WP3 FDI-52 foundation | **PARTIAL** — core + tests done (`d5c32bc`); consumers NOT yet migrated; 7 regressions open |
-| WP4 3D anatomy | NOT STARTED |
-| WP5 2D/Arabic/sync | NOT STARTED |
-| WP6 10 known issues | NOT STARTED |
-| WP7 / WP8 | NOT STARTED |
+| revert `lib/ai/context/fdi.ts` only | `COMPLETED / CLINICAL_ANALYSIS / get_tooth_context` → **flips back** |
+| revert both (sanity) | `COMPLETED` |
+
+→ **`lib/ai/context/fdi.ts` is the flipping file.** `lib/dental-chart/fdi.ts` is not involved.
+
+**Mechanism** — the old validator was a *range* check, not a set check:
+
+```js
+// OLD  lib/ai/context/fdi.ts
+return typeof n === 'number' && Number.isInteger(n) && n >= 11 && n <= 48
+//   30 → TRUE   ← wrongly accepts 19, 20, 29, 30, 39, 40, 49
+
+// NEW  (shared set membership)
+return typeof n === 'number' && Number.isInteger(n) && VALID_FDI.has(n)
+//   30 → FALSE  ← correct
+```
+
+`extractToothMentions` (`lib/ai/agent/classifier.ts:409`) does `if (!isValidFdi(n)) continue`.
+At base, `30` was wrongly extracted as a tooth mention → `toothInvolved: true` → `CLINICAL_ANALYSIS`
+→ `get_tooth_context` ran → answer contained `"Identity:"` → **the golden passed for the wrong reason**.
+Under FDI-52, `30` is correctly rejected, so the agent asks which tooth instead.
+
+**The FDI-52 change therefore FIXED a latent bug; the golden encodes the buggy behaviour.**
+The new answer still satisfies the global denylist, `mustNotContain`, and carries an honesty marker
+(`'Which tooth'` is literally in `HONESTY_MARKERS`). Only `status ∈ [COMPLETED]` and
+`mustContain "Identity:"` fail.
+
+**Per the user's rule 6 the golden is NOT edited.** Awaiting an explicit decision.
+
+## Option B — DONE (commit `5cdb56d`)
+
+Rule: a heard **PRIMARY** number whose digit-reversal is a valid **PERMANENT** number ⇒ `AMBIGUOUS`
+with both candidates. Never fires for a heard permanent number, so `42→42` and `36→36` stay literal.
+
+| Class | Ids |
+|---|---|
+| AMBIGUOUS (16) | 51‑54, 61‑64, 71‑74, 81‑84 |
+| RESOLVED (4) | 55 (reverses to itself), 65/75/85 (56/57/58 invalid — no index 6‑8 in a primary quadrant) |
+
+Full suite: **8 failed → 4 failed**; **6263 → 6271 passed**.
+Fixed: `voice-entity-resolution` (2), `voice-pipeline` (1), `voice-robot-eval` (1).
+
+## STEP 4 INVENTORY — every site where `false` triggers fallback / rescue / clarification / rejection
+
+### A. `isValidFdi` call sites — now accept 51‑85 (behaviour change)
+
+| Site | Path on `false` | Change under 52 ids |
+|---|---|---|
+| `lib/ai/agent/classifier.ts:409` | `continue` — tooth mention dropped | **Two changes:** now REJECTS 19/20/29/30/39/40/49 (previously false-accepted) **and** now ACCEPTS 51‑85. **This is the CS-RESTO-007 mechanism.** |
+| `lib/ai/context/builders.ts:184` | `continue` — chart row dropped from byTooth | primary-tooth rows now **included** (desired — previously invisible to AI context) |
+| `lib/ai/context/builders.ts:638` | `toothFdi: null`, `toothLink: 'unknown'` | AI findings on primary teeth now link as **'confirmed'** (desired) |
+| `lib/ai/context/fdi.ts:114` | `quadrantOf` → `null` | now returns **5‑8** for primary instead of null |
+| `lib/ai/context/fdi.ts:128` | token dropped from `parseToothNumbers` | primary tokens now parsed |
+| `lib/ai/voice/entity-resolution.ts:140,143` | not pushed as candidate | primary now accepted → **handled by the Option B guard** |
+| `lib/ai/voice/entity-resolution.ts:171` | reversal rescue | **fewer** numbers reach it (63/81 now valid) → **mitigated by Option B** |
+| `app/api/ai/context/route.ts:67` | 400 rejection | now **accepts** 51‑85 (desired) |
+| `app/api/treatment-plans/[id]/items/route.ts:50` | 400 rejection | now **accepts** 51‑85 (desired) |
+| `components/…/DentalChartWorkspace.tsx:383` | filtered out | primary now included |
+| `components/…/tooth-3d.ts:35` | `throw` | primary no longer throws |
+
+### B. Hardcoded permanent-only ranges — still REJECT primary (not yet migrated)
+
+| Site | Effect |
+|---|---|
+| `lib/ai/agent/tools.ts:221-222` | `toothFdi < 11 \|\| > 48` → rejects primary, message says `11..48` |
+| `app/api/dental-chart/[id]/summary/route.ts:58` | `< 11 \|\| > 48` → **silently drops primary findings** |
+| `app/api/dental-chart/[id]/summary/route.ts:203` | filter `>= 11 && <= 48` → **silently drops primary** |
+| `lib/ai/agent/classifier.ts:392` | comment says "11–48 only" |
+| `lib/ai/agent/classifier.ts:1196` | `missingInfo: 'valid FDI tooth number (11–48)'` |
+| `lib/ai/agent/loop.ts:826-827` | clarification strings hardcode `(11–48)`; **:827 is English** (Arabic-only violation) |
+
+### C. 32-tooth arrays
+
+| Site | Effect |
+|---|---|
+| `components/dental-chart/adapters/dental-chart-adapter.ts:30` `ALL_FDI_TEETH` (32) | used at `:310` and by `Odontogram.tsx:20` (**Phase-3 protected**) |
+| `DentalChart3D.tsx:253` uses `FDI_TEETH` (32) | 3D will not render primary teeth yet |
+
+### D. Silent fallback (the flagged bug)
+
+`components/dental-chart/adapters/dental-chart-adapter.ts:100-104` — `getToothQuadrant` returns `1`
+for anything outside quadrants 1‑4, so **every primary tooth (51‑85) is silently labelled
+upper-right**. Not yet migrated.
+
+## STEP 5 — `wip/realistic-teeth-anatomy` READ-ONLY inspection
+
+`git fetch origin wip/realistic-teeth-anatomy:refs/remotes/origin/wip/realistic-teeth-anatomy`
+→ HEAD `d8c28ae58cb18c76026c04cf72e8b2153f427be7` (matches expectation).
+
+`git diff --stat 8f3429c8 origin/wip/… -- lib/dental-chart lib/ai/context lib/ai/voice`
+→ **20 files, 587 insertions, 1627 deletions.** `wip` is a **different lineage**, not a small delta.
+
+| Question | Answer |
+|---|---|
+| Does wip have its own `lib/dental-chart/fdi.ts`? | **Yes** — differs from `8f3429c8` by 8 lines (formatting only). Still **32 permanent only** (`FdiQuadrant = 1\|2\|3\|4`), no primary support. |
+| Does wip have its own `lib/ai/context/fdi.ts`? | **Yes** — same divergent validator at `:36-37`: `n >= 11 && n <= 48`. Same two-validator problem. |
+| Same voice `entity-resolution.ts`? | **Yes** — identical reversal-rescue shape at `:105-109` (`if (candidates.length === 0)`). **The same 7-regression bug class will occur on wip when FDI-52 is applied there.** |
+| tooth-anatomy.ts | **904 lines** at wip vs **181** at `8f3429c8` — consistent with the master prompt's +833/−110 rewrite. |
+
+**Implication:** the FDI-52 work and the Option B fix both need re-application on `wip`, whose
+AI/voice layer is an *older* base.
+
+## Remaining failures (4) — none are regressions
+
+| Test | Status |
+|---|---|
+| `tests/api/imaging-review.test.ts` | pre-existing collection error (absent Prisma client) |
+| `tests/unit/dev-start-env.test.ts` | pre-existing (absent Prisma client) |
+| `clinical-safety-eval` ×3 | CS-RESTO-007 — golden encodes the old buggy range validator; **awaiting decision** |
 
 ## Commits on this branch
 
 | Hash | Subject |
 |---|---|
-| `8f3429c` | Merge PR #3 (base, = `dentora-unified` tip) |
-| `84dedb07` | Step 3 FDI-52 — **LOST to a sandbox reset** (`git cat-file` exit 128) |
-| `d5c32bc` | Re-commit of Step 3 (identical content; 226/226 targeted tests green) |
+| `8f3429c` | Merge PR #3 (base = `dentora-unified` tip) |
+| `84dedb07` | Step 3 FDI-52 — **LOST to reset #1** |
+| `d5c32bc` | Re-commit Step 3 — **LOST to reset #2** |
+| `c6f32a2` | docs: run state / baseline / blockers / architecture |
+| `2ebafa3` | feat(fdi): FDI-52 foundation (pushed to origin) |
+| `5cdb56d` | fix(voice): dentition-aware STT reversal guard (Option B) |
+
+## Scratch worktrees (in /tmp, not persisted)
+
+`/tmp/wt_base` @ `8f3429c`, `/tmp/wt_cur` @ `2ebafa3` — used for the CS-RESTO-007 probe and bisect.
+Remove with `git worktree remove /tmp/wt_base /tmp/wt_cur` when done.

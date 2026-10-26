@@ -91,9 +91,27 @@ Expect a non-zero exit until B4 is resolved.
 
 ---
 
-## B6 — CS-RESTO-007 root cause unknown
+## B6 — CS-RESTO-007: mechanism proven, **decision needed** (was: root cause unknown)
 
-See `PROGRESS.md`. The clinical-safety golden will not be edited until the mechanism is proven.
+Root cause is established and pasted in `PROGRESS.md`: the old validator was a range check
+(`11 <= n <= 48`) that wrongly accepted `30`; FDI-52 replaced it with set membership, so `30` is
+now correctly rejected and the agent asks for a tooth instead of completing.
+
+**The golden file has NOT been edited** (user rule 6: never weaken or edit a golden / clinical-safety
+test to get green). Until you decide, these 3 tests fail:
+
+- `CS-RESTO-007: … no invented association`
+- `global invariants hold across ALL cases`
+- `writes the machine-readable clinical-safety results artifact`
+
+**Options:**
+1. Update the golden: `expected.status` → `["COMPLETED", "CLARIFICATION_REQUIRED"]` and relax/replace
+   `mustContain: ["Identity:"]`. *I will not do this without explicit sign-off — it edits a protected gate.*
+2. Keep the golden and instead make the agent still surface patient identity when it must ask for a
+   tooth (behaviour change in `lib/ai/agent/loop.ts:826-827`, no golden edit).
+
+Note: the clarification string also hardcodes `(11–48)` and `:827` is English — both stale
+independently of this decision.
 
 ---
 
