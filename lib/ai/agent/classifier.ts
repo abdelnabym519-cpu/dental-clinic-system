@@ -389,7 +389,12 @@ export function extractPatientName(message: string): string | null {
 const TOOTH_KEYWORDS = ['tooth', 'molar', 'سن', 'أسنان']
 const TOOTH_CONTEXT_CHARS = 14
 
-/** FDI numbers mentioned next to a tooth keyword (±14 chars), 11–48 only. */
+/**
+ * FDI numbers mentioned next to a tooth keyword (±14 chars).
+ * Accepts the 32 permanent (11–48) AND the 20 primary (51–85) identifiers.
+ * Out-of-schema numbers such as 19, 29, 30, 39, 40 and 49 are rejected —
+ * they are not real teeth, even though a naive 11–48 range check admits them.
+ */
 export function extractToothMentions(message: string): number[] {
   const m = message.toLowerCase()
   const found = new Set<number>()
@@ -1193,7 +1198,10 @@ export function classifyAgentTask(input: ClassificationInput): ClassificationOut
     task = {
       ...task,
       toothInvolved: true,
-      missingInfo: [...task.missingInfo, 'valid FDI tooth number (11–48)'],
+      missingInfo: [
+        ...task.missingInfo,
+        'valid FDI tooth number (11–48 permanent or 51–85 primary)',
+      ],
     }
   }
 

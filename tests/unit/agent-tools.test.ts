@@ -111,6 +111,30 @@ describe('context tools (Phase 2 engine wrapper)', () => {
     expect(res.ok).toBe(true)
     expect(res.data.context.meta.scope.toothFdi).toBe(36)
   })
+
+  it('analyze_attachment accepts PRIMARY tooth scope 51-85 (FDI-52)', async () => {
+    const res = await executeTool(
+      'analyze_attachment',
+      { attachmentId: 'att-1', toothFdi: 51 },
+      rt()
+    )
+    // Validation must not reject a primary tooth. (It may fail later for
+    // unrelated reasons — an attachment-less run — but never on toothFdi.)
+    expect(String(res.error ?? ''), 'primary 51 must pass validation').not.toContain('toothFdi')
+  })
+
+  it('analyze_attachment rejects out-of-schema tooth numbers', async () => {
+    // 19/30/49 were wrongly accepted by the old `11..48` range check;
+    // 56/99 have no index 6-8 in a primary quadrant.
+    for (const bad of [19, 30, 49, 56, 99]) {
+      const res = await executeTool(
+        'analyze_attachment',
+        { attachmentId: 'att-1', toothFdi: bad },
+        rt()
+      )
+      expect(String(res.error ?? ''), `toothFdi ${bad} must be rejected`).toContain('toothFdi')
+    }
+  })
 })
 
 describe('clinic tools (tenant-scoped reads)', () => {

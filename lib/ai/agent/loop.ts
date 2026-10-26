@@ -823,8 +823,8 @@ export async function runAgent(request: AgentRequest, deps: AgentDeps): Promise<
     return respond(
       byLang(
         lg,
-        'قصدك أنهي سن؟ اكتب رقم السن بالترقيم العالمي (11–48).',
-        'Which tooth do you mean? Please give the FDI number (11–48).'
+        'قصدك أنهي سن؟ اكتب رقم السن بالترقيم العالمي (11–48 للدائمة أو 51–85 للّبنية).',
+        'Which tooth do you mean? Please give the FDI number (11–48 permanent or 51–85 primary).'
       )
     )
   }

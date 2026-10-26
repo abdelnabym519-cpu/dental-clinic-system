@@ -22,6 +22,7 @@ import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
 import { createPrismaKnowledgeStore } from '@/lib/ai/knowledge/store'
 import { isKnowledgeDomain } from '@/lib/ai/knowledge/taxonomy'
 import { CAPABILITY_TASK_IDS } from '@/lib/ai/engines/capability-matrix'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 import type { KnowledgeEvidencePackage, KnowledgeStore } from '@/lib/ai/knowledge/types'
 import type { AgentToolDefinition, AgentToolResult, AgentDomain, RiskLevel } from './types'
 
@@ -215,12 +216,12 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
         ? 'attachmentId is required'
         : i.jaw !== undefined && i.jaw !== 'max' && i.jaw !== 'man'
           ? 'jaw must be max or man'
-          : i.toothFdi !== undefined &&
-              (typeof i.toothFdi !== 'number' ||
-                !Number.isInteger(i.toothFdi) ||
-                i.toothFdi < 11 ||
-                i.toothFdi > 48)
-            ? 'toothFdi must be an FDI number 11..48'
+          : // FDI-52: accept the 32 permanent AND the 20 primary identifiers.
+            // The old `11..48` range check was wrong in both directions: it
+            // rejected valid primary teeth and admitted out-of-schema numbers
+            // such as 19, 29, 30, 39, 40 and 49.
+            i.toothFdi !== undefined && !isValidFdi(i.toothFdi)
+            ? 'toothFdi must be a valid FDI number (11-48 permanent or 51-85 primary)'
             : OK(),
     timeoutMs: 120_000,
     maxRetries: 0,

@@ -152,6 +152,60 @@ describe('GET /api/dental-chart/[id]/summary', () => {
     expect(body.imaging[1]).toMatchObject({ toothNumber: 26, label: 'IMPACTED', confidence: 0.88 })
   })
 
+  it('does NOT drop PRIMARY (deciduous) tooth findings 51-85 (FDI-52)', async () => {
+    setupPrisma({
+      studies: [
+        {
+          id: 'study-p',
+          modality: 'PANORAMIC',
+          studyDate: new Date('2026-03-01'),
+          aiJobs: [
+            {
+              id: 'job-p',
+              status: 'COMPLETED',
+              acceptedFindings: [
+                { toothNumber: 51, condition: 'CARIES', confidence: 0.9 },
+                { toothNumber: 75, condition: 'CARIES', confidence: 0.8 },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const res = await summaryModule.GET(makeRequest(), ctx)
+    const body = await res.json()
+    expect(body.imaging).toHaveLength(2)
+    expect(body.imaging.map((i: any) => i.toothNumber)).toEqual([51, 75])
+  })
+
+  it('still rejects out-of-schema findings that are not real FDI teeth', async () => {
+    setupPrisma({
+      studies: [
+        {
+          id: 'study-q',
+          modality: 'PANORAMIC',
+          studyDate: new Date('2026-03-02'),
+          aiJobs: [
+            {
+              id: 'job-q',
+              status: 'COMPLETED',
+              // 19, 30, 56, 99 are all outside the 52 valid identifiers.
+              acceptedFindings: [
+                { toothNumber: 19, condition: 'X' },
+                { toothNumber: 30, condition: 'X' },
+                { toothNumber: 56, condition: 'X' },
+                { toothNumber: 99, condition: 'X' },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const res = await summaryModule.GET(makeRequest(), ctx)
+    const body = await res.json()
+    expect(body.imaging).toHaveLength(0)
+  })
+
   it('tolerates hostile/malformed acceptedFindings JSON without throwing', async () => {
     setupPrisma({
       studies: [
