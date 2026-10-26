@@ -214,10 +214,19 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
   if (error) {
     return (
       <div
-        className="rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center text-sm"
+        className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center text-sm"
         data-testid="dental-chart-error"
       >
-        {error}
+        <p className="font-semibold">{error}</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void refetch()}
+          data-testid="dental-chart-error-retry"
+        >
+          {t('common.retry')}
+        </Button>
       </div>
     )
   }

@@ -15,6 +15,7 @@ import { useLanguage } from '@/components/providers/language-provider'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import type { CameraPreset } from './DentalChart3D'
+import { DentalChartErrorBoundary } from './ChartErrorBoundary'
 
 const DentalChart3D = dynamic(() => import('./DentalChart3D'), {
   ssr: false,
@@ -69,7 +70,12 @@ export default function DentalChart3DLoader({
 
   return (
     <div className="h-full min-h-[420px] w-full overflow-hidden rounded-xl">
-      <DentalChart3D statusByTooth={statusByTooth} cameraPreset={cameraPreset} />
+      {/* Graceful degradation only: a render-time throw inside the 3D subtree
+          is contained here so it shows the same localized error as a failed
+          fetch, instead of taking down the whole patient route. */}
+      <DentalChartErrorBoundary>
+        <DentalChart3D statusByTooth={statusByTooth} cameraPreset={cameraPreset} />
+      </DentalChartErrorBoundary>
     </div>
   )
 }
