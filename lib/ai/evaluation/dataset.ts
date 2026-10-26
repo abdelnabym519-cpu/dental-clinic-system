@@ -17,6 +17,7 @@ import type {
   GoldenDataset,
 } from './types'
 import { EVAL_ACTOR_ROLES, EVAL_CATEGORIES, EVAL_LANGUAGES } from './types'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 
 export const GOLDEN_DATASET_VERSION = '1.0.0'
 
@@ -70,7 +71,18 @@ const goldenCaseSchema = z.object({
     message: z.string().min(1),
     patientId: z.string().nullable().optional(),
     patientName: z.string().nullable().optional(),
-    toothFdi: z.number().int().min(11).max(48).nullable().optional(),
+    // FDI-52: one of the 52 valid identifiers (32 permanent + 20 primary).
+    // The old min(11).max(48) range check was wrong in both directions: it
+    // rejected valid primary teeth and admitted out-of-schema numbers such as
+    // 19, 29, 30, 39, 40 and 49, which are not real teeth.
+    toothFdi: z
+      .number()
+      .int()
+      .refine((n) => isValidFdi(n), {
+        message: 'toothFdi must be a valid FDI number (11-48 permanent or 51-85 primary)',
+      })
+      .nullable()
+      .optional(),
     caseId: z.string().nullable().optional(),
     studyId: z.string().nullable().optional(),
     attachments: z.array(z.string()).optional(),
