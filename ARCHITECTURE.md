@@ -1,52 +1,118 @@
-# ARCHITECTURE.md — DenToRa (actual repository graph)
+# ARCHITECTURE.md
 
-Stack: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Prisma 5.22 (MySQL 8.4)
-· Redis (cache/rate-limit) · NextAuth (Auth.js v5) · Tailwind · vitest (+Playwright specs)
-· three.js/R3F (lazy) · Cloudflare AI Gateway = canonical external LLM runtime (lib/ai/gateway.ts).
+## Chart data flow
 
-## System graph (verified from source)
+```mermaid
+graph TD
+    subgraph UI["Chart UI"]
+        W["DentalChartWorkspace.tsx"]
+        C2["DentalChart2D.tsx"]
+        C3["DentalChart3D.tsx"]
+        OG["Odontogram (Phase-3 protected clean room)"]
+        AD["adapters/dental-chart-adapter.ts"]
+        TA["interactive/tooth-anatomy.ts"]
+        ST["chart-state.ts (zustand, single store)"]
+    end
 
+    subgraph API["API layer"]
+        R1["GET/POST /api/dental-chart"]
+        R2["GET/PUT/DELETE /api/dental-chart/[id]"]
+        R3["GET /api/dental-chart/[id]/summary"]
+        R4["POST /api/treatment-plans/[id]/items"]
+    end
+
+    subgraph DOMAIN["Domain"]
+        FDI["lib/dental-chart/fdi.ts  <-- CANONICAL FDI RULE SET"]
+        AIFDI["lib/ai/context/fdi.ts  (re-exports isValidFdi)"]
+    end
+
+    subgraph DB["Prisma / MySQL"]
+        DCE["DentalChartEntry.toothNumber Int, toothNotation String"]
+        TPI["TreatmentPlanItem.toothNumber String?"]
+        TRT["Treatment.toothNumber String?"]
+        INV["InvoiceItem.toothNumber Int?"]
+        LAB["LabOrder.toothNumber String?"]
+    end
+
+    W --> C2
+    W --> C3
+    OG --> AD
+    C3 --> TA
+    C3 --> FDI
+    C2 --> FDI
+    W --> FDI
+    C2 --> ST
+    C3 --> ST
+    W --> R1
+    W --> R2
+    W --> R3
+    R1 --> FDI
+    R4 --> FDI
+    R1 --> DCE
+    R3 --> DCE
+    R4 --> TPI
+    DCE --> TRT
+    DCE --> INV
+    DCE --> LAB
+    AIFDI --> FDI
 ```
-UI (app/(dashboard)/**, app/portal/**, components/**)
-  → pages/routes (server components + client islands)
-    → API routes (app/api/**)  ── requireAuthAndRole() [lib/api-helpers: session+role+hospitalId]
-      → domain libs (lib/money, billing-utils, treatment-utils, dental-chart/*, …)
-        → services (lib/services/*, lib/messaging/*, lib/ai/*)
-          → Prisma client (lib/prisma.ts — typed client + globalThis fallback flag)
-            → MySQL (per-tenant rows: hospitalId on every model/query)
-Sidecars: Redis (rate-limit/cache) · Storage (tenant-prefixed keys) · AuditLog (all clinical mutations)
-AI: routes → gateway.ts (Cloudflare AI Gateway; 120s timeout; 1 explicit fallback model)
-    → typed Arabic-safe errors; local/voice engines under tools/voice + lib/ai/voice/*
-    → imaging: ImagingStudy → AIAnalysisJob → acceptedFindings (doctor-reviewed)
-Background: cron routes (briefing/inventory/automations) · communication-triggers service
+
+## AI runtime
+
+```mermaid
+graph LR
+    N["Next.js app"] -->|ORCHESTRATOR_SECRET| O["orchestrator :8000 (FastAPI, main.py)"]
+    O --> E1["liodon :8001 — panoramic"]
+    O --> E2["implant-ai :8002 — periapical/bitewing"]
+    O --> E3["orthodontic-ai :8003 — cephalometric, 38 landmarks"]
+    O --> E4["meshsegnet :8004 — .obj jaw segmentation"]
+    O --> E5["dentalgemma :8005"]
+    O --> V["orchestrator validation.py (score clamp)"]
 ```
 
-## Environment graph (startup)
+## Tooth-number persistence (verified — **no migration required**)
 
-Bootstrap: `npm run setup:dev` creates `.env` from `.env.example` (DATABASE_URL matches
-docker-compose.dev.yml by a pinned test) and generates the three required dev secrets
-in place, only filling keys that are missing/empty (idempotent, value-never-logged).
+| Model | Column | Type | Notes |
+|---|---|---|---|
+| `DentalChartEntry` | `toothNumber` | `Int` NOT NULL | no CHECK constraint; 51–85 already storable |
+| `DentalChartEntry` | `toothNotation` | `VARCHAR(191)` NOT NULL | non-unique index only |
+| `TreatmentPlanItem` | `toothNumber` | `String?` | |
+| `Treatment` | `toothNumber` | `String?` | |
+| `InvoiceItem` | `toothNumber` | `Int?` | added in `20260925120000_add_billing_phase12` |
+| `LabOrder` | `toothNumber` | `String?` | |
 
-```
-shell env  >  .env.local  >  .env          (canonical precedence, Next.js-compatible)
-   ↓ scripts/lib/dev-env.ts  (loadDevEnvIntoProcess — plain tsx never loads env files)
-scripts/dev-start.ts  →  docker compose (mysql, redis)  →  PrismaClient SELECT 1 probe
-                      →  prisma migrate deploy (CLI)  →  seed-if-uninitialized  →  next dev
-next dev loads the same files with the same precedence → one configuration model everywhere.
-```
+`grep CHECK` across all migrations returns **no tooth-column constraint**. The 32-tooth limit is
+**100% application-layer**. `toothNumber INT` already stores 51–85.
 
-## Critical invariants (load-bearing)
+## FDI consumer inventory (verified by grep)
 
-- Tenant isolation: patient/record resolution is ALWAYS `{id, hospitalId}`; cross-tenant → 404.
-- Money: unified lib/money.ts; monetary consumers accept `number | string | Prisma.Decimal`;
-  runtime conversion centralized in money()/moneyLocal(); Arabic labels are the API (I6/I7).
-- Prisma access: ONE canonical client (lib/prisma.ts) — real generated type (type-only import),
-  globalThis-cached, fallback flag on globalThis (dev chunk-split correctness).
-- MySQL search: `{ contains }` only (collation-based CI) via lib/prisma-search.ts `containsCI`.
-- Phase-12 evidence (docs/phase12/*.json) = certification artifacts — never regenerated by app code.
-- Tests: 335 files; suites cover every route handler via the real handlers + mocked persistence.
+**Canonical:** `lib/dental-chart/fdi.ts`
 
-## 3D dental chart (added capability)
+**Imports of the canonical module**
+- `app/api/treatment-plans/[id]/items/route.ts:4` — `isValidFdi`
+- `components/dental-chart/interactive/DentalChart2D.tsx:20` — `navigationTargets`
+- `components/dental-chart/interactive/DentalChart3D.tsx:22` — `FDI_TEETH`, `groupOf`
+- `components/dental-chart/interactive/DentalChartWorkspace.tsx:25` — `isValidFdi`
+- `components/dental-chart/interactive/ToothContextPanel.tsx:25` — `toothNameAr`, `toothNameEn`
+- `components/dental-chart/interactive/tooth-3d.ts:12` — `archOf`, `groupOf`, `sideOf`, `toothIndexOf`, `isValidFdi`
+- `components/dental-chart/interactive/tooth-anatomy.ts:20` — `groupOf`, `archOf`, `toothIndexOf`
 
-components/dental-chart/interactive/* → R3F WebGL (lazy, ssr:false), shared store
-(lib/dental-chart/chart-state.ts), derived statuses (clinical-status.ts) — see docs/dental-chart/audit.md.
+**Imports of the AI adapter** (now re-exported from canonical — one rule set)
+- `app/api/ai/context/route.ts:23`
+- `lib/ai/agent/classifier.ts:15` (used at `:409`)
+- `lib/ai/voice/entity-resolution.ts:13` (used at `:150`)
+
+**Still-divergent / permanent-only sites (NOT yet migrated)**
+| Site | Issue |
+|---|---|
+| `lib/ai/agent/classifier.ts:392` | comment "11–48 only" |
+| `lib/ai/agent/classifier.ts:1196` | `missingInfo: 'valid FDI tooth number (11–48)'` |
+| `lib/ai/agent/loop.ts:826-827` | clarification strings hardcode `(11–48)`; **also English** (Arabic-only violation) |
+| `lib/ai/agent/tools.ts:221-222` | `toothFdi < 11 \|\| toothFdi > 48` |
+| `app/api/dental-chart/route.ts:131-136` | hardcoded 32-item array |
+| `app/api/dental-chart/[id]/summary/route.ts:58,203` | clamps `< 11 \|\| > 48`, silently drops findings |
+| `components/dental-chart/adapters/dental-chart-adapter.ts:100-104` | `getToothQuadrant` silently `return 1` |
+| `components/dental-chart/types/odontogram.ts:16-33` | `ToothSpecificType` has 16 permanent members, no primary |
+| `components/dental-chart/adapters/dental-chart-adapter.ts:107-132` | permanent-only root/canal table |
+
+**Protected:** the Phase-3 odontogram clean room + its tests must keep passing unchanged.

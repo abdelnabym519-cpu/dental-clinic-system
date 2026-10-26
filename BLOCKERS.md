@@ -1,52 +1,105 @@
-# Blockers — genuinely external only
+# BLOCKERS.md — things this environment cannot do
 
-## B1 — Database-backed runtime verification
+Each entry: what is blocked, the proof, and the **exact command the user must run**.
+Nothing here is faked or mocked.
 
-- External Dependency: MySQL 8.4 (docker-compose.dev.yml) — not installable in this sandbox (no Docker daemon; egress-blocked).
-- Exact Requirement: running MySQL + `DATABASE_URL` (auto-loaded by `npm run dev:start` after Iteration 2).
-- Why Required: end-to-end persistence flows (login → CRUD → readiness 200).
-- Affected Verification: DB matrix row = PARTIAL. The ENVIRONMENT-LOADING half of this
-  blocker was FIXED and PROVEN in-repo (A/B: the exact user failure reproduced, then
-  eliminated; `npm run dev:start` now loads shell > .env.local > .env before any Prisma
-  work). The TCP/query half needs a real MySQL — one command on the developer machine:
-  `npm run dev:start` (user's containers were already Running; the probe will now reach them).
-- Current Status: ENVIRONMENT-BLOCKED (database runtime only; environment-loading repaired).
-- Evidence refresh (2026-10-08, exhaustive local + egress probe):
-  - Local runtimes: `mysqld`, `mariadbd`, `mysql` client, `docker`, `podman`,
-    `nerdctl` — NONE present; no mysql/mariadb-server packages installed.
-  - Egress (HTTP HEAD, 10s timeout): cdn.mysql.com, dev.mysql.com,
-    registry.npmmirror.com, cdn.playwright.dev, playwright.azureedge.net,
-    deb.debian.org — ALL unreachable (000); apt unusable (no list write
-    permission, mirrors unreachable). Only registry.npmjs.org is reachable.
-  - npm-hosted alternatives (`mysql-memory-server` 1.17.0 resolvable) are
-    RUNTIME DOWNLOADERS for the blocked CDNs — not usable offline.
-  - A pure-JS MySQL-wire-protocol stand-in was considered and REJECTED
-    (would fake the exact readiness this certification must prove).
-    => a REAL MySQL in this sandbox is impossible; the DB leg is proven by
-    construction (explicit-datasource probe, test-pinned compose consistency)
-    and executes on any Docker machine via `npm run setup:dev && npm run dev:start`.
+---
 
-## B2 — Browser/E2E execution
+## B1 — Cannot check out `wip/realistic-teeth-anatomy`
 
-- External Dependency: Playwright browser binaries + display (absent; `npx playwright install chromium` attempted this iteration and failed on sandbox egress — evidence recorded).
-- Affected Verification: Playwright specs (`tests/e2e/*.spec.ts`) — CODE-VALIDATED only.
-- Available Alternative: `npx playwright install && npx playwright test` on a developer machine.
-- Current Status: ENVIRONMENT-BLOCKED.
+**Proof:** session is pinned to `arena/91dddda0-dental-clinic-system`; branch switching/creation is
+not permitted for this session. The branch itself exists on origin:
 
-## B3 — Auth secret / external credentials
+```
+$ git ls-remote --heads origin wip/realistic-teeth-anatomy
+d8c28ae58cb18c76026c04cf72e8b2153f427be7	refs/heads/wip/realistic-teeth-anatomy
+```
 
-- External Dependency: `AUTH_SECRET` (Auth.js), Cloudflare `CLOUDFLARE_*` (documented live contract), SMS/WhatsApp providers.
-- Affected Verification: authenticated UI walkthrough; live AI inference (deterministic harness + typed-failure suites cover the contract).
-- Current Status: ENVIRONMENT-BLOCKED (never printed; values live only in the operator's environment).
+**User action:** start a new Arena session on `wip/realistic-teeth-anatomy`, or run from `C:/Projects/dental-erp-dental-chart`.
+Consequence of staying here: the WIP tooth-anatomy rewrite at `d8c28ae` is absent, so WP1 H1/H4
+cannot be tested.
 
-## §13 — Live integrations: requirement / feature / command / resolution (no values)
+---
 
-| Integration                                         | Requirement (why external)                                                             | Feature affected                                | Command that would verify                                   | Resolution                                                                                          |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Cloudflare AI Gateway (`@cf/zai-org/glm-4.7-flash`) | Real CF account + token (user's `.env.local` only — never in sandbox)                  | AI treatment advisor, robot insights            | `npm run dev:start` + AI compose + authenticated AI request | BLOCKED_EXTERNAL — unauth path pinned 401; fallback model contract pinned; no fabricated AI success |
-| OpenRouter                                          | Real API key                                                                           | Optional AI features under `OPENROUTER_API_KEY` | authenticated request via gateway routes                    | BLOCKED_EXTERNAL — key absent by design here                                                        |
-| SMTP (Mailpit dev or real)                          | Mail server (compose provides Mailpit on Docker machines; real SMTP needs credentials) | email notifications/password reset              | `npm run dev:start` + Mailpit UI :8025                      | BLOCKED_EXTERNAL in sandbox; on user machine Mailpit arrives with the same compose                  |
-| WhatsApp Meta Cloud API                             | Business tokens + phone IDs                                                            | WhatsApp messaging (Phase 10)                   | `npm run whatsapp:test -- <number>`                         | BLOCKED_EXTERNAL — `MESSAGING_ENABLED=false` keeps the mock provider verifiable in tests            |
-| SMS (Twilio / Africa's Talking)                     | Provider credentials                                                                   | SMS reminders/fallbacks                         | authenticated send with test number                         | BLOCKED_EXTERNAL — mock provider verified in suite                                                  |
-| S3/MinIO                                            | Object store (compose provides MinIO on Docker machines)                               | file storage when `STORAGE_DRIVER=s3`           | `npm run dev:start` + bucket check                          | BLOCKED_EXTERNAL in sandbox; `local` driver fully test-verified                                     |
-| Playwright browsers                                 | Browser binaries (CDN egress-blocked — see B2)                                         | browser E2E + Dental Chart browser run          | `npx playwright install` → `npx playwright test`            | BLOCKED_EXTERNAL (fresh 2026-10-08 probe in B2)                                                     |
+## B2 — Docker is not installed (blocks WP2 entirely)
+
+**Proof:** `docker --version` → `command not found`.
+
+**User action (Windows, PowerShell, in `C:/Projects/dental-erp-dental-chart`):**
+```powershell
+docker --version
+docker compose -f ai-compose.yml up -d --force-recreate
+docker compose -f ai-compose.yml ps
+curl http://localhost:8000/health
+for ($p=8001; $p -le 8005; $p++) { curl "http://localhost:$p/health" }
+```
+
+---
+
+## B3 — AI model files are absent (blocks WP2 step 1 checksums)
+
+**Proof:**
+```
+$ ls ai-validation/*/model/
+ai-validation/dentalgemma/model/:  README.md
+ai-validation/liodon/model/:       README.md
+ai-validation/meshsegnet/model/:   README.md  source
+```
+No `.onnx`, `.pt`, `.pth` or `.zip` present, so **no SHA-256 can be computed or compared**.
+Models are gitignored, matching the master prompt's note.
+
+**User action (Windows, Git Bash, from `C:/Projects/dental-erp`):**
+```bash
+cd /c/Projects/dental-erp
+sha256sum ai-validation/liodon/model/best.onnx \
+          ai-validation/yolov8-8024/model/8024.pt \
+          ai-validation/cldetection2023/model/model_pretrained_on_train_and_val.pth \
+          ai-validation/meshsegnet/model/MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip \
+          ai-validation/meshsegnet/model/MeshSegNet_Man_15_classes_72samples_lr1e-2_best.zip
+```
+Compare against the five checksums in the master prompt §2. **A mismatch = stop, do not proceed.**
+Note `ai-validation/yolov8-8024/` and `ai-validation/cldetection2023/` do not exist in this clone.
+
+To make models available in the chart worktree without committing them:
+```bash
+cp -r /c/Projects/dental-erp/ai-validation/liodon/model/best.onnx \
+      /c/Projects/dental-erp-dental-chart/ai-validation/liodon/model/
+cp -r /c/Projects/dental-erp/ai-validation/yolov8-8024/model/8024.pt \
+      /c/Projects/dental-erp-dental-chart/ai-validation/yolov8-8024/model/
+```
+
+---
+
+## B4 — Prisma client cannot be generated
+
+**Proof:** `postinstall: prisma generate` reaches `binaries.prisma.sh`, which is outside the network
+allowlist. `node_modules/.prisma/client` is absent. This is why `tsc` reports 498 errors and why
+`tests/api/imaging-review.test.ts` and `tests/unit/dev-start-env.test.ts` fail.
+
+**User action:**
+```bash
+npx prisma generate
+```
+Then re-run `npx tsc --noEmit` to get a true type-error baseline.
+
+---
+
+## B5 — `npm run build` not yet measured
+
+Next.js build runs type checking, which currently fails on the 498 Prisma-derived errors.
+Expect a non-zero exit until B4 is resolved.
+
+---
+
+## B6 — CS-RESTO-007 root cause unknown
+
+See `PROGRESS.md`. The clinical-safety golden will not be edited until the mechanism is proven.
+
+---
+
+## B7 — Node version mismatch
+
+`.nvmrc` = **20**; CI (`ci.yml:32,70,110`, `e2e.yml:50`) = **20**; sandbox has **v22.22.3**.
+`engines` is not declared in `package.json`, so nothing enforces this. No version manager
+(nvm/n/fnm/volta) is installed and `nodejs.org` is not in the network allowlist.
+All local test results therefore come from Node 22; **CI on Node 20 is authoritative.**
