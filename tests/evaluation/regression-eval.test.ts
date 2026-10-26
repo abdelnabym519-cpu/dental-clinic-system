@@ -224,9 +224,12 @@ describe('REGRESSION (Gate J): phase spot-contracts via replay', () => {
 })
 
 describe('REGRESSION (Gate J): lower-layer unit contracts', () => {
-  it('FDI validation: 11–48 valid, everything else rejected', () => {
+  it('FDI validation: 11–48 and 51–85 valid, everything else rejected', () => {
     for (const n of [11, 12, 21, 26, 36, 41, 47, 48]) expect(isValidFdi(n)).toBe(true)
-    for (const n of [0, 1, 9, 10, 50, 51, 99, 100, -3]) expect(isValidFdi(n)).toBe(false)
+    // Phase 3: primary (deciduous) dentition 51–55, 61–65, 71–75, 81–85.
+    for (const n of [51, 55, 61, 65, 71, 75, 81, 85]) expect(isValidFdi(n)).toBe(true)
+    for (const n of [0, 1, 9, 10, 50, 56, 59, 60, 90, 99, 100, -3])
+      expect(isValidFdi(n)).toBe(false)
   })
 
   it('taxonomy detection maps messages to KNOWLEDGE_DOMAINS (stable)', () => {
