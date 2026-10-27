@@ -111,17 +111,27 @@ describe('GET /api/imaging/studies — Phase 20 filters (D7/D8)', () => {
     prisma.imagingStudy.findMany.mockResolvedValue([makeStudy()])
     const res = await call('http://localhost/api/imaging/studies?patientId=pat-1')
     const body = await res.json()
-    expect(body.studies[0].originalUrl).toBe('/api/uploads/hosp-1/imaging/pat-1/study-1/original.jpg')
+    expect(body.studies[0].originalUrl).toBe(
+      '/api/uploads/hosp-1/imaging/pat-1/study-1/original.jpg'
+    )
   })
 
   it('401 when unauthenticated', async () => {
-    mockAuth.requireAuthAndRole.mockResolvedValue({ error: { status: 401 }, user: null, hospitalId: null })
+    mockAuth.requireAuthAndRole.mockResolvedValue({
+      error: { status: 401 },
+      user: null,
+      hospitalId: null,
+    })
     const res = await call('http://localhost/api/imaging/studies')
     expect(res.status).toBe(401)
   })
 
   it('forwards the RBAC error (view roles only)', async () => {
-    mockAuth.requireAuthAndRole.mockResolvedValue({ error: { status: 403 }, user: null, hospitalId: null })
+    mockAuth.requireAuthAndRole.mockResolvedValue({
+      error: { status: 403 },
+      user: null,
+      hospitalId: null,
+    })
     const res = await call('http://localhost/api/imaging/studies?patientId=pat-1')
     expect(res.status).toBe(403)
   })

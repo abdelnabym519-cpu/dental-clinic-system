@@ -42,7 +42,6 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn().mockResolvedValue([]),
     },
-
   },
 }))
 
@@ -334,9 +333,7 @@ describe('Agenda appointment-number collision retry', () => {
   it('retries with a fresh appointment number when a concurrent booking takes it', async () => {
     setupValidEntities()
     const p2002 = Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
-    prisma.appointment.create
-      .mockRejectedValueOnce(p2002)
-      .mockResolvedValueOnce({ id: 'apt-new' })
+    prisma.appointment.create.mockRejectedValueOnce(p2002).mockResolvedValueOnce({ id: 'apt-new' })
 
     const res = await POST(
       jsonRequest('http://localhost/api/appointments', {

@@ -33,7 +33,10 @@ export interface ExtractedDocument {
 
 const PDF_EXTRACTOR = 'pdf-parse@2'
 
-export async function extractDocument(buf: Buffer, fileClass: 'DOCUMENT_PDF' | 'DOCUMENT_TEXT'): Promise<ExtractedDocument> {
+export async function extractDocument(
+  buf: Buffer,
+  fileClass: 'DOCUMENT_PDF' | 'DOCUMENT_TEXT'
+): Promise<ExtractedDocument> {
   if (fileClass === 'DOCUMENT_TEXT') {
     const text = buf.toString('utf8').slice(0, MULTIMODAL_LIMITS.maxExtractedTextChars)
     return {
@@ -56,9 +59,14 @@ export async function extractDocument(buf: Buffer, fileClass: 'DOCUMENT_PDF' | '
   try {
     result = await parser.getText({ first: MULTIMODAL_LIMITS.maxPdfPages })
   } catch (err) {
-    throw new MultimodalError('DOCUMENT_EXTRACTION_FAILED', `PDF parse failed: ${err instanceof Error ? err.message.slice(0, 120) : 'unknown'}`)
+    throw new MultimodalError(
+      'DOCUMENT_EXTRACTION_FAILED',
+      `PDF parse failed: ${err instanceof Error ? err.message.slice(0, 120) : 'unknown'}`
+    )
   } finally {
-    await parser.destroy().catch(() => { /* best effort */ })
+    await parser.destroy().catch(() => {
+      /* best effort */
+    })
   }
 
   // Deterministic page markers + EXACT content offsets: every quoted
@@ -83,7 +91,10 @@ export async function extractDocument(buf: Buffer, fileClass: 'DOCUMENT_PDF' | '
 
   return {
     text,
-    pageCount: Math.min(Number(result.total ?? pages.length) || pages.length, MULTIMODAL_LIMITS.maxPdfPages),
+    pageCount: Math.min(
+      Number(result.total ?? pages.length) || pages.length,
+      MULTIMODAL_LIMITS.maxPdfPages
+    ),
     pageOffsets: pageOffsets.length ? pageOffsets : [0],
     chars: text.length,
     truncated,
@@ -97,7 +108,7 @@ export async function extractDocument(buf: Buffer, fileClass: 'DOCUMENT_PDF' | '
  */
 export async function persistExtractedText(
   doc: ExtractedDocument,
-  keyFor: (name: string) => string,
+  keyFor: (name: string) => string
 ): Promise<{ key: string; sha256: string }> {
   const storage = getStorage()
   const key = keyFor('extracted-text')
@@ -114,7 +125,7 @@ export async function persistExtractedText(
 export function wrapAsUntrustedData(
   label: string,
   content: string,
-  maxChars: number = MULTIMODAL_LIMITS.maxAgentContextCharsPerAttachment,
+  maxChars: number = MULTIMODAL_LIMITS.maxAgentContextCharsPerAttachment
 ): string {
   const bounded = content.slice(0, maxChars)
   const ellipsis = content.length > maxChars ? '\n[…truncated by agent context budget]' : ''

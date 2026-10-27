@@ -176,7 +176,10 @@ export function Odontogram({
 
       toast({
         title: t('Success'),
-        description: t('Tooth #{number} marked as {condition}', { number: payload.toothNumber, condition: payload.condition }),
+        description: t('Tooth #{number} marked as {condition}', {
+          number: payload.toothNumber,
+          condition: payload.condition,
+        }),
       })
 
       setDialogOpen(false)
@@ -223,7 +226,8 @@ export function Odontogram({
                 <span>{t(title)}</span>
                 {mode === 'selection' && (
                   <Badge variant="secondary" className="gap-1 text-xs">
-                    <CheckSquare className="w-3 h-3 text-primary" /> {t("Selection Mode")} </Badge>
+                    <CheckSquare className="w-3 h-3 text-primary" /> {t('Selection Mode')}{' '}
+                  </Badge>
                 )}
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">
@@ -243,7 +247,8 @@ export function Odontogram({
                   className="h-8 gap-1.5 text-xs rounded-lg"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  {t("Refresh")} </Button>
+                  {t('Refresh')}{' '}
+                </Button>
               )}
             </div>
           </div>
@@ -268,7 +273,8 @@ export function Odontogram({
             <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex items-center justify-between gap-3 animate-in fade-in">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-foreground">
-                  {t("Selected Teeth (")}{selectedTeeth.length}):
+                  {t('Selected Teeth (')}
+                  {selectedTeeth.length}):
                 </span>
                 {selectedTeeth
                   .sort((a, b) => a - b)
@@ -285,7 +291,8 @@ export function Odontogram({
                   onClick={() => onTeethSelect([])}
                   className="text-xs text-muted-foreground hover:text-foreground h-7"
                 >
-                  {t("Clear all")} </Button>
+                  {t('Clear all')}{' '}
+                </Button>
               )}
             </div>
           )}

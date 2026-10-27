@@ -6,9 +6,7 @@ import { describe, it, expect } from 'vitest'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { buildTimeline, type TimelineInputs } from '@/lib/ai/context/builders'
 import type { SectionBudget } from '@/lib/ai/context/profiles'
-import {
-  createFakePrisma, makeRequest, NOW,
-} from '@/tests/harness/context-fixtures'
+import { createFakePrisma, makeRequest, NOW } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
 const BUDGET: SectionBudget = { maxRecords: 30, windowDays: 1095, maxTextChars: 200 }
@@ -23,13 +21,32 @@ describe('Timeline (service, FULL_360)', () => {
     expect(d.truncated).toBe(false)
 
     const types = [...new Set(d.events.map((e: any) => e.type))]
-    expect(types).toEqual(expect.arrayContaining(['APPOINTMENT', 'FINDING', 'TREATMENT', 'DIAGNOSIS', 'EXAMINATION', 'FOLLOW_UP', 'PRESCRIPTION', 'IMAGING', 'AI_ANALYSIS', 'OUTCOME']))
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'APPOINTMENT',
+        'FINDING',
+        'TREATMENT',
+        'DIAGNOSIS',
+        'EXAMINATION',
+        'FOLLOW_UP',
+        'PRESCRIPTION',
+        'IMAGING',
+        'AI_ANALYSIS',
+        'OUTCOME',
+      ])
+    )
 
     // every event: provenance + category + significance
     for (const e of d.events) {
       expect(e.provenance.sourceType).toBeTruthy()
       expect(e.provenance.sourceId).toBeTruthy()
-      expect(['CLINICAL_FACT', 'MODEL_FINDING', 'CLINICAL_INTERPRETATION', 'PATIENT_REPORTED', 'SYSTEM_EVENT']).toContain(e.category)
+      expect([
+        'CLINICAL_FACT',
+        'MODEL_FINDING',
+        'CLINICAL_INTERPRETATION',
+        'PATIENT_REPORTED',
+        'SYSTEM_EVENT',
+      ]).toContain(e.category)
       expect(['high', 'normal', 'low']).toContain(e.significance)
     }
   })
@@ -62,9 +79,12 @@ describe('Timeline (service, FULL_360)', () => {
         chiefComplaint: null,
         category: 'SYSTEM_EVENT',
         provenance: {
-          sourceType: 'appointment', sourceId: `appt-tl-${i}`,
-          entityType: 'Appointment', entityId: `appt-tl-${i}`,
-          timestamp: new Date(NOW.getTime() - (i + 1) * 86400000).toISOString(), actor: null,
+          sourceType: 'appointment',
+          sourceId: `appt-tl-${i}`,
+          entityType: 'Appointment',
+          entityId: `appt-tl-${i}`,
+          timestamp: new Date(NOW.getTime() - (i + 1) * 86400000).toISOString(),
+          actor: null,
         },
       })),
     }

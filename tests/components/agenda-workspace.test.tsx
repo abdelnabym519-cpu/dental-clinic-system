@@ -18,7 +18,10 @@ vi.mock('@/components/providers/language-provider', async () => {
       dir: 'ltr',
       t: (key: string, vars?: Record<string, string | number>) => {
         let template: string = en[key] ?? key
-        if (vars) template = template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m))
+        if (vars)
+          template = template.replace(/\{(\w+)\}/g, (m, name) =>
+            name in vars ? String(vars[name]) : m
+          )
         return template
       },
       setLocale: vi.fn(),
@@ -76,7 +79,9 @@ vi.mock('@/components/ui/select', () => ({
   Select: ({ children, value, onValueChange }: any) => (
     <div data-testid="select-root" data-value={value}>
       {React.Children.map(children, (child) =>
-        React.isValidElement(child) ? React.cloneElement(child as any, { onValueChange, value }) : child
+        React.isValidElement(child)
+          ? React.cloneElement(child as any, { onValueChange, value })
+          : child
       )}
     </div>
   ),
@@ -90,11 +95,7 @@ vi.mock('@/components/ui/select', () => ({
     </div>
   ),
   SelectItem: ({ children, value, onValueChange }: any) => (
-    <div
-      data-testid={`select-item-${value}`}
-      onClick={() => onValueChange?.(value)}
-      role="option"
-    >
+    <div data-testid={`select-item-${value}`} onClick={() => onValueChange?.(value)} role="option">
       {children}
     </div>
   ),
@@ -161,7 +162,7 @@ describe('Agenda workspace page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Agenda' })).toBeInTheDocument()
     expect(screen.getByText('New appointment')).toBeInTheDocument()
     expect(screen.getByText('Waitlist')).toBeInTheDocument()
-    expect(screen.getByText("Queue")).toBeInTheDocument()
+    expect(screen.getByText('Queue')).toBeInTheDocument()
   })
 
   it('passes fetched providers into the calendar for filtering', async () => {
@@ -187,8 +188,7 @@ describe('Agenda workspace page', () => {
 
     await waitFor(() => {
       const postCall = fetchMock.mock.calls.find(
-        ([url, init]) =>
-          String(url) === '/api/appointments' && init?.method === 'POST'
+        ([url, init]) => String(url) === '/api/appointments' && init?.method === 'POST'
       )
       expect(postCall).toBeDefined()
       expect(JSON.parse(postCall![1].body)).toMatchObject({
@@ -210,7 +210,8 @@ describe('Agenda workspace page', () => {
           ok: false,
           status: 409,
           json: async () => ({
-            error: 'Doctor already has appointment APT20260001 from 09:00 (60 min) overlapping this time',
+            error:
+              'Doctor already has appointment APT20260001 from 09:00 (60 min) overlapping this time',
           }),
         })
       }

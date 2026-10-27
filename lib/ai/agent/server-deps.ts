@@ -28,7 +28,8 @@ export async function createProductionAgentDeps(client: ProductionPrisma): Promi
   const { DEFAULT_AGENT_LIMITS } = await import('@/lib/ai/agent/types')
   const { complete } = await import('@/lib/ai/openrouter')
   const { getModelByTier } = await import('@/lib/ai/models')
-  const { createOrchestratorCapabilitySource } = await import('@/lib/ai/engines/orchestrator-source')
+  const { createOrchestratorCapabilitySource } =
+    await import('@/lib/ai/engines/orchestrator-source')
   const { createAttachmentService } = await import('@/lib/ai/multimodal/attachments')
   const { LocalAIService } = await import('@/lib/ai/engines/local-ai-service')
   const { requestOrchestratorAnalyze } = await import('@/lib/ai-orchestrator')
@@ -50,13 +51,11 @@ export async function createProductionAgentDeps(client: ProductionPrisma): Promi
     now: () => new Date(),
     localAiCapabilities: capabilitySource,
     attachments: createAttachmentService(client),
-    localAiService: new LocalAIService(
-      capabilitySource,
-      (p) =>
-        requestOrchestratorAnalyze(p).then(
-          (r) =>
-            r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse,
-        ),
+    localAiService: new LocalAIService(capabilitySource, (p) =>
+      requestOrchestratorAnalyze(p).then(
+        (r) =>
+          r as unknown as import('@/lib/ai/engines/local-ai-service').OrchestratorAnalyzeResponse
+      )
     ),
     memory: new MemoryOrchestrator(new PrismaMemoryStore(client)),
   }

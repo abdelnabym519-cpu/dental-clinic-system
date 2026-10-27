@@ -25,10 +25,7 @@ const LEAD_TIME_MINUTES = 60 // earliest bookable start: now + 1h
  * clinic holidays, and per-doctor overlap rejection. The chosen slot is
  * booked with the standard booking pipeline and the entry becomes BOOKED.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole(['ADMIN', 'RECEPTIONIST'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -52,7 +49,10 @@ export async function POST(
       return NextResponse.json({ error: 'This waitlist entry is already booked' }, { status: 400 })
     }
     if (entry.status === 'CANCELLED' || entry.status === 'EXPIRED') {
-      return NextResponse.json({ error: `Cannot book a ${entry.status.toLowerCase()} entry` }, { status: 400 })
+      return NextResponse.json(
+        { error: `Cannot book a ${entry.status.toLowerCase()} entry` },
+        { status: 400 }
+      )
     }
 
     // Patient must still exist in this hospital.
@@ -90,13 +90,20 @@ export async function POST(
 
     const settled = await Promise.all([
       prisma.staffShift.findMany({ where: { hospitalId } }),
-      prisma.doctorBreak.findMany({
-        where: { hospitalId, isActive: true },
-        select: { staffId: true, dayOfWeek: true, startTime: true, endTime: true },
-      }).catch(() => []),
+      prisma.doctorBreak
+        .findMany({
+          where: { hospitalId, isActive: true },
+          select: { staffId: true, dayOfWeek: true, startTime: true, endTime: true },
+        })
+        .catch(() => []),
       prisma.blockedSlot
         .findMany({
-          where: { hospitalId, isActive: true, startAt: { lte: horizonEnd }, endAt: { gte: new Date() } },
+          where: {
+            hospitalId,
+            isActive: true,
+            startAt: { lte: horizonEnd },
+            endAt: { gte: new Date() },
+          },
           select: { staffId: true, startAt: true, endAt: true },
         })
         .catch(() => []),
@@ -131,14 +138,24 @@ export async function POST(
       for (const doctor of candidates) {
         const doctorLeaves = (leaves as Array<{ staffId: string; startDate: Date; endDate: Date }>)
           .filter((l) => l.staffId === doctor.id)
-          .map((l) => ({ startDate: toDateKey(l.startDate), endDate: toDateKey(l.endDate), status: 'APPROVED' }))
+          .map((l) => ({
+            startDate: toDateKey(l.startDate),
+            endDate: toDateKey(l.endDate),
+            status: 'APPROVED',
+          }))
         if (isOnApprovedLeave(dateKey, doctorLeaves)) continue
 
         // Working window for this doctor/weekday: shift → clinic schedule →
         // defaults (resolveDayWindow understands the app's week-schedule JSON).
-        const shift = (shifts as Array<{ staffId: string; dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }>).find(
-          (sh) => sh.staffId === doctor.id && sh.dayOfWeek === weekday && sh.isActive
-        )
+        const shift = (
+          shifts as Array<{
+            staffId: string
+            dayOfWeek: number
+            startTime: string
+            endTime: string
+            isActive: boolean
+          }>
+        ).find((sh) => sh.staffId === doctor.id && sh.dayOfWeek === weekday && sh.isActive)
         const resolved = resolveDayWindow(dateKey, hospital?.workingHours ?? null, shift ?? null)
         const window = resolved.window
         if (!window) continue // clinic closed / doctor not working this day
@@ -170,20 +187,27 @@ export async function POST(
 
           // Per-doctor recurring break on this weekday.
           const slotStartMin = slotMin
-          const breakHit = (doctorBreaks as Array<{ staffId: string; dayOfWeek: number; startTime: string; endTime: string }>).some(
-            (b) => {
-              if (b.staffId !== doctor.id || b.dayOfWeek !== weekday) return false
-              const bStart = timeToMinutes(b.startTime)
-              const bEnd = timeToMinutes(b.endTime)
-              return slotStartMin < bEnd && slotStartMin + duration > bStart
-            }
-          )
+          const breakHit = (
+            doctorBreaks as Array<{
+              staffId: string
+              dayOfWeek: number
+              startTime: string
+              endTime: string
+            }>
+          ).some((b) => {
+            if (b.staffId !== doctor.id || b.dayOfWeek !== weekday) return false
+            const bStart = timeToMinutes(b.startTime)
+            const bEnd = timeToMinutes(b.endTime)
+            return slotStartMin < bEnd && slotStartMin + duration > bStart
+          })
           if (breakHit) continue
 
           // One-off blocked slots overlapping this candidate slot.
           const slotStartAt = new Date(`${dateKey}T${startTime}:00`)
           const slotEndAt = new Date(slotStartAt.getTime() + duration * 60000)
-          const blockedHit = (blockedSlots as Array<{ staffId: string | null; startAt: Date; endAt: Date }>).some(
+          const blockedHit = (
+            blockedSlots as Array<{ staffId: string | null; startAt: Date; endAt: Date }>
+          ).some(
             (b) =>
               (!b.staffId || b.staffId === doctor.id) &&
               b.startAt < slotEndAt &&

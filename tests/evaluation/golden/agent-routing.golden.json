@@ -14,9 +14,7 @@
         "message": "What is the weather like in Cairo today?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OUT_OF_DOMAIN",
         "patientInvolved": false,
         "toothInvolved": false,
@@ -27,14 +25,9 @@
           "max": 0
         },
         "stopReason": "OUT_OF_DOMAIN",
-        "mustNotContain": [
-          "weather"
-        ]
+        "mustNotContain": ["weather"]
       },
-      "tags": [
-        "boundary",
-        "no-retrieval"
-      ]
+      "tags": ["boundary", "no-retrieval"]
     },
     {
       "caseId": "AGT-002",
@@ -48,23 +41,17 @@
         "message": "What is the standard of care for periapical abscess management?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "KNOWLEDGE",
         "patientInvolved": false,
         "contextProfile": null,
-        "tools": [
-          "retrieve_dental_knowledge"
-        ],
+        "tools": ["retrieve_dental_knowledge"],
         "llmCalls": {
           "min": 0,
           "max": 1
         }
       },
-      "tags": [
-        "knowledge-routing"
-      ]
+      "tags": ["knowledge-routing"]
     },
     {
       "caseId": "AGT-003",
@@ -79,21 +66,13 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "CLINICAL_ANALYSIS",
         "patientInvolved": true,
         "contextProfile": "CLINICAL",
-        "tools": [
-          "get_clinical_summary",
-          "retrieve_dental_knowledge"
-        ]
+        "tools": ["get_clinical_summary", "retrieve_dental_knowledge"]
       },
-      "tags": [
-        "clinical",
-        "profile"
-      ]
+      "tags": ["clinical", "profile"]
     },
     {
       "caseId": "AGT-004",
@@ -107,19 +86,13 @@
         "message": "Who is waiting in the queue right now?"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
         "patientInvolved": false,
         "contextProfile": null,
-        "tools": [
-          "get_waiting_queue"
-        ]
+        "tools": ["get_waiting_queue"]
       },
-      "tags": [
-        "operational"
-      ]
+      "tags": ["operational"]
     },
     {
       "caseId": "AGT-005",
@@ -134,23 +107,16 @@
         "message": "Please handle the dental chair 4 maintenance checklist"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
         "patientInvolved": false,
         "llmCalls": {
           "min": 1,
           "max": 1
         },
-        "tools": [
-          "get_appointments"
-        ]
+        "tools": ["get_appointments"]
       },
-      "tags": [
-        "llm-fallback",
-        "typed-fixture"
-      ]
+      "tags": ["llm-fallback", "typed-fixture"]
     },
     {
       "caseId": "AGT-006",
@@ -166,23 +132,14 @@
         "patientId": "pat-B1"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "patientInvolved": true,
         "stopReason": "MISSING_CONTEXT",
         "tools": [],
-        "mustContain": [
-          "never guess patients"
-        ],
-        "mustNotContain": [
-          "Omar"
-        ]
+        "mustContain": ["never guess patients"],
+        "mustNotContain": ["Omar"]
       },
-      "tags": [
-        "tenant-isolation",
-        "no-retrieval"
-      ]
+      "tags": ["tenant-isolation", "no-retrieval"]
     },
     {
       "caseId": "AGT-007",
@@ -197,19 +154,13 @@
         "patientId": "pat-A1"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "MULTI_STEP",
         "patientInvolved": true,
         "contextProfile": "FULL_360",
-        "tools": [
-          "get_patient_360"
-        ]
+        "tools": ["get_patient_360"]
       },
-      "tags": [
-        "multi-step"
-      ]
+      "tags": ["multi-step"]
     },
     {
       "caseId": "AGT-008",
@@ -223,23 +174,14 @@
         "message": "Show my upcoming appointment"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "INFORMATIONAL",
         "patientInvolved": true,
         "contextProfile": "PATIENT_OVERVIEW",
-        "tools": [
-          "get_patient_overview"
-        ],
-        "mustContain": [
-          "Ahmed Ali"
-        ]
+        "tools": ["get_patient_overview"],
+        "mustContain": ["Ahmed Ali"]
       },
-      "tags": [
-        "portal",
-        "self-scope"
-      ]
+      "tags": ["portal", "self-scope"]
     },
     {
       "caseId": "AGT-009",
@@ -253,23 +195,16 @@
         "message": "Record a payment of 500 egp for Ahmed Ali"
       },
       "expected": {
-        "status": [
-          "FAILED"
-        ],
+        "status": ["FAILED"],
         "taskType": "ACTION_REQUEST",
         "stopReason": "SAFETY_BLOCK",
         "actionsExecuted": {
           "min": 0,
           "max": 0
         },
-        "mustContain": [
-          "not permitted for your role (DOCTOR)"
-        ]
+        "mustContain": ["not permitted for your role (DOCTOR)"]
       },
-      "tags": [
-        "rbac",
-        "financial"
-      ]
+      "tags": ["rbac", "financial"]
     },
     {
       "caseId": "AGT-010",
@@ -283,23 +218,16 @@
         "message": "Book an appointment for me tomorrow"
       },
       "expected": {
-        "status": [
-          "FAILED"
-        ],
+        "status": ["FAILED"],
         "taskType": "ACTION_REQUEST",
         "stopReason": "SAFETY_BLOCK",
         "actionsExecuted": {
           "min": 0,
           "max": 0
         },
-        "mustContain": [
-          "not permitted for your role (PATIENT)"
-        ]
+        "mustContain": ["not permitted for your role (PATIENT)"]
       },
-      "tags": [
-        "rbac",
-        "portal"
-      ]
+      "tags": ["rbac", "portal"]
     },
     {
       "caseId": "AGT-011",
@@ -313,22 +241,16 @@
         "message": "Record a payment of 500 egp for the invoice INV-A-101 of Ahmed Ali"
       },
       "expected": {
-        "status": [
-          "CLARIFICATION_REQUIRED"
-        ],
+        "status": ["CLARIFICATION_REQUIRED"],
         "stopReason": "MISSING_CONTEXT",
         "tools": [],
         "actionsExecuted": {
           "min": 0,
           "max": 0
         },
-        "mustContain": [
-          "never guess patients"
-        ]
+        "mustContain": ["never guess patients"]
       },
-      "tags": [
-        "clarification"
-      ]
+      "tags": ["clarification"]
     },
     {
       "caseId": "AGT-012",
@@ -342,19 +264,12 @@
         "message": "مين في قائمة الانتظار بالعيادة دلوقتي؟"
       },
       "expected": {
-        "status": [
-          "COMPLETED"
-        ],
+        "status": ["COMPLETED"],
         "taskType": "OPERATIONAL",
         "patientInvolved": false,
-        "tools": [
-          "get_waiting_queue"
-        ]
+        "tools": ["get_waiting_queue"]
       },
-      "tags": [
-        "bilingual",
-        "operational"
-      ],
+      "tags": ["bilingual", "operational"],
       "description": "The Arabic queue phrasing must carry BOTH a dental-domain term (عيادة) and an operational signal (قائمة) — the classifier is a domain-gated signal detector; a queue question without dental-domain signal is honestly OUT_OF_DOMAIN."
     }
   ]

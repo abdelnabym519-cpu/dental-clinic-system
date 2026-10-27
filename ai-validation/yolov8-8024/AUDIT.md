@@ -5,7 +5,7 @@ Audit date: 2026-09-18. Scope: source auditing and artifact verification.
 
 > **Revision (after the first local run).** The operator downloaded the checkpoint and
 > verified its SHA-256 locally, then ran this lab's gate on it. The gate stopped with
-> *"class name(s) missing from the bytes"* — a **false block**: it was matching the model
+> _"class name(s) missing from the bytes"_ — a **false block**: it was matching the model
 > card's spellings while the checkpoint uses its own for three of the eight concepts. The
 > gate now resolves them through an explicit, closed alias table (`Missing teeth`,
 > `Periapical lesion`, `Root canal obturation`), records the file's own wording unchanged,
@@ -17,7 +17,7 @@ Search for a **verification** tag:
   (the Hugging Face API/tree/commits for this repo, the file tree's published pickle scan,
   the current `ultralytics` wheel from PyPI, or a local test).
 - **CORROBORATED** — stated identically by independent public sources (model card,
-  `model_handler.py`, a consumer Space) but *not* read out of the checkpoint's own bytes.
+  `model_handler.py`, a consumer Space) but _not_ read out of the checkpoint's own bytes.
 - **UNVERIFIED** — not established here; the reason is given with each one.
 
 ---
@@ -46,7 +46,7 @@ revision and at that commit. `model_handler.py` arrived in
 **VERIFIED-HERE.** The repository declares `license: apache-2.0`.
 
 **Read this together with this caveat, which is on the record in a third-party consumer of
-the same model:** the checkpoint is an Ultralytics artifact, and *loading* it uses the
+the same model:** the checkpoint is an Ultralytics artifact, and _loading_ it uses the
 `ultralytics` package, which is **AGPL-3.0**. The consumer Space
 `SajedAlmorsy/AlexTechPark` says exactly that in its conversion script and mitigates it by
 converting to ONNX and running inference with `onnxruntime` (MIT) instead. The declared
@@ -164,16 +164,16 @@ segmentation head. Not measured from the checkpoint.
 The checkpoint's own `names` mapping, read out of `data.pkl` by the operator's run and
 recorded in `checkpoint_ops.txt`:
 
-| idx | canonical concept (audited) | label inside `8024.pt` | match |
-| --- | --- | --- | --- |
-| 0 | Caries | `Caries` | canonical |
-| 1 | Crown | `Crown` | canonical |
-| 2 | Filling | `Filling` | canonical |
-| 3 | **Implant** | `Implant` | canonical — **mandatory** |
-| 4 | Missing-tooth-between | `Missing teeth` | alias |
-| 5 | Periapical-lesion | `Periapical lesion` | alias |
-| 6 | Root Piece | `Root Piece` | canonical |
-| 7 | Root-Canal-Treatment | `Root canal obturation` | alias |
+| idx | canonical concept (audited) | label inside `8024.pt`  | match                     |
+| --- | --------------------------- | ----------------------- | ------------------------- |
+| 0   | Caries                      | `Caries`                | canonical                 |
+| 1   | Crown                       | `Crown`                 | canonical                 |
+| 2   | Filling                     | `Filling`               | canonical                 |
+| 3   | **Implant**                 | `Implant`               | canonical — **mandatory** |
+| 4   | Missing-tooth-between       | `Missing teeth`         | alias                     |
+| 5   | Periapical-lesion           | `Periapical lesion`     | alias                     |
+| 6   | Root Piece                  | `Root Piece`            | canonical                 |
+| 7   | Root-Canal-Treatment        | `Root canal obturation` | alias                     |
 
 Three concepts are spelled differently inside the checkpoint than on the model card. This is
 a **naming difference, not a missing class**, and it was handled as such: the gate maps the
@@ -206,7 +206,7 @@ JSON report carries the result, including the file's own spelling of every conce
 
 **VERIFIED-HERE, and the answer is yes — by format.** A `.pt` checkpoint is a pickle. A
 default load (`torch.load(..., weights_only=False)`, which is what `YOLO(path)` does unless
-told otherwise) reconstructs the object graph by *calling* the classes and reducers the
+told otherwise) reconstructs the object graph by _calling_ the classes and reducers the
 file names. This is why no `.pt` file can be called "safe" on the basis of a scan: the
 scan shows the names, the load runs them.
 
@@ -216,7 +216,7 @@ What the scan of this file shows: all 33 imports are Ultralytics/torch model cla
 AV scan reports the generic signature `Py.Malware.Obfuscation___builtin___getattr_GLOBAL`,
 and Protect AI flags `PAIT-PYTCH-101`. **All three verdicts are pattern-based**: every
 Ultralytics checkpoint contains `getattr`, which that ecosystem uses for legitimate
-attribute-based reconstruction, and none of the three reports claim this file *does*
+attribute-based reconstruction, and none of the three reports claim this file _does_
 something malicious. Equally, none of them prove it does not.
 
 Two facts were established from primary sources to allow a judgement instead of a guess:
@@ -247,7 +247,7 @@ Two facts were established from primary sources to allow a judgement instead of 
 
 Two limits, stated plainly. It needs **torch ≥ 2.6** (`_SafeLoad.SUPPORTED` checks for
 `torch.serialization.get_unsafe_globals_in_checkpoint`); on an older torch the flag is
-*ignored* and the loader degrades to a normal load, so the torch version must be checked
+_ignored_ and the loader degrades to a normal load, so the torch version must be checked
 rather than assumed. And this is a code-level reading of the current release, verified in
 the wheel — not a live load of `8024.pt`, which has not happened.
 
@@ -283,14 +283,14 @@ results. They stay unverified until a real, authorised run happens.
 ## Temporary classification
 
 **BLOCKED** — the audit cannot be completed in this environment, and loading is not yet
-justified. This is *not* a finding against the model.
+justified. This is _not_ a finding against the model.
 
 What the operator's local run has since cleared:
 
 1. **Identity** — the operator's own SHA-256 matches the expected digest (field 6), so the
    audited bytes are the bytes on disk.
 2. **The class list and `Implant`** — read out of the checkpoint itself (fields 11 and 12).
-   The gate's first run stopped on a *false* class-missing block; the alias mapping fixed it
+   The gate's first run stopped on a _false_ class-missing block; the alias mapping fixed it
    without touching the checkpoint, and `Implant` presence is now enforced.
 
 What still keeps this at BLOCKED:
@@ -325,7 +325,7 @@ python scripts\inspect_checkpoint.py --checkpoint model\8024.pt `
 
 If the gate exits 0 — which the corrected class resolution now allows for this file — fields
 6, 7, 11, 12 and 13 are "read from the file", and the classification can be raised to
-**READY FOR LOCAL INFERENCE**. That still means *nothing has run yet*: it is not, and cannot
+**READY FOR LOCAL INFERENCE**. That still means _nothing has run yet_: it is not, and cannot
 be, `Operational`.
 Any other exit code is a stop: send the JSON and the disassembly text back before touching
 the file with a loader.

@@ -33,8 +33,31 @@ describe('robotStateFor — one canonical mapping (§34)', () => {
   })
 
   it('never produces a state outside the 9 allowed robot states', () => {
-    const allowed = new Set(['idle', 'listening', 'thinking', 'speaking', 'interrupted', 'waiting-approval', 'warning', 'error', 'success'])
-    const all: InteractionState[] = ['IDLE', 'LISTENING', 'TRANSCRIBING', 'UNDERSTANDING', 'PROCESSING', 'WAITING_APPROVAL', 'SPEAKING', 'INTERRUPTED', 'WARNING', 'ERROR', 'COMPLETED', 'CANCELLED']
+    const allowed = new Set([
+      'idle',
+      'listening',
+      'thinking',
+      'speaking',
+      'interrupted',
+      'waiting-approval',
+      'warning',
+      'error',
+      'success',
+    ])
+    const all: InteractionState[] = [
+      'IDLE',
+      'LISTENING',
+      'TRANSCRIBING',
+      'UNDERSTANDING',
+      'PROCESSING',
+      'WAITING_APPROVAL',
+      'SPEAKING',
+      'INTERRUPTED',
+      'WARNING',
+      'ERROR',
+      'COMPLETED',
+      'CANCELLED',
+    ]
     for (const s of all) expect(allowed.has(robotStateFor(s))).toBe(true)
   })
 })
@@ -52,7 +75,9 @@ describe('DentoraRobot rendering + accessibility (§26)', () => {
   })
 
   it('waiting-approval is visually distinct from success and error', () => {
-    const { container: a } = render(<DentoraRobot state="WAITING_APPROVAL" statusLabel="approval" />)
+    const { container: a } = render(
+      <DentoraRobot state="WAITING_APPROVAL" statusLabel="approval" />
+    )
     const { container: b } = render(<DentoraRobot state="COMPLETED" statusLabel="done" />)
     const { container: c } = render(<DentoraRobot state="ERROR" statusLabel="err" />)
     const states = [
@@ -70,15 +95,26 @@ describe('DentoraRobot rendering + accessibility (§26)', () => {
   })
 
   it('reducedMotion suppresses eye animation (vestibular safety, §26)', () => {
-    const { container } = render(<DentoraRobot state="LISTENING" statusLabel="listening" reducedMotion />)
+    const { container } = render(
+      <DentoraRobot state="LISTENING" statusLabel="listening" reducedMotion />
+    )
     // Listening pulses the eyes via <animate> — none may exist when reduced.
-    const pulses = Array.from(container.querySelectorAll('animate')).filter((a) => a.getAttribute('values'))
+    const pulses = Array.from(container.querySelectorAll('animate')).filter((a) =>
+      a.getAttribute('values')
+    )
     expect(pulses.length).toBe(0)
   })
 
   it('supports all responsive sizes including kiosk (§25)', () => {
-    for (const [size, px] of [['sm', 96], ['md', 160], ['lg', 240], ['kiosk', 320]]) {
-      const { container, unmount } = render(<DentoraRobot state="IDLE" statusLabel="s" size={size} />)
+    for (const [size, px] of [
+      ['sm', 96],
+      ['md', 160],
+      ['lg', 240],
+      ['kiosk', 320],
+    ]) {
+      const { container, unmount } = render(
+        <DentoraRobot state="IDLE" statusLabel="s" size={size} />
+      )
       const box = container.querySelector('[role="status"]')
       expect(box.style.width).toBe(`${px}px`)
       unmount()
@@ -86,7 +122,9 @@ describe('DentoraRobot rendering + accessibility (§26)', () => {
   })
 
   it('shows the accessible detail text when provided', () => {
-    render(<DentoraRobot state="WAITING_APPROVAL" statusLabel="waiting" detailText="تأكيد الحجز؟" />)
+    render(
+      <DentoraRobot state="WAITING_APPROVAL" statusLabel="waiting" detailText="تأكيد الحجز؟" />
+    )
     expect(screen.getByText('تأكيد الحجز؟')).toBeInTheDocument()
   })
 })

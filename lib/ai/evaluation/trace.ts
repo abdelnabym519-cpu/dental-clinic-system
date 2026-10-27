@@ -21,10 +21,7 @@ export function safeHash(value: string): string {
  * The input message is NOT stored (it may carry untrusted/PHI text) — only
  * its hash, so two runs of the same case are correlatable.
  */
-export function toEvaluationTrace(
-  response: AgentResponse,
-  request: AgentRequest,
-): EvaluationTrace {
+export function toEvaluationTrace(response: AgentResponse, request: AgentRequest): EvaluationTrace {
   const t = response.trace
   const toolSummary = t.toolCalls.map((c) => ({
     index: c.index,
@@ -47,7 +44,8 @@ export function toEvaluationTrace(
   const requested = Array.isArray(request.attachments) ? request.attachments.length : 0
   const deterministic = t.modelCalls === 0
   const blocked =
-    (response.status === 'FAILED' && (t.failureCodes.includes('UNAUTHORIZED') || t.failureCodes.includes('POLICY_BLOCKED'))) ||
+    (response.status === 'FAILED' &&
+      (t.failureCodes.includes('UNAUTHORIZED') || t.failureCodes.includes('POLICY_BLOCKED'))) ||
     response.verification?.result === 'FAIL'
   const structure: Record<string, unknown> = {
     requestId: request.requestId,
@@ -65,9 +63,13 @@ export function toEvaluationTrace(
     contextProfile: response.contextProfileUsed,
     knowledge: k
       ? {
-          ok: k.ok, failureCode: k.failureCode, candidateCount: k.candidateCount,
-          selectedCount: k.selectedCount, sourceCount: k.sourceCount,
-          citationCount: k.citationCount, retrievalMs: k.retrievalMs,
+          ok: k.ok,
+          failureCode: k.failureCode,
+          candidateCount: k.candidateCount,
+          selectedCount: k.selectedCount,
+          sourceCount: k.sourceCount,
+          citationCount: k.citationCount,
+          retrievalMs: k.retrievalMs,
         }
       : null,
     attachments: { requested, resolved: attachmentIds.length, byClass },
@@ -83,9 +85,7 @@ export function toEvaluationTrace(
     warnings: response.warnings.length,
     fallback: deterministic ? 'DETERMINISTIC' : 'LLM_FALLBACK_USED',
   }
-  const fingerprint = createHash('sha256')
-    .update(canonicalJson(structure))
-    .digest('hex')
+  const fingerprint = createHash('sha256').update(canonicalJson(structure)).digest('hex')
   return {
     traceId: t.traceId,
     requestId: request.requestId,

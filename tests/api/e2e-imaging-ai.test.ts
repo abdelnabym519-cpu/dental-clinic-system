@@ -79,7 +79,8 @@ const EMAIL = process.env.E2E_DOCTOR_EMAIL || 'doctor@dentora-dental.com'
 const PASSWORD = process.env.E2E_DOCTOR_PASSWORD || 'Doctor@123'
 const SAMPLE_PATH = process.env.E2E_SAMPLE_PATH || 'ai-validation/liodon/input/sample.jpg'
 const EXPECTED_SAMPLE_SHA = (
-  process.env.E2E_EXPECTED_SAMPLE_SHA || 'f0a1ffa2e77a88aa13957220eef2844b3bc14719061be8c2d3e8d417fff0f3ec'
+  process.env.E2E_EXPECTED_SAMPLE_SHA ||
+  'f0a1ffa2e77a88aa13957220eef2844b3bc14719061be8c2d3e8d417fff0f3ec'
 ).toLowerCase()
 // Pinned artifact (ai-validation/liodon/MODEL_PROVENANCE.md) — the real Liodon.
 const REAL_MODEL_SHA = '4cee38b54203634d895ed30a8910f5d7c4cefe22b18f9116b5561d9dd6e83a71'
@@ -145,7 +146,10 @@ function loadDotEnvFile(file = path.resolve(process.cwd(), '.env')): void {
     if (!trimmed || trimmed.startsWith('#')) continue
     const eq = trimmed.indexOf('=')
     if (eq === -1) continue
-    const key = trimmed.slice(0, eq).trim().replace(/^export\s+/, '')
+    const key = trimmed
+      .slice(0, eq)
+      .trim()
+      .replace(/^export\s+/, '')
     let value = trimmed.slice(eq + 1).trim()
     if (
       (value.startsWith('"') && value.endsWith('"')) ||
@@ -229,9 +233,7 @@ async function loginAsDoctor(): Promise<string> {
   // Step 3 — session cookie, set on the 302 (no need to follow the redirect).
   const loginCookies = loginRes.headers.getSetCookie() ?? []
   const session = loginCookies.find(
-    (c) =>
-      c.startsWith('authjs.session-token=') ||
-      c.startsWith('next-auth.session-token=')
+    (c) => c.startsWith('authjs.session-token=') || c.startsWith('next-auth.session-token=')
   )
   if (!session) {
     const location = loginRes.headers.get('location') ?? ''
@@ -280,9 +282,10 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
       eh.is_standin_not_liodon,
       'liodon engine is running the SYNTHETIC STAND-IN — gate item 7 requires the real artifact'
     ).toBe(false)
-    expect(eh.model_checksum, 'liodon engine checksum does not match the pinned real artifact').toBe(
-      REAL_MODEL_SHA
-    )
+    expect(
+      eh.model_checksum,
+      'liodon engine checksum does not match the pinned real artifact'
+    ).toBe(REAL_MODEL_SHA)
     expect(eh.model_checksum_expected).toBe(REAL_MODEL_SHA)
 
     // Orchestrator: secret set (it refuses to start otherwise), DB up, engine reachable.
@@ -303,16 +306,26 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
     })
     expect(user, `user ${EMAIL} not found`).toBeTruthy()
     expect(['DOCTOR', 'ADMIN'], 'E2E doctor must be DOCTOR or ADMIN').toContain(user!.role)
-    expect(user!.hospitalId, 'E2E doctor has no hospital (tenant) — cannot run the flow').toBeTruthy()
+    expect(
+      user!.hospitalId,
+      'E2E doctor has no hospital (tenant) — cannot run the flow'
+    ).toBeTruthy()
     state.hospitalId = user!.hospitalId!
 
     // Patient: explicit or first of the tenant (official flow only needs the id).
-    const patientId = process.env.E2E_PATIENT_ID || (await prisma.patient.findFirst({
-      where: { hospitalId: user!.hospitalId! },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true },
-    }))?.id
-    expect(patientId, 'no patient found for this tenant (seed one or set E2E_PATIENT_ID)').toBeTruthy()
+    const patientId =
+      process.env.E2E_PATIENT_ID ||
+      (
+        await prisma.patient.findFirst({
+          where: { hospitalId: user!.hospitalId! },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        })
+      )?.id
+    expect(
+      patientId,
+      'no patient found for this tenant (seed one or set E2E_PATIENT_ID)'
+    ).toBeTruthy()
     state.patientId = patientId!
 
     // Real sample artifact, verified by checksum before anything else.
@@ -332,74 +345,67 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
       headers: { cookie: state.cookie!, ...(init?.headers as Record<string, string> | undefined) },
     })
 
-  it(
-    '1. uploads the real panorama via the API → MinIO object + study + COMPLETED job',
-    async () => {
-      const form = new FormData()
-      form.append(
-        'file',
-        new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' })
-      )
-      form.append('patientId', state.patientId!)
-      form.append('modality', 'PANORAMIC')
-      form.append('studyType', 'E2E-19A')
-      form.append('analyze', 'true')
+  it('1. uploads the real panorama via the API → MinIO object + study + COMPLETED job', async () => {
+    const form = new FormData()
+    form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
+    form.append('patientId', state.patientId!)
+    form.append('modality', 'PANORAMIC')
+    form.append('studyType', 'E2E-19A')
+    form.append('analyze', 'true')
 
-      const res = await api('/api/imaging/studies', { method: 'POST', body: form })
-      // Read the body ONCE — undici throws "Body is unusable: Body has
-      // already been read" on a second consumption, and the eager
-      // `await res.text()` inside the expect() message argument consumed it
-      // before res.json() could run (truncated for readable diagnostics).
-      const raw = await res.text()
-      expect(res.status, raw.slice(0, 500)).toBe(201)
-      const body = JSON.parse(raw)
-      state.study = body.study
-      state.job = body.job
+    const res = await api('/api/imaging/studies', { method: 'POST', body: form })
+    // Read the body ONCE — undici throws "Body is unusable: Body has
+    // already been read" on a second consumption, and the eager
+    // `await res.text()` inside the expect() message argument consumed it
+    // before res.json() could run (truncated for readable diagnostics).
+    const raw = await res.text()
+    expect(res.status, raw.slice(0, 500)).toBe(201)
+    const body = JSON.parse(raw)
+    state.study = body.study
+    state.job = body.job
 
-      const s = body.study as StudyView
-      expect(s.id).toBeTruthy()
-      // Tenant-scoped canonical key (spec section: {hospitalId}/imaging/{patientId}/{studyId}/original.ext)
-      expect(s.originalKey).toBe(
-        `${state.hospitalId}/imaging/${state.patientId}/${s.id}/original.jpg`
-      )
-      // The stored object IS the real artifact.
-      expect(s.originalHash).toBe(EXPECTED_SAMPLE_SHA)
-      expect(s.originalSize).toBe(state.sampleBytes!.length)
-      expect(s.status).toBe('ANALYZED')
+    const s = body.study as StudyView
+    expect(s.id).toBeTruthy()
+    // Tenant-scoped canonical key (spec section: {hospitalId}/imaging/{patientId}/{studyId}/original.ext)
+    expect(s.originalKey).toBe(
+      `${state.hospitalId}/imaging/${state.patientId}/${s.id}/original.jpg`
+    )
+    // The stored object IS the real artifact.
+    expect(s.originalHash).toBe(EXPECTED_SAMPLE_SHA)
+    expect(s.originalSize).toBe(state.sampleBytes!.length)
+    expect(s.status).toBe('ANALYZED')
 
-      // Synchronous trigger: the job ran the full pipeline before this 201.
-      const j = body.job as JobView
-      expect(j.status, 'job must be COMPLETED (synchronous /analyze)').toBe('COMPLETED')
-      expect(j.findings).toBeTruthy()
-    },
-    120000
-  )
+    // Synchronous trigger: the job ran the full pipeline before this 201.
+    const j = body.job as JobView
+    expect(j.status, 'job must be COMPLETED (synchronous /analyze)').toBe('COMPLETED')
+    expect(j.findings).toBeTruthy()
+  }, 120000)
 
-  it(
-    '2. real Liodon inference: 3-class output, original-pixel boxes, tooth_number always null',
-    () => {
-      const findings = state.job!.findings!
+  it('2. real Liodon inference: 3-class output, original-pixel boxes, tooth_number always null', () => {
+    const findings = state.job!.findings!
+    expect(
+      findings.length,
+      'the real model produced no detections on the sample — inspect manually'
+    ).toBeGreaterThan(0)
+    for (const f of findings) {
+      expect(CLASSES.has(f.condition), `unknown class ${f.condition}`).toBe(true)
+      expect(f.confidence).toBeGreaterThanOrEqual(0.45) // validated operating point
+      expect(f.confidence).toBeLessThanOrEqual(1)
       expect(
-        findings.length,
-        'the real model produced no detections on the sample — inspect manually'
-      ).toBeGreaterThan(0)
-      for (const f of findings) {
-        expect(CLASSES.has(f.condition), `unknown class ${f.condition}`).toBe(true)
-        expect(f.confidence).toBeGreaterThanOrEqual(0.45) // validated operating point
-        expect(f.confidence).toBeLessThanOrEqual(1)
-        expect(f.tooth_number, 'tooth_number must remain null (model has no tooth numbers)').toBeNull()
-        const b = f.bounding_box
-        for (const v of [b.x, b.y, b.width, b.height, b.x2, b.y2]) {
-          expect(Number.isFinite(v)).toBe(true)
-        }
-        expect(b.width).toBeGreaterThanOrEqual(0)
-        expect(b.height).toBeGreaterThanOrEqual(0)
-        expect(b.x2).toBeGreaterThanOrEqual(b.x)
-        expect(b.y2).toBeGreaterThanOrEqual(b.y)
-        expect(b.coordinate_space).toBe('original_image')
+        f.tooth_number,
+        'tooth_number must remain null (model has no tooth numbers)'
+      ).toBeNull()
+      const b = f.bounding_box
+      for (const v of [b.x, b.y, b.width, b.height, b.x2, b.y2]) {
+        expect(Number.isFinite(v)).toBe(true)
       }
+      expect(b.width).toBeGreaterThanOrEqual(0)
+      expect(b.height).toBeGreaterThanOrEqual(0)
+      expect(b.x2).toBeGreaterThanOrEqual(b.x)
+      expect(b.y2).toBeGreaterThanOrEqual(b.y)
+      expect(b.coordinate_space).toBe('original_image')
     }
-  )
+  })
 
   it('3. provenance: real checksum (not stand-in), pinned source + license, image hash', () => {
     const p = state.job!.provenance!
@@ -415,63 +421,54 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
     expect(p.timestamp).toBeTruthy()
   })
 
-  it(
-    '4. outputs persisted in MinIO as SEPARATE objects; original untouched',
-    async () => {
-      const { getStorage } = await import('@/lib/storage')
-      const storage = getStorage()
+  it('4. outputs persisted in MinIO as SEPARATE objects; original untouched', async () => {
+    const { getStorage } = await import('@/lib/storage')
+    const storage = getStorage()
 
-      const rawKey = state.job!.raw_output_key!
-      const annKey = state.job!.annotated_image_key!
-      const expectedBase =
-        `${state.hospitalId}/imaging/${state.patientId}/${state.study!.id}/ai/liodon`
-      expect(rawKey).toBe(`${expectedBase}/result.json`)
-      expect(annKey).toBe(`${expectedBase}/annotated.png`)
-      // Same tenant prefix as the original — tenant isolation at storage level.
-      expect(rawKey.startsWith(`${state.hospitalId}/`)).toBe(true)
+    const rawKey = state.job!.raw_output_key!
+    const annKey = state.job!.annotated_image_key!
+    const expectedBase = `${state.hospitalId}/imaging/${state.patientId}/${state.study!.id}/ai/liodon`
+    expect(rawKey).toBe(`${expectedBase}/result.json`)
+    expect(annKey).toBe(`${expectedBase}/annotated.png`)
+    // Same tenant prefix as the original — tenant isolation at storage level.
+    expect(rawKey.startsWith(`${state.hospitalId}/`)).toBe(true)
 
-      // The raw object is the engine body verbatim (orchestrator persists it
-      // unmodified) — assertions below prove what the REAL model produced.
-      const raw = await storage.get(rawKey)
-      const rawJson = JSON.parse(raw.body.toString('utf8'))
-      expect(Array.isArray(rawJson.detections)).toBe(true)
-      expect(rawJson.detections.length).toBe(state.job!.findings!.length)
-      for (const d of rawJson.detections as Array<Record<string, unknown>>) {
-        expect(d.tooth_number, 'raw engine detection must have tooth_number null').toBeNull()
-      }
-      expect((rawJson.model as Record<string, unknown>).model_sha256).toBe(REAL_MODEL_SHA)
-      expect((rawJson.image as Record<string, unknown>).sha256).toBe(EXPECTED_SAMPLE_SHA)
-
-      const ann = await storage.get(annKey)
-      expect(ann.body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(
-        true,
-        'annotated object is not a valid PNG'
-      )
-    },
-    60000
-  )
-
-  it(
-    '5. database: job COMPLETED with provenance columns, study ANALYZED',
-    async () => {
-      const { PrismaClient } = await import('@prisma/client')
-      const prisma = new PrismaClient()
-      const job = await prisma.aIAnalysisJob.findUnique({ where: { id: state.job!.id } })
-      expect(job?.status).toBe('COMPLETED')
-      expect(job?.completedAt).toBeTruthy()
-      expect(job?.processingTimeMs, 'processingTimeMs must be recorded').toBeGreaterThan(0)
-      expect(job?.modelChecksum).toBe(REAL_MODEL_SHA)
-      expect(job?.modelSource).toBe(MODEL_SOURCE)
-      expect(job?.modelLicense).toBe('CC-BY-NC-4.0')
-      expect(job?.rawOutputKey).toBe(state.job!.raw_output_key)
-      expect(job?.provenance).toBeTruthy()
-      expect((job!.findings as unknown[]).length).toBe(state.job!.findings!.length)
-
-      const study = await prisma.imagingStudy.findUnique({ where: { id: state.study!.id } })
-      expect(study?.status, 'study must be ANALYZED after a completed job').toBe('ANALYZED')
-      await prisma.$disconnect()
+    // The raw object is the engine body verbatim (orchestrator persists it
+    // unmodified) — assertions below prove what the REAL model produced.
+    const raw = await storage.get(rawKey)
+    const rawJson = JSON.parse(raw.body.toString('utf8'))
+    expect(Array.isArray(rawJson.detections)).toBe(true)
+    expect(rawJson.detections.length).toBe(state.job!.findings!.length)
+    for (const d of rawJson.detections as Array<Record<string, unknown>>) {
+      expect(d.tooth_number, 'raw engine detection must have tooth_number null').toBeNull()
     }
-  )
+    expect((rawJson.model as Record<string, unknown>).model_sha256).toBe(REAL_MODEL_SHA)
+    expect((rawJson.image as Record<string, unknown>).sha256).toBe(EXPECTED_SAMPLE_SHA)
+
+    const ann = await storage.get(annKey)
+    expect(
+      ann.body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    ).toBe(true, 'annotated object is not a valid PNG')
+  }, 60000)
+
+  it('5. database: job COMPLETED with provenance columns, study ANALYZED', async () => {
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    const job = await prisma.aIAnalysisJob.findUnique({ where: { id: state.job!.id } })
+    expect(job?.status).toBe('COMPLETED')
+    expect(job?.completedAt).toBeTruthy()
+    expect(job?.processingTimeMs, 'processingTimeMs must be recorded').toBeGreaterThan(0)
+    expect(job?.modelChecksum).toBe(REAL_MODEL_SHA)
+    expect(job?.modelSource).toBe(MODEL_SOURCE)
+    expect(job?.modelLicense).toBe('CC-BY-NC-4.0')
+    expect(job?.rawOutputKey).toBe(state.job!.raw_output_key)
+    expect(job?.provenance).toBeTruthy()
+    expect((job!.findings as unknown[]).length).toBe(state.job!.findings!.length)
+
+    const study = await prisma.imagingStudy.findUnique({ where: { id: state.study!.id } })
+    expect(study?.status, 'study must be ANALYZED after a completed job').toBe('ANALYZED')
+    await prisma.$disconnect()
+  })
 
   it('6. audit trail: uploaded / requested / processing / completed (tenant-scoped)', async () => {
     const { PrismaClient } = await import('@prisma/client')
@@ -488,83 +485,71 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
     await prisma.$disconnect()
   })
 
-  it(
-    '7. doctor review ACCEPTED → acceptedFindings + study REVIEWED + audit',
-    async () => {
-      const res = await api(`/api/imaging/jobs/${state.job!.id}/review`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision: 'ACCEPTED', reviewNotes: 'E2E acceptance' }),
-      })
-      // Same single-body-consumption rule as test 1 (undici).
-      const raw = await res.text()
-      expect(res.status, raw.slice(0, 500)).toBe(200)
-      const body = JSON.parse(raw)
-      expect(body.job.reviewDecision).toBe('ACCEPTED')
-      expect(body.study.status).toBe('REVIEWED')
+  it('7. doctor review ACCEPTED → acceptedFindings + study REVIEWED + audit', async () => {
+    const res = await api(`/api/imaging/jobs/${state.job!.id}/review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision: 'ACCEPTED', reviewNotes: 'E2E acceptance' }),
+    })
+    // Same single-body-consumption rule as test 1 (undici).
+    const raw = await res.text()
+    expect(res.status, raw.slice(0, 500)).toBe(200)
+    const body = JSON.parse(raw)
+    expect(body.job.reviewDecision).toBe('ACCEPTED')
+    expect(body.study.status).toBe('REVIEWED')
 
-      const { PrismaClient } = await import('@prisma/client')
-      const prisma = new PrismaClient()
-      const job = await prisma.aIAnalysisJob.findUnique({ where: { id: state.job!.id } })
-      expect((job!.acceptedFindings as unknown[]).length).toBe(state.job!.findings!.length)
-      const study = await prisma.imagingStudy.findUnique({ where: { id: state.study!.id } })
-      expect(study?.status).toBe('REVIEWED')
-      const rows = await prisma.auditLog.findMany({
-        where: { entityId: state.job!.id, action: 'AI_FINDING_ACCEPTED' },
-      })
-      expect(rows.length).toBe(1)
-      await prisma.$disconnect()
-    },
-    60000
-  )
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    const job = await prisma.aIAnalysisJob.findUnique({ where: { id: state.job!.id } })
+    expect((job!.acceptedFindings as unknown[]).length).toBe(state.job!.findings!.length)
+    const study = await prisma.imagingStudy.findUnique({ where: { id: state.study!.id } })
+    expect(study?.status).toBe('REVIEWED')
+    const rows = await prisma.auditLog.findMany({
+      where: { entityId: state.job!.id, action: 'AI_FINDING_ACCEPTED' },
+    })
+    expect(rows.length).toBe(1)
+    await prisma.$disconnect()
+  }, 60000)
 
-  it(
-    '8. 19B engine map: BITEWING + analyze → implant-ai job (no longer a 422)',
-    async () => {
-      const form = new FormData()
-      form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
-      form.append('patientId', state.patientId!)
-      form.append('modality', 'BITEWING')
-      form.append('analyze', 'true')
-      const res = await api('/api/imaging/studies', { method: 'POST', body: form })
-      // 201 when the implant engine completes; 502 only if the implant
-      // engine is down in this environment (the job still records FAILED).
-      // The 19A 422 "Liodon runs on PANORAMIC only" is gone: 19B D14 routes
-      // BITEWING to implant-ai.
-      expect([201, 502]).toContain(res.status)
-      const body = await res.json()
+  it('8. 19B engine map: BITEWING + analyze → implant-ai job (no longer a 422)', async () => {
+    const form = new FormData()
+    form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
+    form.append('patientId', state.patientId!)
+    form.append('modality', 'BITEWING')
+    form.append('analyze', 'true')
+    const res = await api('/api/imaging/studies', { method: 'POST', body: form })
+    // 201 when the implant engine completes; 502 only if the implant
+    // engine is down in this environment (the job still records FAILED).
+    // The 19A 422 "Liodon runs on PANORAMIC only" is gone: 19B D14 routes
+    // BITEWING to implant-ai.
+    expect([201, 502]).toContain(res.status)
+    const body = await res.json()
 
-      const { PrismaClient } = await import('@prisma/client')
-      const prisma = new PrismaClient()
-      const jobs = await prisma.aIAnalysisJob.findMany({
-        where: { studyId: body.study!.id },
-        select: { id: true, engine: true, status: true },
-      })
-      await prisma.$disconnect()
-      expect(jobs.length).toBe(1)
-      expect(jobs[0].engine).toBe('implant-ai')
-      expect(['COMPLETED', 'FAILED']).toContain(jobs[0].status)
-      expect(body.study.status).toBe(jobs[0].status === 'COMPLETED' ? 'ANALYZED' : 'UPLOADED')
-    },
-    60000
-  )
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    const jobs = await prisma.aIAnalysisJob.findMany({
+      where: { studyId: body.study!.id },
+      select: { id: true, engine: true, status: true },
+    })
+    await prisma.$disconnect()
+    expect(jobs.length).toBe(1)
+    expect(jobs[0].engine).toBe('implant-ai')
+    expect(['COMPLETED', 'FAILED']).toContain(jobs[0].status)
+    expect(body.study.status).toBe(jobs[0].status === 'COMPLETED' ? 'ANALYZED' : 'UPLOADED')
+  }, 60000)
 
-  it(
-    '8b. 19B engine map: PHOTO + analyze → 422 (no image engine for that modality)',
-    async () => {
-      const form = new FormData()
-      form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
-      form.append('patientId', state.patientId!)
-      form.append('modality', 'PHOTO')
-      form.append('analyze', 'true')
-      const res = await api('/api/imaging/studies', { method: 'POST', body: form })
-      expect(res.status).toBe(422)
-      const body = await res.json()
-      expect(body.error).toBe('AI analysis is not supported for this modality')
-      expect(body.modality).toBe('PHOTO')
-    },
-    60000
-  )
+  it('8b. 19B engine map: PHOTO + analyze → 422 (no image engine for that modality)', async () => {
+    const form = new FormData()
+    form.append('file', new File([state.sampleBytes!], 'sample.jpg', { type: 'image/jpeg' }))
+    form.append('patientId', state.patientId!)
+    form.append('modality', 'PHOTO')
+    form.append('analyze', 'true')
+    const res = await api('/api/imaging/studies', { method: 'POST', body: form })
+    expect(res.status).toBe(422)
+    const body = await res.json()
+    expect(body.error).toBe('AI analysis is not supported for this modality')
+    expect(body.modality).toBe('PHOTO')
+  }, 60000)
 
   it('9. tenant isolation: unknown / foreign jobs are 404 (no oracle)', async () => {
     // Unknown id in this tenant's API surface.
@@ -589,28 +574,27 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
         body: JSON.stringify({ decision: 'REJECTED' }),
       })
       expect(res2.status, 'cross-tenant job must be invisible (404, no oracle)').toBe(404)
-      console.log(`[e2e] cross-tenant check: foreign job ${foreign.id} (hospital ${foreign.hospitalId}) → 404 ✓`)
+      console.log(
+        `[e2e] cross-tenant check: foreign job ${foreign.id} (hospital ${foreign.hospitalId}) → 404 ✓`
+      )
     } else {
-      console.log('[e2e] cross-tenant deep check skipped: no job from a second tenant exists in this DB (covered by unit suite)')
+      console.log(
+        '[e2e] cross-tenant deep check skipped: no job from a second tenant exists in this DB (covered by unit suite)'
+      )
     }
     await prisma.$disconnect()
   })
 
-  it(
-    '10. original object remains immutable after the full AI run',
-    async () => {
-      const { getStorage } = await import('@/lib/storage')
-      const storage = getStorage()
-      const obj = await storage.get(state.study!.originalKey!)
-      const sha = createHash('sha256').update(obj.body).digest('hex')
-      expect(
-        sha,
-        'original object changed after AI processing — immutability violated'
-      ).toBe(EXPECTED_SAMPLE_SHA)
-      expect(obj.body.length).toBe(state.study!.originalSize)
-    },
-    60000
-  )
+  it('10. original object remains immutable after the full AI run', async () => {
+    const { getStorage } = await import('@/lib/storage')
+    const storage = getStorage()
+    const obj = await storage.get(state.study!.originalKey!)
+    const sha = createHash('sha256').update(obj.body).digest('hex')
+    expect(sha, 'original object changed after AI processing — immutability violated').toBe(
+      EXPECTED_SAMPLE_SHA
+    )
+    expect(obj.body.length).toBe(state.study!.originalSize)
+  }, 60000)
 
   it('11. evidence summary', () => {
     const s = state.study!
@@ -621,8 +605,12 @@ describe.skipIf(!ENABLED)('Phase 19A imaging AI E2E (real stack)', () => {
     console.log(`  study            : ${s.id} (${s.status})`)
     console.log(`  original key     : ${s.originalKey}`)
     console.log(`  original sha256  : ${s.originalHash}`)
-    console.log(`  job              : ${j.id} (${j.status}, ${(j as { processing_time_ms?: number }).processing_time_ms} ms)`)
-    console.log(`  detections       : ${j.findings!.map((f) => `${f.condition}@${f.confidence}`).join(', ')}`)
+    console.log(
+      `  job              : ${j.id} (${j.status}, ${(j as { processing_time_ms?: number }).processing_time_ms} ms)`
+    )
+    console.log(
+      `  detections       : ${j.findings!.map((f) => `${f.condition}@${f.confidence}`).join(', ')}`
+    )
     console.log(`  model checksum   : ${j.provenance!.model_checksum} (expected ${REAL_MODEL_SHA})`)
     console.log(`  raw output       : ${j.raw_output_key}`)
     console.log(`  annotated output : ${j.annotated_image_key}`)

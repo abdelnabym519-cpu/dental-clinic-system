@@ -22,6 +22,7 @@ import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
 import { createPrismaKnowledgeStore } from '@/lib/ai/knowledge/store'
 import { isKnowledgeDomain } from '@/lib/ai/knowledge/taxonomy'
 import { CAPABILITY_TASK_IDS } from '@/lib/ai/engines/capability-matrix'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 import type { KnowledgeEvidencePackage, KnowledgeStore } from '@/lib/ai/knowledge/types'
 import type { AgentToolDefinition, AgentToolResult, AgentDomain, RiskLevel } from './types'
 
@@ -48,7 +49,10 @@ export interface ToolRuntime {
   /** Phase 6 — server-resolved actor id (for AIAnalysisJob.requestedById). */
   actorId: string
   /** Phase 1 pipeline entry point (the ONLY write path). */
-  runAction: (intent: string, params: Record<string, string>) => Promise<{
+  runAction: (
+    intent: string,
+    params: Record<string, string>
+  ) => Promise<{
     status: 'EXECUTED' | 'APPROVAL_REQUIRED' | 'BLOCKED'
     success: boolean
     message: string
@@ -89,20 +93,66 @@ function contextTool(
 
 export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: ContextProfile }> = {
   // ── Patient / dental / clinical context (Phase 2 engine) ──────────────
-  get_patient_overview: contextTool('get_patient_overview', 'Patient identity, medical flags, chart, appointments, risk, open balance', 'patient', 'PATIENT_OVERVIEW'),
-  get_clinical_summary: contextTool('get_clinical_summary', 'Full clinical context: notes, examinations, plans, treatments, prescriptions', 'clinical', 'CLINICAL'),
-  get_tooth_context: contextTool('get_tooth_context', 'Tooth 360: chart, tooth-linked treatments, cases, imaging findings', 'dental', 'TOOTH'),
-  get_case_context: contextTool('get_case_context', 'Case (treatment plan) context with items and linked treatments', 'clinical', 'CASE'),
-  get_imaging_context: contextTool('get_imaging_context', 'Imaging studies with AI analyses, model provenance and doctor review state', 'imaging', 'IMAGING'),
-  get_treatment_context: contextTool('get_treatment_context', 'Treatment context: status, teeth, follow-up, linked case', 'treatment', 'TREATMENT'),
-  get_followup_context: contextTool('get_followup_context', 'Follow-up context: due follow-ups, notes, appointments', 'clinical', 'FOLLOW_UP'),
-  get_patient_timeline: contextTool('get_patient_timeline', 'Unified clinical timeline (bounded, deterministic order)', 'clinical', 'TIMELINE'),
-  get_patient_360: contextTool('get_patient_360', 'Complex case review: all bounded sections including timeline', 'patient', 'FULL_360'),
+  get_patient_overview: contextTool(
+    'get_patient_overview',
+    'Patient identity, medical flags, chart, appointments, risk, open balance',
+    'patient',
+    'PATIENT_OVERVIEW'
+  ),
+  get_clinical_summary: contextTool(
+    'get_clinical_summary',
+    'Full clinical context: notes, examinations, plans, treatments, prescriptions',
+    'clinical',
+    'CLINICAL'
+  ),
+  get_tooth_context: contextTool(
+    'get_tooth_context',
+    'Tooth 360: chart, tooth-linked treatments, cases, imaging findings',
+    'dental',
+    'TOOTH'
+  ),
+  get_case_context: contextTool(
+    'get_case_context',
+    'Case (treatment plan) context with items and linked treatments',
+    'clinical',
+    'CASE'
+  ),
+  get_imaging_context: contextTool(
+    'get_imaging_context',
+    'Imaging studies with AI analyses, model provenance and doctor review state',
+    'imaging',
+    'IMAGING'
+  ),
+  get_treatment_context: contextTool(
+    'get_treatment_context',
+    'Treatment context: status, teeth, follow-up, linked case',
+    'treatment',
+    'TREATMENT'
+  ),
+  get_followup_context: contextTool(
+    'get_followup_context',
+    'Follow-up context: due follow-ups, notes, appointments',
+    'clinical',
+    'FOLLOW_UP'
+  ),
+  get_patient_timeline: contextTool(
+    'get_patient_timeline',
+    'Unified clinical timeline (bounded, deterministic order)',
+    'clinical',
+    'TIMELINE'
+  ),
+  get_patient_360: contextTool(
+    'get_patient_360',
+    'Complex case review: all bounded sections including timeline',
+    'patient',
+    'FULL_360'
+  ),
 
   // ── Phase 4 — Dental knowledge (RAG) ──────────────────────────────────
   retrieve_dental_knowledge: {
     name: 'retrieve_dental_knowledge',
-    description: 'Bounded retrieval of structured dental knowledge evidence (guidelines/textbooks/education) with machine-readable citations. Clinical use is limited to TIER_1+TIER_2 sources; patient data is never indexed or returned.',
+    description:
+      'Bounded retrieval of structured dental knowledge evidence (guidelines/textbooks/education) with machine-readable citations. Clinical use is limited to TIER_1+TIER_2 sources; patient data is never indexed or returned.',
     domain: 'knowledge',
     writeClass: 'READ',
     riskLevel: 'NONE',
@@ -116,7 +166,11 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
           ? 'question too long (max 300 chars)'
           : i.domain !== undefined && !isKnowledgeDomain(i.domain)
             ? 'unknown knowledge domain'
-            : i.maxResults !== undefined && (typeof i.maxResults !== 'number' || !Number.isInteger(i.maxResults) || i.maxResults < 1 || i.maxResults > 10)
+            : i.maxResults !== undefined &&
+                (typeof i.maxResults !== 'number' ||
+                  !Number.isInteger(i.maxResults) ||
+                  i.maxResults < 1 ||
+                  i.maxResults > 10)
               ? 'maxResults must be an integer 1..10'
               : i.language !== undefined && i.language !== 'en' && i.language !== 'ar'
                 ? 'language must be en or ar'
@@ -162,8 +216,12 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
         ? 'attachmentId is required'
         : i.jaw !== undefined && i.jaw !== 'max' && i.jaw !== 'man'
           ? 'jaw must be max or man'
-          : i.toothFdi !== undefined && (typeof i.toothFdi !== 'number' || !Number.isInteger(i.toothFdi) || i.toothFdi < 11 || i.toothFdi > 48)
-            ? 'toothFdi must be an FDI number 11..48'
+          : // FDI-52: accept the 32 permanent AND the 20 primary identifiers.
+            // The old `11..48` range check was wrong in both directions: it
+            // rejected valid primary teeth and admitted out-of-schema numbers
+            // such as 19, 29, 30, 39, 40 and 49.
+            i.toothFdi !== undefined && !isValidFdi(i.toothFdi)
+            ? 'toothFdi must be a valid FDI number (11-48 permanent or 51-85 primary)'
             : OK(),
     timeoutMs: 120_000,
     maxRetries: 0,
@@ -179,7 +237,8 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
     requiredRoles: [...STAFF, 'PATIENT'],
     requiresPatient: true,
     viaActionPipeline: false,
-    validateInput: (i) => (typeof i.attachmentId !== 'string' || !i.attachmentId ? 'attachmentId is required' : OK()),
+    validateInput: (i) =>
+      typeof i.attachmentId !== 'string' || !i.attachmentId ? 'attachmentId is required' : OK(),
     timeoutMs: 8000,
     maxRetries: 0,
     idempotent: true,
@@ -217,7 +276,10 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
     requiredRoles: STAFF,
     requiresPatient: false,
     viaActionPipeline: false,
-    validateInput: (i) => (i.date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(i.date)) ? 'Invalid date format' : OK()),
+    validateInput: (i) =>
+      i.date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(i.date))
+        ? 'Invalid date format'
+        : OK(),
     timeoutMs: 5000,
     maxRetries: 1,
     idempotent: true,
@@ -238,7 +300,7 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
   },
   get_doctor_schedule: {
     name: 'get_doctor_schedule',
-    description: 'A doctor\'s schedule for a day',
+    description: "A doctor's schedule for a day",
     domain: 'staff',
     writeClass: 'READ',
     riskLevel: 'NONE',
@@ -276,7 +338,10 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
     requiresPatient: true,
     viaActionPipeline: true,
     actionIntent: 'book_appointment',
-    validateInput: (i) => (i.date === undefined || !/^\d{4}-\d{2}-\d{2}$/.test(String(i.date)) ? 'A valid date (YYYY-MM-DD) is required' : OK()),
+    validateInput: (i) =>
+      i.date === undefined || !/^\d{4}-\d{2}-\d{2}$/.test(String(i.date))
+        ? 'A valid date (YYYY-MM-DD) is required'
+        : OK(),
     timeoutMs: 8000,
     maxRetries: 0,
     idempotent: true, // idempotency enforced by Phase 1 fingerprint
@@ -291,7 +356,10 @@ export const TOOL_REGISTRY: Record<string, AgentToolDefinition & { profile?: Con
     requiresPatient: true,
     viaActionPipeline: true,
     actionIntent: 'record_payment',
-    validateInput: (i) => (i.amount === undefined || !/^\d+(\.\d{1,2})?$/.test(String(i.amount)) ? 'A valid amount is required' : OK()),
+    validateInput: (i) =>
+      i.amount === undefined || !/^\d+(\.\d{1,2})?$/.test(String(i.amount))
+        ? 'A valid amount is required'
+        : OK(),
     timeoutMs: 8000,
     maxRetries: 0,
     idempotent: true,
@@ -336,24 +404,53 @@ export function listToolNames(): string[] {
 // Context-source extraction (for the response provenance contract)
 // ---------------------------------------------------------------------------
 
-export function extractSources(ctx: any, limit = 20): { sourceType: string; sourceId: string; entityType: string; freshness: string }[] {
+export function extractSources(
+  ctx: any,
+  limit = 20
+): { sourceType: string; sourceId: string; entityType: string; freshness: string }[] {
   const out: { sourceType: string; sourceId: string; entityType: string; freshness: string }[] = []
   const push = (p: any, section: string) => {
     if (!p || out.length >= limit) return
-    out.push({ sourceType: p.sourceType ?? section, sourceId: String(p.sourceId ?? ''), entityType: String(p.entityType ?? ''), freshness: section === '' ? 'unknown' : (ctx[section]?.freshness ?? 'unknown') })
+    out.push({
+      sourceType: p.sourceType ?? section,
+      sourceId: String(p.sourceId ?? ''),
+      entityType: String(p.entityType ?? ''),
+      freshness: section === '' ? 'unknown' : (ctx[section]?.freshness ?? 'unknown'),
+    })
   }
-  const s = (key: string) => ctx[key]?.status === 'included' ? ctx[key].data : null
-  const med = s('medical'); if (med) push(med.provenance, 'medical')
-  const den = s('dental'); if (den) den.active.slice(0, 3).forEach((t: any) => push(t.provenance, 'dental'))
-  const appts = s('appointments'); if (appts) [...(appts.upcoming ?? []), ...(appts.recent ?? [])].slice(0, 3).forEach((a: any) => push(a.provenance, 'appointments'))
-  const cl = s('clinical'); if (cl) [...(cl.examinations ?? []), ...(cl.followUpNotes ?? [])].slice(0, 3).forEach((n: any) => push(n.provenance, 'clinical'))
-  const cases = s('cases'); if (cases) cases.plans.slice(0, 2).forEach((c: any) => push(c.provenance, 'cases'))
-  const trt = s('treatments'); if (trt) trt.treatments.slice(0, 3).forEach((t: any) => push(t.provenance, 'treatments'))
-  const rx = s('prescriptions'); if (rx) rx.prescriptions.slice(0, 2).forEach((p: any) => push(p.provenance, 'prescriptions'))
-  const img = s('imaging'); if (img) img.studies.slice(0, 2).forEach((st: any) => { push(st.provenance, 'imaging'); st.analyses.slice(0, 2).forEach((j: any) => push(j.provenance, 'imaging')) })
-  const fin = s('financial'); if (fin) push(fin.provenance, 'financial')
-  const risk = s('risk'); if (risk) push(risk.provenance, 'risk')
-  const tl = s('timeline'); if (tl) tl.events.slice(0, 5).forEach((e: any) => push(e.provenance, 'timeline'))
+  const s = (key: string) => (ctx[key]?.status === 'included' ? ctx[key].data : null)
+  const med = s('medical')
+  if (med) push(med.provenance, 'medical')
+  const den = s('dental')
+  if (den) den.active.slice(0, 3).forEach((t: any) => push(t.provenance, 'dental'))
+  const appts = s('appointments')
+  if (appts)
+    [...(appts.upcoming ?? []), ...(appts.recent ?? [])]
+      .slice(0, 3)
+      .forEach((a: any) => push(a.provenance, 'appointments'))
+  const cl = s('clinical')
+  if (cl)
+    [...(cl.examinations ?? []), ...(cl.followUpNotes ?? [])]
+      .slice(0, 3)
+      .forEach((n: any) => push(n.provenance, 'clinical'))
+  const cases = s('cases')
+  if (cases) cases.plans.slice(0, 2).forEach((c: any) => push(c.provenance, 'cases'))
+  const trt = s('treatments')
+  if (trt) trt.treatments.slice(0, 3).forEach((t: any) => push(t.provenance, 'treatments'))
+  const rx = s('prescriptions')
+  if (rx) rx.prescriptions.slice(0, 2).forEach((p: any) => push(p.provenance, 'prescriptions'))
+  const img = s('imaging')
+  if (img)
+    img.studies.slice(0, 2).forEach((st: any) => {
+      push(st.provenance, 'imaging')
+      st.analyses.slice(0, 2).forEach((j: any) => push(j.provenance, 'imaging'))
+    })
+  const fin = s('financial')
+  if (fin) push(fin.provenance, 'financial')
+  const risk = s('risk')
+  if (risk) push(risk.provenance, 'risk')
+  const tl = s('timeline')
+  if (tl) tl.events.slice(0, 5).forEach((e: any) => push(e.provenance, 'timeline'))
   return out
 }
 
@@ -391,8 +488,15 @@ export async function executeTool(
   const t0 = process.hrtime.bigint()
   const def = TOOL_REGISTRY[name]
   const fail = (error: string, data?: unknown): AgentToolResult => ({
-    ok: false, error, data,
-    meta: { tool: name, tenantId: rt.hospitalId, patientId: rt.patientId, latencyMs: Number(process.hrtime.bigint() - t0) / 1e6 },
+    ok: false,
+    error,
+    data,
+    meta: {
+      tool: name,
+      tenantId: rt.hospitalId,
+      patientId: rt.patientId,
+      latencyMs: Number(process.hrtime.bigint() - t0) / 1e6,
+    },
   })
 
   // §9 — closed registry.
@@ -403,7 +507,8 @@ export async function executeTool(
   const inputError = def.validateInput(input ?? {})
   if (inputError) return fail(`TOOL_VALIDATION_ERROR: ${inputError}`)
   // Patient scope.
-  if (def.requiresPatient && !rt.patientId) return fail('MISSING_CONTEXT: patient required but not resolved')
+  if (def.requiresPatient && !rt.patientId)
+    return fail('MISSING_CONTEXT: patient required but not resolved')
 
   try {
     const run = async () => {
@@ -418,17 +523,23 @@ export async function executeTool(
         return await rt.runAction(def.actionIntent, params)
       }
       if (def.profile) {
-        const ctx = await buildClinicalContext({
-          hospitalId: rt.hospitalId,
-          actor: { id: 'agent', role: rt.role, name: rt.patientName ?? 'agent' },
-          profile: def.profile,
-          patientId: rt.patientId,
-          toothFdi: rt.toothFdi ?? (typeof input.toothFdi === 'number' ? input.toothFdi : null),
-          caseId: (typeof input.caseId === 'string' && input.caseId) || rt.caseId || null,
-          studyId: (typeof input.studyId === 'string' && input.studyId) || rt.studyId || null,
-          treatmentNo: (typeof input.treatmentNo === 'string' && input.treatmentNo) || rt.treatmentNo || null,
-          now: rt.now,
-        }, rt.client)
+        const ctx = await buildClinicalContext(
+          {
+            hospitalId: rt.hospitalId,
+            actor: { id: 'agent', role: rt.role, name: rt.patientName ?? 'agent' },
+            profile: def.profile,
+            patientId: rt.patientId,
+            toothFdi: rt.toothFdi ?? (typeof input.toothFdi === 'number' ? input.toothFdi : null),
+            caseId: (typeof input.caseId === 'string' && input.caseId) || rt.caseId || null,
+            studyId: (typeof input.studyId === 'string' && input.studyId) || rt.studyId || null,
+            treatmentNo:
+              (typeof input.treatmentNo === 'string' && input.treatmentNo) ||
+              rt.treatmentNo ||
+              null,
+            now: rt.now,
+          },
+          rt.client
+        )
         return {
           kind: 'context' as const,
           context: ctx,
@@ -462,7 +573,8 @@ export async function executeTool(
     const latencyMs = Number(process.hrtime.bigint() - t0) / 1e6
 
     // §15 — result validation.
-    if (out === undefined || out === null) return fail('TOOL_VALIDATION_ERROR: tool returned no result')
+    if (out === undefined || out === null)
+      return fail('TOOL_VALIDATION_ERROR: tool returned no result')
     if (def.viaActionPipeline) {
       const r = out as { status?: string; approvalId?: string }
       if (r.status !== 'EXECUTED' && r.status !== 'APPROVAL_REQUIRED' && r.status !== 'BLOCKED') {
@@ -477,7 +589,16 @@ export async function executeTool(
         tenantId: rt.hospitalId, // tools only ever run for this tenant
         patientId: rt.patientId,
         latencyMs,
-        sources: (out as { sources?: { sourceType: string; sourceId: string; entityType: string; freshness: string }[] })?.sources,
+        sources: (
+          out as {
+            sources?: {
+              sourceType: string
+              sourceId: string
+              entityType: string
+              freshness: string
+            }[]
+          }
+        )?.sources,
       },
     }
   } catch (err) {
@@ -493,7 +614,10 @@ export async function executeTool(
  * configured/reachable). Engine selection never happens from this tool —
  * that is the imaging flow / LocalAIService job.
  */
-async function localAiCapabilitiesTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+async function localAiCapabilitiesTool(
+  input: Record<string, unknown>,
+  rt: ToolRuntime
+): Promise<unknown> {
   const { LocalAIService } = await import('../engines/local-ai-service')
   const { resolveCapability } = await import('../engines/capability-matrix')
   const service = new LocalAIService(rt.localAiCapabilities ?? null, null, () => rt.now)
@@ -569,12 +693,12 @@ function toMultimodalError(err: unknown): MultimodalError {
  * Resolve one attachment for engine analysis (server-side, tenant-scoped).
  * Throws typed MultimodalError — the honest, user-safe failure contract.
  */
-async function resolveAttachmentForAnalysis(
-  attachmentId: string,
-  rt: ToolRuntime,
-) {
+async function resolveAttachmentForAnalysis(attachmentId: string, rt: ToolRuntime) {
   if (!rt.attachments) {
-    throw new MultimodalError('ENGINE_UNAVAILABLE', 'attachment service is not configured in this deployment')
+    throw new MultimodalError(
+      'ENGINE_UNAVAILABLE',
+      'attachment service is not configured in this deployment'
+    )
   }
   const att = await rt.attachments.get(attachmentId, rt.hospitalId)
   if (!att) throw new MultimodalError('FORGED_ATTACHMENT_ID', 'attachment not found in this tenant')
@@ -582,12 +706,15 @@ async function resolveAttachmentForAnalysis(
     throw new MultimodalError('INVALID_FILE', `attachment is not processed (status ${att.status})`)
   }
   if (att.fileClass === 'DOCUMENT_PDF' || att.fileClass === 'DOCUMENT_TEXT') {
-    throw new MultimodalError('UNSUPPORTED_MODALITY', 'documents are read, not engine-analyzed — use read_document_attachment')
+    throw new MultimodalError(
+      'UNSUPPORTED_MODALITY',
+      'documents are read, not engine-analyzed — use read_document_attachment'
+    )
   }
   if (att.fileClass === 'VOLUME_DICOM') {
     throw new MultimodalError(
       'CAPABILITY_UNAVAILABLE',
-      'DICOM volumes are stored, but this deployment has no DICOM parser and no volume AI (ingestion only — analysis is not claimed)',
+      'DICOM volumes are stored, but this deployment has no DICOM parser and no volume AI (ingestion only — analysis is not claimed)'
     )
   }
   if (att.fileClass === 'UNKNOWN') {
@@ -596,13 +723,13 @@ async function resolveAttachmentForAnalysis(
   if (!att.dentalModality) {
     throw new MultimodalError(
       'UNSUPPORTED_MODALITY',
-      'dental modality is unknown — no engine can be selected for an unclassified image (no validated classifier exists; nothing is guessed)',
+      'dental modality is unknown — no engine can be selected for an unclassified image (no validated classifier exists; nothing is guessed)'
     )
   }
   if (!att.studyId || !att.patientId) {
     throw new MultimodalError(
       'CAPABILITY_UNAVAILABLE',
-      'attachment is not linked to a patient study — engine analysis requires patient attribution',
+      'attachment is not linked to a patient study — engine analysis requires patient attribution'
     )
   }
   if (rt.patientId && att.patientId !== rt.patientId) {
@@ -620,7 +747,7 @@ async function resolveAttachmentForAnalysis(
  */
 async function analyzeAttachmentCore(
   input: { attachmentId: string; jaw?: 'max' | 'man' | null; toothFdi?: number | null },
-  rt: ToolRuntime,
+  rt: ToolRuntime
 ) {
   const { LocalAIService } = await import('../engines/local-ai-service')
   const att = await resolveAttachmentForAnalysis(String(input.attachmentId), rt)
@@ -629,7 +756,10 @@ async function analyzeAttachmentCore(
   const dentalModality = att.dentalModality
   const studyId = att.studyId
   if (!dentalModality || !studyId) {
-    throw new MultimodalError('CAPABILITY_UNAVAILABLE', 'attachment is not analyzable (no patient study or dental modality)')
+    throw new MultimodalError(
+      'CAPABILITY_UNAVAILABLE',
+      'attachment is not analyzable (no patient study or dental modality)'
+    )
   }
 
   const service =
@@ -649,7 +779,10 @@ async function analyzeAttachmentCore(
   } else {
     for (const t of tasksForModality(dentalModality)) {
       const res = resolveCapability(t)
-      if (res.ok && res.resolvable && res.task) { task = t; break }
+      if (res.ok && res.resolvable && res.task) {
+        task = t
+        break
+      }
     }
   }
 
@@ -668,9 +801,13 @@ async function analyzeAttachmentCore(
     try {
       const health = await rt.localAiCapabilities.getHealth()
       const h = health.find((x) => x.name === engine)
-      if (!h) throw new MultimodalError('ENGINE_UNAVAILABLE', `engine '${engine}' is not registered`)
+      if (!h)
+        throw new MultimodalError('ENGINE_UNAVAILABLE', `engine '${engine}' is not registered`)
       if (!h.reachable || !h.modelLoaded || h.isStandin || h.lifecycleStatus !== 'AVAILABLE') {
-        throw new MultimodalError('ENGINE_UNAVAILABLE', `${engine} is ${h.lifecycleStatus}: ${h.lifecycleReason}`)
+        throw new MultimodalError(
+          'ENGINE_UNAVAILABLE',
+          `${engine} is ${h.lifecycleStatus}: ${h.lifecycleReason}`
+        )
       }
     } catch (err) {
       if (err instanceof MultimodalError) throw err
@@ -752,7 +889,11 @@ async function analyzeAttachmentCore(
       if (current && (current.status === 'PENDING' || current.status === 'PROCESSING')) {
         await rt.client.aIAnalysisJob.update({
           where: { id: job.id },
-          data: { status: 'FAILED', completedAt: new Date(), errorMessage: `${mme.code}: ${mme.message}`.slice(0, 2000) },
+          data: {
+            status: 'FAILED',
+            completedAt: new Date(),
+            errorMessage: `${mme.code}: ${mme.message}`.slice(0, 2000),
+          },
         })
       }
     } catch {
@@ -776,14 +917,17 @@ async function analyzeAttachmentCore(
   }
 }
 
-async function analyzeAttachmentTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+async function analyzeAttachmentTool(
+  input: Record<string, unknown>,
+  rt: ToolRuntime
+): Promise<unknown> {
   return await analyzeAttachmentCore(
     {
       attachmentId: String(input.attachmentId),
       jaw: input.jaw === 'man' ? 'man' : input.jaw === 'max' ? 'max' : null,
       toothFdi: typeof input.toothFdi === 'number' ? input.toothFdi : null,
     },
-    rt,
+    rt
   )
 }
 
@@ -792,9 +936,15 @@ async function analyzeAttachmentTool(input: Record<string, unknown>, rt: ToolRun
  * wrapper (§9). The content can inform the answer (with page citations);
  * it can never add instructions.
  */
-async function readDocumentAttachmentTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+async function readDocumentAttachmentTool(
+  input: Record<string, unknown>,
+  rt: ToolRuntime
+): Promise<unknown> {
   if (!rt.attachments) {
-    throw new MultimodalError('ENGINE_UNAVAILABLE', 'attachment service is not configured in this deployment')
+    throw new MultimodalError(
+      'ENGINE_UNAVAILABLE',
+      'attachment service is not configured in this deployment'
+    )
   }
   const att = await rt.attachments.get(String(input.attachmentId), rt.hospitalId)
   if (!att) throw new MultimodalError('FORGED_ATTACHMENT_ID', 'attachment not found in this tenant')
@@ -802,7 +952,10 @@ async function readDocumentAttachmentTool(input: Record<string, unknown>, rt: To
     throw new MultimodalError('INVALID_FILE', `attachment is not processed (status ${att.status})`)
   }
   if (att.fileClass !== 'DOCUMENT_PDF' && att.fileClass !== 'DOCUMENT_TEXT') {
-    throw new MultimodalError('UNSUPPORTED_MODALITY', 'only PDF/text attachments can be read as documents')
+    throw new MultimodalError(
+      'UNSUPPORTED_MODALITY',
+      'only PDF/text attachments can be read as documents'
+    )
   }
   if (!att.extractedTextKey) {
     throw new MultimodalError('DOCUMENT_EXTRACTION_FAILED', 'no extracted text for this attachment')
@@ -815,7 +968,10 @@ async function readDocumentAttachmentTool(input: Record<string, unknown>, rt: To
   // scoped to "self" and is therefore not readable in the portal.
   if (rt.role === 'PATIENT') {
     if (!att.patientId || att.patientId !== rt.patientId) {
-      throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'portal users can only read documents linked to their own patient record')
+      throw new MultimodalError(
+        'PATIENT_SCOPE_MISMATCH',
+        'portal users can only read documents linked to their own patient record'
+      )
     }
   } else if (rt.patientId && att.patientId && att.patientId !== rt.patientId) {
     throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'attachment belongs to a different patient')
@@ -839,20 +995,28 @@ async function readDocumentAttachmentTool(input: Record<string, unknown>, rt: To
  * model-detected finding differences. Clinical interpretation is ALWAYS
  * NOT_DETERMINED — a clinician act, never a machine conclusion.
  */
-async function compareAttachmentsTool(input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+async function compareAttachmentsTool(
+  input: Record<string, unknown>,
+  rt: ToolRuntime
+): Promise<unknown> {
   const a = await analyzeAttachmentCore({ attachmentId: String(input.attachmentIdA) }, rt)
   const b = await analyzeAttachmentCore({ attachmentId: String(input.attachmentIdB) }, rt)
 
   const ra = a.attachment as AttachmentRef
   const rb = b.attachment as AttachmentRef
   if (ra.patientId !== rb.patientId || !ra.patientId) {
-    throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'comparison requires two attachments of the same patient')
+    throw new MultimodalError(
+      'PATIENT_SCOPE_MISMATCH',
+      'comparison requires two attachments of the same patient'
+    )
   }
 
   const observed: string[] = []
   if (ra.size !== rb.size) observed.push(`file size differs (${ra.size} vs ${rb.size} bytes)`)
   if (ra.dentalModality !== rb.dentalModality) {
-    observed.push(`dental modality differs (${ra.dentalModality ?? 'unknown'} vs ${rb.dentalModality ?? 'unknown'})`)
+    observed.push(
+      `dental modality differs (${ra.dentalModality ?? 'unknown'} vs ${rb.dentalModality ?? 'unknown'})`
+    )
   }
   const da = new Date(ra.createdAt)
   const db = new Date(rb.createdAt)
@@ -863,12 +1027,19 @@ async function compareAttachmentsTool(input: Record<string, unknown>, rt: ToolRu
   if (observed.length === 0) observed.push('no observable metadata difference')
 
   const labelsOf = (env: LocalAiAnalysisEnvelope) =>
-    env.findings.map((f: NormalizedFinding) => ({ label: findingLabel(f), confidence: f.confidence }))
+    env.findings.map((f: NormalizedFinding) => ({
+      label: findingLabel(f),
+      confidence: f.confidence,
+    }))
   const la = labelsOf(a.envelope)
   const lb = labelsOf(b.envelope)
   const modelDifferences = [
-    ...la.filter((f) => !lb.some((g) => g.label === f.label)).map((f) => ({ attachmentId: ra.id, ...f })),
-    ...lb.filter((f) => !la.some((g) => g.label === f.label)).map((f) => ({ attachmentId: rb.id, ...f })),
+    ...la
+      .filter((f) => !lb.some((g) => g.label === f.label))
+      .map((f) => ({ attachmentId: ra.id, ...f })),
+    ...lb
+      .filter((f) => !la.some((g) => g.label === f.label))
+      .map((f) => ({ attachmentId: rb.id, ...f })),
   ]
 
   return {
@@ -894,8 +1065,12 @@ async function compareAttachmentsTool(input: Record<string, unknown>, rt: ToolRu
 // ---------------------------------------------------------------------------
 
 interface ApptRow {
-  id: string; appointmentNo: string; appointmentType: string; status: string
-  scheduledDate: Date; chiefComplaint: string | null
+  id: string
+  appointmentNo: string
+  appointmentType: string
+  status: string
+  scheduledDate: Date
+  chiefComplaint: string | null
   doctor?: { firstName: string; lastName: string } | null
   patient?: { firstName: string; lastName: string } | null
   doctorId?: string | null
@@ -940,7 +1115,11 @@ async function knowledgeTool(input: Record<string, unknown>, rt: ToolRuntime): P
   return { kind: 'knowledge' as const, package: pkg }
 }
 
-async function clinicTool(name: string, input: Record<string, unknown>, rt: ToolRuntime): Promise<unknown> {
+async function clinicTool(
+  name: string,
+  input: Record<string, unknown>,
+  rt: ToolRuntime
+): Promise<unknown> {
   if (name === 'get_appointments') {
     const where: Record<string, unknown> = { hospitalId: rt.hospitalId }
     // No date → today's window (never an unbounded all-time list).
@@ -951,15 +1130,23 @@ async function clinicTool(name: string, input: Record<string, unknown>, rt: Tool
     }
     if (input.status) where.status = input.status
     const rows: ApptRow[] = await rt.client.appointment.findMany({
-      where, orderBy: { scheduledDate: 'asc' }, take: 20,
+      where,
+      orderBy: { scheduledDate: 'asc' },
+      take: 20,
     })
-    return { kind: 'appointments', count: rows.length, date: input.date ?? null, appointments: rows.map(apptView) }
+    return {
+      kind: 'appointments',
+      count: rows.length,
+      date: input.date ?? null,
+      appointments: rows.map(apptView),
+    }
   }
 
   if (name === 'get_waiting_queue') {
     const rows: ApptRow[] = await rt.client.appointment.findMany({
       where: { hospitalId: rt.hospitalId, status: { in: ['CHECKED_IN', 'IN_PROGRESS'] } },
-      orderBy: { scheduledDate: 'asc' }, take: 20,
+      orderBy: { scheduledDate: 'asc' },
+      take: 20,
     })
     return { kind: 'queue', count: rows.length, queue: rows.map(apptView) }
   }
@@ -974,26 +1161,48 @@ async function clinicTool(name: string, input: Record<string, unknown>, rt: Tool
       where.scheduledDate = { gte: d, lt: new Date(d.getTime() + 86400000) }
     }
     const rows: ApptRow[] = await rt.client.appointment.findMany({
-      where, orderBy: { scheduledDate: 'asc' }, take: 30,
+      where,
+      orderBy: { scheduledDate: 'asc' },
+      take: 30,
     })
-    return { kind: 'schedule', doctorId: (input.doctorId as string) ?? null, date: (input.date as string) ?? null, count: rows.length, appointments: rows.map(apptView) }
+    return {
+      kind: 'schedule',
+      doctorId: (input.doctorId as string) ?? null,
+      date: (input.date as string) ?? null,
+      count: rows.length,
+      appointments: rows.map(apptView),
+    }
   }
 
   if (name === 'get_followup_due') {
-    const withinDays = typeof input.withinDays === 'number' && input.withinDays > 0 ? input.withinDays : 30
+    const withinDays =
+      typeof input.withinDays === 'number' && input.withinDays > 0 ? input.withinDays : 30
     const until = new Date(rt.now.getTime() + withinDays * 86400000)
     const rows = (await rt.client.treatment.findMany({
       where: { hospitalId: rt.hospitalId, followUpRequired: true, followUpDate: { lte: until } },
-      orderBy: { followUpDate: 'asc' }, take: 20,
-    })) as { id: string; treatmentNo: string; patientId: string; followUpDate: Date; followUpNotes: string | null; toothNumbers: string | null; status: string }[]
+      orderBy: { followUpDate: 'asc' },
+      take: 20,
+    })) as {
+      id: string
+      treatmentNo: string
+      patientId: string
+      followUpDate: Date
+      followUpNotes: string | null
+      toothNumbers: string | null
+      status: string
+    }[]
     if (rows.length) {
       const patients = (await rt.client.patient.findMany({
-        where: { hospitalId: rt.hospitalId, id: { in: [...new Set(rows.map((r) => r.patientId))] } },
+        where: {
+          hospitalId: rt.hospitalId,
+          id: { in: [...new Set(rows.map((r) => r.patientId))] },
+        },
         select: { id: true, firstName: true, lastName: true },
         take: 30,
       })) as { id: string; firstName: string; lastName: string }[]
       const byId = new Map(patients.map((p) => [p.id, `${p.firstName} ${p.lastName}`]))
-      for (const r of rows) (r as { patientName?: string | null }).patientName = byId.get(r.patientId) ?? null
+      for (const r of rows)
+        (r as { patientName?: string | null }).patientName = byId.get(r.patientId) ?? null
     }
     return {
       kind: 'followups',

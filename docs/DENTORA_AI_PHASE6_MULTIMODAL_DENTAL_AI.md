@@ -25,7 +25,7 @@ Phase 6 makes the DenToRa Agent **multimodal without pretending it is**:
 - Four-state modality honesty: an image is `CLASSIFIED` (linked study),
   `DECLARED` (staff declaration), or `UNKNOWN_DENTAL_IMAGE` — and an unknown
   image is **never scheduled for analysis** (planner gate + typed failure).
-  DICOM is stored and explicitly *not* claimed as CBCT AI. **[VERIFIED]**
+  DICOM is stored and explicitly _not_ claimed as CBCT AI. **[VERIFIED]**
 - The SAME Agent loop handles attachments (§29): deterministic
   `ATTACHMENT_ANALYSIS` task override (attachments are server facts, not
   phrasing), three typed tools (`analyze_attachment`,
@@ -57,7 +57,7 @@ Phase 6 makes the DenToRa Agent **multimodal without pretending it is**:
 
 - **2D dental-image AI**: no validated local 2D engine exists in this
   repository deployment. 2D uploads are ingested, classified, and normalized,
-  and the agent answers *honestly*: "no verified local engine is currently
+  and the agent answers _honestly_: "no verified local engine is currently
   available for this modality in this deployment — nothing was analyzed."
   **[BLOCKED — external: no verified 2D model; OrthoTeethFairy4 checkpoint is gated/unreachable]**
 - **CBCT/volume AI**: DICOM uploads are stored (ingestion only); there is no
@@ -113,16 +113,16 @@ Deliberately out of scope:
 
 Before designing, the existing chain was audited end to end:
 
-| Stage | Existing mechanism (reused) | Phase 6 finding |
-|---|---|---|
-| Upload | Patient documents upload route; imaging upload | MIME/extension were partially trusted by callers; bytes never re-checked server-side |
-| Storage | `lib/storage` (local + S3 drivers, tenant-prefixed keys, `keyBelongsToHospital`) | Sound; no traversal surface; signed URLs supported (local driver returns app URL) |
-| DB | Prisma; `ImagingStudy`, `AIAnalysisJob` exist | No chat-attachment table; adding one additively is required |
-| Patient | RBAC at retrieval (tenant-scoped); PATIENT portal self-scoped | Attachments must inherit this: server re-resolve, never client ids |
-| Imaging | Study row owns original key + status lifecycle | A patient-attributed attachment with an established modality gets a **reused** study row; the attachment table holds chat context only |
-| Job | `AIAnalysisJob` + orchestrator state machine | Reused unchanged; the agent tool creates the job and the orchestrator owns the terminal |
-| Result | Phase 5 envelope (findings, provenance, review state) | Reused unchanged; rendered by the 5-layer block (§14 below) |
-| UI | Chat + patient pages, i18n (`translateText`), RTL | Attachment API is UI-ready; no isolated multimodal UI added |
+| Stage   | Existing mechanism (reused)                                                      | Phase 6 finding                                                                                                                        |
+| ------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Upload  | Patient documents upload route; imaging upload                                   | MIME/extension were partially trusted by callers; bytes never re-checked server-side                                                   |
+| Storage | `lib/storage` (local + S3 drivers, tenant-prefixed keys, `keyBelongsToHospital`) | Sound; no traversal surface; signed URLs supported (local driver returns app URL)                                                      |
+| DB      | Prisma; `ImagingStudy`, `AIAnalysisJob` exist                                    | No chat-attachment table; adding one additively is required                                                                            |
+| Patient | RBAC at retrieval (tenant-scoped); PATIENT portal self-scoped                    | Attachments must inherit this: server re-resolve, never client ids                                                                     |
+| Imaging | Study row owns original key + status lifecycle                                   | A patient-attributed attachment with an established modality gets a **reused** study row; the attachment table holds chat context only |
+| Job     | `AIAnalysisJob` + orchestrator state machine                                     | Reused unchanged; the agent tool creates the job and the orchestrator owns the terminal                                                |
+| Result  | Phase 5 envelope (findings, provenance, review state)                            | Reused unchanged; rendered by the 5-layer block (§14 below)                                                                            |
+| UI      | Chat + patient pages, i18n (`translateText`), RTL                                | Attachment API is UI-ready; no isolated multimodal UI added                                                                            |
 
 Conclusion: build a thin, canonical attachment layer; reuse storage, study,
 job, envelope, and the Agent loop. **[VERIFIED — audit performed before design]**
@@ -187,16 +187,16 @@ Classification is **deterministic, byte-driven, no LLM** (§10):
 
 The DICOM four-state separation is enforced literally:
 
-| State | DICOM in Phase 6 |
-|---|---|
-| Ingestion | ✅ stored (up to 500 MB), row created |
-| Parsing | ❌ no DICOM parser exists |
-| Visualization | ❌ none |
-| AI | ❌ no volume engine — never claimed |
+| State         | DICOM in Phase 6                      |
+| ------------- | ------------------------------------- |
+| Ingestion     | ✅ stored (up to 500 MB), row created |
+| Parsing       | ❌ no DICOM parser exists             |
+| Visualization | ❌ none                               |
+| AI            | ❌ no volume engine — never claimed   |
 
-A CBCT upload therefore yields the honest answer *"stored — ingestion only.
+A CBCT upload therefore yields the honest answer _"stored — ingestion only.
 This deployment has no DICOM parser and no volume AI, so nothing was
-analyzed and nothing is claimed about its content."* The planner schedules
+analyzed and nothing is claimed about its content."_ The planner schedules
 **no** engine step for `VOLUME_DICOM`. **[VERIFIED — route + planner tests]**
 
 ---
@@ -263,7 +263,7 @@ quoted negation in layer 3 is the §15 clause itself). **[VERIFIED]**
 - Page/document provenance is included; the agent context budget
   (`maxAgentContextCharsPerAttachment: 8 000`) bounds what enters a call.
 - Extracted text **never** becomes instructions: the deterministic
-  5-layer renderer only *quotes* content; the action pipeline is the only
+  5-layer renderer only _quotes_ content; the action pipeline is the only
   write path and never sees document text as input.
 - User documents are **never** mixed into the Phase 4 RAG knowledge store:
   the answer states "NOT added to the clinic knowledge base."
@@ -282,7 +282,7 @@ quoted negation in layer 3 is the §15 clause itself). **[VERIFIED]**
   call, no heuristics on pixel statistics, no LLM.
 - Agent task: attachments present ⇒ `ATTACHMENT_ANALYSIS` deterministically
   (server facts override phrasing). Compare vs per-item use is a
-  deterministic phrase list (EN+AR) over the *framing only* — it never
+  deterministic phrase list (EN+AR) over the _framing only_ — it never
   selects engines or modalities. **[VERIFIED — classifier tests]**
 
 ---
@@ -298,8 +298,8 @@ There is no second brain. The existing loop gained:
   - `analyze_attachment { attachmentId, jaw?, toothFdi? }` — FDI 11–48 only;
   - `read_document_attachment { attachmentId }`;
   - `compare_attachments { attachmentIdA, attachmentIdB }` — must differ.
-  No free-form arguments, no paths, no engine names, no modality strings
-  accepted from the model or user.
+    No free-form arguments, no paths, no engine names, no modality strings
+    accepted from the model or user.
 - Minimum-necessary context: the attachment block (metadata + bounded
   document text) **replaces** the patient-profile fetch for attachment
   tasks — `contextProfile: null`, no `get_patient_360`. **[VERIFIED — loop test]**
@@ -404,20 +404,20 @@ the `Tooth_36` label from the normalized envelope, the absence of any
 
 ## 18. Security — threat matrix and mitigations (§9/§33/§35/§36)
 
-| Threat | Mitigation | Verified by |
-|---|---|---|
-| Path traversal in filenames (`../../evil.png`) | sanitized file name; traversal rejected `PATH_TRAVERSAL_REJECTED` 403; response leaks no infra (no ENOENT, no paths) | route test (asserts absence of `ENOENT`/paths) |
-| MIME spoofing (PDF bytes, `.png` name) | magic-byte classification wins; row is `DOCUMENT_PDF` | service test |
-| Malformed DICOM/OBJ/STL | typed `INVALID_FORMAT`/`UNSUPPORTED_MODALITY`; no crash, row `FAILED` | service tests |
-| Pixel bomb (decompression) | `maxPixelCount` 40M pre-decode accounting; 413/`OVERSIZED_INPUT`; bytes cleaned | service test (6500×6200) |
-| Oversized upload (memory) | pre-read 413 guard before `arrayBuffer()` (declared part size) | route test (stubbed 501 MB part) |
-| Prompt injection via PDF/EXIF/filename/URLs | deterministic renderer quotes only; action pipeline is the only write path and never receives content as input; tested with real imperative text | loop test |
-| Cross-tenant access | tenant-prefixed keys + `keyBelongsToHospital`; foreign-tenant ids dropped with warning, never resolved | service + route + loop tests |
-| Forged attachment ids / engine names | server re-resolve against tenant; typed tools reject free-form engine/modality input; forged ids → `FORGED_ATTACHMENT_ID` 403 | route + tool tests |
-| Provenance tampering | SHAs computed at store time; derivative chain recorded; job terminal owned by orchestrator | service tests |
-| Raw path/storage-key leakage | `AttachmentRef` excludes keys/SHAs; signed URL (300 s) only at retrieval | route test (asserts no `storageKey`/`sha256` in 201 body) |
-| Patient scope bypass | PATIENT fail-closed at stage (own patient only) and at tool level; patient-less docs unreadable in portal | loop + route tests |
-| Error leakage | typed `{ error: <translatable prose>, code: <machine code> }`; infra detail never in `error`; all 19 multimodal codes mapped to safe sentences | route tests + i18n sweep |
+| Threat                                         | Mitigation                                                                                                                                       | Verified by                                               |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| Path traversal in filenames (`../../evil.png`) | sanitized file name; traversal rejected `PATH_TRAVERSAL_REJECTED` 403; response leaks no infra (no ENOENT, no paths)                             | route test (asserts absence of `ENOENT`/paths)            |
+| MIME spoofing (PDF bytes, `.png` name)         | magic-byte classification wins; row is `DOCUMENT_PDF`                                                                                            | service test                                              |
+| Malformed DICOM/OBJ/STL                        | typed `INVALID_FORMAT`/`UNSUPPORTED_MODALITY`; no crash, row `FAILED`                                                                            | service tests                                             |
+| Pixel bomb (decompression)                     | `maxPixelCount` 40M pre-decode accounting; 413/`OVERSIZED_INPUT`; bytes cleaned                                                                  | service test (6500×6200)                                  |
+| Oversized upload (memory)                      | pre-read 413 guard before `arrayBuffer()` (declared part size)                                                                                   | route test (stubbed 501 MB part)                          |
+| Prompt injection via PDF/EXIF/filename/URLs    | deterministic renderer quotes only; action pipeline is the only write path and never receives content as input; tested with real imperative text | loop test                                                 |
+| Cross-tenant access                            | tenant-prefixed keys + `keyBelongsToHospital`; foreign-tenant ids dropped with warning, never resolved                                           | service + route + loop tests                              |
+| Forged attachment ids / engine names           | server re-resolve against tenant; typed tools reject free-form engine/modality input; forged ids → `FORGED_ATTACHMENT_ID` 403                    | route + tool tests                                        |
+| Provenance tampering                           | SHAs computed at store time; derivative chain recorded; job terminal owned by orchestrator                                                       | service tests                                             |
+| Raw path/storage-key leakage                   | `AttachmentRef` excludes keys/SHAs; signed URL (300 s) only at retrieval                                                                         | route test (asserts no `storageKey`/`sha256` in 201 body) |
+| Patient scope bypass                           | PATIENT fail-closed at stage (own patient only) and at tool level; patient-less docs unreadable in portal                                        | loop + route tests                                        |
+| Error leakage                                  | typed `{ error: <translatable prose>, code: <machine code> }`; infra detail never in `error`; all 19 multimodal codes mapped to safe sentences   | route tests + i18n sweep                                  |
 
 **i18n contract**: the API error messages are Arabic-resolvable — the
 mandatory `i18n-api-messages` sweep (every `error:`/`message:` literal across
@@ -428,17 +428,17 @@ the whole `app/api` surface) passes with the new attachment strings
 
 ## 19. Resource limits and explicit failure states (§32)
 
-| Limit | Value | Enforced |
-|---|---|---|
-| Bytes per class | 50 MB 2D / 200 MB mesh / 20 MB PDF / 1 MB TXT / 500 MB DICOM (store) / 10 MB unknown | before full read (route guard) + service |
-| Decoded pixels | 40 000 000 | preprocess |
-| Mesh cells (routing) | 5 000 000 (engine decimates to its 10 000 official cap) | service |
-| PDF pages / extracted chars | 200 / 200 000 | extraction |
-| Attachments per request | 4 | agent stage (drop + warn) |
-| Agent context per attachment | 8 000 chars (minimum necessary, §45) | context block |
-| Processing budget | 30 s (validate+preprocess+extract) | service |
-| Analysis budget | 120 s per `analyze_attachment` (sandbox cold mesh runs ≈ 12 s) | tool timeout → `TOOL_TIMEOUT`, user-safe message |
-| Agent loop | inherited Phase 3 limits (maxToolCalls/iterations/timeout/repeats) | loop |
+| Limit                        | Value                                                                                | Enforced                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Bytes per class              | 50 MB 2D / 200 MB mesh / 20 MB PDF / 1 MB TXT / 500 MB DICOM (store) / 10 MB unknown | before full read (route guard) + service         |
+| Decoded pixels               | 40 000 000                                                                           | preprocess                                       |
+| Mesh cells (routing)         | 5 000 000 (engine decimates to its 10 000 official cap)                              | service                                          |
+| PDF pages / extracted chars  | 200 / 200 000                                                                        | extraction                                       |
+| Attachments per request      | 4                                                                                    | agent stage (drop + warn)                        |
+| Agent context per attachment | 8 000 chars (minimum necessary, §45)                                                 | context block                                    |
+| Processing budget            | 30 s (validate+preprocess+extract)                                                   | service                                          |
+| Analysis budget              | 120 s per `analyze_attachment` (sandbox cold mesh runs ≈ 12 s)                       | tool timeout → `TOOL_TIMEOUT`, user-safe message |
+| Agent loop                   | inherited Phase 3 limits (maxToolCalls/iterations/timeout/repeats)                   | loop                                             |
 
 Failure states are explicit and typed — `ENGINE_UNAVAILABLE`,
 `WEIGHTS_UNAVAILABLE`, `ORCHESTRATOR_UNREACHABLE`, `INFERENCE_TIMEOUT`,
@@ -478,18 +478,18 @@ production engine services (`ai/engines/meshsegnet-{max,man}`, unmodified)
 were re-run: real HTTP `/health` (checksum self-verified) + cold and 5 warm
 `/infer` on the published test meshes.
 
-| | meshsegnet-max | meshsegnet-man |
-|---|---|---|
-| Weight file SHA-256 | `727cd3c5…52d2` (verified) | `d74c87e0…a0cf` (verified) |
-| Mesh input SHA-256 | `581b9a02…545e` (verified) | `b824f682…e7a76` (verified) |
-| Model loaded / checksum / stand-in | yes / verified / **no** | yes / verified / **no** |
-| Parameters | 1,799,140 | 1,799,140 |
-| Cells (engine cap) | 9,999 | 10,000 |
-| Model processing time | 12 435 ms | 10 169 ms |
-| HTTP cold / warm-median | 14 012 / 13 246 ms | 11 503 / 11 726 ms |
-| Peak RSS (engine process) | 1 889.5 MB | 1 768.4 MB |
-| Determinism (cold vs warm labels/segments) | identical | identical |
-| Status | **REAL_INFERENCE_VERIFIED** | **REAL_INFERENCE_VERIFIED** |
+|                                            | meshsegnet-max              | meshsegnet-man              |
+| ------------------------------------------ | --------------------------- | --------------------------- |
+| Weight file SHA-256                        | `727cd3c5…52d2` (verified)  | `d74c87e0…a0cf` (verified)  |
+| Mesh input SHA-256                         | `581b9a02…545e` (verified)  | `b824f682…e7a76` (verified) |
+| Model loaded / checksum / stand-in         | yes / verified / **no**     | yes / verified / **no**     |
+| Parameters                                 | 1,799,140                   | 1,799,140                   |
+| Cells (engine cap)                         | 9,999                       | 10,000                      |
+| Model processing time                      | 12 435 ms                   | 10 169 ms                   |
+| HTTP cold / warm-median                    | 14 012 / 13 246 ms          | 11 503 / 11 726 ms          |
+| Peak RSS (engine process)                  | 1 889.5 MB                  | 1 768.4 MB                  |
+| Determinism (cold vs warm labels/segments) | identical                   | identical                   |
+| Status                                     | **REAL_INFERENCE_VERIFIED** | **REAL_INFERENCE_VERIFIED** |
 
 - **Infra vs model separated**: the engine's own `processing_time_ms`
   (model) vs total HTTP time (infra + model): ≈ 0.8 s (max) / ≈ 1.6 s (man)
@@ -513,18 +513,18 @@ sandbox's environment.
 
 **Modalities, honest status:**
 
-| Modality | Ingestion | Preprocessing | AI |
-|---|---|---|---|
-| 2D (PNG/JPEG/WebP) | ✅ | ✅ (orientation, q85, pixel-bomb guard) | 🔴 no verified 2D engine — honest "not analyzed" answer **[BLOCKED — external: no verified model]** |
-| DICOM/CBCT | ✅ (store, ≤500 MB) | ❌ no parser | 🔴 no volume engine — ingestion-only answer **[DEFERRED]** |
-| 3D (STL/OBJ/PLY/VTK) | ✅ | ✅ (cell cap) | ✅ MeshSegNet max/man — **REAL_INFERENCE_VERIFIED** |
-| Documents (PDF/TXT) | ✅ | ✅ bounded extraction | n/a — reading as untrusted data (no engine path) |
-| Unknown | ✅ (≤10 MB) | — | nothing guessed, nothing analyzed |
+| Modality             | Ingestion           | Preprocessing                           | AI                                                                                                  |
+| -------------------- | ------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 2D (PNG/JPEG/WebP)   | ✅                  | ✅ (orientation, q85, pixel-bomb guard) | 🔴 no verified 2D engine — honest "not analyzed" answer **[BLOCKED — external: no verified model]** |
+| DICOM/CBCT           | ✅ (store, ≤500 MB) | ❌ no parser                            | 🔴 no volume engine — ingestion-only answer **[DEFERRED]**                                          |
+| 3D (STL/OBJ/PLY/VTK) | ✅                  | ✅ (cell cap)                           | ✅ MeshSegNet max/man — **REAL_INFERENCE_VERIFIED**                                                 |
+| Documents (PDF/TXT)  | ✅                  | ✅ bounded extraction                   | n/a — reading as untrusted data (no engine path)                                                    |
+| Unknown              | ✅ (≤10 MB)         | —                                       | nothing guessed, nothing analyzed                                                                   |
 
 **External blockers (exact):**
 
 1. `binaries.prisma.sh` unreachable (TLS RST / empty reply) → `prisma
-   generate` cannot run → generated client absent → `next build` fails on
+generate` cannot run → generated client absent → `next build` fails on
    the pre-existing 503 baseline TS errors (mostly client-related).
 2. No MySQL in sandbox → orchestrator job-row writes not re-exercised here
    (66 tests + Phase 5 production evidence cover it).
@@ -556,6 +556,7 @@ acceptance re-verification.
 ## File map
 
 **New (Phase 6):**
+
 - `lib/ai/multimodal/{types,limits,file-signature,filename,modality,preprocess,document-extract,attachments,context}.ts`
 - `app/api/ai/attachments/route.ts` (POST multipart / GET list), `app/api/ai/attachments/[id]/route.ts` (GET signed URL / DELETE)
 - `prisma/migrations/20261001000000_add_multimodal_attachments_phase6/migration.sql`
@@ -565,6 +566,7 @@ acceptance re-verification.
 - `ai-validation/meshsegnet/reports/phase6_real_inference_{max,man}.json`
 
 **Modified (Phase 6):**
+
 - `lib/ai/agent/{types,tools,loop,planner,classifier}.ts` (attachment task, typed tools, planner gate, compare intent, failure rendering)
 - `lib/ai/engines/local-ai-service.ts` (attachment task plumbing)
 - `app/api/ai/agent/route.ts` (attachments passthrough)

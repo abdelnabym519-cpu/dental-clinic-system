@@ -15,7 +15,11 @@
  */
 import { describe, it, expect } from 'vitest'
 import { createFakePrisma, HOSP_A, NOW } from '@/tests/harness/context-fixtures'
-import { runProactiveIntelligence, dismissAlert, type AlertPrisma } from '@/lib/ai/intelligence/proactive'
+import {
+  runProactiveIntelligence,
+  dismissAlert,
+  type AlertPrisma,
+} from '@/lib/ai/intelligence/proactive'
 
 const DAY = 86_400_000
 const daysAgo = (n: number) => new Date(NOW.getTime() - n * DAY)
@@ -29,14 +33,23 @@ type InsightRow = Record<string, unknown>
 /** createFakePrisma + a stateful aIInsight delegate (findMany/create/updateMany). */
 function makeDb(extra: Record<string, unknown[]> = {}) {
   const rows: InsightRow[] = []
-  const base = createFakePrisma({ aiAnalysisJob: [], ...extra } as never) as unknown as Record<string, unknown>
+  const base = createFakePrisma({ aiAnalysisJob: [], ...extra } as never) as unknown as Record<
+    string,
+    unknown
+  >
   const delegate = {
     findMany: async (args?: { where?: Record<string, unknown> }) => {
       const w = args?.where ?? {}
       return rows.filter((r) => Object.entries(w).every(([k, v]) => r[k] === v))
     },
     create: async (args: { data: InsightRow }) => {
-      const row = { id: `ins-${rows.length + 1}`, createdAt: NOW, dismissed: false, actionTaken: false, ...args.data }
+      const row = {
+        id: `ins-${rows.length + 1}`,
+        createdAt: NOW,
+        dismissed: false,
+        actionTaken: false,
+        ...args.data,
+      }
       rows.push(row)
       return row
     },
@@ -57,28 +70,68 @@ function makeDb(extra: Record<string, unknown[]> = {}) {
 
 function trt(id: string, over: { required?: boolean; status?: string; date?: Date | null }) {
   return {
-    id, hospitalId: HOSP_A, patientId: 'pat-A1', treatmentNo: `TRT-${id}`,
-    status: over.status ?? 'COMPLETED', toothNumbers: '36', diagnosis: null, findings: null, chiefComplaint: null,
-    procedureId: 'p', procedure: null, doctorId: 'staff-doctor-1', doctor: null,
-    startTime: daysAgo(30), endTime: daysAgo(29), followUpRequired: over.required ?? true,
+    id,
+    hospitalId: HOSP_A,
+    patientId: 'pat-A1',
+    treatmentNo: `TRT-${id}`,
+    status: over.status ?? 'COMPLETED',
+    toothNumbers: '36',
+    diagnosis: null,
+    findings: null,
+    chiefComplaint: null,
+    procedureId: 'p',
+    procedure: null,
+    doctorId: 'staff-doctor-1',
+    doctor: null,
+    startTime: daysAgo(30),
+    endTime: daysAgo(29),
+    followUpRequired: over.required ?? true,
     followUpDate: over.date === undefined ? daysAgo(10) : over.date,
-    followUpNotes: null, complications: null, appointmentId: null, createdAt: daysAgo(30), updatedAt: daysAgo(29),
+    followUpNotes: null,
+    complications: null,
+    appointmentId: null,
+    createdAt: daysAgo(30),
+    updatedAt: daysAgo(29),
   }
 }
 function appt(id: string, status: string, at: Date, extra: Record<string, unknown> = {}) {
   return {
-    id, hospitalId: HOSP_A, patientId: 'pat-A1', appointmentNo: `APPT-${id}`,
-    appointmentType: 'CONSULTATION', status, scheduledDate: at, chiefComplaint: null,
-    doctorId: 'staff-doctor-1', doctor: null, priority: 'NORMAL', checkedInAt: null, checkedOutAt: null,
-    createdAt: daysAgo(2), ...extra,
+    id,
+    hospitalId: HOSP_A,
+    patientId: 'pat-A1',
+    appointmentNo: `APPT-${id}`,
+    appointmentType: 'CONSULTATION',
+    status,
+    scheduledDate: at,
+    chiefComplaint: null,
+    doctorId: 'staff-doctor-1',
+    doctor: null,
+    priority: 'NORMAL',
+    checkedInAt: null,
+    checkedOutAt: null,
+    createdAt: daysAgo(2),
+    ...extra,
   }
 }
 const job = (id: string, reviewDecision: string | null) => ({
-  id, hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-  requestedById: null, modelVersion: 'v1', modelChecksum: 'c', orchestratorVersion: '2',
-  startedAt: NOW, completedAt: NOW, confidence: 0.5, findings: [],
-  reviewedById: reviewDecision ? 'staff-doctor-1' : null, reviewedAt: reviewDecision ? NOW : null,
-  reviewDecision, acceptedFindings: null, createdAt: NOW,
+  id,
+  hospitalId: HOSP_A,
+  studyId: 'study-A1',
+  engine: 'clm',
+  status: 'COMPLETED',
+  requestedById: null,
+  modelVersion: 'v1',
+  modelChecksum: 'c',
+  orchestratorVersion: '2',
+  startedAt: NOW,
+  completedAt: NOW,
+  confidence: 0.5,
+  findings: [],
+  reviewedById: reviewDecision ? 'staff-doctor-1' : null,
+  reviewedAt: reviewDecision ? NOW : null,
+  reviewDecision,
+  acceptedFindings: null,
+  createdAt: NOW,
 })
 
 describe('Phase 9 — proactive: rules (§17–§21)', () => {
@@ -92,7 +145,11 @@ describe('Phase 9 — proactive: rules (§17–§21)', () => {
         trt('t-nodate', { date: null }),
       ],
     })
-    const res = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 'staff-1' })
+    const res = await runProactiveIntelligence(db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 'staff-1',
+    })
     const find = (type: string, no: string) =>
       res.detected.find((a) => a.alertType === type && a.evidence.treatmentNo === no)
     expect(find('FOLLOW_UP_DUE', 'TRT-t-old')?.severity).toBe('CRITICAL')
@@ -110,10 +167,16 @@ describe('Phase 9 — proactive: rules (§17–§21)', () => {
         appt('a-noshow', 'NO_SHOW', hoursAgo(2)),
       ],
     })
-    const res = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 'staff-1' })
+    const res = await runProactiveIntelligence(db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 'staff-1',
+    })
     const missed = res.detected.filter((a) => a.alertType === 'MISSED_APPOINTMENT')
     expect(missed).toHaveLength(2)
-    expect(missed.find((a) => a.evidence.appointmentNo === 'APPT-a-missed')?.severity).toBe('WARNING')
+    expect(missed.find((a) => a.evidence.appointmentNo === 'APPT-a-missed')?.severity).toBe(
+      'WARNING'
+    )
     expect(missed.find((a) => a.evidence.appointmentNo === 'APPT-a-noshow')?.severity).toBe('INFO')
   })
 
@@ -121,20 +184,38 @@ describe('Phase 9 — proactive: rules (§17–§21)', () => {
     const { db } = makeDb({
       aiAnalysisJob: [job('job-1', null), job('job-2', 'ACCEPTED'), job('job-3', 'REJECTED')],
     })
-    const res = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 'staff-1' })
+    const res = await runProactiveIntelligence(db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 'staff-1',
+    })
     const ai = res.detected.filter((a) => a.alertType === 'AI_REVIEW_REQUIRED')
     expect(ai).toHaveLength(1)
     expect(ai[0].evidence.jobId).toBe('job-1')
   })
 
   it('queue bottleneck: 4 waiting WARNING, 8 waiting CRITICAL', async () => {
-    const mk4 = makeDb({ appointment: [1, 2, 3, 4].map((i) => appt(`q${i}`, 'CHECKED_IN', hoursAhead(1))) })
-    const r4 = await runProactiveIntelligence(mk4.db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
+    const mk4 = makeDb({
+      appointment: [1, 2, 3, 4].map((i) => appt(`q${i}`, 'CHECKED_IN', hoursAhead(1))),
+    })
+    const r4 = await runProactiveIntelligence(mk4.db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 's',
+    })
     const b4 = r4.detected.find((a) => a.alertType === 'QUEUE_BOTTLENECK')
     expect(b4?.severity).toBe('WARNING')
 
-    const mk8 = makeDb({ appointment: Array.from({ length: 8 }, (_, i) => appt(`q8-${i}`, 'CHECKED_IN', hoursAhead(1))) })
-    const r8 = await runProactiveIntelligence(mk8.db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
+    const mk8 = makeDb({
+      appointment: Array.from({ length: 8 }, (_, i) =>
+        appt(`q8-${i}`, 'CHECKED_IN', hoursAhead(1))
+      ),
+    })
+    const r8 = await runProactiveIntelligence(mk8.db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 's',
+    })
     expect(r8.detected.find((a) => a.alertType === 'QUEUE_BOTTLENECK')?.severity).toBe('CRITICAL')
   })
 })
@@ -146,9 +227,17 @@ describe('Phase 9 — proactive: dedup & dismissal (§21)', () => {
       aiAnalysisJob: [job('job-1', null)],
     }
     const one = makeDb(extra)
-    const first = await runProactiveIntelligence(one.db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
+    const first = await runProactiveIntelligence(one.db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 's',
+    })
     expect(first.created).toBe(2)
-    const second = await runProactiveIntelligence(one.db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
+    const second = await runProactiveIntelligence(one.db, {
+      hospitalId: HOSP_A,
+      now: NOW,
+      actorId: 's',
+    })
     expect(second.created).toBe(0)
     expect(second.deduplicated).toBe(2)
     expect(one.rows).toHaveLength(2)
@@ -179,9 +268,19 @@ describe('Phase 9 — proactive: dedup & dismissal (§21)', () => {
     const { db, rows } = makeDb({ treatment: [trt('t1', { date: daysAgo(10) })] })
     await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
     // A tenant-B row that tenant A cannot dismiss.
-    rows.push({ id: 'ins-B', hospitalId: 'hosp-B', dismissed: false, data: { kind: 'PROACTIVE_ALERT', dedupKey: 'x' } })
-    expect(await dismissAlert(db, { hospitalId: HOSP_A, alertId: 'ins-B', actorId: 's' })).toEqual({ ok: false, state: 'NOT_FOUND' })
-    expect(await dismissAlert(db, { hospitalId: HOSP_A, alertId: 'ins-nope', actorId: 's' })).toEqual({ ok: false, state: 'NOT_FOUND' })
+    rows.push({
+      id: 'ins-B',
+      hospitalId: 'hosp-B',
+      dismissed: false,
+      data: { kind: 'PROACTIVE_ALERT', dedupKey: 'x' },
+    })
+    expect(await dismissAlert(db, { hospitalId: HOSP_A, alertId: 'ins-B', actorId: 's' })).toEqual({
+      ok: false,
+      state: 'NOT_FOUND',
+    })
+    expect(
+      await dismissAlert(db, { hospitalId: HOSP_A, alertId: 'ins-nope', actorId: 's' })
+    ).toEqual({ ok: false, state: 'NOT_FOUND' })
   })
 })
 
@@ -205,7 +304,9 @@ describe('Phase 9 — proactive: signal-only + tenant isolation (§34)', () => {
 
   it('tenant isolation: tenant-B triggers never create tenant-A rows', async () => {
     const { db, rows } = makeDb({
-      treatment: [{ ...trt('tb', { date: daysAgo(10) }), hospitalId: 'hosp-B', patientId: 'pat-B1' }],
+      treatment: [
+        { ...trt('tb', { date: daysAgo(10) }), hospitalId: 'hosp-B', patientId: 'pat-B1' },
+      ],
     })
     const res = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 's' })
     expect(res.detected).toHaveLength(0)

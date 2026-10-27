@@ -77,15 +77,23 @@ export class PaymobGateway implements PaymentGateway {
         last_name: (params.customerName || 'Patient').split(' ').slice(1).join(' ') || 'Dentora',
         email: params.customerEmail || 'no-email@dentora-dental.com',
         phone_number: params.customerPhone || '+201000000000',
-        apartment: 'NA', floor: 'NA', street: 'NA', building: 'NA',
-        shipping_method: 'NA', postal_code: 'NA',
-        state: 'Cairo', city: 'Cairo', country: 'EG',
+        apartment: 'NA',
+        floor: 'NA',
+        street: 'NA',
+        building: 'NA',
+        shipping_method: 'NA',
+        postal_code: 'NA',
+        state: 'Cairo',
+        city: 'Cairo',
+        country: 'EG',
       },
     })
 
     // The payment-keys endpoint returns { token }; tolerate a bare string too.
     const paymentKeyToken =
-      typeof paymentKey === 'string' ? paymentKey : String((paymentKey as { token?: string })?.token ?? '')
+      typeof paymentKey === 'string'
+        ? paymentKey
+        : String((paymentKey as { token?: string })?.token ?? '')
 
     return {
       orderId: String(order.id),

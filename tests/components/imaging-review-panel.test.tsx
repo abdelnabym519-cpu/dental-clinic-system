@@ -140,6 +140,8 @@ describe('DoctorReviewPanel — decision semantics', () => {
     })
     renderPanel()
     fireEvent.click(screen.getByRole('button', { name: 'Accept all' }))
-    await waitFor(() => expect(screen.getByText('Only completed jobs can be reviewed')).toBeTruthy())
+    await waitFor(() =>
+      expect(screen.getByText('Only completed jobs can be reviewed')).toBeTruthy()
+    )
   })
 })

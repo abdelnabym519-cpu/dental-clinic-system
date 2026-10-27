@@ -35,21 +35,23 @@ export function gateReport(gate: GateId, checks: EvalCheck[]): GateReport {
   const hasFail = checks.some((c) => c.verdict === 'FAIL')
   const allBlocked = checks.length > 0 && checks.every((c) => c.verdict === 'BLOCKED_ENVIRONMENT')
   // An empty gate is never green — there is no evidence to pass on.
-  const verdict = checks.length === 0
-    ? 'NOT_APPLICABLE'
-    : hasFail
-      ? 'FAIL'
-      : allBlocked
-        ? 'BLOCKED_ENVIRONMENT'
-        : 'PASS'
+  const verdict =
+    checks.length === 0
+      ? 'NOT_APPLICABLE'
+      : hasFail
+        ? 'FAIL'
+        : allBlocked
+          ? 'BLOCKED_ENVIRONMENT'
+          : 'PASS'
   return {
     gate,
     title: GATE_TITLES[gate],
     checks,
     verdict,
-    blockedReasons: checks.length === 0
-      ? ['no checks recorded — gate not exercised (never reported as PASS)']
-      : [...new Set(blockedReasons)],
+    blockedReasons:
+      checks.length === 0
+        ? ['no checks recorded — gate not exercised (never reported as PASS)']
+        : [...new Set(blockedReasons)],
   }
 }
 

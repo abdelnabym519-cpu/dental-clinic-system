@@ -176,7 +176,9 @@ export default function AppointmentsPage() {
           </Badge>
         </TooltipTrigger>
         <TooltipContent side="left" className="max-w-[250px]">
-          <p className="font-medium mb-1">{t("No-Show Risk:")} {risk.riskLevel}</p>
+          <p className="font-medium mb-1">
+            {t('No-Show Risk:')} {risk.riskLevel}
+          </p>
           {risk.factors.map((f, i) => (
             <p key={i} className="text-xs">
               • {f}
@@ -325,11 +327,13 @@ export default function AppointmentsPage() {
               ) : (
                 <Brain className="h-4 w-4 mr-2" />
               )}
-              {showRisk ? t("Refresh Risk") : t("AI Risk")}
+              {showRisk ? t('Refresh Risk') : t('AI Risk')}
             </Button>
             <Link href="/appointments/new">
               <Button>
-                <Plus className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('ui.new_appointment')}
+              </Button>
             </Link>
           </div>
         </div>
@@ -452,7 +456,7 @@ export default function AppointmentsPage() {
                         <div className="font-medium">{appointment.appointmentNo}</div>
                         {appointment.chairNumber && (
                           <div className="text-sm text-muted-foreground">
-                            {t("Chair")} {appointment.chairNumber}
+                            {t('Chair')} {appointment.chairNumber}
                           </div>
                         )}
                       </TableCell>
@@ -488,7 +492,9 @@ export default function AppointmentsPage() {
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                               <Clock className="h-3 w-3" />
                               {formatTime(appointment.scheduledTime)}
-                              <span className="text-xs">({appointment.duration} {t('min)')}</span>
+                              <span className="text-xs">
+                                ({appointment.duration} {t('min)')}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -515,25 +521,35 @@ export default function AppointmentsPage() {
                             <DropdownMenuItem
                               onClick={() => router.push(`/appointments/${appointment.id}`)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />
+                              {t('ui.view_details')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => router.push(`/appointments/${appointment.id}/edit`)}
                             >
-                              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />
+                              {t('ui.edit')}
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
                               <DropdownMenuItem onClick={() => handleCheckIn(appointment.id)}>
-                                <LogIn className="h-4 w-4 mr-2" />{t('ui.check_in')}</DropdownMenuItem>
+                                <LogIn className="h-4 w-4 mr-2" />
+                                {t('ui.check_in')}
+                              </DropdownMenuItem>
                             )}
                             {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
                               <DropdownMenuItem onClick={() => handleCheckOut(appointment.id)}>
-                                <LogOut className="h-4 w-4 mr-2" />{t('ui.check_out')}</DropdownMenuItem>
+                                <LogOut className="h-4 w-4 mr-2" />
+                                {t('ui.check_out')}
+                              </DropdownMenuItem>
                             )}
                             {appointment.status === 'SCHEDULED' && (
                               <DropdownMenuItem
                                 onClick={() => handleStatusChange(appointment.id, 'CONFIRMED')}
                               >
-                                <CheckCircle className="h-4 w-4 mr-2" />{t('ui.confirm')}</DropdownMenuItem>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {t('ui.confirm')}
+                              </DropdownMenuItem>
                             )}
                             {!['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(
                               appointment.status
@@ -551,7 +567,9 @@ export default function AppointmentsPage() {
                                   onClick={() => handleStatusChange(appointment.id, 'CANCELLED')}
                                   className="text-red-600"
                                 >
-                                  <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel')}</DropdownMenuItem>
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  {t('ui.cancel')}
+                                </DropdownMenuItem>
                               </>
                             )}
                           </DropdownMenuContent>
@@ -567,9 +585,9 @@ export default function AppointmentsPage() {
             {!loading && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between border-t px-4 py-4">
                 <div className="text-sm text-muted-foreground">
-                  {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                  {pagination.total} {t("appointments")}
+                  {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                  {pagination.total} {t('appointments')}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -578,16 +596,20 @@ export default function AppointmentsPage() {
                     onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                     disabled={pagination.page <= 1}
                   >
-                    <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                    <ChevronLeft className="h-4 w-4" />
+                    {t('ui.previous')}
+                  </Button>
                   <div className="text-sm">
-                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                    {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                     disabled={pagination.page >= pagination.totalPages}
-                  >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                  >
+                    {t('ui.next')}
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

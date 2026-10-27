@@ -89,7 +89,9 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
                 <div
                   className={`w-12 h-12 rounded-lg flex items-center justify-center ${category.color} mb-3`}
                 >
-                  {React.createElement(ICONS[category.icon] ?? SettingsIcon, { className: 'w-6 h-6' })}
+                  {React.createElement(ICONS[category.icon] ?? SettingsIcon, {
+                    className: 'w-6 h-6',
+                  })}
                 </div>
                 <CardTitle className="text-xl">{t(category.title)}</CardTitle>
                 <CardDescription className="text-sm">{t(category.description)}</CardDescription>
@@ -160,10 +162,10 @@ export function SettingsOverview({ categories }: { categories: SettingsCategory[
             <CardTitle>{t('settings.quickTips')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>{t("• Regular backups are crucial for data safety")}</p>
-            <p>{t("• Review audit logs periodically for security")}</p>
-            <p>{t("• Keep clinic information updated")}</p>
-            <p>{t("• Configure SMS/Email for automated reminders")}</p>
+            <p>{t('• Regular backups are crucial for data safety')}</p>
+            <p>{t('• Review audit logs periodically for security')}</p>
+            <p>{t('• Keep clinic information updated')}</p>
+            <p>{t('• Configure SMS/Email for automated reminders')}</p>
           </CardContent>
         </Card>
       </div>

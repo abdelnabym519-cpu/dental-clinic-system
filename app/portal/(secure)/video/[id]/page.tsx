@@ -121,7 +121,9 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
       case 'SCHEDULED':
         return <Badge className="bg-blue-100 text-blue-700">{t('ui.scheduled')}</Badge>
       case 'IN_PROGRESS':
-        return <Badge className="bg-green-100 text-green-700 animate-pulse">{t('ui.in_progress')}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-700 animate-pulse">{t('ui.in_progress')}</Badge>
+        )
       case 'COMPLETED':
         return <Badge className="bg-gray-100 text-gray-700">{t('ui.completed')}</Badge>
       case 'CANCELLED':
@@ -145,7 +147,9 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
       <div className="text-center py-12">
         <p className="text-red-600">{error || 'Consultation not found'}</p>
         <Link href="/portal/appointments">
-          <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
+          <Button variant="outline" className="mt-4">
+            {t('ui.back_to_appointments')}
+          </Button>
         </Link>
       </div>
     )
@@ -171,7 +175,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm">
-              {t("Dr.")} {consultation.doctor.firstName} {consultation.doctor.lastName}
+              {t('Dr.')} {consultation.doctor.firstName} {consultation.doctor.lastName}
             </span>
             <Button
               variant="ghost"
@@ -212,7 +216,9 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
       <div className="flex items-center gap-4">
         <Link href="/portal/appointments">
           <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t('ui.back')}
+          </Button>
         </Link>
         <div>
           <div className="flex items-center gap-3">
@@ -231,7 +237,7 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
 
             <div className="text-center space-y-1">
               <h2 className="text-lg font-semibold">
-                {t("Dr.")} {consultation.doctor.firstName} {consultation.doctor.lastName}
+                {t('Dr.')} {consultation.doctor.firstName} {consultation.doctor.lastName}
               </h2>
               {consultation.doctor.specialization && (
                 <p className="text-muted-foreground">{consultation.doctor.specialization}</p>
@@ -251,33 +257,35 @@ export default function PatientVideoPage({ params }: { params: Promise<{ id: str
 
             {consultation.appointment?.chiefComplaint && (
               <p className="text-sm text-center max-w-md">
-                <span className="text-muted-foreground">{t("Reason:")} </span>
+                <span className="text-muted-foreground">{t('Reason:')} </span>
                 {consultation.appointment.chiefComplaint}
               </p>
             )}
 
             {consultation.duration != null && (
               <p className="text-sm text-muted-foreground">
-                {t("Duration:")} {consultation.duration} {t("minutes")}
+                {t('Duration:')} {consultation.duration} {t('minutes')}
               </p>
             )}
 
             {canJoin ? (
               <Button size="lg" onClick={joinCall} className="mt-4">
                 <Video className="h-5 w-5 mr-2" />
-                {consultation.status === 'IN_PROGRESS' ? t("Join Call") : t("Join When Ready")}
+                {consultation.status === 'IN_PROGRESS' ? t('Join Call') : t('Join When Ready')}
               </Button>
             ) : (
               <p className="text-muted-foreground text-sm mt-4">
                 {consultation.status === 'COMPLETED'
-                  ? t("This consultation has ended.")
-                  : t("This consultation is not available.")}
+                  ? t('This consultation has ended.')
+                  : t('This consultation is not available.')}
               </p>
             )}
 
             {canJoin && (
               <p className="text-xs text-muted-foreground max-w-sm text-center">
-                {t("Please ensure you have a stable internet connection and have granted camera and microphone permissions in your browser.")}
+                {t(
+                  'Please ensure you have a stable internet connection and have granted camera and microphone permissions in your browser.'
+                )}
               </p>
             )}
           </div>

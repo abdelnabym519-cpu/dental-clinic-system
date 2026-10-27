@@ -277,7 +277,9 @@ export default function QueueManagementPage() {
               {getDoctorName(appointment.doctor)}
             </p>
             {appointment.chairNumber && (
-              <p className="text-xs text-muted-foreground">{t("Chair")} {appointment.chairNumber}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('Chair')} {appointment.chairNumber}
+              </p>
             )}
           </div>
         </div>
@@ -304,26 +306,36 @@ export default function QueueManagementPage() {
             {['SCHEDULED', 'CONFIRMED'].includes(appointment.status) && (
               <>
                 <Button size="sm" onClick={() => handleCheckIn(appointment.id)}>
-                  <LogIn className="h-4 w-4 mr-1" />{t('ui.check_in')}</Button>
+                  <LogIn className="h-4 w-4 mr-1" />
+                  {t('ui.check_in')}
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => handleNoShow(appointment.id)}>
-                  <XCircle className="h-4 w-4 mr-1" />{t('ui.no_show')}</Button>
+                  <XCircle className="h-4 w-4 mr-1" />
+                  {t('ui.no_show')}
+                </Button>
               </>
             )}
             {appointment.status === 'CHECKED_IN' && (
               <>
                 <Button size="sm" onClick={() => handleStartProgress(appointment.id)}>
-                  <Play className="h-4 w-4 mr-1" />{t('ui.start')}</Button>
+                  <Play className="h-4 w-4 mr-1" />
+                  {t('ui.start')}
+                </Button>
               </>
             )}
             {['CHECKED_IN', 'IN_PROGRESS'].includes(appointment.status) && (
               <Button size="sm" variant="outline" onClick={() => handleCheckOut(appointment.id)}>
-                <LogOut className="h-4 w-4 mr-1" />{t('ui.complete')}</Button>
+                <LogOut className="h-4 w-4 mr-1" />
+                {t('ui.complete')}
+              </Button>
             )}
             <Button
               size="sm"
               variant="ghost"
               onClick={() => router.push(`/appointments/${appointment.id}`)}
-            >{t('ui.view')}</Button>
+            >
+              {t('ui.view')}
+            </Button>
           </div>
         )}
       </CardContent>
@@ -354,16 +366,20 @@ export default function QueueManagementPage() {
               <SelectItem value="all">{t('ui.all_doctors')}</SelectItem>
               {doctors.map((doctor) => (
                 <SelectItem key={doctor.id} value={doctor.id}>
-                  {t("Dr.")} {doctor.firstName} {doctor.lastName}
+                  {t('Dr.')} {doctor.firstName} {doctor.lastName}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />{t('ui.refresh')}</Button>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {t('ui.refresh')}
+          </Button>
           <Link href="/appointments/new">
             <Button>
-              <Calendar className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
+              <Calendar className="h-4 w-4 mr-2" />
+              {t('ui.new_appointment')}
+            </Button>
           </Link>
         </div>
       </div>
@@ -430,7 +446,9 @@ export default function QueueManagementPage() {
               <Timer className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{t('Avg Wait')}</span>
             </div>
-            <p className="text-2xl font-bold">{stats.avgWaitTime} {t('min')}</p>
+            <p className="text-2xl font-bold">
+              {stats.avgWaitTime} {t('min')}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -446,7 +464,8 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-amber-50 border-b border-amber-200">
               <CardTitle className="flex items-center gap-2 text-amber-700">
                 <Clock className="h-5 w-5" />
-                {t("Waiting (")}{queue.waiting.length})
+                {t('Waiting (')}
+                {queue.waiting.length})
               </CardTitle>
               <CardDescription>{t('Patients checked in and waiting')}</CardDescription>
             </CardHeader>
@@ -464,13 +483,16 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-purple-50 border-b border-purple-200">
               <CardTitle className="flex items-center gap-2 text-purple-700">
                 <Play className="h-5 w-5" />
-                {t("In Progress (")}{queue.inProgress.length})
+                {t('In Progress (')}
+                {queue.inProgress.length})
               </CardTitle>
               <CardDescription>{t('Currently being attended')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 max-h-[500px] overflow-y-auto">
               {queue.inProgress.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">{t('No treatments in progress')}</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {t('No treatments in progress')}
+                </p>
               ) : (
                 queue.inProgress.map((apt) => <AppointmentCard key={apt.id} appointment={apt} />)
               )}
@@ -482,13 +504,16 @@ export default function QueueManagementPage() {
             <CardHeader className="bg-blue-50 border-b border-blue-200">
               <CardTitle className="flex items-center gap-2 text-blue-700">
                 <Calendar className="h-5 w-5" />
-                {t("Upcoming (")}{queue.upcoming.length})
+                {t('Upcoming (')}
+                {queue.upcoming.length})
               </CardTitle>
               <CardDescription>{t('Scheduled appointments today')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4 max-h-[500px] overflow-y-auto">
               {queue.upcoming.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">{t('No more appointments today')}</p>
+                <p className="text-center text-muted-foreground py-8">
+                  {t('No more appointments today')}
+                </p>
               ) : (
                 queue.upcoming.map((apt) => <AppointmentCard key={apt.id} appointment={apt} />)
               )}
@@ -503,7 +528,8 @@ export default function QueueManagementPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700">
               <CheckCircle className="h-5 w-5" />
-              {t("Completed Today (")}{queue.completed.length})
+              {t('Completed Today (')}
+              {queue.completed.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -515,7 +541,10 @@ export default function QueueManagementPage() {
             {queue.completed.length > 6 && (
               <div className="text-center mt-4">
                 <Link href="/appointments?status=COMPLETED">
-                  <Button variant="outline">{t("View All Completed (")}{queue.completed.length})</Button>
+                  <Button variant="outline">
+                    {t('View All Completed (')}
+                    {queue.completed.length})
+                  </Button>
                 </Link>
               </div>
             )}

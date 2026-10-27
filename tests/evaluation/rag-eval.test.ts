@@ -11,7 +11,11 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createInMemoryKnowledgeStore, SEED_KNOWLEDGE } from './harness'
 import { retrieveKnowledge } from '@/lib/ai/knowledge/retrieval'
-import { checkGrounding, stripUnsupportedCitations, extractCitedIds } from '@/lib/ai/knowledge/grounding'
+import {
+  checkGrounding,
+  stripUnsupportedCitations,
+  extractCitedIds,
+} from '@/lib/ai/knowledge/grounding'
 import type { KnowledgeStore, KnowledgeCitation } from '@/lib/ai/knowledge/types'
 
 const HOSP = 'hosp-A'
@@ -24,8 +28,12 @@ beforeAll(() => {
 describe('RAG lexical retrieval (offline, deterministic)', () => {
   it('EN clinical query retrieves cited, in-domain evidence', async () => {
     const pkg = await retrieveKnowledge(
-      { question: 'What are the indications for a root canal treatment?', useCase: 'clinical', hospitalId: HOSP },
-      store,
+      {
+        question: 'What are the indications for a root canal treatment?',
+        useCase: 'clinical',
+        hospitalId: HOSP,
+      },
+      store
     )
     expect(pkg.ok).toBe(true)
     expect(pkg.results.length).toBeGreaterThan(0)
@@ -36,8 +44,13 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
 
   it('AR clinical query retrieves Arabic evidence (bilingual parity)', async () => {
     const pkg = await retrieveKnowledge(
-      { question: 'ما هي معايير علاج قناة الجذر؟', useCase: 'clinical', hospitalId: HOSP, language: 'ar' },
-      store,
+      {
+        question: 'ما هي معايير علاج قناة الجذر؟',
+        useCase: 'clinical',
+        hospitalId: HOSP,
+        language: 'ar',
+      },
+      store
     )
     expect(pkg.ok).toBe(true)
     expect(pkg.citations.length).toBeGreaterThan(0)
@@ -52,12 +65,21 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
 
   it('domain filter narrows retrieval to the requested taxonomy domain', async () => {
     const open = await retrieveKnowledge(
-      { question: 'indications and contraindications criteria', useCase: 'clinical', hospitalId: HOSP },
-      store,
+      {
+        question: 'indications and contraindications criteria',
+        useCase: 'clinical',
+        hospitalId: HOSP,
+      },
+      store
     )
     const endo = await retrieveKnowledge(
-      { question: 'indications and contraindications criteria', useCase: 'clinical', hospitalId: HOSP, domain: 'ENDODONTICS' },
-      store,
+      {
+        question: 'indications and contraindications criteria',
+        useCase: 'clinical',
+        hospitalId: HOSP,
+        domain: 'ENDODONTICS',
+      },
+      store
     )
     expect(open.results.length).toBeGreaterThanOrEqual(endo.results.length)
     for (const r of endo.results) {
@@ -67,8 +89,12 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
 
   it('honest NO_RESULTS / no-evidence when nothing matches (never fabricated)', async () => {
     const pkg = await retrieveKnowledge(
-      { question: 'What are the guidelines for fluoride varnish application?', useCase: 'clinical', hospitalId: HOSP },
-      store,
+      {
+        question: 'What are the guidelines for fluoride varnish application?',
+        useCase: 'clinical',
+        hospitalId: HOSP,
+      },
+      store
     )
     expect(pkg.ok).toBe(true)
     expect(pkg.citations.length).toBe(0)
@@ -80,8 +106,13 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
     // never eligible without the explicit flag. We assert the eligibility
     // gate is applied (no TIER_4 in results without allowTier4).
     const pkg = await retrieveKnowledge(
-      { question: 'indications criteria protocol', useCase: 'educational', hospitalId: HOSP, allowTier4: false },
-      store,
+      {
+        question: 'indications criteria protocol',
+        useCase: 'educational',
+        hospitalId: HOSP,
+        allowTier4: false,
+      },
+      store
     )
     for (const c of pkg.citations) {
       expect(c.authorityTier).not.toBe('TIER_4')
@@ -102,16 +133,26 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
         tier: 'TIER_2',
         scope: 'TENANT',
         hospitalId: 'hosp-A',
-        chunks: ['Hospital A internal protocol: referral fee schedule for external labs applies only to hospital A contracts.'],
+        chunks: [
+          'Hospital A internal protocol: referral fee schedule for external labs applies only to hospital A contracts.',
+        ],
       },
     ])
     const fromA = await retrieveKnowledge(
-      { question: 'referral fee schedule external labs contract', useCase: 'clinical', hospitalId: 'hosp-A' },
-      tenantStore,
+      {
+        question: 'referral fee schedule external labs contract',
+        useCase: 'clinical',
+        hospitalId: 'hosp-A',
+      },
+      tenantStore
     )
     const fromB = await retrieveKnowledge(
-      { question: 'referral fee schedule external labs contract', useCase: 'clinical', hospitalId: 'hosp-B' },
-      tenantStore,
+      {
+        question: 'referral fee schedule external labs contract',
+        useCase: 'clinical',
+        hospitalId: 'hosp-B',
+      },
+      tenantStore
     )
     const aHasInternal = fromA.citations.some((c) => c.sourceId === 'src-tenant-a')
     const bHasInternal = fromB.citations.some((c) => c.sourceId === 'src-tenant-a')
@@ -121,7 +162,8 @@ describe('RAG lexical retrieval (offline, deterministic)', () => {
 })
 
 describe('RAG grounding (deterministic, no LLM)', () => {
-  const CHUNK_TEXT = 'Indications for root canal treatment include irreversible pulpitis, pulp necrosis with or without apical periodontitis.'
+  const CHUNK_TEXT =
+    'Indications for root canal treatment include irreversible pulpitis, pulp necrosis with or without apical periodontitis.'
   function mkCitation(id: string): KnowledgeCitation {
     return {
       citationId: id,
@@ -167,8 +209,14 @@ describe('RAG grounding (deterministic, no LLM)', () => {
   })
 
   it('stripUnsupportedCitations removes invented markers, keeps valid ones', async () => {
-    const c1 = mkCitation('c1', 'Indications for root canal treatment include irreversible pulpitis.')
-    const { text, removed } = stripUnsupportedCitations('Pulp necrosis [c1] and more [c77].', new Set(['c1']))
+    const c1 = mkCitation(
+      'c1',
+      'Indications for root canal treatment include irreversible pulpitis.'
+    )
+    const { text, removed } = stripUnsupportedCitations(
+      'Pulp necrosis [c1] and more [c77].',
+      new Set(['c1'])
+    )
     expect(removed).toContain('c77')
     expect(text).toContain('[c1]')
     expect(text).not.toContain('[c77]')

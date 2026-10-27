@@ -156,7 +156,12 @@ describe('Agenda availability — resolveDayWindow (three sources of truth)', ()
   it('supports the legacy flat shape including an optional lunch', () => {
     const resolved = resolveDayWindow(
       '2027-03-10',
-      JSON.stringify({ startTime: '08:00', endTime: '19:00', lunchStart: '12:30', lunchEnd: '13:15' }),
+      JSON.stringify({
+        startTime: '08:00',
+        endTime: '19:00',
+        lunchStart: '12:30',
+        lunchEnd: '13:15',
+      }),
       null
     )
     expect(resolved.window).toEqual({ startTime: '08:00', endTime: '19:00' })

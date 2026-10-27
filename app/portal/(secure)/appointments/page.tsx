@@ -8,7 +8,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar, CalendarPlus, Clock, User, ChevronLeft, ChevronRight, XCircle, Loader2 } from 'lucide-react'
+import {
+  Calendar,
+  CalendarPlus,
+  Clock,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  XCircle,
+  Loader2,
+} from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -133,7 +142,9 @@ export default function PatientAppointments() {
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                <p>{t("No")} {filter} {t('appointments found')}</p>
+                <p>
+                  {t('No')} {filter} {t('appointments found')}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -146,19 +157,19 @@ export default function PatientAppointments() {
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {formatDate(apt.scheduledDate)} {t("at")} {apt.scheduledTime}
+                            {formatDate(apt.scheduledDate)} {t('at')} {apt.scheduledTime}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
-                            {t("Dr.")} {apt.doctor.firstName} {apt.doctor.lastName}
+                            {t('Dr.')} {apt.doctor.firstName} {apt.doctor.lastName}
                             {apt.doctor.specialization && ` (${apt.doctor.specialization})`}
                           </span>
                         </div>
                         {apt.chiefComplaint && (
                           <p className="text-sm text-muted-foreground">
-                            {t("Reason:")} {apt.chiefComplaint}
+                            {t('Reason:')} {apt.chiefComplaint}
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
@@ -204,7 +215,7 @@ export default function PatientAppointments() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                    {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                   </span>
                   <Button
                     variant="outline"

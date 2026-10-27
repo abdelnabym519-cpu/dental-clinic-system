@@ -38,11 +38,29 @@ describe('dictionary parity', () => {
 
   it('exposes the mandated core vocabulary', () => {
     for (const key of [
-      'common.save', 'common.cancel', 'common.edit', 'common.delete', 'common.search',
-      'common.filter', 'common.export', 'common.import', 'common.print', 'common.close',
-      'common.confirm', 'common.loading', 'common.noData', 'common.showing',
-      'dashboard.title', 'agenda.title', 'patients.title', 'billing.title',
-      'settings.title', 'nav.dashboard', 'nav.agenda', 'nav.patients', 'nav.billing',
+      'common.save',
+      'common.cancel',
+      'common.edit',
+      'common.delete',
+      'common.search',
+      'common.filter',
+      'common.export',
+      'common.import',
+      'common.print',
+      'common.close',
+      'common.confirm',
+      'common.loading',
+      'common.noData',
+      'common.showing',
+      'dashboard.title',
+      'agenda.title',
+      'patients.title',
+      'billing.title',
+      'settings.title',
+      'nav.dashboard',
+      'nav.agenda',
+      'nav.patients',
+      'nav.billing',
     ]) {
       expect(ar[key], `ar:${key}`).toBeTruthy()
       expect(en[key], `en:${key}`).toBeTruthy()
@@ -105,7 +123,11 @@ describe('pass-3 coverage (profile, language selector, toasts, breadcrumbs)', ()
   it('ships the mandated profile keys in both locales', () => {
     const expected: [string, string, string][] = [
       ['profile.title', 'My Profile', 'ملفي الشخصي'],
-      ['profile.subtitle', 'Preferences that apply to your account only', 'تفضيلات تنطبق على حسابك فقط'],
+      [
+        'profile.subtitle',
+        'Preferences that apply to your account only',
+        'تفضيلات تنطبق على حسابك فقط',
+      ],
       ['profile.languageFormatting', 'Language & Formatting', 'اللغة والتنسيق'],
       ['profile.languageLabel', 'Language', 'اللغة'],
       ['profile.save', 'Save', 'حفظ'],
@@ -169,7 +191,13 @@ describe('pass-3 coverage (profile, language selector, toasts, breadcrumbs)', ()
     const p3 = arKeys.filter((k) => k.startsWith('p3.'))
     expect(p3.length).toBeGreaterThan(1200)
     // Arabic values must actually be Arabic, not copies of the English source.
-    const nonArabic = p3.filter((k) => !/[\u0600-\u06FF]/.test(ar[k]) && !/^(Google|Microsoft|Dentora|Paymob|Twilio|Fawry|InstaPay|OpenRouter|SMTP|Webhook|API|HMRC|NPS|SLA|VIP|EGP|AB)/i.test(en[k]))
+    const nonArabic = p3.filter(
+      (k) =>
+        !/[\u0600-\u06FF]/.test(ar[k]) &&
+        !/^(Google|Microsoft|Dentora|Paymob|Twilio|Fawry|InstaPay|OpenRouter|SMTP|Webhook|API|HMRC|NPS|SLA|VIP|EGP|AB)/i.test(
+          en[k]
+        )
+    )
     expect(nonArabic).toEqual([])
   })
 })
@@ -246,7 +274,10 @@ vi.mock('@/components/providers/language-provider', () => {
       dir: 'rtl',
       t: (key: string, vars?: Record<string, string | number>) => {
         let template: string = arDict[key] ?? key
-        if (vars) template = template.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m))
+        if (vars)
+          template = template.replace(/\{(\w+)\}/g, (m, name) =>
+            name in vars ? String(vars[name]) : m
+          )
         return template
       },
       setLocale: vi.fn(),
@@ -262,8 +293,20 @@ describe('Arabic-mode rendering of wired components', () => {
     render(
       <SettingsOverview
         categories={[
-          { title: 'settings.cards.clinic.title', description: 'settings.cards.clinic.desc', icon: 'Building2', href: '/settings/clinic', color: 'c' },
-          { title: 'settings.cards.profile.title', description: 'settings.cards.profile.desc', icon: 'Languages', href: '/settings/profile', color: 'c' },
+          {
+            title: 'settings.cards.clinic.title',
+            description: 'settings.cards.clinic.desc',
+            icon: 'Building2',
+            href: '/settings/clinic',
+            color: 'c',
+          },
+          {
+            title: 'settings.cards.profile.title',
+            description: 'settings.cards.profile.desc',
+            icon: 'Languages',
+            href: '/settings/profile',
+            color: 'c',
+          },
         ]}
       />
     )
@@ -316,11 +359,17 @@ describe('pass-3 close-out sweep (JSX text nodes, JSX expressions, dates)', () =
   })
 
   it('translates interpolated templates through vars', () => {
-    expect(translateText('ar-EG', 'Clinic holiday: {v1}', { v1: 'عيد الفطر' })).toBe('عطلة العيادة: عيد الفطر')
-    expect(translateText('ar-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe('تفاصيل الموعد A-12')
+    expect(translateText('ar-EG', 'Clinic holiday: {v1}', { v1: 'عيد الفطر' })).toBe(
+      'عطلة العيادة: عيد الفطر'
+    )
+    expect(translateText('ar-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe(
+      'تفاصيل الموعد A-12'
+    )
     expect(translateText('ar-EG', '{v1} appointments loaded', { v1: 0 })).toBe('تم تحميل 0 موعد')
     expect(translateText('ar-EG', 'EGP {v1}', { v1: '120' })).toBe('ج.م 120')
-    expect(translateText('en-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe('Appointment A-12 details')
+    expect(translateText('en-EG', 'Appointment {v1} details', { v1: 'A-12' })).toBe(
+      'Appointment A-12 details'
+    )
   })
 
   it('date-fns formats in Arabic only when the UI locale is Arabic', () => {
@@ -349,22 +398,29 @@ describe('pass-3 close-out sweep (JSX text nodes, JSX expressions, dates)', () =
 
 describe('dental-chart vocabulary (label-only wiring, no logic touched)', () => {
   it('renders the odontogram summary cards in Arabic', async () => {
-    const { OdontogramStats } = await import(
-      '@/components/dental-chart/odontogram/OdontogramStats'
-    )
+    const { OdontogramStats } = await import('@/components/dental-chart/odontogram/OdontogramStats')
     render(
       <OdontogramStats
-        stats={{
-          presentTeeth: 28,
-          cariesTeeth: 2,
-          filledTeeth: 3,
-          missingTeeth: 4,
-          rootCanalTeeth: 1,
-          implantTeeth: 2,
-        } as never}
+        stats={
+          {
+            presentTeeth: 28,
+            cariesTeeth: 2,
+            filledTeeth: 3,
+            missingTeeth: 4,
+            rootCanalTeeth: 1,
+            implantTeeth: 2,
+          } as never
+        }
       />
     )
-    for (const label of ['الأسنان الموجودة', 'التسوس', 'الترميمات', 'المفقودة / المخلوعة', 'علاج العصب', 'الزرعات'])
+    for (const label of [
+      'الأسنان الموجودة',
+      'التسوس',
+      'الترميمات',
+      'المفقودة / المخلوعة',
+      'علاج العصب',
+      'الزرعات',
+    ])
       expect(screen.getByText(label), label).toBeTruthy()
     expect(screen.queryByText('Present Teeth')).toBeNull()
   })
@@ -435,8 +491,12 @@ describe('data-dependent copy SSR sweeps cannot reach (feeds, durations, currenc
     // 30s / 5min / 3h / 2d ago — the tray renders these only when notifications exist
     expect(formatRelativeTime(new Date(now - 30_000), { locale: 'ar-EG' })).toBe('الآن')
     expect(formatRelativeTime(new Date(now - 5 * 60_000), { locale: 'ar-EG' })).toBe('قبل 5 دقيقة')
-    expect(formatRelativeTime(new Date(now - 3 * 3_600_000), { locale: 'ar-EG' })).toBe('قبل 3 ساعة')
-    expect(formatRelativeTime(new Date(now - 2 * 86_400_000), { locale: 'ar-EG' })).toBe('قبل 2 يوم')
+    expect(formatRelativeTime(new Date(now - 3 * 3_600_000), { locale: 'ar-EG' })).toBe(
+      'قبل 3 ساعة'
+    )
+    expect(formatRelativeTime(new Date(now - 2 * 86_400_000), { locale: 'ar-EG' })).toBe(
+      'قبل 2 يوم'
+    )
     // English mode keeps the original wording, and a null date uses the caller fallback
     expect(formatRelativeTime(new Date(now - 5 * 60_000), { locale: 'en-EG' })).toBe('5m ago')
     expect(formatRelativeTime(null, { locale: 'ar-EG', fallback: ar['Never'] })).toBe('لم يحدث بعد')

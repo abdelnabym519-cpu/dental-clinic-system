@@ -244,7 +244,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               {getStatusBadge(plan.status)}
               {plan.consentGiven && (
                 <Badge variant="outline" className="bg-green-50 text-green-700">
-                  <CheckCircle className="h-3 w-3 mr-1" />{t('ui.consent_given')}</Badge>
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  {t('ui.consent_given')}
+                </Badge>
               )}
             </div>
             <p className="text-muted-foreground">{plan.title}</p>
@@ -265,24 +267,32 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           )}
           {plan.status === 'ACCEPTED' && (
             <Button onClick={() => handleStatusChange('IN_PROGRESS')} disabled={actionLoading}>
-              <Play className="h-4 w-4 mr-2" />{t('ui.start_treatment')}</Button>
+              <Play className="h-4 w-4 mr-2" />
+              {t('ui.start_treatment')}
+            </Button>
           )}
           {!['COMPLETED', 'CANCELLED'].includes(plan.status) && (
             <>
               <Link href={`/treatments/plans/${id}/edit`}>
                 <Button variant="outline">
-                  <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
+                  <Edit className="h-4 w-4 mr-2" />
+                  {t('ui.edit')}
+                </Button>
               </Link>
               <Button
                 variant="outline"
                 className="text-red-600"
                 onClick={() => setCancelDialogOpen(true)}
               >
-                <XCircle className="h-4 w-4 mr-2" />{t('ui.cancel_plan')}</Button>
+                <XCircle className="h-4 w-4 mr-2" />
+                {t('ui.cancel_plan')}
+              </Button>
             </>
           )}
           <Button variant="outline">
-            <Printer className="h-4 w-4 mr-2" />{t('ui.print')}</Button>
+            <Printer className="h-4 w-4 mr-2" />
+            {t('ui.print')}
+          </Button>
         </div>
       </div>
 
@@ -298,8 +308,8 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {plan.items.filter((i) => i.status === 'COMPLETED').length} {t("of")}{' '}
-                    {plan.items.length} {t("procedures completed")}
+                    {plan.items.filter((i) => i.status === 'COMPLETED').length} {t('of')}{' '}
+                    {plan.items.length} {t('procedures completed')}
                   </span>
                   <span className="text-sm font-medium">{progress}%</span>
                 </div>
@@ -353,7 +363,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                           <Link
                             href={`/treatments/new?patientId=${plan.patient.id}&procedureId=${item.procedure.id}`}
                           >
-                            <Button size="sm" variant="outline">{t('ui.start')}</Button>
+                            <Button size="sm" variant="outline">
+                              {t('ui.start')}
+                            </Button>
                           </Link>
                         )}
                       </TableCell>
@@ -361,7 +373,7 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
                   ))}
                   <TableRow>
                     <TableCell colSpan={3} className="text-right font-medium">
-                      {t("Total Estimated Cost:")}
+                      {t('Total Estimated Cost:')}
                     </TableCell>
                     <TableCell className="font-bold text-lg">
                       {formatCurrency(plan.estimatedCost, locale)}
@@ -392,7 +404,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
+                <User className="h-5 w-5" />
+                {t('ui.patient')}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -423,7 +437,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               </div>
 
               <Link href={`/patients/${plan.patient.id}`}>
-                <Button variant="outline" className="w-full">{t('ui.view_patient_profile')}</Button>
+                <Button variant="outline" className="w-full">
+                  {t('ui.view_patient_profile')}
+                </Button>
               </Link>
             </CardContent>
           </Card>
@@ -437,7 +453,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">{t('ui.total_cost')}</div>
-                  <div className="font-bold text-lg">{formatCurrency(plan.estimatedCost, locale)}</div>
+                  <div className="font-bold text-lg">
+                    {formatCurrency(plan.estimatedCost, locale)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">{t('ui.procedures')}</div>
@@ -448,7 +466,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
               {plan.estimatedDuration && (
                 <div>
                   <div className="text-sm text-muted-foreground">{t('Est. Duration')}</div>
-                  <div className="font-medium">{Math.round(plan.estimatedDuration / 60)} {t('hours')}</div>
+                  <div className="font-medium">
+                    {Math.round(plan.estimatedDuration / 60)} {t('hours')}
+                  </div>
                 </div>
               )}
 
@@ -493,7 +513,9 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-muted-foreground">{t("By recording consent, you confirm that:")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('By recording consent, you confirm that:')}
+            </p>
             <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
               <li>{t('The treatment plan has been explained to the patient')}</li>
               <li>{t('All questions have been answered')}</li>
@@ -502,9 +524,11 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
             </ul>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConsentDialogOpen(false)}>{t('ui.cancel')}</Button>
+            <Button variant="outline" onClick={() => setConsentDialogOpen(false)}>
+              {t('ui.cancel')}
+            </Button>
             <Button onClick={handleConsentGiven} disabled={actionLoading}>
-              {actionLoading ? t("Recording...") : t("Confirm Consent")}
+              {actionLoading ? t('Recording...') : t('Confirm Consent')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -516,11 +540,15 @@ export default function TreatmentPlanDetailPage({ params }: { params: Promise<{ 
           <DialogHeader>
             <DialogTitle>{t('Cancel Treatment Plan')}</DialogTitle>
             <DialogDescription>
-              {t('Are you sure you want to cancel this treatment plan? This action cannot be undone.')}
+              {t(
+                'Are you sure you want to cancel this treatment plan? This action cannot be undone.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>{t('ui.keep_plan')}</Button>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              {t('ui.keep_plan')}
+            </Button>
             <Button variant="destructive" onClick={handleCancelPlan} disabled={actionLoading}>
               {actionLoading ? 'Cancelling...' : 'Cancel Plan'}
             </Button>

@@ -18,17 +18,37 @@ import {
 
 // The dispatcher in lib/ai/command-executors (executeIntent switch).
 const EXECUTER_ACTIONS = [
-  'create_patient', 'update_patient', 'search_patients', 'check_patient',
-  'book_appointment', 'cancel_appointment', 'reschedule_appointment',
-  'complete_appointment', 'show_appointments',
-  'create_treatment', 'complete_treatment', 'show_treatments',
-  'create_invoice', 'generate_invoice', 'record_payment', 'show_invoices',
-  'check_overdue', 'show_revenue',
-  'check_stock', 'low_stock', 'add_inventory_item', 'update_stock',
-  'create_lab_order', 'update_lab_order', 'show_lab_orders',
-  'create_prescription', 'show_prescriptions',
-  'add_medication', 'search_medications',
-  'show_staff', 'daily_summary',
+  'create_patient',
+  'update_patient',
+  'search_patients',
+  'check_patient',
+  'book_appointment',
+  'cancel_appointment',
+  'reschedule_appointment',
+  'complete_appointment',
+  'show_appointments',
+  'create_treatment',
+  'complete_treatment',
+  'show_treatments',
+  'create_invoice',
+  'generate_invoice',
+  'record_payment',
+  'show_invoices',
+  'check_overdue',
+  'show_revenue',
+  'check_stock',
+  'low_stock',
+  'add_inventory_item',
+  'update_stock',
+  'create_lab_order',
+  'update_lab_order',
+  'show_lab_orders',
+  'create_prescription',
+  'show_prescriptions',
+  'add_medication',
+  'search_medications',
+  'show_staff',
+  'daily_summary',
 ]
 
 describe('action policy registry — completeness', () => {
@@ -67,7 +87,8 @@ describe('action policy registry — RBAC sanity', () => {
   it('every read action is available to all staff roles', () => {
     for (const a of Object.values(ACTION_POLICIES)) {
       if (a.riskLevel === 'READ') {
-        for (const r of STAFF_ROLES) expect(a.roles, `${a.action} read should allow ${r}`).toContain(r)
+        for (const r of STAFF_ROLES)
+          expect(a.roles, `${a.action} read should allow ${r}`).toContain(r)
       }
     }
   })
@@ -89,7 +110,12 @@ describe('action policy registry — RBAC sanity', () => {
   })
 
   it('clinical writes are doctor-gated', () => {
-    for (const a of ['create_treatment', 'complete_treatment', 'create_prescription', 'add_medication']) {
+    for (const a of [
+      'create_treatment',
+      'complete_treatment',
+      'create_prescription',
+      'add_medication',
+    ]) {
       const p = ACTION_POLICIES[a]
       expect(p.roles).toContain('DOCTOR')
       expect(p.roles).not.toContain('RECEPTIONIST')
@@ -138,7 +164,9 @@ describe('action policy registry — validation', () => {
     expect(v({ firstName: 'A', lastName: 'B', phone: '0100', age: 'abc' })).not.toBeNull()
     expect(v({ firstName: 'A', lastName: 'B', phone: '0100', gender: 'MALE' })).toBeNull()
     expect(v({ firstName: 'A', lastName: 'B', phone: '0100', gender: 'DRAGON' })).not.toBeNull()
-    expect(v({ firstName: 'A', lastName: 'B', phone: '0100', dateOfBirth: 'not-a-date' })).not.toBeNull()
+    expect(
+      v({ firstName: 'A', lastName: 'B', phone: '0100', dateOfBirth: 'not-a-date' })
+    ).not.toBeNull()
   })
 
   it('book_appointment: date/time/duration format', () => {

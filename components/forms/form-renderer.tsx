@@ -255,7 +255,7 @@ export function FormRenderer({
               disabled={readOnly}
             >
               <SelectTrigger>
-                <SelectValue placeholder={field.placeholder || t("Select...")} />
+                <SelectValue placeholder={field.placeholder || t('Select...')} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((opt) => (

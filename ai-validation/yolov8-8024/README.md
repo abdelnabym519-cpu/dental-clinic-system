@@ -15,7 +15,7 @@ classification is **BLOCKED**, and this README explains exactly what unblocks it
 Hugging Face's scanners label `8024.pt` **Unsafe**. The label is not a verdict on the
 uploader — every Ultralytics `.pt` file is a pickle, and this one references
 `__builtin__.getattr`, which is both a normal part of how those checkpoints rebuild
-themselves and the classic obfuscation primitive. The scanner reports *which names* the
+themselves and the classic obfuscation primitive. The scanner reports _which names_ the
 file references; it cannot say how they are called, and it cannot tell a normal checkpoint
 from a crafted one that reuses the same names.
 
@@ -24,20 +24,20 @@ So the audit is split in two, and the split is the point:
 1. **What the file asks for** — `scripts/inspect_checkpoint.py`, which decodes the
    checkpoint without constructing a single object from it. It never imports torch, never
    unpickles, and cannot run checkpoint code.
-2. **What the file *is*** — size + SHA-256 compared against the audited artifact, plus the
+2. **What the file _is_** — size + SHA-256 compared against the audited artifact, plus the
    class names read out of the checkpoint's own bytes.
 
 Both must pass before the checkpoint is loaded anywhere.
 
 ## Files
 
-| Path | What it is |
-| --- | --- |
-| `AUDIT.md` | The 16-field audit report and the current classification |
-| `scripts/inspect_checkpoint.py` | The non-executing inspector / gate (stdlib only) |
+| Path                                 | What it is                                                          |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `AUDIT.md`                           | The 16-field audit report and the current classification            |
+| `scripts/inspect_checkpoint.py`      | The non-executing inspector / gate (stdlib only)                    |
 | `tests/test_checkpoint_inspector.py` | 42 tests, including the proof that a hostile pickle is not executed |
-| `model/` | Where `8024.pt` goes on the operator's machine (kept out of git) |
-| `input/` | Where a dental X-ray goes, later (kept out of git) |
+| `model/`                             | Where `8024.pt` goes on the operator's machine (kept out of git)    |
+| `input/`                             | Where a dental X-ray goes, later (kept out of git)                  |
 
 The inspector needs **no third-party packages** — not torch, not numpy, not ultralytics.
 That is deliberate: a tool that needs the library under suspicion cannot be used to
@@ -54,14 +54,14 @@ python scripts\inspect_checkpoint.py --checkpoint model\8024.pt `
 
 Exit codes:
 
-| Code | Meaning |
-| --- | --- |
-| `0` | Gate passed: identity matches the audited artifact, every pickle global is an expected Ultralytics/torch name, every expected class name is present |
-| `1` | Missing / unreadable / not a torch or pickle container |
-| `3` | A forbidden global (`os`, `subprocess`, `socket`, `eval`, `exec`, …) — **do not load** |
-| `4` | An unrecognised global — send the JSON, do not load |
-| `5` | A class concept is missing from the bytes — including `Implant`, which is mandatory for this engine. Not the audited checkpoint |
-| `6` | Size or SHA-256 differs from the audited artifact — **do not load** |
+| Code | Meaning                                                                                                                                             |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | Gate passed: identity matches the audited artifact, every pickle global is an expected Ultralytics/torch name, every expected class name is present |
+| `1`  | Missing / unreadable / not a torch or pickle container                                                                                              |
+| `3`  | A forbidden global (`os`, `subprocess`, `socket`, `eval`, `exec`, …) — **do not load**                                                              |
+| `4`  | An unrecognised global — send the JSON, do not load                                                                                                 |
+| `5`  | A class concept is missing from the bytes — including `Implant`, which is mandatory for this engine. Not the audited checkpoint                     |
+| `6`  | Size or SHA-256 differs from the audited artifact — **do not load**                                                                                 |
 
 What a passing run proves: the bytes are the audited revision, and the pickle asks for
 exactly the classes this checkpoint is expected to need. What it does **not** prove: that
@@ -70,19 +70,19 @@ the file is benign, and it is not a substitute for the restricted load below.
 ### Class resolution (canonical concept vs the checkpoint's own label)
 
 The checkpoint spells three of the eight concepts differently from the model card. The first
-run of this gate on the real file stopped with *"class name(s) missing from the bytes"* —
+run of this gate on the real file stopped with _"class name(s) missing from the bytes"_ —
 a false block, because the gate was matching the card's spelling and the file uses its own:
 
-| # | canonical concept (audited) | label inside `8024.pt` | how it resolves |
-| --- | --- | --- | --- |
-| 0 | `Caries` | `Caries` | canonical |
-| 1 | `Crown` | `Crown` | canonical |
-| 2 | `Filling` | `Filling` | canonical |
-| 3 | `Implant` | `Implant` | canonical — **mandatory** |
-| 4 | `Missing-tooth-between` | `Missing teeth` | alias |
-| 5 | `Periapical-lesion` | `Periapical lesion` | alias |
-| 6 | `Root Piece` | `Root Piece` | canonical |
-| 7 | `Root-Canal-Treatment` | `Root canal obturation` | alias |
+| #   | canonical concept (audited) | label inside `8024.pt`  | how it resolves           |
+| --- | --------------------------- | ----------------------- | ------------------------- |
+| 0   | `Caries`                    | `Caries`                | canonical                 |
+| 1   | `Crown`                     | `Crown`                 | canonical                 |
+| 2   | `Filling`                   | `Filling`               | canonical                 |
+| 3   | `Implant`                   | `Implant`               | canonical — **mandatory** |
+| 4   | `Missing-tooth-between`     | `Missing teeth`         | alias                     |
+| 5   | `Periapical-lesion`         | `Periapical lesion`     | alias                     |
+| 6   | `Root Piece`                | `Root Piece`            | canonical                 |
+| 7   | `Root-Canal-Treatment`      | `Root canal obturation` | alias                     |
 
 Three rules keep the mapping honest, and they are enforced by tests:
 

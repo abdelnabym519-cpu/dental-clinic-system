@@ -19,7 +19,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import {
   isBoxFinding,
@@ -101,9 +108,7 @@ function FindingsTable({ findings, t }: { findings: Finding[]; t: Translate }) {
                 <TableCell>{f.landmark_name}</TableCell>
                 <TableCell className="font-mono text-xs">{Math.round(f.x)}</TableCell>
                 <TableCell className="font-mono text-xs">{Math.round(f.y)}</TableCell>
-                <TableCell>
-                  {f.score === null ? '—' : `${(f.score * 100).toFixed(1)}%`}
-                </TableCell>
+                <TableCell>{f.score === null ? '—' : `${(f.score * 100).toFixed(1)}%`}</TableCell>
               </TableRow>
             ) : null
           )}
@@ -121,7 +126,8 @@ function FindingsTable({ findings, t }: { findings: Finding[]; t: Translate }) {
       <div>
         <p className="mb-2 text-sm font-medium">{t('imaging.3d_analysis')}</p>
         <p className="mb-2 text-xs text-muted-foreground">
-          {t('imaging.segment_classes')}: {segs.length} · {t('imaging.total_points', { count: total })}
+          {t('imaging.segment_classes')}: {segs.length} ·{' '}
+          {t('imaging.total_points', { count: total })}
         </p>
         <Table>
           <TableHeader>
@@ -141,7 +147,10 @@ function FindingsTable({ findings, t }: { findings: Finding[]; t: Translate }) {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 w-24 overflow-hidden rounded bg-muted">
-                        <div className="h-full bg-primary" style={{ width: `${pct.toFixed(1)}%` }} />
+                        <div
+                          className="h-full bg-primary"
+                          style={{ width: `${pct.toFixed(1)}%` }}
+                        />
                       </div>
                       <span className="text-xs text-muted-foreground">{pct.toFixed(1)}%</span>
                     </div>
@@ -256,9 +265,7 @@ export default function ImagingStudyDetailPage() {
   }
 
   if (notFound) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">{t('Study not found')}</div>
-    )
+    return <div className="p-6 text-sm text-muted-foreground">{t('Study not found')}</div>
   }
   if (!study) {
     return <div className="p-6 text-sm text-muted-foreground">…</div>
@@ -293,7 +300,9 @@ export default function ImagingStudyDetailPage() {
             {t('Back to imaging')}
           </button>
           <h1 className="text-2xl font-bold">
-            {study.patient ? `${study.patient.firstName} ${study.patient.lastName}` : study.patientId}
+            {study.patient
+              ? `${study.patient.firstName} ${study.patient.lastName}`
+              : study.patientId}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {modalityLabel} · {study.id}
@@ -376,7 +385,9 @@ export default function ImagingStudyDetailPage() {
                 {t('AI Findings')}
               </CardTitle>
               <CardDescription>
-                {t('AI findings are suggestions only. A licensed dental professional must review them before clinical use.')}
+                {t(
+                  'AI findings are suggestions only. A licensed dental professional must review them before clinical use.'
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -397,7 +408,8 @@ export default function ImagingStudyDetailPage() {
                     {job.provenance.model_version}
                   </div>
                   <div>
-                    {t('Model checksum')}: <span className="break-all">{job.provenance.model_checksum}</span>
+                    {t('Model checksum')}:{' '}
+                    <span className="break-all">{job.provenance.model_checksum}</span>
                   </div>
                   <div>
                     {t('Processing time')}: {job.processingTimeMs} ms
@@ -478,11 +490,7 @@ export default function ImagingStudyDetailPage() {
 
                   <div className="space-y-1">
                     <Label>{t('Review notes')}</Label>
-                    <Textarea
-                      rows={2}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
+                    <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
                   </div>
 
                   {reviewError && <p className="text-sm text-red-600">{reviewError}</p>}

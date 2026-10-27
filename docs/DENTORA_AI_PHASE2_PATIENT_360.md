@@ -11,16 +11,16 @@ loop, no RAG/knowledge base, no new engines, no LLM changes, no UI rewrite.
 
 ## 1. Scope and non-goals
 
-| Done in Phase 2 | Explicitly NOT done (deferred) |
-|---|---|
-| Centralized reusable context builders (patient/tooth/case/timeline/imaging/treatment) | Real agent loop / tool calling on the new context |
-| 9 task-oriented profiles with budgets | RAG / knowledge base / embeddings |
-| Structured contract-validated context (zod, strict) | New inference engines or model changes |
-| Provenance + fact categories on every fact | Voice / robot / general-AI surfaces |
-| RBAC + tenant + patient scoping (server-side) | Any DB migration (schema already suffices) |
-| Prompt-safe serialization with untrusted-data fences | Any Chat UI changes (server context is authoritative) |
-| Developer Context Inspector (dev/test only) | Caching (justified below, §11) |
-| Old `buildContext`/`serializeContext` left **untouched** (additive only) | — |
+| Done in Phase 2                                                                       | Explicitly NOT done (deferred)                        |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Centralized reusable context builders (patient/tooth/case/timeline/imaging/treatment) | Real agent loop / tool calling on the new context     |
+| 9 task-oriented profiles with budgets                                                 | RAG / knowledge base / embeddings                     |
+| Structured contract-validated context (zod, strict)                                   | New inference engines or model changes                |
+| Provenance + fact categories on every fact                                            | Voice / robot / general-AI surfaces                   |
+| RBAC + tenant + patient scoping (server-side)                                         | Any DB migration (schema already suffices)            |
+| Prompt-safe serialization with untrusted-data fences                                  | Any Chat UI changes (server context is authoritative) |
+| Developer Context Inspector (dev/test only)                                           | Caching (justified below, §11)                        |
+| Old `buildContext`/`serializeContext` left **untouched** (additive only)              | —                                                     |
 
 ## 2. Architecture: Retrieve → Normalize → Filter → Structure → Validate → Context
 
@@ -48,20 +48,20 @@ Files: `lib/ai/context/{types,fdi,permissions,profiles,provenance,contract,build
 
 Everything maps onto the existing schema (verified against `prisma/schema.prisma`, 165 models):
 
-| Context section | Source (existing) | Notes |
-|---|---|---|
-| identity | `Patient` | contact block role-gated |
-| medical | `MedicalHistory` (1:1, via `include`) | no extra query |
-| dental | `DentalChartEntry` (FDI int 11–48) | active = latest unresolved per tooth |
-| appointments | `Appointment` | chief complaint = PATIENT_REPORTED |
-| clinical | `ClinicalNote` (+ complaints from appt/treatment/plan) | `isPrivate` DOCTOR/ADMIN only (same rule as `/api/clinical-notes`) |
-| cases | `TreatmentPlan` (+ items, procedure) | the application's de-facto case anchor |
-| treatments | `Treatment` (+ procedure, doctor) | `toothNumbers` free-text → parsed FDI |
-| prescriptions | `Prescription` (+ medications) | DRAFT/SIGNED/SENT/validUntil preserved |
-| imaging | `ImagingStudy` → `AIAnalysisJob` (nested `include`) | findings Json normalized |
-| financial | `Invoice` (open statuses) | `aggregate` for exact open balance |
-| risk | `PatientRiskScore` | MODEL_FINDING |
-| timeline | assembled from the rows above — **zero extra queries** | dedup by eventId |
+| Context section | Source (existing)                                      | Notes                                                              |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------------------------ |
+| identity        | `Patient`                                              | contact block role-gated                                           |
+| medical         | `MedicalHistory` (1:1, via `include`)                  | no extra query                                                     |
+| dental          | `DentalChartEntry` (FDI int 11–48)                     | active = latest unresolved per tooth                               |
+| appointments    | `Appointment`                                          | chief complaint = PATIENT_REPORTED                                 |
+| clinical        | `ClinicalNote` (+ complaints from appt/treatment/plan) | `isPrivate` DOCTOR/ADMIN only (same rule as `/api/clinical-notes`) |
+| cases           | `TreatmentPlan` (+ items, procedure)                   | the application's de-facto case anchor                             |
+| treatments      | `Treatment` (+ procedure, doctor)                      | `toothNumbers` free-text → parsed FDI                              |
+| prescriptions   | `Prescription` (+ medications)                         | DRAFT/SIGNED/SENT/validUntil preserved                             |
+| imaging         | `ImagingStudy` → `AIAnalysisJob` (nested `include`)    | findings Json normalized                                           |
+| financial       | `Invoice` (open statuses)                              | `aggregate` for exact open balance                                 |
+| risk            | `PatientRiskScore`                                     | MODEL_FINDING                                                      |
+| timeline        | assembled from the rows above — **zero extra queries** | dedup by eventId                                                   |
 
 No `Case`, `Diagnosis`, or `Finding` models exist in the schema, so none were invented:
 case = `TreatmentPlan`; diagnosis = the `diagnosis` free-text fields (kept as text, typed
@@ -72,17 +72,17 @@ findings (MODEL_FINDING) — the two are never merged.
 
 9 profiles, each declaring exactly its sections + per-section budgets (bounded, deterministic):
 
-| Profile | Sections (in order) | Queries |
-|---|---|---|
-| MINIMAL | identity | 1 |
-| PATIENT_OVERVIEW | identity, medical, dental, appointments, risk, financial | 6 |
-| CLINICAL | identity, medical, dental, appointments, clinical, cases, treatments, prescriptions, risk | 8 |
-| TOOTH | identity, dental, treatments, cases, imaging, clinical, appointments | 7 |
-| CASE | identity, cases, treatments, prescriptions, clinical, imaging, appointments, dental | 8 |
-| IMAGING | identity, imaging, appointments, cases, dental | 5 |
-| TREATMENT | identity, treatments, cases, prescriptions, clinical, appointments, dental, imaging | 8 |
-| FOLLOW_UP | identity, treatments, clinical, appointments, cases, prescriptions | 6 |
-| FULL_360 | all 12 sections incl. timeline | 11 |
+| Profile          | Sections (in order)                                                                       | Queries |
+| ---------------- | ----------------------------------------------------------------------------------------- | ------- |
+| MINIMAL          | identity                                                                                  | 1       |
+| PATIENT_OVERVIEW | identity, medical, dental, appointments, risk, financial                                  | 6       |
+| CLINICAL         | identity, medical, dental, appointments, clinical, cases, treatments, prescriptions, risk | 8       |
+| TOOTH            | identity, dental, treatments, cases, imaging, clinical, appointments                      | 7       |
+| CASE             | identity, cases, treatments, prescriptions, clinical, imaging, appointments, dental       | 8       |
+| IMAGING          | identity, imaging, appointments, cases, dental                                            | 5       |
+| TREATMENT        | identity, treatments, cases, prescriptions, clinical, appointments, dental, imaging       | 8       |
+| FOLLOW_UP        | identity, treatments, clinical, appointments, cases, prescriptions                        | 6       |
+| FULL_360         | all 12 sections incl. timeline                                                            | 11      |
 
 Budgets (`profiles.ts`): `maxRecords` (take-limits), `windowDays` (drop older events/records),
 `maxTextChars` (free-text truncation, deterministic `…[truncated]` marker). Same request +
@@ -137,9 +137,9 @@ another patient is filtered out — tested).
 Unified events from already-fetched rows (zero extra queries):
 
 - types: `APPOINTMENT, EXAMINATION, FINDING, IMAGING, AI_ANALYSIS, DIAGNOSIS, TREATMENT,
-  PRESCRIPTION, FOLLOW_UP, OUTCOME`
+PRESCRIPTION, FOLLOW_UP, OUTCOME`
 - every event: `eventId, timestamp, type, toothFdi (confirmed only), caseId, summary,
-  category (FactCategory), significance (high/normal/low), provenance`
+category (FactCategory), significance (high/normal/low), provenance`
 - **Deterministic ordering**: timestamp desc → fixed type priority → eventId. **Dedup** by
   eventId (unique by construction, defensively deduped). **Bounded** by budget with an
   explicit `truncated` flag + `eventCount` (raw count preserved).
@@ -153,12 +153,12 @@ Unified events from already-fetched rows (zero extra queries):
 rendered with its **model provenance**: engine, status, `modelVersion`, `modelChecksum`,
 `orchestratorVersion`, completedAt. The findings Json is normalized per engine shape:
 
-| Raw shape | Normalized |
-|---|---|
-| `bounding_box` (+condition) | `kind: 'box'`, summary `{condition, box: "x,y,w,h"}` |
-| `landmark_id/landmark_name` | `kind: 'landmark'` |
-| `class_id/class_name` | `kind: 'segment'` |
-| anything else | `kind: 'unknown'` — surfaced honestly, never dropped silently |
+| Raw shape                   | Normalized                                                    |
+| --------------------------- | ------------------------------------------------------------- |
+| `bounding_box` (+condition) | `kind: 'box'`, summary `{condition, box: "x,y,w,h"}`          |
+| `landmark_id/landmark_name` | `kind: 'landmark'`                                            |
+| `class_id/class_name`       | `kind: 'segment'`                                             |
+| anything else               | `kind: 'unknown'` — surfaced honestly, never dropped silently |
 
 `confidence` preserved (finding or job level); `findingCount` = raw count (visible truncation
 cap 8 per analysis); review state from `reviewDecision/reviewedAt/reviewedBy/acceptedFindings`
@@ -203,26 +203,26 @@ rejection, revisitable with measurements in a later phase.
    (`patient.portalUserId === actor.id`, tenant-scoped). Anything else → `unauthorized`.
    PATIENT sees only `identity` (no contact block) + `appointments` — what the portal already
    shows.
-3. **RBAC = omission at retrieval** (§18): the service filters sections/fields *before*
+3. **RBAC = omission at retrieval** (§18): the service filters sections/fields _before_
    querying (e.g. non-DOCTOR roles add `isPrivate: false` to the note query — private notes
    are never fetched, only omitted). Unauthorized sections are `excluded` with a reason
    recorded in `meta.excluded[]`.
 
-| Section | SUPER_ADMIN | ADMIN | DOCTOR | RECEPTIONIST | ACCOUNTANT | LAB_TECH | PATIENT |
-|---|---|---|---|---|---|---|---|
-| identity | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | own |
-| medical | ✓ | ✓ | ✓ | ✓ | — | — | — |
-| dental | ✓ | ✓ | ✓ | ✓ | — | — | — |
-| appointments | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | own |
-| clinical (non-private) | ✓ | ✓ | ✓ | ✓ | — | — | — |
-| clinical (private) | ✓ | ✓ | ✓ | — | — | — | — |
-| cases | ✓ | ✓ | ✓ | operational | billing | — | — |
-| treatments | ✓ | ✓ | ✓ | operational | — | — | — |
-| prescriptions | ✓ | ✓ | ✓ | — | — | — | — |
-| imaging | ✓ | ✓ | ✓ | — | — | ✓ | — |
-| financial | ✓ | ✓ | ✓ | ✓ | ✓ | — | — |
-| risk | ✓ | ✓ | ✓ | — | — | — | — |
-| timeline | ✓ | ✓ | ✓ | ✓ | — | — | — |
+| Section                | SUPER_ADMIN | ADMIN | DOCTOR | RECEPTIONIST | ACCOUNTANT | LAB_TECH | PATIENT |
+| ---------------------- | ----------- | ----- | ------ | ------------ | ---------- | -------- | ------- |
+| identity               | ✓           | ✓     | ✓      | ✓            | ✓          | ✓        | own     |
+| medical                | ✓           | ✓     | ✓      | ✓            | —          | —        | —       |
+| dental                 | ✓           | ✓     | ✓      | ✓            | —          | —        | —       |
+| appointments           | ✓           | ✓     | ✓      | ✓            | ✓          | ✓        | own     |
+| clinical (non-private) | ✓           | ✓     | ✓      | ✓            | —          | —        | —       |
+| clinical (private)     | ✓           | ✓     | ✓      | —            | —          | —        | —       |
+| cases                  | ✓           | ✓     | ✓      | operational  | billing    | —        | —       |
+| treatments             | ✓           | ✓     | ✓      | operational  | —          | —        | —       |
+| prescriptions          | ✓           | ✓     | ✓      | —            | —          | —        | —       |
+| imaging                | ✓           | ✓     | ✓      | —            | —          | ✓        | —       |
+| financial              | ✓           | ✓     | ✓      | ✓            | ✓          | —        | —       |
+| risk                   | ✓           | ✓     | ✓      | —            | —          | —        | —       |
+| timeline               | ✓           | ✓     | ✓      | ✓            | —          | —        | —       |
 
 Field scope: RECEPTIONIST on treatments/cases = operational (no clinical text);
 ACCOUNTANT on cases = billing (title/status/cost); DOCTOR/ADMIN/SUPER_ADMIN see private
@@ -241,18 +241,18 @@ depth. Injection strings in the fixture
 
 ### 12.3 Independent 10-question security audit
 
-| # | Question | Verdict | Evidence |
-|---|---|---|---|
-| 1 | Can a client-controlled tenant/hospital id bypass tenant isolation? | NO — tenant comes from the session; all queries bound to it; cross-tenant id → `not_found` | `ai-context-security.test.ts` (tenant isolation ×4) |
-| 2 | Can a PATIENT read another patient's record? | NO — self-scope via portalUserId, tenant-scoped; else → `unauthorized` | security tests + E2E route test |
-| 3 | Can a role retrieve (then have hidden) fields it may not see? | NO — omission at retrieval: sections excluded before querying; notes filtered `isPrivate: false`; fields nulled at build | matrix tests, `LAB_TECH`/`ACCOUNTANT`/`RECEPTIONIST` tests |
-| 4 | Does any RBAC role see AI findings without review state? | NO — findings always carry review + `MODEL_FINDING (not a diagnosis)` labeling; LAB_TECH imaging-only | imaging tests |
-| 5 | Can injected text in notes/complaints become instructions to the model? | NO — fenced as untrusted data (fence asserted around the injected string); structured context keeps it as data | security test "injection text stays DATA" |
-| 6 | Can identifier tampering (patientId/caseId/studyId/treatmentNo/toothFdi) bypass authz? | NO — all re-validated against tenant+patient in builders; impostor-id test; FDI validated 11–48 | case scope tests, route validation tests |
-| 7 | Is stale data ever presented as live? | NO — explicit freshness per section; `unknown` for no data; no cache | freshness tests (incl. 2028 clock → all historical) |
-| 8 | Can a caller inject arbitrary fields into the AI context? | NO — builders are the only producer; zod strict validation rejects unknown keys (envelope, sections, items) | contract tests (injection ×4) |
-| 9 | Is the inspector reachable in production or usable to escalate? | NO — hard 403 when `NODE_ENV=production`; in dev it reuses `requireAuthAndRole` (no separate authz path) | E2E production-gate test |
-| 10 | Does anything write, or create audit overhead, on a READ? | NO — read-only; no writes, no per-read audit rows (Phase 1 lean policy kept) | code review + query count assertions |
+| #   | Question                                                                               | Verdict                                                                                                                  | Evidence                                                   |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| 1   | Can a client-controlled tenant/hospital id bypass tenant isolation?                    | NO — tenant comes from the session; all queries bound to it; cross-tenant id → `not_found`                               | `ai-context-security.test.ts` (tenant isolation ×4)        |
+| 2   | Can a PATIENT read another patient's record?                                           | NO — self-scope via portalUserId, tenant-scoped; else → `unauthorized`                                                   | security tests + E2E route test                            |
+| 3   | Can a role retrieve (then have hidden) fields it may not see?                          | NO — omission at retrieval: sections excluded before querying; notes filtered `isPrivate: false`; fields nulled at build | matrix tests, `LAB_TECH`/`ACCOUNTANT`/`RECEPTIONIST` tests |
+| 4   | Does any RBAC role see AI findings without review state?                               | NO — findings always carry review + `MODEL_FINDING (not a diagnosis)` labeling; LAB_TECH imaging-only                    | imaging tests                                              |
+| 5   | Can injected text in notes/complaints become instructions to the model?                | NO — fenced as untrusted data (fence asserted around the injected string); structured context keeps it as data           | security test "injection text stays DATA"                  |
+| 6   | Can identifier tampering (patientId/caseId/studyId/treatmentNo/toothFdi) bypass authz? | NO — all re-validated against tenant+patient in builders; impostor-id test; FDI validated 11–48                          | case scope tests, route validation tests                   |
+| 7   | Is stale data ever presented as live?                                                  | NO — explicit freshness per section; `unknown` for no data; no cache                                                     | freshness tests (incl. 2028 clock → all historical)        |
+| 8   | Can a caller inject arbitrary fields into the AI context?                              | NO — builders are the only producer; zod strict validation rejects unknown keys (envelope, sections, items)              | contract tests (injection ×4)                              |
+| 9   | Is the inspector reachable in production or usable to escalate?                        | NO — hard 403 when `NODE_ENV=production`; in dev it reuses `requireAuthAndRole` (no separate authz path)                 | E2E production-gate test                                   |
+| 10  | Does anything write, or create audit overhead, on a READ?                              | NO — read-only; no writes, no per-read audit rows (Phase 1 lean policy kept)                                             | code review + query count assertions                       |
 
 **No critical vulnerabilities found.**
 
@@ -293,20 +293,20 @@ Measured on the deterministic in-memory client (constant per profile; DB round-t
 production equal the measured query counts). Legacy = old `buildContext`+`serializeContext`
 (same data, always 2 queries — one `findUnique` with nested includes + one risk `findFirst`).
 
-| Profile | Old latency | Old queries | Old payload | New latency | New queries | New payload |
-|---|---|---|---|---|---|---|
-| MINIMAL | 0.06 ms | 2 | 404 B | 0.12 ms | 1 | 1.3 KB |
-| PATIENT_OVERVIEW | 0.06 ms | 2 | 404 B | 0.37 ms | 6 | 3.4 KB |
-| CLINICAL | 0.06 ms | 2 | 404 B | 0.55 ms | 8 | 6.9 KB |
-| TOOTH | 0.06 ms | 2 | 404 B | 0.53 ms | 7 | 6.2 KB |
-| CASE | 0.06 ms | 2 | 404 B | 0.48 ms | 8 | 6.5 KB |
-| IMAGING | 0.06 ms | 2 | 404 B | 0.24 ms | 5 | 3.4 KB |
-| TREATMENT | 0.06 ms | 2 | 404 B | 0.49 ms | 8 | 6.5 KB |
-| FOLLOW_UP | 0.06 ms | 2 | 404 B | 0.28 ms | 6 | 5.5 KB |
-| FULL_360 | 0.06 ms | 2 | 404 B | 0.76 ms | 11 | 9.2 KB |
+| Profile          | Old latency | Old queries | Old payload | New latency | New queries | New payload |
+| ---------------- | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- |
+| MINIMAL          | 0.06 ms     | 2           | 404 B       | 0.12 ms     | 1           | 1.3 KB      |
+| PATIENT_OVERVIEW | 0.06 ms     | 2           | 404 B       | 0.37 ms     | 6           | 3.4 KB      |
+| CLINICAL         | 0.06 ms     | 2           | 404 B       | 0.55 ms     | 8           | 6.9 KB      |
+| TOOTH            | 0.06 ms     | 2           | 404 B       | 0.53 ms     | 7           | 6.2 KB      |
+| CASE             | 0.06 ms     | 2           | 404 B       | 0.48 ms     | 8           | 6.5 KB      |
+| IMAGING          | 0.06 ms     | 2           | 404 B       | 0.24 ms     | 5           | 3.4 KB      |
+| TREATMENT        | 0.06 ms     | 2           | 404 B       | 0.49 ms     | 8           | 6.5 KB      |
+| FOLLOW_UP        | 0.06 ms     | 2           | 404 B       | 0.28 ms     | 6           | 5.5 KB      |
+| FULL_360         | 0.06 ms     | 2           | 404 B       | 0.76 ms     | 11          | 9.2 KB      |
 
 **No material regression**: in-memory build stays sub-millisecond; the new engine makes 1–11
-*constant* queries vs the old engine's 2 (the extra round-trips buy per-section structure,
+_constant_ queries vs the old engine's 2 (the extra round-trips buy per-section structure,
 provenance and role scoping); payload is bounded by budgets (≤ ~9 KB for FULL_360).
 
 **N+1 check**: with 100× more notes/chart/appointment rows for the same patient, the query
@@ -326,26 +326,26 @@ clock (`NOW = 2026-09-29T12:00Z`) for deterministic freshness.
 
 ### Coverage (76 new tests)
 
-| File | Tests | Covers |
-|---|---|---|
-| `tests/unit/ai-context-patient.test.ts` | 11 | sections, budgets, missing semantics, freshness windows, query count constant + N+1 scaling, PATIENT self-scope, determinism, Minimum Necessary |
-| `tests/unit/ai-context-tooth.test.ts` | 9 | FDI helpers, **tooth-36 semantic isolation (no 46/A2/tenant-B leak)**, confirmed-only tooth links, no invented prescription-tooth link, LAB_TECH scope |
-| `tests/unit/ai-context-case.test.ts` | 7 | plan/items/teeth, appointmentId case link (+null), caseId re-validation (impostor row), billing/operational field scopes, LAB_TECH exclusion |
-| `tests/unit/ai-context-timeline.test.ts` | 6 | unified events, deterministic order, dedup, bound+truncation, fact-category integrity, tooth+case links |
-| `tests/unit/ai-context-imaging.test.ts` | 9 | all finding shapes (box/landmark/segment/unknown/null-tooth/invalid-FDI), model provenance, review states, pending-review honesty, study scope, role matrix, finding cap with raw count |
-| `tests/unit/ai-context-security.test.ts` | 16 | full RBAC matrix, omission-at-retrieval (private notes, clinical text), tenant isolation ×4, injection fencing ×2, stale honesty, identifier tampering ×3 |
-| `tests/unit/ai-context-contract.test.ts` | 10 | contract across all 9 profiles, arbitrary-field injection ×4, half-present sections, tampered meta, invalid FDI, merged categories, unknown event types, serializer determinism |
-| `tests/api/ai-context-route.test.ts` | 8 | E2E: production gate 403, auth, validation (×4), structured+serialized response, tooth scope, PATIENT self-scope through the route, cross-tenant no-leak, fail-closed 500 |
+| File                                     | Tests | Covers                                                                                                                                                                                  |
+| ---------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/unit/ai-context-patient.test.ts`  | 11    | sections, budgets, missing semantics, freshness windows, query count constant + N+1 scaling, PATIENT self-scope, determinism, Minimum Necessary                                         |
+| `tests/unit/ai-context-tooth.test.ts`    | 9     | FDI helpers, **tooth-36 semantic isolation (no 46/A2/tenant-B leak)**, confirmed-only tooth links, no invented prescription-tooth link, LAB_TECH scope                                  |
+| `tests/unit/ai-context-case.test.ts`     | 7     | plan/items/teeth, appointmentId case link (+null), caseId re-validation (impostor row), billing/operational field scopes, LAB_TECH exclusion                                            |
+| `tests/unit/ai-context-timeline.test.ts` | 6     | unified events, deterministic order, dedup, bound+truncation, fact-category integrity, tooth+case links                                                                                 |
+| `tests/unit/ai-context-imaging.test.ts`  | 9     | all finding shapes (box/landmark/segment/unknown/null-tooth/invalid-FDI), model provenance, review states, pending-review honesty, study scope, role matrix, finding cap with raw count |
+| `tests/unit/ai-context-security.test.ts` | 16    | full RBAC matrix, omission-at-retrieval (private notes, clinical text), tenant isolation ×4, injection fencing ×2, stale honesty, identifier tampering ×3                               |
+| `tests/unit/ai-context-contract.test.ts` | 10    | contract across all 9 profiles, arbitrary-field injection ×4, half-present sections, tampered meta, invalid FDI, merged categories, unknown event types, serializer determinism         |
+| `tests/api/ai-context-route.test.ts`     | 8     | E2E: production gate 403, auth, validation (×4), structured+serialized response, tooth scope, PATIENT self-scope through the route, cross-tenant no-leak, fail-closed 500               |
 
 ### Gate results
 
-| Gate | Result |
-|---|---|
-| Full vitest | **5254 passed / 12 skipped / 0 failed** (baseline 5178 → +76 new, 0 regressions) |
-| `tsc --noEmit` | **503** errors — exactly the pre-existing baseline (0 new) |
-| `eslint` | **0 errors / 261 warnings** — exactly the pre-existing baseline |
-| Performance before/after + N+1 | §15 — no material regression; query counts constant |
-| Security audit (§47) | §12.3 — 10/10, no critical findings |
+| Gate                                                                                        | Result                                                                                          |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Full vitest                                                                                 | **5254 passed / 12 skipped / 0 failed** (baseline 5178 → +76 new, 0 regressions)                |
+| `tsc --noEmit`                                                                              | **503** errors — exactly the pre-existing baseline (0 new)                                      |
+| `eslint`                                                                                    | **0 errors / 261 warnings** — exactly the pre-existing baseline                                 |
+| Performance before/after + N+1                                                              | §15 — no material regression; query counts constant                                             |
+| Security audit (§47)                                                                        | §12.3 — 10/10, no critical findings                                                             |
 | Final gate §55 (Patient→Clinical→Tooth→Case→Imaging→Findings→Diagnosis→Treatment→Follow-up) | each link covered with tenant + RBAC + patient-scope + provenance + integrity + freshness tests |
 
 ### Locked decisions (for the record)

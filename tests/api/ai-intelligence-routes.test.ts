@@ -17,7 +17,15 @@
  *    steps park in WAITING_APPROVAL through the Phase-1 pipeline.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createFakePrisma, HOSP_A, HOSP_B, PAT_A1, PAT_A2, PAT_B1, ACTORS } from '@/tests/harness/context-fixtures'
+import {
+  createFakePrisma,
+  HOSP_A,
+  HOSP_B,
+  PAT_A1,
+  PAT_A2,
+  PAT_B1,
+  ACTORS,
+} from '@/tests/harness/context-fixtures'
 
 const store = vi.hoisted(() => ({
   auth: { error: null, user: null, hospitalId: 'hosp-A' },
@@ -27,7 +35,8 @@ const store = vi.hoisted(() => ({
 vi.mock('@/lib/api-helpers', () => ({
   requireAuthAndRole: async (allowedRoles) => {
     const { error, user, hospitalId } = store.auth
-    if (error || !user || !hospitalId) return { error: error || { status: 401 }, user: null, hospitalId: null, session: null }
+    if (error || !user || !hospitalId)
+      return { error: error || { status: 401 }, user: null, hospitalId: null, session: null }
     if (allowedRoles && !allowedRoles.includes(user.role)) {
       return { error: { status: 403 }, user: null, hospitalId: null, session: null }
     }
@@ -36,7 +45,11 @@ vi.mock('@/lib/api-helpers', () => ({
 }))
 
 let fake = null
-vi.mock('@/lib/prisma', () => ({ get prisma() { return fake } }))
+vi.mock('@/lib/prisma', () => ({
+  get prisma() {
+    return fake
+  },
+}))
 
 vi.mock('@/lib/ai/action-pipeline', () => ({
   runAiAction: async (args) => store.action.response(args),
@@ -53,16 +66,43 @@ const { GET: wfGET, POST: wfPOST } = await import('@/app/api/ai/workflows/route'
 // Fake prisma: harness tables + the Phase-9 delegates the routes need
 // ---------------------------------------------------------------------------
 
-const STAFF = [{ id: 'staff-doctor-1', hospitalId: HOSP_A, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR' }]
+const STAFF = [
+  {
+    id: 'staff-doctor-1',
+    hospitalId: HOSP_A,
+    firstName: 'Hana',
+    lastName: 'Shalaby',
+    role: 'DOCTOR',
+  },
+]
 const JOB_ACCEPTED = {
-  id: 'job-A1', hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-  requestedById: 'staff-doctor-1', modelVersion: 'v1.2.0', modelChecksum: 'c0ffee',
-  orchestratorVersion: '2.1.0', startedAt: new Date('2026-09-19T12:00:00Z'), completedAt: new Date('2026-09-19T12:00:00Z'),
-  confidence: 0.87, findings: [{ condition: 'caries', tooth_number: 36 }],
-  reviewedById: 'staff-doctor-1', reviewedAt: new Date('2026-09-21T12:00:00Z'), reviewDecision: 'ACCEPTED',
-  acceptedFindings: [{ condition: 'caries', tooth_number: 36 }], createdAt: new Date('2026-09-19T12:00:00Z'),
+  id: 'job-A1',
+  hospitalId: HOSP_A,
+  studyId: 'study-A1',
+  engine: 'clm',
+  status: 'COMPLETED',
+  requestedById: 'staff-doctor-1',
+  modelVersion: 'v1.2.0',
+  modelChecksum: 'c0ffee',
+  orchestratorVersion: '2.1.0',
+  startedAt: new Date('2026-09-19T12:00:00Z'),
+  completedAt: new Date('2026-09-19T12:00:00Z'),
+  confidence: 0.87,
+  findings: [{ condition: 'caries', tooth_number: 36 }],
+  reviewedById: 'staff-doctor-1',
+  reviewedAt: new Date('2026-09-21T12:00:00Z'),
+  reviewDecision: 'ACCEPTED',
+  acceptedFindings: [{ condition: 'caries', tooth_number: 36 }],
+  createdAt: new Date('2026-09-19T12:00:00Z'),
 }
-const JOB_UNREVIEWED = { ...JOB_ACCEPTED, id: 'job-pend', reviewDecision: null, reviewedById: null, reviewedAt: null, acceptedFindings: null }
+const JOB_UNREVIEWED = {
+  ...JOB_ACCEPTED,
+  id: 'job-pend',
+  reviewDecision: null,
+  reviewedById: null,
+  reviewedAt: null,
+  acceptedFindings: null,
+}
 
 function makeFake() {
   const base = createFakePrisma({
@@ -84,7 +124,12 @@ function makeFake() {
 
   // auditLog (fire-and-forget collector).
   const audits = []
-  base.auditLog = { create: async ({ data }) => { audits.push(data); return data } }
+  base.auditLog = {
+    create: async ({ data }) => {
+      audits.push(data)
+      return data
+    },
+  }
 
   // aiInsight: stateful rows + the query shapes the alerts route/proactive use.
   const insightRows = []
@@ -107,8 +152,8 @@ function makeFake() {
         const sevRank = { CRITICAL: 3, WARNING: 2, INFO: 1 }
         rows = [...rows].sort((a, b) => {
           for (const [f, dir] of Object.entries(orderBy[0])) {
-            const av = f === 'severity' ? sevRank[a[f]] ?? 0 : String(a[f] ?? '')
-            const bv = f === 'severity' ? sevRank[b[f]] ?? 0 : String(b[f] ?? '')
+            const av = f === 'severity' ? (sevRank[a[f]] ?? 0) : String(a[f] ?? '')
+            const bv = f === 'severity' ? (sevRank[b[f]] ?? 0) : String(b[f] ?? '')
             const c = av === bv ? 0 : (av as unknown) > (bv as unknown) ? 1 : -1
             if (c !== 0) return dir === 'asc' ? c : -c
           }
@@ -126,7 +171,10 @@ function makeFake() {
     updateMany: async ({ where, data }) => {
       let count = 0
       for (const r of insightRows) {
-        if (matchI(r, where)) { Object.assign(r, data); count += 1 }
+        if (matchI(r, where)) {
+          Object.assign(r, data)
+          count += 1
+        }
       }
       return { count }
     },
@@ -135,13 +183,15 @@ function makeFake() {
   // aiWorkflowRun: stateful (tenant rows; composite findUnique).
   const wfRows = []
   base.aiWorkflowRun = {
-    findMany: async ({ where } = {}) => wfRows.filter((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)),
+    findMany: async ({ where } = {}) =>
+      wfRows.filter((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)),
     create: async ({ data }) => {
       const row = { ...data, createdAt: new Date() }
       wfRows.push(row)
       return row
     },
-    findUnique: async ({ where }) => wfRows.find((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)) ?? null,
+    findUnique: async ({ where }) =>
+      wfRows.find((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)) ?? null,
     update: async ({ where, data }) => {
       const r = wfRows.find((row) => Object.entries(where ?? {}).every(([k, v]) => row[k] === v))
       if (!r) throw new Error('aiWorkflowRun not found')
@@ -158,14 +208,24 @@ function makeFake() {
 function setAuth(user, hospitalId = HOSP_A) {
   store.auth = { error: null, user, hospitalId }
 }
-const DOCTOR = { id: ACTORS.doctorA.id, role: 'DOCTOR', name: 'Hana Shalaby', firstName: 'Hana', lastName: 'Shalaby' }
+const DOCTOR = {
+  id: ACTORS.doctorA.id,
+  role: 'DOCTOR',
+  name: 'Hana Shalaby',
+  firstName: 'Hana',
+  lastName: 'Shalaby',
+}
 const RECEPTIONIST = { id: ACTORS.receptionistA.id, role: 'RECEPTIONIST', name: 'Recep A' }
 const PATIENT_A = { id: ACTORS.patientA.id, role: 'PATIENT', name: 'Ahmed Ali' }
 const PATIENT_B = { id: ACTORS.patientB.id, role: 'PATIENT', name: 'Omar Farouk' }
 
 const url = (p: string) => new Request(`http://localhost/api${p}`)
 const post = (p: string, body: unknown) =>
-  new Request(`http://localhost/api${p}`, { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } })
+  new Request(`http://localhost/api${p}`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'content-type': 'application/json' },
+  })
 const json = async (res) => res.json()
 
 beforeEach(() => {
@@ -223,9 +283,13 @@ describe('Phase 9 API — scope re-validation (§38)', () => {
 
   it('case scope: valid plan echoes; foreign/unknown plan → 404 INT_CASE_NOT_FOUND', async () => {
     setAuth(DOCTOR)
-    const ok = await json(await caseGET(url('/ai/intelligence/case?patientId=pat-A1&caseId=plan-A1')))
+    const ok = await json(
+      await caseGET(url('/ai/intelligence/case?patientId=pat-A1&caseId=plan-A1'))
+    )
     expect(ok.caseId).toBe('plan-A1')
-    const bad = await json(await caseGET(url('/ai/intelligence/case?patientId=pat-A1&caseId=plan-NOPE')))
+    const bad = await json(
+      await caseGET(url('/ai/intelligence/case?patientId=pat-A1&caseId=plan-NOPE'))
+    )
     expect(bad.error.code).toBe('INT_CASE_NOT_FOUND')
   })
 
@@ -247,9 +311,22 @@ describe('Phase 9 API — scope re-validation (§38)', () => {
     const body = await json(res)
     // Fixed section shape: 16 named sections + disclaimer (flat object).
     const sectionKeys = [
-      'patientContext', 'chiefComplaint', 'relevantHistory', 'affectedTeeth', 'symptoms',
-      'clinicalFindings', 'imaging', 'aiFindings', 'clinicianConfirmedFindings', 'differentialConsiderations',
-      'treatmentHistory', 'currentTreatment', 'pendingItems', 'followUp', 'knownUncertainty', 'missingInformation',
+      'patientContext',
+      'chiefComplaint',
+      'relevantHistory',
+      'affectedTeeth',
+      'symptoms',
+      'clinicalFindings',
+      'imaging',
+      'aiFindings',
+      'clinicianConfirmedFindings',
+      'differentialConsiderations',
+      'treatmentHistory',
+      'currentTreatment',
+      'pendingItems',
+      'followUp',
+      'knownUncertainty',
+      'missingInformation',
     ]
     expect(Object.keys(body.summary)).toHaveLength(16 + 1) // + disclaimerKey
     for (const k of sectionKeys) {
@@ -300,7 +377,9 @@ describe('Phase 9 API — alerts (§21, §34)', () => {
     const runRes = await alertsPOST(post('/ai/intelligence/alerts', { op: 'run' }))
     const run = await json(runRes)
     expect(run.result.created).toBeGreaterThanOrEqual(1)
-    const createdAlert = fake.__phase9.insightRows.find((r) => r.data?.alertType === 'AI_REVIEW_REQUIRED' && r.data?.evidence?.jobId === 'job-pend')
+    const createdAlert = fake.__phase9.insightRows.find(
+      (r) => r.data?.alertType === 'AI_REVIEW_REQUIRED' && r.data?.evidence?.jobId === 'job-pend'
+    )
     expect(createdAlert).toBeTruthy()
     expect(createdAlert.data.action).toBeNull() // signal only
     expect(createdAlert.data.kind).toBe('PROACTIVE_ALERT')
@@ -318,7 +397,9 @@ describe('Phase 9 API — alerts (§21, §34)', () => {
     expect(run2.result.deduplicated).toBe(run.result.created)
 
     // Dismiss → state change; row kept; GET no longer lists it.
-    const dis = await json(await alertsPOST(post('/ai/intelligence/alerts', { op: 'dismiss', alertId: createdAlert.id })))
+    const dis = await json(
+      await alertsPOST(post('/ai/intelligence/alerts', { op: 'dismiss', alertId: createdAlert.id }))
+    )
     expect(dis).toMatchObject({ ok: true, state: 'DISMISSED' })
     expect(fake.__phase9.insightRows).toHaveLength(fake.__phase9.insightRows.length) // not deleted
     expect(createdAlert.dismissed).toBe(true)
@@ -334,7 +415,9 @@ describe('Phase 9 API — alerts (§21, §34)', () => {
 
   it('dismiss unknown alert → 404 INT_ALERT_NOT_FOUND; bad op → 400', async () => {
     setAuth(DOCTOR)
-    const dis = await json(await alertsPOST(post('/ai/intelligence/alerts', { op: 'dismiss', alertId: 'ins-nope' })))
+    const dis = await json(
+      await alertsPOST(post('/ai/intelligence/alerts', { op: 'dismiss', alertId: 'ins-nope' }))
+    )
     expect(dis.error.code).toBe('INT_ALERT_NOT_FOUND')
     const bad = await json(await alertsPOST(post('/ai/intelligence/alerts', { op: 'fly' })))
     expect(bad.error.code).toBe('INT_INVALID_PARAMS')
@@ -362,7 +445,11 @@ describe('Phase 9 API — workflows (§22–§26, §38)', () => {
 
   it('run case_review → COMPLETED; AiWorkflowRun row persisted + audited', async () => {
     setAuth(DOCTOR)
-    const body = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: PAT_A1 })))
+    const body = await json(
+      await wfPOST(
+        post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: PAT_A1 })
+      )
+    )
     expect(body.run.status).toBe('COMPLETED')
     expect(body.run.workflowId).toBe('case_review')
     expect(body.outputItems.length).toBeGreaterThan(0)
@@ -376,23 +463,38 @@ describe('Phase 9 API — workflows (§22–§26, §38)', () => {
 
   it('RBAC: a role outside the definition → 403 INT_WORKFLOW_ROLE_DENIED', async () => {
     setAuth(RECEPTIONIST)
-    const res = await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'daily_clinic_review', patientId: null }))
+    const res = await wfPOST(
+      post('/ai/workflows', { op: 'run', workflowId: 'daily_clinic_review', patientId: null })
+    )
     expect(res.status).toBe(403)
     expect((await json(res)).error.code).toBe('INT_WORKFLOW_ROLE_DENIED')
   })
 
   it('unknown workflowId → 404; forged patientId → 404 typed', async () => {
     setAuth(DOCTOR)
-    const unknown = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'hack', patientId: PAT_A1 })))
+    const unknown = await json(
+      await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'hack', patientId: PAT_A1 }))
+    )
     expect(unknown.error.code).toBe('INT_WORKFLOW_NOT_FOUND')
-    const forged = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: 'pat-B1' })))
+    const forged = await json(
+      await wfPOST(
+        post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: 'pat-B1' })
+      )
+    )
     expect(forged.error.code).toBe('INT_PATIENT_NOT_FOUND')
   })
 
   it('follow_up with approval pipeline → WAITING_APPROVAL (never executed)', async () => {
     setAuth(DOCTOR)
-    store.action.response = async () => ({ status: 'APPROVAL_REQUIRED', success: false, message: 'pending', approvalId: 'appr-777' })
-    const body = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'follow_up', patientId: PAT_A1 })))
+    store.action.response = async () => ({
+      status: 'APPROVAL_REQUIRED',
+      success: false,
+      message: 'pending',
+      approvalId: 'appr-777',
+    })
+    const body = await json(
+      await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'follow_up', patientId: PAT_A1 }))
+    )
     expect(body.run.status).toBe('WAITING_APPROVAL')
     expect(body.run.approvalId).toBe('appr-777')
     const row = fake.__phase9.wfRows.find((r) => r.id === body.run.id)
@@ -403,19 +505,36 @@ describe('Phase 9 API — workflows (§22–§26, §38)', () => {
 
   it('cancel → CANCELLED (audited); re-cancel terminal run → 409', async () => {
     setAuth(DOCTOR)
-    const run = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: PAT_A1 })))
-    const cancel = await json(await wfPOST(post('/ai/workflows', { op: 'cancel', runId: run.run.id })))
+    const run = await json(
+      await wfPOST(
+        post('/ai/workflows', { op: 'run', workflowId: 'case_review', patientId: PAT_A1 })
+      )
+    )
+    const cancel = await json(
+      await wfPOST(post('/ai/workflows', { op: 'cancel', runId: run.run.id }))
+    )
     // case_review completes synchronously, so cancel from COMPLETED → 409.
     expect(cancel.error.code).toBe('INT_WORKFLOW_INVALID_TRANSITION')
 
     // A still-active run (WAITING_APPROVAL) can be cancelled.
-    store.action.response = async () => ({ status: 'APPROVAL_REQUIRED', success: false, message: 'pending', approvalId: 'appr-8' })
-    const parked = await json(await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'follow_up', patientId: PAT_A1 })))
+    store.action.response = async () => ({
+      status: 'APPROVAL_REQUIRED',
+      success: false,
+      message: 'pending',
+      approvalId: 'appr-8',
+    })
+    const parked = await json(
+      await wfPOST(post('/ai/workflows', { op: 'run', workflowId: 'follow_up', patientId: PAT_A1 }))
+    )
     expect(parked.run.status).toBe('WAITING_APPROVAL')
-    const cancel2 = await json(await wfPOST(post('/ai/workflows', { op: 'cancel', runId: parked.run.id })))
+    const cancel2 = await json(
+      await wfPOST(post('/ai/workflows', { op: 'cancel', runId: parked.run.id }))
+    )
     expect(cancel2.run.status).toBe('CANCELLED')
     // Terminal now → re-cancel rejected.
-    const cancel3 = await json(await wfPOST(post('/ai/workflows', { op: 'cancel', runId: parked.run.id })))
+    const cancel3 = await json(
+      await wfPOST(post('/ai/workflows', { op: 'cancel', runId: parked.run.id }))
+    )
     expect(cancel3.error.code).toBe('INT_WORKFLOW_INVALID_TRANSITION')
     expect(fake.__phase9.audits.map((a) => a.action)).toContain('AI_WORKFLOW_CANCEL')
   })
@@ -426,9 +545,13 @@ describe('Phase 9 API — workflows (§22–§26, §38)', () => {
     const list = await json(await wfPOST(post('/ai/workflows', { op: 'list' })))
     expect(list.count).toBe(1)
     expect(list.runs[0].status).toBe('COMPLETED')
-    const got = await json(await wfPOST(post('/ai/workflows', { op: 'get', runId: list.runs[0].id })))
+    const got = await json(
+      await wfPOST(post('/ai/workflows', { op: 'get', runId: list.runs[0].id }))
+    )
     expect(got.run.id).toBe(list.runs[0].id)
-    const missing = await json(await wfPOST(post('/ai/workflows', { op: 'get', runId: 'wfrun-nope' })))
+    const missing = await json(
+      await wfPOST(post('/ai/workflows', { op: 'get', runId: 'wfrun-nope' }))
+    )
     expect(missing.error.code).toBe('INT_WORKFLOW_NOT_FOUND')
   })
 

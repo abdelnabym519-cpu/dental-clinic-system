@@ -217,14 +217,19 @@ export default function MedicationsPage() {
   const handleDelete = async (med: Medication) => {
     const ok = await confirm({
       title: 'Deactivate Medication',
-      description: t('Deactivate "{name}"? It will no longer appear in prescription search.', { name: med.name }),
+      description: t('Deactivate "{name}"? It will no longer appear in prescription search.', {
+        name: med.name,
+      }),
       confirmLabel: 'Deactivate',
     })
     if (!ok) return
     try {
       const res = await fetch(`/api/medications/${med.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(t('Failed'))
-      toast({ title: t('Deactivated'), description: t('{name} has been deactivated', { name: med.name }) })
+      toast({
+        title: t('Deactivated'),
+        description: t('{name} has been deactivated', { name: med.name }),
+      })
       fetchMedications()
     } catch {
       toast({
@@ -301,7 +306,9 @@ export default function MedicationsPage() {
             <div className="text-center py-12 text-muted-foreground">
               <Pill className="h-12 w-12 mx-auto mb-4 opacity-30" />
               <p className="text-lg font-medium">{t('No medications found')}</p>
-              <p className="text-sm">{t('Add your first medication to build your drug catalog.')}</p>
+              <p className="text-sm">
+                {t('Add your first medication to build your drug catalog.')}
+              </p>
             </div>
           ) : (
             <Table>
@@ -369,16 +376,20 @@ export default function MedicationsPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-          >{t('ui.previous')}</Button>
+          >
+            {t('ui.previous')}
+          </Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
-            {t("Page")} {pagination.page} {t("of")} {pagination.pages}
+            {t('Page')} {pagination.page} {t('of')} {pagination.pages}
           </span>
           <Button
             variant="outline"
             size="sm"
             disabled={pagination.page >= pagination.pages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-          >{t('ui.next')}</Button>
+          >
+            {t('ui.next')}
+          </Button>
         </div>
       )}
 
@@ -386,16 +397,16 @@ export default function MedicationsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? t("Edit Medication") : 'Add Medication'}</DialogTitle>
+            <DialogTitle>{editing ? t('Edit Medication') : 'Add Medication'}</DialogTitle>
             <DialogDescription>
-              {editing ? t("Update medication details") : t("Add a new medication to your catalog")}
+              {editing ? t('Update medication details') : t('Add a new medication to your catalog')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label>{t("Medication Name *")}</Label>
+                <Label>{t('Medication Name *')}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
@@ -451,7 +462,7 @@ export default function MedicationsPage() {
                 <Input
                   value={formData.strength}
                   onChange={(e) => setFormData((f) => ({ ...f, strength: e.target.value }))}
-                  placeholder={t("500mg")}
+                  placeholder={t('500mg')}
                 />
               </div>
               <div>
@@ -472,7 +483,7 @@ export default function MedicationsPage() {
                   <Input
                     value={formData.defaultDosage}
                     onChange={(e) => setFormData((f) => ({ ...f, defaultDosage: e.target.value }))}
-                    placeholder={t("1 tablet")}
+                    placeholder={t('1 tablet')}
                   />
                 </div>
                 <div>
@@ -482,7 +493,7 @@ export default function MedicationsPage() {
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, defaultFrequency: e.target.value }))
                     }
-                    placeholder={t("3 times a day")}
+                    placeholder={t('3 times a day')}
                   />
                 </div>
                 <div>
@@ -492,7 +503,7 @@ export default function MedicationsPage() {
                     onChange={(e) =>
                       setFormData((f) => ({ ...f, defaultDuration: e.target.value }))
                     }
-                    placeholder={t("5 days")}
+                    placeholder={t('5 days')}
                   />
                 </div>
               </div>
@@ -525,7 +536,9 @@ export default function MedicationsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {t('ui.cancel')}
+            </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editing ? 'Update' : 'Add Medication'}

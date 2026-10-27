@@ -76,15 +76,31 @@ export const AGENT_TASK_TYPES = [
 export type AgentTaskType = (typeof AGENT_TASK_TYPES)[number]
 
 export const AGENT_DOMAINS = [
-  'patient', 'dental', 'clinical', 'imaging', 'treatment', 'prescription',
-  'billing', 'scheduling', 'staff', 'inventory', 'lab', 'knowledge',
+  'patient',
+  'dental',
+  'clinical',
+  'imaging',
+  'treatment',
+  'prescription',
+  'billing',
+  'scheduling',
+  'staff',
+  'inventory',
+  'lab',
+  'knowledge',
 ] as const
 export type AgentDomain = (typeof AGENT_DOMAINS)[number]
 
 export const RISK_LEVELS = ['NONE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
 export type RiskLevel = (typeof RISK_LEVELS)[number]
 
-export const EXECUTION_MODES = ['READ_ONLY', 'DRAFT', 'APPROVAL_REQUIRED', 'EXECUTE', 'FORBIDDEN'] as const
+export const EXECUTION_MODES = [
+  'READ_ONLY',
+  'DRAFT',
+  'APPROVAL_REQUIRED',
+  'EXECUTE',
+  'FORBIDDEN',
+] as const
 export type ExecutionMode = (typeof EXECUTION_MODES)[number]
 
 export interface AgentTask {
@@ -141,8 +157,16 @@ export interface KnowledgeSignal {
 
 /** Indirection so the agent package does not import Phase 2 types eagerly. */
 export type ContextProfileRef =
-  | 'MINIMAL' | 'PATIENT_OVERVIEW' | 'CLINICAL' | 'TOOTH' | 'CASE'
-  | 'IMAGING' | 'TREATMENT' | 'FOLLOW_UP' | 'TIMELINE' | 'FULL_360'
+  | 'MINIMAL'
+  | 'PATIENT_OVERVIEW'
+  | 'CLINICAL'
+  | 'TOOTH'
+  | 'CASE'
+  | 'IMAGING'
+  | 'TREATMENT'
+  | 'FOLLOW_UP'
+  | 'TIMELINE'
+  | 'FULL_360'
 
 // ---------------------------------------------------------------------------
 // Plan (bounded templates — §13/§14)
@@ -210,22 +234,22 @@ export interface AgentToolResult<T = unknown> {
 // ---------------------------------------------------------------------------
 
 export const AGENT_FAILURE_CODES = [
-  'INVALID_REQUEST',      // malformed request envelope
-  'MISSING_CONTEXT',      // required entity (patient/tooth/param) not provided
-  'UNAUTHORIZED',         // role may not perform this
-  'SCOPE_ERROR',          // tenant/patient scope violated (fail-stop)
-  'TOOL_NOT_FOUND',       // unknown tool name — closed registry
-  'TOOL_INPUT_ERROR',     // unknown/invalid tool parameter
-  'TOOL_TIMEOUT',         // hard per-tool timeout
-  'TOOL_FAILURE',         // unexpected tool error
-  'PLAN_LIMIT',           // plan/iteration/repetition limit hit
-  'SAFETY_BLOCK',         // Phase 1 policy blocked the action
-  'APPROVAL_REQUIRED',    // pipeline requires human approval (not an error)
-  'APPROVAL_REJECTED',    // approval rejected (informational)
-  'VERIFICATION_FAILED',  // write ran but post-verification failed
-  'MODEL_UNAVAILABLE',    // LLM down — deterministic path took over
-  'PARSE_ERROR',          // unparseable model output — ignored safely
-  'SYSTEM_ERROR',         // everything else (fail closed)
+  'INVALID_REQUEST', // malformed request envelope
+  'MISSING_CONTEXT', // required entity (patient/tooth/param) not provided
+  'UNAUTHORIZED', // role may not perform this
+  'SCOPE_ERROR', // tenant/patient scope violated (fail-stop)
+  'TOOL_NOT_FOUND', // unknown tool name — closed registry
+  'TOOL_INPUT_ERROR', // unknown/invalid tool parameter
+  'TOOL_TIMEOUT', // hard per-tool timeout
+  'TOOL_FAILURE', // unexpected tool error
+  'PLAN_LIMIT', // plan/iteration/repetition limit hit
+  'SAFETY_BLOCK', // Phase 1 policy blocked the action
+  'APPROVAL_REQUIRED', // pipeline requires human approval (not an error)
+  'APPROVAL_REJECTED', // approval rejected (informational)
+  'VERIFICATION_FAILED', // write ran but post-verification failed
+  'MODEL_UNAVAILABLE', // LLM down — deterministic path took over
+  'PARSE_ERROR', // unparseable model output — ignored safely
+  'SYSTEM_ERROR', // everything else (fail closed)
 ] as const
 export type AgentFailureCode = (typeof AGENT_FAILURE_CODES)[number]
 

@@ -150,14 +150,14 @@ export default function PatientBills() {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(inv.createdAt)}
-                          {inv.dueDate && t(" · Due: {v1}", { v1: formatDate(inv.dueDate) })}
+                          {inv.dueDate && t(' · Due: {v1}', { v1: formatDate(inv.dueDate) })}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="font-semibold">{formatCurrency(inv.balanceAmount)}</p>
                           <p className="text-xs text-muted-foreground">
-                            {t("of")} {formatCurrency(inv.totalAmount)}
+                            {t('of')} {formatCurrency(inv.totalAmount)}
                           </p>
                         </div>
                         {expandedId === inv.id ? (
@@ -191,10 +191,15 @@ export default function PatientBills() {
                                     }
                                   )
                                   const data = await res.json()
-                                  if (!res.ok) throw new Error(data.error || t('Failed to start payment'))
+                                  if (!res.ok)
+                                    throw new Error(data.error || t('Failed to start payment'))
                                   if (data.paymentUrl) window.open(data.paymentUrl, '_blank')
                                 } catch (err) {
-                                  alert(err instanceof Error ? err.message : t('Failed to start payment'))
+                                  alert(
+                                    err instanceof Error
+                                      ? err.message
+                                      : t('Failed to start payment')
+                                  )
                                 } finally {
                                   setPayingId(null)
                                 }
@@ -267,7 +272,7 @@ export default function PatientBills() {
                               }
                             >
                               <CreditCard className="h-4 w-4 mr-2" />
-                              {t("Pay")} {formatCurrency(inv.balanceAmount)} {t("Online")}
+                              {t('Pay')} {formatCurrency(inv.balanceAmount)} {t('Online')}
                             </Button>
                           </>
                         )}
@@ -288,7 +293,7 @@ export default function PatientBills() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                    {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                   </span>
                   <Button
                     variant="outline"

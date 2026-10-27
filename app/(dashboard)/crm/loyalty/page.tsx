@@ -273,7 +273,10 @@ export default function LoyaltyPage() {
       }
 
       toast({
-        title: t('Awarded {points} points to {name}', { points: pts, name: `${awardPatient.firstName} ${awardPatient.lastName}` }),
+        title: t('Awarded {points} points to {name}', {
+          points: pts,
+          name: `${awardPatient.firstName} ${awardPatient.lastName}`,
+        }),
       })
 
       // Reset form
@@ -330,7 +333,10 @@ export default function LoyaltyPage() {
       }
 
       toast({
-        title: t('Redeemed {points} points for {name}', { points: pts, name: `${redeemPatient.firstName} ${redeemPatient.lastName}` }),
+        title: t('Redeemed {points} points for {name}', {
+          points: pts,
+          name: `${redeemPatient.firstName} ${redeemPatient.lastName}`,
+        }),
       })
 
       // Reset form
@@ -363,7 +369,9 @@ export default function LoyaltyPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Gift className="h-7 w-7 text-purple-500" />{t('ui.loyalty_points')}</h1>
+            <Gift className="h-7 w-7 text-purple-500" />
+            {t('ui.loyalty_points')}
+          </h1>
           <p className="text-muted-foreground">{t('Award, redeem, and track loyalty points')}</p>
         </div>
       </div>
@@ -374,14 +382,16 @@ export default function LoyaltyPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-green-600" />{t('ui.award_points')}</CardTitle>
+              <Plus className="h-5 w-5 text-green-600" />
+              {t('ui.award_points')}
+            </CardTitle>
             <CardDescription>{t('Add loyalty points to a patient account')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAward} className="space-y-4">
               {/* Patient search */}
               <div className="space-y-2">
-                <Label>{t("Patient *")}</Label>
+                <Label>{t('Patient *')}</Label>
                 {awardPatient ? (
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div>
@@ -409,7 +419,9 @@ export default function LoyaltyPage() {
                           setAwardBalance(null)
                           awardSearch.clear()
                         }}
-                      >{t('ui.change')}</Button>
+                      >
+                        {t('ui.change')}
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -428,7 +440,9 @@ export default function LoyaltyPage() {
                       (awardSearch.results.length > 0 || awardSearch.searching) && (
                         <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
                           {awardSearch.searching ? (
-                            <div className="p-3 text-sm text-muted-foreground">{t('ui.searching')}</div>
+                            <div className="p-3 text-sm text-muted-foreground">
+                              {t('ui.searching')}
+                            </div>
                           ) : (
                             awardSearch.results.map((p) => (
                               <button
@@ -452,7 +466,7 @@ export default function LoyaltyPage() {
 
               {/* Points */}
               <div className="space-y-2">
-                <Label htmlFor="awardPoints">{t("Points *")}</Label>
+                <Label htmlFor="awardPoints">{t('Points *')}</Label>
                 <Input
                   id="awardPoints"
                   type="number"
@@ -466,7 +480,7 @@ export default function LoyaltyPage() {
 
               {/* Type */}
               <div className="space-y-2">
-                <Label>{t("Type *")}</Label>
+                <Label>{t('Type *')}</Label>
                 <Select value={awardType} onValueChange={(v) => setAwardType(v as PointType)}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_type')} />
@@ -500,7 +514,9 @@ export default function LoyaltyPage() {
                   </>
                 ) : (
                   <>
-                    <Plus className="mr-2 h-4 w-4" />{t('ui.award_points')}</>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('ui.award_points')}
+                  </>
                 )}
               </Button>
             </form>
@@ -511,14 +527,16 @@ export default function LoyaltyPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Minus className="h-5 w-5 text-red-600" />{t('ui.redeem_points')}</CardTitle>
+              <Minus className="h-5 w-5 text-red-600" />
+              {t('ui.redeem_points')}
+            </CardTitle>
             <CardDescription>{t('Redeem loyalty points from a patient account')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRedeem} className="space-y-4">
               {/* Patient search */}
               <div className="space-y-2">
-                <Label>{t("Patient *")}</Label>
+                <Label>{t('Patient *')}</Label>
                 {redeemPatient ? (
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <div>
@@ -546,7 +564,9 @@ export default function LoyaltyPage() {
                           setRedeemBalance(null)
                           redeemSearch.clear()
                         }}
-                      >{t('ui.change')}</Button>
+                      >
+                        {t('ui.change')}
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -565,7 +585,9 @@ export default function LoyaltyPage() {
                       (redeemSearch.results.length > 0 || redeemSearch.searching) && (
                         <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
                           {redeemSearch.searching ? (
-                            <div className="p-3 text-sm text-muted-foreground">{t('ui.searching')}</div>
+                            <div className="p-3 text-sm text-muted-foreground">
+                              {t('ui.searching')}
+                            </div>
                           ) : (
                             redeemSearch.results.map((p) => (
                               <button
@@ -593,14 +615,14 @@ export default function LoyaltyPage() {
                   <span className="text-sm font-medium">{t('Available Balance')}</span>
                   <span className="text-xl font-bold flex items-center gap-1">
                     <TrendingUp className="h-4 w-4 text-green-600" />
-                    {redeemBalance.toLocaleString()} {t("pts")}
+                    {redeemBalance.toLocaleString()} {t('pts')}
                   </span>
                 </div>
               )}
 
               {/* Points */}
               <div className="space-y-2">
-                <Label htmlFor="redeemPoints">{t("Points to Redeem *")}</Label>
+                <Label htmlFor="redeemPoints">{t('Points to Redeem *')}</Label>
                 <Input
                   id="redeemPoints"
                   type="number"
@@ -643,7 +665,9 @@ export default function LoyaltyPage() {
                   </>
                 ) : (
                   <>
-                    <Minus className="mr-2 h-4 w-4" />{t('ui.redeem_points')}</>
+                    <Minus className="mr-2 h-4 w-4" />
+                    {t('ui.redeem_points')}
+                  </>
                 )}
               </Button>
             </form>
@@ -746,7 +770,8 @@ export default function LoyaltyPage() {
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    {t("Page")} {pagination.page} {t("of")} {pagination.totalPages} ({pagination.total} {t("total)")}
+                    {t('Page')} {pagination.page} {t('of')} {pagination.totalPages} (
+                    {pagination.total} {t('total)')}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -754,13 +779,17 @@ export default function LoyaltyPage() {
                       size="sm"
                       disabled={pagination.page <= 1}
                       onClick={() => fetchTransactions(pagination.page - 1)}
-                    >{t('ui.previous')}</Button>
+                    >
+                      {t('ui.previous')}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={pagination.page >= pagination.totalPages}
                       onClick={() => fetchTransactions(pagination.page + 1)}
-                    >{t('ui.next')}</Button>
+                    >
+                      {t('ui.next')}
+                    </Button>
                   </div>
                 </div>
               )}

@@ -26,7 +26,14 @@ function Engrave({ d, offset = 0.55, n }: { d: string; offset?: number; n: numbe
         strokeLinecap="round"
         filter={`url(#blurS-${n})`}
       />
-      <path d={d} fill="none" stroke="#5C4A2A" strokeOpacity={0.4} strokeWidth={0.8} strokeLinecap="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke="#5C4A2A"
+        strokeOpacity={0.4}
+        strokeWidth={0.8}
+        strokeLinecap="round"
+      />
       <path
         d={d}
         fill="none"
@@ -44,7 +51,14 @@ function Engrave({ d, offset = 0.55, n }: { d: string; offset?: number; n: numbe
 function SubtleLine({ d, offset = 0.5 }: { d: string; offset?: number }) {
   return (
     <>
-      <path d={d} fill="none" stroke="#6B5632" strokeOpacity={0.22} strokeWidth={0.7} strokeLinecap="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke="#6B5632"
+        strokeOpacity={0.22}
+        strokeWidth={0.7}
+        strokeLinecap="round"
+      />
       <path
         d={d}
         fill="none"
@@ -68,7 +82,13 @@ function Blob({ b, n, shade }: { b: VolBlob; n: number; shade: boolean }) {
       ry={b.ry}
       fill={fill}
       fillOpacity={b.radial ? b.opacity : b.opacity}
-      filter={b.blur ? `url(#blur${b.blur === 'wide' ? 'W' : 'S'}-${n})` : b.radial ? `url(#blurS-${n})` : undefined}
+      filter={
+        b.blur
+          ? `url(#blur${b.blur === 'wide' ? 'W' : 'S'}-${n})`
+          : b.radial
+            ? `url(#blurS-${n})`
+            : undefined
+      }
       transform={b.rot ? `rotate(${b.rot} ${b.cx} ${b.cy})` : undefined}
     />
   )
@@ -226,7 +246,13 @@ export function ToothSVG({
               />
               {/* Furcation deepening painted ON the trunks only — crisp between roots, soft on them */}
               {geometry.furcationShadows.map((d, i) => (
-                <path key={`fur-${i}`} d={d} fill="#4A340C" fillOpacity={0.42} filter={`url(#blurS-${n})`} />
+                <path
+                  key={`fur-${i}`}
+                  d={d}
+                  fill="#4A340C"
+                  fillOpacity={0.42}
+                  filter={`url(#blurS-${n})`}
+                />
               ))}
               {geometry.rootApexShadows.map((a, i) => (
                 <ellipse
@@ -243,7 +269,9 @@ export function ToothSVG({
             </g>
           )}
           {!missing &&
-            geometry.rootGrooves.map((d, i) => <SubtleLine key={`rg-${i}`} d={d} offset={engraveOffset * 0.7} />)}
+            geometry.rootGrooves.map((d, i) => (
+              <SubtleLine key={`rg-${i}`} d={d} offset={engraveOffset * 0.7} />
+            ))}
           {!tooth.isRootCanal &&
             !missing &&
             geometry.rootCanalPaths.map((d, i) => (
@@ -290,7 +318,12 @@ export function ToothSVG({
           ))}
 
           {/* Translucent pulp chamber — faint, deep inside the enamel */}
-          <path d={geometry.pulpOutline} fill="#7A4A3A" fillOpacity={0.12} filter={`url(#blurW-${n})`} />
+          <path
+            d={geometry.pulpOutline}
+            fill="#7A4A3A"
+            fillOpacity={0.12}
+            filter={`url(#blurW-${n})`}
+          />
 
           {hasTable && (
             <g>

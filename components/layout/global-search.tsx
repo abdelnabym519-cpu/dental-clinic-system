@@ -196,13 +196,17 @@ export function GlobalSearch() {
             {/* Empty state */}
             {query.length < 2 && (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                {t("Type at least 2 characters to search across patients, appointments, invoices, staff, and treatments.")}
+                {t(
+                  'Type at least 2 characters to search across patients, appointments, invoices, staff, and treatments.'
+                )}
               </div>
             )}
 
             {/* Loading */}
             {query.length >= 2 && loading && !results && (
-              <div className="p-6 text-center text-sm text-muted-foreground">{t('ui.searching')}</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                {t('ui.searching')}
+              </div>
             )}
 
             {/* No results */}
@@ -268,15 +272,18 @@ export function GlobalSearch() {
           {results && totalResults > 0 && (
             <div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {totalResults} {t("result")}{totalResults !== 1 ? 's' : ''}
+                {totalResults} {t('result')}
+                {totalResults !== 1 ? 's' : ''}
               </span>
               <span>
-                <kbd className="rounded border px-1 py-0.5 font-mono text-[10px]">↑↓</kbd> {t("navigate")}
-                <kbd className="ml-2 rounded border px-1 py-0.5 font-mono text-[10px]">↵</kbd> {t("open")}
+                <kbd className="rounded border px-1 py-0.5 font-mono text-[10px]">↑↓</kbd>{' '}
+                {t('navigate')}
+                <kbd className="ml-2 rounded border px-1 py-0.5 font-mono text-[10px]">↵</kbd>{' '}
+                {t('open')}
                 <kbd className="ml-2 rounded border px-1 py-0.5 font-mono text-[10px]">
                   esc
                 </kbd>{' '}
-                {t("close")}
+                {t('close')}
               </span>
             </div>
           )}

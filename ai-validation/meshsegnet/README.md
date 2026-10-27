@@ -25,25 +25,25 @@ wiring. Nothing here is called by the application.
 
 Two real runs, both on CPU, no GPU present:
 
-| | Lower jaw | Upper jaw |
-| --- | --- | --- |
-| Model | `MeshSegNet_Man_…_best.zip` | `MeshSegNet_Max_…_best.zip` |
-| Input mesh | `0EJBIPTC_lower.obj` | `ZOUIF2W4_upper.obj` |
-| Cells before decimation | 178,421 | 328,581 |
-| Cells used (official rule) | 10,000 | 9,999 |
-| **Inference time** | **2.02 s** | **2.05 s** |
-| Total runtime | 9.32 s | 10.72 s |
-| Peak RAM | 1.48 GB | 1.50 GB |
-| Classes predicted | **15 / 15** | 10 / 15 |
-| Output | 10,000 labeled cells (`.vtp`, `.npy`, `.npz`) | 9,999 labeled cells |
+|                            | Lower jaw                                     | Upper jaw                   |
+| -------------------------- | --------------------------------------------- | --------------------------- |
+| Model                      | `MeshSegNet_Man_…_best.zip`                   | `MeshSegNet_Max_…_best.zip` |
+| Input mesh                 | `0EJBIPTC_lower.obj`                          | `ZOUIF2W4_upper.obj`        |
+| Cells before decimation    | 178,421                                       | 328,581                     |
+| Cells used (official rule) | 10,000                                        | 9,999                       |
+| **Inference time**         | **2.02 s**                                    | **2.05 s**                  |
+| Total runtime              | 9.32 s                                        | 10.72 s                     |
+| Peak RAM                   | 1.48 GB                                       | 1.50 GB                     |
+| Classes predicted          | **15 / 15**                                   | 10 / 15                     |
+| Output                     | 10,000 labeled cells (`.vtp`, `.npy`, `.npz`) | 9,999 labeled cells         |
 
 **Stability** — three repeats of the lower-jaw job:
 
-| Run | Inference | Total | Peak RAM | Classes |
-| --- | --- | --- | --- | --- |
-| 1 | 2.02 s | 9.32 s | 1.48 GB | 15 |
-| 2 | 2.21 s | 10.23 s | 1.52 GB | 15 |
-| 3 | 2.05 s | 9.27 s | 1.47 GB | 15 |
+| Run | Inference | Total   | Peak RAM | Classes |
+| --- | --------- | ------- | -------- | ------- |
+| 1   | 2.02 s    | 9.32 s  | 1.48 GB  | 15      |
+| 2   | 2.21 s    | 10.23 s | 1.52 GB  | 15      |
+| 3   | 2.05 s    | 9.27 s  | 1.47 GB  | 15      |
 
 Runtime is stable and completes comfortably. The lower-jaw scan resolved **all
 15 classes**, with a plausible distribution (58 % gingiva, the largest tooth
@@ -121,10 +121,10 @@ casualty: numpy 2.0 moved it to `np.exceptions`.)
 The runner installs a shim **before** importing vedo, restoring only those two
 names in memory for the current process:
 
-| Restored name | Value | Why it is safe |
-| --- | --- | --- |
-| `np.warnings` | the standard library `warnings` module | exactly the object numpy re-exported before 1.24 — not a reimplementation |
-| `np.VisibleDeprecationWarning` | `np.exceptions.VisibleDeprecationWarning`, if numpy moved it | same class object, different location |
+| Restored name                  | Value                                                        | Why it is safe                                                            |
+| ------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `np.warnings`                  | the standard library `warnings` module                       | exactly the object numpy re-exported before 1.24 — not a reimplementation |
+| `np.VisibleDeprecationWarning` | `np.exceptions.VisibleDeprecationWarning`, if numpy moved it | same class object, different location                                     |
 
 Nothing else is patched, no package version changes, no file is written, and no
 numerical behaviour is affected: these names only control **which warnings are
@@ -139,15 +139,15 @@ numpy downgrade is performed or required.
 
 ### Library-compatibility fixes applied by the runner
 
-Three version drifts in the pinned library set stopped this pipeline *before* it
+Three version drifts in the pinned library set stopped this pipeline _before_ it
 could touch the model. Each was reproduced against the real libraries and fixed
 inside the lab. None of them touches the model, the weights or the mathematics.
 
-| # | Symptom | Cause | Fix |
-| --- | --- | --- | --- |
-| 1 | `ModuleNotFoundError: No module named 'resource'` at startup | `resource` is Unix-only | portable memory probing: `psutil` → Windows `GetProcessMemoryInfo` → POSIX `resource` + `/proc`, imported lazily |
-| 2 | `AttributeError: module 'numpy' has no attribute 'warnings'` while importing vedo | numpy removed the alias in 1.24; vedo 2022.4.2 still uses it at import time | `np.warnings` restored in memory — the stdlib `warnings` module, i.e. the same object numpy used to re-export |
-| 3 | `ValueError: No input was provided when one is required.` from `clone()` / `decimate()` / `compute_normals()` | modern VTK added a `mapper` **property** to `vtkActor` that shadows vedo's own `mapper()` method earlier in the MRO | the class attribute is rebound to vedo's own method, then verified on a tiny mesh |
+| #   | Symptom                                                                                                       | Cause                                                                                                               | Fix                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | `ModuleNotFoundError: No module named 'resource'` at startup                                                  | `resource` is Unix-only                                                                                             | portable memory probing: `psutil` → Windows `GetProcessMemoryInfo` → POSIX `resource` + `/proc`, imported lazily |
+| 2   | `AttributeError: module 'numpy' has no attribute 'warnings'` while importing vedo                             | numpy removed the alias in 1.24; vedo 2022.4.2 still uses it at import time                                         | `np.warnings` restored in memory — the stdlib `warnings` module, i.e. the same object numpy used to re-export    |
+| 3   | `ValueError: No input was provided when one is required.` from `clone()` / `decimate()` / `compute_normals()` | modern VTK added a `mapper` **property** to `vtkActor` that shadows vedo's own `mapper()` method earlier in the MRO | the class attribute is rebound to vedo's own method, then verified on a tiny mesh                                |
 
 Fixes 2 and 3 live in **`scripts/compat.py`** and are applied by every script in
 the lab (loaded by path, so a fix made once cannot drift between scripts). They
@@ -168,13 +168,13 @@ python scripts\compat.py
 
 **These shims are numerically inert, and that was measured, not assumed.** With
 the shimmed stack (vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) the
-pipeline produces *exactly* the same features and adjacency matrices as the
+pipeline produces _exactly_ the same features and adjacency matrices as the
 modern stack used for the original validation run (vedo 2026.6.1 + vtk 9.7.0):
 
-| Mesh | Cells | Points after decimation | A_S / A_L nonzeros per row |
-| --- | --- | --- | --- |
-| `0EJBIPTC_lower.obj` | 178,421 → **10,000** | 6,172 | **428 / 1697** |
-| `ZOUIF2W4_upper.obj` | 328,581 → **9,999** | 5,003 | **311 / 1307** |
+| Mesh                 | Cells                | Points after decimation | A_S / A_L nonzeros per row |
+| -------------------- | -------------------- | ----------------------- | -------------------------- |
+| `0EJBIPTC_lower.obj` | 178,421 → **10,000** | 6,172                   | **428 / 1697**             |
+| `ZOUIF2W4_upper.obj` | 328,581 → **9,999**  | 5,003                   | **311 / 1307**             |
 
 Both stacks agree to the digit on both jaws. The decimation, the 15 features and
 the two adjacency thresholds are therefore unchanged by the compatibility work —
@@ -200,7 +200,7 @@ pip install psutil      # optional
 ```
 
 The reported figure is always attributed to the probe that produced it, because
-Windows measures a *working set* and Linux a *resident set* — the two are not
+Windows measures a _working set_ and Linux a _resident set_ — the two are not
 interchangeable and the report does not pretend they are.
 
 Verify the runner starts on a machine without `resource`:
@@ -212,15 +212,15 @@ python -m unittest discover -s tests -v
 Use `--dry-run` to exercise everything except the forward pass, and
 `--expect-sha256 <hash>` to pin the input.
 
-| Script | Purpose |
-| --- | --- |
-| `check_environment.py` | Python, torch, CUDA availability, cores, RAM, mesh libraries, artifact presence |
-| `download_artifacts.py` | Fetches the official models, official source snapshot and real meshes; refuses anything whose SHA-256 does not match |
-| `verify_artifacts.py` | Hashes everything, loads each checkpoint into the architecture with `strict=False`, and reports missing/unexpected keys |
-| `run_meshsegnet.py` | The only script that performs inference |
-| `compat.py` | The shared compatibility shims (numpy names for vedo, vedo's `mapper()` method) plus a mesh-operation self-test. Run it directly for a pre-flight report: `python scripts\compat.py` |
-| `../tests/test_vedo_vtk_compat.py` | Regression tests for the vedo/VTK fix: the shim must repair `clone()`/`decimate()`, must be a no-op on a correct stack, must run before any mesh is touched, and the official decimation targets (10,000 / 9,999 cells) must still be hit exactly. |
-| `../tests/test_runner_import.py` | Platform-compatibility regression tests: the runner must import and start on a machine without `resource`, memory probes must never raise, and the official constants/filenames must stay unchanged. Standard library only. |
+| Script                                 | Purpose                                                                                                                                                                                                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_environment.py`                 | Python, torch, CUDA availability, cores, RAM, mesh libraries, artifact presence                                                                                                                                                                                       |
+| `download_artifacts.py`                | Fetches the official models, official source snapshot and real meshes; refuses anything whose SHA-256 does not match                                                                                                                                                  |
+| `verify_artifacts.py`                  | Hashes everything, loads each checkpoint into the architecture with `strict=False`, and reports missing/unexpected keys                                                                                                                                               |
+| `run_meshsegnet.py`                    | The only script that performs inference                                                                                                                                                                                                                               |
+| `compat.py`                            | The shared compatibility shims (numpy names for vedo, vedo's `mapper()` method) plus a mesh-operation self-test. Run it directly for a pre-flight report: `python scripts\compat.py`                                                                                  |
+| `../tests/test_vedo_vtk_compat.py`     | Regression tests for the vedo/VTK fix: the shim must repair `clone()`/`decimate()`, must be a no-op on a correct stack, must run before any mesh is touched, and the official decimation targets (10,000 / 9,999 cells) must still be hit exactly.                    |
+| `../tests/test_runner_import.py`       | Platform-compatibility regression tests: the runner must import and start on a machine without `resource`, memory probes must never raise, and the official constants/filenames must stay unchanged. Standard library only.                                           |
 | `../tests/test_numpy_warnings_shim.py` | Regression tests for the `np.warnings` fix: the exact vedo 2022.4.2 statement must execute after the shim and must still fail without it, the shim must be installed before `import vedo`, and it must patch nothing else. Really imports vedo where it is installed. |
 
 `--model man` = lower jaw (mandible), `--model max` = upper jaw (maxilla). Match
@@ -228,13 +228,13 @@ the model to the jaw of the scan; the two heads were trained separately.
 
 ### Outputs
 
-| File | Contents |
-| --- | --- |
-| `output/<case>_<model>_predicted.vtp` | the decimated mesh with per-cell `Label` data — the same output format as the official script |
-| `output/<case>_<model>_labels.npy` | `int32` label per cell, shape `(N,)`, values 0–14 |
-| `output/<case>_<model>_probabilities.npz` | full softmax output, shape `(N, 15)` |
-| `output/run_report.json` | machine-readable run record |
-| `logs/run_<UTC>_<model>.json` | immutable copy of each run |
+| File                                      | Contents                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `output/<case>_<model>_predicted.vtp`     | the decimated mesh with per-cell `Label` data — the same output format as the official script |
+| `output/<case>_<model>_labels.npy`        | `int32` label per cell, shape `(N,)`, values 0–14                                             |
+| `output/<case>_<model>_probabilities.npz` | full softmax output, shape `(N, 15)`                                                          |
+| `output/run_report.json`                  | machine-readable run record                                                                   |
+| `logs/run_<UTC>_<model>.json`             | immutable copy of each run                                                                    |
 
 `run_report.json` records model identity (filename, size, SHA-256, architecture
 source hash, parameter count, class count, trained epochs), input identity (path,
@@ -275,26 +275,26 @@ and the output format.
 
 ## Verification status
 
-| Claim | Status |
-| --- | --- |
-| Method identity (paper, authors, repository, MIT) | **VERIFIED** |
-| Official weights exist as in-repo git blobs (not release assets) | **VERIFIED** |
-| Both model SHA-256 values | **VERIFIED** — match on every run |
-| Weights load into the architecture with 0 missing / 0 unexpected keys | **VERIFIED** |
-| Class count 15, ids 0–14 | **VERIFIED** |
-| Real intraoral scan inputs, hashed, millimetre scale | **VERIFIED** |
-| **Actual CPU inference** | **VERIFIED** — repeated, both jaws |
-| Real segmentation output produced | **VERIFIED** — `.vtp` / `.npy` / `.npz` |
-| Runtime stability | **VERIFIED** — 3 repeats, 2.02–2.21 s inference |
-| Label→tooth-name mapping | **NOT PUBLISHED** — not claimed |
-| Accuracy of the segmentation | **NOT ASSESSED** — no ground truth used |
-| Torch 2.14.0 (the version on the local machine) | **VERIFIED** — checkpoint loads, official architecture matches with 0 missing keys, full preprocessing produces identical numbers |
-| Behaviour on your specific laptop | **NOT MEASURED HERE** — re-run locally |
-| Runs on Windows (no Unix-only imports; RAM probing portable) | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics |
-| Windows `GetProcessMemoryInfo` reports a real working set | **VERIFIED BY TEST** — pointer-sized handle declared; a truncated handle (the original bug) is now impossible; zeroed counters degrade to `unavailable` instead of a fake `0 bytes` |
-| Mesh pipeline works on the era-mismatched stack (vedo 2022.4.2 + vtk 9.7.0) | **VERIFIED** — reproduced the failure, fixed it, then ran the full pipeline on both real meshes with identical features and adjacency |
-| Dependency versions changed to make it work | **NONE** — no numpy/torch/vedo/vtk downgrade or upgrade; the shims restore library behaviour in-process |
-| Imports vedo 2022.4.2 on numpy 1.26.4 (`np.warnings` gap) | **VERIFIED** — reproduced the real failure, then imported the real vedo 2022.4.2 with vtk 9.7.0 after the shim; covered by `tests/test_numpy_warnings_shim.py` |
+| Claim                                                                       | Status                                                                                                                                                                              |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Method identity (paper, authors, repository, MIT)                           | **VERIFIED**                                                                                                                                                                        |
+| Official weights exist as in-repo git blobs (not release assets)            | **VERIFIED**                                                                                                                                                                        |
+| Both model SHA-256 values                                                   | **VERIFIED** — match on every run                                                                                                                                                   |
+| Weights load into the architecture with 0 missing / 0 unexpected keys       | **VERIFIED**                                                                                                                                                                        |
+| Class count 15, ids 0–14                                                    | **VERIFIED**                                                                                                                                                                        |
+| Real intraoral scan inputs, hashed, millimetre scale                        | **VERIFIED**                                                                                                                                                                        |
+| **Actual CPU inference**                                                    | **VERIFIED** — repeated, both jaws                                                                                                                                                  |
+| Real segmentation output produced                                           | **VERIFIED** — `.vtp` / `.npy` / `.npz`                                                                                                                                             |
+| Runtime stability                                                           | **VERIFIED** — 3 repeats, 2.02–2.21 s inference                                                                                                                                     |
+| Label→tooth-name mapping                                                    | **NOT PUBLISHED** — not claimed                                                                                                                                                     |
+| Accuracy of the segmentation                                                | **NOT ASSESSED** — no ground truth used                                                                                                                                             |
+| Torch 2.14.0 (the version on the local machine)                             | **VERIFIED** — checkpoint loads, official architecture matches with 0 missing keys, full preprocessing produces identical numbers                                                   |
+| Behaviour on your specific laptop                                           | **NOT MEASURED HERE** — re-run locally                                                                                                                                              |
+| Runs on Windows (no Unix-only imports; RAM probing portable)                | **VERIFIED BY TEST** — `tests/test_runner_import.py`, no change to model or mathematics                                                                                             |
+| Windows `GetProcessMemoryInfo` reports a real working set                   | **VERIFIED BY TEST** — pointer-sized handle declared; a truncated handle (the original bug) is now impossible; zeroed counters degrade to `unavailable` instead of a fake `0 bytes` |
+| Mesh pipeline works on the era-mismatched stack (vedo 2022.4.2 + vtk 9.7.0) | **VERIFIED** — reproduced the failure, fixed it, then ran the full pipeline on both real meshes with identical features and adjacency                                               |
+| Dependency versions changed to make it work                                 | **NONE** — no numpy/torch/vedo/vtk downgrade or upgrade; the shims restore library behaviour in-process                                                                             |
+| Imports vedo 2022.4.2 on numpy 1.26.4 (`np.warnings` gap)                   | **VERIFIED** — reproduced the real failure, then imported the real vedo 2022.4.2 with vtk 9.7.0 after the shim; covered by `tests/test_numpy_warnings_shim.py`                      |
 
 ---
 
@@ -302,11 +302,11 @@ and the output format.
 
 Two different things are being claimed, and they are kept apart on purpose.
 
-| | Where it was established | What it covers |
-| --- | --- | --- |
-| The method, the weights, the input data, the pipeline | Arena sandbox (Linux, 2 cores, 3 GB, 1 torch thread) | that these are the real official artifacts and that real inference produced real output |
-| The dependency stack *you* have (torch 2.14.0 + vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) | Arena sandbox, by installing exactly that stack | that the pipeline runs on those versions, with identical numbers |
-| Your hardware, your Windows, your timing and RAM | **only you can produce this** | that it runs on the i9-13900H, and how fast |
+|                                                                                                          | Where it was established                             | What it covers                                                                          |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| The method, the weights, the input data, the pipeline                                                    | Arena sandbox (Linux, 2 cores, 3 GB, 1 torch thread) | that these are the real official artifacts and that real inference produced real output |
+| The dependency stack _you_ have (torch 2.14.0 + vedo 2022.4.2 + vtk 9.7.0 + numpy 1.26.4 + scipy 1.17.1) | Arena sandbox, by installing exactly that stack      | that the pipeline runs on those versions, with identical numbers                        |
+| Your hardware, your Windows, your timing and RAM                                                         | **only you can produce this**                        | that it runs on the i9-13900H, and how fast                                             |
 
 Arena cannot observe your machine, your VTK runtime, your filesystem or your
 timings. Nothing below is a substitute for running it locally.
@@ -322,6 +322,7 @@ into the application.
 ```powershell
 python scripts\compat.py
 ```
+
 Expected: `mesh ops verified: True` and
 `This library stack can perform the pipeline's mesh operations.`
 Any other result means the mesh stage cannot run — send me the output.
@@ -332,6 +333,7 @@ Any other result means the mesh stage cannot run — send me the output.
 python scripts\check_environment.py
 python scripts\verify_artifacts.py --expect-models
 ```
+
 Expected: `torch 2.14.0+cpu`, `CUDA available : False`, total RAM ≈ 16 GB; both
 models `official match : YES` with `missing=0 unexpected=0`; both meshes with
 `finite coords : True` and extent ≈ 85 mm. Exit code 0 for both.
@@ -341,6 +343,7 @@ models `official match : YES` with `missing=0 unexpected=0`; both meshes with
 ```powershell
 python -m unittest discover -s tests -v
 ```
+
 Expected: `Ran 43 tests` … `OK`.
 
 **4 — the RAM probe really measures something on Windows**
@@ -348,6 +351,7 @@ Expected: `Ran 43 tests` … `OK`.
 ```powershell
 python -c "import sys; sys.path.insert(0,'scripts'); import run_meshsegnet as r; print(r.memory_usage())"
 ```
+
 Expected: `rss_bytes` greater than 0 and a `method` mentioning
 `Windows working set`. If it says `unavailable`, report it — that is the bug this
 round of work fixed.
@@ -357,6 +361,7 @@ round of work fixed.
 ```powershell
 python scripts\run_meshsegnet.py --dry-run --model man --input input\meshes\0EJBIPTC_lower.obj --expect-sha256 b824f6822f4a6ada296eef6869e9341fa1e69ad6cd14862b53572198ae5e7a76
 ```
+
 Expected: `decimation : yes -> 10,000 cells`,
 `features : X (10000, 15)`, `adjacency : A_S/A_L (10000, 10000), nnz/row 428 / 1697`,
 then `--dry-run: skipping the forward pass.` Exit code 0. This exercises the
@@ -368,6 +373,7 @@ here rather than halfway through the real run.
 ```powershell
 python scripts\run_meshsegnet.py --help > $env:TEMP\msn_help.txt; Get-Content $env:TEMP\msn_help.txt | Select-Object -First 3
 ```
+
 Expected: the usage text, with no `UnicodeEncodeError`.
 
 ## Limitations
@@ -397,7 +403,7 @@ Expected: the usage text, with no `UnicodeEncodeError`.
    `DeprecationWarning` for `vtkTransformPolyDataFilter` and `GetData` while
    decimating. The calls still work, the numbers are identical, and suppressing
    a library's warnings was not this lab's call to make. A future VTK that
-   *removes* those APIs would break the mesh stage; the runner detects that
+   _removes_ those APIs would break the mesh stage; the runner detects that
    before touching the mesh (`python scripts\compat.py`) and stops cleanly
    with `[STOP]` rather than crashing.
 8. **Sandbox ≠ laptop.** Timing and RAM figures come from a 2-core, 3 GB

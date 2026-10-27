@@ -27,7 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 
 interface PatientOption {
@@ -48,7 +55,15 @@ interface StudyRow {
   latestJob: { id: string; status: string; engine: string } | null
 }
 
-const MODALITIES = ['PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO', 'CEPHALOMETRIC'] as const
+const MODALITIES = [
+  'PANORAMIC',
+  'PERIAPICAL',
+  'BITEWING',
+  'CBCT',
+  'THREE_D_SCAN',
+  'PHOTO',
+  'CEPHALOMETRIC',
+] as const
 
 export default function ImagingStudiesPage() {
   const { t } = useLanguage()
@@ -80,13 +95,15 @@ export default function ImagingStudiesPage() {
       }
       if (patientsRes.ok) {
         const data = await patientsRes.json()
-        const list = Array.isArray(data) ? data : data.patients ?? []
-        setPatients(list.map((p: any) => ({
-          id: p.id,
-          patientId: p.patientId,
-          firstName: p.firstName,
-          lastName: p.lastName,
-        })))
+        const list = Array.isArray(data) ? data : (data.patients ?? [])
+        setPatients(
+          list.map((p: any) => ({
+            id: p.id,
+            patientId: p.patientId,
+            firstName: p.firstName,
+            lastName: p.lastName,
+          }))
+        )
       }
     } finally {
       setLoading(false)
@@ -119,7 +136,8 @@ export default function ImagingStudiesPage() {
       if (res.ok) {
         setMessage({
           kind: 'ok',
-          text: data.job?.status === 'FAILED' ? t('Job failed: ') + (data.error ?? '') : t('Uploaded'),
+          text:
+            data.job?.status === 'FAILED' ? t('Job failed: ') + (data.error ?? '') : t('Uploaded'),
         })
         setFile(null)
         setDescription('')
@@ -241,9 +259,7 @@ export default function ImagingStudiesPage() {
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
-              <p className="text-xs text-muted-foreground">
-                {t('JPG, PNG or WebP — up to 50MB')}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('JPG, PNG or WebP — up to 50MB')}</p>
             </div>
 
             <label className="flex items-center gap-2 text-sm md:col-span-2">
@@ -261,7 +277,11 @@ export default function ImagingStudiesPage() {
                 {uploading ? '…' : t('Upload')}
               </Button>
               {message && (
-                <span className={message.kind === 'ok' ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
+                <span
+                  className={
+                    message.kind === 'ok' ? 'text-green-600 text-sm' : 'text-red-600 text-sm'
+                  }
+                >
                   {message.text}
                 </span>
               )}
@@ -279,7 +299,11 @@ export default function ImagingStudiesPage() {
           {loading ? (
             <p className="text-sm text-muted-foreground py-8 text-center">…</p>
           ) : studies.length === 0 ? (
-            <EmptyState icon={Scan} title={t('No imaging studies yet')} description={t('Upload Imaging Study')} />
+            <EmptyState
+              icon={Scan}
+              title={t('No imaging studies yet')}
+              description={t('Upload Imaging Study')}
+            />
           ) : (
             <Table>
               <TableHeader>
@@ -298,9 +322,7 @@ export default function ImagingStudiesPage() {
                     className="cursor-pointer"
                     onClick={() => router.push(`/imaging/${s.id}`)}
                   >
-                    <TableCell className="font-medium">
-                      {s.patientName ?? s.patientId}
-                    </TableCell>
+                    <TableCell className="font-medium">{s.patientName ?? s.patientId}</TableCell>
                     <TableCell>
                       {s.modality === 'PANORAMIC'
                         ? t('Panoramic')

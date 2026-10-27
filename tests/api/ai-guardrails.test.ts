@@ -109,11 +109,18 @@ vi.mock('@/lib/prisma', () => {
                 ? statusValue(where.status).includes(i.status)
                 : i.status === where.status))
         )
-        return rows[0] ? { ...rows[0], patient: patients.find((p) => p.id === rows[0].patientId) } : null
+        return rows[0]
+          ? { ...rows[0], patient: patients.find((p) => p.id === rows[0].patientId) }
+          : null
       }),
       findMany: vi.fn(async () => invoices),
       create: vi.fn(async ({ data }: any) => {
-        const row = { id: `inv-new-${ledgerSeq + 1}`, ...data, invoiceNo: 'INV-00099', status: 'PENDING' }
+        const row = {
+          id: `inv-new-${ledgerSeq + 1}`,
+          ...data,
+          invoiceNo: 'INV-00099',
+          status: 'PENDING',
+        }
         invoices.push(row)
         return row
       }),
@@ -125,15 +132,19 @@ vi.mock('@/lib/prisma', () => {
         payments.push(row)
         return row
       }),
-      findUnique: vi.fn(async ({ where }: any) =>
-        payments.find((p) => p.paymentNo === where.paymentNo && p.hospitalId === where.hospitalId) ?? null
+      findUnique: vi.fn(
+        async ({ where }: any) =>
+          payments.find(
+            (p) => p.paymentNo === where.paymentNo && p.hospitalId === where.hospitalId
+          ) ?? null
       ),
-      findFirst: vi.fn(async ({ where }: any) =>
-        payments.find(
-          (p) =>
-            p.paymentNo === where.paymentNo &&
-            (where.hospitalId === undefined || p.hospitalId === where.hospitalId)
-        ) ?? null
+      findFirst: vi.fn(
+        async ({ where }: any) =>
+          payments.find(
+            (p) =>
+              p.paymentNo === where.paymentNo &&
+              (where.hospitalId === undefined || p.hospitalId === where.hospitalId)
+          ) ?? null
       ),
       count: vi.fn(async () => payments.length),
       findMany: vi.fn(async () => payments),
@@ -174,8 +185,12 @@ vi.mock('@/lib/prisma', () => {
         ledgerState.push(row)
         return row
       }),
-      findUnique: vi.fn(async ({ where }: any) => ledgerState.find((r) => r.id === where.id) ?? null),
-      findFirst: vi.fn(async ({ where }: any) => ledgerState.find((r) => matchRow(r, where)) ?? null),
+      findUnique: vi.fn(
+        async ({ where }: any) => ledgerState.find((r) => r.id === where.id) ?? null
+      ),
+      findFirst: vi.fn(
+        async ({ where }: any) => ledgerState.find((r) => matchRow(r, where)) ?? null
+      ),
       findMany: vi.fn(async ({ where }: any) => ledgerState.filter((r) => matchRow(r, where))),
       update: vi.fn(async ({ where, data }: any) => {
         const row = ledgerState.find((r) => matchRow(r, where))
@@ -185,7 +200,11 @@ vi.mock('@/lib/prisma', () => {
       }),
       updateMany: vi.fn(async ({ where, data }: any) => {
         let count = 0
-        for (const r of ledgerState) if (matchRow(r, where)) { Object.assign(r, data); count++ }
+        for (const r of ledgerState)
+          if (matchRow(r, where)) {
+            Object.assign(r, data)
+            count++
+          }
         return { count }
       }),
     },
@@ -213,7 +232,9 @@ vi.mock('@/lib/ai/context-builder', () => ({
 }))
 
 vi.mock('@/lib/ai/models', () => ({
-  getModelByTier: vi.fn().mockReturnValue({ model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.7 }),
+  getModelByTier: vi
+    .fn()
+    .mockReturnValue({ model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.7 }),
   SKILL_MODEL_MAP: {},
   AI_MODELS: { default: { model: 'google/gemini-2.5-pro', maxTokens: 4096, temperature: 0.7 } },
 }))
@@ -280,7 +301,11 @@ function mockAuth(user: any, hospitalId: string) {
 }
 
 /** Simulate the LLM parser output for one command round-trip. */
-function llmIntent(intent: string, params: Record<string, string>, extra: Record<string, unknown> = {}) {
+function llmIntent(
+  intent: string,
+  params: Record<string, string>,
+  extra: Record<string, unknown> = {}
+) {
   vi.mocked(complete).mockResolvedValue({
     content: JSON.stringify({ intent, params, confidence: 0.9, summary: 'parsed', ...extra }),
     usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
@@ -498,7 +523,9 @@ describe('D — approved execution', () => {
     expect(actions).toContain('AI_RECORD_PAYMENT')
     expect(
       prisma.auditLog.create.mock.calls.some(
-        (c: any) => c[0].data.newValues && JSON.parse(c[0].data.newValues).status === 'EXECUTED_AFTER_APPROVAL'
+        (c: any) =>
+          c[0].data.newValues &&
+          JSON.parse(c[0].data.newValues).status === 'EXECUTED_AFTER_APPROVAL'
       )
     ).toBe(true)
   })
@@ -689,7 +716,11 @@ describe('H — injection', () => {
     settingRows = [{ key: 'ai_financial_approval_limit', value: '5000' }]
     mockAuth(ACCOUNTANT, TENANT)
     // The LLM lies about the approval requirement.
-    llmIntent('record_payment', { invoiceNo: 'INV-00001', amount: '9000' }, { requiresApproval: false })
+    llmIntent(
+      'record_payment',
+      { invoiceNo: 'INV-00001', amount: '9000' },
+      { requiresApproval: false }
+    )
 
     const res = await postCommand('record payment of 9000 for INV-00001')
     const data = await res.json()

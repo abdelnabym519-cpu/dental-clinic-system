@@ -38,7 +38,10 @@ interface StructuredUnit {
 const SENTENCE_END = /(?<=[.!?؛؟])\s+/
 
 function splitSentences(text: string): string[] {
-  return text.split(SENTENCE_END).map((s) => s.trim()).filter(Boolean)
+  return text
+    .split(SENTENCE_END)
+    .map((s) => s.trim())
+    .filter(Boolean)
 }
 
 /** Parse raw content into structured units with heading context. */
@@ -51,15 +54,28 @@ function toStructuredUnits(content: string): Array<StructuredUnit & { section: s
   let table: string[] = []
 
   const flushPara = () => {
-    if (para.length) { units.push({ type: 'paragraph', text: para.join(' ') }); para = [] }
+    if (para.length) {
+      units.push({ type: 'paragraph', text: para.join(' ') })
+      para = []
+    }
   }
   const flushList = () => {
-    if (list.length) { units.push({ type: 'list', text: list.join('\n') }); list = [] }
+    if (list.length) {
+      units.push({ type: 'list', text: list.join('\n') })
+      list = []
+    }
   }
   const flushTable = () => {
-    if (table.length) { units.push({ type: 'table', text: table.join('\n') }); table = [] }
+    if (table.length) {
+      units.push({ type: 'table', text: table.join('\n') })
+      table = []
+    }
   }
-  const flushAll = () => { flushPara(); flushList(); flushTable() }
+  const flushAll = () => {
+    flushPara()
+    flushList()
+    flushTable()
+  }
 
   for (const line of lines) {
     const trimmed = line.trim()
@@ -74,19 +90,25 @@ function toStructuredUnits(content: string): Array<StructuredUnit & { section: s
       units.push({ type: 'heading', text: title, level })
       continue
     }
-    if (!trimmed) { flushAll(); continue }
+    if (!trimmed) {
+      flushAll()
+      continue
+    }
     if (/^\s*\|.*\|\s*$/.test(line) || /^[-|: ]{3,}$/.test(trimmed)) {
-      flushPara(); flushList()
+      flushPara()
+      flushList()
       table.push(line.trim())
       continue
     }
     const listItem = trimmed.match(/^[-*•]\s+(.*)$/)
     if (listItem) {
-      flushPara(); flushTable()
+      flushPara()
+      flushTable()
       list.push(`- ${listItem[1]}`) // preserve the bullet marker in chunk text
       continue
     }
-    flushList(); flushTable()
+    flushList()
+    flushTable()
     para.push(trimmed)
   }
   flushAll()
@@ -111,7 +133,10 @@ function toStructuredUnits(content: string): Array<StructuredUnit & { section: s
  * Merge/split structured units into chunks on sentence boundaries.
  * Tables and lists are kept whole unless a single one exceeds maxChars.
  */
-export function chunkContent(content: string, opts: ChunkingOptions = DEFAULT_CHUNKING): ChunkUnit[] {
+export function chunkContent(
+  content: string,
+  opts: ChunkingOptions = DEFAULT_CHUNKING
+): ChunkUnit[] {
   const units = toStructuredUnits(content)
   const chunks: Array<{ section: string | null; text: string }> = []
   let current: Array<{ section: string | null; text: string }> = []
@@ -121,7 +146,10 @@ export function chunkContent(content: string, opts: ChunkingOptions = DEFAULT_CH
     if (current.length) {
       chunks.push({
         section: current.map((c) => c.section).find(Boolean) ?? null,
-        text: current.map((c) => c.text).join('\n').trim(),
+        text: current
+          .map((c) => c.text)
+          .join('\n')
+          .trim(),
       })
     }
     current = []
@@ -132,7 +160,8 @@ export function chunkContent(content: string, opts: ChunkingOptions = DEFAULT_CH
     if (unit.type === 'heading') continue // headings only set context
     const text = unit.text
     if (text.length <= opts.maxChars) {
-      if (currentLen + text.length + 1 > opts.maxChars || current.length >= opts.maxUnitsPerChunk) close()
+      if (currentLen + text.length + 1 > opts.maxChars || current.length >= opts.maxUnitsPerChunk)
+        close()
       current.push({ section: unit.section, text })
       currentLen += text.length + 1
       if (currentLen >= opts.targetChars) close()
@@ -164,7 +193,11 @@ export function chunkContent(content: string, opts: ChunkingOptions = DEFAULT_CH
   const merged: Array<{ section: string | null; text: string }> = []
   for (const c of chunks) {
     const prev = merged[merged.length - 1]
-    if (prev && c.text.length < opts.minChars && prev.text.length + c.text.length + 1 <= opts.maxChars) {
+    if (
+      prev &&
+      c.text.length < opts.minChars &&
+      prev.text.length + c.text.length + 1 <= opts.maxChars
+    ) {
       prev.text = `${prev.text}\n${c.text}`
     } else {
       merged.push({ ...c })

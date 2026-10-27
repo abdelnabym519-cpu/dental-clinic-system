@@ -75,7 +75,8 @@ import {
   TestTube,
   Smile,
   Shield,
-  Pen,  MessageCircle,
+  Pen,
+  MessageCircle,
 } from 'lucide-react'
 import { DentalChartWorkspace } from '@/components/dental-chart/interactive/DentalChartWorkspace'
 import { Patient360 } from '@/components/ai/patient-360'
@@ -241,7 +242,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || t('Failed to fetch patient ({status})', { status: response.status }))
+        throw new Error(
+          errorData.error || t('Failed to fetch patient ({status})', { status: response.status })
+        )
       }
 
       const data = await response.json()
@@ -493,7 +496,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <h1 className="text-2xl font-bold">
               {patient.firstName} {patient.lastName}
             </h1>
-            <p className="text-muted-foreground">{t("Patient ID:")} {patient.patientId}</p>
+            <p className="text-muted-foreground">
+              {t('Patient ID:')} {patient.patientId}
+            </p>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="outline">{patient.gender}</Badge>
               {patient.bloodGroup && <Badge variant="secondary">{patient.bloodGroup}</Badge>}
@@ -503,11 +508,15 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-wrap gap-2">
           <Link href={`/patients/${patient.id}/edit`}>
             <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</Button>
+              <Edit className="h-4 w-4 mr-2" />
+              {t('ui.edit')}
+            </Button>
           </Link>
           <Link href={`/appointments/new?patientId=${patient.id}`}>
             <Button>
-              <Calendar className="h-4 w-4 mr-2" />{t('ui.book_appointment')}</Button>
+              <Calendar className="h-4 w-4 mr-2" />
+              {t('ui.book_appointment')}
+            </Button>
           </Link>
         </div>
       </div>
@@ -622,7 +631,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">{t('ui.date_of_birth')}</p>
-                    <p>{format(new Date(patient.dateOfBirth), 'PPP', { locale: dateFnsLocale(locale) })}</p>
+                    <p>
+                      {format(new Date(patient.dateOfBirth), 'PPP', {
+                        locale: dateFnsLocale(locale),
+                      })}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">{t('ui.gender')}</p>
@@ -709,7 +722,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                     {patient.medicalHistory.currentMedications &&
                       patient.medicalHistory.currentMedications.length > 0 && (
                         <div>
-                          <p className="text-sm text-muted-foreground">{t('Current Medications')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('Current Medications')}
+                          </p>
                           <p className="text-sm">
                             {patient.medicalHistory.currentMedications.join(', ')}
                           </p>
@@ -845,10 +860,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               </div>
                               <div className="text-right">
                                 <p className="text-sm text-muted-foreground">
-                                  {format(new Date(event.date), 'PPP', { locale: dateFnsLocale(locale) })}
+                                  {format(new Date(event.date), 'PPP', {
+                                    locale: dateFnsLocale(locale),
+                                  })}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {format(new Date(event.date), 'p', { locale: dateFnsLocale(locale) })}
+                                  {format(new Date(event.date), 'p', {
+                                    locale: dateFnsLocale(locale),
+                                  })}
                                 </p>
                               </div>
                             </div>
@@ -873,7 +892,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               <div className="mt-2 flex flex-wrap gap-2">
                                 {event.metadata.toothNumbers && (
                                   <span className="text-xs bg-muted px-2 py-1 rounded">
-                                    {t("Teeth:")} {event.metadata.toothNumbers}
+                                    {t('Teeth:')} {event.metadata.toothNumbers}
                                   </span>
                                 )}
                                 {event.metadata.cost && (
@@ -919,7 +938,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       setCompareSelection([])
                     }}
                   >
-                    {compareMode ? t("Cancel Compare") : 'Compare'}
+                    {compareMode ? t('Cancel Compare') : 'Compare'}
                   </Button>
                 )}
                 {compareMode && compareSelection.length === 2 && (
@@ -930,12 +949,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
-                      <Upload className="h-4 w-4 mr-2" />{t('ui.upload_document')}</Button>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t('ui.upload_document')}
+                    </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>{t('ui.upload_document')}</DialogTitle>
-                      <DialogDescription>{t('Upload a new document for this patient')}</DialogDescription>
+                      <DialogDescription>
+                        {t('Upload a new document for this patient')}
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -947,7 +970,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                           onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                         />
                         <p className="text-xs text-muted-foreground">
-                          {t("Supported: JPEG, PNG, GIF, WebP, PDF, DOC, DOCX (max 10MB)")}
+                          {t('Supported: JPEG, PNG, GIF, WebP, PDF, DOC, DOCX (max 10MB)')}
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -966,7 +989,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description">{t("Description (optional)")}</Label>
+                        <Label htmlFor="description">{t('Description (optional)')}</Label>
                         <Textarea
                           id="description"
                           placeholder={t('Enter a description...')}
@@ -976,10 +999,12 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>{t('ui.cancel')}</Button>
+                      <Button variant="outline" onClick={() => setUploadDialogOpen(false)}>
+                        {t('ui.cancel')}
+                      </Button>
                       <Button onClick={handleUploadDocument} disabled={uploading}>
                         {uploading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        {t("Upload")}
+                        {t('Upload')}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -1051,12 +1076,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                               <div>
                                 <p className="font-medium">{doc.originalName}</p>
                                 {doc.description && (
-                                  <p className="text-sm text-muted-foreground">{t(doc.description)}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {t(doc.description)}
+                                  </p>
                                 )}
                                 {doc.annotations &&
                                   (doc.annotations as Annotation[]).length > 0 && (
                                     <Badge variant="secondary" className="text-xs mt-0.5">
-                                      {(doc.annotations as Annotation[]).length} {t("annotation")}
+                                      {(doc.annotations as Annotation[]).length} {t('annotation')}
                                       {(doc.annotations as Annotation[]).length !== 1 ? 's' : ''}
                                     </Badge>
                                   )}
@@ -1069,7 +1096,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                             </Badge>
                           </TableCell>
                           <TableCell>{formatFileSize(doc.fileSize)}</TableCell>
-                          <TableCell>{format(new Date(doc.createdAt), 'PP', { locale: dateFnsLocale(locale) })}</TableCell>
+                          <TableCell>
+                            {format(new Date(doc.createdAt), 'PP', {
+                              locale: dateFnsLocale(locale),
+                            })}
+                          </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -1087,9 +1118,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                         setViewDocument(doc)
                                       }}
                                     >
-                                      <Eye className="h-4 w-4 mr-2" />{t('ui.view')}</DropdownMenuItem>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      {t('ui.view')}
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => setAnnotateDocument(doc)}>
-                                      <Pen className="h-4 w-4 mr-2" />{t('ui.annotate')}</DropdownMenuItem>
+                                      <Pen className="h-4 w-4 mr-2" />
+                                      {t('ui.annotate')}
+                                    </DropdownMenuItem>
                                   </>
                                 )}
                                 {isImage && (
@@ -1107,7 +1142,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                                   className="text-destructive"
                                   onClick={() => handleDeleteDocument(doc.id)}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {t('ui.delete')}
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -1174,12 +1211,16 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               before={{
                 src: uploadUrl(compareSelection[0].filePath),
                 title: compareSelection[0].originalName,
-                date: format(new Date(compareSelection[0].createdAt), 'PP', { locale: dateFnsLocale(locale) }),
+                date: format(new Date(compareSelection[0].createdAt), 'PP', {
+                  locale: dateFnsLocale(locale),
+                }),
               }}
               after={{
                 src: uploadUrl(compareSelection[1].filePath),
                 title: compareSelection[1].originalName,
-                date: format(new Date(compareSelection[1].createdAt), 'PP', { locale: dateFnsLocale(locale) }),
+                date: format(new Date(compareSelection[1].createdAt), 'PP', {
+                  locale: dateFnsLocale(locale),
+                }),
               }}
             />
           )}
@@ -1192,18 +1233,23 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               <div>
                 <CardTitle>{t('ui.appointments')}</CardTitle>
                 <CardDescription>
-                  {t("Recent and upcoming appointments")}
+                  {t('Recent and upcoming appointments')}
                   {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length > 0 && (
                     <span className="ml-2 inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                       {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length}{' '}
-                      {t("no-show")}{patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length === 1 ? '' : 's'}
+                      {t('no-show')}
+                      {patient.appointments.filter((apt) => apt.status === 'NO_SHOW').length === 1
+                        ? ''
+                        : 's'}
                     </span>
                   )}
                 </CardDescription>
               </div>
               <Link href={`/appointments/new?patientId=${patient.id}`}>
                 <Button>
-                  <Calendar className="h-4 w-4 mr-2" />{t('ui.new_appointment')}</Button>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {t('ui.new_appointment')}
+                </Button>
               </Link>
             </CardHeader>
             <CardContent>
@@ -1228,17 +1274,24 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                         <TableCell>
                           <div>
                             <p className="font-medium">
-                              {format(new Date(apt.scheduledDate), 'PPP', { locale: dateFnsLocale(locale) })}
+                              {format(new Date(apt.scheduledDate), 'PPP', {
+                                locale: dateFnsLocale(locale),
+                              })}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(apt.scheduledDate), 'p', { locale: dateFnsLocale(locale) })}
+                              {format(new Date(apt.scheduledDate), 'p', {
+                                locale: dateFnsLocale(locale),
+                              })}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>{apt.appointmentType}</TableCell>
                         <TableCell>
                           {apt.doctor
-                            ? t("Dr. {v1} {v2}", { v1: apt.doctor.firstName, v2: apt.doctor.lastName })
+                            ? t('Dr. {v1} {v2}', {
+                                v1: apt.doctor.firstName,
+                                v2: apt.doctor.lastName,
+                              })
                             : 'Not assigned'}
                         </TableCell>
                         <TableCell>
@@ -1290,14 +1343,21 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                   <TableBody>
                     {patient.treatments.map((treatment) => (
                       <TableRow key={treatment.id}>
-                        <TableCell>{format(new Date(treatment.createdAt), 'PP', { locale: dateFnsLocale(locale) })}</TableCell>
+                        <TableCell>
+                          {format(new Date(treatment.createdAt), 'PP', {
+                            locale: dateFnsLocale(locale),
+                          })}
+                        </TableCell>
                         <TableCell className="font-medium">{treatment.procedure.name}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{treatment.procedure.category}</Badge>
                         </TableCell>
                         <TableCell>
                           {treatment.doctor
-                            ? t("Dr. {v1} {v2}", { v1: treatment.doctor.firstName, v2: treatment.doctor.lastName })
+                            ? t('Dr. {v1} {v2}', {
+                                v1: treatment.doctor.firstName,
+                                v2: treatment.doctor.lastName,
+                              })
                             : 'N/A'}
                         </TableCell>
                         <TableCell>
@@ -1339,7 +1399,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("Invoice #")}</TableHead>
+                      <TableHead>{t('Invoice #')}</TableHead>
                       <TableHead>{t('ui.date')}</TableHead>
                       <TableHead>{t('ui.amount')}</TableHead>
                       <TableHead>{t('ui.paid')}</TableHead>
@@ -1355,9 +1415,17 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
                       return (
                         <TableRow key={invoice.id}>
                           <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                          <TableCell>{format(new Date(invoice.createdAt), 'PP', { locale: dateFnsLocale(locale) })}</TableCell>
-                          <TableCell>{t('EGP')} {Number(invoice.totalAmount).toLocaleString()}</TableCell>
-                          <TableCell>{t('EGP')} {totalPaid.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {format(new Date(invoice.createdAt), 'PP', {
+                              locale: dateFnsLocale(locale),
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            {t('EGP')} {Number(invoice.totalAmount).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            {t('EGP')} {totalPaid.toLocaleString()}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant={

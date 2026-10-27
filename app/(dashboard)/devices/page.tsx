@@ -220,11 +220,15 @@ export default function DevicesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchDevices}>
-            <RefreshCw className="h-4 w-4 mr-1" />{t('ui.refresh')}</Button>
+            <RefreshCw className="h-4 w-4 mr-1" />
+            {t('ui.refresh')}
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" />{t('ui.register_device')}</Button>
+                <Plus className="h-4 w-4 mr-1" />
+                {t('ui.register_device')}
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -232,15 +236,15 @@ export default function DevicesPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>{t("Device Name *")}</Label>
+                  <Label>{t('Device Name *')}</Label>
                   <Input
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder={t("e.g. Chair Unit 1")}
+                    placeholder={t('e.g. Chair Unit 1')}
                   />
                 </div>
                 <div>
-                  <Label>{t("Device Type *")}</Label>
+                  <Label>{t('Device Type *')}</Label>
                   <Select value={formType} onValueChange={setFormType}>
                     <SelectTrigger>
                       <SelectValue placeholder={t('ui.select_type')} />
@@ -267,7 +271,7 @@ export default function DevicesPage() {
                   <Input
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
-                    placeholder={t("e.g. Operatory 1")}
+                    placeholder={t('e.g. Operatory 1')}
                   />
                 </div>
                 <div>
@@ -278,7 +282,9 @@ export default function DevicesPage() {
                     placeholder={`${t('e.g.')} 192.168.1.100`}
                   />
                 </div>
-                <Button className="w-full" onClick={handleRegister}>{t('ui.register_device')}</Button>
+                <Button className="w-full" onClick={handleRegister}>
+                  {t('ui.register_device')}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -377,7 +383,7 @@ export default function DevicesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Cpu className="h-5 w-5" /> {t("Registered Devices")}
+            <Cpu className="h-5 w-5" /> {t('Registered Devices')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -419,7 +425,8 @@ export default function DevicesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {DEVICE_TYPES.find((opt) => opt.value === device.type)?.label || device.type}
+                          {DEVICE_TYPES.find((opt) => opt.value === device.type)?.label ||
+                            device.type}
                         </Badge>
                       </TableCell>
                       <TableCell>{device.location || '—'}</TableCell>
@@ -487,20 +494,23 @@ export default function DevicesPage() {
           <CardTitle className="text-sm">{t('Device Integration API')}</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>{t("Connected devices can push data using these endpoints:")}</p>
+          <p>{t('Connected devices can push data using these endpoints:')}</p>
           <div className="bg-muted/50 p-3 rounded-md font-mono text-xs space-y-1">
             <p>
-              <span className="text-green-600 font-semibold">{t('POST')}</span> {t("/api/devices/register — Register new device")}
+              <span className="text-green-600 font-semibold">{t('POST')}</span>{' '}
+              {t('/api/devices/register — Register new device')}
             </p>
             <p>
-              <span className="text-blue-600 font-semibold">{t('POST')}</span> {t("/api/devices/data — Push sensor readings")}
+              <span className="text-blue-600 font-semibold">{t('POST')}</span>{' '}
+              {t('/api/devices/data — Push sensor readings')}
             </p>
             <p>
-              <span className="text-purple-600 font-semibold">{t('GET')}</span> {t("/api/devices/status — Get device statuses")}
+              <span className="text-purple-600 font-semibold">{t('GET')}</span>{' '}
+              {t('/api/devices/status — Get device statuses')}
             </p>
           </div>
           <p>
-            {t("Payload example for")}{' '}
+            {t('Payload example for')}{' '}
             <code className="text-xs bg-muted px-1 rounded">/api/devices/data</code>:
           </p>
           <pre className="bg-muted/50 p-3 rounded-md text-xs overflow-x-auto">

@@ -11,10 +11,7 @@ import { StorageNotFoundError } from '@/lib/storage'
  * present, renders on the fly otherwise (drafts). Any authenticated role in
  * the tenant may view the document body.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole()
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -78,9 +75,6 @@ export async function GET(
     return new Response(new Uint8Array(pdf), { headers: pdfHeaders })
   } catch (err: unknown) {
     console.error('Error rendering invoice PDF:', err)
-    return NextResponse.json(
-      { error: 'Failed to render invoice PDF' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to render invoice PDF' }, { status: 500 })
   }
 }

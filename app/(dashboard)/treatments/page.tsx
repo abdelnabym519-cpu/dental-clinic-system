@@ -208,7 +208,9 @@ export default function TreatmentsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('ui.treatments')}</h1>
-          <p className="text-muted-foreground">{t('Manage patient treatments and clinical records')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage patient treatments and clinical records')}
+          </p>
         </div>
         <div className="flex gap-2">
           <ExportMenu
@@ -237,11 +239,15 @@ export default function TreatmentsPage() {
           />
           <Link href="/treatments/plans">
             <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />{t('ui.treatment_plans')}</Button>
+              <FileText className="h-4 w-4 mr-2" />
+              {t('ui.treatment_plans')}
+            </Button>
           </Link>
           <Link href="/treatments/new">
             <Button>
-              <Plus className="h-4 w-4 mr-2" />{t('ui.new_treatment')}</Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('ui.new_treatment')}
+            </Button>
           </Link>
         </div>
       </div>
@@ -392,7 +398,7 @@ export default function TreatmentsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {t("Dr.")} {treatment.doctor.firstName} {treatment.doctor.lastName}
+                        {t('Dr.')} {treatment.doctor.firstName} {treatment.doctor.lastName}
                       </div>
                       {treatment.doctor.specialization && (
                         <div className="text-sm text-muted-foreground">
@@ -417,7 +423,9 @@ export default function TreatmentsPage() {
                         {getStatusBadge(treatment.status)}
                         {treatment.followUpRequired && (
                           <div className="flex items-center gap-1 text-xs text-amber-600">
-                            <AlertCircle className="h-3 w-3" />{t('ui.follow_up_2')}</div>
+                            <AlertCircle className="h-3 w-3" />
+                            {t('ui.follow_up_2')}
+                          </div>
                         )}
                       </div>
                     </TableCell>
@@ -432,21 +440,29 @@ export default function TreatmentsPage() {
                           <DropdownMenuItem
                             onClick={() => router.push(`/treatments/${treatment.id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            {t('ui.view_details')}
+                          </DropdownMenuItem>
                           {treatment.status !== 'COMPLETED' && treatment.status !== 'CANCELLED' && (
                             <DropdownMenuItem
                               onClick={() => router.push(`/treatments/${treatment.id}/edit`)}
                             >
-                              <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                              <Edit className="h-4 w-4 mr-2" />
+                              {t('ui.edit')}
+                            </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
                           {treatment.status === 'PLANNED' && (
                             <DropdownMenuItem onClick={() => handleStartTreatment(treatment.id)}>
-                              <Play className="h-4 w-4 mr-2" />{t('ui.start_treatment')}</DropdownMenuItem>
+                              <Play className="h-4 w-4 mr-2" />
+                              {t('ui.start_treatment')}
+                            </DropdownMenuItem>
                           )}
                           {treatment.status === 'IN_PROGRESS' && (
                             <DropdownMenuItem onClick={() => handleCompleteTreatment(treatment.id)}>
-                              <CheckCircle className="h-4 w-4 mr-2" />{t('ui.complete_treatment')}</DropdownMenuItem>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              {t('ui.complete_treatment')}
+                            </DropdownMenuItem>
                           )}
                           {treatment.appointment && (
                             <DropdownMenuItem
@@ -454,7 +470,9 @@ export default function TreatmentsPage() {
                                 router.push(`/appointments/${treatment.appointment!.id}`)
                               }
                             >
-                              <Calendar className="h-4 w-4 mr-2" />{t('ui.view_appointment')}</DropdownMenuItem>
+                              <Calendar className="h-4 w-4 mr-2" />
+                              {t('ui.view_appointment')}
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -469,9 +487,9 @@ export default function TreatmentsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("treatments")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('treatments')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -480,16 +498,20 @@ export default function TreatmentsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

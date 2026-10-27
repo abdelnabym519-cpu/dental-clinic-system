@@ -24,10 +24,17 @@ import { knowledgeFailure } from './errors'
 import {
   DEFAULT_RETRIEVAL_CONFIG,
   TIER_ELIGIBILITY,
-  type EvidenceConflict, type FreshnessStatus, type KnowledgeCitation,
-  type KnowledgeEvidencePackage, type KnowledgeFailure, type KnowledgeQuery,
-  type KnowledgeRetrievalResult, type KnowledgeStore, type KnowledgeStats,
-  type RetrievalConfig, type SourceTier,
+  type EvidenceConflict,
+  type FreshnessStatus,
+  type KnowledgeCitation,
+  type KnowledgeEvidencePackage,
+  type KnowledgeFailure,
+  type KnowledgeQuery,
+  type KnowledgeRetrievalResult,
+  type KnowledgeStore,
+  type KnowledgeStats,
+  type RetrievalConfig,
+  type SourceTier,
 } from './types'
 import { isKnowledgeDomain } from './taxonomy'
 
@@ -53,7 +60,11 @@ const OPPOSITION: Array<{ neg: string[]; pos: string[]; label: string }> = [
   },
 ]
 
-function freshnessOf(source: { meta: { publicationDate?: string | null; lastUpdated?: string | null } }, now: Date, maxYears: number): FreshnessStatus {
+function freshnessOf(
+  source: { meta: { publicationDate?: string | null; lastUpdated?: string | null } },
+  now: Date,
+  maxYears: number
+): FreshnessStatus {
   const date = source.meta.lastUpdated ?? source.meta.publicationDate
   if (!date) return 'UNKNOWN_DATE'
   const ageMs = now.getTime() - new Date(date).getTime()
@@ -81,7 +92,10 @@ export async function retrieveKnowledge(
   const queryId = `kq-${Date.now().toString(36)}`
   const t0 = Date.now()
 
-  const fail = (code: Parameters<typeof knowledgeFailure>[0], message: string): KnowledgeEvidencePackage => ({
+  const fail = (
+    code: Parameters<typeof knowledgeFailure>[0],
+    message: string
+  ): KnowledgeEvidencePackage => ({
     ok: false,
     queryId,
     question: query.question,
@@ -91,8 +105,13 @@ export async function retrieveKnowledge(
     conflicts: [],
     budgetUsed: { evidenceChars: 0, limit: config.maxEvidenceChars, truncated: false },
     stats: {
-      candidateCount: 0, selectedCount: 0, sourceCount: 0,
-      retrievalMs: 0, rankingMs: 0, duplicateChunksDropped: 0, method: 'LEXICAL',
+      candidateCount: 0,
+      selectedCount: 0,
+      sourceCount: 0,
+      retrievalMs: 0,
+      rankingMs: 0,
+      duplicateChunksDropped: 0,
+      method: 'LEXICAL',
     },
     retrievedAt: nowDate.toISOString(),
   })
@@ -100,11 +119,15 @@ export async function retrieveKnowledge(
   // ── validate ──────────────────────────────────────────────────────────
   const question = query.question?.trim() ?? ''
   if (!question) return fail('INVALID_QUERY', 'question is required')
-  if (question.length > config.maxQueryChars) return fail('INVALID_QUERY', `question exceeds ${config.maxQueryChars} chars`)
+  if (question.length > config.maxQueryChars)
+    return fail('INVALID_QUERY', `question exceeds ${config.maxQueryChars} chars`)
   if (query.domain && !isKnowledgeDomain(query.domain)) {
     return fail('UNSUPPORTED_DOMAIN', `unknown domain: ${query.domain}`)
   }
-  const maxResults = Math.min(Math.max(query.maxResults ?? config.maxResultsDefault, 1), config.maxResults)
+  const maxResults = Math.min(
+    Math.max(query.maxResults ?? config.maxResultsDefault, 1),
+    config.maxResults
+  )
 
   const normalized = normalizeQuery(question)
   const queryKeys = new Set<string>()
@@ -148,7 +171,12 @@ export async function retrieveKnowledge(
     (!query.jurisdiction || entry.source.meta.jurisdiction === query.jurisdiction) &&
     (entry.document.status !== 'SUPERSEDED' || (query.includeSuperseded ?? false))
 
-  interface Acc { lexical: number; weight: number; matched: Set<string>; sectionBoost: number }
+  interface Acc {
+    lexical: number
+    weight: number
+    matched: Set<string>
+    sectionBoost: number
+  }
   const acc = new Map<number, Acc>()
   for (const key of queryKeys) {
     const posting = index.postings.get(key)
@@ -163,14 +191,18 @@ export async function retrieveKnowledge(
       if (!tf) continue
       const w = (1 + Math.log(tf)) * idf * (isTerm ? 1.5 : 1)
       let a = acc.get(i)
-      if (!a) { a = { lexical: 0, weight: 0, matched: new Set(), sectionBoost: 0 }; acc.set(i, a) }
+      if (!a) {
+        a = { lexical: 0, weight: 0, matched: new Set(), sectionBoost: 0 }
+        acc.set(i, a)
+      }
       a.lexical += w
       a.weight += w
       a.matched.add(key.slice(2))
       // field boost: the matched term also appears in the section heading
       if (isTerm) {
         const surfaces = entry.terms.get(key.slice(2)) ?? []
-        if (surfaces.some((s) => (entry.chunk.section ?? '').toLowerCase().includes(s))) a.sectionBoost += w * 0.15
+        if (surfaces.some((s) => (entry.chunk.section ?? '').toLowerCase().includes(s)))
+          a.sectionBoost += w * 0.15
       }
     }
   }
@@ -185,8 +217,12 @@ export async function retrieveKnowledge(
     const normalizedLexical = a.weight ? (a.lexical + a.sectionBoost) / (a.weight * 3) : 0
     const semantic = queryVec && entry.vector ? cosineClamped(queryVec, entry.vector) : null
     // hybrid blend: lexical primary, semantic secondary (deterministic).
-    const relevance = semantic === null ? normalizedLexical : 0.6 * normalizedLexical + 0.4 * semantic
-    const score = Math.min(1, relevance * (0.55 + 0.45 * domainFactor) * tierFactor * freshnessFactor)
+    const relevance =
+      semantic === null ? normalizedLexical : 0.6 * normalizedLexical + 0.4 * semantic
+    const score = Math.min(
+      1,
+      relevance * (0.55 + 0.45 * domainFactor) * tierFactor * freshnessFactor
+    )
     scores.push({ idx: i, score, matchedTerms: [...a.matched].sort() })
   }
 
@@ -208,7 +244,8 @@ export async function retrieveKnowledge(
   const rankingMs = Date.now() - rankT0
 
   if (!scores.length) {
-    const emptyReason = query.domain || query.language || query.jurisdiction ? 'DOMAIN_NO_MATCH' : 'NO_RESULTS'
+    const emptyReason =
+      query.domain || query.language || query.jurisdiction ? 'DOMAIN_NO_MATCH' : 'NO_RESULTS'
     return {
       ok: true,
       queryId,
@@ -220,15 +257,24 @@ export async function retrieveKnowledge(
       conflicts: [],
       budgetUsed: { evidenceChars: 0, limit: config.maxEvidenceChars, truncated: false },
       stats: {
-        candidateCount: index.chunks.length, selectedCount: 0, sourceCount: 0,
-        retrievalMs, rankingMs, duplicateChunksDropped: 0, method: queryVec ? 'HYBRID' : 'LEXICAL',
+        candidateCount: index.chunks.length,
+        selectedCount: 0,
+        sourceCount: 0,
+        retrievalMs,
+        rankingMs,
+        duplicateChunksDropped: 0,
+        method: queryVec ? 'HYBRID' : 'LEXICAL',
       },
       retrievedAt: nowDate.toISOString(),
     }
   }
 
   // ── dedup + diversity + budget ────────────────────────────────────────
-  const selected: Array<{ entry: (typeof index.chunks)[number]; score: number; matchedTerms: string[] }> = []
+  const selected: Array<{
+    entry: (typeof index.chunks)[number]
+    score: number
+    matchedTerms: string[]
+  }> = []
   const perSource = new Map<string, number>()
   let droppedDup = 0
   let budgetChars = 0
@@ -242,9 +288,15 @@ export async function retrieveKnowledge(
     if (srcCount >= config.maxChunksPerSource) continue
     const toks = new Set(tokenize(entry.chunk.text).filter((t) => t.length > 2))
     const isDup = selectedTokenSets.some((st) => jaccard(st, toks) >= config.nearDuplicateJaccard)
-    if (isDup) { droppedDup += 1; continue }
+    if (isDup) {
+      droppedDup += 1
+      continue
+    }
     const room = config.maxEvidenceChars - budgetChars
-    if (room <= 0) { truncated = true; break }
+    if (room <= 0) {
+      truncated = true
+      break
+    }
     let text = entry.chunk.text
     if (text.length > room) {
       text = truncateAtSentence(text, room)
@@ -257,13 +309,15 @@ export async function retrieveKnowledge(
   }
 
   // ── conflicts (explicit, never merged) ────────────────────────────────
-  const conflicts = detectConflicts(selected.map((s) => ({
-    sourceId: s.entry.source.id,
-    tier: s.entry.source.meta.authorityTier,
-    publicationDate: s.entry.source.meta.publicationDate ?? null,
-    text: s.entry.chunk.text.toLowerCase(),
-    terms: s.matchedTerms,
-  })))
+  const conflicts = detectConflicts(
+    selected.map((s) => ({
+      sourceId: s.entry.source.id,
+      tier: s.entry.source.meta.authorityTier,
+      publicationDate: s.entry.source.meta.publicationDate ?? null,
+      text: s.entry.chunk.text.toLowerCase(),
+      terms: s.matchedTerms,
+    }))
+  )
 
   // ── results + citations (server-side only) ────────────────────────────
   const results: KnowledgeRetrievalResult[] = selected.map((s, i) => ({
@@ -294,7 +348,9 @@ export async function retrieveKnowledge(
 
   const emptyReason = results.length
     ? null
-    : query.domain || query.language || query.jurisdiction ? 'DOMAIN_NO_MATCH' : 'NO_RESULTS'
+    : query.domain || query.language || query.jurisdiction
+      ? 'DOMAIN_NO_MATCH'
+      : 'NO_RESULTS'
 
   return {
     ok: true,
@@ -367,7 +423,9 @@ function detectConflicts(candidates: ConflictCandidate[]): EvidenceConflict[] {
           topic: term,
           sourceIds: [...new Set(group.map((g) => g.sourceId))].sort(),
           tiers: [...new Set(group.map((g) => g.tier))],
-          publicationDates: [...new Set(group.map((g) => g.publicationDate))].sort() as Array<string | null>,
+          publicationDates: [...new Set(group.map((g) => g.publicationDate))].sort() as Array<
+            string | null
+          >,
           note: `Sources disagree on "${term}" (${opp.label}); no consensus is implied.`,
         })
       }

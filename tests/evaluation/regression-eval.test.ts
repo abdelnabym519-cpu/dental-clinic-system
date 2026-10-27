@@ -11,7 +11,14 @@ import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { loadSuiteDatasets, evaluateDataset, assertNoFailures, createInMemoryKnowledgeStore, SEED_KNOWLEDGE, goldenPath } from './harness'
+import {
+  loadSuiteDatasets,
+  evaluateDataset,
+  assertNoFailures,
+  createInMemoryKnowledgeStore,
+  SEED_KNOWLEDGE,
+  goldenPath,
+} from './harness'
 import { canonicalJson, gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 import { isValidFdi } from '@/lib/ai/context/fdi'
 import { detectDomains } from '@/lib/ai/knowledge/taxonomy'
@@ -28,11 +35,23 @@ vi.mock('@/lib/prisma', () => {
     if (cond === null || typeof cond !== 'object') return row === cond
     if (Array.isArray(cond)) return false
     for (const [k, v] of Object.entries(cond)) {
-      if (k === 'OR') { if (!cond.OR.some((s: any) => condMatches(row, s))) return false; continue }
-      if (k === 'AND') { if (!cond.AND.every((s: any) => condMatches(row, s))) return false; continue }
+      if (k === 'OR') {
+        if (!cond.OR.some((s: any) => condMatches(row, s))) return false
+        continue
+      }
+      if (k === 'AND') {
+        if (!cond.AND.every((s: any) => condMatches(row, s))) return false
+        continue
+      }
       if (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
         if ('in' in v && !(v.in as any[]).includes(row[k])) return false
-        if ('contains' in v && !(String(row[k] ?? '').toLowerCase().includes(String(v.contains).toLowerCase()))) return false
+        if (
+          'contains' in v &&
+          !String(row[k] ?? '')
+            .toLowerCase()
+            .includes(String(v.contains).toLowerCase())
+        )
+          return false
         if ('gte' in v && !(new Date(row[k]).getTime() >= new Date(v.gte).getTime())) return false
         if ('lt' in v && !(new Date(row[k]).getTime() < new Date(v.lt).getTime())) return false
         if ('lte' in v && !(new Date(row[k]).getTime() <= new Date(v.lte).getTime())) return false
@@ -44,18 +63,59 @@ vi.mock('@/lib/prisma', () => {
         }
         continue
       }
-      if (row[k] !== v && !(row[k] instanceof Date || v instanceof Date || (row[k] && v && new Date(row[k]).getTime() === new Date(v).getTime()))) return false
+      if (
+        row[k] !== v &&
+        !(
+          row[k] instanceof Date ||
+          v instanceof Date ||
+          (row[k] && v && new Date(row[k]).getTime() === new Date(v).getTime())
+        )
+      )
+        return false
     }
     return true
   }
   const tables: Record<string, any[]> = {
     patient: [
-      { id: 'pat-A1', hospitalId: 'hosp-A', patientId: 'PAT-A1', firstName: 'Ahmed', lastName: 'Ali', phone: '01011112222', portalUserId: 'user-pat-A' },
-      { id: 'pat-A2', hospitalId: 'hosp-A', patientId: 'PAT-A2', firstName: 'Sara', lastName: 'Hassan', phone: '01022223333', portalUserId: null },
-      { id: 'pat-B1', hospitalId: 'hosp-B', patientId: 'PAT-B1', firstName: 'Omar', lastName: 'Farouk', phone: '01099998888', portalUserId: 'user-pat-B' },
+      {
+        id: 'pat-A1',
+        hospitalId: 'hosp-A',
+        patientId: 'PAT-A1',
+        firstName: 'Ahmed',
+        lastName: 'Ali',
+        phone: '01011112222',
+        portalUserId: 'user-pat-A',
+      },
+      {
+        id: 'pat-A2',
+        hospitalId: 'hosp-A',
+        patientId: 'PAT-A2',
+        firstName: 'Sara',
+        lastName: 'Hassan',
+        phone: '01022223333',
+        portalUserId: null,
+      },
+      {
+        id: 'pat-B1',
+        hospitalId: 'hosp-B',
+        patientId: 'PAT-B1',
+        firstName: 'Omar',
+        lastName: 'Farouk',
+        phone: '01099998888',
+        portalUserId: 'user-pat-B',
+      },
     ],
     treatment: [
-      { id: 'trt-u-1', hospitalId: 'hosp-A', patientId: 'pat-A1', treatmentNo: 'TRT-A-777', status: 'COMPLETED', cost: 1000, invoiceItems: [], procedureId: 'proc-1' },
+      {
+        id: 'trt-u-1',
+        hospitalId: 'hosp-A',
+        patientId: 'pat-A1',
+        treatmentNo: 'TRT-A-777',
+        status: 'COMPLETED',
+        cost: 1000,
+        invoiceItems: [],
+        procedureId: 'proc-1',
+      },
     ],
     setting: [
       { id: 's1', hospitalId: 'hosp-A', key: 'ai_financial_approval_limit', value: '10000' },
@@ -63,7 +123,21 @@ vi.mock('@/lib/prisma', () => {
     ],
     user: [{ id: 'staff-acc-1', hospitalId: 'hosp-A', role: 'ACCOUNTANT', name: 'Acc A' }],
   }
-  const MODELS = ['aIActionApproval', 'setting', 'invoice', 'payment', 'patient', 'treatment', 'user', 'auditLog', 'hospital', 'appointment', 'prescription', 'staff', 'invoiceItem']
+  const MODELS = [
+    'aIActionApproval',
+    'setting',
+    'invoice',
+    'payment',
+    'patient',
+    'treatment',
+    'user',
+    'auditLog',
+    'hospital',
+    'appointment',
+    'prescription',
+    'staff',
+    'invoiceItem',
+  ]
   const delegate = (model: string) => {
     const rows = () => (tables[model] ??= [])
     return {
@@ -72,18 +146,43 @@ vi.mock('@/lib/prisma', () => {
       findUnique: async (args?: any) => rows().find((r) => condMatches(r, args?.where)) ?? null,
       count: async (args?: any) => rows().filter((r) => condMatches(r, args?.where)).length,
       aggregate: async () => ({ _sum: {}, _max: null, _count: { _all: rows().length } }),
-      create: async ({ data }: any) => { const row = { id: `gen-${model}-${rows().length + 1}`, createdAt: new Date(), ...data }; rows().push(row); return row },
-      update: async ({ where, data }: any) => { const row = rows().find((r) => condMatches(r, where)); if (!row) throw new Error(`no row for update in ${model}`); Object.assign(row, data); return row },
-      updateMany: async ({ where, data }: any) => { let n = 0; for (const r of rows()) if (condMatches(r, where)) { Object.assign(r, data); n++ } return { count: n } },
-      deleteMany: async ({ where }: any) => { const keep = rows().filter((r) => !condMatches(r, where)); const n = rows().length - keep.length; tables[model] = keep; return { count: n } },
+      create: async ({ data }: any) => {
+        const row = { id: `gen-${model}-${rows().length + 1}`, createdAt: new Date(), ...data }
+        rows().push(row)
+        return row
+      },
+      update: async ({ where, data }: any) => {
+        const row = rows().find((r) => condMatches(r, where))
+        if (!row) throw new Error(`no row for update in ${model}`)
+        Object.assign(row, data)
+        return row
+      },
+      updateMany: async ({ where, data }: any) => {
+        let n = 0
+        for (const r of rows())
+          if (condMatches(r, where)) {
+            Object.assign(r, data)
+            n++
+          }
+        return { count: n }
+      },
+      deleteMany: async ({ where }: any) => {
+        const keep = rows().filter((r) => !condMatches(r, where))
+        const n = rows().length - keep.length
+        tables[model] = keep
+        return { count: n }
+      },
     }
   }
-  const client: any = { $transaction: async (fn: any) => (typeof fn === 'function' ? fn(client) : Promise.all(fn)) }
+  const client: any = {
+    $transaction: async (fn: any) => (typeof fn === 'function' ? fn(client) : Promise.all(fn)),
+  }
   for (const m of MODELS) client[m] = delegate(m)
   return { prisma: client, isPrismaFallback: () => false }
 })
 
-const CLASSIFY_OPERATIONAL = '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
+const CLASSIFY_OPERATIONAL =
+  '{"taskType":"OPERATIONAL","patientInvolved":false,"toothInvolved":false,"confidence":0.6}'
 const store = createInMemoryKnowledgeStore(SEED_KNOWLEDGE)
 
 describe('REGRESSION (Gate J): phase spot-contracts via replay', () => {
@@ -114,17 +213,23 @@ describe('REGRESSION (Gate J): phase spot-contracts via replay', () => {
   }, 120000)
 
   it('gate J verdict', () => {
-    const report = gateReport('J_REGRESSION', checks.length > 0
-      ? [pass('J.replay', `${count} spot-contracts across Phases 1–6 + cross-cutting`)]
-      : [fail('J.replay', 'EVAL_CONTRACT_MISMATCH', 'no checks')])
+    const report = gateReport(
+      'J_REGRESSION',
+      checks.length > 0
+        ? [pass('J.replay', `${count} spot-contracts across Phases 1–6 + cross-cutting`)]
+        : [fail('J.replay', 'EVAL_CONTRACT_MISMATCH', 'no checks')]
+    )
     expect(report.verdict).toBe('PASS')
   })
 })
 
 describe('REGRESSION (Gate J): lower-layer unit contracts', () => {
-  it('FDI validation: 11–48 valid, everything else rejected', () => {
+  it('FDI validation: 11–48 and 51–85 valid, everything else rejected', () => {
     for (const n of [11, 12, 21, 26, 36, 41, 47, 48]) expect(isValidFdi(n)).toBe(true)
-    for (const n of [0, 1, 9, 10, 50, 51, 99, 100, -3]) expect(isValidFdi(n)).toBe(false)
+    // Phase 3: primary (deciduous) dentition 51–55, 61–65, 71–75, 81–85.
+    for (const n of [51, 55, 61, 65, 71, 75, 81, 85]) expect(isValidFdi(n)).toBe(true)
+    for (const n of [0, 1, 9, 10, 50, 56, 59, 60, 90, 99, 100, -3])
+      expect(isValidFdi(n)).toBe(false)
   })
 
   it('taxonomy detection maps messages to KNOWLEDGE_DOMAINS (stable)', () => {

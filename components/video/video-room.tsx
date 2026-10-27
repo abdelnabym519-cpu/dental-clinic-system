@@ -135,7 +135,9 @@ export default function VideoRoom({
         <div className="text-center space-y-2">
           <Phone className="h-12 w-12 text-muted-foreground mx-auto" />
           <h2 className="text-xl font-semibold">{t('Call Ended')}</h2>
-          <p className="text-muted-foreground">{t("Duration:")} {formatDuration(elapsed)}</p>
+          <p className="text-muted-foreground">
+            {t('Duration:')} {formatDuration(elapsed)}
+          </p>
         </div>
         {isDoctor && (
           <div className="w-full max-w-lg space-y-3">
@@ -179,7 +181,7 @@ export default function VideoRoom({
                 onClick={() => setShowSidebar(!showSidebar)}
               >
                 <FileText className="h-4 w-4 mr-1" />
-                {showSidebar ? 'Hide' : t("Show")} {t("Panel")}
+                {showSidebar ? 'Hide' : t('Show')} {t('Panel')}
               </Button>
             )}
             <Button
@@ -245,24 +247,32 @@ export default function VideoRoom({
                 )}
                 {patient.medicalHistory && (
                   <div className="space-y-1 pt-2 border-t">
-                    <div className="font-medium text-xs text-muted-foreground uppercase">{t('ui.medical_alerts')}</div>
+                    <div className="font-medium text-xs text-muted-foreground uppercase">
+                      {t('ui.medical_alerts')}
+                    </div>
                     {patient.medicalHistory.hasAllergies && (
                       <div className="flex items-center gap-1 text-red-600 text-xs">
                         <AlertTriangle className="h-3 w-3" />
-                        {t("Allergies:")} {patient.medicalHistory.drugAllergies || t("Yes")}
+                        {t('Allergies:')} {patient.medicalHistory.drugAllergies || t('Yes')}
                       </div>
                     )}
                     {patient.medicalHistory.hasDiabetes && (
                       <div className="flex items-center gap-1 text-orange-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />{t('ui.diabetes')}</div>
+                        <AlertTriangle className="h-3 w-3" />
+                        {t('ui.diabetes')}
+                      </div>
                     )}
                     {patient.medicalHistory.hasHypertension && (
                       <div className="flex items-center gap-1 text-orange-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />{t('ui.hypertension')}</div>
+                        <AlertTriangle className="h-3 w-3" />
+                        {t('ui.hypertension')}
+                      </div>
                     )}
                     {patient.medicalHistory.hasHeartDisease && (
                       <div className="flex items-center gap-1 text-red-600 text-xs">
-                        <AlertTriangle className="h-3 w-3" />{t('ui.heart_disease')}</div>
+                        <AlertTriangle className="h-3 w-3" />
+                        {t('ui.heart_disease')}
+                      </div>
                     )}
                   </div>
                 )}
@@ -280,7 +290,7 @@ export default function VideoRoom({
                 <div className="text-muted-foreground">{appointment.appointmentNo}</div>
                 {appointment.chiefComplaint && (
                   <div>
-                    <span className="text-muted-foreground">{t("Complaint:")}</span>{' '}
+                    <span className="text-muted-foreground">{t('Complaint:')}</span>{' '}
                     {appointment.chiefComplaint}
                   </div>
                 )}
@@ -292,7 +302,9 @@ export default function VideoRoom({
           <Card className="flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />{t('ui.consultation_notes')}</CardTitle>
+                <MessageSquare className="h-4 w-4" />
+                {t('ui.consultation_notes')}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea

@@ -57,17 +57,18 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
 
             {/* Clinical Anatomy Spec */}
             <div className="flex items-center justify-between text-[10px] text-muted-foreground/90 bg-muted/30 px-1.5 py-0.5 rounded">
-              <span>{t("Anatomy:")}</span>
+              <span>{t('Anatomy:')}</span>
               <span className="font-medium">
-                {tooth.rootCount} {t("Root")}{tooth.rootCount > 1 ? 's' : ''} &bull; {tooth.canalCount}{' '}
-                {t("Canal")}{tooth.canalCount > 1 ? 's' : ''}
+                {tooth.rootCount} {t('Root')}
+                {tooth.rootCount > 1 ? 's' : ''} &bull; {tooth.canalCount} {t('Canal')}
+                {tooth.canalCount > 1 ? 's' : ''}
               </span>
             </div>
 
             {/* Surfaces Involved */}
             {activeSurfaces.length > 0 && (
               <div className="text-[11px] text-muted-foreground pt-0.5">
-                <span className="font-semibold text-foreground">{t("Surfaces:")} </span>
+                <span className="font-semibold text-foreground">{t('Surfaces:')} </span>
                 {activeSurfaces.join(', ')}
               </div>
             )}
@@ -82,7 +83,7 @@ export function ToothTooltip({ tooth, children }: ToothTooltipProps) {
             {/* History Count */}
             {tooth.history.length > 1 && (
               <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/40 flex justify-between">
-                <span>{t("Total records:")}</span>
+                <span>{t('Total records:')}</span>
                 <span className="font-semibold">{tooth.history.length}</span>
               </div>
             )}

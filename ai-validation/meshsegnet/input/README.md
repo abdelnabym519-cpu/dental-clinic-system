@@ -14,13 +14,13 @@ A **raw intraoral scan** of a dental arch — a triangular surface mesh in
 millimetre coordinates, as produced by an intraoral scanner (IOS) or a
 laboratory scanner. Not a CBCT volume, not a photograph, not a segmented file.
 
-| Property | Requirement |
-| --- | --- |
-| Type | triangular surface mesh (per-face connectivity) |
-| Formats the official code reads | anything `vedo.load()` handles, e.g. `.obj`, `.stl`, `.vtk`, `.ply` |
-| Units | millimetres (the model normalises internally, but scale must be realistic) |
-| Provenance | must be a real scanned jaw — never a synthetic or generated mesh |
-| Labels | **not required** for prediction; the official `step5_predict.py` assumes no ground truth |
+| Property                        | Requirement                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------- |
+| Type                            | triangular surface mesh (per-face connectivity)                                          |
+| Formats the official code reads | anything `vedo.load()` handles, e.g. `.obj`, `.stl`, `.vtk`, `.ply`                      |
+| Units                           | millimetres (the model normalises internally, but scale must be realistic)               |
+| Provenance                      | must be a real scanned jaw — never a synthetic or generated mesh                         |
+| Labels                          | **not required** for prediction; the official `step5_predict.py` assumes no ground truth |
 
 The official repository ships **no sample mesh** — `step5_predict.py` expects the
 user to supply one (`sample_filenames = ['Example.stl'] # need to define`).
@@ -30,10 +30,10 @@ user to supply one (`sample_filenames = ['Example.stl'] # need to define`).
 Both are real intraoral scans of dental arches, published by the
 **3DTeethSeg'22 challenge** (MICCAI 2022) community:
 
-| File | Jaw | Cells | Source |
-| --- | --- | --- | --- |
+| File                 | Jaw   | Cells   | Source                                                                       |
+| -------------------- | ----- | ------- | ---------------------------------------------------------------------------- |
 | `0EJBIPTC_lower.obj` | lower | 178,421 | `abenhamadou/3DTeethSeg22_challenge` → `refrence_algorithm_submission/test/` |
-| `ZOUIF2W4_upper.obj` | upper | 328,581 | `HuayuanSong/TeethSegFront` (3DTeethSeg'22 naming convention) |
+| `ZOUIF2W4_upper.obj` | upper | 328,581 | `HuayuanSong/TeethSegFront` (3DTeethSeg'22 naming convention)                |
 
 Download them with:
 

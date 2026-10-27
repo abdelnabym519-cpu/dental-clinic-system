@@ -27,19 +27,50 @@ const patientPortal = { id: 'user-pat-A', name: 'Ahmed Ali (portal)', role: 'PAT
 let uploadDir: string
 const analyzeCalls = []
 
-function envelope(jobId: string, studyId: string, engine = 'meshsegnet', modality = 'THREE_D_SCAN') {
+function envelope(
+  jobId: string,
+  studyId: string,
+  engine = 'meshsegnet',
+  modality = 'THREE_D_SCAN'
+) {
   return {
-    jobId, studyId, hospitalId: HOSP_A, engine, modality,
+    jobId,
+    studyId,
+    hospitalId: HOSP_A,
+    engine,
+    modality,
     findings: [
-      { id: 'f1', findingClass: 'MODEL_DETECTED', engine, detail: { class_name: 'Tooth_36', point_count: 1234 }, confidence: null },
-      { id: 'f2', findingClass: 'MODEL_DETECTED', engine, detail: { class_name: 'Gingiva', point_count: 812 }, confidence: null },
+      {
+        id: 'f1',
+        findingClass: 'MODEL_DETECTED',
+        engine,
+        detail: { class_name: 'Tooth_36', point_count: 1234 },
+        confidence: null,
+      },
+      {
+        id: 'f2',
+        findingClass: 'MODEL_DETECTED',
+        engine,
+        detail: { class_name: 'Gingiva', point_count: 812 },
+        confidence: null,
+      },
     ],
     topConfidence: null,
     uncertainty: 'Model output is decision support only; findings require clinician review.',
     provenance: {
-      engine, modelVersion: 'v1', modelChecksum: 'abc', modelChecksumExpected: 'abc',
-      modelSource: '', modelLicense: '', orchestratorVersion: '', inputSha256: 'x',
-      device: 'cpu', runtime: '', processingTimeMs: 1234, rawOutputKey: 'k', annotatedImageKey: null,
+      engine,
+      modelVersion: 'v1',
+      modelChecksum: 'abc',
+      modelChecksumExpected: 'abc',
+      modelSource: '',
+      modelLicense: '',
+      orchestratorVersion: '',
+      inputSha256: 'x',
+      device: 'cpu',
+      runtime: '',
+      processingTimeMs: 1234,
+      rawOutputKey: 'k',
+      annotatedImageKey: null,
       timestamp: NOW.toISOString(),
     },
     reviewState: 'PENDING_REVIEW',
@@ -82,10 +113,18 @@ function fakeAttachmentService(records: Record<string, any>) {
     get: async (id: string, hospitalId: string) =>
       records[id] && records[id].hospitalId === hospitalId ? records[id] : null,
     toRef: (r) => ({
-      id: r.id, originalName: r.originalName, mediaType: r.mediaType, fileClass: r.fileClass,
-      size: r.size, dentalModality: r.dentalModality, modalityOrigin: r.modalityOrigin,
-      dentalImageState: r.dentalImageState, status: r.status, patientId: r.patientId,
-      studyId: r.studyId, createdAt: (r.createdAt ?? new Date()).toISOString(),
+      id: r.id,
+      originalName: r.originalName,
+      mediaType: r.mediaType,
+      fileClass: r.fileClass,
+      size: r.size,
+      dentalModality: r.dentalModality,
+      modalityOrigin: r.modalityOrigin,
+      dentalImageState: r.dentalImageState,
+      status: r.status,
+      patientId: r.patientId,
+      studyId: r.studyId,
+      createdAt: (r.createdAt ?? new Date()).toISOString(),
     }),
   }
 }
@@ -94,7 +133,12 @@ function fakeLocalAiService(over = {}) {
   return {
     resolveEngine: (p) => ({
       engine: over.engine ?? 'meshsegnet',
-      task: { task: p.task ?? 'dental_mesh_segmentation', engine: over.engine ?? 'meshsegnet', modality: p.modality, humanReview: 'REQUIRED' },
+      task: {
+        task: p.task ?? 'dental_mesh_segmentation',
+        engine: over.engine ?? 'meshsegnet',
+        modality: p.modality,
+        humanReview: 'REQUIRED',
+      },
     }),
     analyze: async (p) => {
       analyzeCalls.push(p)
@@ -113,7 +157,8 @@ function writableClient(base) {
     let n = 0
     return {
       findUnique: async ({ where }) => rows.find((r) => r.id === where?.id) ?? null,
-      findFirst: async ({ where }) => rows.find((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)) ?? null,
+      findFirst: async ({ where }) =>
+        rows.find((r) => Object.entries(where ?? {}).every(([k, v]) => r[k] === v)) ?? null,
       create: async ({ data }) => {
         const row = { id: `gen-${++n}`, createdAt: new Date(), ...data }
         rows.push(row)
@@ -130,7 +175,10 @@ function writableClient(base) {
   return { ...base, aIAnalysisJob: writable(), auditLog: writable() }
 }
 
-function run(message, { actor = doctor, attachments, extraRows, localAiService, attachmentsSvc } = {}) {
+function run(
+  message,
+  { actor = doctor, attachments, extraRows, localAiService, attachmentsSvc } = {}
+) {
   return runAgent(
     {
       requestId: 'req-p6',
@@ -154,7 +202,7 @@ function run(message, { actor = doctor, attachments, extraRows, localAiService, 
       now: () => NOW,
       attachments: attachmentsSvc,
       localAiService,
-    },
+    }
   )
 }
 
@@ -200,7 +248,7 @@ describe('attachment analysis (Arabic + English, §30)', () => {
     expect(a).toContain('Tooth_36') // finding label from the normalized detail
     expect(a).toContain('PENDING CLINICIAN REVIEW')
     expect(a).toContain('not provided') // layer 3 is never machine-generated
-    expect(a.toLowerCase()).not.toMatch(/diagnosis[:：]\s/ ) // no diagnosis field/claim
+    expect(a.toLowerCase()).not.toMatch(/diagnosis[:：]\s/) // no diagnosis field/claim
   })
 
   it('analyze this scan (English) works identically', async () => {
@@ -242,8 +290,20 @@ describe('multi-attachment sets', () => {
     const r = await run('قارن الصورتين', {
       attachments: ['att-a', 'att-b'],
       attachmentsSvc: fakeAttachmentService({
-        'att-a': attachmentRecord({ id: 'att-a', studyId: 'st-a', sha256: 'sha-a', storageKey: `${HOSP_A}/ai/attachments/ua/f.obj`, createdAt: new Date(NOW.getTime() - 30 * 86400000) }),
-        'att-b': attachmentRecord({ id: 'att-b', studyId: 'st-b', sha256: 'sha-b', storageKey: `${HOSP_A}/ai/attachments/ub/f.obj`, createdAt: NOW }),
+        'att-a': attachmentRecord({
+          id: 'att-a',
+          studyId: 'st-a',
+          sha256: 'sha-a',
+          storageKey: `${HOSP_A}/ai/attachments/ua/f.obj`,
+          createdAt: new Date(NOW.getTime() - 30 * 86400000),
+        }),
+        'att-b': attachmentRecord({
+          id: 'att-b',
+          studyId: 'st-b',
+          sha256: 'sha-b',
+          storageKey: `${HOSP_A}/ai/attachments/ub/f.obj`,
+          createdAt: NOW,
+        }),
       }),
       localAiService: fakeLocalAiService(),
     })
@@ -264,8 +324,16 @@ describe('multi-attachment sets', () => {
     const r = await run('حلل الصورتين', {
       attachments: ['att-a', 'att-b'],
       attachmentsSvc: fakeAttachmentService({
-        'att-a': attachmentRecord({ id: 'att-a', studyId: 'st-a', storageKey: `${HOSP_A}/ai/attachments/ua/f.obj` }),
-        'att-b': attachmentRecord({ id: 'att-b', studyId: 'st-b', storageKey: `${HOSP_A}/ai/attachments/ub/f.obj` }),
+        'att-a': attachmentRecord({
+          id: 'att-a',
+          studyId: 'st-a',
+          storageKey: `${HOSP_A}/ai/attachments/ua/f.obj`,
+        }),
+        'att-b': attachmentRecord({
+          id: 'att-b',
+          studyId: 'st-b',
+          storageKey: `${HOSP_A}/ai/attachments/ub/f.obj`,
+        }),
       }),
       localAiService: fakeLocalAiService(),
     })
@@ -320,9 +388,14 @@ describe('honest no-engine answers (§18)', () => {
       attachments: ['att-dcm'],
       attachmentsSvc: fakeAttachmentService({
         'att-dcm': attachmentRecord({
-          id: 'att-dcm', fileClass: 'VOLUME_DICOM', dentalModality: null,
-          modalityOrigin: 'NONE', studyId: null, mediaType: 'application/dicom',
-          originalName: 'cbct.dcm', storageKey: `${HOSP_A}/ai/attachments/ud/f.dcm`,
+          id: 'att-dcm',
+          fileClass: 'VOLUME_DICOM',
+          dentalModality: null,
+          modalityOrigin: 'NONE',
+          studyId: null,
+          mediaType: 'application/dicom',
+          originalName: 'cbct.dcm',
+          storageKey: `${HOSP_A}/ai/attachments/ud/f.dcm`,
         }),
       }),
       localAiService: fakeLocalAiService(),
@@ -338,9 +411,14 @@ describe('honest no-engine answers (§18)', () => {
       attachments: ['att-unk'],
       attachmentsSvc: fakeAttachmentService({
         'att-unk': attachmentRecord({
-          id: 'att-unk', fileClass: 'IMAGE_2D', dentalModality: null,
-          modalityOrigin: 'NONE', dentalImageState: 'UNKNOWN_DENTAL_IMAGE',
-          studyId: null, mediaType: 'image/png', originalName: 'x.png',
+          id: 'att-unk',
+          fileClass: 'IMAGE_2D',
+          dentalModality: null,
+          modalityOrigin: 'NONE',
+          dentalImageState: 'UNKNOWN_DENTAL_IMAGE',
+          studyId: null,
+          mediaType: 'image/png',
+          originalName: 'x.png',
           storageKey: `${HOSP_A}/ai/attachments/ux/f.png`,
         }),
       }),
@@ -359,11 +437,17 @@ describe('document attachments — untrusted data boundary', () => {
     await mkdir(dir, { recursive: true })
     await writeFile(path.join(uploadDir, key), text, 'utf8')
     return attachmentRecord({
-      id: 'att-doc', fileClass: 'DOCUMENT_PDF', dentalModality: null,
-      modalityOrigin: 'NONE', dentalImageState: null, studyId: null,
-      mediaType: 'application/pdf', originalName: 'record.pdf',
+      id: 'att-doc',
+      fileClass: 'DOCUMENT_PDF',
+      dentalModality: null,
+      modalityOrigin: 'NONE',
+      dentalImageState: null,
+      studyId: null,
+      mediaType: 'application/pdf',
+      originalName: 'record.pdf',
       storageKey: `${HOSP_A}/ai/attachments/udoc/f.pdf`,
-      pageCount: 1, extractedTextKey: key,
+      pageCount: 1,
+      extractedTextKey: key,
     })
   }
 
@@ -439,7 +523,12 @@ describe('typed failures', () => {
     const r = await run('analyze this', {
       attachments: ['att-1'],
       attachmentsSvc: fakeAttachmentService({ 'att-1': attachmentRecord() }),
-      localAiService: fakeLocalAiService({ reject: new MultimodalError('ENGINE_UNAVAILABLE', "engine 'meshsegnet' is UNAVAILABLE: weights not loaded") }),
+      localAiService: fakeLocalAiService({
+        reject: new MultimodalError(
+          'ENGINE_UNAVAILABLE',
+          "engine 'meshsegnet' is UNAVAILABLE: weights not loaded"
+        ),
+      }),
     })
     expect(r.status).toBe('COMPLETED')
     expect(r.toolsUsed).toEqual(['analyze_attachment'])

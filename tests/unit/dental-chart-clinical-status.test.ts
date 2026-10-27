@@ -19,7 +19,9 @@ describe('tooth treatment-status derivation', () => {
 
   it('affected when an active finding exists', () => {
     expect(deriveToothStatus([f('CARIES')], [])).toBe('affected')
-    expect(deriveToothStatus([f('ABSCCESS' in {} ? 'CARIES' : 'ABSCCESS'.replace('CC','CC'))], [])).toBe('affected')
+    expect(
+      deriveToothStatus([f('ABSCCESS' in {} ? 'CARIES' : 'ABSCCESS'.replace('CC', 'CC'))], [])
+    ).toBe('affected')
   })
 
   it('resolved findings never affect status (history-safe)', () => {

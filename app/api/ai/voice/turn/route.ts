@@ -48,12 +48,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'voiceSessionId is required' }, { status: 400 })
   }
 
-  const op = (VALID_OPS as string[]).includes(body.op as string) ? (body.op as VoiceTurnInput['op']) : 'SPEAK'
+  const op = (VALID_OPS as string[]).includes(body.op as string)
+    ? (body.op as VoiceTurnInput['op'])
+    : 'SPEAK'
 
   // Rate limit (audit-log based, same pattern as /api/ai/chat + agent).
   const oneMinuteAgo = new Date(Date.now() - 60_000)
   const recentCount = await prisma.auditLog.count({
-    where: { hospitalId, userId: user.id, action: 'AI_VOICE_TURN', createdAt: { gte: oneMinuteAgo } },
+    where: {
+      hospitalId,
+      userId: user.id,
+      action: 'AI_VOICE_TURN',
+      createdAt: { gte: oneMinuteAgo },
+    },
   })
   if (recentCount >= 60) {
     return NextResponse.json({ error: 'Rate limit exceeded. Try again shortly.' }, { status: 429 })
@@ -115,7 +122,9 @@ export async function POST(req: Request) {
           }),
         },
       })
-      .catch((e: unknown) => console.error('voice audit failed:', e instanceof Error ? e.message : e))
+      .catch((e: unknown) =>
+        console.error('voice audit failed:', e instanceof Error ? e.message : e)
+      )
 
     return NextResponse.json(result)
   } catch (err) {

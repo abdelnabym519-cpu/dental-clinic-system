@@ -55,7 +55,9 @@ describe('validateEnvironment (fail fast, never silently unsafe)', () => {
   })
 
   it('short production secrets are flagged as INSECURE_VALUE', () => {
-    expect(validateEnvironment({ ...PROD, NEXTAUTH_SECRET: 'short' }).map((p) => p.kind)).toContain('INSECURE_VALUE')
+    expect(validateEnvironment({ ...PROD, NEXTAUTH_SECRET: 'short' }).map((p) => p.kind)).toContain(
+      'INSECURE_VALUE'
+    )
   })
 
   it('development may omit production-only vars entirely', () => {

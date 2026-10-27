@@ -464,13 +464,13 @@ const INVOICE_FIELDS: FieldDefinition[] = [
     name: 'cgstAmount',
     type: 'decimal',
     required: false,
-    description: 'VAT amount (defaults to 0)'
+    description: 'VAT amount (defaults to 0)',
   },
   {
     name: 'sgstAmount',
     type: 'decimal',
     required: false,
-    description: 'Secondary tax amount (defaults to 0)'
+    description: 'Secondary tax amount (defaults to 0)',
   },
   { name: 'discountAmount', type: 'decimal', required: false, description: 'Discount amount' },
   {
@@ -505,7 +505,17 @@ const PAYMENT_FIELDS: FieldDefinition[] = [
     type: 'enum',
     required: true,
     description: 'Payment method',
-    enumValues: ['CASH', 'CARD', 'INSTAPAY', 'FAWRY', 'BANK_TRANSFER', 'CHEQUE', 'INSURANCE', 'WALLET', 'ONLINE'],
+    enumValues: [
+      'CASH',
+      'CARD',
+      'INSTAPAY',
+      'FAWRY',
+      'BANK_TRANSFER',
+      'CHEQUE',
+      'INSURANCE',
+      'WALLET',
+      'ONLINE',
+    ],
     enumAliases: PAYMENT_METHOD_ALIASES,
   },
   { name: 'paymentDate', type: 'date', required: false, description: 'Payment date' },

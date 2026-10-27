@@ -33,7 +33,9 @@ vi.mock('@/lib/ai/context-builder', () => ({
 }))
 
 vi.mock('@/lib/ai/models', () => ({
-  getModelByTier: vi.fn().mockReturnValue({ model: 'test/model', maxTokens: 1024, temperature: 0.7 }),
+  getModelByTier: vi
+    .fn()
+    .mockReturnValue({ model: 'test/model', maxTokens: 1024, temperature: 0.7 }),
 }))
 
 vi.mock('@/lib/ai/action-pipeline', () => ({
@@ -80,7 +82,11 @@ function chatReq(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/ai/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [{ role: 'user', content: 'check patient John Doe' }], stream: false, ...body }),
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: 'check patient John Doe' }],
+      stream: false,
+      ...body,
+    }),
   })
 }
 
@@ -99,7 +105,11 @@ describe('POST /api/ai/chat — F-1 param strip (LLM-emitted params are untruste
     setup()
     mockLlm({
       action: 'check_patient',
-      params: { query: 'John Doe', patientId: 'pat-OTHER-TENANT-999', __resolvedPatientId: 'pat-FORGED' },
+      params: {
+        query: 'John Doe',
+        patientId: 'pat-OTHER-TENANT-999',
+        __resolvedPatientId: 'pat-FORGED',
+      },
       complexity: 'simple',
     })
 

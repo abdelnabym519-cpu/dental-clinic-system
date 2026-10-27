@@ -14,7 +14,13 @@ import {
 } from '@/lib/ai/engines/capability-matrix'
 import { CAPABILITY_OVERALL } from '@/lib/ai/engines/types'
 
-const REGISTERED_ENGINES = ['liodon', 'meshsegnet-max', 'meshsegnet-man', 'implant-ai', 'orthodontic-ai']
+const REGISTERED_ENGINES = [
+  'liodon',
+  'meshsegnet-max',
+  'meshsegnet-man',
+  'implant-ai',
+  'orthodontic-ai',
+]
 
 describe('capability matrix — schema', () => {
   it('has no duplicate task ids', () => {
@@ -24,10 +30,14 @@ describe('capability matrix — schema', () => {
   it('every row is well-formed (overall, six levels, review always required)', () => {
     for (const r of CAPABILITY_MATRIX) {
       expect(CAPABILITY_OVERALL).toContain(r.overall)
-      expect(Object.keys(r.levels).sort()).toEqual(
-        ['capabilityDeclared', 'cpuInferenceVerified', 'localInferenceVerified',
-          'modelExists', 'productionIntegrated', 'weightsVerified'],
-      )
+      expect(Object.keys(r.levels).sort()).toEqual([
+        'capabilityDeclared',
+        'cpuInferenceVerified',
+        'localInferenceVerified',
+        'modelExists',
+        'productionIntegrated',
+        'weightsVerified',
+      ])
       expect(r.humanReview).toBe('REQUIRED')
       expect(r.fallback.length).toBeGreaterThan(0)
     }
@@ -110,7 +120,9 @@ describe('capability matrix — six-level evidence semantics (§9)', () => {
         expect(Object.values(r.levels).every(Boolean)).toBe(true)
       }
     }
-    const supported = CAPABILITY_MATRIX.filter((r) => r.overall === 'SUPPORTED').map((r) => r.task).sort()
+    const supported = CAPABILITY_MATRIX.filter((r) => r.overall === 'SUPPORTED')
+      .map((r) => r.task)
+      .sort()
     // Evidence-backed in the validation environment (real weights + real
     // CPU runs committed under ai-validation/meshsegnet/reports/).
     expect(supported).toEqual([

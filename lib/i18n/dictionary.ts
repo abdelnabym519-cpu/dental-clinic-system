@@ -87,4 +87,3 @@ export function translateLabel(
 ): string {
   return translateText(locale, englishLabel, vars)
 }
-

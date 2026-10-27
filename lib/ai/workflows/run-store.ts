@@ -16,11 +16,14 @@ import type { WorkflowRunRecord, WorkflowRunStore } from './types'
 interface WorkflowRunDelegate {
   create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>
   findUnique: (args: { where: Record<string, unknown> }) => Promise<Record<string, unknown> | null>
-  update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<Record<string, unknown>>
+  update: (args: {
+    where: Record<string, unknown>
+    data: Record<string, unknown>
+  }) => Promise<Record<string, unknown>>
 }
 
 export interface WorkflowRunPrisma {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   aiWorkflowRun?: WorkflowRunDelegate | any
 }
 
@@ -41,8 +44,14 @@ function toRecord(row: Record<string, unknown>): WorkflowRunRecord {
     context: (row.context ?? {}) as Record<string, unknown>,
     result: (row.result ?? null) as Record<string, unknown> | null,
     attempts: Number(row.attempts ?? 1),
-    startedAt: row.startedAt == null ? null : new Date(row.startedAt as string | number | Date).toISOString(),
-    completedAt: row.completedAt == null ? null : new Date(row.completedAt as string | number | Date).toISOString(),
+    startedAt:
+      row.startedAt == null
+        ? null
+        : new Date(row.startedAt as string | number | Date).toISOString(),
+    completedAt:
+      row.completedAt == null
+        ? null
+        : new Date(row.completedAt as string | number | Date).toISOString(),
     expiresAt: new Date(row.expiresAt as string | number | Date).toISOString(),
     createdAt: new Date((row.createdAt ?? new Date()) as string | number | Date).toISOString(),
   }
@@ -53,7 +62,10 @@ function toRecord(row: Record<string, unknown>): WorkflowRunRecord {
  * callers per call) so a store instance can never be pointed at another
  * tenant.
  */
-export function createWorkflowRunStore(prisma: WorkflowRunPrisma, hospitalId: string): WorkflowRunStore {
+export function createWorkflowRunStore(
+  prisma: WorkflowRunPrisma,
+  hospitalId: string
+): WorkflowRunStore {
   const del = prisma.aiWorkflowRun
   if (!del) {
     // Fail closed: no persistence available → runs cannot be observed.
@@ -97,7 +109,19 @@ export function createWorkflowRunStore(prisma: WorkflowRunPrisma, hospitalId: st
     },
     async update(
       id: string,
-      data: Partial<Pick<WorkflowRunRecord, 'status' | 'currentStep' | 'stepLog' | 'approvalId' | 'result' | 'attempts' | 'startedAt' | 'completedAt'>>,
+      data: Partial<
+        Pick<
+          WorkflowRunRecord,
+          | 'status'
+          | 'currentStep'
+          | 'stepLog'
+          | 'approvalId'
+          | 'result'
+          | 'attempts'
+          | 'startedAt'
+          | 'completedAt'
+        >
+      >
     ) {
       const row = await del.update({
         where: { id, hospitalId },
@@ -113,7 +137,10 @@ export function createMemoryWorkflowRunStore(): WorkflowRunStore {
   const map = new Map<string, WorkflowRunRecord>()
   return {
     async create(rec: Omit<WorkflowRunRecord, 'createdAt'> & { createdAt?: string }) {
-      const full: WorkflowRunRecord = { ...rec, createdAt: rec.createdAt ?? new Date().toISOString() }
+      const full: WorkflowRunRecord = {
+        ...rec,
+        createdAt: rec.createdAt ?? new Date().toISOString(),
+      }
       map.set(full.id, full)
       return full
     },

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   FDI_TEETH,
+  FDI_TEETH_PRIMARY,
   isValidFdi,
   quadrantOf,
   toothIndexOf,
@@ -22,10 +23,56 @@ describe('FDI notation (ISO-3950)', () => {
     expect([...FDI_TEETH].slice(0, 8)).toEqual([11, 12, 13, 14, 15, 16, 17, 18])
   })
 
-  it('rejects invalid numbering (deciduous ranges, zero, quadrant 5+, non-integers)', () => {
-    for (const bad of [0, 10, 19, 51, 55, 91, 99, -16, 16.5, NaN, Infinity]) {
+  it('rejects invalid numbering (zero, index 0/9, quadrant 9+, non-integers)', () => {
+    // 51 and 55 are NO LONGER invalid: they are valid primary (deciduous) teeth.
+    for (const bad of [
+      0,
+      10,
+      19,
+      20,
+      29,
+      49,
+      50,
+      56,
+      57,
+      58,
+      59,
+      60,
+      66,
+      76,
+      86,
+      90,
+      91,
+      99,
+      -16,
+      16.5,
+      NaN,
+      Infinity,
+    ]) {
       expect(isValidFdi(bad as number)).toBe(false)
     }
+  })
+
+  it('rejects non-numbers: a number is required, never coerced', () => {
+    for (const bad of ['11', '16', '51', '', null, undefined, true, false, [], {}, () => 11]) {
+      expect(isValidFdi(bad)).toBe(false)
+    }
+  })
+
+  it('accepts the 20 primary (deciduous) teeth 51–55, 61–65, 71–75, 81–85', () => {
+    expect(FDI_TEETH_PRIMARY).toHaveLength(20)
+    for (const t of FDI_TEETH_PRIMARY) expect(isValidFdi(t)).toBe(true)
+    expect([...FDI_TEETH_PRIMARY].slice(0, 5)).toEqual([51, 52, 53, 54, 55])
+    // Primary quadrants have no index 6–8 and no premolars.
+    for (const bad of [56, 57, 58, 59, 66, 67, 68, 76, 86]) {
+      expect(isValidFdi(bad)).toBe(false)
+    }
+  })
+
+  it('FDI_TEETH stays the 32 permanent teeth (chart/3D behaviour preserved)', () => {
+    expect(FDI_TEETH).toHaveLength(32)
+    expect(FDI_TEETH.every((t) => isValidFdi(t))).toBe(true)
+    expect(FDI_TEETH.some((t) => t >= 51)).toBe(false)
   })
 
   it('derives quadrant/arch/side/group', () => {

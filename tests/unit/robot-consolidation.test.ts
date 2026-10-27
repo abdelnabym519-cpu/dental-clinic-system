@@ -38,7 +38,10 @@ describe('Robot naming and unified surface', () => {
     const chat = items.find((i) => i.href === '/chat')
     expect(chat, 'restored /chat nav entry exists').toBeTruthy()
     expect(chat!.title).toBe('AI Chat')
-    expect(items.some((i) => i.title === 'AI Companion'), 'Companion naming stays removed').toBe(false)
+    expect(
+      items.some((i) => i.title === 'AI Companion'),
+      'Companion naming stays removed'
+    ).toBe(false)
   })
 
   it('Arabic user-facing name is روبوت', () => {
@@ -70,7 +73,7 @@ describe('Robot naming and unified surface', () => {
 describe('canonical Robot greeting', () => {
   it('Arabic greeting matches the canonical phrase EXACTLY', () => {
     expect(ROBOT_GREETING_AR).toBe(
-      'أهلًا دكتور 👋 أنا الروبوت الذكي الخاص بالعيادة. تم تطويري بواسطة بشمهندس محمد. أنا جاهز. 🤖',
+      'أهلًا دكتور 👋 أنا الروبوت الذكي الخاص بالعيادة. تم تطويري بواسطة بشمهندس محمد. أنا جاهز. 🤖'
     )
   })
 
@@ -93,7 +96,10 @@ describe('language detection (Arabic / English / Mixed)', () => {
   })
 
   it('English input is detected as English', () => {
-    expect(detectInputLanguage('What appointments do I have today?')).toEqual({ lang: 'en', mixed: false })
+    expect(detectInputLanguage('What appointments do I have today?')).toEqual({
+      lang: 'en',
+      mixed: false,
+    })
   })
 
   it('mixed input is detected as mixed with the dominant language', () => {
@@ -109,7 +115,9 @@ describe('language detection (Arabic / English / Mixed)', () => {
   it('TTS language follows the text actually spoken', () => {
     expect(ttsLangForText('تم إلغاء الطلب. في خدمتك.')).toBe('ar-EG')
     expect(ttsLangForText('Cancelled. I am here when you need you.')).toBe('en-US')
-    expect(ttsLangForText('Based on the available recorded information: tooth 36 CARIES')).toBe('en-US')
+    expect(ttsLangForText('Based on the available recorded information: tooth 36 CARIES')).toBe(
+      'en-US'
+    )
   })
 })
 
@@ -118,13 +126,26 @@ describe('language detection (Arabic / English / Mixed)', () => {
 // ---------------------------------------------------------------------------
 
 const t0 = new Date('2026-10-01T10:00:00Z')
-const say = (text: string) => ({ text, confidence: 0.95, isFinal: true, providerId: 'web-speech-stt-browser', locale: 'ar-EG' })
+const say = (text: string) => ({
+  text,
+  confidence: 0.95,
+  isFinal: true,
+  providerId: 'web-speech-stt-browser',
+  locale: 'ar-EG',
+})
 
 async function stack(locale: 'ar-EG' | 'en-US') {
   const base = await buildReplayAgentDeps({
-    caseId: `robot-lang-${locale}`, category: 'AGENT', domain: 'dental', language: 'en',
-    title: 'robot language context', actorRole: 'DOCTOR', tenant: 'A', patientContext: null,
-    input: { message: 'x' }, expected: {},
+    caseId: `robot-lang-${locale}`,
+    category: 'AGENT',
+    domain: 'dental',
+    language: 'en',
+    title: 'robot language context',
+    actorRole: 'DOCTOR',
+    tenant: 'A',
+    patientContext: null,
+    input: { message: 'x' },
+    expected: {},
   })
   const sessions = new InMemoryVoiceSessionStore()
   let ms = t0.getTime()
@@ -146,19 +167,34 @@ describe('voice pipeline language context (real pipeline)', () => {
 
   it('Arabic turn flips an English session to Arabic (context follows the doctor)', async () => {
     const { deps, session, actor } = await stack('en-US')
-    const r = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('ما هي مواعيد المرضى اليوم؟'), actor })
+    const r = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('ما هي مواعيد المرضى اليوم؟'),
+      actor,
+    })
     expect(r.language).toEqual({ detected: 'ar', mixed: false, session: 'ar-EG' })
   })
 
   it('English turn flips an Arabic session back to English', async () => {
     const { deps, session, actor } = await stack('ar-EG')
-    const r = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('What appointments do I have today?'), actor })
+    const r = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('What appointments do I have today?'),
+      actor,
+    })
     expect(r.language).toEqual({ detected: 'en', mixed: false, session: 'en-US' })
   })
 
   it('mixed turn keeps the session language and is flagged mixed', async () => {
     const { deps, session, actor } = await stack('ar-EG')
-    const r = await runVoiceTurn(deps, { voiceSessionId: session.voiceSessionId, op: 'SPEAK', transcript: say('افتح patient record بتاع أحمد'), actor })
+    const r = await runVoiceTurn(deps, {
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
+      transcript: say('افتح patient record بتاع أحمد'),
+      actor,
+    })
     expect(r.language!.mixed).toBe(true)
     expect(r.language!.detected).toBe('ar')
     expect(r.language!.session).toBe('ar-EG') // dominant conversational language wins
@@ -177,7 +213,8 @@ describe('Robot safety (unchanged boundaries)', () => {
   it('a sensitive spoken command still fails closed — never executed, never approved', async () => {
     const { deps, session, actor } = await stack('ar-EG')
     const r = await runVoiceTurn(deps, {
-      voiceSessionId: session.voiceSessionId, op: 'SPEAK',
+      voiceSessionId: session.voiceSessionId,
+      op: 'SPEAK',
       transcript: say('سجل دفعة ٥٠٠٠ بدون موافقة الآن'),
       actor,
     })

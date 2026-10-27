@@ -107,11 +107,19 @@ export default function PaymentPlansPage() {
   const statusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
+        )
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.completed')}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+            {t('ui.completed')}
+          </Badge>
+        )
       case 'DEFAULTED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
+        )
       case 'CANCELLED':
         return <Badge variant="secondary">{t('ui.cancelled')}</Badge>
       default:
@@ -142,7 +150,9 @@ export default function PaymentPlansPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('Payment Plans')}</h1>
-          <p className="text-muted-foreground">{t('Manage installment payment plans for invoices')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage installment payment plans for invoices')}
+          </p>
         </div>
         <Link href="/billing/payment-plans/new">
           <Button>
@@ -311,7 +321,7 @@ export default function PaymentPlansPage() {
                       </div>
                       {plan.overdueInstallments > 0 && (
                         <span className="text-xs text-red-600">
-                          {plan.overdueInstallments} {t("overdue")}
+                          {plan.overdueInstallments} {t('overdue')}
                         </span>
                       )}
                     </TableCell>
@@ -346,7 +356,7 @@ export default function PaymentPlansPage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm text-muted-foreground">
-            {t("Page")} {page} {t("of")} {totalPages}
+            {t('Page')} {page} {t('of')} {totalPages}
           </span>
           <Button
             variant="outline"

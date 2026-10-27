@@ -7,7 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { Pill, User, Calendar, ChevronDown, ChevronUp, FileDown, MessageCircle, Check, Loader2 } from 'lucide-react'
+import {
+  Pill,
+  User,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  FileDown,
+  MessageCircle,
+  Check,
+  Loader2,
+} from 'lucide-react'
 
 interface Prescription {
   id: string
@@ -112,7 +122,7 @@ export default function PatientPrescriptions() {
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <User className="h-3 w-3" />
-                        {t("Dr.")} {rx.doctor.firstName} {rx.doctor.lastName}
+                        {t('Dr.')} {rx.doctor.firstName} {rx.doctor.lastName}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -120,11 +130,15 @@ export default function PatientPrescriptions() {
                       </span>
                     </div>
                     {rx.diagnosis && (
-                      <p className="text-sm text-muted-foreground">{t("Diagnosis:")} {rx.diagnosis}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t('Diagnosis:')} {rx.diagnosis}
+                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{rx.medications.length} {t('meds')}</Badge>
+                    <Badge variant="outline">
+                      {rx.medications.length} {t('meds')}
+                    </Badge>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -178,7 +192,7 @@ export default function PatientPrescriptions() {
                           </p>
                           {item.quantity && (
                             <Badge variant="outline" className="text-xs">
-                              {t("Qty:")} {item.quantity}
+                              {t('Qty:')} {item.quantity}
                             </Badge>
                           )}
                         </div>
@@ -201,7 +215,7 @@ export default function PatientPrescriptions() {
                       <>
                         <Separator />
                         <p className="text-sm text-muted-foreground">
-                          <strong>{t("Notes:")}</strong> {rx.notes}
+                          <strong>{t('Notes:')}</strong> {rx.notes}
                         </p>
                       </>
                     )}

@@ -28,8 +28,14 @@ export interface ProfileDefinition {
   defaultBudget: SectionBudget
 }
 
-const B = (maxRecords: number, maxTextChars = 500, windowDays: number | null = null): SectionBudget => ({
-  maxRecords, maxTextChars, windowDays,
+const B = (
+  maxRecords: number,
+  maxTextChars = 500,
+  windowDays: number | null = null
+): SectionBudget => ({
+  maxRecords,
+  maxTextChars,
+  windowDays,
 })
 
 export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
@@ -51,8 +57,15 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
   },
   CLINICAL: {
     sections: [
-      'identity', 'medical', 'dental', 'appointments', 'clinical',
-      'cases', 'treatments', 'prescriptions', 'risk',
+      'identity',
+      'medical',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+      'risk',
     ],
     budgets: {
       medical: B(1, 300),
@@ -81,7 +94,16 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
     defaultBudget: B(10, 300),
   },
   CASE: {
-    sections: ['identity', 'cases', 'treatments', 'prescriptions', 'clinical', 'imaging', 'appointments', 'dental'],
+    sections: [
+      'identity',
+      'cases',
+      'treatments',
+      'prescriptions',
+      'clinical',
+      'imaging',
+      'appointments',
+      'dental',
+    ],
     budgets: {
       cases: B(3, 400),
       treatments: B(8, 400),
@@ -104,7 +126,16 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
     defaultBudget: B(8, 300),
   },
   TREATMENT: {
-    sections: ['identity', 'treatments', 'cases', 'prescriptions', 'clinical', 'appointments', 'dental', 'imaging'],
+    sections: [
+      'identity',
+      'treatments',
+      'cases',
+      'prescriptions',
+      'clinical',
+      'appointments',
+      'dental',
+      'imaging',
+    ],
     budgets: {
       treatments: B(6, 600),
       cases: B(3, 300),
@@ -131,7 +162,16 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
     // Bounded unified timeline: enough clinical surface to build events,
     // without financial/risk internals (added in Phase 3 for the agent's
     // timeline tool — additive, no other profile changes).
-    sections: ['identity', 'dental', 'appointments', 'clinical', 'cases', 'treatments', 'imaging', 'timeline'],
+    sections: [
+      'identity',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'imaging',
+      'timeline',
+    ],
     budgets: {
       dental: B(32, 150),
       appointments: B(12, 200, 730),
@@ -145,8 +185,18 @@ export const PROFILE_DEFINITIONS: Record<ContextProfile, ProfileDefinition> = {
   },
   FULL_360: {
     sections: [
-      'identity', 'medical', 'dental', 'appointments', 'clinical', 'cases',
-      'treatments', 'prescriptions', 'imaging', 'financial', 'risk', 'timeline',
+      'identity',
+      'medical',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+      'imaging',
+      'financial',
+      'risk',
+      'timeline',
     ],
     budgets: {
       medical: B(1, 300),

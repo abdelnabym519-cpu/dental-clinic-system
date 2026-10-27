@@ -20,7 +20,12 @@ function rt(over = {}) {
     studyId: null,
     treatmentNo: null,
     now: NOW,
-    runAction: async () => ({ status: 'EXECUTED', success: true, message: 'ok', verification: { verified: true, detail: 'verified' } }),
+    runAction: async () => ({
+      status: 'EXECUTED',
+      success: true,
+      message: 'ok',
+      verification: { verified: true, detail: 'verified' },
+    }),
     ...over,
   }
 }
@@ -47,7 +52,11 @@ describe('role pre-filter (§10)', () => {
   })
 
   it('staff can use clinic tools', async () => {
-    const res = await executeTool('get_waiting_queue', {}, rt({ role: 'RECEPTIONIST', patientId: null }))
+    const res = await executeTool(
+      'get_waiting_queue',
+      {},
+      rt({ role: 'RECEPTIONIST', patientId: null })
+    )
     expect(res.ok).toBe(true)
   })
 })
@@ -74,7 +83,11 @@ describe('input validation (§9)', () => {
   })
 
   it('get_appointments rejects malformed dates', async () => {
-    const res = await executeTool('get_appointments', { date: 'not-a-date' }, rt({ patientId: null }))
+    const res = await executeTool(
+      'get_appointments',
+      { date: 'not-a-date' },
+      rt({ patientId: null })
+    )
     expect(res.ok).toBe(false)
     expect(res.error).toContain('TOOL_VALIDATION_ERROR')
   })
@@ -98,11 +111,39 @@ describe('context tools (Phase 2 engine wrapper)', () => {
     expect(res.ok).toBe(true)
     expect(res.data.context.meta.scope.toothFdi).toBe(36)
   })
+
+  it('analyze_attachment accepts PRIMARY tooth scope 51-85 (FDI-52)', async () => {
+    const res = await executeTool(
+      'analyze_attachment',
+      { attachmentId: 'att-1', toothFdi: 51 },
+      rt()
+    )
+    // Validation must not reject a primary tooth. (It may fail later for
+    // unrelated reasons — an attachment-less run — but never on toothFdi.)
+    expect(String(res.error ?? ''), 'primary 51 must pass validation').not.toContain('toothFdi')
+  })
+
+  it('analyze_attachment rejects out-of-schema tooth numbers', async () => {
+    // 19/30/49 were wrongly accepted by the old `11..48` range check;
+    // 56/99 have no index 6-8 in a primary quadrant.
+    for (const bad of [19, 30, 49, 56, 99]) {
+      const res = await executeTool(
+        'analyze_attachment',
+        { attachmentId: 'att-1', toothFdi: bad },
+        rt()
+      )
+      expect(String(res.error ?? ''), `toothFdi ${bad} must be rejected`).toContain('toothFdi')
+    }
+  })
 })
 
 describe('clinic tools (tenant-scoped reads)', () => {
   it('waiting queue: tenant-A rows only, ordered by arrival', async () => {
-    const res = await executeTool('get_waiting_queue', {}, rt({ patientId: null, role: 'RECEPTIONIST' }))
+    const res = await executeTool(
+      'get_waiting_queue',
+      {},
+      rt({ patientId: null, role: 'RECEPTIONIST' })
+    )
     expect(res.ok).toBe(true)
     const q = res.data.queue
     // q2 (10:00) arrived before q1 (11:00)
@@ -112,7 +153,11 @@ describe('clinic tools (tenant-scoped reads)', () => {
 
   it('appointments by date: same-day window, no cross-tenant leak', async () => {
     const today = NOW.toISOString().split('T')[0]
-    const res = await executeTool('get_appointments', { date: today }, rt({ patientId: null, role: 'RECEPTIONIST' }))
+    const res = await executeTool(
+      'get_appointments',
+      { date: today },
+      rt({ patientId: null, role: 'RECEPTIONIST' })
+    )
     const nos = res.data.appointments.map((x) => x.appointmentNo)
     expect(nos).toContain('APPT-A-3003')
     expect(nos).not.toContain('APPT-B-3001') // other tenant, same day
@@ -122,23 +167,39 @@ describe('clinic tools (tenant-scoped reads)', () => {
 
   it('doctor schedule by doctorId', async () => {
     const today = NOW.toISOString().split('T')[0]
-    const res = await executeTool('get_doctor_schedule', { date: today, doctorId: 'staff-doctor-1' }, rt({ patientId: null }))
+    const res = await executeTool(
+      'get_doctor_schedule',
+      { date: today, doctorId: 'staff-doctor-1' },
+      rt({ patientId: null })
+    )
     expect(res.data.appointments.every((a) => a.doctorName === 'Hana Shalaby')).toBe(true)
     expect(res.data.appointments.length).toBeGreaterThan(0)
   })
 
   it('no-date schedule/appointments default to today — never an unbounded all-time list (adversarial finding AD-1)', async () => {
-    const res = await executeTool('get_doctor_schedule', {}, rt({ patientId: null, doctorId: undefined }))
+    const res = await executeTool(
+      'get_doctor_schedule',
+      {},
+      rt({ patientId: null, doctorId: undefined })
+    )
     // only today's rows (base fixture rows are d±10/30/200 — none today)
     expect(res.data.appointments.length).toBeLessThanOrEqual(3)
-    const appts = await executeTool('get_appointments', {}, rt({ patientId: null, role: 'RECEPTIONIST' }))
+    const appts = await executeTool(
+      'get_appointments',
+      {},
+      rt({ patientId: null, role: 'RECEPTIONIST' })
+    )
     const nos = appts.data.appointments.map((x: any) => x.appointmentNo)
     expect(nos).not.toContain('APPT-A-1001') // d(+30)
     expect(nos).not.toContain('APPT-A-1002') // d(-10)
   })
 
   it('follow-ups due: bounded window, patient names, no cross-tenant leak', async () => {
-    const res = await executeTool('get_followup_due', {}, rt({ patientId: null, role: 'RECEPTIONIST' }))
+    const res = await executeTool(
+      'get_followup_due',
+      {},
+      rt({ patientId: null, role: 'RECEPTIONIST' })
+    )
     expect(res.ok).toBe(true)
     const f = res.data.followups
     expect(f.length).toBe(3) // trt-A1 (d+30 boundary), trt-due-1 (d+5), trt-due-2 (d-2 overdue)
@@ -149,7 +210,11 @@ describe('clinic tools (tenant-scoped reads)', () => {
   })
 
   it('tenant B sees only tenant B follow-ups', async () => {
-    const res = await executeTool('get_followup_due', {}, rt({ hospitalId: HOSP_B, patientId: null, role: 'RECEPTIONIST' }))
+    const res = await executeTool(
+      'get_followup_due',
+      {},
+      rt({ hospitalId: HOSP_B, patientId: null, role: 'RECEPTIONIST' })
+    )
     expect(res.data.followups.map((x) => x.treatmentNo)).toEqual(['TRT-B-801'])
   })
 })
@@ -160,21 +225,38 @@ describe('action tools (Phase 1 pipeline only)', () => {
     const r = rt({
       runAction: async (intent, params) => {
         calls.push({ intent, params })
-        return { status: 'APPROVAL_REQUIRED', success: false, message: 'approval needed', approvalId: 'appr-1' }
+        return {
+          status: 'APPROVAL_REQUIRED',
+          success: false,
+          message: 'approval needed',
+          approvalId: 'appr-1',
+        }
       },
     })
     const res = await executeTool('record_payment', { amount: '500' }, r)
     expect(res.ok).toBe(true)
     expect(res.data.status).toBe('APPROVAL_REQUIRED')
-    expect(calls).toEqual([{
-      intent: 'record_payment',
-      params: { amount: '500', patientId: PAT_A1, patientName: 'Ahmed Ali' },
-    }])
+    expect(calls).toEqual([
+      {
+        intent: 'record_payment',
+        params: { amount: '500', patientId: PAT_A1, patientName: 'Ahmed Ali' },
+      },
+    ])
   })
 
   it('maps schedule_followup → book_appointment intent', async () => {
     const calls = []
-    const r = rt({ runAction: async (intent) => { calls.push(intent); return { status: 'EXECUTED', success: true, message: 'ok', verification: { verified: true, detail: 'v' } } } })
+    const r = rt({
+      runAction: async (intent) => {
+        calls.push(intent)
+        return {
+          status: 'EXECUTED',
+          success: true,
+          message: 'ok',
+          verification: { verified: true, detail: 'v' },
+        }
+      },
+    })
     await executeTool('schedule_followup', { date: '2026-10-05', type: 'FOLLOW_UP' }, r)
     expect(calls).toEqual(['book_appointment'])
   })
@@ -200,7 +282,18 @@ describe('timeouts (§14)', () => {
 
 describe('profile → tool mapping', () => {
   it('maps every profile to a registry tool', () => {
-    for (const p of ['MINIMAL', 'PATIENT_OVERVIEW', 'CLINICAL', 'TOOTH', 'CASE', 'IMAGING', 'TREATMENT', 'FOLLOW_UP', 'TIMELINE', 'FULL_360']) {
+    for (const p of [
+      'MINIMAL',
+      'PATIENT_OVERVIEW',
+      'CLINICAL',
+      'TOOTH',
+      'CASE',
+      'IMAGING',
+      'TREATMENT',
+      'FOLLOW_UP',
+      'TIMELINE',
+      'FULL_360',
+    ]) {
       expect(TOOL_REGISTRY[toolNamesByProfile(p)]).toBeDefined()
     }
   })

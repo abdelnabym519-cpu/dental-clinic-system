@@ -48,7 +48,7 @@ describe('Arabic shaping', () => {
     // final-form yeh only when something precedes that can join
     expect(forms('في')).toEqual(['FED3', 'FEF2'])
     const isolated = shapeArabicClusters('و')[0]
-    expect(isolated.codePoint).toBe(0xFEED) // waw never joins forward
+    expect(isolated.codePoint).toBe(0xfeed) // waw never joins forward
   })
 
   it('keeps lam and alef as separate glyphs so the text layer stays exact', () => {
@@ -60,7 +60,10 @@ describe('Arabic shaping', () => {
     // beh(initial) lam(medial — it links beh to alef) alef(final)
     // lam(isolated — alef never joins forward, so nothing links to it).
     expect(shaped.map((c) => c.codePoint.toString(16).toUpperCase())).toEqual([
-      'FE91', 'FEE0', 'FE8E', 'FEDD',
+      'FE91',
+      'FEE0',
+      'FE8E',
+      'FEDD',
     ])
   })
 
@@ -73,7 +76,10 @@ describe('Arabic shaping', () => {
 
 describe('Arabic visual ordering', () => {
   const visual = (text: string) => orderText(shapeArabicClusters(text))
-  const asText = (text: string) => visual(text).visual.map((c) => c.toUnicode).join('')
+  const asText = (text: string) =>
+    visual(text)
+      .visual.map((c) => c.toUnicode)
+      .join('')
 
   it('places right-to-left text so the last logical glyph is leftmost', () => {
     expect(asText('أب')).toBe('بأ')
@@ -107,12 +113,17 @@ describe('embedded font subset', () => {
   it('ships the font asset with its licence', () => {
     const font = readFileSync(join(process.cwd(), 'assets/fonts/NotoNaskhArabic-Regular.ttf'))
     expect(font.length).toBeGreaterThan(50_000)
-    const licence = readFileSync(join(process.cwd(), 'assets/fonts/NotoNaskhArabic-LICENSE.txt'), 'utf8')
+    const licence = readFileSync(
+      join(process.cwd(), 'assets/fonts/NotoNaskhArabic-LICENSE.txt'),
+      'utf8'
+    )
     expect(licence).toContain('SIL OPEN FONT LICENSE')
   })
 
   it('maps every presentation form and the Arabic letters to real glyphs', () => {
-    const subset = subsetFontFor([...'فاتورة المريض أحمد محمود ١٢٥٠'].map((c) => c.codePointAt(0) as number))
+    const subset = subsetFontFor(
+      [...'فاتورة المريض أحمد محمود ١٢٥٠'].map((c) => c.codePointAt(0) as number)
+    )
     for (const codePoint of [0xfe8d, 0xfee0, 0xfed3, 0xfef4, 0x0661]) {
       expect(subset.gidFor(codePoint), codePoint.toString(16)).toBeGreaterThan(0)
     }
@@ -161,7 +172,10 @@ describe('PDF writer — embedded font path', () => {
   })
 
   it('keeps Latin-only documents on core fonts (no font data embedded)', () => {
-    const latin = renderSimplePdf({ title: 'Invoice INV-1001', lines: [{ text: 'Total: EGP 1,600' }] })
+    const latin = renderSimplePdf({
+      title: 'Invoice INV-1001',
+      lines: [{ text: 'Total: EGP 1,600' }],
+    })
     const text = asLatin1(latin)
     expect(text).toContain('/BaseFont /Helvetica')
     expect(text).not.toContain('/FontFile2')
@@ -171,7 +185,8 @@ describe('PDF writer — embedded font path', () => {
   it('extracts back to the exact logical Arabic it was given', async () => {
     // Round-trip through a real PDF parser: glyphs -> ToUnicode -> text.
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(arabic), isEvalSupported: false }).promise
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(arabic), isEvalSupported: false })
+      .promise
     const page = await doc.getPage(1)
     const content = await page.getTextContent()
     const lines = content.items.map((item: { str: string }) => item.str)
@@ -195,8 +210,12 @@ describe('embedded-font detection', () => {
     // are outside Latin-1; `escapePdfText` would turn them into "?", so they
     // go to the embedded font — which the asset covers.
     expect(needsEmbeddedFont('Clinic — 2026-09-22')).toBe(true)
-    const subset = subsetFontFor([0x2014, 0x2013, 0x2022, 0x2018, 0x2019, 0x201c, 0x201d, 0x2026, 0x00d7])
-    for (const codePoint of [0x2014, 0x2013, 0x2022, 0x2018, 0x2019, 0x201c, 0x201d, 0x2026, 0x00d7]) {
+    const subset = subsetFontFor([
+      0x2014, 0x2013, 0x2022, 0x2018, 0x2019, 0x201c, 0x201d, 0x2026, 0x00d7,
+    ])
+    for (const codePoint of [
+      0x2014, 0x2013, 0x2022, 0x2018, 0x2019, 0x201c, 0x201d, 0x2026, 0x00d7,
+    ]) {
       expect(subset.gidFor(codePoint), codePoint.toString(16)).toBeGreaterThan(0)
     }
   })

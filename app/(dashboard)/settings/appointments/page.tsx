@@ -178,12 +178,14 @@ export default function AppointmentSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('Time Slot Configuration')}</CardTitle>
-            <CardDescription>{t('Set default appointment duration and buffer time')}</CardDescription>
+            <CardDescription>
+              {t('Set default appointment duration and buffer time')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="slotDuration">{t("Default Slot Duration (minutes)")}</Label>
+                <Label htmlFor="slotDuration">{t('Default Slot Duration (minutes)')}</Label>
                 <Input
                   id="slotDuration"
                   type="number"
@@ -193,7 +195,9 @@ export default function AppointmentSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="bufferTime">{t("Buffer Time Between Appointments (minutes)")}</Label>
+                <Label htmlFor="bufferTime">
+                  {t('Buffer Time Between Appointments (minutes)')}
+                </Label>
                 <Input
                   id="bufferTime"
                   type="number"
@@ -265,7 +269,7 @@ export default function AppointmentSettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="maxAdvanceBookingDays">{t("Maximum Advance Booking (days)")}</Label>
+                <Label htmlFor="maxAdvanceBookingDays">{t('Maximum Advance Booking (days)')}</Label>
                 <Input
                   id="maxAdvanceBookingDays"
                   type="number"
@@ -280,7 +284,7 @@ export default function AppointmentSettingsPage() {
               </div>
 
               <div>
-                <Label htmlFor="reminderHoursBefore">{t("Reminder Time (hours before)")}</Label>
+                <Label htmlFor="reminderHoursBefore">{t('Reminder Time (hours before)')}</Label>
                 <Input
                   id="reminderHoursBefore"
                   type="number"
@@ -368,7 +372,7 @@ export default function AppointmentSettingsPage() {
         <div className="flex justify-end">
           <Button onClick={handleSaveSettings} disabled={saving} size="lg">
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : t("Save Appointment Settings")}
+            {saving ? 'Saving...' : t('Save Appointment Settings')}
           </Button>
         </div>
       </div>

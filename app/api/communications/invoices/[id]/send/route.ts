@@ -13,10 +13,7 @@ import { buildStorageKey } from '@/lib/storage/keys'
  * POST /api/communications/invoices/[id]/send — invoice via WhatsApp
  * (master prompt 3G). RBAC: ACCOUNTANT, ADMIN. Tenant-scoped.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole(['ACCOUNTANT', 'ADMIN'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -48,8 +45,8 @@ export async function POST(
       translateText(locale, key, vars)
 
     const clinicName =
-      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ??
-      t('Clinic')
+      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))
+        ?.name ?? t('Clinic')
     // Caption values keep the message-template format that 3C–3J pins
     // (plain 2-decimal total, ISO date); the document itself is localized.
     const dateStr = new Date().toISOString().slice(0, 10)
@@ -109,10 +106,7 @@ export async function POST(
       data: { sentViaWhatsApp: true, pdfUrl: storageKey },
     })
 
-    return NextResponse.json(
-      { success: true, queueId, pdfUrl: storageKey },
-      { status: 201 }
-    )
+    return NextResponse.json({ success: true, queueId, pdfUrl: storageKey }, { status: 201 })
   } catch (err) {
     console.error('Error sending invoice:', err)
     return NextResponse.json({ error: 'Failed to queue invoice message' }, { status: 500 })

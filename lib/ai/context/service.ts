@@ -21,17 +21,31 @@
 
 import { prisma } from '@/lib/prisma'
 import {
-  type ClinicalContext, type ContextRequest, type ContextSection, type ContextSectionKey,
-  type ExclusionReason, type Freshness,
+  type ClinicalContext,
+  type ContextRequest,
+  type ContextSection,
+  type ContextSectionKey,
+  type ExclusionReason,
+  type Freshness,
 } from './types'
 import { PROFILE_DEFINITIONS, budgetFor } from './profiles'
 import { canSeeSection, fieldScope } from './permissions'
 import { assertContextContract } from './contract'
 import { freshnessOf, truncateText } from './provenance'
 import {
-  buildAppointments, buildCases, buildClinical, buildDental, buildFinancial,
-  buildImaging, buildPrescriptions, buildRisk, buildTreatments, buildTimeline,
-  buildIdentity, buildMedical, type ResolvedPatient,
+  buildAppointments,
+  buildCases,
+  buildClinical,
+  buildDental,
+  buildFinancial,
+  buildImaging,
+  buildPrescriptions,
+  buildRisk,
+  buildTreatments,
+  buildTimeline,
+  buildIdentity,
+  buildMedical,
+  type ResolvedPatient,
 } from './builders'
 
 // ---------------------------------------------------------------------------
@@ -123,9 +137,18 @@ export async function buildClinicalContext(
   }
 
   const ctx: Record<string, any> = {
-    identity: null, medical: null, dental: null, appointments: null,
-    clinical: null, cases: null, treatments: null, prescriptions: null,
-    imaging: null, financial: null, risk: null, timeline: null,
+    identity: null,
+    medical: null,
+    dental: null,
+    appointments: null,
+    clinical: null,
+    cases: null,
+    treatments: null,
+    prescriptions: null,
+    imaging: null,
+    financial: null,
+    risk: null,
+    timeline: null,
   }
   const excludedList: { section: ContextSectionKey; reason: ExclusionReason }[] = []
   const mark = (section: ContextSectionKey, s: any) => {
@@ -140,7 +163,10 @@ export async function buildClinicalContext(
       mark(s, excluded(s, 'patient_not_found'))
     }
     const meta = metaOf(req, scope, now, excludedList, counter, startedAt, {
-      reason: resolved.reason, id: null, patientId: null, name: null,
+      reason: resolved.reason,
+      id: null,
+      patientId: null,
+      name: null,
     })
     const out = { meta, ...ctx } as ClinicalContext
     assertContextContract(out)
@@ -150,8 +176,13 @@ export async function buildClinicalContext(
   const p = resolved.patient
   const role = req.actor.role
   const baseArgs = {
-    client: db, hospitalId: req.hospitalId, patientId: p.id,
-    role, profile: req.profile, scope, now,
+    client: db,
+    hospitalId: req.hospitalId,
+    patientId: p.id,
+    role,
+    profile: req.profile,
+    scope,
+    now,
   } as const
 
   // Case→treatment link, built from the SAME plan rows the cases section
@@ -170,46 +201,76 @@ export async function buildClinicalContext(
           return mark('identity', included(buildIdentity(p, role), p.createdAt, now))
         case 'medical': {
           const data = buildMedical(p, budget)
-          return mark('medical', data ? included(data, p.medicalHistory?.updatedAt ?? p.medicalHistory?.createdAt, now) : missing())
+          return mark(
+            'medical',
+            data
+              ? included(data, p.medicalHistory?.updatedAt ?? p.medicalHistory?.createdAt, now)
+              : missing()
+          )
         }
         case 'dental': {
           const r = await buildDental(args)
-          return mark('dental', r.data.toothCount === 0 ? missing() : included(r.data, r.latest, now))
+          return mark(
+            'dental',
+            r.data.toothCount === 0 ? missing() : included(r.data, r.latest, now)
+          )
         }
         case 'appointments': {
           const r = await buildAppointments(args)
-          const empty = !r.data.upcoming.length && !r.data.recent.length && !r.data.cancelled.length && !r.data.missed.length
+          const empty =
+            !r.data.upcoming.length &&
+            !r.data.recent.length &&
+            !r.data.cancelled.length &&
+            !r.data.missed.length
           return mark('appointments', empty ? missing() : included(r.data, r.latest, now))
         }
         case 'clinical': {
           const r = await buildClinical(args)
-          const empty = !r.data.notes.length && !r.data.examinations.length && !r.data.followUpNotes.length
+          const empty =
+            !r.data.notes.length && !r.data.examinations.length && !r.data.followUpNotes.length
           return mark('clinical', empty ? missing() : included(r.data, r.latest, now))
         }
         case 'cases': {
           const r = await buildCases(args, fieldScope(role, 'cases'))
           caseIdByAppointment = new Map(
-            r.planRows.filter((pl) => pl.appointmentId).map((pl) => [pl.appointmentId as string, pl.id])
+            r.planRows
+              .filter((pl) => pl.appointmentId)
+              .map((pl) => [pl.appointmentId as string, pl.id])
           )
-          return mark('cases', r.data.plans.length === 0 ? missing() : included(r.data, r.latest, now))
+          return mark(
+            'cases',
+            r.data.plans.length === 0 ? missing() : included(r.data, r.latest, now)
+          )
         }
         case 'treatments': {
           const r = await buildTreatments(args, fieldScope(role, 'treatments'), caseIdByAppointment)
-          return mark('treatments', r.data.treatments.length === 0 ? missing() : included(r.data, r.latest, now))
+          return mark(
+            'treatments',
+            r.data.treatments.length === 0 ? missing() : included(r.data, r.latest, now)
+          )
         }
         case 'prescriptions': {
           const r = await buildPrescriptions(args)
-          return mark('prescriptions', r.data.prescriptions.length === 0 ? missing() : included(r.data, r.latest, now))
+          return mark(
+            'prescriptions',
+            r.data.prescriptions.length === 0 ? missing() : included(r.data, r.latest, now)
+          )
         }
         case 'imaging': {
           const r = await buildImaging(args)
-          return mark('imaging', r.data.studies.length === 0 ? missing() : included(r.data, r.latest, now))
+          return mark(
+            'imaging',
+            r.data.studies.length === 0 ? missing() : included(r.data, r.latest, now)
+          )
         }
         case 'financial': {
           const r = await buildFinancial(args)
-          return mark('financial', r.data.openInvoices.length === 0
-            ? included({ ...r.data, openBalance: 0 }, r.latest, now)
-            : included(r.data, r.latest, now))
+          return mark(
+            'financial',
+            r.data.openInvoices.length === 0
+              ? included({ ...r.data, openBalance: 0 }, r.latest, now)
+              : included(r.data, r.latest, now)
+          )
         }
         case 'risk': {
           const r = await buildRisk(args)
@@ -224,29 +285,62 @@ export async function buildClinicalContext(
     } catch (err) {
       // A section failing must not silently look like "no data" — fail closed
       // for the whole context (the AI must not receive partial truth).
-      throw new Error(`context section ${key} failed: ${err instanceof Error ? err.message : 'unknown'}`)
+      throw new Error(
+        `context section ${key} failed: ${err instanceof Error ? err.message : 'unknown'}`
+      )
     }
   }
 
   // Build every non-timeline section (independent; sequential keeps query
   // accounting deterministic — the count is bounded and constant per profile).
   const keys: ContextSectionKey[] = [
-    'identity', 'medical', 'dental', 'appointments', 'clinical', 'cases',
-    'treatments', 'prescriptions', 'imaging', 'financial', 'risk',
+    'identity',
+    'medical',
+    'dental',
+    'appointments',
+    'clinical',
+    'cases',
+    'treatments',
+    'prescriptions',
+    'imaging',
+    'financial',
+    'risk',
   ]
   for (const k of keys) await buildSection(k)
 
   // ── Complaints enrichment (chief complaints from fetched rows) ─────────
   if (ctx.clinical?.status === 'included') {
-    const complaints: { text: string | null; from: 'appointment' | 'treatment' | 'treatment_plan'; at: string }[] = []
-    for (const a of [...ctx.appointments?.data?.upcoming ?? [], ...ctx.appointments?.data?.recent ?? []]) {
-      if (a.chiefComplaint) complaints.push({ text: truncateText(a.chiefComplaint, 200), from: 'appointment', at: a.scheduledAt })
+    const complaints: {
+      text: string | null
+      from: 'appointment' | 'treatment' | 'treatment_plan'
+      at: string
+    }[] = []
+    for (const a of [
+      ...(ctx.appointments?.data?.upcoming ?? []),
+      ...(ctx.appointments?.data?.recent ?? []),
+    ]) {
+      if (a.chiefComplaint)
+        complaints.push({
+          text: truncateText(a.chiefComplaint, 200),
+          from: 'appointment',
+          at: a.scheduledAt,
+        })
     }
     for (const t of ctx.treatments?.data?.treatments ?? []) {
-      if (t.chiefComplaint) complaints.push({ text: truncateText(t.chiefComplaint, 200), from: 'treatment', at: t.startedAt ?? t.provenance.timestamp ?? '' })
+      if (t.chiefComplaint)
+        complaints.push({
+          text: truncateText(t.chiefComplaint, 200),
+          from: 'treatment',
+          at: t.startedAt ?? t.provenance.timestamp ?? '',
+        })
     }
     for (const c of ctx.cases?.data?.plans ?? []) {
-      if (c.chiefComplaint) complaints.push({ text: truncateText(c.chiefComplaint, 200), from: 'treatment_plan', at: c.provenance.timestamp ?? '' })
+      if (c.chiefComplaint)
+        complaints.push({
+          text: truncateText(c.chiefComplaint, 200),
+          from: 'treatment_plan',
+          at: c.provenance.timestamp ?? '',
+        })
     }
     ctx.clinical.data.complaints = complaints.slice(0, 5)
   }
@@ -256,7 +350,12 @@ export async function buildClinicalContext(
     const budget = budgetFor(req.profile, 'timeline')
     const t = buildTimeline(
       {
-        appointments: [...(ctx.appointments?.data?.upcoming ?? []), ...(ctx.appointments?.data?.recent ?? []), ...(ctx.appointments?.data?.cancelled ?? []), ...(ctx.appointments?.data?.missed ?? [])],
+        appointments: [
+          ...(ctx.appointments?.data?.upcoming ?? []),
+          ...(ctx.appointments?.data?.recent ?? []),
+          ...(ctx.appointments?.data?.cancelled ?? []),
+          ...(ctx.appointments?.data?.missed ?? []),
+        ],
         dental: ctx.dental?.data,
         clinical: ctx.clinical?.data,
         treatments: ctx.treatments?.data?.treatments,
@@ -267,11 +366,17 @@ export async function buildClinicalContext(
     )
     mark('timeline', t.data.events.length === 0 ? missing() : included(t.data, t.latest, now))
   } else {
-    mark('timeline', excluded('timeline', !sections.has('timeline') ? 'not_in_profile' : 'not_permitted'))
+    mark(
+      'timeline',
+      excluded('timeline', !sections.has('timeline') ? 'not_in_profile' : 'not_permitted')
+    )
   }
 
   const meta = metaOf(req, scope, now, excludedList, counter, startedAt, {
-    reason: 'ok', id: p.id, patientId: p.patientId, name: `${p.firstName} ${p.lastName}`,
+    reason: 'ok',
+    id: p.id,
+    patientId: p.patientId,
+    name: `${p.firstName} ${p.lastName}`,
   })
   const out = { meta, ...ctx } as ClinicalContext
   assertContextContract(out)
@@ -280,7 +385,12 @@ export async function buildClinicalContext(
 
 function metaOf(
   req: ContextRequest,
-  scope: { toothFdi: number | null; caseId: string | null; studyId: string | null; treatmentNo: string | null },
+  scope: {
+    toothFdi: number | null
+    caseId: string | null
+    studyId: string | null
+    treatmentNo: string | null
+  },
   now: Date,
   excludedList: { section: ContextSectionKey; reason: ExclusionReason }[],
   counter: { n: number },

@@ -49,7 +49,7 @@ export async function GET(req: Request) {
           status: r.status,
           requestReason: r.requestReason,
           blockReason: r.blockReason,
-          patient: r.patientId ? patients[r.patientId] ?? null : null,
+          patient: r.patientId ? (patients[r.patientId] ?? null) : null,
           requestedById: r.requestedById,
           requestedByName: names[r.requestedById] ?? null,
           requestedAt: r.createdAt,
@@ -61,9 +61,13 @@ export async function GET(req: Request) {
           error: r.error,
           // Client-side affordances (server re-checks everything on POST).
           canApprove:
-            pending && (policy?.approvalRoles ?? []).includes(user.role) && user.id !== r.requestedById,
+            pending &&
+            (policy?.approvalRoles ?? []).includes(user.role) &&
+            user.id !== r.requestedById,
           canReject:
-            pending && (policy?.approvalRoles ?? []).includes(user.role) && user.id !== r.requestedById,
+            pending &&
+            (policy?.approvalRoles ?? []).includes(user.role) &&
+            user.id !== r.requestedById,
           canCancel: pending && user.id === r.requestedById,
           canExecute:
             r.status === 'APPROVED' &&
@@ -74,9 +78,6 @@ export async function GET(req: Request) {
     })
   } catch (err) {
     console.error('list AI approvals failed:', err instanceof Error ? err.message : err)
-    return NextResponse.json(
-      { error: 'AI action safety layer is not available' },
-      { status: 503 }
-    )
+    return NextResponse.json({ error: 'AI action safety layer is not available' }, { status: 503 })
   }
 }

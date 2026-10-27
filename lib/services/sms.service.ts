@@ -151,7 +151,9 @@ class SMSService {
   }
 
   /** Vodafone Egypt Business SMS. */
-  private async sendViaVodafone(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
+  private async sendViaVodafone(
+    payload: SMSPayload
+  ): Promise<{ messageId: string; cost?: number }> {
     const url = 'https://api.vodafone.com.eg/sms/v1/send'
 
     const response = await fetch(url, {
@@ -180,7 +182,9 @@ class SMSService {
   }
 
   /** Etisalat Egypt Business SMS. */
-  private async sendViaEtisalat(payload: SMSPayload): Promise<{ messageId: string; cost?: number }> {
+  private async sendViaEtisalat(
+    payload: SMSPayload
+  ): Promise<{ messageId: string; cost?: number }> {
     const url = 'https://api.etisalat.com.eg/sms/v1/send'
 
     const response = await fetch(url, {
@@ -290,7 +294,11 @@ class SMSService {
     const now = new Date()
     // Hour of day in Africa/Cairo (UTC+2, UTC+3 during DST)
     const cairoHour = parseInt(
-      new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Cairo', hour: 'numeric', hour12: false }).format(now),
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Cairo',
+        hour: 'numeric',
+        hour12: false,
+      }).format(now),
       10
     )
 

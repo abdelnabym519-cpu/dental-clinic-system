@@ -59,7 +59,11 @@ const SEGMENT_FINDING_SCHEMA = z.object({
 // is permissive across engines by design: this endpoint validates STRUCTURE
 // (finite numbers, bounded ids, non-negative counts), and the per-engine
 // validation already ran when the job completed.
-const FINDING_SCHEMA = z.union([BOX_FINDING_SCHEMA, LANDMARK_FINDING_SCHEMA, SEGMENT_FINDING_SCHEMA])
+const FINDING_SCHEMA = z.union([
+  BOX_FINDING_SCHEMA,
+  LANDMARK_FINDING_SCHEMA,
+  SEGMENT_FINDING_SCHEMA,
+])
 
 const REVIEW_SCHEMA = z.object({
   decision: z.enum(['ACCEPTED', 'MODIFIED', 'REJECTED']),
@@ -67,10 +71,7 @@ const REVIEW_SCHEMA = z.object({
   reviewNotes: z.string().max(2000).optional(),
 })
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, user, hospitalId } = await requireAuthAndRole(['DOCTOR', 'ADMIN'])
 
   if (error || !user || !hospitalId) {
@@ -131,7 +132,6 @@ export async function POST(
       // the two assignments above are validated findings arrays (doctor-corrected
       // payloads pass the shape validation earlier in this handler)
       acceptedFindings: (acceptedFindings ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-
     },
   })
 

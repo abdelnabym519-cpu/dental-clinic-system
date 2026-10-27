@@ -111,7 +111,9 @@ function AcceptInviteContent() {
         toast({
           variant: 'destructive',
           title: t('Error'),
-          description: result.error ? t(result.error) : t('Something went wrong. Please try again.'),
+          description: result.error
+            ? t(result.error)
+            : t('Something went wrong. Please try again.'),
         })
       }
     } catch {
@@ -177,7 +179,7 @@ function AcceptInviteContent() {
           </div>
           <CardTitle className="text-2xl font-bold">{t('Welcome Aboard!')}</CardTitle>
           <CardDescription>
-            {t("Your account has been created successfully. You can now log in to")}{' '}
+            {t('Your account has been created successfully. You can now log in to')}{' '}
             {inviteData?.hospitalName}.
           </CardDescription>
         </CardHeader>
@@ -198,7 +200,9 @@ function AcceptInviteContent() {
             <UserPlus className="h-6 w-6" />
           </div>
         </div>
-        <CardTitle className="text-2xl font-bold">{t("Join")} {inviteData?.hospitalName}</CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          {t('Join')} {inviteData?.hospitalName}
+        </CardTitle>
         <CardDescription>
           {t("You've been invited to join as a")}{' '}
           <Badge variant="secondary">{formatRole(inviteData?.role || '')}</Badge>
@@ -208,11 +212,11 @@ function AcceptInviteContent() {
         <div className="mb-6 p-4 bg-muted rounded-lg">
           <div className="text-sm space-y-1">
             <p>
-              <span className="text-muted-foreground">{t("Name:")}</span>{' '}
+              <span className="text-muted-foreground">{t('Name:')}</span>{' '}
               <span className="font-medium">{inviteData?.name}</span>
             </p>
             <p>
-              <span className="text-muted-foreground">{t("Email:")}</span>{' '}
+              <span className="text-muted-foreground">{t('Email:')}</span>{' '}
               <span className="font-medium">{inviteData?.email}</span>
             </p>
           </div>
@@ -261,7 +265,7 @@ function AcceptInviteContent() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("Create Account")}
+            {t('Create Account')}
           </Button>
         </form>
 

@@ -94,12 +94,14 @@ export default function SuppliersPage() {
           <Link
             href="/inventory"
             className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
-          >{t('ui.back_to_inventory')}</Link>
+          >
+            {t('ui.back_to_inventory')}
+          </Link>
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
           >
-            {t("+ Add Supplier")}
+            {t('+ Add Supplier')}
           </button>
         </div>
       </div>
@@ -140,17 +142,33 @@ export default function SuppliersPage() {
               <table className="min-w-full divide-y divide-border">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.code')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.name')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.contact_person')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.phone')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.email')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.status')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.items')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.code')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.name')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.contact_person')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.phone')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.email')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.status')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.items')}
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {t('Total Business')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('ui.actions')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t('ui.actions')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-background divide-y divide-border">
@@ -184,11 +202,15 @@ export default function SuppliersPage() {
                         <Link
                           href={`/inventory/suppliers/${supplier.id}`}
                           className="text-blue-600 hover:text-blue-900 mr-3"
-                        >{t('ui.view')}</Link>
+                        >
+                          {t('ui.view')}
+                        </Link>
                         <Link
                           href={`/inventory/suppliers/${supplier.id}/edit`}
                           className="text-indigo-600 hover:text-indigo-900"
-                        >{t('ui.edit')}</Link>
+                        >
+                          {t('ui.edit')}
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -200,9 +222,11 @@ export default function SuppliersPage() {
             <div className="bg-background px-4 py-3 flex items-center justify-between border-t border-border sm:px-6">
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-foreground">{t('ui.showing_page')}<span className="font-medium">{pagination.page}</span> {t("of")}{' '}
+                  <p className="text-sm text-foreground">
+                    {t('ui.showing_page')}
+                    <span className="font-medium">{pagination.page}</span> {t('of')}{' '}
                     <span className="font-medium">{pagination.pages}</span> ({pagination.total}{' '}
-                    {t("total suppliers)")}
+                    {t('total suppliers)')}
                   </p>
                 </div>
                 <div>
@@ -211,12 +235,16 @@ export default function SuppliersPage() {
                       onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
                       disabled={pagination.page === 1}
                       className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >{t('ui.previous')}</button>
+                    >
+                      {t('ui.previous')}
+                    </button>
                     <button
                       onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
                       disabled={pagination.page === pagination.pages}
                       className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted/50 disabled:opacity-50"
-                    >{t('ui.next')}</button>
+                    >
+                      {t('ui.next')}
+                    </button>
                   </nav>
                 </div>
               </div>
@@ -231,12 +259,16 @@ export default function SuppliersPage() {
           <div className="bg-background rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">{t('Add New Supplier')}</h2>
             <p className="text-muted-foreground mb-4">
-              {t("Supplier form will be implemented here. For now, please use the API directly or create a dedicated page.")}
+              {t(
+                'Supplier form will be implemented here. For now, please use the API directly or create a dedicated page.'
+              )}
             </p>
             <button
               onClick={() => setShowAddModal(false)}
               className="px-4 py-2 bg-muted-foreground text-background rounded-lg hover:bg-muted-foreground/80"
-            >{t('ui.close')}</button>
+            >
+              {t('ui.close')}
+            </button>
           </div>
         </div>
       )}

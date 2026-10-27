@@ -8,10 +8,7 @@ import { cancelQueuedMessage, retryQueuedMessage } from '@/lib/messaging/service
  * - cancel: PENDING → CANCELLED
  * - retry:  FAILED → PENDING (attempts reset, scheduled now)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId } = await requireAuthAndRole(['ADMIN'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

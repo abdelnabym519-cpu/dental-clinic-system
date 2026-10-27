@@ -8,7 +8,13 @@
  * a content-curation concern outside this harness.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
-import { loadSuiteDatasets, evaluateDataset, assertNoFailures, createInMemoryKnowledgeStore, SEED_KNOWLEDGE } from './harness'
+import {
+  loadSuiteDatasets,
+  evaluateDataset,
+  assertNoFailures,
+  createInMemoryKnowledgeStore,
+  SEED_KNOWLEDGE,
+} from './harness'
 import { gateReport, pass, fail, type EvalCheck } from '@/lib/ai/evaluation'
 import { KNOWLEDGE_DOMAINS } from '@/lib/ai/knowledge/taxonomy'
 
@@ -56,7 +62,9 @@ describe('CLINICAL knowledge-domain golden replay (Gate D)', () => {
 
   it('gate D (clinical behavior) verdict', () => {
     const gateChecks: EvalCheck[] = [
-      checks.length > 0 ? pass('D.clinical-behavior', `${results.length} domain cases, ${checks.length} checks`) : fail('D.clinical-behavior', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
+      checks.length > 0
+        ? pass('D.clinical-behavior', `${results.length} domain cases, ${checks.length} checks`)
+        : fail('D.clinical-behavior', 'EVAL_CONTRACT_MISMATCH', 'no checks'),
     ]
     const report = gateReport('D_RAG', gateChecks)
     expect(report.verdict).toBe('PASS')

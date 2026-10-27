@@ -14,7 +14,12 @@ export const WORKFLOW_CASE_REVIEW: WorkflowDefinition = {
   version: 1,
   nameKey: 'wf.caseReview.name',
   allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST'],
-  allowedTools: ['get_followup_context', 'get_clinical_context', 'search_knowledge', 'get_attachment_analysis'],
+  allowedTools: [
+    'get_followup_context',
+    'get_clinical_context',
+    'search_knowledge',
+    'get_attachment_analysis',
+  ],
   maxSteps: 9,
   maxToolCalls: 8,
   timeoutMs: 30_000,
@@ -25,14 +30,33 @@ export const WORKFLOW_CASE_REVIEW: WorkflowDefinition = {
   audit: { action: 'AI_WORKFLOW_CASE_REVIEW' },
   steps: [
     { id: 'resolve_patient', kind: 'RESOLVE_PATIENT', titleKey: 'wf.step.resolvePatient' },
-    { id: 'build_case_graph', kind: 'BUILD_CASE_GRAPH', titleKey: 'wf.step.buildCaseGraph', usesTool: 'get_clinical_context' },
+    {
+      id: 'build_case_graph',
+      kind: 'BUILD_CASE_GRAPH',
+      titleKey: 'wf.step.buildCaseGraph',
+      usesTool: 'get_clinical_context',
+    },
     { id: 'retrieve_memory', kind: 'RETRIEVE_MEMORY', titleKey: 'wf.step.retrieveMemory' },
     { id: 'retrieve_imaging', kind: 'RETRIEVE_IMAGING', titleKey: 'wf.step.retrieveImaging' },
-    { id: 'retrieve_ai_findings', kind: 'RETRIEVE_AI_FINDINGS', titleKey: 'wf.step.retrieveAiFindings', usesTool: 'get_attachment_analysis' },
-    { id: 'retrieve_knowledge', kind: 'RETRIEVE_KNOWLEDGE', titleKey: 'wf.step.retrieveKnowledge', usesTool: 'search_knowledge' },
+    {
+      id: 'retrieve_ai_findings',
+      kind: 'RETRIEVE_AI_FINDINGS',
+      titleKey: 'wf.step.retrieveAiFindings',
+      usesTool: 'get_attachment_analysis',
+    },
+    {
+      id: 'retrieve_knowledge',
+      kind: 'RETRIEVE_KNOWLEDGE',
+      titleKey: 'wf.step.retrieveKnowledge',
+      usesTool: 'search_knowledge',
+    },
     { id: 'summarize', kind: 'SUMMARIZE', titleKey: 'wf.step.summarize' },
     { id: 'identify_missing', kind: 'IDENTIFY_MISSING', titleKey: 'wf.step.identifyMissing' },
-    { id: 'build_review_package', kind: 'BUILD_REVIEW_PACKAGE', titleKey: 'wf.step.buildReviewPackage' },
+    {
+      id: 'build_review_package',
+      kind: 'BUILD_REVIEW_PACKAGE',
+      titleKey: 'wf.step.buildReviewPackage',
+    },
   ],
 }
 
@@ -57,11 +81,30 @@ export const WORKFLOW_IMAGING_REVIEW: WorkflowDefinition = {
   audit: { action: 'AI_WORKFLOW_IMAGING_REVIEW' },
   steps: [
     { id: 'resolve_patient', kind: 'RESOLVE_PATIENT', titleKey: 'wf.step.resolvePatient' },
-    { id: 'retrieve_imaging', kind: 'RETRIEVE_IMAGING', titleKey: 'wf.step.retrieveImaging', usesTool: 'get_attachment_analysis' },
-    { id: 'retrieve_ai_findings', kind: 'RETRIEVE_AI_FINDINGS', titleKey: 'wf.step.retrieveAiFindings', usesTool: 'get_attachment_analysis' },
+    {
+      id: 'retrieve_imaging',
+      kind: 'RETRIEVE_IMAGING',
+      titleKey: 'wf.step.retrieveImaging',
+      usesTool: 'get_attachment_analysis',
+    },
+    {
+      id: 'retrieve_ai_findings',
+      kind: 'RETRIEVE_AI_FINDINGS',
+      titleKey: 'wf.step.retrieveAiFindings',
+      usesTool: 'get_attachment_analysis',
+    },
     { id: 'validate_output', kind: 'IDENTIFY_MISSING', titleKey: 'wf.step.validateOutput' },
-    { id: 'build_review_package', kind: 'BUILD_REVIEW_PACKAGE', titleKey: 'wf.step.clinicianReview' },
-    { id: 'create_finding', kind: 'PROPOSE_ACTION', titleKey: 'wf.step.createFinding', usesTool: 'create_finding' },
+    {
+      id: 'build_review_package',
+      kind: 'BUILD_REVIEW_PACKAGE',
+      titleKey: 'wf.step.clinicianReview',
+    },
+    {
+      id: 'create_finding',
+      kind: 'PROPOSE_ACTION',
+      titleKey: 'wf.step.createFinding',
+      usesTool: 'create_finding',
+    },
   ],
 }
 
@@ -85,10 +128,29 @@ export const WORKFLOW_FOLLOW_UP: WorkflowDefinition = {
   audit: { action: 'AI_WORKFLOW_FOLLOW_UP' },
   steps: [
     { id: 'resolve_patient', kind: 'RESOLVE_PATIENT', titleKey: 'wf.step.resolvePatient' },
-    { id: 'build_case_graph', kind: 'BUILD_CASE_GRAPH', titleKey: 'wf.step.buildCaseGraph', usesTool: 'get_clinical_context' },
-    { id: 'determine_state', kind: 'DETERMINE_FOLLOW_UP_STATE', titleKey: 'wf.step.determineFollowUpState', usesTool: 'get_followup_context' },
-    { id: 'prepare_recommendation', kind: 'PREPARE_RECOMMENDATION', titleKey: 'wf.step.prepareRecommendation' },
-    { id: 'propose_action', kind: 'PROPOSE_ACTION', titleKey: 'wf.step.proposeAction', usesTool: 'schedule_followup' },
+    {
+      id: 'build_case_graph',
+      kind: 'BUILD_CASE_GRAPH',
+      titleKey: 'wf.step.buildCaseGraph',
+      usesTool: 'get_clinical_context',
+    },
+    {
+      id: 'determine_state',
+      kind: 'DETERMINE_FOLLOW_UP_STATE',
+      titleKey: 'wf.step.determineFollowUpState',
+      usesTool: 'get_followup_context',
+    },
+    {
+      id: 'prepare_recommendation',
+      kind: 'PREPARE_RECOMMENDATION',
+      titleKey: 'wf.step.prepareRecommendation',
+    },
+    {
+      id: 'propose_action',
+      kind: 'PROPOSE_ACTION',
+      titleKey: 'wf.step.proposeAction',
+      usesTool: 'schedule_followup',
+    },
     { id: 'verify', kind: 'BUILD_REVIEW_PACKAGE', titleKey: 'wf.step.verifyAudit' },
   ],
 }
@@ -108,13 +170,34 @@ export const WORKFLOW_DAILY_CLINIC: WorkflowDefinition = {
   verificationRequired: true,
   audit: { action: 'AI_WORKFLOW_DAILY_CLINIC' },
   steps: [
-    { id: 'load_clinic_state', kind: 'LOAD_CLINIC_STATE', titleKey: 'wf.step.loadClinicState', usesTool: 'get_clinical_context' },
+    {
+      id: 'load_clinic_state',
+      kind: 'LOAD_CLINIC_STATE',
+      titleKey: 'wf.step.loadClinicState',
+      usesTool: 'get_clinical_context',
+    },
     { id: 'identify_pending', kind: 'RANK_DETERMINISTIC', titleKey: 'wf.step.identifyPending' },
-    { id: 'identify_bottlenecks', kind: 'RANK_DETERMINISTIC', titleKey: 'wf.step.identifyBottlenecks' },
-    { id: 'identify_review_required', kind: 'RANK_DETERMINISTIC', titleKey: 'wf.step.identifyReviewRequired' },
+    {
+      id: 'identify_bottlenecks',
+      kind: 'RANK_DETERMINISTIC',
+      titleKey: 'wf.step.identifyBottlenecks',
+    },
+    {
+      id: 'identify_review_required',
+      kind: 'RANK_DETERMINISTIC',
+      titleKey: 'wf.step.identifyReviewRequired',
+    },
     { id: 'rank_severity', kind: 'RANK_DETERMINISTIC', titleKey: 'wf.step.rankSeverity' },
-    { id: 'generate_explanation', kind: 'GENERATE_EXPLANATION', titleKey: 'wf.step.generateExplanation' },
-    { id: 'present_command_center', kind: 'BUILD_REVIEW_PACKAGE', titleKey: 'wf.step.presentCommandCenter' },
+    {
+      id: 'generate_explanation',
+      kind: 'GENERATE_EXPLANATION',
+      titleKey: 'wf.step.generateExplanation',
+    },
+    {
+      id: 'present_command_center',
+      kind: 'BUILD_REVIEW_PACKAGE',
+      titleKey: 'wf.step.presentCommandCenter',
+    },
   ],
 }
 

@@ -14,10 +14,7 @@ import { buildStorageKey } from '@/lib/storage/keys'
  * document. RBAC: ADMIN + ACCOUNTANT (RECEPTIONIST creates and takes cash,
  * per the billing RBAC matrix).
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId, session } = await requireAuthAndRole(['ADMIN', 'ACCOUNTANT'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -36,10 +33,7 @@ export async function POST(
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
     if (invoice.status !== 'DRAFT') {
-      return NextResponse.json(
-        { error: 'Only DRAFT invoices can be issued' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Only DRAFT invoices can be issued' }, { status: 409 })
     }
 
     const hospital = await prisma.hospital.findUnique({
@@ -87,9 +81,6 @@ export async function POST(
     )
   } catch (err: unknown) {
     console.error('Error issuing invoice:', err)
-    return NextResponse.json(
-      { error: 'Failed to issue invoice' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to issue invoice' }, { status: 500 })
   }
 }

@@ -13,7 +13,14 @@
  *  - every rendered item carries provenance (trust + source + validFrom)
  */
 
-import { MEMORY_LIMITS, type MemoryBlock, type MemoryBlockItem, type MemoryItem, type MemoryQuery, type MemoryTrust } from './types'
+import {
+  MEMORY_LIMITS,
+  type MemoryBlock,
+  type MemoryBlockItem,
+  type MemoryItem,
+  type MemoryQuery,
+  type MemoryTrust,
+} from './types'
 
 export function renderValue(value: unknown): string {
   if (typeof value === 'string') return value
@@ -47,7 +54,10 @@ export function renderItem(item: MemoryItem): { rendered: string; candidate: boo
  */
 export function retrieveMemory(rows: MemoryItem[], q: MemoryQuery): MemoryBlock {
   const maxItems = Math.min(q.maxItems ?? MEMORY_LIMITS.defaultMaxItems, MEMORY_LIMITS.hardMaxItems)
-  const budgetChars = Math.min(q.maxChars ?? MEMORY_LIMITS.defaultMaxChars, MEMORY_LIMITS.hardMaxChars)
+  const budgetChars = Math.min(
+    q.maxChars ?? MEMORY_LIMITS.defaultMaxChars,
+    MEMORY_LIMITS.hardMaxChars
+  )
 
   const eligible = q.includeCandidate
     ? rows
@@ -105,9 +115,15 @@ export function retrieveMemory(rows: MemoryItem[], q: MemoryQuery): MemoryBlock 
 export function serializeMemoryBlock(block: MemoryBlock): string {
   if (block.items.length === 0) return ''
   const lines = block.items.map((i) => i.rendered)
-  const note = block.candidateCount > 0
-    ? ` (${block.candidateCount} unverified candidate(s) — never for clinical decisions)`
+  const note =
+    block.candidateCount > 0
+      ? ` (${block.candidateCount} unverified candidate(s) — never for clinical decisions)`
+      : ''
+  const more = block.truncated
+    ? ` [truncated: ${block.totalMatched} matched, ${block.items.length} shown]`
     : ''
-  const more = block.truncated ? ` [truncated: ${block.totalMatched} matched, ${block.items.length} shown]` : ''
-  return `MEMORY (provenance-labeled context — not the medical record):${note}${more}\n` + lines.join('\n')
+  return (
+    `MEMORY (provenance-labeled context — not the medical record):${note}${more}\n` +
+    lines.join('\n')
+  )
 }

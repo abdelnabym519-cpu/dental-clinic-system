@@ -48,7 +48,7 @@ function defaultExpiry(domain: string): Date | null {
 function err(code: string, message: string, status: number) {
   return NextResponse.json(
     { error: { code, messageKey: ERROR_KEYS[code] ?? 'aiMemory.error.invalid', message } },
-    { status },
+    { status }
   )
 }
 
@@ -74,7 +74,7 @@ const MESSAGES: Record<string, string> = {
 async function resolveScope(
   hospitalId: string,
   user: { id: string; role: string },
-  body: Record<string, unknown>,
+  body: Record<string, unknown>
 ): Promise<{
   domain: string
   doctorId: string | null
@@ -83,7 +83,8 @@ async function resolveScope(
   conversationId: string | null
 } | null> {
   const domain = typeof body.domain === 'string' ? body.domain : null
-  if (!domain || !['CLINIC', 'DOCTOR', 'PATIENT', 'CASE', 'CONVERSATION'].includes(domain)) return null
+  if (!domain || !['CLINIC', 'DOCTOR', 'PATIENT', 'CASE', 'CONVERSATION'].includes(domain))
+    return null
   const str = (v: unknown) => (typeof v === 'string' && v ? v : null)
 
   if (user.role === 'PATIENT') {
@@ -104,7 +105,9 @@ async function resolveScope(
         where: { hospitalId, id: cid, userId: user.id },
         select: { id: true },
       })
-      return conv ? { domain, doctorId: null, patientId: null, caseId: null, conversationId: cid } : null
+      return conv
+        ? { domain, doctorId: null, patientId: null, caseId: null, conversationId: cid }
+        : null
     }
     return null
   }
@@ -182,7 +185,11 @@ export async function POST(req: Request) {
         const writeClass = typeof body.writeClass === 'string' ? body.writeClass : null
         const sourceKind = typeof body.sourceKind === 'string' ? body.sourceKind : null
         if (!key || value === undefined || !memoryType || !writeClass || !sourceKind) {
-          return err('MEMORY_CONTENT_INVALID', 'key, value, memoryType, writeClass, sourceKind required', 400)
+          return err(
+            'MEMORY_CONTENT_INVALID',
+            'key, value, memoryType, writeClass, sourceKind required',
+            400
+          )
         }
         // Only USER_CONFIRMED is ever allowed through a user API — the
         // doctor/system classes need their own trust flows, and CANDIDATE
@@ -212,14 +219,16 @@ export async function POST(req: Request) {
         const id = typeof body.id === 'string' ? body.id : null
         const value = body.value
         const reason = typeof body.reason === 'string' && body.reason ? body.reason : null
-        if (!id || value === undefined) return err('MEMORY_CONTENT_INVALID', 'id and value required', 400)
+        if (!id || value === undefined)
+          return err('MEMORY_CONTENT_INVALID', 'id and value required', 400)
         const old = await store.getActive(id, hospitalId)
         if (!old) return err('MEMORY_NOT_FOUND', 'not found', 404)
         // Doctor-confirmed correction (the only trust-UP path a user may
         // take here); a same-trust correction keeps the actor's class.
-        const writeClass = user.role === 'DOCTOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
-          ? 'DOCTOR_CONFIRMED'
-          : 'USER_CONFIRMED'
+        const writeClass =
+          user.role === 'DOCTOR' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
+            ? 'DOCTOR_CONFIRMED'
+            : 'USER_CONFIRMED'
         const trustLevel = writeClass === 'DOCTOR_CONFIRMED' ? 'DOCTOR_CONFIRMED' : 'USER_PROVIDED'
         const item = await store.supersede(
           id,
@@ -235,7 +244,7 @@ export async function POST(req: Request) {
             expiresAt: null,
             actor: actor as never,
           },
-          reason ?? 'correction',
+          reason ?? 'correction'
         )
         return NextResponse.json({ ok: true, id: item.id, superseded: old.id })
       }
@@ -246,9 +255,10 @@ export async function POST(req: Request) {
         if (!id) return err('MEMORY_CONTENT_INVALID', 'id required', 400)
         // Note: keep the calls bound to `store` — the store methods use
         // `this`; detaching the reference (fn(...)) breaks them.
-        const item = op === 'invalidate'
-          ? await store.invalidate(id, hospitalId, actor as never, reason ?? 'requested by user')
-          : await store.delete(id, hospitalId, actor as never, reason ?? 'requested by user')
+        const item =
+          op === 'invalidate'
+            ? await store.invalidate(id, hospitalId, actor as never, reason ?? 'requested by user')
+            : await store.delete(id, hospitalId, actor as never, reason ?? 'requested by user')
         return NextResponse.json({ ok: true, id: item.id, status: item.status })
       }
       case 'list': {
@@ -268,8 +278,18 @@ export async function POST(req: Request) {
       }
     }
   } catch (e) {
-    const code = e instanceof Error && 'code' in e ? String((e as { code: string }).code) : 'MEMORY_CONTENT_INVALID'
-    const status = code === 'MEMORY_UNAUTHORIZED' ? 403 : code === 'MEMORY_NOT_FOUND' || code === 'MEMORY_NOT_ACTIVE' ? 404 : code === 'MEMORY_DUPLICATE_ACTIVE' ? 409 : 400
+    const code =
+      e instanceof Error && 'code' in e
+        ? String((e as { code: string }).code)
+        : 'MEMORY_CONTENT_INVALID'
+    const status =
+      code === 'MEMORY_UNAUTHORIZED'
+        ? 403
+        : code === 'MEMORY_NOT_FOUND' || code === 'MEMORY_NOT_ACTIVE'
+          ? 404
+          : code === 'MEMORY_DUPLICATE_ACTIVE'
+            ? 409
+            : 400
     return err(code, MESSAGES[code] ?? 'failed', status)
   }
 }

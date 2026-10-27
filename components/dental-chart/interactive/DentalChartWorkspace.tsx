@@ -43,7 +43,11 @@ import type { CameraPreset } from './DentalChart3D'
 interface SummaryPayload {
   patient: { id: string; name: string }
   entries: DentalChartEntryRecord[]
-  procedures: (Omit<PanelProcedure, 'procedureName'> & { procedureName?: string; procedure?: { name?: string }; toothNumbers: string | null })[]
+  procedures: (Omit<PanelProcedure, 'procedureName'> & {
+    procedureName?: string
+    procedure?: { name?: string }
+    toothNumbers: string | null
+  })[]
   activePlan: { id: string; status: string } | null
   imaging: PanelImagingFinding[]
   statusByTooth: Record<number, ToothTreatmentStatus>
@@ -190,7 +194,10 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
     hoveredTooth != null
       ? `${t('dental_chart.tooth')} ${hoveredTooth} — ${
           summary?.entries.some((e) => e.toothNumber === hoveredTooth)
-            ? conditionLabel(summary.entries.find((e) => e.toothNumber === hoveredTooth)!.condition, locale)
+            ? conditionLabel(
+                summary.entries.find((e) => e.toothNumber === hoveredTooth)!.condition,
+                locale
+              )
             : t('dental_chart.status.healthy')
         }`
       : null
@@ -206,8 +213,20 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center text-sm" data-testid="dental-chart-error">
-        {error}
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center text-sm"
+        data-testid="dental-chart-error"
+      >
+        <p className="font-semibold">{error}</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void refetch()}
+          data-testid="dental-chart-error-retry"
+        >
+          {t('common.retry')}
+        </Button>
       </div>
     )
   }
@@ -215,7 +234,11 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
   const statusOf = (n: number): ToothTreatmentStatus => statusByTooth[n] ?? 'healthy'
 
   return (
-    <div className="space-y-4" dir={locale.startsWith('ar') ? 'rtl' : 'ltr'} data-testid="dental-chart-workspace">
+    <div
+      className="space-y-4"
+      dir={locale.startsWith('ar') ? 'rtl' : 'ltr'}
+      data-testid="dental-chart-workspace"
+    >
       {/* header: title + view toggle + camera presets */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -225,7 +248,11 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border" role="tablist" aria-label={t('dental_chart.view_mode')}>
+          <div
+            className="flex overflow-hidden rounded-lg border"
+            role="tablist"
+            aria-label={t('dental_chart.view_mode')}
+          >
             {(
               [
                 ['2d', t('dental_chart.view_2d'), Grid3X3],
@@ -239,7 +266,9 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
                 aria-selected={viewMode === mode}
                 onClick={() => setViewMode(mode)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-sm ${
-                  viewMode === mode ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'
+                  viewMode === mode
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background hover:bg-muted'
                 }`}
               >
                 <Icon className="h-4 w-4" /> {label}
@@ -259,7 +288,12 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
                 <option value="top">{t('dental_chart.preset_top')}</option>
                 <option value="side">{t('dental_chart.preset_side')}</option>
               </select>
-              <Button variant="outline" size="icon" aria-label={t('dental_chart.reset_camera')} onClick={() => setCameraPreset('default')}>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={t('dental_chart.reset_camera')}
+                onClick={() => setCameraPreset('default')}
+              >
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </>
@@ -268,10 +302,16 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
       </div>
 
       {/* legend (always visible, localized) */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-3 py-2" aria-label={t('dental_chart.legend')}>
+      <div
+        className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-3 py-2"
+        aria-label={t('dental_chart.legend')}
+      >
         {(Object.keys(TOOTH_COLORS) as ToothTreatmentStatus[]).map((s) => (
           <span key={s} className="flex items-center gap-1.5 text-xs">
-            <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: TOOTH_COLORS[s] }} />
+            <span
+              className="inline-block h-3 w-3 rounded-full"
+              style={{ backgroundColor: TOOTH_COLORS[s] }}
+            />
             {t(`dental_chart.status.${s}`)}
           </span>
         ))}
@@ -279,14 +319,21 @@ export function DentalChartWorkspace({ patientId }: { patientId: string }) {
 
       {/* views */}
       <div className={viewMode === 'split' ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'}>
-        {viewMode !== '3d' && <DentalChart2D patientId={patientId} entries={summary?.entries ?? []} />}
-        {viewMode !== '2d' && <DentalChart3DLoader statusByTooth={statusByTooth} cameraPreset={cameraPreset} />}
+        {viewMode !== '3d' && (
+          <DentalChart2D patientId={patientId} entries={summary?.entries ?? []} />
+        )}
+        {viewMode !== '2d' && (
+          <DentalChart3DLoader statusByTooth={statusByTooth} cameraPreset={cameraPreset} />
+        )}
       </div>
       <p className="text-xs text-muted-foreground">{t('dental_chart.keyboard_hint')}</p>
 
       {/* hovered tooth chip (3D pointer feedback) */}
       {hoveredTooth != null && (
-        <div className="pointer-events-none fixed bottom-6 start-6 z-50 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-lg" data-testid="dental-chart-hover-chip">
+        <div
+          className="pointer-events-none fixed bottom-6 start-6 z-50 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-lg"
+          data-testid="dental-chart-hover-chip"
+        >
           {hoveredLabel}
         </div>
       )}
@@ -335,11 +382,13 @@ function groupByTooth<T>(items: readonly T[], key: (item: T) => number): Map<num
 /** TreatmentPlanItem.toothNumbers is a comma-separated FDI string. */
 export function parseToothNumbers(value: string | null | undefined): number[] {
   if (!value) return []
-  return value
-    .split(',')
-    .map((s) => Number.parseInt(s.trim(), 10))
-    // Canonical FDI authority (same 32-tooth whitelist the write APIs
-    // enforce) — NOT a loose 11..48 range, which would accept 19/29/39/49,
-    // numbers that exist in no FDI quadrant.
-    .filter((n) => isValidFdi(n))
+  return (
+    value
+      .split(',')
+      .map((s) => Number.parseInt(s.trim(), 10))
+      // Canonical FDI authority (same 32-tooth whitelist the write APIs
+      // enforce) — NOT a loose 11..48 range, which would accept 19/29/39/49,
+      // numbers that exist in no FDI quadrant.
+      .filter((n) => isValidFdi(n))
+  )
 }

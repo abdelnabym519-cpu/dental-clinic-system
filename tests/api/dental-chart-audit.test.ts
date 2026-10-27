@@ -41,10 +41,20 @@ const AUTHED = {
 }
 
 const ENTRY = {
-  id: 'entry-1', hospitalId: 'hospital-1', patientId: 'patient-1', toothNumber: 16,
-  toothNotation: '16', condition: 'CARIES', severity: 'MODERATE',
-  mesial: false, distal: false, occlusal: true, buccal: false, lingual: false,
-  notes: null, resolvedDate: null,
+  id: 'entry-1',
+  hospitalId: 'hospital-1',
+  patientId: 'patient-1',
+  toothNumber: 16,
+  toothNotation: '16',
+  condition: 'CARIES',
+  severity: 'MODERATE',
+  mesial: false,
+  distal: false,
+  occlusal: true,
+  buccal: false,
+  lingual: false,
+  notes: null,
+  resolvedDate: null,
 }
 
 beforeEach(() => {
@@ -58,7 +68,11 @@ describe('dental chart mutation audit trail', () => {
     ;(prisma.dentalChartEntry.create as any).mockResolvedValue({ ...ENTRY })
     const res = await listModule.POST(
       post('http://localhost/api/dental-chart', {
-        patientId: 'patient-1', toothNumber: 16, condition: 'CARIES', severity: 'MODERATE', occlusal: true,
+        patientId: 'patient-1',
+        toothNumber: 16,
+        condition: 'CARIES',
+        severity: 'MODERATE',
+        occlusal: true,
       }),
       {} as any
     )
@@ -86,7 +100,10 @@ describe('dental chart mutation audit trail', () => {
     expect(res.status).toBe(200)
     const call = (prisma.auditLog.create as any).mock.calls[0][0]
     expect(call.data.action).toBe('TOOTH_STATE_CHANGED')
-    expect(JSON.parse(call.data.oldValues)).toMatchObject({ condition: 'CARIES', severity: 'MODERATE' })
+    expect(JSON.parse(call.data.oldValues)).toMatchObject({
+      condition: 'CARIES',
+      severity: 'MODERATE',
+    })
     expect(JSON.parse(call.data.newValues)).toMatchObject({ severity: 'SEVERE' })
   })
 
@@ -105,10 +122,18 @@ describe('dental chart mutation audit trail', () => {
 
   it('POST treatment plan item → auditLog PROCEDURE_ASSIGNED with tooth linkage', async () => {
     ;(prisma.treatmentPlan.findFirst as any).mockResolvedValue({ id: 'plan-1', status: 'ACCEPTED' })
-    ;(prisma.procedure.findFirst as any).mockResolvedValue({ id: 'proc-1', basePrice: '350.00', defaultDuration: 30 })
+    ;(prisma.procedure.findFirst as any).mockResolvedValue({
+      id: 'proc-1',
+      basePrice: '350.00',
+      defaultDuration: 30,
+    })
     ;(prisma.treatmentPlanItem.create as any).mockResolvedValue({
-      id: 'item-9', treatmentPlanId: 'plan-1', procedureId: 'proc-1',
-      toothNumbers: '16', estimatedCost: '350', status: 'PENDING',
+      id: 'item-9',
+      treatmentPlanId: 'plan-1',
+      procedureId: 'proc-1',
+      toothNumbers: '16',
+      estimatedCost: '350',
+      status: 'PENDING',
       procedure: { id: 'proc-1', code: 'P1', name: 'حشو مركب', category: 'RESTORATIVE' },
     })
     // the golden Phase-11 totals-sync block runs after the audit write
@@ -117,7 +142,10 @@ describe('dental chart mutation audit trail', () => {
     ])
     ;(prisma.treatmentPlan.update as any).mockResolvedValue({ id: 'plan-1' })
     const res = await itemsModule.POST(
-      post('http://localhost/api/treatment-plans/plan-1/items', { procedureId: 'proc-1', toothNumbers: '16' }),
+      post('http://localhost/api/treatment-plans/plan-1/items', {
+        procedureId: 'proc-1',
+        toothNumbers: '16',
+      }),
       { params: Promise.resolve({ id: 'plan-1' }) } as any
     )
     expect(res.status).toBe(201)
@@ -129,7 +157,10 @@ describe('dental chart mutation audit trail', () => {
       entityType: 'TreatmentPlanItem',
       entityId: 'item-9',
     })
-    expect(JSON.parse(call.data.newValues)).toMatchObject({ toothNumbers: '16', procedureId: 'proc-1' })
+    expect(JSON.parse(call.data.newValues)).toMatchObject({
+      toothNumbers: '16',
+      procedureId: 'proc-1',
+    })
   })
 
   it('audit failures do NOT silently swallow the mutation (mutation already committed → 500 surfaces)', async () => {
@@ -137,7 +168,11 @@ describe('dental chart mutation audit trail', () => {
     ;(prisma.dentalChartEntry.create as any).mockResolvedValue({ ...ENTRY })
     ;(prisma.auditLog.create as any).mockRejectedValue(new Error('audit write failed'))
     const res = await listModule.POST(
-      post('http://localhost/api/dental-chart', { patientId: 'patient-1', toothNumber: 16, condition: 'CARIES' }),
+      post('http://localhost/api/dental-chart', {
+        patientId: 'patient-1',
+        toothNumber: 16,
+        condition: 'CARIES',
+      }),
       {} as any
     )
     // honest semantics: if the audit trail cannot be written, the request fails

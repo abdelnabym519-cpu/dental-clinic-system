@@ -2,7 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React from 'react'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import { DentalChartWorkspace, parseToothNumbers } from '@/components/dental-chart/interactive/DentalChartWorkspace'
+import {
+  DentalChartWorkspace,
+  parseToothNumbers,
+} from '@/components/dental-chart/interactive/DentalChartWorkspace'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
 
 // Toast + session mocks (same pattern as the odontogram component suite)
@@ -120,13 +123,18 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     // the clinical-details UI opens for THAT tooth:
     const panel = screen.getByTestId('tooth-context-panel')
     expect(panel).toBeTruthy()
-    expect((panel.textContent ?? '')).toContain('16')
+    expect(panel.textContent ?? '').toContain('16')
   })
 
   it('loads the summary and renders 2D + legend + empty-selection hint', async () => {
     mockSummaryFetch()
     render(<DentalChartWorkspace patientId="patient-1" />)
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/dental-chart/patient-1/summary', expect.anything()))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/dental-chart/patient-1/summary',
+        expect.anything()
+      )
+    )
     expect(screen.getByTestId('dental-chart-2d')).toBeTruthy()
     expect(screen.getByText('Select a tooth to view its details')).toBeTruthy()
   })
@@ -159,7 +167,10 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
     mockSummaryFetch()
     view.rerender(<DentalChartWorkspace patientId="patient-2" />)
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/dental-chart/patient-2/summary', expect.anything())
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/dental-chart/patient-2/summary',
+        expect.anything()
+      )
     )
     // Patient B's chart must open WITHOUT Patient A's selection, hover or panel:
     expect(useDentalChartStore.getState().selectedToothNumber).toBeNull()
@@ -244,13 +255,18 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
         expect.objectContaining({ method: 'POST' })
       )
     )
-    const call = fetchMock.mock.calls.find(([u]) => String(u).includes('/api/treatment-plans/plan-1/items'))
+    const call = fetchMock.mock.calls.find(([u]) =>
+      String(u).includes('/api/treatment-plans/plan-1/items')
+    )
     const body = JSON.parse((call?.[1] as { body: string }).body)
     expect(body.procedureId).toBe('proc-1')
     expect(body.toothNumbers).toBe('16')
     // single refetch point: the summary is fetched again after the mutation
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith('/api/dental-chart/patient-1/summary', expect.anything())
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/dental-chart/patient-1/summary',
+        expect.anything()
+      )
     )
     void panel
   })
@@ -273,7 +289,8 @@ describe('DentalChartWorkspace (interactive 2D/3D + clinical panel)', () => {
       )
     )
     const posts = fetchMock.mock.calls.filter(
-      ([u, init]) => String(u) === '/api/dental-chart' && (init as { method?: string }).method === 'POST'
+      ([u, init]) =>
+        String(u) === '/api/dental-chart' && (init as { method?: string }).method === 'POST'
     )
     expect(posts).toHaveLength(1)
   })

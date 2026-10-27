@@ -12,7 +12,9 @@ let cached: { version: string; gitSha: string | null } | null = null
 
 function readPackageVersion(): string {
   try {
-    const pkg = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')) as { version?: string }
+    const pkg = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')) as {
+      version?: string
+    }
     return typeof pkg.version === 'string' && pkg.version ? pkg.version : '0.0.0'
   } catch {
     return '0.0.0'
@@ -32,7 +34,7 @@ export function appVersion(): string {
 
 /** Best-effort release commit (injected by CI/deploy; never guessed). */
 export function releaseRevision(): string | null {
-  return appVersion() === cached?.version ? cached?.gitSha ?? null : null
+  return appVersion() === cached?.version ? (cached?.gitSha ?? null) : null
 }
 
 /** One-line version stamp for logs and diagnostics. */

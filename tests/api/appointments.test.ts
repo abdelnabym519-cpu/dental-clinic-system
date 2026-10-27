@@ -42,7 +42,6 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn().mockResolvedValue([]),
     },
-
   },
 }))
 

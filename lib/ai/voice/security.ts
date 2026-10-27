@@ -75,8 +75,15 @@ export interface DuplicateWindowEntry {
   ledToAction: boolean
 }
 
-export function transcriptFingerprint(normalizedTranscript: string, tenantId: string, userId: string): string {
-  return createHash('sha256').update(`${tenantId}:${userId}:${normalizedTranscript}`).digest('hex').slice(0, 16)
+export function transcriptFingerprint(
+  normalizedTranscript: string,
+  tenantId: string,
+  userId: string
+): string {
+  return createHash('sha256')
+    .update(`${tenantId}:${userId}:${normalizedTranscript}`)
+    .digest('hex')
+    .slice(0, 16)
 }
 
 export interface DuplicateVerdict {
@@ -95,11 +102,11 @@ export function assessDuplicate(
   tenantId: string,
   userId: string,
   history: DuplicateWindowEntry[],
-  nowMs: number,
+  nowMs: number
 ): DuplicateVerdict {
   const fp = transcriptFingerprint(normalized, tenantId, userId)
   const recent = history.find(
-    (h) => h.fingerprint === fp && nowMs - h.atMs <= VOICE_DUPLICATE_WINDOW_MS && h.ledToAction,
+    (h) => h.fingerprint === fp && nowMs - h.atMs <= VOICE_DUPLICATE_WINDOW_MS && h.ledToAction
   )
   return { duplicate: Boolean(recent), fingerprint: fp }
 }
@@ -120,7 +127,7 @@ export interface ConfirmationVerdict {
 export function assessVoiceConfirmation(
   normalized: string,
   session: VoiceSession,
-  nowMs: number,
+  nowMs: number
 ): ConfirmationVerdict {
   const phrasePresent = matchControlPhrase(normalized) === 'CONFIRM'
   const bound =
@@ -162,7 +169,11 @@ export interface AudioFileSafetyResult {
  * traversal), with an allowed extension, under the size cap. The server API
  * never accepts audio — this protects the opt-in local provider only.
  */
-export function validateAudioFileSafety(audioPath: string, baseDir: string, sizeBytes: number): AudioFileSafetyResult {
+export function validateAudioFileSafety(
+  audioPath: string,
+  baseDir: string,
+  sizeBytes: number
+): AudioFileSafetyResult {
   const resolvedBase = path.resolve(baseDir)
   const resolved = path.resolve(audioPath)
   if (!resolved.startsWith(resolvedBase + path.sep)) {

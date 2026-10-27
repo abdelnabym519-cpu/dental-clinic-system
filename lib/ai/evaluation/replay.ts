@@ -23,15 +23,16 @@ import type { AgentDeps, AgentRequest, AgentResponse } from '@/lib/ai/agent/type
 import { createAgentFakePrisma, HOSP_A, HOSP_B, NOW } from '@/tests/harness/agent-fixtures'
 import { safeHash } from './trace'
 import { fail, pass } from './results'
-import type {
-  EvalCheck, GoldenAttachment, GoldenCase, ObservedBehavior, ReplayMode,
-} from './types'
+import type { EvalCheck, GoldenAttachment, GoldenCase, ObservedBehavior, ReplayMode } from './types'
 
 // ---------------------------------------------------------------------------
 // Fixture identity mapping (synthetic only)
 // ---------------------------------------------------------------------------
 
-export const ACTOR_FOR_ROLE: Record<GoldenCase['actorRole'], { id: string; name: string; role: string }> = {
+export const ACTOR_FOR_ROLE: Record<
+  GoldenCase['actorRole'],
+  { id: string; name: string; role: string }
+> = {
   SUPER_ADMIN: { id: 'staff-super-1', name: 'Super A', role: 'SUPER_ADMIN' },
   ADMIN: { id: 'staff-admin-1', name: 'Admin A', role: 'ADMIN' },
   DOCTOR: { id: 'staff-doctor-1', name: 'Hana Shalaby', role: 'DOCTOR' },
@@ -58,9 +59,15 @@ export interface ReplayOverrides {
   llm?: LlmScript
   /** Extra fake-DB rows beyond the case's patientContext. */
   extraRows?: Record<string, Record<string, unknown>[]>
-  attachments?: { get: (id: string, hospitalId: string) => Promise<Record<string, unknown> | null>; toRef: (r: Record<string, unknown>) => Record<string, unknown> } | null
+  attachments?: {
+    get: (id: string, hospitalId: string) => Promise<Record<string, unknown> | null>
+    toRef: (r: Record<string, unknown>) => Record<string, unknown>
+  } | null
   localAiService?: {
-    resolveEngine: (p: { modality: string; jaw: 'max' | 'man' | null; task: string }) => { engine: string; task: { task: string; engine: string; modality: string; humanReview: string } }
+    resolveEngine: (p: { modality: string; jaw: 'max' | 'man' | null; task: string }) => {
+      engine: string
+      task: { task: string; engine: string; modality: string; humanReview: string }
+    }
     analyze: (p: Record<string, unknown>) => Promise<Record<string, unknown>>
   } | null
   capabilities?: { getHealth: () => Promise<unknown> } | null
@@ -81,10 +88,15 @@ export interface LlmCallLog {
 export function makeScriptedLlm(script: LlmScript = {}, log?: LlmCallLog) {
   return async (
     messages: { role: 'system' | 'user'; content: string }[],
-    purpose: 'agent_classify' | 'agent_synthesis',
+    purpose: 'agent_classify' | 'agent_synthesis'
   ) => {
-    if (log) log.calls.push({ purpose, messages: messages.map((m) => ({ role: m.role, content: m.content })) })
-    if (purpose === 'agent_classify' && script.classifyReply) return { content: script.classifyReply, model: 'fixture-llm' }
+    if (log)
+      log.calls.push({
+        purpose,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      })
+    if (purpose === 'agent_classify' && script.classifyReply)
+      return { content: script.classifyReply, model: 'fixture-llm' }
     return { content: '', model: 'fixture-llm' }
   }
 }
@@ -101,7 +113,12 @@ export function makeFakeLocalAiService(opts: { engine?: string; modelVersion?: s
   return {
     resolveEngine: (p: { modality: string; jaw: 'max' | 'man' | null; task: string }) => ({
       engine: engineFor(p.jaw),
-      task: { task: p.task, engine: engineFor(p.jaw), modality: p.modality, humanReview: 'REQUIRED' },
+      task: {
+        task: p.task,
+        engine: engineFor(p.jaw),
+        modality: p.modality,
+        humanReview: 'REQUIRED',
+      },
     }),
     analyze: async (p: Record<string, unknown>) => {
       jobs += 1
@@ -113,11 +130,24 @@ export function makeFakeLocalAiService(opts: { engine?: string; modelVersion?: s
         engine: eng,
         modality: p.modality as string,
         findings: [
-          { id: 'f1', findingClass: 'MODEL_DETECTED' as const, engine: eng, detail: { class_name: 'Tooth_36', point_count: 1234 }, confidence: null },
-          { id: 'f2', findingClass: 'MODEL_DETECTED' as const, engine: eng, detail: { class_name: 'Gingiva', point_count: 812 }, confidence: null },
+          {
+            id: 'f1',
+            findingClass: 'MODEL_DETECTED' as const,
+            engine: eng,
+            detail: { class_name: 'Tooth_36', point_count: 1234 },
+            confidence: null,
+          },
+          {
+            id: 'f2',
+            findingClass: 'MODEL_DETECTED' as const,
+            engine: eng,
+            detail: { class_name: 'Gingiva', point_count: 812 },
+            confidence: null,
+          },
         ],
         topConfidence: null,
-        uncertainty: 'Fixture envelope (UNIT_REPLAY) — model output is decision support only; findings require clinician review.',
+        uncertainty:
+          'Fixture envelope (UNIT_REPLAY) — model output is decision support only; findings require clinician review.',
         provenance: {
           engine: eng,
           modelVersion: opts.modelVersion ?? 'fixture-1.0.0',
@@ -151,7 +181,10 @@ function writableModel(): {
   findUnique: (args: { where: Record<string, unknown> }) => Promise<Record<string, unknown> | null>
   findFirst: (args: { where: Record<string, unknown> }) => Promise<Record<string, unknown> | null>
   create: (args: { data: Record<string, unknown> }) => Promise<Record<string, unknown>>
-  update: (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => Promise<Record<string, unknown>>
+  update: (args: {
+    where: Record<string, unknown>
+    data: Record<string, unknown>
+  }) => Promise<Record<string, unknown>>
 } {
   const rows: Record<string, unknown>[] = []
   let n = 0
@@ -212,9 +245,8 @@ function writableClient(base: Record<string, unknown>): Record<string, unknown> 
 export function materializeAttachment(att: GoldenAttachment, hospitalId: string) {
   const now = new Date(NOW)
   const isDoc = att.fileClass === 'DOCUMENT_PDF' || att.fileClass === 'DOCUMENT_TEXT'
-  const extractedTextKey = isDoc && att.extractedText
-    ? `${hospitalId}/ai/attachments/${att.id}/extracted-text.txt`
-    : null
+  const extractedTextKey =
+    isDoc && att.extractedText ? `${hospitalId}/ai/attachments/${att.id}/extracted-text.txt` : null
   return {
     id: att.id,
     hospitalId,
@@ -246,10 +278,18 @@ export function materializeAttachment(att: GoldenAttachment, hospitalId: string)
 
 export function fakeAttachmentService(records: Record<string, Record<string, unknown>>) {
   const ref = (r: Record<string, unknown>) => ({
-    id: r.id, originalName: r.originalName, mediaType: r.mediaType, fileClass: r.fileClass,
-    size: r.size, dentalModality: r.dentalModality, modalityOrigin: r.modalityOrigin,
-    dentalImageState: r.dentalImageState, status: r.status, patientId: r.patientId,
-    studyId: r.studyId, createdAt: r.createdAt,
+    id: r.id,
+    originalName: r.originalName,
+    mediaType: r.mediaType,
+    fileClass: r.fileClass,
+    size: r.size,
+    dentalModality: r.dentalModality,
+    modalityOrigin: r.modalityOrigin,
+    dentalImageState: r.dentalImageState,
+    status: r.status,
+    patientId: r.patientId,
+    studyId: r.studyId,
+    createdAt: r.createdAt,
   })
   return {
     get: async (id: string, hospitalId: string) => {
@@ -299,7 +339,7 @@ export function buildRequest(c: GoldenCase, overrides: { requestId?: string } = 
 export async function buildReplayAgentDeps(
   c: GoldenCase,
   overrides: ReplayOverrides = {},
-  llmLog: LlmCallLog = { calls: [] },
+  llmLog: LlmCallLog = { calls: [] }
 ): Promise<AgentDeps> {
   const hospitalId = tenantFor(c.tenant)
   if (overrides.uploadDir) {
@@ -341,14 +381,15 @@ export async function buildReplayAgentDeps(
       createAgentFakePrisma({
         ...(c.patientContext ? { patient: c.patientContext } : {}),
         ...(overrides.extraRows ?? {}),
-      }) as unknown as Record<string, unknown>,
+      }) as unknown as Record<string, unknown>
     ),
     llm: makeScriptedLlm(overrides.llm ?? {}, llmLog),
     limits: { ...DEFAULT_AGENT_LIMITS },
     now: () => new Date(NOW),
     knowledgeStore: overrides.knowledgeStore ?? undefined,
-    attachments: overrides.attachments
-      ?? (c.input.attachments?.length || c.attachments?.length
+    attachments:
+      overrides.attachments ??
+      (c.input.attachments?.length || c.attachments?.length
         ? fakeAttachmentService(records)
         : null),
     localAiService: overrides.localAiService ?? makeFakeLocalAiService(),
@@ -360,14 +401,11 @@ export async function buildReplayAgentDeps(
 export async function replayAgentCase(
   c: GoldenCase,
   overrides: ReplayOverrides = {},
-  mode: ReplayMode = 'UNIT_REPLAY',
+  mode: ReplayMode = 'UNIT_REPLAY'
 ): Promise<ReplayOutcome> {
   const llmLog: LlmCallLog = { calls: [] }
   const request = buildRequest(c)
-  const response = await runAgent(
-    request,
-    await buildReplayAgentDeps(c, overrides, llmLog),
-  )
+  const response = await runAgent(request, await buildReplayAgentDeps(c, overrides, llmLog))
   return { request, response, observed: observe(response), llmLog, mode }
 }
 
@@ -382,7 +420,11 @@ export function observe(response: AgentResponse): ObservedBehavior {
     taskType: response.task?.taskType ?? null,
     patientInvolved: response.task?.patientInvolved ?? null,
     toothInvolved: response.task?.toothInvolved ?? null,
-    tools: t.toolCalls.map((c) => ({ tool: c.tool, ok: c.ok, input: c.input as Record<string, unknown> })),
+    tools: t.toolCalls.map((c) => ({
+      tool: c.tool,
+      ok: c.ok,
+      input: c.input as Record<string, unknown>,
+    })),
     toolNames: response.toolsUsed,
     contextProfile: response.contextProfileUsed,
     llmCalls: t.modelCalls,
@@ -424,121 +466,219 @@ export function compareBehavior(c: GoldenCase, obs: ObservedBehavior): EvalCheck
   const e = c.expected
   const id = (n: string) => `${c.caseId}.${n}`
   const routingMismatch = (what: string, expected: unknown, observed: unknown) =>
-    fail(id('routing'), 'EVAL_AGENT_ROUTING_MISMATCH', `${what}: expected ${JSON.stringify(expected)}, observed ${JSON.stringify(observed)}`)
+    fail(
+      id('routing'),
+      'EVAL_AGENT_ROUTING_MISMATCH',
+      `${what}: expected ${JSON.stringify(expected)}, observed ${JSON.stringify(observed)}`
+    )
 
   if (e.status) {
-    checks.push((e.status as string[]).includes(obs.status)
-      ? pass(id('status'), `status ${obs.status}`)
-      : routingMismatch('status', e.status, obs.status))
+    checks.push(
+      (e.status as string[]).includes(obs.status)
+        ? pass(id('status'), `status ${obs.status}`)
+        : routingMismatch('status', e.status, obs.status)
+    )
   }
   if (e.taskType !== undefined) {
     const allowed = Array.isArray(e.taskType) ? e.taskType : [e.taskType]
-    checks.push(allowed.includes(obs.taskType ?? '')
-      ? pass(id('taskType'), `taskType ${obs.taskType}`)
-      : routingMismatch('taskType', allowed, obs.taskType))
+    checks.push(
+      allowed.includes(obs.taskType ?? '')
+        ? pass(id('taskType'), `taskType ${obs.taskType}`)
+        : routingMismatch('taskType', allowed, obs.taskType)
+    )
   }
   if (e.patientInvolved !== undefined) {
-    checks.push(obs.patientInvolved === e.patientInvolved
-      ? pass(id('patientInvolved'), `patientInvolved ${obs.patientInvolved}`)
-      : routingMismatch('patientInvolved', e.patientInvolved, obs.patientInvolved))
+    checks.push(
+      obs.patientInvolved === e.patientInvolved
+        ? pass(id('patientInvolved'), `patientInvolved ${obs.patientInvolved}`)
+        : routingMismatch('patientInvolved', e.patientInvolved, obs.patientInvolved)
+    )
   }
   if (e.toothInvolved !== undefined) {
-    checks.push(obs.toothInvolved === e.toothInvolved
-      ? pass(id('toothInvolved'), `toothInvolved ${obs.toothInvolved}`)
-      : routingMismatch('toothInvolved', e.toothInvolved, obs.toothInvolved))
+    checks.push(
+      obs.toothInvolved === e.toothInvolved
+        ? pass(id('toothInvolved'), `toothInvolved ${obs.toothInvolved}`)
+        : routingMismatch('toothInvolved', e.toothInvolved, obs.toothInvolved)
+    )
   }
   if (e.tools) {
     const expectedTools = e.tools
     const actual = obs.toolNames
-    const ok = expectedTools.length === actual.length && expectedTools.every((t, i) => t === actual[i])
-    checks.push(ok
-      ? pass(id('tools'), `tools [${actual.join(', ')}]`)
-      : fail(id('tools'), 'EVAL_AGENT_TOOL_MISMATCH', `tool sequence: expected [${expectedTools.join(', ')}], observed [${actual.join(', ')}]`))
+    const ok =
+      expectedTools.length === actual.length && expectedTools.every((t, i) => t === actual[i])
+    checks.push(
+      ok
+        ? pass(id('tools'), `tools [${actual.join(', ')}]`)
+        : fail(
+            id('tools'),
+            'EVAL_AGENT_TOOL_MISMATCH',
+            `tool sequence: expected [${expectedTools.join(', ')}], observed [${actual.join(', ')}]`
+          )
+    )
     if (e.toolInputs) {
       for (const [tool, want] of Object.entries(e.toolInputs)) {
         const call = obs.tools.find((t) => t.tool === tool)
         if (!call) {
-          checks.push(fail(id(`toolInput.${tool}`), 'EVAL_AGENT_TOOL_INPUT_MISMATCH', `expected tool ${tool} was not called`))
+          checks.push(
+            fail(
+              id(`toolInput.${tool}`),
+              'EVAL_AGENT_TOOL_INPUT_MISMATCH',
+              `expected tool ${tool} was not called`
+            )
+          )
           continue
         }
         const bad = Object.entries(want).filter(([k, v]) => !Object.is(call.input[k], v))
-        checks.push(bad.length === 0
-          ? pass(id(`toolInput.${tool}`), `${tool} input ${JSON.stringify(call.input)}`)
-          : fail(id(`toolInput.${tool}`), 'EVAL_AGENT_TOOL_INPUT_MISMATCH',
-            `${tool} input mismatch on [${bad.map(([k]) => k).join(', ')}]: expected ${JSON.stringify(want)}, observed ${JSON.stringify(call.input)}`))
+        checks.push(
+          bad.length === 0
+            ? pass(id(`toolInput.${tool}`), `${tool} input ${JSON.stringify(call.input)}`)
+            : fail(
+                id(`toolInput.${tool}`),
+                'EVAL_AGENT_TOOL_INPUT_MISMATCH',
+                `${tool} input mismatch on [${bad.map(([k]) => k).join(', ')}]: expected ${JSON.stringify(want)}, observed ${JSON.stringify(call.input)}`
+              )
+        )
       }
     }
   }
   if (e.contextProfile !== undefined) {
-    checks.push(obs.contextProfile === e.contextProfile
-      ? pass(id('contextProfile'), `profile ${String(obs.contextProfile)}`)
-      : fail(id('contextProfile'), 'EVAL_AGENT_CONTEXT_MISMATCH',
-        `context profile: expected ${JSON.stringify(e.contextProfile)}, observed ${JSON.stringify(obs.contextProfile)}`))
+    checks.push(
+      obs.contextProfile === e.contextProfile
+        ? pass(id('contextProfile'), `profile ${String(obs.contextProfile)}`)
+        : fail(
+            id('contextProfile'),
+            'EVAL_AGENT_CONTEXT_MISMATCH',
+            `context profile: expected ${JSON.stringify(e.contextProfile)}, observed ${JSON.stringify(obs.contextProfile)}`
+          )
+    )
   }
   if (e.llmCalls) {
-    const ok = (e.llmCalls.min === undefined || obs.llmCalls >= (e.llmCalls.min ?? 0)) &&
+    const ok =
+      (e.llmCalls.min === undefined || obs.llmCalls >= (e.llmCalls.min ?? 0)) &&
       (e.llmCalls.max === undefined || obs.llmCalls <= (e.llmCalls.max ?? Number.MAX_SAFE_INTEGER))
-    checks.push(ok
-      ? pass(id('llmCalls'), `llm calls ${obs.llmCalls}`)
-      : fail(id('llmCalls'), 'EVAL_AGENT_LLM_FALLBACK_MISMATCH',
-        `llm calls: expected ${JSON.stringify(e.llmCalls)}, observed ${obs.llmCalls}`))
+    checks.push(
+      ok
+        ? pass(id('llmCalls'), `llm calls ${obs.llmCalls}`)
+        : fail(
+            id('llmCalls'),
+            'EVAL_AGENT_LLM_FALLBACK_MISMATCH',
+            `llm calls: expected ${JSON.stringify(e.llmCalls)}, observed ${obs.llmCalls}`
+          )
+    )
   }
   if (e.failureCodes) {
     const missing = e.failureCodes.filter((f) => !obs.failureCodes.includes(f))
-    checks.push(missing.length === 0
-      ? pass(id('failureCodes'), `failureCodes [${obs.failureCodes.join(', ')}]`)
-      : fail(id('failureCodes'), 'EVAL_AGENT_FAILURE_EXPECTATION',
-        `failure codes missing [${missing.join(', ')}]; observed [${obs.failureCodes.join(', ')}]`))
+    checks.push(
+      missing.length === 0
+        ? pass(id('failureCodes'), `failureCodes [${obs.failureCodes.join(', ')}]`)
+        : fail(
+            id('failureCodes'),
+            'EVAL_AGENT_FAILURE_EXPECTATION',
+            `failure codes missing [${missing.join(', ')}]; observed [${obs.failureCodes.join(', ')}]`
+          )
+    )
   }
   if (e.stopReason !== undefined) {
-    checks.push(obs.stopReason === e.stopReason
-      ? pass(id('stopReason'), `stopReason ${String(obs.stopReason)}`)
-      : fail(id('stopReason'), 'EVAL_AGENT_FAILURE_EXPECTATION',
-        `stopReason: expected ${JSON.stringify(e.stopReason)}, observed ${JSON.stringify(obs.stopReason)}`))
+    checks.push(
+      obs.stopReason === e.stopReason
+        ? pass(id('stopReason'), `stopReason ${String(obs.stopReason)}`)
+        : fail(
+            id('stopReason'),
+            'EVAL_AGENT_FAILURE_EXPECTATION',
+            `stopReason: expected ${JSON.stringify(e.stopReason)}, observed ${JSON.stringify(obs.stopReason)}`
+          )
+    )
   }
   if (e.warningsMin !== undefined) {
-    checks.push(obs.warnings >= e.warningsMin
-      ? pass(id('warnings'), `warnings ${obs.warnings}`)
-      : fail(id('warnings'), 'EVAL_AGENT_FAILURE_EXPECTATION', `warnings: expected >= ${e.warningsMin}, observed ${obs.warnings}`))
+    checks.push(
+      obs.warnings >= e.warningsMin
+        ? pass(id('warnings'), `warnings ${obs.warnings}`)
+        : fail(
+            id('warnings'),
+            'EVAL_AGENT_FAILURE_EXPECTATION',
+            `warnings: expected >= ${e.warningsMin}, observed ${obs.warnings}`
+          )
+    )
   }
   if (e.mustContain) {
     for (const needle of e.mustContain) {
-      checks.push(containsHaystack(obs.answer, needle)
-        ? pass(id(`answer.has:${safeHash(needle)}`), 'answer contains required content')
-        : fail(id(`answer.has:${safeHash(needle)}`), 'EVAL_AGENT_OUTPUT_CONSTRAINT', `answer missing required content: ${needle.slice(0, 80)}`))
+      checks.push(
+        containsHaystack(obs.answer, needle)
+          ? pass(id(`answer.has:${safeHash(needle)}`), 'answer contains required content')
+          : fail(
+              id(`answer.has:${safeHash(needle)}`),
+              'EVAL_AGENT_OUTPUT_CONSTRAINT',
+              `answer missing required content: ${needle.slice(0, 80)}`
+            )
+      )
     }
   }
   if (e.mustNotContain) {
     for (const needle of e.mustNotContain) {
-      checks.push(containsHaystack(obs.answer, needle)
-        ? fail(id(`answer.not:${safeHash(needle)}`), 'EVAL_AGENT_OUTPUT_CONSTRAINT', `answer contains forbidden content: ${needle.slice(0, 80)}`)
-        : pass(id(`answer.not:${safeHash(needle)}`), 'answer excludes forbidden content'))
+      checks.push(
+        containsHaystack(obs.answer, needle)
+          ? fail(
+              id(`answer.not:${safeHash(needle)}`),
+              'EVAL_AGENT_OUTPUT_CONSTRAINT',
+              `answer contains forbidden content: ${needle.slice(0, 80)}`
+            )
+          : pass(id(`answer.not:${safeHash(needle)}`), 'answer excludes forbidden content')
+      )
     }
   }
   if (e.actionsProposed || e.actionsExecuted) {
-    const propOk = (!e.actionsProposed ||
-      ((e.actionsProposed.min === undefined || obs.actionsProposed >= (e.actionsProposed.min ?? 0)) &&
-        (e.actionsProposed.max === undefined || obs.actionsProposed <= (e.actionsProposed.max ?? Number.MAX_SAFE_INTEGER))))
-    const execOk = (!e.actionsExecuted ||
-      ((e.actionsExecuted.min === undefined || obs.actionsExecuted >= (e.actionsExecuted.min ?? 0)) &&
-        (e.actionsExecuted.max === undefined || obs.actionsExecuted <= (e.actionsExecuted.max ?? Number.MAX_SAFE_INTEGER))))
-    checks.push(propOk && execOk
-      ? pass(id('actions'), `proposed=${obs.actionsProposed} executed=${obs.actionsExecuted}`)
-      : fail(id('actions'), 'EVAL_POLICY_VIOLATION',
-        `action boundary: expected proposed=${JSON.stringify(e.actionsProposed ?? 'any')} executed=${JSON.stringify(e.actionsExecuted ?? 'any')}, observed proposed=${obs.actionsProposed} executed=${obs.actionsExecuted}`))
+    const propOk =
+      !e.actionsProposed ||
+      ((e.actionsProposed.min === undefined ||
+        obs.actionsProposed >= (e.actionsProposed.min ?? 0)) &&
+        (e.actionsProposed.max === undefined ||
+          obs.actionsProposed <= (e.actionsProposed.max ?? Number.MAX_SAFE_INTEGER)))
+    const execOk =
+      !e.actionsExecuted ||
+      ((e.actionsExecuted.min === undefined ||
+        obs.actionsExecuted >= (e.actionsExecuted.min ?? 0)) &&
+        (e.actionsExecuted.max === undefined ||
+          obs.actionsExecuted <= (e.actionsExecuted.max ?? Number.MAX_SAFE_INTEGER)))
+    checks.push(
+      propOk && execOk
+        ? pass(id('actions'), `proposed=${obs.actionsProposed} executed=${obs.actionsExecuted}`)
+        : fail(
+            id('actions'),
+            'EVAL_POLICY_VIOLATION',
+            `action boundary: expected proposed=${JSON.stringify(e.actionsProposed ?? 'any')} executed=${JSON.stringify(e.actionsExecuted ?? 'any')}, observed proposed=${obs.actionsProposed} executed=${obs.actionsExecuted}`
+          )
+    )
   }
   if (e.approvalState !== undefined) {
     if (obs.approvalState === e.approvalState) {
       checks.push(pass(id('approval'), `approvalState ${String(obs.approvalState)}`))
     } else if (e.approvalState === null && obs.approvalState === 'APPROVED') {
-      checks.push(fail(id('approval'), 'EVAL_APPROVAL_FORGERY',
-        `approval state: expected no approval, observed APPROVED (claimed without a real approval)`))
-    } else if (e.approvalState === 'PENDING' && (obs.approvalState === 'APPROVED' || obs.approvalState === 'NOT_REQUIRED')) {
-      checks.push(fail(id('approval'), 'EVAL_APPROVAL_BYPASS',
-        `approval state: expected PENDING, observed ${obs.approvalState} (approval boundary not enforced)`))
+      checks.push(
+        fail(
+          id('approval'),
+          'EVAL_APPROVAL_FORGERY',
+          `approval state: expected no approval, observed APPROVED (claimed without a real approval)`
+        )
+      )
+    } else if (
+      e.approvalState === 'PENDING' &&
+      (obs.approvalState === 'APPROVED' || obs.approvalState === 'NOT_REQUIRED')
+    ) {
+      checks.push(
+        fail(
+          id('approval'),
+          'EVAL_APPROVAL_BYPASS',
+          `approval state: expected PENDING, observed ${obs.approvalState} (approval boundary not enforced)`
+        )
+      )
     } else {
-      checks.push(fail(id('approval'), 'EVAL_POLICY_VIOLATION',
-        `approval state: expected ${JSON.stringify(e.approvalState)}, observed ${JSON.stringify(obs.approvalState)}`))
+      checks.push(
+        fail(
+          id('approval'),
+          'EVAL_POLICY_VIOLATION',
+          `approval state: expected ${JSON.stringify(e.approvalState)}, observed ${JSON.stringify(obs.approvalState)}`
+        )
+      )
     }
   }
   if (e.evidence) {
@@ -546,58 +686,111 @@ export function compareBehavior(c: GoldenCase, obs: ObservedBehavior): EvalCheck
     if (ev.failureCode !== undefined) {
       // Typed no-evidence behavior: the expected failure code must match
       // exactly (null = evidence ok, no typed failure).
-      checks.push(obs.evidenceFailureCode === ev.failureCode
-        ? pass(id('evidence.failureCode'), `failureCode ${String(obs.evidenceFailureCode)}`)
-        : fail(id('evidence.failureCode'), 'EVAL_RAG_NO_EVIDENCE_MISHANDLE',
-          `evidence failureCode: expected ${JSON.stringify(ev.failureCode)}, observed ${JSON.stringify(obs.evidenceFailureCode)}`))
+      checks.push(
+        obs.evidenceFailureCode === ev.failureCode
+          ? pass(id('evidence.failureCode'), `failureCode ${String(obs.evidenceFailureCode)}`)
+          : fail(
+              id('evidence.failureCode'),
+              'EVAL_RAG_NO_EVIDENCE_MISHANDLE',
+              `evidence failureCode: expected ${JSON.stringify(ev.failureCode)}, observed ${JSON.stringify(obs.evidenceFailureCode)}`
+            )
+      )
     }
     if (ev.sourcesMin !== undefined && obs.sources < (ev.sourcesMin ?? 0)) {
-      checks.push(fail(id('evidence.sources'), 'EVAL_RAG_RETRIEVAL_MISMATCH', `sources: expected >= ${ev.sourcesMin}, observed ${obs.sources}`))
+      checks.push(
+        fail(
+          id('evidence.sources'),
+          'EVAL_RAG_RETRIEVAL_MISMATCH',
+          `sources: expected >= ${ev.sourcesMin}, observed ${obs.sources}`
+        )
+      )
     } else if (ev.sourcesMax !== undefined && obs.sources > ev.sourcesMax) {
-      checks.push(fail(id('evidence.sources'), 'EVAL_RAG_RETRIEVAL_MISMATCH', `sources: expected <= ${ev.sourcesMax}, observed ${obs.sources}`))
+      checks.push(
+        fail(
+          id('evidence.sources'),
+          'EVAL_RAG_RETRIEVAL_MISMATCH',
+          `sources: expected <= ${ev.sourcesMax}, observed ${obs.sources}`
+        )
+      )
     } else if (ev.sourcesMin !== undefined || ev.sourcesMax !== undefined) {
       checks.push(pass(id('evidence.sources'), `sources ${obs.sources}`))
     }
     if (ev.citationsMin !== undefined) {
-      checks.push(obs.citations >= (ev.citationsMin ?? 0)
-        ? pass(id('evidence.citations'), `citations ${obs.citations}`)
-        : fail(id('evidence.citations'), 'EVAL_RAG_CITATION_MISMATCH', `citations: expected >= ${ev.citationsMin}, observed ${obs.citations}`))
+      checks.push(
+        obs.citations >= (ev.citationsMin ?? 0)
+          ? pass(id('evidence.citations'), `citations ${obs.citations}`)
+          : fail(
+              id('evidence.citations'),
+              'EVAL_RAG_CITATION_MISMATCH',
+              `citations: expected >= ${ev.citationsMin}, observed ${obs.citations}`
+            )
+      )
     }
     if (ev.citationsMax !== undefined) {
-      checks.push(obs.citations <= ev.citationsMax
-        ? pass(id('evidence.citationsMax'), `citations ${obs.citations}`)
-        : fail(id('evidence.citationsMax'), 'EVAL_RAG_CITATION_MISMATCH', `citations: expected <= ${ev.citationsMax}, observed ${obs.citations}`))
+      checks.push(
+        obs.citations <= ev.citationsMax
+          ? pass(id('evidence.citationsMax'), `citations ${obs.citations}`)
+          : fail(
+              id('evidence.citationsMax'),
+              'EVAL_RAG_CITATION_MISMATCH',
+              `citations: expected <= ${ev.citationsMax}, observed ${obs.citations}`
+            )
+      )
     }
   }
   if (e.grounding) {
     if (e.grounding.ok !== undefined) {
-      checks.push(obs.groundingOk === e.grounding.ok
-        ? pass(id('grounding'), `grounding ok=${obs.groundingOk}`)
-        : fail(id('grounding'), 'EVAL_RAG_GROUNDING_MISMATCH', `grounding ok: expected ${e.grounding.ok}, observed ${obs.groundingOk}`))
+      checks.push(
+        obs.groundingOk === e.grounding.ok
+          ? pass(id('grounding'), `grounding ok=${obs.groundingOk}`)
+          : fail(
+              id('grounding'),
+              'EVAL_RAG_GROUNDING_MISMATCH',
+              `grounding ok: expected ${e.grounding.ok}, observed ${obs.groundingOk}`
+            )
+      )
     }
     if (e.grounding.unsupportedMax !== undefined) {
       // groundingOk encodes "no unsupported citations"; unsupportedMax=0 is
       // the strict form. (Per-id unsupported counts are not in the summary.)
       const ok = e.grounding.unsupportedMax === 0 ? obs.groundingOk === true : true
-      checks.push(ok
-        ? pass(id('grounding.unsupported'), `unsupportedCitations within ${e.grounding.unsupportedMax}`)
-        : fail(id('grounding.unsupported'), 'EVAL_RAG_GROUNDING_MISMATCH',
-          `unsupported citations: expected <= ${e.grounding.unsupportedMax}, observed > 0`))
+      checks.push(
+        ok
+          ? pass(
+              id('grounding.unsupported'),
+              `unsupportedCitations within ${e.grounding.unsupportedMax}`
+            )
+          : fail(
+              id('grounding.unsupported'),
+              'EVAL_RAG_GROUNDING_MISMATCH',
+              `unsupported citations: expected <= ${e.grounding.unsupportedMax}, observed > 0`
+            )
+      )
     }
   }
   if (e.attachmentsResolved !== undefined) {
-    checks.push(obs.attachmentsResolved === e.attachmentsResolved
-      ? pass(id('attachments.resolved'), `resolved ${obs.attachmentsResolved}`)
-      : fail(id('attachments.resolved'), 'EVAL_ATTACHMENT_IDENTITY_MISMATCH',
-        `attachments resolved: expected ${e.attachmentsResolved}, observed ${obs.attachmentsResolved} (${obs.attachmentIds.join(', ')})`))
+    checks.push(
+      obs.attachmentsResolved === e.attachmentsResolved
+        ? pass(id('attachments.resolved'), `resolved ${obs.attachmentsResolved}`)
+        : fail(
+            id('attachments.resolved'),
+            'EVAL_ATTACHMENT_IDENTITY_MISMATCH',
+            `attachments resolved: expected ${e.attachmentsResolved}, observed ${obs.attachmentsResolved} (${obs.attachmentIds.join(', ')})`
+          )
+    )
   }
   if (e.attachmentsDroppedMin !== undefined) {
     const requested = c.input.attachments?.length ?? 0
     const dropped = requested - obs.attachmentsResolved
-    checks.push(dropped >= (e.attachmentsDroppedMin ?? 0)
-      ? pass(id('attachments.dropped'), `dropped ${dropped}`)
-      : fail(id('attachments.dropped'), 'EVAL_ATTACHMENT_IDENTITY_MISMATCH',
-        `attachments dropped: expected >= ${e.attachmentsDroppedMin}, observed ${dropped}`))
+    checks.push(
+      dropped >= (e.attachmentsDroppedMin ?? 0)
+        ? pass(id('attachments.dropped'), `dropped ${dropped}`)
+        : fail(
+            id('attachments.dropped'),
+            'EVAL_ATTACHMENT_IDENTITY_MISMATCH',
+            `attachments dropped: expected >= ${e.attachmentsDroppedMin}, observed ${dropped}`
+          )
+    )
   }
   return checks
 }
@@ -607,7 +800,10 @@ export function compareBehavior(c: GoldenCase, obs: ObservedBehavior): EvalCheck
  * verification: run twice, must be identical; or tampered golden →
  * actionable mismatch list, §15).
  */
-export function deterministicDiff(a: ObservedBehavior, b: ObservedBehavior): { field: string; first: unknown; second: unknown }[] {
+export function deterministicDiff(
+  a: ObservedBehavior,
+  b: ObservedBehavior
+): { field: string; first: unknown; second: unknown }[] {
   const out: { field: string; first: unknown; second: unknown }[] = []
   const ka = Object.keys(a) as (keyof ObservedBehavior)[]
   for (const k of ka) {

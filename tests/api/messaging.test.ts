@@ -24,11 +24,33 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn().mockResolvedValue([]),
     },
     leave: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]) },
-    holiday: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]) },
-    doctorBreak: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]) },
-    blockedSlot: { findFirst: vi.fn(), findMany: vi.fn().mockResolvedValue([]), create: vi.fn(), update: vi.fn() },
-    hospital: { findUnique: vi.fn().mockResolvedValue({ name: 'عيادة دنتورا', address: 'القاهرة', phone: null, workingHours: null }) },
-    room: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]), create: vi.fn() },
+    holiday: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    doctorBreak: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    blockedSlot: {
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    hospital: {
+      findUnique: vi.fn().mockResolvedValue({
+        name: 'عيادة دنتورا',
+        address: 'القاهرة',
+        phone: null,
+        workingHours: null,
+      }),
+    },
+    room: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+    },
     prescription: {
       findFirst: vi.fn(),
       update: vi.fn(),
@@ -47,7 +69,12 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       count: vi.fn().mockResolvedValue(0),
     },
-    waitlist: { findFirst: vi.fn(), findMany: vi.fn().mockResolvedValue([]), update: vi.fn(), count: vi.fn().mockResolvedValue(0) },
+    waitlist: {
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn(),
+      count: vi.fn().mockResolvedValue(0),
+    },
     videoConsultation: { create: vi.fn() },
     doctorBreakModel: {},
   },
@@ -335,7 +362,9 @@ describe('prescription send (3F, item 22) — RBAC + tenant + PDF attachment', (
     pdfUrl: null,
     patient: { id: 'pat-1', firstName: 'أحمد', lastName: 'محمد', phone: '+201012345678' },
     doctor: { id: 'dr-1', firstName: 'سمير', lastName: 'علي', phone: '+201198765432' },
-    medications: [{ medicationName: 'Amoxicillin', dosage: '500mg', frequency: '3x/day', duration: '7 days' }],
+    medications: [
+      { medicationName: 'Amoxicillin', dosage: '500mg', frequency: '3x/day', duration: '7 days' },
+    ],
   }
 
   it('DOCTOR can send: PDF attached, Arabic text, PENDING queue record', async () => {
@@ -357,7 +386,9 @@ describe('prescription send (3F, item 22) — RBAC + tenant + PDF attachment', (
     const payload = row.payload as { text: string; attachment?: { data: string } }
     expect(payload.text).toContain('وصفتك الطبية من عيادة دنتورا 💊')
     expect(payload.attachment.mimeType).toBe('application/pdf')
-    expect(Buffer.from(payload.attachment.data, 'base64').toString('latin1').startsWith('%PDF')).toBe(true)
+    expect(
+      Buffer.from(payload.attachment.data, 'base64').toString('latin1').startsWith('%PDF')
+    ).toBe(true)
 
     // Phase 11 — the signed PDF is persisted and the prescription is marked SENT
     expect(storageMock.put).toHaveBeenCalled()
@@ -491,7 +522,10 @@ describe('radiology send (3H, item 24) — reads patient-file storage, images on
       params: Promise.resolve({ id: 'doc-1' }),
     })
     expect(res.status).toBe(201)
-    const payload = created[0].payload as { text: string; attachment: { data: string; mimeType: string } }
+    const payload = created[0].payload as {
+      text: string
+      attachment: { data: string; mimeType: string }
+    }
     expect(created[0].messageType).toBe('RADIOLOGY')
     expect(payload.text).toContain('نتيجة الأشعة من عيادة دنتورا 🦷')
     expect(payload.attachment.mimeType).toBe('image/jpeg')
@@ -522,7 +556,10 @@ describe('message log (3L, items 27/28) — ADMIN only, masked numbers', () => {
         sentAt: new Date('2026-09-19T10:00:05Z'),
         attempts: 1,
         lastError: null,
-        payload: { text: 'مرحباً', attachment: { filename: 'a.pdf', mimeType: 'application/pdf', data: 'SECRETA' } },
+        payload: {
+          text: 'مرحباً',
+          attachment: { filename: 'a.pdf', mimeType: 'application/pdf', data: 'SECRETA' },
+        },
         appointmentId: 'apt-1',
         patientId: 'pat-1',
       },
@@ -577,9 +614,12 @@ describe('message log (3L, items 27/28) — ADMIN only, masked numbers', () => {
     prisma.messageQueue.update.mockResolvedValue({ id: 'mq-9', status: 'CANCELLED' })
     // A message from another hospital is invisible to this tenant (item 28):
     // the scoped lookup finds nothing → cancel is refused.
-    const foreign = await messageAction(jsonReq('http://localhost/x', { action: 'cancel' }, 'PATCH'), {
-      params: Promise.resolve({ id: 'mq-9' }),
-    })
+    const foreign = await messageAction(
+      jsonReq('http://localhost/x', { action: 'cancel' }, 'PATCH'),
+      {
+        params: Promise.resolve({ id: 'mq-9' }),
+      }
+    )
     expect(foreign.status).toBe(400)
 
     // Same-tenant lookup succeeds.
@@ -588,9 +628,12 @@ describe('message log (3L, items 27/28) — ADMIN only, masked numbers', () => {
         ? { id: 'mq-9', hospitalId: HOSPITAL, status: 'PENDING' }
         : null
     )
-    const cancel = await messageAction(jsonReq('http://localhost/x', { action: 'cancel' }, 'PATCH'), {
-      params: Promise.resolve({ id: 'mq-9' }),
-    })
+    const cancel = await messageAction(
+      jsonReq('http://localhost/x', { action: 'cancel' }, 'PATCH'),
+      {
+        params: Promise.resolve({ id: 'mq-9' }),
+      }
+    )
     expect(cancel.status).toBe(200)
   })
 })
@@ -626,7 +669,10 @@ describe('blocked slots management (2D) — ADMIN/DOCTOR-own RBAC', () => {
     )
     expect(ok.status).toBe(201)
     const bad = await createBlockedSlot(
-      jsonReq('http://localhost/x', { startAt: '2027-06-15T10:00:00.000Z', endAt: '2027-06-15T09:00:00.000Z' })
+      jsonReq('http://localhost/x', {
+        startAt: '2027-06-15T10:00:00.000Z',
+        endAt: '2027-06-15T09:00:00.000Z',
+      })
     )
     expect(bad.status).toBe(400)
   })

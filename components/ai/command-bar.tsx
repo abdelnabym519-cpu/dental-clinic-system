@@ -81,10 +81,14 @@ export function CommandBar() {
               if (e.key === 'Enter') handleSubmit()
               if (e.key === 'Escape') setOpen(false)
             }}
-            placeholder={t("Type a command… e.g. 'Book appointment for Mohamed Ahmed tomorrow at 10am'")}
+            placeholder={t(
+              "Type a command… e.g. 'Book appointment for Mohamed Ahmed tomorrow at 10am'"
+            )}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">{t('ESC')}</span>
+          <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">
+            {t('ESC')}
+          </span>
         </div>
 
         {/* Quick examples (shown when no query) */}
@@ -96,10 +100,10 @@ export function CommandBar() {
             <div className="flex flex-wrap gap-2">
               {[
                 t("Show today's appointments"),
-                t("Check stock for composite resin"),
+                t('Check stock for composite resin'),
                 t("Show this month's revenue"),
-                t("Check overdue invoices"),
-                t("Low stock alerts"),
+                t('Check overdue invoices'),
+                t('Low stock alerts'),
               ].map((example) => (
                 <button
                   key={example}
@@ -137,7 +141,7 @@ export function CommandBar() {
         {commandLoading && (
           <div className="flex items-center gap-2 px-4 py-3 border-t">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-            <span className="text-sm text-muted-foreground">{t("Processing…")}</span>
+            <span className="text-sm text-muted-foreground">{t('Processing…')}</span>
           </div>
         )}
 
@@ -225,7 +229,7 @@ export function CommandBar() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-red-600">{result.result?.message || t("No result")}</p>
+              <p className="text-sm text-red-600">{result.result?.message || t('No result')}</p>
             )}
           </div>
         )}

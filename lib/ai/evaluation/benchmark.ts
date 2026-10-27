@@ -31,7 +31,7 @@ function percentile(sorted: number[], p: number): number {
 export async function benchmark<T>(
   name: string,
   fn: () => Promise<T>,
-  opts: BenchmarkOptions = {},
+  opts: BenchmarkOptions = {}
 ): Promise<BenchmarkRecord> {
   const env = opts.env ?? environmentFacts()
   const warmup = opts.warmup ?? 3

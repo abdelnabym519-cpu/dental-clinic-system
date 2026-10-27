@@ -23,10 +23,7 @@ import { X, Plus, Stethoscope, Image as ImageIcon, ClipboardList } from 'lucide-
 import { useLanguage } from '@/components/providers/language-provider'
 import type { DentalChartEntryRecord } from '@/components/dental-chart/types/odontogram'
 import { toothNameAr, toothNameEn } from '@/lib/dental-chart/fdi'
-import {
-  TOOTH_COLORS,
-  type ToothTreatmentStatus,
-} from '@/lib/dental-chart/clinical-status'
+import { TOOTH_COLORS, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import {
   CHARTABLE_CONDITIONS,
   SEVERITY_LABELS,
@@ -184,14 +181,24 @@ export function ToothContextPanel({
           )}
           <ul className="space-y-1.5">
             {entries.map((e) => (
-              <li key={e.id} className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-sm">
+              <li
+                key={e.id}
+                className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-sm"
+              >
                 <span>{conditionLabel(e.condition, locale)}</span>
                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {SEVERITY_LABELS[e.severity] ? (locale.startsWith('ar') ? SEVERITY_LABELS[e.severity].ar : SEVERITY_LABELS[e.severity].en) : e.severity}
-                  {SURFACES.filter((s) => e[s as keyof DentalChartEntryRecord] === true).length > 0 &&
+                  {SEVERITY_LABELS[e.severity]
+                    ? locale.startsWith('ar')
+                      ? SEVERITY_LABELS[e.severity].ar
+                      : SEVERITY_LABELS[e.severity].en
+                    : e.severity}
+                  {SURFACES.filter((s) => e[s as keyof DentalChartEntryRecord] === true).length >
+                    0 &&
                     ' · ' +
                       SURFACES.filter((s) => e[s as keyof DentalChartEntryRecord] === true)
-                        .map((s) => (locale.startsWith('ar') ? SURFACE_LABELS[s].ar : SURFACE_LABELS[s].en))
+                        .map((s) =>
+                          locale.startsWith('ar') ? SURFACE_LABELS[s].ar : SURFACE_LABELS[s].en
+                        )
                         .join('، ')}
                   {e.resolvedDate ? ` · ${t('dental_chart.resolved')}` : ''}
                 </span>
@@ -265,7 +272,8 @@ export function ToothContextPanel({
         <section aria-label={t('dental_chart.procedure')}>
           <div className="mb-2 flex items-center justify-between">
             <h4 className="flex items-center gap-1.5 text-sm font-semibold">
-              <ClipboardList className="h-4 w-4" /> {t('dental_chart.procedures')} ({procedures.length})
+              <ClipboardList className="h-4 w-4" /> {t('dental_chart.procedures')} (
+              {procedures.length})
             </h4>
             {canModify && !addingProcedure && (
               <Button size="sm" variant="outline" onClick={() => setAddingProcedure(true)}>
@@ -278,7 +286,10 @@ export function ToothContextPanel({
           )}
           <ul className="space-y-1.5">
             {procedures.map((p) => (
-              <li key={p.id} className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-sm">
+              <li
+                key={p.id}
+                className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-sm"
+              >
                 <span>{p.procedureName}</span>
                 <span className="flex items-center gap-2 text-xs text-muted-foreground">
                   ✓ {ITEM_STATUS_AR[p.status] ?? p.status}

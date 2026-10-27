@@ -6,16 +6,16 @@
 
 ## 1. Existing Odontogram (Phase 3 — PROTECTED, imported never modified)
 
-| File | Lines | Role |
-|---|---|---|
-| `components/dental-chart/types/odontogram.ts` | 132 | Domain types: 16 tooth classes, 16 `DentalCondition`s, 5 surfaces, `ToothViewModel`, `DentalChartEntryRecord` |
-| `components/dental-chart/geometry/tooth-paths.ts` | 1468 | Clean-room SVG vector geometry (16 tooth classes) |
-| `components/dental-chart/adapters/dental-chart-adapter.ts` | 415 | `buildToothViewModels`, `calculateOdontogramStats`, `ALL_FDI_TEETH`, `TOOTH_NAMES` (English) |
-| `components/dental-chart/odontogram/Odontogram.tsx` | ~600 | Client component: fetches `/api/dental-chart`, condition filter, surface dialog, legend, stats |
-| `components/dental-chart/odontogram/ToothCell.tsx` | 147 | Already keyboard accessible: `tabIndex`, `aria-label`, `aria-pressed`, Enter/Space handling |
-| `components/dental-chart/odontogram/*` | — | `ArchGrid`, `Quadrant`, `ToothSVG`, `ToothSurfaces`, `ToothTooltip`, `SurfaceSelectorDialog`, `OdontogramLegend`, `OdontogramStats`, `ToothHistoryTimeline` |
-| `components/dental-chart/dental-chart.tsx`, `components/treatments/dental-chart.tsx` | — | Facade wrappers around `Odontogram` |
-| `app/(dashboard)/patients/[id]/odontogram/page.tsx` | — | Standalone route (Phase 11 navigation target) |
+| File                                                                                 | Lines | Role                                                                                                                                                        |
+| ------------------------------------------------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/dental-chart/types/odontogram.ts`                                        | 132   | Domain types: 16 tooth classes, 16 `DentalCondition`s, 5 surfaces, `ToothViewModel`, `DentalChartEntryRecord`                                               |
+| `components/dental-chart/geometry/tooth-paths.ts`                                    | 1468  | Clean-room SVG vector geometry (16 tooth classes)                                                                                                           |
+| `components/dental-chart/adapters/dental-chart-adapter.ts`                           | 415   | `buildToothViewModels`, `calculateOdontogramStats`, `ALL_FDI_TEETH`, `TOOTH_NAMES` (English)                                                                |
+| `components/dental-chart/odontogram/Odontogram.tsx`                                  | ~600  | Client component: fetches `/api/dental-chart`, condition filter, surface dialog, legend, stats                                                              |
+| `components/dental-chart/odontogram/ToothCell.tsx`                                   | 147   | Already keyboard accessible: `tabIndex`, `aria-label`, `aria-pressed`, Enter/Space handling                                                                 |
+| `components/dental-chart/odontogram/*`                                               | —     | `ArchGrid`, `Quadrant`, `ToothSVG`, `ToothSurfaces`, `ToothTooltip`, `SurfaceSelectorDialog`, `OdontogramLegend`, `OdontogramStats`, `ToothHistoryTimeline` |
+| `components/dental-chart/dental-chart.tsx`, `components/treatments/dental-chart.tsx` | —     | Facade wrappers around `Odontogram`                                                                                                                         |
+| `app/(dashboard)/patients/[id]/odontogram/page.tsx`                                  | —     | Standalone route (Phase 11 navigation target)                                                                                                               |
 
 ## 2. Tooth numbering
 
@@ -71,14 +71,14 @@ Existing keys: `ui.dental_chart`, `clinical.odontogram`, `toothCondition.*`.
 
 ## 8. Tests (current, all green)
 
-| Suite | Count |
-|---|---|
-| `tests/unit/odontogram-clean-room.test.ts` | 13 |
-| `tests/components/odontogram-clean-room.test.tsx` | 11 |
-| `tests/api/dental-chart-routes.test.ts` | 21 |
-| `tests/e2e/dental-chart.spec.ts` (Playwright, not in vitest suite) | 8 |
-| Adjacent dental AI: `ai-context-tooth` (9) + `intelligence-dental-brain` (11) | 20 |
-| **Dental-related total (vitest)** | **65** |
+| Suite                                                                         | Count  |
+| ----------------------------------------------------------------------------- | ------ |
+| `tests/unit/odontogram-clean-room.test.ts`                                    | 13     |
+| `tests/components/odontogram-clean-room.test.tsx`                             | 11     |
+| `tests/api/dental-chart-routes.test.ts`                                       | 21     |
+| `tests/e2e/dental-chart.spec.ts` (Playwright, not in vitest suite)            | 8      |
+| Adjacent dental AI: `ai-context-tooth` (9) + `intelligence-dental-brain` (11) | 20     |
+| **Dental-related total (vitest)**                                             | **65** |
 
 (The prompt's "195 protected tests" is historical; the operative invariant is:
 **every current dental + full-suite test stays green.**)

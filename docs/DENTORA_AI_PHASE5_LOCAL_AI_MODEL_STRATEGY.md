@@ -4,13 +4,13 @@
 
 Every statement in this document carries one of five evidence tags:
 
-| Tag | Meaning |
-|---|---|
+| Tag            | Meaning                                                                            |
+| -------------- | ---------------------------------------------------------------------------------- |
 | **[VERIFIED]** | Reproducible proof exists in this repository (committed artifact + automated test) |
-| **[INFERRED]** | Sound reasoning from verified facts; no direct artifact yet |
-| **[PLANNED]** | Designed, not yet built |
-| **[BLOCKED]** | Cannot be completed from this environment — with the exact external blocker |
-| **[DEFERRED]** | Explicitly out of scope for Phase 5, owned by a later phase |
+| **[INFERRED]** | Sound reasoning from verified facts; no direct artifact yet                        |
+| **[PLANNED]**  | Designed, not yet built                                                            |
+| **[BLOCKED]**  | Cannot be completed from this environment — with the exact external blocker        |
+| **[DEFERRED]** | Explicitly out of scope for Phase 5, owned by a later phase                        |
 
 ---
 
@@ -64,7 +64,7 @@ selects, executes, normalizes, traces, and honestly reports specialized dental A
 
 **In scope** (§3): registry, runtime abstraction, typed contracts, selection policy,
 local-vs-cloud policy, observability/tracing, security model, health semantics, evidence
-harness, benchmark harness, this document, and the Agent integration that *reports*
+harness, benchmark harness, this document, and the Agent integration that _reports_
 capabilities through the Phase 3 loop.
 
 **Deliberately out of scope:** Phases 6–11 features (Odontogram, i18n expansion, PDF,
@@ -90,7 +90,7 @@ capabilityDeclared → modelExists → weightsVerified → localInferenceVerifie
 ```
 
 A task is **SUPPORTED** only when all six hold. **PARTIAL** when the production path
-exists but some level is unverified *in this environment*. **UNVERIFIED** when levels are
+exists but some level is unverified _in this environment_. **UNVERIFIED** when levels are
 partially met without production integration. **UNAVAILABLE** when the capability is
 declared absent (we chose not to claim it).
 
@@ -110,19 +110,19 @@ terminal state carries a machine-readable reason.
 
 "Verified / working / integrated / CPU-compatible / production-ready" may appear in
 DenToRa output only when a committed artifact backs the word (§34). This document applies
-that rule to itself via the five evidence tags. **[VERIFIED — tests/unit/engines-*, orchestrator lifecycle tests]**
+that rule to itself via the five evidence tags. **[VERIFIED — tests/unit/engines-\*, orchestrator lifecycle tests]**
 
 ---
 
 ## 4. Hardware reality
 
-| | Validation sandbox (where evidence was produced) | Target machine (operator's) |
-|---|---|---|
-| CPU | 2 vCPU (Linux) | Intel i9-13900H (hybrid 6P+8E+4E-cores) |
-| RAM | ~4 GB | 16 GB |
-| GPU | none | Iris Xe (unused — CPU-only contract) |
-| OS | Linux | Windows |
-| Python | 3.11.2 / torch 2.14.0 (`cuda_available: false` recorded) | — (operator-provisioned) |
+|        | Validation sandbox (where evidence was produced)         | Target machine (operator's)             |
+| ------ | -------------------------------------------------------- | --------------------------------------- |
+| CPU    | 2 vCPU (Linux)                                           | Intel i9-13900H (hybrid 6P+8E+4E-cores) |
+| RAM    | ~4 GB                                                    | 16 GB                                   |
+| GPU    | none                                                     | Iris Xe (unused — CPU-only contract)    |
+| OS     | Linux                                                    | Windows                                 |
+| Python | 3.11.2 / torch 2.14.0 (`cuda_available: false` recorded) | — (operator-provisioned)                |
 
 **Contract:** every engine and every evidence artifact in this repository must run on
 plain CPU with zero CUDA dependency; the Docker base images are CPU-only; the target's
@@ -143,16 +143,16 @@ with the §27 harness run on the target.
 
 ## 5. Engine inventory
 
-Repo existence ≠ operational. Each row states its *evidence-backed* status:
+Repo existence ≠ operational. Each row states its _evidence-backed_ status:
 
-| Engine | Code | Task(s) | Modality | Weights | Phase 5 status | Evidence |
-|---|---|---|---|---|---|---|
-| MeshSegNet (max) | `ai/engines/meshsegnet-max` | `dental_mesh_segmentation`, `cbct_surface_segmentation` | 3D scan / CBCT (mesh) | SHA `727cd3c5…5d2` verified from official Tai-Hsien/MeshSegNet repo | **AVAILABLE — REAL_INFERENCE_VERIFIED** (CPU) | `phase5_real_inference_max.json` |
-| MeshSegNet (mandible) | `ai/engines/meshsegnet-man` | `dental_mesh_segmentation_mandible` | 3D scan (mesh) | SHA `d74c87e0…60a0cf` verified from official repo | **AVAILABLE — REAL_INFERENCE_VERIFIED** (CPU) | `phase5_real_inference_man.json` |
-| Liodon | `ai/engines/liodon` | `panoramic_caries_detection`, `panoramic_impacted_tooth_detection` | Panoramic | SHA `4cee38b5…3a71` operator-verified (19A) | **PARTIAL — BLOCKED (weights on Hugging Face, unreachable from sandbox)** | `ai-validation/liodon/` |
-| Implant AI | `ai/engines/implant-ai` | `periapical_lesion_detection`, `bitewing_caries_detection` | Periapical / bitewing | SHA `e7cc1377…9ce98` operator-verified (19B) | **PARTIAL — BLOCKED (weights on Hugging Face, unreachable)** | `ai-validation/yolov8-8024/` (19B lab) |
-| Orthodontic AI | `ai/engines/orthodontic-ai` | `cephalometric_landmark_detection`, `orthodontic_analysis` | Cephalometric | SHA `fb1a781a…646fdcc` mechanism-verified (19B) | **PARTIAL — BLOCKED (real checkpoint on gated Google Drive)** | `ai-validation/cldetection2023/` |
-| Cloud LLM | (existing) | conversation synthesis, RAG synthesis | text | — | **UNCHANGED — CLOUD_ALLOWED for text only** | Phase 3/4, untouched |
+| Engine                | Code                        | Task(s)                                                            | Modality              | Weights                                                             | Phase 5 status                                                            | Evidence                               |
+| --------------------- | --------------------------- | ------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------- |
+| MeshSegNet (max)      | `ai/engines/meshsegnet-max` | `dental_mesh_segmentation`, `cbct_surface_segmentation`            | 3D scan / CBCT (mesh) | SHA `727cd3c5…5d2` verified from official Tai-Hsien/MeshSegNet repo | **AVAILABLE — REAL_INFERENCE_VERIFIED** (CPU)                             | `phase5_real_inference_max.json`       |
+| MeshSegNet (mandible) | `ai/engines/meshsegnet-man` | `dental_mesh_segmentation_mandible`                                | 3D scan (mesh)        | SHA `d74c87e0…60a0cf` verified from official repo                   | **AVAILABLE — REAL_INFERENCE_VERIFIED** (CPU)                             | `phase5_real_inference_man.json`       |
+| Liodon                | `ai/engines/liodon`         | `panoramic_caries_detection`, `panoramic_impacted_tooth_detection` | Panoramic             | SHA `4cee38b5…3a71` operator-verified (19A)                         | **PARTIAL — BLOCKED (weights on Hugging Face, unreachable from sandbox)** | `ai-validation/liodon/`                |
+| Implant AI            | `ai/engines/implant-ai`     | `periapical_lesion_detection`, `bitewing_caries_detection`         | Periapical / bitewing | SHA `e7cc1377…9ce98` operator-verified (19B)                        | **PARTIAL — BLOCKED (weights on Hugging Face, unreachable)**              | `ai-validation/yolov8-8024/` (19B lab) |
+| Orthodontic AI        | `ai/engines/orthodontic-ai` | `cephalometric_landmark_detection`, `orthodontic_analysis`         | Cephalometric         | SHA `fb1a781a…646fdcc` mechanism-verified (19B)                     | **PARTIAL — BLOCKED (real checkpoint on gated Google Drive)**             | `ai-validation/cldetection2023/`       |
+| Cloud LLM             | (existing)                  | conversation synthesis, RAG synthesis                              | text                  | —                                                                   | **UNCHANGED — CLOUD_ALLOWED for text only**                               | Phase 3/4, untouched                   |
 
 **No phantom engines exist.** The registry contains exactly the engines above; the
 capability matrix contains exactly ten tasks; an engine may be named in the matrix only if
@@ -200,18 +200,18 @@ The matrix is product policy data (task → registered engine + evidence levels)
 between `ai/orchestrator/app/capability_matrix.py` (source of truth) and
 `lib/ai/engines/capability-matrix.ts`, contract-tested field-by-field.
 
-| Task | Modality | Engine | Overall | Why |
-|---|---|---|---|---|
-| `dental_mesh_segmentation` | THREE_D_SCAN | meshsegnet-max | **SUPPORTED** | All six levels hold; real CPU inference evidence committed |
-| `dental_mesh_segmentation_mandible` | THREE_D_SCAN | meshsegnet-man | **SUPPORTED** | Separate weights, separate evidence run |
-| `cbct_surface_segmentation` | CBCT | meshsegnet-max | **SUPPORTED** | Engine consumes surfaced meshes; raw-volume segmentation is NOT claimed |
-| `panoramic_caries_detection` | PANORAMIC | liodon | PARTIAL | Production path + operator SHA exist; weights unreachable from sandbox |
-| `panoramic_impacted_tooth_detection` | PANORAMIC | liodon | PARTIAL | same engine |
-| `periapical_lesion_detection` | PERIAPICAL | implant-ai | PARTIAL | production path + operator SHA; weights unreachable |
-| `bitewing_caries_detection` | BITEWING | implant-ai | PARTIAL | same engine |
-| `cephalometric_landmark_detection` | CEPHALOMETRIC | orthodontic-ai | PARTIAL | mechanism proven (random-weight control); real checkpoint gated |
-| `orthodontic_analysis` | CEPHALOMETRIC | orthodontic-ai | PARTIAL | exposed via 38-landmark output; no diagnosis computed |
-| `cbct_multi_structure_segmentation` | CBCT | — | **UNAVAILABLE** | no engine in repo (ToothFairy-class models are access-gated); honest gap, deferred |
+| Task                                 | Modality      | Engine         | Overall         | Why                                                                                |
+| ------------------------------------ | ------------- | -------------- | --------------- | ---------------------------------------------------------------------------------- |
+| `dental_mesh_segmentation`           | THREE_D_SCAN  | meshsegnet-max | **SUPPORTED**   | All six levels hold; real CPU inference evidence committed                         |
+| `dental_mesh_segmentation_mandible`  | THREE_D_SCAN  | meshsegnet-man | **SUPPORTED**   | Separate weights, separate evidence run                                            |
+| `cbct_surface_segmentation`          | CBCT          | meshsegnet-max | **SUPPORTED**   | Engine consumes surfaced meshes; raw-volume segmentation is NOT claimed            |
+| `panoramic_caries_detection`         | PANORAMIC     | liodon         | PARTIAL         | Production path + operator SHA exist; weights unreachable from sandbox             |
+| `panoramic_impacted_tooth_detection` | PANORAMIC     | liodon         | PARTIAL         | same engine                                                                        |
+| `periapical_lesion_detection`        | PERIAPICAL    | implant-ai     | PARTIAL         | production path + operator SHA; weights unreachable                                |
+| `bitewing_caries_detection`          | BITEWING      | implant-ai     | PARTIAL         | same engine                                                                        |
+| `cephalometric_landmark_detection`   | CEPHALOMETRIC | orthodontic-ai | PARTIAL         | mechanism proven (random-weight control); real checkpoint gated                    |
+| `orthodontic_analysis`               | CEPHALOMETRIC | orthodontic-ai | PARTIAL         | exposed via 38-landmark output; no diagnosis computed                              |
+| `cbct_multi_structure_segmentation`  | CBCT          | —              | **UNAVAILABLE** | no engine in repo (ToothFairy-class models are access-gated); honest gap, deferred |
 
 Every row: `humanReview: REQUIRED` — **finding ≠ diagnosis** (§12). Modality mismatch
 resolves to a typed `MODALITY_MISMATCH`, unknown task to typed `UNSUPPORTED_CAPABILITY` —
@@ -249,7 +249,7 @@ Validated Output    (canonical envelope — checksum-verified weights, provenanc
   with neutral names + counts); tests assert the envelope schema and the absence of raw
   internals. **[VERIFIED]**
 - **Honest failure is first-class.** Unreachable orchestrator → `runtime.source =
-  'unavailable'` + exact reason in the answer; forged checksum / stand-in weight / job
+'unavailable'` + exact reason in the answer; forged checksum / stand-in weight / job
   mismatch → typed rejection, no output. Tested. **[VERIFIED]**
 - **In-process vs service (§21): service.** Decision evidence: peak RSS of one MeshSegNet
   engine process is ~1.8 GB (measured) — hosting it in the Node app would endanger the
@@ -270,7 +270,7 @@ Selection is a **pure function of (task, modality[, jaw])** with zero free text 
 - Structured-data tasks → deterministic tools (Phase 1/2 tools), never a model.
 - Factual/educational questions → Phase 4 RAG.
 - No evidence-backed engine → honest unavailability with the exact reason.
-- An engine *name* in user text is data, not a selector. **Test:** "Can liodon run on my
+- An engine _name_ in user text is data, not a selector. **Test:** "Can liodon run on my
   panoramic? What dental AI analysis can you do on X-rays?" produces a byte-identical
   answer to the same question without "liodon" — and no patient data is fetched (a
   capability question is patient-free registry information, even for PATIENT actors).
@@ -282,13 +282,13 @@ Selection is a **pure function of (task, modality[, jaw])** with zero free text 
 
 Per-task routing policy (§14), enforced by the capability matrix + agent loop:
 
-| Mode | Meaning | Phase 5 instances |
-|---|---|---|
-| `LOCAL_REQUIRED` | only a local engine may execute; cloud refusal is the safe default | all ten dental-imaging tasks |
-| `LOCAL_PREFERRED` | local engine used when AVAILABLE; otherwise honest unavailability (no silent cloud) | the six PARTIAL tasks until their weights are reachable |
-| `CLOUD_ALLOWED` | cloud permitted for this task class | text: conversation synthesis + RAG synthesis (Phase 3/4) — **unchanged** |
-| `CLOUD_ONLY_CURRENTLY` | only a cloud path exists today; reported as such, never as local | — (none in dental imaging; none invented) |
-| `UNAVAILABLE` | no path at all, reported honestly | `cbct_multi_structure_segmentation` |
+| Mode                   | Meaning                                                                             | Phase 5 instances                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `LOCAL_REQUIRED`       | only a local engine may execute; cloud refusal is the safe default                  | all ten dental-imaging tasks                                             |
+| `LOCAL_PREFERRED`      | local engine used when AVAILABLE; otherwise honest unavailability (no silent cloud) | the six PARTIAL tasks until their weights are reachable                  |
+| `CLOUD_ALLOWED`        | cloud permitted for this task class                                                 | text: conversation synthesis + RAG synthesis (Phase 3/4) — **unchanged** |
+| `CLOUD_ONLY_CURRENTLY` | only a cloud path exists today; reported as such, never as local                    | — (none in dental imaging; none invented)                                |
+| `UNAVAILABLE`          | no path at all, reported honestly                                                   | `cbct_multi_structure_segmentation`                                      |
 
 The cloud LLM remains fully intact for its original role; Phase 5 **adds a local path
 through the abstraction — it never replaces the cloud destructively**. No engine output
@@ -348,18 +348,18 @@ weight identity → evidence report. **[VERIFIED for the pipeline and evidence a
 
 ## 14. Security — threat matrix & mitigations
 
-| Threat | Mitigation | Evidence |
-|---|---|---|
-| Path traversal (model/artifact paths) | orchestrator storage layer resolves and rejects paths outside the artifact root | orchestrator tests (traversal cases) **[VERIFIED]** |
-| Model injection (substituted weights) | SHA-256 identity at download AND at load; mismatch = different artifact, re-verify; `is_standin` flag | evidence reports + service tests (forged checksum rejected) **[VERIFIED]** |
-| Oversized / zip-bomb inputs | engine-side size + cell-count caps (official 10k-cell decimation cap enforced, recorded in evidence); job-level wall-clock limits | evidence `preprocessing` block **[VERIFIED]** |
-| Command injection (agent strings → OS) | agent-produced strings are data only: no `eval`, no shell interpolation, no OS command construction anywhere in the TS/Python AI path | code audit + 0 matches in grep **[INFERRED]** |
-| Cross-tenant access | server-side tenant re-validation on every job; ids re-resolved, never trusted from client | orchestrator tests + service tests (job mismatch rejected) **[VERIFIED]** |
-| Forged provenance / confidence | provenance written server-side by the runtime; confidence is model-native and surfaced as-is (no re-labeling); tamper test: substituted checksum fails identity check | evidence tamper test **[VERIFIED]** |
-| Privilege escalation (agent upgrading itself) | Phase 3 policy unchanged: LLM/classifier never upgrades execution mode or approval; the new capability tool is read-only and `reviewRequired` | Phase 3 tests still green (5499 pass) **[VERIFIED]** |
-| Engine-name impersonation in user text | selection is a (task, modality) lookup; names in text are ignored | integration test (byte-identical answer with/without "liodon") **[VERIFIED]** |
-| PHI leakage into traces/evidence | fixtures synthetic or challenge-published; evidence contains hashes/counts only; answer tests assert absence of patient name/ids | evidence + integration tests **[VERIFIED]** |
-| Starvation / DoS via concurrent inference | global inference semaphore + per-job timeout + request budget (§17) | orchestrator design **[PLANNED — enforced in production deployment]** |
+| Threat                                        | Mitigation                                                                                                                                                            | Evidence                                                                      |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Path traversal (model/artifact paths)         | orchestrator storage layer resolves and rejects paths outside the artifact root                                                                                       | orchestrator tests (traversal cases) **[VERIFIED]**                           |
+| Model injection (substituted weights)         | SHA-256 identity at download AND at load; mismatch = different artifact, re-verify; `is_standin` flag                                                                 | evidence reports + service tests (forged checksum rejected) **[VERIFIED]**    |
+| Oversized / zip-bomb inputs                   | engine-side size + cell-count caps (official 10k-cell decimation cap enforced, recorded in evidence); job-level wall-clock limits                                     | evidence `preprocessing` block **[VERIFIED]**                                 |
+| Command injection (agent strings → OS)        | agent-produced strings are data only: no `eval`, no shell interpolation, no OS command construction anywhere in the TS/Python AI path                                 | code audit + 0 matches in grep **[INFERRED]**                                 |
+| Cross-tenant access                           | server-side tenant re-validation on every job; ids re-resolved, never trusted from client                                                                             | orchestrator tests + service tests (job mismatch rejected) **[VERIFIED]**     |
+| Forged provenance / confidence                | provenance written server-side by the runtime; confidence is model-native and surfaced as-is (no re-labeling); tamper test: substituted checksum fails identity check | evidence tamper test **[VERIFIED]**                                           |
+| Privilege escalation (agent upgrading itself) | Phase 3 policy unchanged: LLM/classifier never upgrades execution mode or approval; the new capability tool is read-only and `reviewRequired`                         | Phase 3 tests still green (5499 pass) **[VERIFIED]**                          |
+| Engine-name impersonation in user text        | selection is a (task, modality) lookup; names in text are ignored                                                                                                     | integration test (byte-identical answer with/without "liodon") **[VERIFIED]** |
+| PHI leakage into traces/evidence              | fixtures synthetic or challenge-published; evidence contains hashes/counts only; answer tests assert absence of patient name/ids                                      | evidence + integration tests **[VERIFIED]**                                   |
+| Starvation / DoS via concurrent inference     | global inference semaphore + per-job timeout + request budget (§17)                                                                                                   | orchestrator design **[PLANNED — enforced in production deployment]**         |
 
 ---
 
@@ -377,7 +377,7 @@ RBAC/tenant code was modified (guardrail §30). **[VERIFIED — job-mismatch and
 
 Enforced by `lifecycle.py` (state machine, forward-only, terminal states carry reasons)
 and the registry (checksum = identity). **No silent artifact replacement:** re-downloading
-a weight with a different SHA is a *new artifact* requiring re-verification and
+a weight with a different SHA is a _new artifact_ requiring re-verification and
 re-registration; the old verified artifact remains valid until explicitly RETIRED.
 Engine process model: one process per engine, model loaded once at startup (load time
 recorded: 74 ms), served for the process lifetime; a RETIRED engine's process is drained
@@ -450,7 +450,7 @@ PHI/host paths on every push (`tests/unit/engines-evidence.test.ts`).
 
 **NOT executed [BLOCKED]:** real-weight inference for liodon / implant-ai (Hugging Face
 unreachable from the sandbox) and orthodontic-ai (gated Drive link). Their PARTIAL status
-is the *correct* state — §39: a stop condition is reported, not bypassed.
+is the _correct_ state — §39: a stop condition is reported, not bypassed.
 
 ---
 
@@ -460,10 +460,10 @@ is the *correct* state — §39: a stop condition is reported, not bypassed.
 (`ai-validation/meshsegnet/reports/phase5_benchmark_summary.json`, produced by
 `scripts/bench-local-ai-phase5.ts`):
 
-| Engine | Cold first | Warm median (n=5) | Warm p95 | Peak RSS | Params | Model load |
-|---|---|---|---|---|---|---|
-| meshsegnet-max | 12,496 ms | 11,348 ms | 11,578 ms | 1,844 MB | 1,799,140 | 74 ms |
-| meshsegnet-man | 16,262 ms | 9,609 ms | 9,825 ms | 1,737 MB | 1,799,140 | 74 ms |
+| Engine         | Cold first | Warm median (n=5) | Warm p95  | Peak RSS | Params    | Model load |
+| -------------- | ---------- | ----------------- | --------- | -------- | --------- | ---------- |
+| meshsegnet-max | 12,496 ms  | 11,348 ms         | 11,578 ms | 1,844 MB | 1,799,140 | 74 ms      |
+| meshsegnet-man | 16,262 ms  | 9,609 ms          | 9,825 ms  | 1,737 MB | 1,799,140 | 74 ms      |
 
 These are real CPU inference latencies for a 10k-cell decimated full-arch mesh on
 2 vCPU — on the target 13900H they are expected to be substantially faster (higher
@@ -488,14 +488,14 @@ beyond the evidence.
 
 ## File map
 
-| Path | Role |
-|---|---|
-| `ai/orchestrator/app/{registry,capability_matrix,lifecycle,main,provenance,storage,validation,db}.py` | FastAPI orchestrator (source of truth) |
-| `ai/orchestrator/tests/` | 66 orchestrator tests |
-| `ai/engines/{meshsegnet-max,meshsegnet-man,liodon,implant-ai,orthodontic-ai}/` | engine code (mesh engines: `engine_modified: false` in evidence) |
-| `lib/ai/engines/{types,capability-matrix,local-ai-service,orchestrator-source}.ts` | TS abstraction layer (typed, no `any`) |
-| `lib/ai/agent/{classifier,planner,loop,tools}.ts` + `app/api/ai/agent/route.ts` | Phase 3 agent integration (capability tool, deterministic paths) |
-| `tests/unit/engines-*.test.ts`, `tests/unit/agent-local-ai-integration.test.ts`, `tests/harness/local-ai-fixtures.ts` | TS contract/integration/evidence tests |
-| `ai-validation/meshsegnet/scripts/run_phase5_evidence.py` | real-inference evidence runner |
-| `ai-validation/meshsegnet/reports/phase5_real_inference_{max,man}.json`, `phase5_benchmark_summary.json` | committed machine-readable evidence |
-| `scripts/bench-local-ai-phase5.ts` | benchmark summarizer (offline, deterministic) |
+| Path                                                                                                                  | Role                                                             |
+| --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `ai/orchestrator/app/{registry,capability_matrix,lifecycle,main,provenance,storage,validation,db}.py`                 | FastAPI orchestrator (source of truth)                           |
+| `ai/orchestrator/tests/`                                                                                              | 66 orchestrator tests                                            |
+| `ai/engines/{meshsegnet-max,meshsegnet-man,liodon,implant-ai,orthodontic-ai}/`                                        | engine code (mesh engines: `engine_modified: false` in evidence) |
+| `lib/ai/engines/{types,capability-matrix,local-ai-service,orchestrator-source}.ts`                                    | TS abstraction layer (typed, no `any`)                           |
+| `lib/ai/agent/{classifier,planner,loop,tools}.ts` + `app/api/ai/agent/route.ts`                                       | Phase 3 agent integration (capability tool, deterministic paths) |
+| `tests/unit/engines-*.test.ts`, `tests/unit/agent-local-ai-integration.test.ts`, `tests/harness/local-ai-fixtures.ts` | TS contract/integration/evidence tests                           |
+| `ai-validation/meshsegnet/scripts/run_phase5_evidence.py`                                                             | real-inference evidence runner                                   |
+| `ai-validation/meshsegnet/reports/phase5_real_inference_{max,man}.json`, `phase5_benchmark_summary.json`              | committed machine-readable evidence                              |
+| `scripts/bench-local-ai-phase5.ts`                                                                                    | benchmark summarizer (offline, deterministic)                    |

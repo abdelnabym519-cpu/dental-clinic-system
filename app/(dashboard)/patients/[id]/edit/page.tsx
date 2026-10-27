@@ -151,12 +151,16 @@ export default function EditPatientPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(data.error || t('Failed to update patient ({status})', { status: response.status }))
+        throw new Error(
+          data.error || t('Failed to update patient ({status})', { status: response.status })
+        )
       }
 
       toast({
         title: 'Patient Updated',
-        description: t('Patient {name} has been updated successfully.', { name: `${form.firstName} ${form.lastName}` }),
+        description: t('Patient {name} has been updated successfully.', {
+          name: `${form.firstName} ${form.lastName}`,
+        }),
       })
 
       router.push(`/patients/${patientId}`)
@@ -202,7 +206,7 @@ export default function EditPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">{t("First Name *")}</Label>
+              <Label htmlFor="firstName">{t('First Name *')}</Label>
               <Input
                 id="firstName"
                 value={form.firstName}
@@ -212,7 +216,7 @@ export default function EditPatientPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">{t("Last Name *")}</Label>
+              <Label htmlFor="lastName">{t('Last Name *')}</Label>
               <Input
                 id="lastName"
                 value={form.lastName}
@@ -281,7 +285,7 @@ export default function EditPatientPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">{t("Phone *")}</Label>
+              <Label htmlFor="phone">{t('Phone *')}</Label>
               <Input
                 id="phone"
                 value={form.phone}
@@ -362,7 +366,7 @@ export default function EditPatientPage() {
                 id="aadharNumber"
                 value={form.aadharNumber}
                 onChange={(e) => updateField('aadharNumber', e.target.value)}
-                placeholder={t("14-digit national ID")}
+                placeholder={t('14-digit national ID')}
               />
             </div>
             <div className="space-y-2">
@@ -418,7 +422,7 @@ export default function EditPatientPage() {
                 id="emergencyContactRelation"
                 value={form.emergencyContactRelation}
                 onChange={(e) => updateField('emergencyContactRelation', e.target.value)}
-                placeholder={t("e.g. Spouse, Parent")}
+                placeholder={t('e.g. Spouse, Parent')}
               />
             </div>
           </CardContent>
@@ -427,15 +431,21 @@ export default function EditPatientPage() {
         {/* Submit */}
         <div className="flex justify-end gap-3">
           <Link href={`/patients/${patientId}`}>
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.saving')}</>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('ui.saving')}
+              </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />{t('ui.save_changes')}</>
+                <Save className="mr-2 h-4 w-4" />
+                {t('ui.save_changes')}
+              </>
             )}
           </Button>
         </div>

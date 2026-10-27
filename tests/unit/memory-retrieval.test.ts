@@ -6,7 +6,11 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryMemoryStore } from '@/lib/ai/memory/store'
 import { serializeMemoryBlock } from '@/lib/ai/memory/retrieval'
-import { planMemoryRetrieval, hasMemoryIntent, extractUserPreferenceStatement } from '@/lib/ai/memory/orchestrator'
+import {
+  planMemoryRetrieval,
+  hasMemoryIntent,
+  extractUserPreferenceStatement,
+} from '@/lib/ai/memory/orchestrator'
 import type { MemoryActor, MemoryScope } from '@/lib/ai/memory/types'
 
 const HOSP_A = 'hosp-A'
@@ -22,36 +26,69 @@ async function seed() {
   const store = new InMemoryMemoryStore(NOW)
   const pScope: MemoryScope = { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' }
   await store.write({
-    scope: pScope, key: 'pref.language', value: { text: 'Arabic' }, memoryType: 'STRUCTURED',
-    writeClass: 'USER_CONFIRMED', trustLevel: 'USER_PROVIDED', sourceKind: 'USER_STATEMENT', actor: user,
+    scope: pScope,
+    key: 'pref.language',
+    value: { text: 'Arabic' },
+    memoryType: 'STRUCTURED',
+    writeClass: 'USER_CONFIRMED',
+    trustLevel: 'USER_PROVIDED',
+    sourceKind: 'USER_STATEMENT',
+    actor: user,
   })
   await store.write({
-    scope: pScope, key: 'event.book_appointment', value: { action: 'book_appointment', at: NOW.toISOString() },
-    memoryType: 'EPISODIC', writeClass: 'SYSTEM_VERIFIED', trustLevel: 'SYSTEM_DERIVED',
-    sourceKind: 'ACTION_RESULT', sourceRef: 'appr-1', actor: sys,
+    scope: pScope,
+    key: 'event.book_appointment',
+    value: { action: 'book_appointment', at: NOW.toISOString() },
+    memoryType: 'EPISODIC',
+    writeClass: 'SYSTEM_VERIFIED',
+    trustLevel: 'SYSTEM_DERIVED',
+    sourceKind: 'ACTION_RESULT',
+    sourceRef: 'appr-1',
+    actor: sys,
   })
   // Candidate (AI_DERIVED) — must NOT appear in a default clinical retrieval.
   await store.write({
-    scope: pScope, key: 'obs.candidate', value: { text: 'mentioned swelling' }, memoryType: 'SEMANTIC',
-    writeClass: 'CANDIDATE_MEMORY', trustLevel: 'AI_DERIVED', sourceKind: 'CONVERSATION', actor: user,
+    scope: pScope,
+    key: 'obs.candidate',
+    value: { text: 'mentioned swelling' },
+    memoryType: 'SEMANTIC',
+    writeClass: 'CANDIDATE_MEMORY',
+    trustLevel: 'AI_DERIVED',
+    sourceKind: 'CONVERSATION',
+    actor: user,
   })
   // Another tenant — must never leak.
   await store.write({
-    scope: { hospitalId: HOSP_B, domain: 'PATIENT', patientId: 'PAT-B1' }, key: 'pref.language',
-    value: { text: 'English' }, memoryType: 'STRUCTURED', writeClass: 'USER_CONFIRMED',
-    trustLevel: 'USER_PROVIDED', sourceKind: 'USER_STATEMENT', actor: { id: 'user-b', role: 'PATIENT' },
+    scope: { hospitalId: HOSP_B, domain: 'PATIENT', patientId: 'PAT-B1' },
+    key: 'pref.language',
+    value: { text: 'English' },
+    memoryType: 'STRUCTURED',
+    writeClass: 'USER_CONFIRMED',
+    trustLevel: 'USER_PROVIDED',
+    sourceKind: 'USER_STATEMENT',
+    actor: { id: 'user-b', role: 'PATIENT' },
   })
   // Another patient, same tenant.
   await store.write({
-    scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A2' }, key: 'pref.language',
-    value: { text: 'English' }, memoryType: 'STRUCTURED', writeClass: 'USER_CONFIRMED',
-    trustLevel: 'USER_PROVIDED', sourceKind: 'USER_STATEMENT', actor: { id: 'user-2', role: 'PATIENT' },
+    scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A2' },
+    key: 'pref.language',
+    value: { text: 'English' },
+    memoryType: 'STRUCTURED',
+    writeClass: 'USER_CONFIRMED',
+    trustLevel: 'USER_PROVIDED',
+    sourceKind: 'USER_STATEMENT',
+    actor: { id: 'user-2', role: 'PATIENT' },
   })
   // Expired item — stale memory must not be retrieved.
   await store.write({
-    scope: { hospitalId: HOSP_A, domain: 'CONVERSATION', conversationId: 'conv-1' }, key: 'decision.slot',
-    value: { text: 'morning preferred' }, memoryType: 'SEMANTIC', writeClass: 'USER_CONFIRMED',
-    trustLevel: 'USER_PROVIDED', sourceKind: 'CONVERSATION', actor: user,
+    scope: { hospitalId: HOSP_A, domain: 'CONVERSATION', conversationId: 'conv-1' },
+    key: 'decision.slot',
+    value: { text: 'morning preferred' },
+    memoryType: 'SEMANTIC',
+    writeClass: 'USER_CONFIRMED',
+    trustLevel: 'USER_PROVIDED',
+    sourceKind: 'CONVERSATION',
+    actor: user,
     expiresAt: new Date(NOW.getTime() - DAY),
   })
   return store
@@ -60,8 +97,14 @@ async function seed() {
 describe('memory retrieval', () => {
   it('is tenant-scoped and patient-scoped (no cross-tenant, no cross-patient)', async () => {
     const store = await seed()
-    const block = await store.query({ scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' } }, NOW)
-    expect(block.items.map((i) => i.key).sort()).toEqual(['event.book_appointment', 'pref.language'])
+    const block = await store.query(
+      { scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' } },
+      NOW
+    )
+    expect(block.items.map((i) => i.key).sort()).toEqual([
+      'event.book_appointment',
+      'pref.language',
+    ])
     // Tenant B and patient A2 values are absent.
     expect(JSON.stringify(block.items)).not.toContain('English')
   })
@@ -84,8 +127,11 @@ describe('memory retrieval', () => {
   it('never returns expired (stale) memory', async () => {
     const store = await seed()
     const block = await store.query(
-      { scope: { hospitalId: HOSP_A, domain: 'CONVERSATION', conversationId: 'conv-1' }, includeCandidate: true },
-      NOW,
+      {
+        scope: { hospitalId: HOSP_A, domain: 'CONVERSATION', conversationId: 'conv-1' },
+        includeCandidate: true,
+      },
+      NOW
     )
     expect(block.items).toHaveLength(0)
     // After retention runs, the row is DELETED (terminal) + audited.
@@ -101,7 +147,7 @@ describe('memory retrieval', () => {
     const store = await seed()
     const block = await store.query(
       { scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' }, maxItems: 1 },
-      NOW,
+      NOW
     )
     expect(block.items).toHaveLength(1)
     expect(block.truncated).toBe(true)
@@ -110,7 +156,10 @@ describe('memory retrieval', () => {
 
   it('renders provenance on every line (trust + source + as-of)', async () => {
     const store = await seed()
-    const block = await store.query({ scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' } }, NOW)
+    const block = await store.query(
+      { scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' } },
+      NOW
+    )
     for (const item of block.items) {
       expect(item.rendered).toMatch(/\[(USER_PROVIDED|SYSTEM_DERIVED)\] /)
       expect(item.rendered).toContain('source: ')
@@ -122,8 +171,11 @@ describe('memory retrieval', () => {
   it('key/type filters narrow retrieval (task-specific, never whole history)', async () => {
     const store = await seed()
     const block = await store.query(
-      { scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' }, keys: ['pref.language'] },
-      NOW,
+      {
+        scope: { hospitalId: HOSP_A, domain: 'PATIENT', patientId: 'PAT-A1' },
+        keys: ['pref.language'],
+      },
+      NOW
     )
     expect(block.items.map((i) => i.key)).toEqual(['pref.language'])
   })
@@ -145,7 +197,9 @@ describe('memory intent planning (deterministic triggers)', () => {
   })
 
   it('no retrieval without a trigger (smallest-sufficient-context)', () => {
-    expect(planMemoryRetrieval(input({ message: 'What are today\u2019s appointments?' }))).toBeNull()
+    expect(
+      planMemoryRetrieval(input({ message: 'What are today\u2019s appointments?' }))
+    ).toBeNull()
   })
 
   it('English + Arabic memory intents fire', () => {
@@ -156,13 +210,19 @@ describe('memory intent planning (deterministic triggers)', () => {
   })
 
   it('case-level profiles always pull case memory', () => {
-    const plan = planMemoryRetrieval(input({ contextProfile: 'CASE', caseId: 'treat-1', message: 'Summarize the case' }))
+    const plan = planMemoryRetrieval(
+      input({ contextProfile: 'CASE', caseId: 'treat-1', message: 'Summarize the case' })
+    )
     expect(plan?.domains).toContain('CASE')
   })
 
   it('extracts explicit first-person preference statements only', () => {
-    expect(extractUserPreferenceStatement('I prefer morning appointments.', 'PATIENT')?.domain).toBe('PATIENT')
-    expect(extractUserPreferenceStatement('أفضّل المواعيد الصباحية', 'DOCTOR')?.domain).toBe('DOCTOR')
+    expect(
+      extractUserPreferenceStatement('I prefer morning appointments.', 'PATIENT')?.domain
+    ).toBe('PATIENT')
+    expect(extractUserPreferenceStatement('أفضّل المواعيد الصباحية', 'DOCTOR')?.domain).toBe(
+      'DOCTOR'
+    )
     expect(extractUserPreferenceStatement('Book an appointment.', 'PATIENT')).toBeNull()
   })
 })

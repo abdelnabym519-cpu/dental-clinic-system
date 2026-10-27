@@ -218,7 +218,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
             onChange={(e) => setStartDate(e.target.value)}
             className="w-[160px]"
           />
-          <span className="text-muted-foreground">{t("to")}</span>
+          <span className="text-muted-foreground">{t('to')}</span>
           <Input
             type="date"
             value={endDate}
@@ -242,7 +242,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {t("Avg:")} {formatCurrency(data.revenue.averagePerTreatment)} {t("/ treatment")}
+              {t('Avg:')} {formatCurrency(data.revenue.averagePerTreatment)} {t('/ treatment')}
             </p>
           </CardContent>
         </Card>
@@ -274,7 +274,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {data.treatments.inProgress} {t("in progress")}
+              {data.treatments.inProgress} {t('in progress')}
             </p>
           </CardContent>
         </Card>
@@ -300,7 +300,9 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />{t('ui.appointments')}</CardTitle>
+              <Calendar className="h-4 w-4" />
+              {t('ui.appointments')}
+            </CardTitle>
             <CardDescription>{t('Appointment statistics for the selected period')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -333,7 +335,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center gap-2 pt-2 border-t">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  {t("Average wait time:")} {data.appointments.avgWaitTime} {t("minutes")}
+                  {t('Average wait time:')} {data.appointments.avgWaitTime} {t('minutes')}
                 </span>
               </div>
             )}
@@ -344,7 +346,9 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4" />{t('ui.attendance')}</CardTitle>
+              <UserCheck className="h-4 w-4" />
+              {t('ui.attendance')}
+            </CardTitle>
             <CardDescription>{t('Attendance statistics for the selected period')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -409,7 +413,7 @@ export default function PerformancePage({ params }: { params: Promise<{ id: stri
                             {categoryLabels[proc.category] || proc.category}
                           </Badge>
                           <span className="text-sm text-muted-foreground">
-                            {proc.count} {t("procedures")}
+                            {proc.count} {t('procedures')}
                           </span>
                         </div>
                         <span className="font-medium">{formatCurrency(proc.revenue)}</span>

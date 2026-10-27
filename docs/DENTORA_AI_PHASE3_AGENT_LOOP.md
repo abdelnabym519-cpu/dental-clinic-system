@@ -30,17 +30,17 @@ distributed agent platforms, chat-UI rewrite, **Phases 4–11** (work stops here
 
 ## 2. Engineering loop (per §37)
 
-| Stage | Evidence |
-|---|---|
-| DISCOVER | Read Phase 0/1/2 docs + code (context engine, action pipeline, approvals, openrouter, schema) |
-| AUDIT | `lib/ai/action-pipeline.ts` (`runAiAction`, `approveAndExecute`), `lib/ai/action-policy.ts` (31 intents, role matrices), `lib/ai/approvals.ts`, `app/api/ai/approvals/[id]/route.ts`, `lib/ai/openrouter.ts`, `prisma/schema.prisma` (AIConversation/AISessionType) |
-| BASELINE | Fresh `git status`/`rev-parse` (HEAD=remote=`2e39ada`); full vitest 5254/12/0; tsc 503; user's uncommitted auth changes preserved and never staged |
-| IMPLEMENT | `lib/ai/agent/*` (8 files), `app/api/ai/agent/route.ts`, additive TIMELINE profile in Phase 2 registry, additive `lt`/`lte` in the test harness where-engine, 1 i18n key (ar+en) |
-| TEST | 108 new tests (unit: classifier/planner/tools/loop E2E; api: route); full suite green |
-| BENCH | `scripts/bench-agent-phase3.ts` — §15 |
-| REVIEW | Independent adversarial pass — §16 |
-| DOC | This document |
-| COMMIT | Phase 3 files only — §17 |
+| Stage     | Evidence                                                                                                                                                                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DISCOVER  | Read Phase 0/1/2 docs + code (context engine, action pipeline, approvals, openrouter, schema)                                                                                                                                                                       |
+| AUDIT     | `lib/ai/action-pipeline.ts` (`runAiAction`, `approveAndExecute`), `lib/ai/action-policy.ts` (31 intents, role matrices), `lib/ai/approvals.ts`, `app/api/ai/approvals/[id]/route.ts`, `lib/ai/openrouter.ts`, `prisma/schema.prisma` (AIConversation/AISessionType) |
+| BASELINE  | Fresh `git status`/`rev-parse` (HEAD=remote=`2e39ada`); full vitest 5254/12/0; tsc 503; user's uncommitted auth changes preserved and never staged                                                                                                                  |
+| IMPLEMENT | `lib/ai/agent/*` (8 files), `app/api/ai/agent/route.ts`, additive TIMELINE profile in Phase 2 registry, additive `lt`/`lte` in the test harness where-engine, 1 i18n key (ar+en)                                                                                    |
+| TEST      | 108 new tests (unit: classifier/planner/tools/loop E2E; api: route); full suite green                                                                                                                                                                               |
+| BENCH     | `scripts/bench-agent-phase3.ts` — §15                                                                                                                                                                                                                               |
+| REVIEW    | Independent adversarial pass — §16                                                                                                                                                                                                                                  |
+| DOC       | This document                                                                                                                                                                                                                                                       |
+| COMMIT    | Phase 3 files only — §17                                                                                                                                                                                                                                            |
 
 ## 3. Architecture: the agent loop as orchestrator
 
@@ -73,16 +73,16 @@ distributed agent platforms, chat-UI rewrite, **Phases 4–11** (work stops here
 
 **Which stages run per task type** (explicit state machine, not a fixed pipeline):
 
-| Task type | Stages executed |
-|---|---|
-| OUT_OF_DOMAIN | Observe → Classify → Respond (boundary text) → Audit |
-| UNKNOWN (after fallback) | Observe → Understand → Classify(→LLM) → Respond (clarify) → Audit |
-| MISSING patient/tooth | Observe → Understand (resolution fails) → Respond (clarify) → Audit — **no tools** |
-| INFORMATIONAL | + Retrieve → Plan(1 read) → Execute → Deterministic Respond → Audit |
-| OPERATIONAL | Plan(1 clinic tool) → Execute → Deterministic Respond → Audit — **no patient, no LLM** |
-| CLINICAL / IMAGING analysis | + Retrieve → (Safety n/a) → LLM synthesis (fenced) / deterministic fallback → Audit |
-| ACTION_REQUEST | Resolve → Plan(reads+action) → Safety(policy) → Execute (pipeline) → Verify → Respond (draft / pending / executed / blocked) → Audit |
-| MULTI_STEP | Retrieve(FULL_360) → Safety → Execute (≤ limits) → Verify → Synthesis + action confirmation → Audit |
+| Task type                   | Stages executed                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| OUT_OF_DOMAIN               | Observe → Classify → Respond (boundary text) → Audit                                                                                 |
+| UNKNOWN (after fallback)    | Observe → Understand → Classify(→LLM) → Respond (clarify) → Audit                                                                    |
+| MISSING patient/tooth       | Observe → Understand (resolution fails) → Respond (clarify) → Audit — **no tools**                                                   |
+| INFORMATIONAL               | + Retrieve → Plan(1 read) → Execute → Deterministic Respond → Audit                                                                  |
+| OPERATIONAL                 | Plan(1 clinic tool) → Execute → Deterministic Respond → Audit — **no patient, no LLM**                                               |
+| CLINICAL / IMAGING analysis | + Retrieve → (Safety n/a) → LLM synthesis (fenced) / deterministic fallback → Audit                                                  |
+| ACTION_REQUEST              | Resolve → Plan(reads+action) → Safety(policy) → Execute (pipeline) → Verify → Respond (draft / pending / executed / blocked) → Audit |
+| MULTI_STEP                  | Retrieve(FULL_360) → Safety → Execute (≤ limits) → Verify → Synthesis + action confirmation → Audit                                  |
 
 **No stage is re-entered:** approval resumption happens ONLY through the existing
 `approveAndExecute` endpoint on the ledger row — the agent returns
@@ -120,22 +120,22 @@ trace.
 
 The Phase 2 engine is reused unchanged as the retrieval layer. Mapping:
 
-| Task / topics | Profile | Engine queries |
-|---|---|---|
-| Patient appointments/identity/balance, informational | `PATIENT_OVERVIEW` | 6 |
-| Clinical history / findings / notes | `CLINICAL` | 8 |
-| Single tooth review | `TOOTH` | 7 |
-| Pinned case (treatment plan) | `CASE` | 8 |
-| Imaging studies + AI analyses | `IMAGING` | 5 |
-| Pinned treatment | `TREATMENT` | 8 |
-| Follow-ups | `FOLLOW_UP` | 6 |
-| Complex case review (MULTI_STEP) | `FULL_360` | 11 |
-| Clinic-level operational (no patient) | **none** — bounded clinic tools | 1–2 |
+| Task / topics                                        | Profile                         | Engine queries |
+| ---------------------------------------------------- | ------------------------------- | -------------- |
+| Patient appointments/identity/balance, informational | `PATIENT_OVERVIEW`              | 6              |
+| Clinical history / findings / notes                  | `CLINICAL`                      | 8              |
+| Single tooth review                                  | `TOOTH`                         | 7              |
+| Pinned case (treatment plan)                         | `CASE`                          | 8              |
+| Imaging studies + AI analyses                        | `IMAGING`                       | 5              |
+| Pinned treatment                                     | `TREATMENT`                     | 8              |
+| Follow-ups                                           | `FOLLOW_UP`                     | 6              |
+| Complex case review (MULTI_STEP)                     | `FULL_360`                      | 11             |
+| Clinic-level operational (no patient)                | **none** — bounded clinic tools | 1–2            |
 
 - **`FULL_360` is never the default** — only explicit MULTI_STEP reviews use it.
 - **Additive change to Phase 2:** a new `TIMELINE` profile (8 sections, 7
   queries, budget-capped) was registered in `lib/ai/context/{types,profiles,
-  contract}.ts` so the agent's `get_patient_timeline` tool has a bounded timeline
+contract}.ts` so the agent's `get_patient_timeline` tool has a bounded timeline
   without FULL_360. No other Phase 2 behavior changed; all Phase 2 tests
   re-run green (128/128 in the affected set).
 - Structural pins win over vague phrases: client-pinned `studyId` → IMAGING,
@@ -150,17 +150,17 @@ exist here. Unknown tool → `TOOL_NOT_FOUND`; unknown/invalid param →
 without a resolved patient → `MISSING_CONTEXT`. Tools run with the **server-
 resolved scope only** — caller-asserted identity never reaches a query.
 
-| Tool | Class | Domain | Roles | Notes |
-|---|---|---|---|---|
-| get_patient_overview / get_clinical_summary / get_tooth_context / get_case_context / get_imaging_context / get_treatment_context / get_followup_context / get_patient_timeline / get_patient_360 | READ | patient/clinical/imaging/dental | staff + PATIENT | wrap `buildClinicalContext` (Phase 2); return structured context + fenced serialization + provenance sources |
-| get_appointments | READ | scheduling | staff | date window (default today), tenant-scoped, ≤20 |
-| get_waiting_queue | READ | scheduling | staff | CHECKED_IN/IN_PROGRESS, ordered, ≤20 |
-| get_doctor_schedule | READ | staff | staff | day window (default today) + doctorId, ≤30 |
-| get_followup_due | READ | clinical | staff | N-day window (default 30), ≤20, patient names joined |
-| schedule_followup | **WRITE** | scheduling | staff | → Phase 1 `book_appointment` |
-| record_payment | **WRITE** | billing | staff | → Phase 1 `record_payment` |
-| create_invoice | **WRITE** | billing | staff | → Phase 1 `create_invoice` |
-| create_prescription | **WRITE** | prescription | staff | → Phase 1 `create_prescription` |
+| Tool                                                                                                                                                                                             | Class     | Domain                          | Roles           | Notes                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
+| get_patient_overview / get_clinical_summary / get_tooth_context / get_case_context / get_imaging_context / get_treatment_context / get_followup_context / get_patient_timeline / get_patient_360 | READ      | patient/clinical/imaging/dental | staff + PATIENT | wrap `buildClinicalContext` (Phase 2); return structured context + fenced serialization + provenance sources |
+| get_appointments                                                                                                                                                                                 | READ      | scheduling                      | staff           | date window (default today), tenant-scoped, ≤20                                                              |
+| get_waiting_queue                                                                                                                                                                                | READ      | scheduling                      | staff           | CHECKED_IN/IN_PROGRESS, ordered, ≤20                                                                         |
+| get_doctor_schedule                                                                                                                                                                              | READ      | staff                           | staff           | day window (default today) + doctorId, ≤30                                                                   |
+| get_followup_due                                                                                                                                                                                 | READ      | clinical                        | staff           | N-day window (default 30), ≤20, patient names joined                                                         |
+| schedule_followup                                                                                                                                                                                | **WRITE** | scheduling                      | staff           | → Phase 1 `book_appointment`                                                                                 |
+| record_payment                                                                                                                                                                                   | **WRITE** | billing                         | staff           | → Phase 1 `record_payment`                                                                                   |
+| create_invoice                                                                                                                                                                                   | **WRITE** | billing                         | staff           | → Phase 1 `create_invoice`                                                                                   |
+| create_prescription                                                                                                                                                                              | **WRITE** | prescription                    | staff           | → Phase 1 `create_prescription`                                                                              |
 
 **Writes never execute directly**: `viaActionPipeline: true` tools call the
 injected `runAction`, which is the Phase 1 `runAiAction` — policy → RBAC →
@@ -181,17 +181,17 @@ the plan (`hasContext` guard) — duplicate-call elimination verified by bench
 
 Hard limits (`AgentLimits`, injectable, defaults in `DEFAULT_AGENT_LIMITS`):
 
-| Limit | Default | Behavior on hit |
-|---|---|---|
-| maxPlanSteps | 12 | plan truncated at build time |
-| maxToolCalls | 10 | loop stops; unrun action → `NOT_EXECUTED` (honest) |
-| maxRepeatedToolCalls | 3 | loop stops (`PLAN_LIMIT`) |
-| maxIterations | 8 | loop stops |
-| totalTimeoutMs | 30 000 | loop stops before next step |
-| per-tool timeoutMs | 5 000 / 8 000 | `TOOL_TIMEOUT` typed result |
-| maxContextChars | 60 000 | context truncated + warning |
-| maxAnswerChars | 4 000 | model answer truncated |
-| maxLlmCalls | 1 | LLM skipped → deterministic/clarify path |
+| Limit                | Default       | Behavior on hit                                    |
+| -------------------- | ------------- | -------------------------------------------------- |
+| maxPlanSteps         | 12            | plan truncated at build time                       |
+| maxToolCalls         | 10            | loop stops; unrun action → `NOT_EXECUTED` (honest) |
+| maxRepeatedToolCalls | 3             | loop stops (`PLAN_LIMIT`)                          |
+| maxIterations        | 8             | loop stops                                         |
+| totalTimeoutMs       | 30 000        | loop stops before next step                        |
+| per-tool timeoutMs   | 5 000 / 8 000 | `TOOL_TIMEOUT` typed result                        |
+| maxContextChars      | 60 000        | context truncated + warning                        |
+| maxAnswerChars       | 4 000         | model answer truncated                             |
+| maxLlmCalls          | 1             | LLM skipped → deterministic/clarify path           |
 
 Every limit hit is recorded in `trace.limits.hits` and surfaced in the response
 `limitHits`.
@@ -264,6 +264,7 @@ USER QUESTION (untrusted data): …
 ## 11. LLM usage — no LLM for everything (§28)
 
 The LLM has exactly **two** jobs, both optional:
+
 1. classification fallback for in-domain UNKNOWN (enum-constrained),
 2. clinical synthesis of fenced context for CLINICAL_ANALYSIS / IMAGING_ANALYSIS /
    MULTI_STEP.
@@ -342,14 +343,14 @@ Bench: `scripts/bench-agent-phase3.ts` (in-memory harness, median of 25,
 LLM stubbed — measures orchestration + engine, not model latency).
 "Before" = Phase 2 engine numbers (Phase 2 report §15). All queries bounded.
 
-| Task | Phase 3 wall (median) | Queries | Tool calls | Model calls |
-|---|---|---|---|---|
-| OPERATIONAL waiting queue | 0.33 ms | 1 | 1 | 0 |
-| INFORMATIONAL patient overview (name-resolved) | 0.93 ms | 7 | 1 | 0 |
-| CLINICAL_ANALYSIS (LLM stubbed) | 1.09 ms | 9 | 1 | 1 (stub) |
-| TOOTH 36 | 1.06 ms | 8 | 1 | 1 (stub) |
-| FULL_360 (via `get_patient_360`) | 1.13 ms | 11 | 1 | 0 |
-| OPERATIONAL follow-ups due | 0.36 ms | 2 | 1 | 0 |
+| Task                                           | Phase 3 wall (median) | Queries | Tool calls | Model calls |
+| ---------------------------------------------- | --------------------- | ------- | ---------- | ----------- |
+| OPERATIONAL waiting queue                      | 0.33 ms               | 1       | 1          | 0           |
+| INFORMATIONAL patient overview (name-resolved) | 0.93 ms               | 7       | 1          | 0           |
+| CLINICAL_ANALYSIS (LLM stubbed)                | 1.09 ms               | 9       | 1          | 1 (stub)    |
+| TOOTH 36                                       | 1.06 ms               | 8       | 1          | 1 (stub)    |
+| FULL_360 (via `get_patient_360`)               | 1.13 ms               | 11      | 1          | 0           |
+| OPERATIONAL follow-ups due                     | 0.36 ms               | 2       | 1          | 0           |
 
 - **Agent overhead vs raw engine**: ~0.2–0.3 ms per task (classification +
   resolution + orchestration); query counts equal Phase 2 profile budgets plus
@@ -366,16 +367,16 @@ LLM stubbed — measures orchestration + engine, not model latency).
 Fresh-eyes pass over the security-critical paths (auth, tenant scoping, patient
 resolution, action/approval delegation, injection boundary, limits, tracing).
 
-| # | Finding | Sev | Exploit | Impact | Fix | Regression test |
-|---|---|---|---|---|---|---|
-| AD-1 | `get_doctor_schedule`/`get_appointments` without a date used `ORDER BY scheduledDate ASC` with no window → an unbounded (oldest-N) all-time list | Med | Staff asks "show schedule" → oldest records returned; misleading + extra scan | Misinformation, perf at scale | Default window = server today when no date given | `agent-tools` "no-date schedule/appointments default to today" |
-| AD-2 | Synthesized (LLM) answer is model-generated text: a prompt-injection inside clinical free text could in principle make the *model* echo a planted sentence in `answer` | Low | Malicious note text + clinical request | Cosmetic/wrong text in `answer` only — structured contract fields (`actionsExecuted`, `approvalState`, `verification`) are server-built and unaffected; deterministic paths have zero model | 4-layer boundary + fence + sanitization + "answer only from context" rules; UI (Phase 4) binds to contract fields, not raw text | `agent-loop` "fake EXECUTED text from the model cannot enter the contract" |
-| AD-3 | Patient name lookup fetches ≤100 tenant patients before exact/contains matching | Low | Enterprise tenant with >100 same-name-like patients | Safe failure: `CLARIFICATION_REQUIRED` (never a wrong guess) | Accepted — bounded + fails safe; dedicated resolver if a tenant outgrows it | `agent-loop` ambiguous + not-found cases |
-| AD-4 | Message name extraction is heuristic (stopword-filtered) | Low | "for Peter Today" → candidate "Peter" | Wrong candidate → no match/ambiguous → clarification (server-verified resolution, never an identity assertion) | Accepted — resolution is authoritative; hints only | `agent-loop` cross-tenant + ambiguous |
-| AD-5 | (found in-dev) RETRIEVE built context, then the plan scheduled the same context tool → duplicate queries per task | Med | Any patient task | 2× query cost, N+1-like | `hasContext` guard; single timed context tool call | bench §15 (7q/9q/11q = exactly one build) |
-| AD-6 | (found in-dev) MULTI_STEP-with-action had no context profile → no grounding context, limits test unreachable | Med | Complex review tasks | Un-grounded answers; unverifiable multi-step | ACTION branch sets `FULL_360` when `isMultiStep` (§5/§7) | `agent-loop` MULTI_STEP test |
-| AD-7 | Clinic tools expose patient names to all staff roles | Info | — | Matches existing app visibility (queue/appointments pages are staff-visible); no clinical/financial fields in these tools | Accepted, documented | — |
-| AD-8 | Rate limit is count-then-act (TOCTOU) | Info | Burst within one tick | Same exposure as the existing chat route (identical pattern) | Accepted (existing convention) | — |
+| #    | Finding                                                                                                                                                                | Sev  | Exploit                                                                       | Impact                                                                                                                                                                                      | Fix                                                                                                                             | Regression test                                                            |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| AD-1 | `get_doctor_schedule`/`get_appointments` without a date used `ORDER BY scheduledDate ASC` with no window → an unbounded (oldest-N) all-time list                       | Med  | Staff asks "show schedule" → oldest records returned; misleading + extra scan | Misinformation, perf at scale                                                                                                                                                               | Default window = server today when no date given                                                                                | `agent-tools` "no-date schedule/appointments default to today"             |
+| AD-2 | Synthesized (LLM) answer is model-generated text: a prompt-injection inside clinical free text could in principle make the _model_ echo a planted sentence in `answer` | Low  | Malicious note text + clinical request                                        | Cosmetic/wrong text in `answer` only — structured contract fields (`actionsExecuted`, `approvalState`, `verification`) are server-built and unaffected; deterministic paths have zero model | 4-layer boundary + fence + sanitization + "answer only from context" rules; UI (Phase 4) binds to contract fields, not raw text | `agent-loop` "fake EXECUTED text from the model cannot enter the contract" |
+| AD-3 | Patient name lookup fetches ≤100 tenant patients before exact/contains matching                                                                                        | Low  | Enterprise tenant with >100 same-name-like patients                           | Safe failure: `CLARIFICATION_REQUIRED` (never a wrong guess)                                                                                                                                | Accepted — bounded + fails safe; dedicated resolver if a tenant outgrows it                                                     | `agent-loop` ambiguous + not-found cases                                   |
+| AD-4 | Message name extraction is heuristic (stopword-filtered)                                                                                                               | Low  | "for Peter Today" → candidate "Peter"                                         | Wrong candidate → no match/ambiguous → clarification (server-verified resolution, never an identity assertion)                                                                              | Accepted — resolution is authoritative; hints only                                                                              | `agent-loop` cross-tenant + ambiguous                                      |
+| AD-5 | (found in-dev) RETRIEVE built context, then the plan scheduled the same context tool → duplicate queries per task                                                      | Med  | Any patient task                                                              | 2× query cost, N+1-like                                                                                                                                                                     | `hasContext` guard; single timed context tool call                                                                              | bench §15 (7q/9q/11q = exactly one build)                                  |
+| AD-6 | (found in-dev) MULTI_STEP-with-action had no context profile → no grounding context, limits test unreachable                                                           | Med  | Complex review tasks                                                          | Un-grounded answers; unverifiable multi-step                                                                                                                                                | ACTION branch sets `FULL_360` when `isMultiStep` (§5/§7)                                                                        | `agent-loop` MULTI_STEP test                                               |
+| AD-7 | Clinic tools expose patient names to all staff roles                                                                                                                   | Info | —                                                                             | Matches existing app visibility (queue/appointments pages are staff-visible); no clinical/financial fields in these tools                                                                   | Accepted, documented                                                                                                            | —                                                                          |
+| AD-8 | Rate limit is count-then-act (TOCTOU)                                                                                                                                  | Info | Burst within one tick                                                         | Same exposure as the existing chat route (identical pattern)                                                                                                                                | Accepted (existing convention)                                                                                                  | —                                                                          |
 
 Also verified no-issue: fake approvals ignored (PENDING), fake tool outputs
 cannot execute, history tampering has no authority, param injection cannot set
@@ -388,6 +389,7 @@ writes have `maxRetries: 0` (idempotency = Phase 1 fingerprint).
 ## 17. Tests, gates, decisions
 
 **New tests (109):**
+
 - `tests/unit/agent-classifier.test.ts` (26) — domain gate, FDI extraction,
   action signals/params, task types, LLM-fallback contract (enum + garbage).
 - `tests/unit/agent-planner.test.ts` (13) — templates, dedup/caps, cycle
@@ -413,6 +415,7 @@ failed** (baseline 5254) · tsc **503** (0 new) · eslint 0 errors on all Phase 
 files · Phase 2 context suite re-run green (128/128) · i18n parity test in the suite green (ar/en).
 
 **Decisions (locked):**
+
 - No migration (trace reuses `AIConversation`/`QUERY`); no new tables/models.
 - No caching (Phase 2 decision stands; bench shows no need).
 - Agent = orchestrator; Phase 1 pipeline stays the single write path and the
@@ -442,6 +445,7 @@ files · Phase 2 context suite re-run green (128/128) · i18n parity test in the
 - **Phases 4–11 are not started** (per mandate: STOP at Phase 3).
 
 **Files changed/added (Phase 3 only):**
+
 ```
 A  lib/ai/agent/types.ts
 A  lib/ai/agent/classifier.ts

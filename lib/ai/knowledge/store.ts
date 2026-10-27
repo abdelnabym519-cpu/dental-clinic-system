@@ -13,8 +13,13 @@
  * hospitalId === query.hospitalId)).
  */
 import type {
-  CommitBatch, CommitReceipt, IngestionReport,
-  KnowledgeChunk, KnowledgeDocument, KnowledgeSource, KnowledgeStore,
+  CommitBatch,
+  CommitReceipt,
+  IngestionReport,
+  KnowledgeChunk,
+  KnowledgeDocument,
+  KnowledgeSource,
+  KnowledgeStore,
   KnowledgeSourceMeta,
 } from './types'
 
@@ -42,7 +47,8 @@ export function createMemoryKnowledgeStore(idFactory?: () => string): MemoryKnow
   const chunks = new Map<string, KnowledgeChunk>()
 
   const visibleSource = (s: KnowledgeSource, hospitalId: string | null): boolean =>
-    s.status === 'PUBLISHED' && (s.meta.scope === 'GLOBAL' || (s.meta.scope === 'TENANT' && s.meta.hospitalId === hospitalId))
+    s.status === 'PUBLISHED' &&
+    (s.meta.scope === 'GLOBAL' || (s.meta.scope === 'TENANT' && s.meta.hospitalId === hospitalId))
 
   const store: KnowledgeStore = {
     async findSourceByKey(sourceKey) {
@@ -53,27 +59,35 @@ export function createMemoryKnowledgeStore(idFactory?: () => string): MemoryKnow
       return [...documents.values()].filter((d) => d.sourceId === sourceId)
     },
     async findPublishedByContentHash(hash) {
-      for (const d of documents.values()) if (d.status === 'PUBLISHED' && d.contentHash === hash) return d
+      for (const d of documents.values())
+        if (d.status === 'PUBLISHED' && d.contentHash === hash) return d
       return null
     },
     async listPublishedSources(hospitalId) {
       return [...sources.values()].filter((s) => visibleSource(s, hospitalId))
     },
     async listDocumentsForSources(sourceIds, includeSuperseded) {
-      return [...documents.values()].filter((d) =>
-        sourceIds.includes(d.sourceId) &&
-        (d.status === 'PUBLISHED' || (includeSuperseded && d.status === 'SUPERSEDED')))
+      return [...documents.values()].filter(
+        (d) =>
+          sourceIds.includes(d.sourceId) &&
+          (d.status === 'PUBLISHED' || (includeSuperseded && d.status === 'SUPERSEDED'))
+      )
     },
     async listChunks(documentIds) {
       return [...chunks.values()].filter((c) => documentIds.includes(c.documentId))
     },
     async listAllChunks(hospitalId) {
-      const visible = new Set([...sources.values()].filter((s) => visibleSource(s, hospitalId)).map((s) => s.id))
+      const visible = new Set(
+        [...sources.values()].filter((s) => visibleSource(s, hospitalId)).map((s) => s.id)
+      )
       return [...chunks.values()].filter((c) => visible.has(c.sourceId))
     },
     async commit(batch): Promise<CommitReceipt> {
       // All-or-nothing: validate everything first, then write.
-      if (sources.has(batch.source.id) && sources.get(batch.source.id)!.meta.sourceKey !== batch.source.meta.sourceKey) {
+      if (
+        sources.has(batch.source.id) &&
+        sources.get(batch.source.id)!.meta.sourceKey !== batch.source.meta.sourceKey
+      ) {
         throw new Error('commit: source id/key conflict')
       }
       if (batch.document.status === 'PUBLISHED') {
@@ -88,7 +102,8 @@ export function createMemoryKnowledgeStore(idFactory?: () => string): MemoryKnow
       }
       for (const c of batch.chunks) {
         for (const ex of chunks.values()) {
-          if (ex.documentId === c.documentId && ex.position === c.position) throw new Error('commit: duplicate chunk position')
+          if (ex.documentId === c.documentId && ex.position === c.position)
+            throw new Error('commit: duplicate chunk position')
         }
       }
       sources.set(batch.source.id, batch.source)
@@ -186,19 +201,30 @@ export function createPrismaKnowledgeStore(prisma: any): KnowledgeStore {
 
   return {
     async findSourceByKey(sourceKey) {
-      const row = await prisma.knowledgeSource.findFirst({ where: { sourceKey }, orderBy: { createdAt: 'asc' } })
+      const row = await prisma.knowledgeSource.findFirst({
+        where: { sourceKey },
+        orderBy: { createdAt: 'asc' },
+      })
       return row ? rowToSource(row) : null
     },
     async listDocumentsBySource(sourceId) {
-      const rows = await prisma.knowledgeDocument.findMany({ where: { sourceId }, orderBy: { ingestedAt: 'asc' } })
+      const rows = await prisma.knowledgeDocument.findMany({
+        where: { sourceId },
+        orderBy: { ingestedAt: 'asc' },
+      })
       return rows.map(rowToDocument)
     },
     async findPublishedByContentHash(hash) {
-      const row = await prisma.knowledgeDocument.findFirst({ where: { contentHash: hash, status: 'PUBLISHED' } })
+      const row = await prisma.knowledgeDocument.findFirst({
+        where: { contentHash: hash, status: 'PUBLISHED' },
+      })
       return row ? rowToDocument(row) : null
     },
     async listPublishedSources(hospitalId) {
-      const where = { status: 'PUBLISHED', OR: [{ scope: 'GLOBAL' }, ...(hospitalId ? [{ scope: 'TENANT', hospitalId }] : [])] }
+      const where = {
+        status: 'PUBLISHED',
+        OR: [{ scope: 'GLOBAL' }, ...(hospitalId ? [{ scope: 'TENANT', hospitalId }] : [])],
+      }
       const rows = await prisma.knowledgeSource.findMany({ where, orderBy: { createdAt: 'asc' } })
       return rows.map(rowToSource)
     },
@@ -207,23 +233,38 @@ export function createPrismaKnowledgeStore(prisma: any): KnowledgeStore {
         sourceId: { in: sourceIds },
         status: includeSuperseded ? { in: ['PUBLISHED', 'SUPERSEDED'] } : 'PUBLISHED',
       }
-      const rows = await prisma.knowledgeDocument.findMany({ where, orderBy: { ingestedAt: 'asc' } })
+      const rows = await prisma.knowledgeDocument.findMany({
+        where,
+        orderBy: { ingestedAt: 'asc' },
+      })
       return rows.map(rowToDocument)
     },
     async listChunks(documentIds) {
-      const rows = await prisma.knowledgeChunk.findMany({ where: { documentId: { in: documentIds } }, orderBy: [{ documentId: 'asc' }, { position: 'asc' }] })
+      const rows = await prisma.knowledgeChunk.findMany({
+        where: { documentId: { in: documentIds } },
+        orderBy: [{ documentId: 'asc' }, { position: 'asc' }],
+      })
       return rows.map(rowToChunk)
     },
     async listAllChunks(hospitalId) {
       const where = {
-        source: { status: 'PUBLISHED', OR: [{ scope: 'GLOBAL' }, ...(hospitalId ? [{ scope: 'TENANT', hospitalId }] : [])] },
+        source: {
+          status: 'PUBLISHED',
+          OR: [{ scope: 'GLOBAL' }, ...(hospitalId ? [{ scope: 'TENANT', hospitalId }] : [])],
+        },
       }
-      const rows = await prisma.knowledgeChunk.findMany({ where, orderBy: [{ documentId: 'asc' }, { position: 'asc' }] })
+      const rows = await prisma.knowledgeChunk.findMany({
+        where,
+        orderBy: [{ documentId: 'asc' }, { position: 'asc' }],
+      })
       return rows.map(rowToChunk)
     },
     async commit(batch) {
       const tx = await prisma.$transaction(async (txClient: any) => {
-        let sourceRow = await txClient.knowledgeSource.findFirst({ where: { sourceKey: batch.source.meta.sourceKey }, orderBy: { createdAt: 'asc' } })
+        let sourceRow = await txClient.knowledgeSource.findFirst({
+          where: { sourceKey: batch.source.meta.sourceKey },
+          orderBy: { createdAt: 'asc' },
+        })
         if (!sourceRow) {
           sourceRow = await txClient.knowledgeSource.create({
             data: {
@@ -232,8 +273,12 @@ export function createPrismaKnowledgeStore(prisma: any): KnowledgeStore {
               title: batch.source.meta.title,
               publisher: batch.source.meta.publisher,
               authors: batch.source.meta.authors,
-              publicationDate: batch.source.meta.publicationDate ? new Date(batch.source.meta.publicationDate) : null,
-              lastUpdated: batch.source.meta.lastUpdated ? new Date(batch.source.meta.lastUpdated) : null,
+              publicationDate: batch.source.meta.publicationDate
+                ? new Date(batch.source.meta.publicationDate)
+                : null,
+              lastUpdated: batch.source.meta.lastUpdated
+                ? new Date(batch.source.meta.lastUpdated)
+                : null,
               reference: batch.source.meta.reference,
               sourceType: batch.source.meta.sourceType,
               authorityTier: batch.source.meta.authorityTier,
@@ -319,7 +364,10 @@ export function createPrismaKnowledgeStore(prisma: any): KnowledgeStore {
       })
     },
     async updateDocumentIngestion(documentId, report) {
-      await prisma.knowledgeDocument.update({ where: { id: documentId }, data: { ingestion: report } })
+      await prisma.knowledgeDocument.update({
+        where: { id: documentId },
+        data: { ingestion: report },
+      })
     },
   }
 }

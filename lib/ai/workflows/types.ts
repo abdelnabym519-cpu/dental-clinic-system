@@ -146,7 +146,24 @@ export interface WorkflowRunResult {
 // ---------------------------------------------------------------------------
 
 export interface WorkflowRunStore {
-  create: (rec: Omit<WorkflowRunRecord, 'createdAt'> & { createdAt?: string }) => Promise<WorkflowRunRecord>
+  create: (
+    rec: Omit<WorkflowRunRecord, 'createdAt'> & { createdAt?: string }
+  ) => Promise<WorkflowRunRecord>
   findUnique: (id: string, hospitalId: string) => Promise<WorkflowRunRecord | null>
-  update: (id: string, data: Partial<Pick<WorkflowRunRecord, 'status' | 'currentStep' | 'stepLog' | 'approvalId' | 'result' | 'attempts' | 'startedAt' | 'completedAt'>>) => Promise<WorkflowRunRecord>
+  update: (
+    id: string,
+    data: Partial<
+      Pick<
+        WorkflowRunRecord,
+        | 'status'
+        | 'currentStep'
+        | 'stepLog'
+        | 'approvalId'
+        | 'result'
+        | 'attempts'
+        | 'startedAt'
+        | 'completedAt'
+      >
+    >
+  ) => Promise<WorkflowRunRecord>
 }

@@ -56,7 +56,11 @@ export function speakableFromResponse(text: string, maxChars = 800): string {
   // List bullets → pauses.
   out = out.replace(/^\s*[-*•]\s+/gm, '')
   // Collapse whitespace but keep sentence pauses.
-  out = out.replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '. ').replace(/\n/g, '. ').trim()
+  out = out
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, '. ')
+    .trim()
   if (out.length > maxChars) {
     const cut = out.slice(0, maxChars)
     const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '))
@@ -106,7 +110,11 @@ export class CommandTtsProvider implements TtsProvider {
     child.stdin.end(input.text, 'utf8')
     await new Promise<void>((resolve, reject) => {
       child.on('error', reject)
-      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`COMMAND_TTS_EXIT_${code}:${stderr.slice(0, 200)}`))))
+      child.on('close', (code) =>
+        code === 0
+          ? resolve()
+          : reject(new Error(`COMMAND_TTS_EXIT_${code}:${stderr.slice(0, 200)}`))
+      )
     })
     return {
       providerId: this.providerId,
@@ -127,12 +135,19 @@ export class NullTtsProvider implements TtsProvider {
 
 export type TtsProviderKind = 'web-speech-browser' | 'command' | 'null'
 
-export function resolveTtsProviderKind(env: { DENTORA_VOICE_TTS_CMD?: string } = process.env as { DENTORA_VOICE_TTS_CMD?: string }): TtsProviderKind {
+export function resolveTtsProviderKind(
+  env: { DENTORA_VOICE_TTS_CMD?: string } = process.env as { DENTORA_VOICE_TTS_CMD?: string }
+): TtsProviderKind {
   if (env.DENTORA_VOICE_TTS_CMD) return 'command'
   return 'web-speech-browser'
 }
 
-export function createTtsProvider(opts: { kind?: TtsProviderKind; commandConfig?: { command: string; args?: string[]; timeoutMs?: number } } = {}): TtsProvider {
+export function createTtsProvider(
+  opts: {
+    kind?: TtsProviderKind
+    commandConfig?: { command: string; args?: string[]; timeoutMs?: number }
+  } = {}
+): TtsProvider {
   switch (opts.kind ?? resolveTtsProviderKind()) {
     case 'command':
       if (!opts.commandConfig) throw new Error('COMMAND_TTS_CONFIG_REQUIRED')

@@ -122,9 +122,7 @@ export function FindingCard({
               </span>
             )}
           </div>
-          {subline && (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{subline}</p>
-          )}
+          {subline && <p className="mt-0.5 truncate text-xs text-muted-foreground">{subline}</p>}
           <div className="mt-1 flex items-center gap-2">
             {pct === null ? (
               <span className="text-xs text-muted-foreground">

@@ -56,7 +56,11 @@ export interface SttProvider {
 
 export class FixtureSttProvider implements SttProvider {
   readonly providerId = 'fixture-stt'
-  constructor(private readonly scripted: { text: string; confidence?: number; isFinal?: boolean } = { text: '' }) {}
+  constructor(
+    private readonly scripted: { text: string; confidence?: number; isFinal?: boolean } = {
+      text: '',
+    }
+  ) {}
 
   async transcribe(): Promise<SttTranscribeResult> {
     return {
@@ -82,7 +86,9 @@ export class WebSpeechBrowserSttProvider implements SttProvider {
   readonly providerId = 'web-speech-stt-browser'
 
   async transcribe(): Promise<SttTranscribeResult> {
-    throw new Error('WEB_SPEECH_IS_CLIENT_SIDE: browsers post typed transcripts via /api/ai/voice/turn')
+    throw new Error(
+      'WEB_SPEECH_IS_CLIENT_SIDE: browsers post typed transcripts via /api/ai/voice/turn'
+    )
   }
 }
 
@@ -105,7 +111,10 @@ export class CommandSttProvider implements SttProvider {
 
   async transcribe(input: SttTranscribeInput): Promise<SttTranscribeResult> {
     if (!input.audioPath) throw new Error('COMMAND_STT_REQUIRES_AUDIO_PATH')
-    const size = await stat(input.audioPath).then((s) => s.size, () => -1)
+    const size = await stat(input.audioPath).then(
+      (s) => s.size,
+      () => -1
+    )
     const safety = validateAudioFileSafety(input.audioPath, this.config.baseDir, size)
     if (!safety.ok) throw new Error(`AUDIO_UNSAFE:${safety.code}`)
     const bytes = await readFile(input.audioPath)
@@ -115,7 +124,8 @@ export class CommandSttProvider implements SttProvider {
   async transcribeBytes(wavBytes: Buffer, input: SttTranscribeInput): Promise<SttTranscribeResult> {
     if (wavBytes.length > 10 * 1024 * 1024) throw new Error('AUDIO_TOO_LARGE')
     const t0 = Date.now()
-    const args = this.config.argsTemplate.map((a) => (a === '{{audio}}' ? '-' : a))
+    const args = this.config.argsTemplate
+      .map((a) => (a === '{{audio}}' ? '-' : a))
       .concat(input.grammar ? ['--grammar', input.grammar] : [])
     const child = spawn(this.config.command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -138,7 +148,11 @@ export class CommandSttProvider implements SttProvider {
     child.stdin.end(wavBytes)
     await new Promise<void>((resolve, reject) => {
       child.on('error', reject)
-      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`COMMAND_STT_EXIT_${code}:${stderr.slice(0, 200)}`))))
+      child.on('close', (code) =>
+        code === 0
+          ? resolve()
+          : reject(new Error(`COMMAND_STT_EXIT_${code}:${stderr.slice(0, 200)}`))
+      )
     })
     let parsed: { text?: unknown; confidence?: unknown; isFinal?: unknown }
     try {
@@ -164,16 +178,20 @@ export class CommandSttProvider implements SttProvider {
 
 export type SttProviderKind = 'fixture' | 'web-speech-browser' | 'command'
 
-export function resolveSttProviderKind(env: { DENTORA_VOICE_STT_CMD?: string } = process.env as { DENTORA_VOICE_STT_CMD?: string }): SttProviderKind {
+export function resolveSttProviderKind(
+  env: { DENTORA_VOICE_STT_CMD?: string } = process.env as { DENTORA_VOICE_STT_CMD?: string }
+): SttProviderKind {
   if (env.DENTORA_VOICE_STT_CMD) return 'command'
   return 'web-speech-browser'
 }
 
-export function createSttProvider(opts: {
-  kind?: SttProviderKind
-  fixtureScript?: { text: string; confidence?: number; isFinal?: boolean }
-  commandConfig?: CommandSttConfig
-} = {}): SttProvider {
+export function createSttProvider(
+  opts: {
+    kind?: SttProviderKind
+    fixtureScript?: { text: string; confidence?: number; isFinal?: boolean }
+    commandConfig?: CommandSttConfig
+  } = {}
+): SttProvider {
   switch (opts.kind ?? resolveSttProviderKind()) {
     case 'fixture':
       return new FixtureSttProvider(opts.fixtureScript)

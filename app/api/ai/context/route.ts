@@ -21,9 +21,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { isValidFdi } from '@/lib/ai/context/fdi'
-import {
-  buildClinicalContext,
-} from '@/lib/ai/context/service'
+import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import { CONTEXT_PROFILES } from '@/lib/ai/context/types'
 
@@ -41,7 +39,10 @@ type Body = {
 export async function POST(req: Request) {
   // Dev/test only — never reachable in production.
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Context inspector is only available in development' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Context inspector is only available in development' },
+      { status: 403 }
+    )
   }
 
   const { error, user, hospitalId } = await requireAuthAndRole()

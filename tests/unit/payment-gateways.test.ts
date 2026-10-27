@@ -65,7 +65,10 @@ describe('FawryGateway', () => {
   it('creates a signed charge request and returns a pending order', async () => {
     mockFetch.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ referenceNumber: 'FWRY-99001', checkoutUrl: 'https://atfawry.fawrystaging.com/pay/99001' }),
+        JSON.stringify({
+          referenceNumber: 'FWRY-99001',
+          checkoutUrl: 'https://atfawry.fawrystaging.com/pay/99001',
+        }),
         { status: 200 }
       )
     )
@@ -109,7 +112,11 @@ describe('FawryGateway', () => {
     )
 
     const gateway = new FawryGateway(FAWRY_CREDS)
-    const result = await gateway.verifyPayment({ orderId: 'FWRY-99001', paymentId: 'FWRY-99001', signature: '' })
+    const result = await gateway.verifyPayment({
+      orderId: 'FWRY-99001',
+      paymentId: 'FWRY-99001',
+      signature: '',
+    })
 
     expect(result.verified).toBe(true)
     expect(result.status).toBe('PAID')
@@ -119,11 +126,17 @@ describe('FawryGateway', () => {
 
   it('does not verify unpaid status', async () => {
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ status: 'UNPAID', fawryRefNumber: 'FWRY-99001' }), { status: 200 })
+      new Response(JSON.stringify({ status: 'UNPAID', fawryRefNumber: 'FWRY-99001' }), {
+        status: 200,
+      })
     )
 
     const gateway = new FawryGateway(FAWRY_CREDS)
-    const result = await gateway.verifyPayment({ orderId: 'FWRY-99001', paymentId: 'FWRY-99001', signature: '' })
+    const result = await gateway.verifyPayment({
+      orderId: 'FWRY-99001',
+      paymentId: 'FWRY-99001',
+      signature: '',
+    })
 
     expect(result.verified).toBe(false)
   })
@@ -181,7 +194,11 @@ describe('FawryGateway', () => {
     )
 
     const gateway = new FawryGateway(FAWRY_CREDS)
-    const refund = await gateway.initiateRefund({ paymentId: 'FWRY-99001', amount: 500, reason: 'duplicate' })
+    const refund = await gateway.initiateRefund({
+      paymentId: 'FWRY-99001',
+      amount: 500,
+      reason: 'duplicate',
+    })
 
     expect(refund.success).toBe(true)
     expect(refund.amount).toBe(500)
@@ -247,7 +264,11 @@ describe('PaymobGateway', () => {
       )
 
     const gateway = new PaymobGateway(PAYMOB_CREDS)
-    const result = await gateway.verifyPayment({ orderId: '424242', paymentId: '987654', signature: '' })
+    const result = await gateway.verifyPayment({
+      orderId: '424242',
+      paymentId: '987654',
+      signature: '',
+    })
 
     expect(result.verified).toBe(true)
     expect(result.amount).toBe(1500)
@@ -303,7 +324,8 @@ describe('PaymobGateway', () => {
       provider: 'paymob',
       status: 'PENDING',
       metadata: {
-        redirectUrl: 'https://accept.paymob.com/api/acceptance/iframes/789456?payment_token=PAY-KEY',
+        redirectUrl:
+          'https://accept.paymob.com/api/acceptance/iframes/789456?payment_token=PAY-KEY',
       },
     }
     const config = gateway.getCheckoutConfig(order, PAYMOB_CREDS)
@@ -315,7 +337,9 @@ describe('PaymobGateway', () => {
   it('initiates refunds against the Paymob refund endpoint', async () => {
     mockFetch
       .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'AUTH-TOKEN' }), { status: 201 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 555001, pending: true }), { status: 201 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 555001, pending: true }), { status: 201 })
+      )
 
     const gateway = new PaymobGateway(PAYMOB_CREDS)
     const refund = await gateway.initiateRefund({ paymentId: '987654', amount: 500 })
@@ -380,11 +404,17 @@ describe('InstapayGateway', () => {
     const signature = createHmac('sha256', 'instapay-webhook-secret').update(body).digest('hex')
 
     expect(gateway.verifyWebhook(body, signature, 'instapay-webhook-secret')).toBe(true)
-    expect(gateway.verifyWebhook(body, signature.replace(/./, 'a'), 'instapay-webhook-secret')).toBe(false)
+    expect(
+      gateway.verifyWebhook(body, signature.replace(/./, 'a'), 'instapay-webhook-secret')
+    ).toBe(false)
   })
 
   it('rejects webhooks when no secret is configured', () => {
-    const gateway = new InstapayGateway({ provider: 'INSTAPAY', isLiveMode: false, instapayHandle: 'dentora@instapay' })
+    const gateway = new InstapayGateway({
+      provider: 'INSTAPAY',
+      isLiveMode: false,
+      instapayHandle: 'dentora@instapay',
+    })
     expect(gateway.verifyWebhook('{}', 'sig', '')).toBe(false)
   })
 
@@ -397,7 +427,10 @@ describe('InstapayGateway', () => {
       receipt: 'INV-2026-001',
       provider: 'instapay',
       status: 'PENDING',
-      metadata: { reference: 'IP-INV-2026-001-abcdef12', redirectUrl: '/pay/instapay?reference=x&amount=1500' },
+      metadata: {
+        reference: 'IP-INV-2026-001-abcdef12',
+        redirectUrl: '/pay/instapay?reference=x&amount=1500',
+      },
     }
     const config = gateway.getCheckoutConfig(order, INSTAPAY_CREDS)
     expect(config.provider).toBe('instapay')
@@ -408,7 +441,10 @@ describe('InstapayGateway', () => {
 
   it('acknowledges refunds as pending external transfers', async () => {
     const gateway = new InstapayGateway(INSTAPAY_CREDS)
-    const refund = await gateway.initiateRefund({ paymentId: 'IP-INV-2026-001-abcdef12', amount: 300 })
+    const refund = await gateway.initiateRefund({
+      paymentId: 'IP-INV-2026-001-abcdef12',
+      amount: 300,
+    })
 
     expect(refund.success).toBe(true)
     expect(refund.status).toBe('PENDING')

@@ -26,7 +26,8 @@ describe('chunking', () => {
   })
 
   it('keeps table rows whole (no mid-table slicing)', () => {
-    const doc = `# Materials
+    const doc =
+      `# Materials
 | Material | Indication |
 |----------|------------|
 | GIC | cervical lesions |
@@ -52,7 +53,11 @@ The three signs together suggest active periodontitis and require full charting.
   })
 
   it('splits oversized paragraphs on sentence boundaries (never mid-sentence)', () => {
-    const sentences = Array.from({ length: 30 }, (_, i) => `Sentence number ${i + 1} describes a periodontal finding in detail for patient cohort ${i}.`)
+    const sentences = Array.from(
+      { length: 30 },
+      (_, i) =>
+        `Sentence number ${i + 1} describes a periodontal finding in detail for patient cohort ${i}.`
+    )
     const doc = `# Findings\n${sentences.join(' ')}`
     const chunks = chunkContent(doc, { ...DEFAULT_CHUNKING, maxChars: 400, targetChars: 300 })
     expect(chunks.length).toBeGreaterThan(1)
@@ -77,7 +82,8 @@ The three signs together suggest active periodontitis and require full charting.
   })
 
   it('merges tiny trailing sections into the previous chunk', () => {
-    const big = 'Probing depths were measured at six sites per tooth and recorded for every sextant of the arch during this periodontal examination. '
+    const big =
+      'Probing depths were measured at six sites per tooth and recorded for every sextant of the arch during this periodontal examination. '
     const doc = `# Body
 ${big.repeat(5)}
 # Note

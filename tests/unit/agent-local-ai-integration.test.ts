@@ -47,7 +47,8 @@ function deps(over = {}) {
     },
     limits: { ...DEFAULT_AGENT_LIMITS },
     now: () => NOW,
-    localAiCapabilities: over.source === 'none' ? null : createFakeCapabilitySource(over.sourceOver ?? {}),
+    localAiCapabilities:
+      over.source === 'none' ? null : createFakeCapabilitySource(over.sourceOver ?? {}),
   }
 }
 
@@ -87,7 +88,7 @@ describe('classification (deterministic — §32/§13)', () => {
   it('a pinned study is an imaging-flow request, NOT a capability question', async () => {
     const res = await runAgent(
       req(ANALYSIS_REQ, doctor, { studyId: 'study-9', patientId: 'pat-A1' }),
-      deps(),
+      deps()
     )
     // No capability tool is scheduled for a pinned-study analysis request.
     expect(res.trace.toolCalls.map((t) => t.tool)).not.toContain('local_ai_capabilities')
@@ -99,7 +100,9 @@ describe('answer content (§29-style honesty, no PHI)', () => {
     const res = await runAgent(req(CAP_Q, doctor), deps())
     expect(res.status).toBe('COMPLETED')
     expect(res.answer).toMatch(/decision support/i)
-    expect(res.answer).toMatch(/meshsegnet-max/).toMatch(/meshsegnet-man/)
+    expect(res.answer)
+      .toMatch(/meshsegnet-max/)
+      .toMatch(/meshsegnet-man/)
     expect(res.answer).toMatch(/clinician review/i)
     // Live runtime (fake source says the two MeshSegNet engines are AVAILABLE).
     expect(res.answer).toMatch(/Engines currently available/)
@@ -125,7 +128,7 @@ describe('answer content (§29-style honesty, no PHI)', () => {
   it('no patient data is fetched or rendered (capability is patient-free)', async () => {
     const res = await runAgent(
       req(CAP_Q2, doctor, { patientId: 'pat-A1', patientName: 'Ahmed Ali' }),
-      deps(),
+      deps()
     )
     expect(res.trace.toolCalls.map((t) => t.tool)).toEqual(['local_ai_capabilities'])
     expect(res.answer).not.toContain('Ahmed')
@@ -144,7 +147,7 @@ describe('engine selection is never from user text (§32)', () => {
     const a = await runAgent(req(CAP_Q, doctor), deps())
     const b = await runAgent(
       req('Can liodon run on my panoramic? What dental AI analysis can you do on X-rays?', doctor),
-      deps(),
+      deps()
     )
     // Both answers are the deterministic capability view — the named engine
     // never becomes a selection or a claim.

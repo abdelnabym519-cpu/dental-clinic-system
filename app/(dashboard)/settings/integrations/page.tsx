@@ -150,7 +150,9 @@ export default function IntegrationsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t('Integrations')}</h1>
-        <p className="text-muted-foreground">{t('Connect external services to enhance your workflow')}</p>
+        <p className="text-muted-foreground">
+          {t('Connect external services to enhance your workflow')}
+        </p>
       </div>
 
       {/* Google Calendar */}
@@ -170,7 +172,7 @@ export default function IntegrationsPage() {
             </div>
             {!loading && (
               <Badge variant={calendarStatus?.connected ? 'default' : 'secondary'}>
-                {calendarStatus?.connected ? t("Connected") : t("Not Connected")}
+                {calendarStatus?.connected ? t('Connected') : t('Not Connected')}
               </Badge>
             )}
           </div>
@@ -178,7 +180,9 @@ export default function IntegrationsPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />{t('ui.loading')}</div>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {t('ui.loading')}
+            </div>
           ) : calendarStatus?.connected ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -192,7 +196,9 @@ export default function IntegrationsPage() {
                   <p className="text-muted-foreground">{t('Connected Since')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.createdAt
-                      ? format(new Date(calendarStatus.integration.createdAt), 'PPP', { locale: dateFnsLocale(locale) })
+                      ? format(new Date(calendarStatus.integration.createdAt), 'PPP', {
+                          locale: dateFnsLocale(locale),
+                        })
                       : '—'}
                   </p>
                 </div>
@@ -200,15 +206,19 @@ export default function IntegrationsPage() {
                   <p className="text-muted-foreground">{t('Last Sync')}</p>
                   <p className="font-medium">
                     {calendarStatus.integration?.lastSyncAt
-                      ? format(new Date(calendarStatus.integration.lastSyncAt), 'PPp', { locale: dateFnsLocale(locale) })
-                      : t("Never")}
+                      ? format(new Date(calendarStatus.integration.lastSyncAt), 'PPp', {
+                          locale: dateFnsLocale(locale),
+                        })
+                      : t('Never')}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t('ui.status')}</p>
                   <p className="font-medium flex items-center gap-1">
                     <Check className="h-4 w-4 text-green-600" />
-                    {calendarStatus.integration?.syncEnabled ? t("Sync Enabled") : t("Sync Disabled")}
+                    {calendarStatus.integration?.syncEnabled
+                      ? t('Sync Enabled')
+                      : t('Sync Disabled')}
                   </p>
                 </div>
               </div>
@@ -220,7 +230,7 @@ export default function IntegrationsPage() {
                   ) : (
                     <RefreshCcw className="h-4 w-4 mr-2" />
                   )}
-                  {t("Sync Now")}
+                  {t('Sync Now')}
                 </Button>
                 <Button
                   variant="outline"
@@ -233,19 +243,23 @@ export default function IntegrationsPage() {
                   ) : (
                     <Unplug className="h-4 w-4 mr-2" />
                   )}
-                  {t("Disconnect")}
+                  {t('Disconnect')}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                {t("Connect your Google Calendar to automatically sync appointments. When you create or update appointments in the system, they'll appear on your Google Calendar.")}
+                {t(
+                  "Connect your Google Calendar to automatically sync appointments. When you create or update appointments in the system, they'll appear on your Google Calendar."
+                )}
               </p>
               <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg">
                 <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
                 <p className="text-xs text-amber-800">
-                  {t("Requires Google Calendar API credentials configured by the system administrator (GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET environment variables).")}
+                  {t(
+                    'Requires Google Calendar API credentials configured by the system administrator (GOOGLE_CALENDAR_CLIENT_ID and GOOGLE_CALENDAR_CLIENT_SECRET environment variables).'
+                  )}
                 </p>
               </div>
               <Button onClick={handleConnect} disabled={connecting}>
@@ -254,7 +268,7 @@ export default function IntegrationsPage() {
                 ) : (
                   <ExternalLink className="h-4 w-4 mr-2" />
                 )}
-                {t("Connect Google Calendar")}
+                {t('Connect Google Calendar')}
               </Button>
             </div>
           )}
@@ -269,7 +283,9 @@ export default function IntegrationsPage() {
               <Calendar className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <CardTitle className="text-muted-foreground">{t('Microsoft Outlook Calendar')}</CardTitle>
+              <CardTitle className="text-muted-foreground">
+                {t('Microsoft Outlook Calendar')}
+              </CardTitle>
               <CardDescription>{t('Coming soon')}</CardDescription>
             </div>
           </div>

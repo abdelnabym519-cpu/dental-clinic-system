@@ -153,11 +153,13 @@ export function PaymentCheckout({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>{state === t("success") ? t("Payment Successful") : 'Pay Online'}</DialogTitle>
+            <DialogTitle>
+              {state === t('success') ? t('Payment Successful') : 'Pay Online'}
+            </DialogTitle>
             <DialogDescription>
-              {state === t("success")
-                ? t("Your payment has been processed successfully.")
-                : t("Invoice {v1} for {v2}", { v1: invoiceNo, v2: patientName })}
+              {state === t('success')
+                ? t('Your payment has been processed successfully.')
+                : t('Invoice {v1} for {v2}', { v1: invoiceNo, v2: patientName })}
             </DialogDescription>
           </DialogHeader>
 
@@ -172,7 +174,7 @@ export function PaymentCheckout({
                 </div>
                 <Button className="w-full" size="lg" onClick={initiatePayment}>
                   <CreditCard className="h-4 w-4 mr-2" />
-                  {t("Pay")} {formatCurrency(amount)}
+                  {t('Pay')} {formatCurrency(amount)}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
                   {t("Secured payment via your clinic's payment gateway")}
@@ -184,7 +186,7 @@ export function PaymentCheckout({
               <div className="flex flex-col items-center py-8 gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">
-                  {state === 'loading' ? t("Preparing payment...") : t("Waiting for payment...")}
+                  {state === 'loading' ? t('Preparing payment...') : t('Waiting for payment...')}
                 </p>
               </div>
             )}
@@ -196,11 +198,15 @@ export function PaymentCheckout({
               </div>
             )}
 
-            {state === t("success") && (
+            {state === t('success') && (
               <div className="flex flex-col items-center py-8 gap-3">
                 <CheckCircle className="h-12 w-12 text-green-500" />
-                <p className="font-medium">{t("Payment of")} {formatCurrency(amount)} {t("received")}</p>
-                <p className="text-sm text-muted-foreground">{t("Invoice")} {invoiceNo} {t("updated")}</p>
+                <p className="font-medium">
+                  {t('Payment of')} {formatCurrency(amount)} {t('received')}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t('Invoice')} {invoiceNo} {t('updated')}
+                </p>
               </div>
             )}
 
@@ -209,7 +215,9 @@ export function PaymentCheckout({
                 <AlertCircle className="h-12 w-12 text-red-500" />
                 <p className="font-medium text-red-600">{t('ui.payment_failed')}</p>
                 <p className="text-sm text-muted-foreground text-center">{errorMsg}</p>
-                <Button onClick={initiatePayment} variant="outline">{t('ui.try_again')}</Button>
+                <Button onClick={initiatePayment} variant="outline">
+                  {t('ui.try_again')}
+                </Button>
               </div>
             )}
           </div>

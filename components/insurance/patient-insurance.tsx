@@ -206,21 +206,23 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
     if (!p.verificationStatus) {
       return (
         <Badge variant="outline" className="text-xs">
-          <Clock className="h-3 w-3 mr-1" /> {t("Unverified")}
+          <Clock className="h-3 w-3 mr-1" /> {t('Unverified')}
         </Badge>
       )
     }
     if (p.verificationStatus === 'VERIFIED') {
       return (
         <Badge variant="default" className="text-xs bg-green-600">
-          <CheckCircle className="h-3 w-3 mr-1" /> {t("Verified")}
+          <CheckCircle className="h-3 w-3 mr-1" /> {t('Verified')}
         </Badge>
       )
     }
     if (p.verificationStatus === 'EXPIRED') {
       return (
         <Badge variant="destructive" className="text-xs">
-          <AlertTriangle className="h-3 w-3 mr-1" />{t('ui.expired')}</Badge>
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          {t('ui.expired')}
+        </Badge>
       )
     }
     return (
@@ -273,7 +275,8 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                       {!p.isActive && <Badge variant="secondary">{t('ui.inactive')}</Badge>}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {t("Policy:")} {p.policyNumber} {p.groupNumber && t("· Group: {v1}", { v1: p.groupNumber })}
+                      {t('Policy:')} {p.policyNumber}{' '}
+                      {p.groupNumber && t('· Group: {v1}', { v1: p.groupNumber })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -302,7 +305,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   </div>
                   <div>
                     <p className="text-muted-foreground">{t('ui.expires')}</p>
-                    <p className="font-medium">{p.expiryDate ? formatDate(p.expiryDate, locale) : 'N/A'}</p>
+                    <p className="font-medium">
+                      {p.expiryDate ? formatDate(p.expiryDate, locale) : 'N/A'}
+                    </p>
                   </div>
                 </div>
                 {(p.annualMaximum || p.deductible || p.copayPercentage) && (
@@ -310,7 +315,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     {p.annualMaximum && (
                       <div>
                         <p className="text-muted-foreground">{t('ui.annual_maximum')}</p>
-                        <p className="font-medium">{formatCurrency(Number(p.annualMaximum), locale)}</p>
+                        <p className="font-medium">
+                          {formatCurrency(Number(p.annualMaximum), locale)}
+                        </p>
                       </div>
                     )}
                     {p.remainingAmount != null && (
@@ -326,7 +333,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                         <p className="text-muted-foreground">{t('ui.deductible')}</p>
                         <p className="font-medium">
                           {formatCurrency(Number(p.deductible), locale)}
-                          {p.deductibleMet && <span className="text-green-600 ml-1">{t("(Met)")}</span>}
+                          {p.deductibleMet && (
+                            <span className="text-green-600 ml-1">{t('(Met)')}</span>
+                          )}
                         </p>
                       </div>
                     )}
@@ -350,10 +359,12 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                   >
                     {p.isActive ? (
                       <>
-                        <XCircle className="h-4 w-4 mr-1" />{t('ui.deactivate')}</>
+                        <XCircle className="h-4 w-4 mr-1" />
+                        {t('ui.deactivate')}
+                      </>
                     ) : (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-1" /> {t("Activate")}
+                        <CheckCircle className="h-4 w-4 mr-1" /> {t('Activate')}
                       </>
                     )}
                   </Button>
@@ -369,12 +380,12 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingId ? t("Edit Insurance Policy") : t("Add Insurance Policy")}
+              {editingId ? t('Edit Insurance Policy') : t('Add Insurance Policy')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>{t("Insurance Provider *")}</Label>
+              <Label>{t('Insurance Provider *')}</Label>
               <Select
                 value={form.providerId}
                 onValueChange={(v) => setForm({ ...form, providerId: v })}
@@ -393,11 +404,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("Policy Number *")}</Label>
+                <Label>{t('Policy Number *')}</Label>
                 <Input
                   value={form.policyNumber}
                   onChange={(e) => setForm({ ...form, policyNumber: e.target.value })}
-                  placeholder={t("e.g., POL-12345")}
+                  placeholder={t('e.g., POL-12345')}
                 />
               </div>
               <div>
@@ -409,11 +420,11 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>{t("Member ID *")}</Label>
+                <Label>{t('Member ID *')}</Label>
                 <Input
                   value={form.memberId}
                   onChange={(e) => setForm({ ...form, memberId: e.target.value })}
-                  placeholder={t("e.g., MEM-001")}
+                  placeholder={t('e.g., MEM-001')}
                 />
               </div>
               <div>
@@ -426,7 +437,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[t("Self"), t("Spouse"), t("Child"), t("Parent"), 'Other'].map((r) => (
+                    {[t('Self'), t('Spouse'), t('Child'), t('Parent'), 'Other'].map((r) => (
                       <SelectItem key={r} value={r}>
                         {r}
                       </SelectItem>
@@ -435,7 +446,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 </Select>
               </div>
               <div className="col-span-2">
-                <Label>{t("Subscriber Name *")}</Label>
+                <Label>{t('Subscriber Name *')}</Label>
                 <Input
                   value={form.subscriberName}
                   onChange={(e) => setForm({ ...form, subscriberName: e.target.value })}
@@ -443,7 +454,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>{t("Effective Date *")}</Label>
+                <Label>{t('Effective Date *')}</Label>
                 <Input
                   type="date"
                   value={form.effectiveDate}
@@ -493,7 +504,7 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
                 />
               </div>
               <div>
-                <Label>{t("Co-pay %")}</Label>
+                <Label>{t('Co-pay %')}</Label>
                 <Input
                   type="number"
                   value={form.copayPercentage}
@@ -503,7 +514,9 @@ export function PatientInsurance({ patientId }: { patientId: string }) {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('ui.cancel')}</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                {t('ui.cancel')}
+              </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : editingId ? 'Update' : 'Add Policy'}
               </Button>

@@ -248,7 +248,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />{t('ui.contact_information')}</CardTitle>
+                  <Phone className="h-4 w-4" />
+                  {t('ui.contact_information')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -268,7 +270,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />{t('ui.address')}</p>
+                    <MapPin className="h-3 w-3" />
+                    {t('ui.address')}
+                  </p>
                   <p className="font-medium">
                     {staff.address ? (
                       <>
@@ -289,7 +293,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-4 w-4" />{t('ui.personal_details')}</CardTitle>
+                  <User className="h-4 w-4" />
+                  {t('ui.personal_details')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -318,7 +324,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-muted-foreground">{t('ui.emergency_contact')}</p>
                   <p className="font-medium">
                     {staff.emergencyContact
-                      ? `${staff.emergencyContact} (${staff.emergencyPhone || t("No phone")})`
+                      ? `${staff.emergencyContact} (${staff.emergencyPhone || t('No phone')})`
                       : '-'}
                   </p>
                 </div>
@@ -329,7 +335,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />{t('ui.professional_details')}</CardTitle>
+                  <Briefcase className="h-4 w-4" />
+                  {t('ui.professional_details')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -384,7 +392,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />{t('ui.financial_details')}</CardTitle>
+                  <CreditCard className="h-4 w-4" />
+                  {t('ui.financial_details')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -413,8 +423,12 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />{t('ui.work_schedule')}</CardTitle>
-              <CardDescription>{t("Weekly work schedule for")} {staff.firstName}</CardDescription>
+                <Clock className="h-4 w-4" />
+                {t('ui.work_schedule')}
+              </CardTitle>
+              <CardDescription>
+                {t('Weekly work schedule for')} {staff.firstName}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {staff.shifts.length === 0 ? (
@@ -446,7 +460,7 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
                         >
                           {shift && shift.isActive
                             ? `${shift.startTime} - ${shift.endTime}`
-                            : t("Off")}
+                            : t('Off')}
                         </span>
                       </div>
                     )
@@ -461,7 +475,9 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />{t('ui.documents')}</CardTitle>
+                <FileText className="h-4 w-4" />
+                {t('ui.documents')}
+              </CardTitle>
               <CardDescription>{t('Staff documents and certifications')}</CardDescription>
             </CardHeader>
             <CardContent>

@@ -20,9 +20,17 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import { benchmark, environmentFacts, assertLabeled, isEnvLabel } from '@/lib/ai/evaluation'
 import { createFakePrisma, HOSP_A, PAT_A1, NOW } from '@/tests/harness/context-fixtures'
 import { buildCaseGraph, traverseGraph, type GraphPrisma } from '@/lib/ai/intelligence/case-graph'
-import { understandCase, buildClinicalSummary, differentialSupport } from '@/lib/ai/intelligence/dental-brain'
+import {
+  understandCase,
+  buildClinicalSummary,
+  differentialSupport,
+} from '@/lib/ai/intelligence/dental-brain'
 import { buildPatientIntelligence } from '@/lib/ai/intelligence/patient-ai'
-import { buildClinicMetrics, buildCommandCenter, type ClinicPrisma } from '@/lib/ai/intelligence/clinic-brain'
+import {
+  buildClinicMetrics,
+  buildCommandCenter,
+  type ClinicPrisma,
+} from '@/lib/ai/intelligence/clinic-brain'
 import { runProactiveIntelligence, type AlertPrisma } from '@/lib/ai/intelligence/proactive'
 import { runWorkflow, type WorkflowDeps } from '@/lib/ai/workflows/engine'
 import { createMemoryWorkflowRunStore } from '@/lib/ai/workflows/run-store'
@@ -32,15 +40,37 @@ const envLabel = environmentFacts().label
 
 function fixture() {
   return createFakePrisma({
-    staff: [{ id: 'staff-doctor-1', hospitalId: HOSP_A, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR' }],
-    aiAnalysisJob: [{
-      id: 'job-perf', hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-      requestedById: null, modelVersion: 'v1', modelChecksum: 'c', orchestratorVersion: '2',
-      startedAt: NOW, completedAt: NOW, confidence: 0.87,
-      findings: [{ condition: 'caries', tooth_number: 36 }],
-      reviewedById: 'staff-doctor-1', reviewedAt: NOW, reviewDecision: 'ACCEPTED',
-      acceptedFindings: [{ condition: 'caries', tooth_number: 36 }], createdAt: NOW,
-    }],
+    staff: [
+      {
+        id: 'staff-doctor-1',
+        hospitalId: HOSP_A,
+        firstName: 'Hana',
+        lastName: 'Shalaby',
+        role: 'DOCTOR',
+      },
+    ],
+    aiAnalysisJob: [
+      {
+        id: 'job-perf',
+        hospitalId: HOSP_A,
+        studyId: 'study-A1',
+        engine: 'clm',
+        status: 'COMPLETED',
+        requestedById: null,
+        modelVersion: 'v1',
+        modelChecksum: 'c',
+        orchestratorVersion: '2',
+        startedAt: NOW,
+        completedAt: NOW,
+        confidence: 0.87,
+        findings: [{ condition: 'caries', tooth_number: 36 }],
+        reviewedById: 'staff-doctor-1',
+        reviewedAt: NOW,
+        reviewDecision: 'ACCEPTED',
+        acceptedFindings: [{ condition: 'caries', tooth_number: 36 }],
+        createdAt: NOW,
+      },
+    ],
     aiMemoryItem: [],
   } as never) as unknown as GraphPrisma
 }
@@ -55,7 +85,9 @@ function wfDeps(): WorkflowDeps {
 }
 
 const wfCtx: WorkflowContext = {
-  hospitalId: HOSP_A, patientId: PAT_A1, caseId: null,
+  hospitalId: HOSP_A,
+  patientId: PAT_A1,
+  caseId: null,
   actor: { id: 'perf-actor', role: 'DOCTOR', name: 'Perf Actor' },
 }
 
@@ -68,11 +100,21 @@ describe('PERFORMANCE (Phase 9, §36): environment-labeled intelligence metrics'
   })
 
   it('case graph build + bounded traversal: labeled, zero failures', async () => {
-    const record = await benchmark('phase9_graph_build_traverse', async () => {
-      const g = await buildCaseGraph(fixture(), { hospitalId: HOSP_A, patientId: PAT_A1, caseId: null, actor: { id: 'x', role: 'DOCTOR' }, now: NOW })
-      const t = traverseGraph(g, { startId: `patient:${PAT_A1}`, maxDepth: 3 })
-      return g.nodes.length + g.edges.length + t.queryCount
-    }, { warmup: 2, samples: 7 })
+    const record = await benchmark(
+      'phase9_graph_build_traverse',
+      async () => {
+        const g = await buildCaseGraph(fixture(), {
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          caseId: null,
+          actor: { id: 'x', role: 'DOCTOR' },
+          now: NOW,
+        })
+        const t = traverseGraph(g, { startId: `patient:${PAT_A1}`, maxDepth: 3 })
+        return g.nodes.length + g.edges.length + t.queryCount
+      },
+      { warmup: 2, samples: 7 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)
@@ -81,28 +123,42 @@ describe('PERFORMANCE (Phase 9, §36): environment-labeled intelligence metrics'
   }, 120000)
 
   it('per-brain + summary latency (understanding/summary/differential/patient AI): labeled, zero failures', async () => {
-    const record = await benchmark('phase9_brains_latency', async () => {
-      const g = await buildCaseGraph(fixture(), { hospitalId: HOSP_A, patientId: PAT_A1, caseId: null, actor: { id: 'x', role: 'DOCTOR' }, now: NOW })
-      const u = understandCase(g, { procedureCategories: [], now: NOW })
-      buildClinicalSummary(u, g, 'Ahmed Ali')
-      differentialSupport(g, { procedureCategories: [] })
-      const pi = buildPatientIntelligence(g, NOW)
-      return pi.timeline.length + u.teeth.length
-    }, { warmup: 2, samples: 7 })
+    const record = await benchmark(
+      'phase9_brains_latency',
+      async () => {
+        const g = await buildCaseGraph(fixture(), {
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          caseId: null,
+          actor: { id: 'x', role: 'DOCTOR' },
+          now: NOW,
+        })
+        const u = understandCase(g, { procedureCategories: [], now: NOW })
+        buildClinicalSummary(u, g, 'Ahmed Ali')
+        differentialSupport(g, { procedureCategories: [] })
+        const pi = buildPatientIntelligence(g, NOW)
+        return pi.timeline.length + u.teeth.length
+      },
+      { warmup: 2, samples: 7 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)
   }, 120000)
 
   it('clinic brain + command center: labeled, zero failures', async () => {
-    const record = await benchmark('phase9_clinic_command_center', async () => {
-      const db = fixture() as unknown as ClinicPrisma
-      const [m, cc] = await Promise.all([
-        buildClinicMetrics(db, { hospitalId: HOSP_A, now: NOW, actorRole: 'ADMIN' }),
-        buildCommandCenter(db, { hospitalId: HOSP_A, now: NOW, actorRole: 'ADMIN' }),
-      ])
-      return m.todayAppointments.total + cc.sections.length
-    }, { warmup: 2, samples: 5 })
+    const record = await benchmark(
+      'phase9_clinic_command_center',
+      async () => {
+        const db = fixture() as unknown as ClinicPrisma
+        const [m, cc] = await Promise.all([
+          buildClinicMetrics(db, { hospitalId: HOSP_A, now: NOW, actorRole: 'ADMIN' }),
+          buildCommandCenter(db, { hospitalId: HOSP_A, now: NOW, actorRole: 'ADMIN' }),
+        ])
+        return m.todayAppointments.total + cc.sections.length
+      },
+      { warmup: 2, samples: 5 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)
@@ -111,12 +167,16 @@ describe('PERFORMANCE (Phase 9, §36): environment-labeled intelligence metrics'
   it('workflow case_review run (total / steps / tool calls): labeled, zero failures', async () => {
     let lastSteps = 0
     let lastTools = 0
-    const record = await benchmark('phase9_workflow_case_review', async () => {
-      const res = await runWorkflow(wfDeps(), { workflowId: 'case_review', context: wfCtx })
-      lastSteps = res.run.stepLog.length
-      lastTools = Number(res.run.result?.toolCalls ?? 0)
-      return lastSteps
-    }, { warmup: 1, samples: 5 })
+    const record = await benchmark(
+      'phase9_workflow_case_review',
+      async () => {
+        const res = await runWorkflow(wfDeps(), { workflowId: 'case_review', context: wfCtx })
+        lastSteps = res.run.stepLog.length
+        lastTools = Number(res.run.result?.toolCalls ?? 0)
+        return lastSteps
+      },
+      { warmup: 1, samples: 5 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)
@@ -141,11 +201,23 @@ describe('PERFORMANCE (Phase 9, §36): environment-labeled intelligence metrics'
       updateMany: async () => ({ count: 0 }),
     }
     const db = fake as unknown as AlertPrisma
-    const record = await benchmark('phase9_alerts_sweep_dedup', async () => {
-      const first = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 'perf' })
-      const second = await runProactiveIntelligence(db, { hospitalId: HOSP_A, now: NOW, actorId: 'perf' })
-      return first.detected.length + second.deduplicated
-    }, { warmup: 1, samples: 5 })
+    const record = await benchmark(
+      'phase9_alerts_sweep_dedup',
+      async () => {
+        const first = await runProactiveIntelligence(db, {
+          hospitalId: HOSP_A,
+          now: NOW,
+          actorId: 'perf',
+        })
+        const second = await runProactiveIntelligence(db, {
+          hospitalId: HOSP_A,
+          now: NOW,
+          actorId: 'perf',
+        })
+        return first.detected.length + second.deduplicated
+      },
+      { warmup: 1, samples: 5 }
+    )
     expect(record.env.label).toBe(envLabel)
     expect(assertLabeled(record.env)).toBeNull()
     expect(record.failures).toBe(0)

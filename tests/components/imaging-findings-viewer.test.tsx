@@ -17,13 +17,31 @@ const FINDINGS = [
     condition: 'caries',
     tooth_number: null,
     confidence: 0.94,
-    bounding_box: { x: 100, y: 50, width: 200, height: 120, x2: 300, y2: 170, coordinate_space: 'original_image', units: 'pixels' },
+    bounding_box: {
+      x: 100,
+      y: 50,
+      width: 200,
+      height: 120,
+      x2: 300,
+      y2: 170,
+      coordinate_space: 'original_image',
+      units: 'pixels',
+    },
   },
   {
     condition: 'impacted_tooth',
     tooth_number: null,
     confidence: 0.5,
-    bounding_box: { x: 400, y: 300, width: 150, height: 90, x2: 550, y2: 390, coordinate_space: 'original_image', units: 'pixels' },
+    bounding_box: {
+      x: 400,
+      y: 300,
+      width: 150,
+      height: 90,
+      x2: 550,
+      y2: 390,
+      coordinate_space: 'original_image',
+      units: 'pixels',
+    },
   },
 ]
 
@@ -104,7 +122,9 @@ describe('FindingsViewer — bounding box overlay', () => {
   })
 
   it('switches to the annotated image when available', () => {
-    const { container } = renderViewer({ annotatedUrl: '/api/uploads/hosp-1/study-1/annotated.png' })
+    const { container } = renderViewer({
+      annotatedUrl: '/api/uploads/hosp-1/study-1/annotated.png',
+    })
     const img = container.querySelector('img')
     expect(img.getAttribute('src')).toContain('original.jpg')
     fireEvent.click(screen.getByText('AI annotated image'))
@@ -162,10 +182,7 @@ describe('FindingCard', () => {
   it('shows the tooth number only when one is available', () => {
     render(
       <LanguageProvider initialLocale="en-US">
-        <FindingCard
-          finding={{ ...FINDINGS[0], tooth_number: 16 }}
-          index={0}
-        />
+        <FindingCard finding={{ ...FINDINGS[0], tooth_number: 16 }} index={0} />
       </LanguageProvider>
     )
     expect(screen.getByText(/Tooth 16/)).toBeTruthy()
@@ -221,8 +238,22 @@ describe('FindingsViewer — cephalometric landmark overlay (19B)', () => {
   it('filters landmarks by score with the minimum-confidence slider', () => {
     const { container } = renderViewer({
       findings: [
-        { landmark_id: 0, landmark_name: '0', x: 10, y: 10, score: 0.9, coordinate_space: 'cropped_original_image' },
-        { landmark_id: 1, landmark_name: '1', x: 20, y: 20, score: 0.3, coordinate_space: 'cropped_original_image' },
+        {
+          landmark_id: 0,
+          landmark_name: '0',
+          x: 10,
+          y: 10,
+          score: 0.9,
+          coordinate_space: 'cropped_original_image',
+        },
+        {
+          landmark_id: 1,
+          landmark_name: '1',
+          x: 20,
+          y: 20,
+          score: 0.3,
+          coordinate_space: 'cropped_original_image',
+        },
       ],
     })
     loadNaturalSize(container, 800, 600)
@@ -239,7 +270,14 @@ describe('FindingCard — 19B result shapes', () => {
     render(
       <LanguageProvider initialLocale="en-US">
         <FindingCard
-          finding={{ landmark_id: 7, landmark_name: '7', x: 123.4, y: 456.7, score: 0.83, coordinate_space: 'cropped_original_image' }}
+          finding={{
+            landmark_id: 7,
+            landmark_name: '7',
+            x: 123.4,
+            y: 456.7,
+            score: 0.83,
+            coordinate_space: 'cropped_original_image',
+          }}
           index={7}
         />
       </LanguageProvider>
@@ -253,7 +291,14 @@ describe('FindingCard — 19B result shapes', () => {
     render(
       <LanguageProvider initialLocale="en-US">
         <FindingCard
-          finding={{ landmark_id: 0, landmark_name: '0', x: 1, y: 2, score: null, coordinate_space: 'cropped_original_image' }}
+          finding={{
+            landmark_id: 0,
+            landmark_name: '0',
+            x: 1,
+            y: 2,
+            score: null,
+            coordinate_space: 'cropped_original_image',
+          }}
           index={0}
         />
       </LanguageProvider>

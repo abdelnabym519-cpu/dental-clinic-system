@@ -85,17 +85,17 @@ export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
         if (cancelled) return
         if (doctorsRes.ok) {
           const data = await doctorsRes.json()
-          const list = Array.isArray(data) ? data : data.doctors ?? []
+          const list = Array.isArray(data) ? data : (data.doctors ?? [])
           setProviders(list)
         }
         if (patientsRes.ok) {
           const data = await patientsRes.json()
-          const list: PatientOption[] = Array.isArray(data) ? data : data.patients ?? []
+          const list: PatientOption[] = Array.isArray(data) ? data : (data.patients ?? [])
           setPatients(list)
         }
         if (roomsRes.ok) {
           const data = await roomsRes.json()
-          const list: RoomOption[] = Array.isArray(data) ? data : data.rooms ?? []
+          const list: RoomOption[] = Array.isArray(data) ? data : (data.rooms ?? [])
           setRooms(list)
         }
       } catch {
@@ -121,9 +121,7 @@ export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('agenda.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('agenda.subtitle')}
-          </p>
+          <p className="text-muted-foreground">{t('agenda.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canSchedule && (
@@ -181,9 +179,9 @@ export function AgendaWorkspace({ canSchedule, role }: AgendaWorkspaceProps) {
 
       {canSchedule && (
         <AppointmentDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSaved={handleSaved}
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          onSaved={handleSaved}
           patients={patients}
           doctors={providers}
           rooms={rooms}

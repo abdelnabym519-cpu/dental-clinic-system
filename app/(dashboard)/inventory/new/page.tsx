@@ -114,14 +114,18 @@ export default function NewInventoryItemPage() {
         <Link
           href="/inventory"
           className="px-4 py-2 bg-muted-foreground text-white rounded-lg hover:bg-muted-foreground/80"
-        >{t('ui.back_to_inventory')}</Link>
+        >
+          {t('ui.back_to_inventory')}
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-background rounded-lg shadow p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Item Code */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('ui.item_code')}<span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('ui.item_code')}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -130,13 +134,15 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t("e.g., DM-001")}
+              placeholder={t('e.g., DM-001')}
             />
           </div>
 
           {/* Item Name */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('ui.item_name')}<span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('ui.item_name')}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -145,13 +151,15 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t("e.g., Composite Resin")}
+              placeholder={t('e.g., Composite Resin')}
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('ui.category')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('ui.category')}
+            </label>
             <select
               name="categoryId"
               value={formData.categoryId}
@@ -170,7 +178,7 @@ export default function NewInventoryItemPage() {
           {/* Item Type */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              {t("Item Type")} <span className="text-red-500">*</span>
+              {t('Item Type')} <span className="text-red-500">*</span>
             </label>
             <select
               name="itemType"
@@ -191,7 +199,7 @@ export default function NewInventoryItemPage() {
           {/* Unit of Measurement */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              {t("Unit of Measurement")} <span className="text-red-500">*</span>
+              {t('Unit of Measurement')} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -200,13 +208,15 @@ export default function NewInventoryItemPage() {
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t("e.g., pieces, boxes, bottles, kg")}
+              placeholder={t('e.g., pieces, boxes, bottles, kg')}
             />
           </div>
 
           {/* Current Stock */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('ui.current_stock')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('ui.current_stock')}
+            </label>
             <input
               type="number"
               name="currentStock"
@@ -219,7 +229,9 @@ export default function NewInventoryItemPage() {
 
           {/* Minimum Stock */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('ui.minimum_stock')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('ui.minimum_stock')}
+            </label>
             <input
               type="number"
               name="minimumStock"
@@ -232,7 +244,9 @@ export default function NewInventoryItemPage() {
 
           {/* Reorder Point */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('Reorder Point')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('Reorder Point')}
+            </label>
             <input
               type="number"
               name="reorderLevel"
@@ -245,7 +259,9 @@ export default function NewInventoryItemPage() {
 
           {/* Maximum Stock */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('Maximum Stock')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('Maximum Stock')}
+            </label>
             <input
               type="number"
               name="maximumStock"
@@ -258,7 +274,9 @@ export default function NewInventoryItemPage() {
 
           {/* Unit Price */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t("Unit Price (EGP )")}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('Unit Price (EGP )')}
+            </label>
             <input
               type="number"
               name="purchasePrice"
@@ -272,7 +290,7 @@ export default function NewInventoryItemPage() {
           {/* Selling Price */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              {t("Selling Price (EGP )")}
+              {t('Selling Price (EGP )')}
             </label>
             <input
               type="number"
@@ -286,7 +304,9 @@ export default function NewInventoryItemPage() {
 
           {/* HSN Code */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">{t('HSN Code')}</label>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {t('HSN Code')}
+            </label>
             <input
               type="text"
               name="hsnCode"
@@ -299,7 +319,7 @@ export default function NewInventoryItemPage() {
           {/* Tax Percentage */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              {t("Tax Percentage (%)")}
+              {t('Tax Percentage (%)')}
             </label>
             <input
               type="number"
@@ -342,14 +362,16 @@ export default function NewInventoryItemPage() {
               value={formData.storageLocation}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t("e.g., Shelf A1")}
+              placeholder={t('e.g., Shelf A1')}
             />
           </div>
         </div>
 
         {/* Description */}
         <div className="mt-6">
-          <label className="block text-sm font-medium text-foreground mb-2">{t('ui.description')}</label>
+          <label className="block text-sm font-medium text-foreground mb-2">
+            {t('ui.description')}
+          </label>
           <textarea
             name="description"
             value={formData.description}
@@ -412,13 +434,15 @@ export default function NewInventoryItemPage() {
           <Link
             href="/inventory"
             className="px-6 py-2 border border-border rounded-lg hover:bg-muted"
-          >{t('ui.cancel')}</Link>
+          >
+            {t('ui.cancel')}
+          </Link>
           <button
             type="submit"
             disabled={loading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? 'Creating...' : t("Create Item")}
+            {loading ? 'Creating...' : t('Create Item')}
           </button>
         </div>
       </form>

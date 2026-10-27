@@ -93,13 +93,21 @@ describe('API error contract (§40)', () => {
   it('produces code/message/requestId (+details) without internals', () => {
     const { status, body } = apiError('RATE_LIMITED', 'c-x', { details: { used: 60 } })
     expect(status).toBe(429)
-    expect(body.error).toMatchObject({ code: 'RATE_LIMITED', requestId: 'c-x', details: { used: 60 } })
+    expect(body.error).toMatchObject({
+      code: 'RATE_LIMITED',
+      requestId: 'c-x',
+      details: { used: 60 },
+    })
     expect(body.error.message).toBeTruthy()
   })
 
   it('messages are localized (Arabic + English) from the catalog', () => {
-    expect(apiError('UNAUTHORIZED', 'c', { locale: 'ar-EG' }).body.error.message).toBe(API_ERROR_MESSAGES.UNAUTHORIZED.ar)
-    expect(apiError('UNAUTHORIZED', 'c', { locale: 'en-US' }).body.error.message).toBe(API_ERROR_MESSAGES.UNAUTHORIZED.en)
+    expect(apiError('UNAUTHORIZED', 'c', { locale: 'ar-EG' }).body.error.message).toBe(
+      API_ERROR_MESSAGES.UNAUTHORIZED.ar
+    )
+    expect(apiError('UNAUTHORIZED', 'c', { locale: 'en-US' }).body.error.message).toBe(
+      API_ERROR_MESSAGES.UNAUTHORIZED.en
+    )
   })
 
   it('status mapping covers every generic code', () => {
@@ -112,7 +120,13 @@ describe('API error contract (§40)', () => {
 
 describe('retry classification (§17 — never retry safety)', () => {
   it('security failures are NEVER retried', () => {
-    for (const code of ['SAFETY_BLOCK', 'TENANT_MISMATCH', 'APPROVAL_REPLAY', 'FORGED_PROVENANCE', 'UNAUTHORIZED']) {
+    for (const code of [
+      'SAFETY_BLOCK',
+      'TENANT_MISMATCH',
+      'APPROVAL_REPLAY',
+      'FORGED_PROVENANCE',
+      'UNAUTHORIZED',
+    ]) {
       expect(classifyError(code).maxRetries).toBe(0)
     }
   })
@@ -154,7 +168,11 @@ describe('audit-log rate limiter (§41)', () => {
 
   it('is scoped per tenant+user+action', async () => {
     let seen: Record<string, unknown> | null = null
-    const client = { auditLog: { count: async (a: { where: unknown }) => ((seen = a.where as Record<string, unknown>), 0) } }
+    const client = {
+      auditLog: {
+        count: async (a: { where: unknown }) => ((seen = a.where as Record<string, unknown>), 0),
+      },
+    }
     await checkRateLimit({ client }, { hospitalId: 'h1', userId: 'u1', action: 'X' }, 5)
     expect(seen).toMatchObject({ hospitalId: 'h1', userId: 'u1', action: 'X' })
   })
@@ -180,6 +198,8 @@ describe('CORS policy (§27 — credentials never ride a wildcard)', () => {
 
   it('trailing slashes are normalized', () => {
     const env = { CORS_ALLOWED_ORIGINS: 'https://app.example.com/' }
-    expect(corsHeadersFor('https://app.example.com', env)['Access-Control-Allow-Origin']).toBe('https://app.example.com')
+    expect(corsHeadersFor('https://app.example.com', env)['Access-Control-Allow-Origin']).toBe(
+      'https://app.example.com'
+    )
   })
 })

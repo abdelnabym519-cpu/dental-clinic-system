@@ -17,6 +17,13 @@ import {
   ToothConditionConfigItem,
 } from '../types/odontogram'
 import { getToothSpecificType } from '../geometry/tooth-paths'
+import {
+  FDI_TEETH_ALL,
+  FDI_TEETH_PRIMARY,
+  isValidFdi,
+  quadrantOf,
+  type FdiQuadrant,
+} from '@/lib/dental-chart/fdi'
 
 // ─── FDI TOOTH NUMBERING DEFINITIONS ─────────────────────────────────────────
 
@@ -102,6 +109,40 @@ export function getToothQuadrant(toothNumber: number): 1 | 2 | 3 | 4 {
     return firstDigit as 1 | 2 | 3 | 4
   }
   return 1
+}
+
+// ─── PRIMARY (DECIDUOUS) DENTITION — ADDITIVE (FDI-52) ──────────────────────
+//
+// Additions only. `FDI_QUADRANTS`, `ALL_FDI_TEETH` and `getToothQuadrant`
+// above are intentionally UNCHANGED and keep their permanent-only contract,
+// so every existing Phase-3 assertion (exactly 32 teeth, quadrants Q1-Q4,
+// `getToothQuadrant` returning 1-4) continues to hold without edits.
+//
+// The lists are derived from `@/lib/dental-chart/fdi`, the one shared source
+// of truth, so these can never drift from the validator.
+
+export const FDI_QUADRANTS_PRIMARY = {
+  Q5: [55, 54, 53, 52, 51], // Upper Right (Maxillary Right)
+  Q6: [61, 62, 63, 64, 65], // Upper Left (Maxillary Left)
+  Q7: [75, 74, 73, 72, 71], // Lower Left (Mandibular Left)
+  Q8: [81, 82, 83, 84, 85], // Lower Right (Mandibular Right)
+} as const
+
+export const ALL_FDI_TEETH_PRIMARY: number[] = [...FDI_TEETH_PRIMARY]
+
+export const ALL_FDI_TEETH_MIXED: number[] = [...FDI_TEETH_ALL]
+
+/**
+ * Quadrant for ANY of the 52 FDI identifiers: 1-4 permanent, 5-8 primary.
+ *
+ * Additive sibling of `getToothQuadrant`, which is left untouched (including
+ * its `return 1` fallback) so existing callers and Phase-3 tests are
+ * unaffected. For an unrecognised number this falls back to `1`, matching the
+ * pre-existing fallback convention in this adapter — that default is a
+ * rendering convenience, NOT a clinical claim about the tooth.
+ */
+export function getToothQuadrantWide(toothNumber: number): FdiQuadrant {
+  return isValidFdi(toothNumber) ? quadrantOf(toothNumber) : 1
 }
 
 export function getToothRootCanalCounts(toothNumber: number): {

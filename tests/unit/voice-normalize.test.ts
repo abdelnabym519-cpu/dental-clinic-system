@@ -23,7 +23,9 @@ describe('transcript sanitization (untrusted input)', () => {
   })
 
   it('rejects oversized input', () => {
-    expect(sanitizeTranscript('ا'.repeat(VOICE_TRANSCRIPT_MAX_CHARS + 1)).code).toBe('VOICE_TRANSCRIPT_TOO_LONG')
+    expect(sanitizeTranscript('ا'.repeat(VOICE_TRANSCRIPT_MAX_CHARS + 1)).code).toBe(
+      'VOICE_TRANSCRIPT_TOO_LONG'
+    )
     expect(sanitizeTranscript('ا'.repeat(VOICE_TRANSCRIPT_MAX_CHARS)).ok).toBe(true)
   })
 

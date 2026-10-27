@@ -161,7 +161,7 @@ export default function DashboardPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-5 w-5" />
-              <p>{error || t("An error occurred")}</p>
+              <p>{error || t('An error occurred')}</p>
             </div>
             <Button onClick={fetchDashboardStats} className="mt-4">
               {t('Retry')}
@@ -217,8 +217,8 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.overview.todayAppointments}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.overview.completedAppointmentsToday} {t("completed,")}{' '}
-              {stats.overview.pendingAppointments} {t("pending")}
+              {stats.overview.completedAppointmentsToday} {t('completed,')}{' '}
+              {stats.overview.pendingAppointments} {t('pending')}
             </p>
           </CardContent>
         </Card>
@@ -323,7 +323,9 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-8">{t('dashboard.noUpcoming')}</p>
+                <p className="text-muted-foreground text-center py-8">
+                  {t('dashboard.noUpcoming')}
+                </p>
               )}
             </div>
             <div className="mt-4 flex gap-2">
@@ -457,7 +459,9 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted-foreground text-center py-8">{t('dashboard.noProcedures')}</p>
+              <p className="text-muted-foreground text-center py-8">
+                {t('dashboard.noProcedures')}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -480,7 +484,7 @@ export default function DashboardPage() {
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t("Min:")} {item.minimumStock} {item.unit}
+                        {t('Min:')} {item.minimumStock} {item.unit}
                       </p>
                     </div>
                     <div className="text-red-600 font-medium">
@@ -489,7 +493,9 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-center py-8">{t('dashboard.allInStock')}</p>
+                <p className="text-muted-foreground text-center py-8">
+                  {t('dashboard.allInStock')}
+                </p>
               )}
             </div>
             <Link href="/inventory">

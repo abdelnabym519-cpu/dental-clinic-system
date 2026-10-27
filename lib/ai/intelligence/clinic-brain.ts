@@ -16,8 +16,10 @@ import type { GraphPrisma } from './case-graph'
 import type { DataState, IntelligenceItem } from './types'
 
 export type ClinicPrisma = GraphPrisma & {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  aIInsight?: { findMany: (a?: { where?: Record<string, unknown> }) => Promise<Record<string, any>[]> }
+   
+  aIInsight?: {
+    findMany: (a?: { where?: Record<string, unknown> }) => Promise<Record<string, any>[]>
+  }
 }
 
 export interface ClinicOpsMetrics {
@@ -30,11 +32,33 @@ export interface ClinicOpsMetrics {
     cancellations: number
     utilization: number | null // completed+in-progress / scheduled today
   }
-  queue: { state: DataState; waiting: number; inProgress: number; checkedIn: { ref: string; type: string | null; priority: string | null }[] }
-  overdueFollowUps: { state: DataState; count: number; items: { ref: string; patientId: string; doctorId: string | null; date: string | null; notes: string | null }[] }
+  queue: {
+    state: DataState
+    waiting: number
+    inProgress: number
+    checkedIn: { ref: string; type: string | null; priority: string | null }[]
+  }
+  overdueFollowUps: {
+    state: DataState
+    count: number
+    items: {
+      ref: string
+      patientId: string
+      doctorId: string | null
+      date: string | null
+      notes: string | null
+    }[]
+  }
   pendingTreatments: { state: DataState; count: number; byStatus: Record<string, number> }
-  doctorWorkload: { state: DataState; rows: { doctorId: string; scheduledToday: number; overdueFollowUps: number }[] }
-  aiReviewRequired: { state: DataState; count: number; items: { jobId: string; engine: string | null; status: string | null }[] }
+  doctorWorkload: {
+    state: DataState
+    rows: { doctorId: string; scheduledToday: number; overdueFollowUps: number }[]
+  }
+  aiReviewRequired: {
+    state: DataState
+    count: number
+    items: { jobId: string; engine: string | null; status: string | null }[]
+  }
   financialItems: { state: DataState; note: string; openBalances: number; invoiceCount: number }
   unresolvedTasks: { state: DataState; count: number; items: string[] }
   bottlenecks: { state: DataState; rows: { code: string; detail: string; count: number }[] }
@@ -63,11 +87,13 @@ function dayBounds(now: Date): { start: Date; end: Date } {
 
 export async function buildClinicMetrics(
   prisma: ClinicPrisma,
-  p: { hospitalId: string; now: Date; actorRole: string },
+  p: { hospitalId: string; now: Date; actorRole: string }
 ): Promise<ClinicOpsMetrics> {
   const { start, end } = dayBounds(p.now)
   const [today, overdueSource, aiJobs] = await Promise.all([
-    prisma.appointment.findMany({ where: { hospitalId: p.hospitalId, scheduledDate: { gte: start, lt: end } } }),
+    prisma.appointment.findMany({
+      where: { hospitalId: p.hospitalId, scheduledDate: { gte: start, lt: end } },
+    }),
     prisma.treatment.findMany({
       where: {
         hospitalId: p.hospitalId,
@@ -79,13 +105,16 @@ export async function buildClinicMetrics(
   ])
   const treatments = overdueSource
   const byStatus: Record<string, number> = {}
-  for (const a of today) byStatus[a.status ?? 'UNKNOWN'] = (byStatus[a.status ?? 'UNKNOWN'] ?? 0) + 1
+  for (const a of today)
+    byStatus[a.status ?? 'UNKNOWN'] = (byStatus[a.status ?? 'UNKNOWN'] ?? 0) + 1
   const noShows = byStatus['NO_SHOW'] ?? 0
   const cancellations = byStatus['CANCELLED'] ?? 0
   const done = (byStatus['COMPLETED'] ?? 0) + (byStatus['IN_PROGRESS'] ?? 0)
   const utilization = today.length > 0 ? Math.round((done / today.length) * 100) / 100 : null
 
-  const queueItems = today.filter((a) => ['CHECKED_IN', 'IN_PROGRESS', 'SCHEDULED'].includes(a.status ?? ''))
+  const queueItems = today.filter((a) =>
+    ['CHECKED_IN', 'IN_PROGRESS', 'SCHEDULED'].includes(a.status ?? '')
+  )
   const queue = {
     state: 'AVAILABLE' as DataState,
     waiting: queueItems.filter((a) => a.status === 'CHECKED_IN').length,
@@ -93,7 +122,11 @@ export async function buildClinicMetrics(
     checkedIn: queueItems
       .filter((a) => a.status === 'CHECKED_IN')
       .slice(0, 20)
-      .map((a) => ({ ref: a.appointmentNo ?? a.id, type: a.appointmentType ?? null, priority: a.priority ?? null })),
+      .map((a) => ({
+        ref: a.appointmentNo ?? a.id,
+        type: a.appointmentType ?? null,
+        priority: a.priority ?? null,
+      })),
   }
 
   const overdue = treatments
@@ -105,19 +138,27 @@ export async function buildClinicMetrics(
       date: t.followUpDate ? new Date(t.followUpDate).toISOString() : null,
       notes: t.followUpNotes ?? null,
     }))
-    .sort((a, b) => (a.date ?? '') < (b.date ?? '') ? -1 : 1)
+    .sort((a, b) => ((a.date ?? '') < (b.date ?? '') ? -1 : 1))
 
   const pendingTreatments = await prisma.treatment.findMany({
     where: { hospitalId: p.hospitalId, status: { in: ['PLANNED', 'IN_PROGRESS'] } },
   })
   const pendingByStatus: Record<string, number> = {}
-  for (const t of pendingTreatments) pendingByStatus[t.status ?? 'UNKNOWN'] = (pendingByStatus[t.status ?? 'UNKNOWN'] ?? 0) + 1
+  for (const t of pendingTreatments)
+    pendingByStatus[t.status ?? 'UNKNOWN'] = (pendingByStatus[t.status ?? 'UNKNOWN'] ?? 0) + 1
 
   // Doctor workload (today's appointments + overdue follow-ups per doctor).
-  const docMap = new Map<string, { doctorId: string; scheduledToday: number; overdueFollowUps: number }>()
+  const docMap = new Map<
+    string,
+    { doctorId: string; scheduledToday: number; overdueFollowUps: number }
+  >()
   for (const a of today) {
     if (!a.doctorId) continue
-    const row = docMap.get(a.doctorId) ?? { doctorId: a.doctorId, scheduledToday: 0, overdueFollowUps: 0 }
+    const row = docMap.get(a.doctorId) ?? {
+      doctorId: a.doctorId,
+      scheduledToday: 0,
+      overdueFollowUps: 0,
+    }
     row.scheduledToday += 1
     docMap.set(a.doctorId, row)
   }
@@ -146,7 +187,12 @@ export async function buildClinicMetrics(
     let inv: Record<string, any>[] = []
     if (prisma.invoice) {
       inv = await prisma.invoice
-        .findMany({ where: { hospitalId: p.hospitalId, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } } })
+        .findMany({
+          where: {
+            hospitalId: p.hospitalId,
+            status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] },
+          },
+        })
         .catch(() => [] as Record<string, any>[])
     }
     invoiceCount = inv.length
@@ -155,15 +201,31 @@ export async function buildClinicMetrics(
 
   const unresolvedTasks: string[] = []
   for (const f of overdue.slice(0, 10)) unresolvedTasks.push(`follow-up overdue: ${f.ref}`)
-  for (const r of reviewRequired.slice(0, 10)) unresolvedTasks.push(`AI review required: ${r.jobId} (${r.engine ?? 'engine'})`)
+  for (const r of reviewRequired.slice(0, 10))
+    unresolvedTasks.push(`AI review required: ${r.jobId} (${r.engine ?? 'engine'})`)
 
   // Bottlenecks — deterministic rules over verified data.
   const bottlenecks: ClinicOpsMetrics['bottlenecks']['rows'] = []
-  if (noShows >= 3) bottlenecks.push({ code: 'NO_SHOW_RATE', detail: `${noShows} no-shows today`, count: noShows })
-  if (queue.waiting >= 4) bottlenecks.push({ code: 'QUEUE_BACKLOG', detail: `${queue.waiting} patients waiting`, count: queue.waiting })
-  if (overdue.length >= 5) bottlenecks.push({ code: 'FOLLOW_UP_BACKLOG', detail: `${overdue.length} overdue follow-ups`, count: overdue.length })
+  if (noShows >= 3)
+    bottlenecks.push({ code: 'NO_SHOW_RATE', detail: `${noShows} no-shows today`, count: noShows })
+  if (queue.waiting >= 4)
+    bottlenecks.push({
+      code: 'QUEUE_BACKLOG',
+      detail: `${queue.waiting} patients waiting`,
+      count: queue.waiting,
+    })
+  if (overdue.length >= 5)
+    bottlenecks.push({
+      code: 'FOLLOW_UP_BACKLOG',
+      detail: `${overdue.length} overdue follow-ups`,
+      count: overdue.length,
+    })
   if (utilization !== null && utilization > 0.95 && queue.inProgress >= 2) {
-    bottlenecks.push({ code: 'UTILIZATION_SATURATION', detail: `utilization ${utilization} with ${queue.inProgress} in progress`, count: queue.inProgress })
+    bottlenecks.push({
+      code: 'UTILIZATION_SATURATION',
+      detail: `utilization ${utilization} with ${queue.inProgress} in progress`,
+      count: queue.inProgress,
+    })
   }
 
   return {
@@ -178,12 +240,21 @@ export async function buildClinicMetrics(
     },
     queue,
     overdueFollowUps: { state: 'AVAILABLE', count: overdue.length, items: overdue.slice(0, 20) },
-    pendingTreatments: { state: 'AVAILABLE', count: pendingTreatments.length, byStatus: pendingByStatus },
+    pendingTreatments: {
+      state: 'AVAILABLE',
+      count: pendingTreatments.length,
+      byStatus: pendingByStatus,
+    },
     doctorWorkload: { state: 'AVAILABLE', rows: [...docMap.values()].slice(0, 20) },
     aiReviewRequired: { state: 'AVAILABLE', count: reviewRequired.length, items: reviewRequired },
     financialItems: financialAllowed
       ? { state: 'AVAILABLE', note: 'authorized role', openBalances, invoiceCount }
-      : { state: 'NOT_AVAILABLE', note: 'role not authorized for financial items', openBalances: 0, invoiceCount: 0 },
+      : {
+          state: 'NOT_AVAILABLE',
+          note: 'role not authorized for financial items',
+          openBalances: 0,
+          invoiceCount: 0,
+        },
     unresolvedTasks: { state: 'AVAILABLE', count: unresolvedTasks.length, items: unresolvedTasks },
     bottlenecks: { state: 'AVAILABLE', rows: bottlenecks },
   }
@@ -197,12 +268,21 @@ export async function buildClinicMetrics(
  */
 export async function buildCommandCenter(
   prisma: Parameters<typeof buildClinicMetrics>[0],
-  p: { hospitalId: string; now: Date; actorRole: string },
+  p: { hospitalId: string; now: Date; actorRole: string }
 ): Promise<CommandCenter> {
   const m = await buildClinicMetrics(prisma, p)
-  const mk = (key: string, state: DataState, items: IntelligenceItem[]): CommandCenter['sections'][number] => ({ key, state, items })
+  const mk = (
+    key: string,
+    state: DataState,
+    items: IntelligenceItem[]
+  ): CommandCenter['sections'][number] => ({ key, state, items })
   let n = 0
-  const item = (insightClass: IntelligenceItem['insightClass'], titleKey: string, detail: Record<string, unknown>, state: DataState = 'AVAILABLE') => ({
+  const item = (
+    insightClass: IntelligenceItem['insightClass'],
+    titleKey: string,
+    detail: Record<string, unknown>,
+    state: DataState = 'AVAILABLE'
+  ) => ({
     id: `cc-${++n}`,
     insightClass,
     state,
@@ -215,56 +295,67 @@ export async function buildCommandCenter(
   const sections: CommandCenter['sections'] = []
 
   sections.push(
-    mk(
-      'todaysAppointments',
-      m.todayAppointments.state,
-      [
-        item('FACT', 'cc.appointments.total', { total: m.todayAppointments.total }),
-        item('FACT', 'cc.appointments.byStatus', { byStatus: m.todayAppointments.byStatus }),
-        ...(m.todayAppointments.utilization !== null ? [item('DERIVED_INSIGHT', 'cc.appointments.utilization', { utilization: m.todayAppointments.utilization })] : []),
-      ],
-    ),
+    mk('todaysAppointments', m.todayAppointments.state, [
+      item('FACT', 'cc.appointments.total', { total: m.todayAppointments.total }),
+      item('FACT', 'cc.appointments.byStatus', { byStatus: m.todayAppointments.byStatus }),
+      ...(m.todayAppointments.utilization !== null
+        ? [
+            item('DERIVED_INSIGHT', 'cc.appointments.utilization', {
+              utilization: m.todayAppointments.utilization,
+            }),
+          ]
+        : []),
+    ])
   )
   sections.push(
     mk(
       'patientsWaiting',
       m.queue.state,
       m.queue.checkedIn.length > 0
-        ? m.queue.checkedIn.slice(0, 10).map((q) => item('FACT', 'cc.queue.waiting', { ref: q.ref, type: q.type, priority: q.priority }))
-        : [item('FACT', 'cc.queue.empty', {}, 'NOT_AVAILABLE')],
-    ),
+        ? m.queue.checkedIn
+            .slice(0, 10)
+            .map((q) =>
+              item('FACT', 'cc.queue.waiting', { ref: q.ref, type: q.type, priority: q.priority })
+            )
+        : [item('FACT', 'cc.queue.empty', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
-    mk(
-      'delayedAppointments',
-      'NOT_MEASURED',
-      [item('FACT', 'cc.delayed.notMeasured', { note: 'delay detection requires live chair-time telemetry — not claimed' })],
-    ),
+    mk('delayedAppointments', 'NOT_MEASURED', [
+      item('FACT', 'cc.delayed.notMeasured', {
+        note: 'delay detection requires live chair-time telemetry — not claimed',
+      }),
+    ])
   )
   sections.push(
     mk(
       'urgentClinicalReview',
       m.aiReviewRequired.state,
       m.aiReviewRequired.items.length > 0
-        ? m.aiReviewRequired.items.map((r) => item('AI_INTERPRETATION', 'cc.review.aiPending', { jobId: r.jobId, engine: r.engine }))
-        : [item('FACT', 'cc.review.none', {}, 'NOT_AVAILABLE')],
-    ),
+        ? m.aiReviewRequired.items.map((r) =>
+            item('AI_INTERPRETATION', 'cc.review.aiPending', { jobId: r.jobId, engine: r.engine })
+          )
+        : [item('FACT', 'cc.review.none', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
     mk(
       'pendingFollowUps',
       m.overdueFollowUps.state,
       m.overdueFollowUps.items.length > 0
-        ? m.overdueFollowUps.items.map((f) => item('DERIVED_INSIGHT', 'cc.followup.overdue', { ref: f.ref, date: f.date }))
-        : [item('FACT', 'cc.followup.none', {}, 'NOT_AVAILABLE')],
-    ),
+        ? m.overdueFollowUps.items.map((f) =>
+            item('DERIVED_INSIGHT', 'cc.followup.overdue', { ref: f.ref, date: f.date })
+          )
+        : [item('FACT', 'cc.followup.none', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
-    mk(
-      'pendingTreatments',
-      m.pendingTreatments.state,
-      [item('FACT', 'cc.pending.count', { count: m.pendingTreatments.count, byStatus: m.pendingTreatments.byStatus })],
-    ),
+    mk('pendingTreatments', m.pendingTreatments.state, [
+      item('FACT', 'cc.pending.count', {
+        count: m.pendingTreatments.count,
+        byStatus: m.pendingTreatments.byStatus,
+      }),
+    ])
   )
   sections.push(
     mk(
@@ -272,42 +363,64 @@ export async function buildCommandCenter(
       m.aiReviewRequired.state,
       m.aiReviewRequired.items.length > 0
         ? [item('DERIVED_INSIGHT', 'cc.ai.count', { count: m.aiReviewRequired.count })]
-        : [item('FACT', 'cc.ai.none', {}, 'NOT_AVAILABLE')],
-    ),
+        : [item('FACT', 'cc.ai.none', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
     mk(
       'operationalBottlenecks',
       m.bottlenecks.state,
       m.bottlenecks.rows.length > 0
-        ? m.bottlenecks.rows.map((b) => item('DERIVED_INSIGHT', 'cc.bottleneck', { code: b.code, detail: b.detail }))
-        : [item('FACT', 'cc.bottleneck.none', {}, 'NOT_AVAILABLE')],
-    ),
+        ? m.bottlenecks.rows.map((b) =>
+            item('DERIVED_INSIGHT', 'cc.bottleneck', { code: b.code, detail: b.detail })
+          )
+        : [item('FACT', 'cc.bottleneck.none', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
     mk(
       'unresolvedTasks',
       m.unresolvedTasks.state,
       m.unresolvedTasks.items.length > 0
-        ? m.unresolvedTasks.items.map((t) => item('DERIVED_INSIGHT', 'cc.task.unresolved', { task: t }))
-        : [item('FACT', 'cc.task.none', {}, 'NOT_AVAILABLE')],
-    ),
+        ? m.unresolvedTasks.items.map((t) =>
+            item('DERIVED_INSIGHT', 'cc.task.unresolved', { task: t })
+          )
+        : [item('FACT', 'cc.task.none', {}, 'NOT_AVAILABLE')]
+    )
   )
   sections.push(
     mk(
       'financialItems',
       m.financialItems.state,
       m.financialItems.state === 'AVAILABLE'
-        ? [item('FACT', 'cc.financial.open', { invoiceCount: m.financialItems.invoiceCount, openBalances: m.financialItems.openBalances })]
-        : [item('FACT', 'cc.financial.notAuthorized', { note: m.financialItems.note }, 'NOT_AVAILABLE')],
-    ),
+        ? [
+            item('FACT', 'cc.financial.open', {
+              invoiceCount: m.financialItems.invoiceCount,
+              openBalances: m.financialItems.openBalances,
+            }),
+          ]
+        : [
+            item(
+              'FACT',
+              'cc.financial.notAuthorized',
+              { note: m.financialItems.note },
+              'NOT_AVAILABLE'
+            ),
+          ]
+    )
   )
   sections.push(
     mk(
       'doctorWorkload',
       m.doctorWorkload.state,
-      m.doctorWorkload.rows.map((d) => item('FACT', 'cc.doctor.workload', { doctorId: d.doctorId, scheduledToday: d.scheduledToday, overdueFollowUps: d.overdueFollowUps })),
-    ),
+      m.doctorWorkload.rows.map((d) =>
+        item('FACT', 'cc.doctor.workload', {
+          doctorId: d.doctorId,
+          scheduledToday: d.scheduledToday,
+          overdueFollowUps: d.overdueFollowUps,
+        })
+      )
+    )
   )
 
   return { generatedAt: p.now.toISOString(), hospitalId: p.hospitalId, sections, metrics: m }

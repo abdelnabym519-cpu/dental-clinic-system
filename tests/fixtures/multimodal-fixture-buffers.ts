@@ -35,7 +35,11 @@ function pngChunk(type: string, data: Buffer): Buffer {
 }
 
 /** A real, decodable solid-color PNG of exactly (width × height). */
-export function pngBuffer(width = 48, height = 32, rgb: [number, number, number] = [255, 0, 0]): Buffer {
+export function pngBuffer(
+  width = 48,
+  height = 32,
+  rgb: [number, number, number] = [255, 0, 0]
+): Buffer {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(width, 0)
   ihdr.writeUInt32BE(height, 4)
@@ -104,7 +108,7 @@ export function asciiStlBuffer(): Buffer {
       'endsolid fixture',
       '',
     ].join('\n'),
-    'utf8',
+    'utf8'
   )
 }
 
@@ -112,7 +116,7 @@ export function asciiStlBuffer(): Buffer {
 export function objBuffer(): Buffer {
   return Buffer.from(
     ['# fixture mesh', 'v 0 0 0', 'v 1 0 0', 'v 0 1 0', 'f 1 2 3', ''].join('\n'),
-    'utf8',
+    'utf8'
   )
 }
 

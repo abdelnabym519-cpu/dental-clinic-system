@@ -49,7 +49,15 @@ export const INTERACTION_STATE_TRANSITIONS: Record<InteractionState, Interaction
   // SPEAKING is legal: short-circuit answers (clarification acks, duplicate
   // notices) speak without entering PROCESSING.
   UNDERSTANDING: ['PROCESSING', 'LISTENING', 'SPEAKING', 'CANCELLED', 'ERROR'],
-  PROCESSING: ['SPEAKING', 'WAITING_APPROVAL', 'LISTENING', 'WARNING', 'ERROR', 'CANCELLED', 'INTERRUPTED'],
+  PROCESSING: [
+    'SPEAKING',
+    'WAITING_APPROVAL',
+    'LISTENING',
+    'WARNING',
+    'ERROR',
+    'CANCELLED',
+    'INTERRUPTED',
+  ],
   WAITING_APPROVAL: ['PROCESSING', 'SPEAKING', 'CANCELLED', 'ERROR', 'INTERRUPTED', 'WARNING'],
   SPEAKING: ['COMPLETED', 'LISTENING', 'INTERRUPTED', 'ERROR', 'CANCELLED'],
   INTERRUPTED: ['LISTENING', 'IDLE', 'CANCELLED', 'ERROR'],
@@ -62,13 +70,19 @@ export const INTERACTION_STATE_TRANSITIONS: Record<InteractionState, Interaction
 
 export class VoiceStateTransitionError extends Error {
   readonly code = 'VOICE_STATE_TRANSITION_INVALID'
-  constructor(public readonly from: InteractionState, public readonly to: InteractionState) {
+  constructor(
+    public readonly from: InteractionState,
+    public readonly to: InteractionState
+  ) {
     super(`VOICE_STATE_TRANSITION_INVALID: ${from} -> ${to}`)
     this.name = 'VoiceStateTransitionError'
   }
 }
 
-export function canTransitionInteractionState(from: InteractionState, to: InteractionState): boolean {
+export function canTransitionInteractionState(
+  from: InteractionState,
+  to: InteractionState
+): boolean {
   return (INTERACTION_STATE_TRANSITIONS[from] ?? []).includes(to)
 }
 
@@ -171,11 +185,7 @@ export interface PatientResolutionResult {
 export type ControlPhraseKind = 'INTERRUPT' | 'CANCEL' | 'CONFIRM' | null
 
 export interface VoiceClarification {
-  code:
-    | 'TOOTH_AMBIGUOUS'
-    | 'PATIENT_AMBIGUOUS'
-    | 'PATIENT_NOT_FOUND'
-    | 'TOOTH_NOT_FOUND'
+  code: 'TOOTH_AMBIGUOUS' | 'PATIENT_AMBIGUOUS' | 'PATIENT_NOT_FOUND' | 'TOOTH_NOT_FOUND'
   questionAr: string
   questionEn: string
   candidates: string[]

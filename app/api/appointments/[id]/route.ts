@@ -8,7 +8,12 @@ import {
   findAvailabilityViolation,
 } from '@/lib/services/appointment-conflict.service'
 import { isValidTime, toDateKey, parseDateKey } from '@/lib/agenda-utils'
-import { queueDoctorCancellation, queueDoctorReschedule, queueReviewRequest, type QueueableAppointment } from '@/lib/messaging/service'
+import {
+  queueDoctorCancellation,
+  queueDoctorReschedule,
+  queueReviewRequest,
+  type QueueableAppointment,
+} from '@/lib/messaging/service'
 
 // Roles allowed to mutate the schedule (edit / reschedule / cancel / status).
 const SCHEDULING_ROLES = ['ADMIN', 'DOCTOR', 'RECEPTIONIST']
@@ -113,7 +118,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         { status: 400 }
       )
     }
-    const VALID_STATUSES = ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED']
+    const VALID_STATUSES = [
+      'SCHEDULED',
+      'CONFIRMED',
+      'CHECKED_IN',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'CANCELLED',
+      'NO_SHOW',
+      'RESCHEDULED',
+    ]
     if (status !== undefined && !VALID_STATUSES.includes(status)) {
       return NextResponse.json({ error: 'Invalid appointment status' }, { status: 400 })
     }
@@ -184,7 +198,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         duration: checkDuration,
       })
       if (violating) {
-        return NextResponse.json({ error: violating.message, code: violating.code }, { status: 409 })
+        return NextResponse.json(
+          { error: violating.message, code: violating.code },
+          { status: 409 }
+        )
       }
 
       const conflictingAppointment = await findConflictingAppointment({
@@ -265,7 +282,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         let memberDate = target.scheduledDate as Date
         if (scheduledDate !== undefined) {
           memberDate = new Date(target.scheduledDate as Date)
-          memberDate.setDate(memberDate.getDate() + (parseDateKey(newKey).getTime() - parseDateKey(oldKey).getTime()) / 86400000)
+          memberDate.setDate(
+            memberDate.getDate() +
+              (parseDateKey(newKey).getTime() - parseDateKey(oldKey).getTime()) / 86400000
+          )
         }
 
         const memberTime = scheduledTime ?? (target.scheduledTime as string)
@@ -361,28 +381,31 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         duration: (appointment.duration ?? existingAppointment.duration) as number,
         appointmentType: existingAppointment.appointmentType,
         status: (appointment.status ?? previous.status) as string,
-        contactPhone: (appointment.contactPhone ?? (existingAppointment as { contactPhone?: string | null }).contactPhone) as string | null,
-        patient: appointment.patient ?? { id: existingAppointment.patientId, firstName: '', lastName: '', phone: null },
-        doctor:
-          doctorRow ?? {
-            id: existingAppointment.doctorId,
-            firstName: '',
-            lastName: '',
-            phone: null,
-          },
+        contactPhone: (appointment.contactPhone ??
+          (existingAppointment as { contactPhone?: string | null }).contactPhone) as string | null,
+        patient: appointment.patient ?? {
+          id: existingAppointment.patientId,
+          firstName: '',
+          lastName: '',
+          phone: null,
+        },
+        doctor: doctorRow ?? {
+          id: existingAppointment.doctorId,
+          firstName: '',
+          lastName: '',
+          phone: null,
+        },
       } as QueueableAppointment
       if (status === 'CANCELLED' && previous.status !== 'CANCELLED') {
         await queueDoctorCancellation(messagingBase)
-      } else if (
-        status === 'COMPLETED' &&
-        previous.status !== 'COMPLETED'
-      ) {
+      } else if (status === 'COMPLETED' && previous.status !== 'COMPLETED') {
         await queueReviewRequest(messagingBase)
       } else if (
         (scheduledDate !== undefined || scheduledTime !== undefined) &&
         (toDateKey(new Date(scheduledDate ?? existingAppointment.scheduledDate)) !==
           toDateKey(existingAppointment.scheduledDate) ||
-          (scheduledTime ?? existingAppointment.scheduledTime) !== existingAppointment.scheduledTime)
+          (scheduledTime ?? existingAppointment.scheduledTime) !==
+            existingAppointment.scheduledTime)
       ) {
         await queueDoctorReschedule(messagingBase)
       }

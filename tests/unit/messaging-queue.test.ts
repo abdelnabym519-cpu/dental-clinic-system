@@ -27,19 +27,23 @@ vi.mock('@/lib/prisma', () => ({
         if (where?.hospitalId) rows = rows.filter((r) => r.hospitalId === where.hospitalId)
         return rows.length
       }),
-      update: vi.fn(async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
-        const row = messageQueueRows.get(where.id) ?? {}
-        const merged = {
-          ...row,
-          ...data,
-          attempts:
-            typeof data.attempts === 'object' && data.attempts !== null && 'increment' in (data.attempts as object)
-              ? (row.attempts as number) + (data.attempts as { increment: number }).increment
-              : (data.attempts ?? row.attempts),
+      update: vi.fn(
+        async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+          const row = messageQueueRows.get(where.id) ?? {}
+          const merged = {
+            ...row,
+            ...data,
+            attempts:
+              typeof data.attempts === 'object' &&
+              data.attempts !== null &&
+              'increment' in (data.attempts as object)
+                ? (row.attempts as number) + (data.attempts as { increment: number }).increment
+                : (data.attempts ?? row.attempts),
+          }
+          messageQueueRows.set(where.id, merged)
+          return merged
         }
-        messageQueueRows.set(where.id, merged)
-        return merged
-      }),
+      ),
       findFirst: vi.fn(async ({ where }) => messageQueueRows.get(where.id) ?? null),
       create: vi.fn(async ({ data }) => {
         const row = { id: `mq-${messageQueueRows.size + 1}`, ...data }
@@ -47,7 +51,13 @@ vi.mock('@/lib/prisma', () => ({
         return row
       }),
     },
-    hospital: { findUnique: vi.fn(async () => ({ name: 'عيادة دنتورا', address: 'القاهرة', phone: '+201234567890' })) },
+    hospital: {
+      findUnique: vi.fn(async () => ({
+        name: 'عيادة دنتورا',
+        address: 'القاهرة',
+        phone: '+201234567890',
+      })),
+    },
     patient: { findUnique: vi.fn(), findFirst: vi.fn() },
     staff: { findUnique: vi.fn(), findFirst: vi.fn() },
   },
@@ -234,7 +244,10 @@ describe('enqueue + admin lifecycle', () => {
   it('the log masks recipients and never exposes attachment bytes (3L)', async () => {
     seedRow({
       recipient: '+201012345678',
-      payload: { text: 'مرحباً', attachment: { filename: 'rx.pdf', mimeType: 'application/pdf', data: 'AAAA' } },
+      payload: {
+        text: 'مرحباً',
+        attachment: { filename: 'rx.pdf', mimeType: 'application/pdf', data: 'AAAA' },
+      },
     })
     const { rows } = await getMessageLog({ hospitalId: 'hospital-1' })
     expect(rows).toHaveLength(1)

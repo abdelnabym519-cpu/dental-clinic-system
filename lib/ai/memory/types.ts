@@ -18,13 +18,7 @@
  *    createdBy) and a scope (domain + tenant-scoped columns).
  */
 
-export const MEMORY_DOMAINS = [
-  'CLINIC',
-  'DOCTOR',
-  'PATIENT',
-  'CASE',
-  'CONVERSATION',
-] as const
+export const MEMORY_DOMAINS = ['CLINIC', 'DOCTOR', 'PATIENT', 'CASE', 'CONVERSATION'] as const
 export type MemoryDomain = (typeof MEMORY_DOMAINS)[number]
 
 export const MEMORY_TYPES = ['STRUCTURED', 'EPISODIC', 'SEMANTIC'] as const

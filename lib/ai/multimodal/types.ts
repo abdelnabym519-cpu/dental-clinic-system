@@ -262,7 +262,7 @@ export type MultimodalErrorCode = (typeof MULTIMODAL_ERRORS)[number]
 export class MultimodalError extends Error {
   constructor(
     readonly code: MultimodalErrorCode,
-    message: string,
+    message: string
   ) {
     super(message)
     this.name = 'MultimodalError'

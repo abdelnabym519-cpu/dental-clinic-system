@@ -11,7 +11,11 @@
  */
 import { projectChunkText, tokenize } from './normalize'
 import type {
-  EmbeddingProvider, KnowledgeChunk, KnowledgeDocument, KnowledgeSource, KnowledgeStore,
+  EmbeddingProvider,
+  KnowledgeChunk,
+  KnowledgeDocument,
+  KnowledgeSource,
+  KnowledgeStore,
 } from './types'
 
 export interface IndexChunk {

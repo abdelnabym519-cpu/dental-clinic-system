@@ -85,7 +85,10 @@ export default function PrescriptionsPage() {
     try {
       const res = await fetch(`/api/prescriptions/${rx.id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(t('Failed'))
-      toast({ title: t('Deleted'), description: t('Prescription {number} removed', { number: rx.prescriptionNo }) })
+      toast({
+        title: t('Deleted'),
+        description: t('Prescription {number} removed', { number: rx.prescriptionNo }),
+      })
       fetchPrescriptions()
     } catch {
       toast({
@@ -101,7 +104,9 @@ export default function PrescriptionsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <ClipboardList className="h-8 w-8" />{t('ui.prescriptions')}</h1>
+            <ClipboardList className="h-8 w-8" />
+            {t('ui.prescriptions')}
+          </h1>
           <p className="text-muted-foreground">{t('Create and manage patient prescriptions')}</p>
         </div>
         <div className="flex gap-2">
@@ -133,7 +138,9 @@ export default function PrescriptionsPage() {
             }
           />
           <Button onClick={() => router.push('/prescriptions/new')}>
-            <Plus className="h-4 w-4 mr-2" />{t('ui.new_prescription')}</Button>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('ui.new_prescription')}
+          </Button>
         </div>
       </div>
 
@@ -172,7 +179,7 @@ export default function PrescriptionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("Rx #")}</TableHead>
+                  <TableHead>{t('Rx #')}</TableHead>
                   <TableHead>{t('ui.patient')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.doctor')}</TableHead>
                   <TableHead className="hidden md:table-cell">{t('ui.diagnosis')}</TableHead>
@@ -250,16 +257,20 @@ export default function PrescriptionsPage() {
             size="sm"
             disabled={pagination.page <= 1}
             onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-          >{t('ui.previous')}</Button>
+          >
+            {t('ui.previous')}
+          </Button>
           <span className="flex items-center text-sm text-muted-foreground px-3">
-            {t("Page")} {pagination.page} {t("of")} {pagination.pages}
+            {t('Page')} {pagination.page} {t('of')} {pagination.pages}
           </span>
           <Button
             variant="outline"
             size="sm"
             disabled={pagination.page >= pagination.pages}
             onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-          >{t('ui.next')}</Button>
+          >
+            {t('ui.next')}
+          </Button>
         </div>
       )}
       {ConfirmDialogComponent}

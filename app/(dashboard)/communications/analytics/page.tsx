@@ -159,7 +159,7 @@ export default function CampaignAnalyticsPage() {
                   <p className="text-xs text-muted-foreground">
                     {data.sms.pending + data.sms.queued > 0
                       ? `${data.sms.pending + data.sms.queued} pending`
-                      : t("All processed")}
+                      : t('All processed')}
                   </p>
                 </CardContent>
               </Card>
@@ -171,7 +171,7 @@ export default function CampaignAnalyticsPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{data.sms.deliveryRate}%</div>
                   <p className="text-xs text-muted-foreground">
-                    {data.sms.delivered + data.sms.sent} {t("delivered")}
+                    {data.sms.delivered + data.sms.sent} {t('delivered')}
                   </p>
                 </CardContent>
               </Card>
@@ -184,8 +184,10 @@ export default function CampaignAnalyticsPage() {
                   <div className="text-2xl font-bold text-red-600">{data.sms.failed}</div>
                   <p className="text-xs text-muted-foreground">
                     {data.sms.total > 0
-                      ? t("{v1}% failure rate", { v1: ((data.sms.failed / data.sms.total) * 100).toFixed(1) })
-                      : t("No messages")}
+                      ? t('{v1}% failure rate', {
+                          v1: ((data.sms.failed / data.sms.total) * 100).toFixed(1),
+                        })
+                      : t('No messages')}
                   </p>
                 </CardContent>
               </Card>
@@ -195,11 +197,13 @@ export default function CampaignAnalyticsPage() {
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{t('EGP')} {data.sms.totalCost.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">
+                    {t('EGP')} {data.sms.totalCost.toFixed(2)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {data.sms.total > 0
-                      ? t("EGP {v1}/msg", { v1: (data.sms.totalCost / data.sms.total).toFixed(4) })
-                      : t("No cost data")}
+                      ? t('EGP {v1}/msg', { v1: (data.sms.totalCost / data.sms.total).toFixed(4) })
+                      : t('No cost data')}
                   </p>
                 </CardContent>
               </Card>
@@ -221,7 +225,7 @@ export default function CampaignAnalyticsPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{data.email.total.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
-                    {data.email.sent} {t("successfully delivered")}
+                    {data.email.sent} {t('successfully delivered')}
                   </p>
                 </CardContent>
               </Card>
@@ -233,7 +237,7 @@ export default function CampaignAnalyticsPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{data.email.openRate}%</div>
                   <p className="text-xs text-muted-foreground">
-                    {data.email.opened} {t("opened of")} {data.email.sent}
+                    {data.email.opened} {t('opened of')} {data.email.sent}
                   </p>
                 </CardContent>
               </Card>
@@ -245,7 +249,7 @@ export default function CampaignAnalyticsPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{data.email.clickRate}%</div>
                   <p className="text-xs text-muted-foreground">
-                    {data.email.clicked} {t("clicked of")} {data.email.sent}
+                    {data.email.clicked} {t('clicked of')} {data.email.sent}
                   </p>
                 </CardContent>
               </Card>
@@ -258,8 +262,10 @@ export default function CampaignAnalyticsPage() {
                   <div className="text-2xl font-bold text-red-600">{data.email.failed}</div>
                   <p className="text-xs text-muted-foreground">
                     {data.email.total > 0
-                      ? t("{v1}% failure rate", { v1: ((data.email.failed / data.email.total) * 100).toFixed(1) })
-                      : t("No messages")}
+                      ? t('{v1}% failure rate', {
+                          v1: ((data.email.failed / data.email.total) * 100).toFixed(1),
+                        })
+                      : t('No messages')}
                   </p>
                 </CardContent>
               </Card>
@@ -288,7 +294,7 @@ export default function CampaignAnalyticsPage() {
                         className="flex flex-col items-center flex-1 min-w-[20px] group relative"
                       >
                         <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-xs bg-popover border rounded px-2 py-1 whitespace-nowrap z-10">
-                          {day.date}: {day.sms} {t("SMS,")} {day.email} {t("Email")}
+                          {day.date}: {day.sms} {t('SMS,')} {day.email} {t('Email')}
                         </div>
                         <div className="flex flex-col-reverse w-full gap-[1px]">
                           {day.sms > 0 && (
@@ -319,9 +325,13 @@ export default function CampaignAnalyticsPage() {
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-blue-500" />{t('ui.sms')}</span>
+                    <span className="w-3 h-3 rounded-sm bg-blue-500" />
+                    {t('ui.sms')}
+                  </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-purple-500" />{t('ui.email')}</span>
+                    <span className="w-3 h-3 rounded-sm bg-purple-500" />
+                    {t('ui.email')}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -372,7 +382,8 @@ export default function CampaignAnalyticsPage() {
                         <TableCell className="text-right text-green-600">{c.sentCount}</TableCell>
                         <TableCell className="text-right text-red-600">{c.failedCount}</TableCell>
                         <TableCell className="text-right">
-                          {t('EGP')} {c.actualCost > 0 ? c.actualCost.toFixed(2) : c.estimatedCost.toFixed(2)}
+                          {t('EGP')}{' '}
+                          {c.actualCost > 0 ? c.actualCost.toFixed(2) : c.estimatedCost.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(c.createdAt).toLocaleDateString(locale)}
@@ -408,7 +419,9 @@ export default function CampaignAnalyticsPage() {
                             </Badge>
                           </div>
                         </div>
-                        <span className="text-sm font-semibold">{opt.count} {t('sent')}</span>
+                        <span className="text-sm font-semibold">
+                          {opt.count} {t('sent')}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -437,7 +450,9 @@ export default function CampaignAnalyticsPage() {
                             </Badge>
                           </div>
                         </div>
-                        <span className="text-sm font-semibold">{opt.count} {t('sent')}</span>
+                        <span className="text-sm font-semibold">
+                          {opt.count} {t('sent')}
+                        </span>
                       </div>
                     ))}
                   </div>

@@ -23,12 +23,7 @@ import { FDI_TEETH, groupOf } from '@/lib/dental-chart/fdi'
 import { TOOTH_COLORS, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
 import { toothTransform, toothDimensions, ARCH_Y } from './tooth-3d'
-import {
-  buildCrownGeometry,
-  buildRootGeometry,
-  rootSpecs,
-  type ToothGroup,
-} from './tooth-anatomy'
+import { buildCrownGeometry, buildRootGeometry, rootSpecs, type ToothGroup } from './tooth-anatomy'
 
 // ─── shared GPU resources (created once, disposed on unmount) ───────────────
 
@@ -131,8 +126,19 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
   const cusps = useMemo(() => {
     if (!d.cusps) return []
     const r = d.crownTop * 0.45
-    const offs = d.cusps === 2 ? [[-r, 0], [r, 0]] : [[-r, -r], [r, -r], [-r, r], [r, r]]
-    return offs.map(([cx, cz]) => [cx, d.crownHeight / 2 * 0.95, cz] as [number, number, number])
+    const offs =
+      d.cusps === 2
+        ? [
+            [-r, 0],
+            [r, 0],
+          ]
+        : [
+            [-r, -r],
+            [r, -r],
+            [-r, r],
+            [r, r],
+          ]
+    return offs.map(([cx, cz]) => [cx, (d.crownHeight / 2) * 0.95, cz] as [number, number, number])
   }, [d.crownHeight, d.crownTop, d.cusps])
 
   return (
@@ -161,7 +167,11 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
       {status !== 'missing' ? (
         <>
           {/* crown */}
-          <mesh geometry={res.crownGeoms[groupKey(n)]} material={material} position={[0, crownY, 0]} />
+          <mesh
+            geometry={res.crownGeoms[groupKey(n)]}
+            material={material}
+            position={[0, crownY, 0]}
+          />
           {/* cusps */}
           {cusps.map((c, i) => (
             <mesh key={i} geometry={res.cuspGeom} material={material} position={c} />
@@ -239,7 +249,10 @@ export default function DentalChart3D({
   // Dispose shared GPU resources when the 3D view unmounts (Stage N rule 5).
   useEffect(() => () => getShared() && shared?.dispose(), [])
 
-  const teeth = useMemo(() => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })), [statusByTooth])
+  const teeth = useMemo(
+    () => FDI_TEETH.map((n) => ({ n, status: statusByTooth[n] ?? 'healthy' })),
+    [statusByTooth]
+  )
 
   return (
     <Canvas

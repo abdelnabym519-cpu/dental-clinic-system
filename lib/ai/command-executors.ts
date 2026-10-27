@@ -206,7 +206,11 @@ export async function execBookAppointment(
   hospitalId: string,
   client: any = prisma
 ) {
-  const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+  const patient = await findPatient(
+    hospitalId,
+    params.patientName,
+    resolvedPatientIdFromParams(params)
+  )
   if (!patient)
     return {
       success: false,
@@ -285,7 +289,11 @@ export async function execCancelAppointment(
       },
     })
   } else if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
     appointment = await client.appointment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['SCHEDULED', 'CONFIRMED'] } },
@@ -336,7 +344,11 @@ export async function execRescheduleAppointment(
       },
     })
   } else if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
     appointment = await client.appointment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['SCHEDULED', 'CONFIRMED'] } },
@@ -402,7 +414,11 @@ export async function execCompleteAppointment(
       include: { patient: { select: { firstName: true, lastName: true } } },
     })
   } else if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
     appointment = await client.appointment.findFirst({
       where: {
@@ -468,7 +484,11 @@ export async function execCreateTreatment(
   hospitalId: string,
   client: any = prisma
 ) {
-  const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+  const patient = await findPatient(
+    hospitalId,
+    params.patientName,
+    resolvedPatientIdFromParams(params)
+  )
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
   const procedure = await client.procedure.findFirst({
@@ -536,7 +556,11 @@ export async function execCompleteTreatment(
       },
     })
   } else if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
     treatment = await client.treatment.findFirst({
       where: { hospitalId, patientId: patient.id, status: { in: ['PLANNED', 'IN_PROGRESS'] } },
@@ -569,7 +593,11 @@ export async function execCompleteTreatment(
 export async function execShowTreatments(params: Record<string, string>, hospitalId: string) {
   const where: any = { hospitalId }
   if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (patient) where.patientId = patient.id
   }
   if (params.status) where.status = params.status
@@ -609,7 +637,11 @@ export async function execCreateInvoice(
   hospitalId: string,
   client: any = prisma
 ) {
-  const patient = await findPatient(hospitalId, params.query || params.patientName, resolvedPatientIdFromParams(params))
+  const patient = await findPatient(
+    hospitalId,
+    params.query || params.patientName,
+    resolvedPatientIdFromParams(params)
+  )
   if (!patient)
     return { success: false, message: `Patient "${params.query || params.patientName}" not found.` }
 
@@ -623,10 +655,7 @@ export async function execCreateInvoice(
       message: `No unbilled completed treatments for ${patient.firstName} ${patient.lastName}.`,
     }
 
-  const subtotal = unbilled.reduce(
-    (s: number, t: { cost: unknown }) => s + Number(t.cost),
-    0
-  )
+  const subtotal = unbilled.reduce((s: number, t: { cost: unknown }) => s + Number(t.cost), 0)
   // Egyptian VAT: single 14% rate stored in the legacy cgst slot (sgst 0)
   const cgstRate = 14
   const sgstRate = 0
@@ -690,7 +719,11 @@ export async function execRecordPayment(
       include: { patient: { select: { firstName: true, lastName: true } } },
     })
   } else {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
     invoice = await client.invoice.findFirst({
       where: {
@@ -752,7 +785,11 @@ export async function execShowInvoices(params: Record<string, string>, hospitalI
   const where: any = { hospitalId }
   if (params.status) where.status = params.status.toUpperCase()
   if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (patient) where.patientId = patient.id
   }
 
@@ -976,7 +1013,11 @@ export async function execCreateLabOrder(
   hospitalId: string,
   client: any = prisma
 ) {
-  const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+  const patient = await findPatient(
+    hospitalId,
+    params.patientName,
+    resolvedPatientIdFromParams(params)
+  )
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
   const vendor = await client.labVendor.findFirst({
@@ -1061,7 +1102,11 @@ export async function execShowLabOrders(params: Record<string, string>, hospital
   const where: any = { hospitalId }
   if (params.status) where.status = params.status
   if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (patient) where.patientId = patient.id
   }
 
@@ -1098,7 +1143,11 @@ export async function execCreatePrescription(
   hospitalId: string,
   client: any = prisma
 ) {
-  const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+  const patient = await findPatient(
+    hospitalId,
+    params.patientName,
+    resolvedPatientIdFromParams(params)
+  )
   if (!patient) return { success: false, message: `Patient "${params.patientName}" not found.` }
 
   const doctor = await findDoctor(hospitalId, params.doctorName)
@@ -1233,7 +1282,11 @@ export async function execSearchMedications(params: Record<string, string>, hosp
 export async function execShowPrescriptions(params: Record<string, string>, hospitalId: string) {
   const where: any = { hospitalId }
   if (params.patientName) {
-    const patient = await findPatient(hospitalId, params.patientName, resolvedPatientIdFromParams(params))
+    const patient = await findPatient(
+      hospitalId,
+      params.patientName,
+      resolvedPatientIdFromParams(params)
+    )
     if (patient) where.patientId = patient.id
   }
   if (params.doctorName) {

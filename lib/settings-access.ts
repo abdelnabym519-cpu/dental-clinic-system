@@ -72,7 +72,10 @@ export function rolesForSettingsSection(section: string): readonly string[] {
  * Non-settings paths yield false by definition — callers should check
  * settingsSectionFromPath first when the path may be outside the area.
  */
-export function canAccessSettingsSection(pathname: string, role: string | null | undefined): boolean {
+export function canAccessSettingsSection(
+  pathname: string,
+  role: string | null | undefined
+): boolean {
   const section = settingsSectionFromPath(pathname)
   if (section === null) return false
   if (!role) return false

@@ -38,7 +38,11 @@ async function liveEngineNames(): Promise<string[] | null> {
   try {
     const source = createOrchestratorCapabilitySource()
     const health = await source.getHealth()
-    return health.filter((h) => h.reachable && h.modelLoaded && !h.isStandin && h.lifecycleStatus === 'AVAILABLE').map((h) => h.name)
+    return health
+      .filter(
+        (h) => h.reachable && h.modelLoaded && !h.isStandin && h.lifecycleStatus === 'AVAILABLE'
+      )
+      .map((h) => h.name)
   } catch {
     return null // live view unknown — the capability record says so honestly
   }
@@ -119,7 +123,10 @@ export async function POST(req: NextRequest) {
   // global maximum (largest per-class limit) so a hostile 500MB+ upload is
   // answered without being held in memory.
   if (file.size > MULTIMODAL_LIMITS.maxBytes.VOLUME_DICOM) {
-    return NextResponse.json({ error: 'File is too large', code: 'OVERSIZED_INPUT' }, { status: 413 })
+    return NextResponse.json(
+      { error: 'File is too large', code: 'OVERSIZED_INPUT' },
+      { status: 413 }
+    )
   }
 
   let buffer: Buffer
@@ -144,7 +151,10 @@ export async function POST(req: NextRequest) {
       source: 'CHAT_UPLOAD',
     })
     const live = await liveEngineNames()
-    return NextResponse.json({ attachment: service.toRef(record), capability: capRecord(record, live) }, { status: 201 })
+    return NextResponse.json(
+      { attachment: service.toRef(record), capability: capRecord(record, live) },
+      { status: 201 }
+    )
   } catch (err) {
     return typedError(err)
   }
@@ -157,7 +167,10 @@ export async function GET(req: NextRequest) {
   }
   const conversationId = req.nextUrl.searchParams.get('conversationId')
   if (!conversationId) {
-    return NextResponse.json({ error: 'conversationId is required', code: 'INVALID_REQUEST' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'conversationId is required', code: 'INVALID_REQUEST' },
+      { status: 400 }
+    )
   }
   const records = await service.listForConversation(conversationId, hospitalId)
   return NextResponse.json({ attachments: records.map((r) => service.toRef(r)) })

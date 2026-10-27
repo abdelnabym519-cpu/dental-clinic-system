@@ -188,7 +188,7 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" /> {t("Select Doctor")}
+              <User className="h-5 w-5" /> {t('Select Doctor')}
             </CardTitle>
             <CardDescription>{t('Choose your preferred doctor')}</CardDescription>
           </CardHeader>
@@ -217,7 +217,7 @@ export default function BookAppointment() {
                     onClick={() => setSelectedDoctor(doc.id)}
                   >
                     <p className="font-medium">
-                      {t("Dr.")} {doc.firstName} {doc.lastName}
+                      {t('Dr.')} {doc.firstName} {doc.lastName}
                     </p>
                     {doc.specialization && (
                       <p className="text-sm text-muted-foreground">{doc.specialization}</p>
@@ -227,7 +227,9 @@ export default function BookAppointment() {
               </div>
             )}
 
-            <Button className="w-full mt-4" disabled={!selectedDoctor} onClick={() => setStep(2)}>{t('ui.continue')}<ArrowRight className="h-4 w-4 ml-2" />
+            <Button className="w-full mt-4" disabled={!selectedDoctor} onClick={() => setStep(2)}>
+              {t('ui.continue')}
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
         </Card>
@@ -238,12 +240,12 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="h-5 w-5" /> {t("Select Date & Time")}
+              <Calendar className="h-5 w-5" /> {t('Select Date & Time')}
             </CardTitle>
             <CardDescription>
               {selectedDoctorObj && (
                 <>
-                  {t("Dr.")} {selectedDoctorObj.firstName} {selectedDoctorObj.lastName}
+                  {t('Dr.')} {selectedDoctorObj.firstName} {selectedDoctorObj.lastName}
                 </>
               )}
             </CardDescription>
@@ -289,8 +291,12 @@ export default function BookAppointment() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
-              <Button className="flex-1" disabled={!selectedTime} onClick={() => setStep(3)}>{t('ui.continue')}<ArrowRight className="h-4 w-4 ml-2" />
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t('ui.back')}
+              </Button>
+              <Button className="flex-1" disabled={!selectedTime} onClick={() => setStep(3)}>
+                {t('ui.continue')}
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </CardContent>
@@ -302,7 +308,7 @@ export default function BookAppointment() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" /> {t("Confirm Booking")}
+              <CheckCircle className="h-5 w-5" /> {t('Confirm Booking')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -312,7 +318,7 @@ export default function BookAppointment() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('ui.doctor')}</span>
                 <span className="font-medium">
-                  {t("Dr.")} {selectedDoctorObj?.firstName} {selectedDoctorObj?.lastName}
+                  {t('Dr.')} {selectedDoctorObj?.firstName} {selectedDoctorObj?.lastName}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -333,9 +339,9 @@ export default function BookAppointment() {
             </div>
 
             <div className="space-y-2">
-              <Label>{t("Reason for visit (optional)")}</Label>
+              <Label>{t('Reason for visit (optional)')}</Label>
               <Textarea
-                placeholder={t("Describe your dental concern ") + COMPLAINT_HINT}
+                placeholder={t('Describe your dental concern ') + COMPLAINT_HINT}
                 value={chiefComplaint}
                 onChange={(e) => setChiefComplaint(e.target.value)}
                 rows={3}
@@ -344,10 +350,12 @@ export default function BookAppointment() {
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />{t('ui.back')}</Button>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {t('ui.back')}
+              </Button>
               <Button className="flex-1" onClick={handleBook} disabled={booking}>
                 {booking && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t("Confirm Booking")}
+                {t('Confirm Booking')}
               </Button>
             </div>
           </CardContent>
@@ -362,14 +370,20 @@ export default function BookAppointment() {
             <h2 className="text-xl font-bold text-green-700">{t('Booking Confirmed!')}</h2>
             <div className="p-4 rounded-lg bg-green-50 space-y-2 text-sm">
               <p>
-                <strong>{t("Appointment:")}</strong> {bookingResult.appointmentNo}
+                <strong>{t('Appointment:')}</strong> {bookingResult.appointmentNo}
               </p>
               <p>
-                <strong>{t("Doctor:")}</strong>{' '}
+                <strong>{t('Doctor:')}</strong>{' '}
                 {bookingResult.doctor?.firstName
-                  ? t("Dr. {v1} {v2}", { v1: bookingResult.doctor.firstName, v2: bookingResult.doctor.lastName })
+                  ? t('Dr. {v1} {v2}', {
+                      v1: bookingResult.doctor.firstName,
+                      v2: bookingResult.doctor.lastName,
+                    })
                   : selectedDoctorObj
-                    ? t("Dr. {v1} {v2}", { v1: selectedDoctorObj.firstName, v2: selectedDoctorObj.lastName })
+                    ? t('Dr. {v1} {v2}', {
+                        v1: selectedDoctorObj.firstName,
+                        v2: selectedDoctorObj.lastName,
+                      })
                     : ''}
               </p>
               <p>
@@ -382,7 +396,7 @@ export default function BookAppointment() {
                 })}
               </p>
               <p>
-                <strong>{t("Time:")}</strong> {selectedTime}
+                <strong>{t('Time:')}</strong> {selectedTime}
               </p>
             </div>
             <Button onClick={() => router.push('/portal/appointments')}>

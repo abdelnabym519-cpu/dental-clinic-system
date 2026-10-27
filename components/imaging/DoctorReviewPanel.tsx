@@ -62,9 +62,7 @@ export function DoctorReviewPanel({ jobId, findings, onReviewComplete }: DoctorR
     })
   }
 
-  const submit = async (
-    kind: 'accept-all' | 'accept-selected' | 'reject-all'
-  ) => {
+  const submit = async (kind: 'accept-all' | 'accept-selected' | 'reject-all') => {
     if (submitting) return
 
     if (kind === 'reject-all') {

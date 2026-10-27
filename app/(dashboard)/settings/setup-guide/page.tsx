@@ -642,7 +642,7 @@ const setupSections: SetupSection[] = [
         tips: [
           'Start with Economy model — it handles most tasks well',
           'The Robot answers questions about patients, appointments, and billing — by voice or text',
-          'Use Ctrl+K command bar for quick actions like "schedule appointment for Noura tomorrow"'
+          'Use Ctrl+K command bar for quick actions like "schedule appointment for Noura tomorrow"',
         ],
         link: { label: 'Go to AI Settings', href: '/settings/ai' },
       },
@@ -835,7 +835,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
           <div className="mt-3 space-y-4">
             {/* Steps */}
             <div>
-              <p className="text-sm font-medium mb-2">{t("Steps:")}</p>
+              <p className="text-sm font-medium mb-2">{t('Steps:')}</p>
               <ol className="space-y-1.5 ml-1">
                 {guide.steps.map((step, i) => (
                   <li key={i} className="flex gap-2 text-sm text-muted-foreground">
@@ -854,7 +854,7 @@ function GuideSection({ guide, index }: { guide: SetupStep; index: number }) {
             {guide.tips && guide.tips.length > 0 && (
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-3">
                 <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1.5">
-                  {t("Tips:")}
+                  {t('Tips:')}
                 </p>
                 <ul className="space-y-1">
                   {guide.tips.map((tip, i) => (
@@ -927,7 +927,9 @@ export default function SetupGuidePage() {
         <div className="flex items-center gap-2 mb-1">
           <Link href="/settings">
             <Button variant="ghost" size="sm" className="gap-1">
-              <ArrowLeft className="w-4 h-4" />{t('ui.settings')}</Button>
+              <ArrowLeft className="w-4 h-4" />
+              {t('ui.settings')}
+            </Button>
           </Link>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
@@ -935,7 +937,9 @@ export default function SetupGuidePage() {
           {t('Setup Guide')}
         </h1>
         <p className="text-muted-foreground mt-1">
-          {t("Step-by-step instructions to set up your clinic. Follow the essential steps first, then add optional integrations.")}
+          {t(
+            'Step-by-step instructions to set up your clinic. Follow the essential steps first, then add optional integrations.'
+          )}
         </p>
       </div>
 
@@ -1030,7 +1034,9 @@ export default function SetupGuidePage() {
                           ~{t(section.estimatedTime)}
                         </span>
                       </div>
-                      <CardDescription className="text-sm">{t(section.description)}</CardDescription>
+                      <CardDescription className="text-sm">
+                        {t(section.description)}
+                      </CardDescription>
                     </div>
                     <div className="shrink-0 mt-1">
                       {isExpanded ? (
@@ -1063,7 +1069,9 @@ export default function SetupGuidePage() {
           <div className="text-center">
             <h3 className="font-semibold mb-1">{t('Need More Help?')}</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              {t("If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team.")}
+              {t(
+                "If you're stuck on any step, feel free to ask the Robot for instant help, or contact our support team."
+              )}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link href="/ai-companion">

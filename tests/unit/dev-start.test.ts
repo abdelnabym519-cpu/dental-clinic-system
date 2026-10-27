@@ -280,7 +280,9 @@ describe('runSafeStartup — failure scenarios', () => {
       // DATABASE_URL), and the no-configuration error names every checked
       // source with deterministic precedence. The behavioral invariant is
       // unchanged: it still fails BEFORE any Docker command.
-      await expect(runSafeStartup(h.deps, { root: dir })).rejects.toThrow(/DATABASE_URL is not configured/)
+      await expect(runSafeStartup(h.deps, { root: dir })).rejects.toThrow(
+        /DATABASE_URL is not configured/
+      )
       expect(h.callKeys()).toHaveLength(0)
     } finally {
       if (saved !== undefined) process.env.DATABASE_URL = saved

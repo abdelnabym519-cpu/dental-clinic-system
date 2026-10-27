@@ -247,8 +247,7 @@ export function orderText(clusters: ShapedGlyphCluster[]): OrderedText {
     return 'neutral'
   }
   /** Direction a run is laid out in: numbers read left-to-right either way. */
-  const layoutOf = (direction: Direction): 'rtl' | 'ltr' =>
-    direction === 'rtl' ? 'rtl' : 'ltr'
+  const layoutOf = (direction: Direction): 'rtl' | 'ltr' => (direction === 'rtl' ? 'rtl' : 'ltr')
 
   // 1. Paragraph direction: the first strong character in logical order.
   const firstStrong = clusters.find((cluster) => directionOf(cluster) !== 'neutral')

@@ -18,10 +18,19 @@ import { chunkContent, type ChunkUnit } from './chunking'
 import { chunkChecksum, contentHash, normalizeForHash } from './checksum'
 import { detectDomains, isKnowledgeDomain } from './taxonomy'
 import {
-  KNOWLEDGE_SCOPES, SOURCE_TIERS, SOURCE_TYPES,
-  type CommitBatch, type IngestInput, type IngestionFailureCode,
-  type IngestionReport, type IngestionStageReport, type KnowledgeChunk,
-  type KnowledgeDocument, type KnowledgeSource, type KnowledgeStore, type KnowledgeSourceMeta,
+  KNOWLEDGE_SCOPES,
+  SOURCE_TIERS,
+  SOURCE_TYPES,
+  type CommitBatch,
+  type IngestInput,
+  type IngestionFailureCode,
+  type IngestionReport,
+  type IngestionStageReport,
+  type KnowledgeChunk,
+  type KnowledgeDocument,
+  type KnowledgeSource,
+  type KnowledgeStore,
+  type KnowledgeSourceMeta,
 } from './types'
 
 export const MAX_CONTENT_CHARS = 2_000_000
@@ -70,7 +79,11 @@ interface Ctx {
   work: Work
 }
 
-async function stage(ctx: Ctx, name: IngestionStageReport['stage'], fn: () => void | Promise<void>): Promise<void> {
+async function stage(
+  ctx: Ctx,
+  name: IngestionStageReport['stage'],
+  fn: () => void | Promise<void>
+): Promise<void> {
   const t0 = Date.now()
   try {
     await fn()
@@ -115,7 +128,11 @@ export interface IngestOptions {
   idFactory?: () => string
 }
 
-export async function ingest(input: IngestInput, store: KnowledgeStore, opts: IngestOptions = {}): Promise<IngestionReport> {
+export async function ingest(
+  input: IngestInput,
+  store: KnowledgeStore,
+  opts: IngestOptions = {}
+): Promise<IngestionReport> {
   const now = opts.now ?? (() => new Date())
   const idFactory = opts.idFactory ?? (() => `ks-${Math.random().toString(36).slice(2, 12)}`)
   const ctx: Ctx = {
@@ -153,25 +170,39 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
       if (!s.sourceKey?.trim()) fail('INVALID_QUERY', 'sourceKey is required')
       if (!s.title?.trim()) fail('INVALID_QUERY', 'title is required')
       if (!s.publisher?.trim()) fail('INVALID_QUERY', 'publisher is required')
-      if (!SOURCE_TYPES.includes(s.sourceType)) fail('INVALID_QUERY', `unknown sourceType: ${s.sourceType}`)
-      if (!SOURCE_TIERS.includes(s.authorityTier)) fail('INVALID_QUERY', `unknown authorityTier: ${s.authorityTier}`)
+      if (!SOURCE_TYPES.includes(s.sourceType))
+        fail('INVALID_QUERY', `unknown sourceType: ${s.sourceType}`)
+      if (!SOURCE_TIERS.includes(s.authorityTier))
+        fail('INVALID_QUERY', `unknown authorityTier: ${s.authorityTier}`)
       if (!s.language?.trim()) fail('INVALID_QUERY', 'language is required')
-      if (!KNOWLEDGE_SCOPES.includes(s.scope)) fail('INVALID_QUERY', 'scope must be GLOBAL or TENANT')
-      if (s.scope === 'TENANT' && !s.hospitalId) fail('INVALID_QUERY', 'TENANT scope requires hospitalId')
-      if (s.reference && !/^(https?:\/\/|doi:|urn:)/i.test(s.reference)) fail('INVALID_QUERY', 'reference must be a URL/DOI/URN')
-      if (s.publicationDate && Number.isNaN(Date.parse(s.publicationDate))) fail('INVALID_QUERY', 'publicationDate must be ISO')
-      if (s.lastUpdated && Number.isNaN(Date.parse(s.lastUpdated))) fail('INVALID_QUERY', 'lastUpdated must be ISO')
+      if (!KNOWLEDGE_SCOPES.includes(s.scope))
+        fail('INVALID_QUERY', 'scope must be GLOBAL or TENANT')
+      if (s.scope === 'TENANT' && !s.hospitalId)
+        fail('INVALID_QUERY', 'TENANT scope requires hospitalId')
+      if (s.reference && !/^(https?:\/\/|doi:|urn:)/i.test(s.reference))
+        fail('INVALID_QUERY', 'reference must be a URL/DOI/URN')
+      if (s.publicationDate && Number.isNaN(Date.parse(s.publicationDate)))
+        fail('INVALID_QUERY', 'publicationDate must be ISO')
+      if (s.lastUpdated && Number.isNaN(Date.parse(s.lastUpdated)))
+        fail('INVALID_QUERY', 'lastUpdated must be ISO')
       const content = input.content
       if (!content || !content.trim()) fail('INVALID_QUERY', 'content is empty')
-      if (content.length > MAX_CONTENT_CHARS) fail('OVERSIZED_CONTENT', `content exceeds ${MAX_CONTENT_CHARS} chars`)
-      if (/[^\p{L}\p{M}\p{N}\p{P}\p{S}\p{Z} \t\n\r]/u.test(content)) fail('INVALID_QUERY', 'content contains unsupported control characters')
-      if (detectPatientData(content)) fail('PATIENT_DATA_DETECTED', 'content contains patient-record markers — patient data is never indexed into the knowledge layer')
+      if (content.length > MAX_CONTENT_CHARS)
+        fail('OVERSIZED_CONTENT', `content exceeds ${MAX_CONTENT_CHARS} chars`)
+      if (/[^\p{L}\p{M}\p{N}\p{P}\p{S}\p{Z} \t\n\r]/u.test(content))
+        fail('INVALID_QUERY', 'content contains unsupported control characters')
+      if (detectPatientData(content))
+        fail(
+          'PATIENT_DATA_DETECTED',
+          'content contains patient-record markers — patient data is never indexed into the knowledge layer'
+        )
     })
 
     // ── normalize (NFKC, structure preserved; hashing collapses whitespace) ─
     await stage(ctx, 'normalize', () => {
       ctx.work.normalized = input.content.normalize('NFKC')
-      if (!normalizeForHash(ctx.work.normalized)) fail('INVALID_QUERY', 'content is empty after normalization')
+      if (!normalizeForHash(ctx.work.normalized))
+        fail('INVALID_QUERY', 'content is empty after normalization')
     })
 
     // ── metadata (unknown stays UNKNOWN — never inferred) ─────────────────
@@ -197,7 +228,8 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
         ctx.work.domain = meta.domain
       } else {
         const detected = detectDomains(`${meta.title} ${ctx.work.normalized.slice(0, 4000)}`)
-        if (!detected.length) fail('TAXONOMY_UNKNOWN', 'content does not match any controlled dental domain')
+        if (!detected.length)
+          fail('TAXONOMY_UNKNOWN', 'content does not match any controlled dental domain')
         ctx.work.domain = detected[0].domain
       }
     })
@@ -212,21 +244,27 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
     await stage(ctx, 'checksum', async () => {
       ctx.work.docHash = contentHash(ctx.work.normalized)
       const existing = await ctx.store.findPublishedByContentHash(ctx.work.docHash)
-      if (existing) fail('DUPLICATE_CONTENT', `identical content already published (document ${existing.id})`)
+      if (existing)
+        fail('DUPLICATE_CONTENT', `identical content already published (document ${existing.id})`)
     })
 
     // ── dedup (near-identical chunks, same domain) ────────────────────────
     await stage(ctx, 'dedup', async () => {
       const meta = ctx.work.meta!
-      const corpus = await ctx.store.listAllChunks(meta.scope === 'TENANT' ? (meta.hospitalId ?? null) : null)
+      const corpus = await ctx.store.listAllChunks(
+        meta.scope === 'TENANT' ? (meta.hospitalId ?? null) : null
+      )
       const sameDomain = corpus.filter((c) => c.domain === ctx.work.domain)
       const newTokens = ctx.work.units.map((u) => tokenSet(u.text))
       const kept = ctx.work.units.filter((u, i) => {
-        const dup = sameDomain.some((c) => jaccard(newTokens[i], tokenSet(c.text)) >= NEAR_DUP_JACCARD)
+        const dup = sameDomain.some(
+          (c) => jaccard(newTokens[i], tokenSet(c.text)) >= NEAR_DUP_JACCARD
+        )
         if (dup) ctx.work.droppedNearDup += 1
         return !dup
       })
-      if (!kept.length) fail('DUPLICATE_CONTENT', 'all chunks are near-identical to existing published content')
+      if (!kept.length)
+        fail('DUPLICATE_CONTENT', 'all chunks are near-identical to existing published content')
       ctx.work.units = kept
     })
 
@@ -235,7 +273,9 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
       const meta = ctx.work.meta!
       const domain = ctx.work.domain!
       const existingSource = await ctx.store.findSourceByKey(meta.sourceKey)
-      const existingDocs = existingSource ? await ctx.store.listDocumentsBySource(existingSource.id) : []
+      const existingDocs = existingSource
+        ? await ctx.store.listDocumentsBySource(existingSource.id)
+        : []
       const version = meta.version ?? String(existingDocs.length + 1)
       const sourceId = existingSource?.id ?? ctx.idFactory()
       const docId = ctx.idFactory()
@@ -279,9 +319,15 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
         ? existingDocs.filter((d) => d.status === 'PUBLISHED').map((d) => d.id)
         : []
 
-      const batch: CommitBatch = { source, document, chunks, supersedeDocumentIds: ctx.work.superseded }
+      const batch: CommitBatch = {
+        source,
+        document,
+        chunks,
+        supersedeDocumentIds: ctx.work.superseded,
+      }
       const receipt = await ctx.store.commit(batch)
-      if (receipt.chunkIds.length !== chunks.length) fail('INDEX_FAILURE', 'commit did not persist all chunks')
+      if (receipt.chunkIds.length !== chunks.length)
+        fail('INDEX_FAILURE', 'commit did not persist all chunks')
 
       ctx.work.document = document
       ctx.work.chunks = chunks
@@ -295,10 +341,13 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
     await stage(ctx, 'validate_publish', async () => {
       const doc = ctx.work.document!
       const docs = await ctx.store.listDocumentsBySource(doc.sourceId)
-      const mine = docs.find((d) => d.id === doc.id && d.status === 'PUBLISHED' && d.contentHash === doc.contentHash)
+      const mine = docs.find(
+        (d) => d.id === doc.id && d.status === 'PUBLISHED' && d.contentHash === doc.contentHash
+      )
       if (!mine) throw new Error('readback: published document not found')
       const back = await ctx.store.listChunks([mine.id])
-      if (back.length !== ctx.work.chunks.length) throw new Error(`readback: expected ${ctx.work.chunks.length} chunks, found ${back.length}`)
+      if (back.length !== ctx.work.chunks.length)
+        throw new Error(`readback: expected ${ctx.work.chunks.length} chunks, found ${back.length}`)
     })
 
     // ── publish (observability record) ────────────────────────────────────
@@ -333,7 +382,12 @@ export async function ingest(input: IngestInput, store: KnowledgeStore, opts: In
 // ---------------------------------------------------------------------------
 
 function tokenSet(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/\s+/).filter((t) => t.length > 2))
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 2)
+  )
 }
 
 function jaccard(a: Set<string>, b: Set<string>): number {

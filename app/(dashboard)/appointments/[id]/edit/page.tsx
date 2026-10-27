@@ -244,7 +244,9 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
       <div className="text-center py-12">
         <p className="text-muted-foreground">{t('ui.appointment_not_found')}</p>
         <Link href="/appointments">
-          <Button variant="outline" className="mt-4">{t('ui.back_to_appointments')}</Button>
+          <Button variant="outline" className="mt-4">
+            {t('ui.back_to_appointments')}
+          </Button>
         </Link>
       </div>
     )
@@ -271,7 +273,9 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
+                <User className="h-5 w-5" />
+                {t('ui.patient')}
+              </CardTitle>
               <CardDescription>
                 {t('Patient cannot be changed for an existing appointment')}
               </CardDescription>
@@ -291,12 +295,14 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />{t('ui.schedule')}</CardTitle>
+                <Calendar className="h-5 w-5" />
+                {t('ui.schedule')}
+              </CardTitle>
               <CardDescription>{t('Update the doctor, date, or time')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>{t("Doctor *")}</Label>
+                <Label>{t('Doctor *')}</Label>
                 <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('ui.select_a_doctor')} />
@@ -304,7 +310,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                   <SelectContent>
                     {doctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id}>
-                        {t("Dr.")} {doctor.firstName} {doctor.lastName}
+                        {t('Dr.')} {doctor.firstName} {doctor.lastName}
                         {doctor.specialization && ` (${doctor.specialization})`}
                       </SelectItem>
                     ))}
@@ -331,12 +337,12 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="15">{t("15 minutes")}</SelectItem>
-                      <SelectItem value="30">{t("30 minutes")}</SelectItem>
-                      <SelectItem value="45">{t("45 minutes")}</SelectItem>
-                      <SelectItem value="60">{t("1 hour")}</SelectItem>
-                      <SelectItem value="90">{t("1.5 hours")}</SelectItem>
-                      <SelectItem value="120">{t("2 hours")}</SelectItem>
+                      <SelectItem value="15">{t('15 minutes')}</SelectItem>
+                      <SelectItem value="30">{t('30 minutes')}</SelectItem>
+                      <SelectItem value="45">{t('45 minutes')}</SelectItem>
+                      <SelectItem value="60">{t('1 hour')}</SelectItem>
+                      <SelectItem value="90">{t('1.5 hours')}</SelectItem>
+                      <SelectItem value="120">{t('2 hours')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -344,12 +350,16 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
               {/* Time Slots */}
               <div className="space-y-2">
-                <Label>{t("Time Slot *")}</Label>
+                <Label>{t('Time Slot *')}</Label>
                 {loadingSlots ? (
                   <div className="flex items-center gap-2 p-4 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />{t('ui.loading_available_slots')}</div>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('ui.loading_available_slots')}
+                  </div>
                 ) : timeSlots.length === 0 ? (
-                  <p className="p-4 text-sm text-muted-foreground">{t('ui.no_available_slots_for_this_date')}</p>
+                  <p className="p-4 text-sm text-muted-foreground">
+                    {t('ui.no_available_slots_for_this_date')}
+                  </p>
                 ) : (
                   <div className="grid grid-cols-4 gap-2">
                     {timeSlots.map((slot) => (
@@ -382,7 +392,9 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />{t('ui.appointment_details')}</CardTitle>
+                <Clock className="h-5 w-5" />
+                {t('ui.appointment_details')}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
@@ -425,11 +437,11 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t('Not assigned')}</SelectItem>
-                      <SelectItem value="1">{t("Chair 1")}</SelectItem>
-                      <SelectItem value="2">{t("Chair 2")}</SelectItem>
-                      <SelectItem value="3">{t("Chair 3")}</SelectItem>
-                      <SelectItem value="4">{t("Chair 4")}</SelectItem>
-                      <SelectItem value="5">{t("Chair 5")}</SelectItem>
+                      <SelectItem value="1">{t('Chair 1')}</SelectItem>
+                      <SelectItem value="2">{t('Chair 2')}</SelectItem>
+                      <SelectItem value="3">{t('Chair 3')}</SelectItem>
+                      <SelectItem value="4">{t('Chair 4')}</SelectItem>
+                      <SelectItem value="5">{t('Chair 5')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -470,15 +482,21 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
         <div className="mt-6 flex justify-end gap-4">
           <Link href={`/appointments/${id}`}>
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.saving')}</>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('ui.saving')}
+              </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />{t('ui.save_changes')}</>
+                <Save className="mr-2 h-4 w-4" />
+                {t('ui.save_changes')}
+              </>
             )}
           </Button>
         </div>

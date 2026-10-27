@@ -179,7 +179,10 @@ test.describe('Agenda — clinic scheduling workspace', () => {
     await page.waitForURL(/\/appointments\/[^/]+\/edit/, { timeout: 10000 })
     await page.goBack()
 
-    await page.getByRole('button', { name: /actions for appointment/i }).first().click()
+    await page
+      .getByRole('button', { name: /actions for appointment/i })
+      .first()
+      .click()
     page.once('dialog', (d) => d.accept())
     await page.getByRole('button', { name: /^Cancel$/ }).click()
     // The block re-renders with the Cancelled status after refresh.

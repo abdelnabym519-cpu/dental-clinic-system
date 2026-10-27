@@ -1,7 +1,7 @@
 # OUTPUT_DECODING.md — why the generated text contains `[UNK_BYTE_0x...]`
 
 **Status of this document:** the mechanism below is established from the runtime
-source and from the bytes in the reported output. What is *not* established here
+source and from the bytes in the reported output. What is _not_ established here
 is the exact value of two metadata keys in this particular GGUF file — that is a
 two-second local read, and the commands are in §4. Nothing in this document has
 been executed against the model in this repository; §4 is local work.
@@ -60,11 +60,11 @@ output stream, a codepoint it was asked to decode but cannot represent.
 `token_to_piece()` chooses between two mutually exclusive detokenize paths, and
 the choice is made **entirely from GGUF metadata** (`llama_vocab::impl::load()`):
 
-| `tokenizer.ggml.model` | vocab type | `escape_whitespaces` | pieces decoded as |
-| --- | --- | --- | --- |
-| `llama` | SPM | (n/a) | SPM text, `▁` → space |
-| `gemma4` | BPE | **true** | SPM text, `▁` → space (`pre` is forced to `gemma4`) |
-| `gpt2`, `hybriddna`, `whitespace` | BPE | **false** | GPT-2 byte alphabet — *unless* `tokenizer.ggml.pre` is one of `gemma4`, `granite-embed-multi-311m`, `sarvam-moe`, which set it true |
+| `tokenizer.ggml.model`            | vocab type | `escape_whitespaces` | pieces decoded as                                                                                                                   |
+| --------------------------------- | ---------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `llama`                           | SPM        | (n/a)                | SPM text, `▁` → space                                                                                                               |
+| `gemma4`                          | BPE        | **true**             | SPM text, `▁` → space (`pre` is forced to `gemma4`)                                                                                 |
+| `gpt2`, `hybriddna`, `whitespace` | BPE        | **false**            | GPT-2 byte alphabet — _unless_ `tokenizer.ggml.pre` is one of `gemma4`, `granite-embed-multi-311m`, `sarvam-moe`, which set it true |
 
 And `token_to_piece()` then does:
 
@@ -82,9 +82,9 @@ So the failure needs two things at once: **a vocabulary whose piece strings
 contain `▁`**, and **metadata that selects the byte-level path**. The output
 proves both:
 
-* the codepoint in the marker is `e29681` = `E2 96 81` = **exactly `U+2581` ▁**,
+- the codepoint in the marker is `e29681` = `E2 96 81` = **exactly `U+2581` ▁**,
   the SentencePiece space marker;
-* the marker's own text carries a copy of the whole token piece (`▁is`), because
+- the marker's own text carries a copy of the whole token piece (`▁is`), because
   the `catch` appends `text` before the closing bracket — which is why the piece
   then appears a second time after the `]`: `[UNK_BYTE_0xe29681▁is]` + `is`.
 
@@ -109,14 +109,14 @@ newer build is not expected to change this behaviour.
 The `â–` in the reported text is three bytes (`E2 96 81`) displayed as two
 characters. That is a **Windows-1252 reading of correct UTF-8**:
 
-* `0xE2` → `â`
-* `0x96` → `–` (en dash in cp1252)
-* `0x81` → *undefined in cp1252*, which is why three bytes look like two
+- `0xE2` → `â`
+- `0x96` → `–` (en dash in cp1252)
+- `0x81` → _undefined in cp1252_, which is why three bytes look like two
 
 The runner writes its files as UTF-8 with an explicit encoding, and it always
 has; if the file is then read by a tool that assumes the ANSI code page
 (`Get-Content` without `-Encoding UTF8` in PowerShell 5.1, `type`, a console
-pasting into a cp1252 window), the *display* is mojibake while the file itself is
+pasting into a cp1252 window), the _display_ is mojibake while the file itself is
 correct. Both layers are fixed differently, so it matters:
 §2 needs the runtime/artifact fixed, §3 needs the file read as UTF-8.
 
@@ -144,7 +144,7 @@ follows it: `unk-byte-markers-possible` is the prediction described in §2.
 ### 4.2 The decode path itself (the confirmation)
 
 `llama-tokenize.exe` ships in the same `b11026` Windows build and decodes token
-pieces through the *same* function as generation — but needs no image and no
+pieces through the _same_ function as generation — but needs no image and no
 projector:
 
 ```powershell
@@ -152,23 +152,23 @@ projector:
     -p "This is a dental radiograph" --no-bos
 ```
 
-* **Pieces printed as `[UNK_BYTE_0xe29681...]`** → §2 confirmed: the byte-level
+- **Pieces printed as `[UNK_BYTE_0xe29681...]`** → §2 confirmed: the byte-level
   path is being used for a vocabulary whose pieces contain `▁`.
-* **Pieces printed with a leading space (`' This'`, `' a'`)** → the SentencePiece
+- **Pieces printed with a leading space (`' This'`, `' a'`)** → the SentencePiece
   path was taken and `▁` was unescaped. Since §2 established that this
-  vocabulary's pieces *do* contain `▁` (the marker's own hex says so), that
+  vocabulary's pieces _do_ contain `▁` (the marker's own hex says so), that
   combination would mean the metadata is fine and the markers came from
   somewhere else — stop and report it, because it would contradict the analysis
   here rather than confirm it.
 
 ### 4.3 The experiment that tests the diagnosis without touching the files
 
-`--override-kv` changes metadata *in memory only*: the GGUF on disk stays
+`--override-kv` changes metadata _in memory only_: the GGUF on disk stays
 byte-identical, its hash does not change, and nothing is re-converted. If the
 mismatch in §2 is the cause, forcing the pre-tokenizer that sets
 `escape_whitespaces = true` removes the markers.
 
-**As of this commit the runner does that by default**, so the plain run *is* the
+**As of this commit the runner does that by default**, so the plain run _is_ the
 override. The comparison is now between the default run and an explicitly disabled
 one — the same prompt, the same image, the same parameters, one metadata setting
 apart:
@@ -193,23 +193,23 @@ python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llam
 ```
 
 Passing it by hand through `--extra --override-kv tokenizer.ggml.pre=str:X` still
-works, but it can no longer *change* the value: llama.cpp keeps overrides in a map
+works, but it can no longer _change_ the value: llama.cpp keeps overrides in a map
 and the first occurrence of a key wins, and this lab's own flag is appended before
 `--extra`. The runner says so in `execution.notes` when it sees a passthrough
 override for that key. Use `--tokenizer-pre`.
 
 Interpretation:
 
-| Result | Meaning | Next step |
-| --- | --- | --- |
+| Result                                           | Meaning                                                                      | Next step                                                                                                                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No markers with the override, markers without it | Diagnosis confirmed. The decoder now reads the pieces as SentencePiece text. | Report a corrected conversion to the GGUF publisher; keep using the override locally, and never describe an overridden run as the artifact's own behaviour. |
-| Markers still present | The pre-tokenizer is not what drives it for this file. | Stop. Report the `llama-tokenize` output verbatim; do not add further overrides. |
-| The model fails to load with the override | The override changed more than the decode path. | Stop and report the load error. |
+| Markers still present                            | The pre-tokenizer is not what drives it for this file.                       | Stop. Report the `llama-tokenize` output verbatim; do not add further overrides.                                                                            |
+| The model fails to load with the override        | The override changed more than the decode path.                              | Stop and report the load error.                                                                                                                             |
 
 Two honest caveats: this is a **runtime workaround, not a repair of the
 artifact** — the correct fix belongs in the GGUF's metadata (or in the pieces),
 and producing that conversion is explicitly out of scope for this lab. And a
-pre-tokenizer also affects how the *prompt* is split, so an overridden run is a
+pre-tokenizer also affects how the _prompt_ is split, so an overridden run is a
 diagnostic comparison, not a drop-in replacement for a clean artifact.
 
 ### 4.4 Reading the results correctly
@@ -228,25 +228,25 @@ be compared.
 
 Changed (Phase 2 of this task, all inside `ai-validation/dentalgemma/`):
 
-* stdout/stderr are captured as **bytes** and decoded explicitly, with every
+- stdout/stderr are captured as **bytes** and decoded explicitly, with every
   invalid sequence counted (offsets and bytes) instead of silently replaced;
-* the runtime's bytes are preserved verbatim in `<stem>_stdout.raw` /
+- the runtime's bytes are preserved verbatim in `<stem>_stdout.raw` /
   `<stem>_stderr.raw`, so a decoding or display defect can never destroy the
   evidence again;
-* `[UNK_BYTE_...]` markers are **counted and named** in the report
+- `[UNK_BYTE_...]` markers are **counted and named** in the report
   (`output_integrity`) and printed on the console, and the report states that
   the readable text is not necessarily the model's raw output;
-* the runner's own console output is UTF-8 with `errors="replace"`, so a Windows
+- the runner's own console output is UTF-8 with `errors="replace"`, so a Windows
   code page can no longer crash a finished run before the report is written;
-* `verify_artifacts.py` / `gguf.py` now report the tokenizer metadata and the
+- `verify_artifacts.py` / `gguf.py` now report the tokenizer metadata and the
   decode path it selects, with the runtime rule and its source cited;
-* the workaround is a **first-class, recorded setting** instead of a passthrough:
+- the workaround is a **first-class, recorded setting** instead of a passthrough:
   `--tokenizer-pre <value>` (default `gemma4`) and `--no-tokenizer-pre-override`,
   with the applied value, its source and the file's own metadata recorded in
   `execution` — so a run can never be quoted without saying which decoding it
   used. The runner also records the same report's `validation_scope`, because a
   decoded answer is still not a diagnosis;
-* the CPU is **pinned by default** (`-ngl 0`, `-dev none`, `--no-mmproj-offload`),
+- the CPU is **pinned by default** (`-ngl 0`, `-dev none`, `--no-mmproj-offload`),
   with `execution.device_evidence` recording what the runtime's own log said about
   the device it actually used. A run that had to be forced onto the CPU must not be
   reported as though the artifact were simply "operational" (see
@@ -254,10 +254,10 @@ Changed (Phase 2 of this task, all inside `ai-validation/dentalgemma/`):
 
 Deliberately **not** done:
 
-* the markers are **not** stripped or rewritten — that would hide a real
+- the markers are **not** stripped or rewritten — that would hide a real
   decoding defect and destroy the only evidence of it (a test enforces this);
-* no GGUF, projector or hash was modified, no re-download, no re-conversion, no
+- no GGUF, projector or hash was modified, no re-download, no re-conversion, no
   fine-tuning, no prompt change, no inference-parameter change;
-* nothing in the ERP or the application was touched;
-* no claim is made that a real local inference now decodes cleanly. That is §4's
+- nothing in the ERP or the application was touched;
+- no claim is made that a real local inference now decodes cleanly. That is §4's
   job, on the machine that has the weights.

@@ -51,15 +51,13 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
   }, [textValue, voice])
 
   const statusLabel = statusLabelFor(voice.interactionState, t)
-  const detail = voice.clarification
-    ?? (voice.turns.length ? voice.turns[voice.turns.length - 1]!.content : null)
+  const detail =
+    voice.clarification ??
+    (voice.turns.length ? voice.turns[voice.turns.length - 1]!.content : null)
 
   return (
     <div
-      className={cn(
-        'mx-auto flex w-full max-w-5xl flex-col gap-4 p-4',
-        kiosk && 'max-w-7xl p-8',
-      )}
+      className={cn('mx-auto flex w-full max-w-5xl flex-col gap-4 p-4', kiosk && 'max-w-7xl p-8')}
       data-testid="robot-panel"
     >
       <header className="flex items-center justify-between gap-3">
@@ -132,11 +130,16 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
           </div>
           {!voice.supported && (
             <p className="text-center text-xs text-muted-foreground" role="note">
-              {t('Voice capture is not available in this browser — you can type below; DenToRa answers through the same agent.')}
+              {t(
+                'Voice capture is not available in this browser — you can type below; DenToRa answers through the same agent.'
+              )}
             </p>
           )}
           {voice.error && (
-            <p className="text-center text-xs font-medium text-red-600 dark:text-red-400" role="alert">
+            <p
+              className="text-center text-xs font-medium text-red-600 dark:text-red-400"
+              role="alert"
+            >
               {t('Voice error')}: {voice.error}
             </p>
           )}
@@ -159,23 +162,31 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
               </p>
             )}
             {voice.turns.map((turn, i) => (
-              <div key={`${turn.at}-${i}`} className={cn('flex', turn.role === 'user' ? 'justify-end' : 'justify-start')}>
+              <div
+                key={`${turn.at}-${i}`}
+                className={cn('flex', turn.role === 'user' ? 'justify-end' : 'justify-start')}
+              >
                 <div
                   className={cn(
                     'max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
                     turn.role === 'user'
                       ? 'bg-sky-600 text-white'
-                      : 'border border-border bg-background text-foreground',
+                      : 'border border-border bg-background text-foreground'
                   )}
                 >
-                  <span className="sr-only">{turn.role === 'user' ? t('You') : t('DenToRa')}: </span>
+                  <span className="sr-only">
+                    {turn.role === 'user' ? t('You') : t('DenToRa')}:{' '}
+                  </span>
                   <p className="whitespace-pre-wrap">{turn.content}</p>
                 </div>
               </div>
             ))}
             {voice.interim && (
               <div className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl bg-sky-600/50 px-3.5 py-2 text-sm text-white" aria-hidden="true">
+                <div
+                  className="max-w-[85%] rounded-2xl bg-sky-600/50 px-3.5 py-2 text-sm text-white"
+                  aria-hidden="true"
+                >
                   {voice.interim}…
                 </div>
               </div>
@@ -194,8 +205,8 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
                 {t('Approval required')}
               </p>
               <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                {t('Action')}: <code className="font-mono">{voice.approval.action}</code> · {t('Risk')}:{' '}
-                {voice.approval.riskLevel}
+                {t('Action')}: <code className="font-mono">{voice.approval.action}</code> ·{' '}
+                {t('Risk')}: {voice.approval.riskLevel}
               </p>
               {Object.keys(voice.approval.params).length > 0 && (
                 <ul className="mt-1 text-xs text-amber-800 dark:text-amber-300">
@@ -230,7 +241,9 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
                 </button>
               </div>
               <p className="mt-2 text-[11px] leading-snug text-amber-700 dark:text-amber-400">
-                {t('Final approval follows the role-separated approval policy — voice confirmation only flags your request.')}
+                {t(
+                  'Final approval follows the role-separated approval policy — voice confirmation only flags your request.'
+                )}
               </p>
             </div>
           )}
@@ -269,19 +282,32 @@ export function RobotPanel({ kiosk = false }: { kiosk?: boolean }) {
 
 function statusLabelFor(s: string, t: (k: string) => string): string {
   switch (s) {
-    case 'IDLE': return t('DenToRa is idle')
-    case 'LISTENING': return t('DenToRa is listening')
-    case 'TRANSCRIBING': return t('Transcribing your speech')
-    case 'UNDERSTANDING': return t('Understanding your request')
-    case 'PROCESSING': return t('DenToRa is thinking')
-    case 'WAITING_APPROVAL': return t('Waiting for your approval')
-    case 'SPEAKING': return t('DenToRa is speaking')
-    case 'INTERRUPTED': return t('Interrupted — I am listening')
-    case 'WARNING': return t('Warning — please review')
-    case 'ERROR': return t('Something went wrong')
-    case 'COMPLETED': return t('Done')
-    case 'CANCELLED': return t('Session cancelled')
-    default: return t('DenToRa is idle')
+    case 'IDLE':
+      return t('DenToRa is idle')
+    case 'LISTENING':
+      return t('DenToRa is listening')
+    case 'TRANSCRIBING':
+      return t('Transcribing your speech')
+    case 'UNDERSTANDING':
+      return t('Understanding your request')
+    case 'PROCESSING':
+      return t('DenToRa is thinking')
+    case 'WAITING_APPROVAL':
+      return t('Waiting for your approval')
+    case 'SPEAKING':
+      return t('DenToRa is speaking')
+    case 'INTERRUPTED':
+      return t('Interrupted — I am listening')
+    case 'WARNING':
+      return t('Warning — please review')
+    case 'ERROR':
+      return t('Something went wrong')
+    case 'COMPLETED':
+      return t('Done')
+    case 'CANCELLED':
+      return t('Session cancelled')
+    default:
+      return t('DenToRa is idle')
   }
 }
 

@@ -102,7 +102,9 @@ export default function FormsSettingsPage() {
   const handleDelete = async (id: string, name: string) => {
     const ok = await confirm({
       title: 'Delete Template',
-      description: t('Delete "{name}"? Templates with submissions will be deactivated instead.', { name }),
+      description: t('Delete "{name}"? Templates with submissions will be deactivated instead.', {
+        name,
+      }),
       confirmLabel: 'Delete',
     })
     if (!ok) return
@@ -155,7 +157,9 @@ export default function FormsSettingsPage() {
               <div className="flex items-center gap-3 justify-center">
                 <Button asChild>
                   <Link href="/settings/forms/new">
-                    <Plus className="h-4 w-4 mr-2" />{t('ui.create_template')}</Link>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('ui.create_template')}
+                  </Link>
                 </Button>
                 <Button variant="outline" onClick={handleSeedDefaults}>
                   {t('Load Default Templates')}
@@ -225,7 +229,9 @@ export default function FormsSettingsPage() {
                             className="text-destructive"
                             onClick={() => handleDelete(tf.id, tf.name)}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />{t('ui.delete')}</DropdownMenuItem>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {t('ui.delete')}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

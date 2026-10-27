@@ -223,7 +223,9 @@ export default function InstrumentsPage() {
           <p className="text-muted-foreground">{t('Manage dental instruments and equipment')}</p>
         </div>
         <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
+          <Plus className="h-4 w-4 mr-2" />
+          {t('ui.add_instrument')}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -280,7 +282,9 @@ export default function InstrumentsPage() {
               {t('Add your first instrument to start tracking')}
             </p>
             <Button onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-2" />{t('ui.add_instrument')}</Button>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('ui.add_instrument')}
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -291,7 +295,7 @@ export default function InstrumentsPage() {
                 <TableRow>
                   <TableHead>{t('ui.name')}</TableHead>
                   <TableHead>{t('ui.category')}</TableHead>
-                  <TableHead>{t("Serial #")}</TableHead>
+                  <TableHead>{t('Serial #')}</TableHead>
                   <TableHead>{t('ui.status')}</TableHead>
                   <TableHead>{t('ui.location')}</TableHead>
                   <TableHead className="text-right">{t('Cycles')}</TableHead>
@@ -324,7 +328,7 @@ export default function InstrumentsPage() {
                     <TableCell className="text-muted-foreground text-sm">
                       {inst.lastSterilizedAt
                         ? new Date(inst.lastSterilizedAt).toLocaleDateString(locale)
-                        : t("Never")}
+                        : t('Never')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -358,21 +362,21 @@ export default function InstrumentsPage() {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
-            <DialogTitle>{editingId ? t("Edit Instrument") : 'Add Instrument'}</DialogTitle>
+            <DialogTitle>{editingId ? t('Edit Instrument') : 'Add Instrument'}</DialogTitle>
             <DialogDescription>{t('Enter instrument details')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t("Name *")}</Label>
+                <Label>{t('Name *')}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder={t("e.g., High-Speed Handpiece")}
+                  placeholder={t('e.g., High-Speed Handpiece')}
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t("Category *")}</Label>
+                <Label>{t('Category *')}</Label>
                 <Select
                   value={form.category}
                   onValueChange={(v) => setForm({ ...form, category: v })}
@@ -412,7 +416,7 @@ export default function InstrumentsPage() {
                 <Input
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  placeholder={t("e.g., Chair 1")}
+                  placeholder={t('e.g., Chair 1')}
                 />
               </div>
               <div className="space-y-2">
@@ -451,7 +455,9 @@ export default function InstrumentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>{t('ui.cancel')}</Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              {t('ui.cancel')}
+            </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {editingId ? 'Update' : 'Create'}

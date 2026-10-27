@@ -87,9 +87,13 @@ export function createAttachmentService(client: any): AttachmentService {
         where: { id: input.linkedStudyId, hospitalId },
         select: { id: true, patientId: true, modality: true },
       })
-      if (!study) throw new MultimodalError('FORGED_ATTACHMENT_ID', 'linked study not found in this tenant')
+      if (!study)
+        throw new MultimodalError('FORGED_ATTACHMENT_ID', 'linked study not found in this tenant')
       if (input.patientId && input.patientId !== study.patientId) {
-        throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'linked study belongs to a different patient')
+        throw new MultimodalError(
+          'PATIENT_SCOPE_MISMATCH',
+          'linked study belongs to a different patient'
+        )
       }
       linkedStudy = study
       patientId = study.patientId // the study's patient is the trusted attribution
@@ -101,14 +105,18 @@ export function createAttachmentService(client: any): AttachmentService {
           select: { id: true },
         })
         if (!own || own.id !== input.patientId) {
-          throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'patients may only attach to their own record')
+          throw new MultimodalError(
+            'PATIENT_SCOPE_MISMATCH',
+            'patients may only attach to their own record'
+          )
         }
       } else {
         const p = await client.patient.findFirst({
           where: { id: input.patientId, hospitalId },
           select: { id: true },
         })
-        if (!p) throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'patient not found in this tenant')
+        if (!p)
+          throw new MultimodalError('PATIENT_SCOPE_MISMATCH', 'patient not found in this tenant')
       }
       patientId = input.patientId
     }
@@ -197,8 +205,15 @@ export function createAttachmentService(client: any): AttachmentService {
         provenance: provenance as unknown as object,
       }
       if (processed) {
-        if (processed.width !== undefined) { data.width = processed.width; data.height = processed.height; data.pixelCount = processed.pixelCount }
-        if (processed.pageCount !== undefined) { data.pageCount = processed.pageCount; data.extractedTextKey = processed.extractedTextKey ?? null }
+        if (processed.width !== undefined) {
+          data.width = processed.width
+          data.height = processed.height
+          data.pixelCount = processed.pixelCount
+        }
+        if (processed.pageCount !== undefined) {
+          data.pageCount = processed.pageCount
+          data.extractedTextKey = processed.extractedTextKey ?? null
+        }
       }
       row = await client.multimodalAttachment.update({
         where: { id: row.id },
@@ -210,12 +225,24 @@ export function createAttachmentService(client: any): AttachmentService {
     } catch (err) {
       const code = err instanceof MultimodalError ? err.code : 'INVALID_FILE'
       // Best-effort cleanup of any partially stored artifact.
-      try { await storage.delete(storageKey) } catch { /* already gone */ }
+      try {
+        await storage.delete(storageKey)
+      } catch {
+        /* already gone */
+      }
       if (row) {
-        await client.multimodalAttachment.update({
-          where: { id: row.id },
-          data: { status: 'FAILED', failureCode: code, provenance: provenance as unknown as object },
-        }).catch(() => { /* row already gone */ })
+        await client.multimodalAttachment
+          .update({
+            where: { id: row.id },
+            data: {
+              status: 'FAILED',
+              failureCode: code,
+              provenance: provenance as unknown as object,
+            },
+          })
+          .catch(() => {
+            /* row already gone */
+          })
       }
       if (err instanceof MultimodalError) throw err
       throw new MultimodalError('INVALID_FILE', 'attachment processing failed')
@@ -227,7 +254,10 @@ export function createAttachmentService(client: any): AttachmentService {
     return row ? rowToRecord(row) : null
   }
 
-  async function listForConversation(conversationId: string, hospitalId: string): Promise<AttachmentRecord[]> {
+  async function listForConversation(
+    conversationId: string,
+    hospitalId: string
+  ): Promise<AttachmentRecord[]> {
     const rows = await client.multimodalAttachment.findMany({
       where: { conversationId, hospitalId },
       orderBy: { createdAt: 'asc' },
@@ -267,8 +297,14 @@ async function processByClass(
   fileClass: MultimodalFileClass,
   baseKey: string,
   fileName: string,
-  provenance: AttachmentProvenance,
-): Promise<{ width?: number; height?: number; pixelCount?: number; pageCount?: number; extractedTextKey?: string | null } | null> {
+  provenance: AttachmentProvenance
+): Promise<{
+  width?: number
+  height?: number
+  pixelCount?: number
+  pageCount?: number
+  extractedTextKey?: string | null
+} | null> {
   switch (fileClass) {
     case 'IMAGE_2D': {
       const image = await preprocessImage(buf)
@@ -292,7 +328,11 @@ async function processByClass(
     case 'DOCUMENT_TEXT': {
       const doc = await extractDocument(buf, fileClass)
       const persisted = await persistExtractedText(doc, (name) => `${baseKey}/${name}`)
-      provenance.derivatives.push({ key: persisted.key, kind: 'extracted_text', sha256: persisted.sha256 })
+      provenance.derivatives.push({
+        key: persisted.key,
+        kind: 'extracted_text',
+        sha256: persisted.sha256,
+      })
       return { pageCount: doc.pageCount, extractedTextKey: persisted.key }
     }
     case 'VOLUME_DICOM':

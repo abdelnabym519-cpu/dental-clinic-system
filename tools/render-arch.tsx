@@ -23,18 +23,38 @@ import {
 import { getToothSpecificType } from '../components/dental-chart/geometry/tooth-paths'
 
 const NAMES: Record<number, string> = {
-  11: 'Upper R Central Incisor', 12: 'Upper R Lateral Incisor', 13: 'Upper R Canine',
-  14: 'Upper R First Premolar', 15: 'Upper R Second Premolar', 16: 'Upper R First Molar',
-  17: 'Upper R Second Molar', 18: 'Upper R Third Molar',
-  21: 'Upper L Central Incisor', 22: 'Upper L Lateral Incisor', 23: 'Upper L Canine',
-  24: 'Upper L First Premolar', 25: 'Upper L Second Premolar', 26: 'Upper L First Molar',
-  27: 'Upper L Second Molar', 28: 'Upper L Third Molar',
-  31: 'Lower L Central Incisor', 32: 'Lower L Lateral Incisor', 33: 'Lower L Canine',
-  34: 'Lower L First Premolar', 35: 'Lower L Second Premolar', 36: 'Lower L First Molar',
-  37: 'Lower L Second Molar', 38: 'Lower L Third Molar',
-  41: 'Lower R Central Incisor', 42: 'Lower R Lateral Incisor', 43: 'Lower R Canine',
-  44: 'Lower R First Premolar', 45: 'Lower R Second Premolar', 46: 'Lower R First Molar',
-  47: 'Lower R Second Molar', 48: 'Lower R Third Molar',
+  11: 'Upper R Central Incisor',
+  12: 'Upper R Lateral Incisor',
+  13: 'Upper R Canine',
+  14: 'Upper R First Premolar',
+  15: 'Upper R Second Premolar',
+  16: 'Upper R First Molar',
+  17: 'Upper R Second Molar',
+  18: 'Upper R Third Molar',
+  21: 'Upper L Central Incisor',
+  22: 'Upper L Lateral Incisor',
+  23: 'Upper L Canine',
+  24: 'Upper L First Premolar',
+  25: 'Upper L Second Premolar',
+  26: 'Upper L First Molar',
+  27: 'Upper L Second Molar',
+  28: 'Upper L Third Molar',
+  31: 'Lower L Central Incisor',
+  32: 'Lower L Lateral Incisor',
+  33: 'Lower L Canine',
+  34: 'Lower L First Premolar',
+  35: 'Lower L Second Premolar',
+  36: 'Lower L First Molar',
+  37: 'Lower L Second Molar',
+  38: 'Lower L Third Molar',
+  41: 'Lower R Central Incisor',
+  42: 'Lower R Lateral Incisor',
+  43: 'Lower R Canine',
+  44: 'Lower R First Premolar',
+  45: 'Lower R Second Premolar',
+  46: 'Lower R First Molar',
+  47: 'Lower R Second Molar',
+  48: 'Lower R Third Molar',
 }
 
 function groupOf(n: number): ToothAnatomyGroup {
@@ -94,9 +114,7 @@ function makeTooth(
 
 /** SSR-render one tooth's SVG markup, repositioned as a nested <svg>. */
 function placeTooth(tooth: ToothViewModel, x: number, y: number, w: number, h: number): string {
-  const markup = renderToStaticMarkup(
-    React.createElement(ToothSVG, { tooth, interactive: false })
-  )
+  const markup = renderToStaticMarkup(React.createElement(ToothSVG, { tooth, interactive: false }))
   const repositioned = markup.replace(
     /^<svg/,
     `<svg x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"`
@@ -112,7 +130,14 @@ function cellWidth(tooth: ToothViewModel): number {
   return 59
 }
 
-function label(x: number, y: number, text: string, size = 13, anchor: 'start' | 'middle' = 'middle', color = '#475569') {
+function label(
+  x: number,
+  y: number,
+  text: string,
+  size = 13,
+  anchor: 'start' | 'middle' = 'middle',
+  color = '#475569'
+) {
   return `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="${size}" fill="${color}" text-anchor="${anchor}" font-weight="bold">${text}</text>`
 }
 
@@ -171,14 +196,26 @@ function archSheet(): string {
     label(525, upperTop + cellH + 30, 'OCCLUSAL PLANE', 11, 'middle', '#94A3B8') +
     row(lowerOrder, lowerTop, false)
 
-  return sheet('DenToRa Odontogram — Healthy Permanent Dentition (FDI)', body, 1080, lowerTop + cellH + 70)
+  return sheet(
+    'DenToRa Odontogram — Healthy Permanent Dentition (FDI)',
+    body,
+    1080,
+    lowerTop + cellH + 70
+  )
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SHEET 2 — clinical condition variants
 // ══════════════════════════════════════════════════════════════════════════════
 function conditionsSheet(): string {
-  const variants: Array<[number, DentalCondition, Partial<Record<'mesial' | 'distal' | 'occlusal' | 'buccal' | 'lingual', boolean>>, string]> = [
+  const variants: Array<
+    [
+      number,
+      DentalCondition,
+      Partial<Record<'mesial' | 'distal' | 'occlusal' | 'buccal' | 'lingual', boolean>>,
+      string,
+    ]
+  > = [
     [11, 'HEALTHY', {}, 'Healthy'],
     [12, 'CARIES', { occlusal: true }, 'Caries O'],
     [13, 'CROWN', {}, 'Crown'],
@@ -227,7 +264,14 @@ function closeUpSheet(): string {
     const th = 100 * scale
     out += placeTooth(makeTooth(num), x + (cellW - tw) / 2, y, tw, th)
     out += label(x + cellW / 2, y - 12, String(num), 15)
-    out += label(x + cellW / 2, y + th + 26, NAMES[num].replace('Upper R ', ''), 9.5, 'middle', '#64748B')
+    out += label(
+      x + cellW / 2,
+      y + th + 26,
+      NAMES[num].replace('Upper R ', ''),
+      9.5,
+      'middle',
+      '#64748B'
+    )
   })
   return sheet('Maxillary Class Close-Up (11 → 18)', out, 900, 120 + 100 * scale + 70)
 }
@@ -247,7 +291,14 @@ function closeUpMandibularSheet(): string {
     const th = 100 * scale
     out += placeTooth(makeTooth(num), x + (cellW - tw) / 2, y, tw, th)
     out += label(x + cellW / 2, y + th + 20, String(num), 15)
-    out += label(x + cellW / 2, y - 12, NAMES[num].replace('Lower R ', ''), 9.5, 'middle', '#64748B')
+    out += label(
+      x + cellW / 2,
+      y - 12,
+      NAMES[num].replace('Lower R ', ''),
+      9.5,
+      'middle',
+      '#64748B'
+    )
   })
   return sheet('Mandibular Class Close-Up (41 → 48)', out, 900, 120 + 100 * scale + 70)
 }
@@ -264,7 +315,12 @@ function zoomSheet(nums: number[], scale = 3): string {
     out += placeTooth(makeTooth(num), x, y, cellW, 100 * scale)
     out += label(x + cellW / 2, y - 14, String(num), 20)
   })
-  return sheet('High-Zoom ' + nums.join(' + '), out, nums.length * (cellW + 40) + 40, 100 * scale + 100)
+  return sheet(
+    'High-Zoom ' + nums.join(' + '),
+    out,
+    nums.length * (cellW + 40) + 40,
+    100 * scale + 100
+  )
 }
 
 const outDir = path.resolve(process.cwd(), 'tools/preview')

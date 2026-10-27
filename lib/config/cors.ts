@@ -30,14 +30,18 @@ function parseAllowlist(env: Record<string, string | undefined>): string[] {
     .filter(Boolean)
 }
 
-export function corsHeadersFor(origin: string | null, env: Record<string, string | undefined> = process.env): CorsDecision {
+export function corsHeadersFor(
+  origin: string | null,
+  env: Record<string, string | undefined> = process.env
+): CorsDecision {
   const base: CorsDecision = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-CSRF-Token',
   }
   const allowlist = parseAllowlist(env)
   if (allowlist.length > 0) {
-    const match = origin && allowlist.includes(origin.replace(/\/$/, '')) ? origin.replace(/\/$/, '') : null
+    const match =
+      origin && allowlist.includes(origin.replace(/\/$/, '')) ? origin.replace(/\/$/, '') : null
     return {
       ...base,
       'Access-Control-Allow-Origin': match ?? '',

@@ -89,9 +89,9 @@ Get-ChildItem llama.cpp\*.exe | Select-Object Name
 `llama-server.exe`). If `llama-mtmd-cli.exe` is absent, the build is too old —
 take the newest release.
 
-*Other builds in the same release, if you want them later: `-sycl-x64` and
+_Other builds in the same release, if you want them later: `-sycl-x64` and
 `-openvino-*-x64` also target Intel hardware; `-cuda-*` and `-rocm-*` are for
-NVIDIA/AMD and are irrelevant here.*
+NVIDIA/AMD and are irrelevant here._
 
 ### Option B — build it yourself
 
@@ -142,7 +142,7 @@ python scripts\download_artifacts.py --role main # just the 2.68 GiB language mo
 
 If you would rather download by hand, `--urls` prints exactly which URLs and
 digests to expect. Avoid PowerShell's `Invoke-WebRequest` for files this size
-(the `curl` alias in Windows PowerShell 5.1 is *not* curl); use `curl.exe -L -C -`,
+(the `curl` alias in Windows PowerShell 5.1 is _not_ curl); use `curl.exe -L -C -`,
 or `hf download naazimsnh02/dentalgemma-1.5-4b-it-GGUF --revision 81e65fb2a242aebadaeb78900d79aa5af1fd5ce7`.
 
 ---
@@ -186,13 +186,13 @@ Get-FileHash .\model\dentalgemma-mmproj-f16.gguf -Algorithm SHA256 | Format-List
 
 **Expected — these exact digests:**
 
-| File | SHA-256 |
-| --- | --- |
-| `dentalgemma-4b-Q4_K_M.gguf` | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` |
+| File                          | SHA-256                                                            |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `dentalgemma-4b-Q4_K_M.gguf`  | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` |
 | `dentalgemma-mmproj-f16.gguf` | `3d03262e058316c318c6dd4868c11fdccef68ec4af6d2ebea54bd1865b8c8113` |
 
-*These are the publisher's recorded values (Hugging Face LFS `oid`), not hashes
-invented here.* **If either digest differs, STOP AND REPORT** with the full output
+_These are the publisher's recorded values (Hugging Face LFS `oid`), not hashes
+invented here._ **If either digest differs, STOP AND REPORT** with the full output
 of `verify_artifacts.py` and the `Get-FileHash` results. Do not run a model whose
 files do not match.
 
@@ -250,10 +250,10 @@ disk), and well under a minute for the generation itself.
 
 ### Why CPU-only is the default (`-ngl 0`, `-dev none`, `--no-mmproj-offload`)
 
-llama.cpp does **not** default to the CPU. Its `-ngl` default is *auto* (as many
+llama.cpp does **not** default to the CPU. Its `-ngl` default is _auto_ (as many
 layers as fit on the GPU), and the projector goes to the first GPU backend that
 answers. On this machine that is the Intel Iris Xe through the Vulkan backend, and
-a run that only *looked* CPU-only died inside the vision encode:
+a run that only _looked_ CPU-only died inside the vision encode:
 
 ```
 ggml_vulkan: device lost on Vulkan0
@@ -268,11 +268,11 @@ executed them.
 
 So the runner pins the CPU explicitly:
 
-| flag | what it stops |
-| --- | --- |
-| `-ngl 0` | any layer being offloaded to a GPU (`-ngl` defaults to *auto*) |
-| `-dev none` | llama.cpp selecting a GPU device at all (`-dev none` is its own "no GPU device") |
-| `--no-mmproj-offload` | the SigLIP vision encoder being placed on the iGPU |
+| flag                  | what it stops                                                                    |
+| --------------------- | -------------------------------------------------------------------------------- |
+| `-ngl 0`              | any layer being offloaded to a GPU (`-ngl` defaults to _auto_)                   |
+| `-dev none`           | llama.cpp selecting a GPU device at all (`-dev none` is its own "no GPU device") |
+| `--no-mmproj-offload` | the SigLIP vision encoder being placed on the iGPU                               |
 
 These are the runtime's own flags, not a new mechanism: `-ngl`/`-dev` live in
 llama.cpp's `common/arg.cpp`, `--no-mmproj-offload` sets `mmproj_use_gpu = false`
@@ -284,13 +284,13 @@ in `tools/mtmd/mtmd-cli.cpp`. The runner adds nothing to the runtime.
 Get-Content .\output\run_report.json | Select-String "cpu_only" -Context 2,2
 ```
 
-* `execution.cpu_only` — `true` when the run was pinned to the CPU.
-* `execution.gpu_requested_by` — the exact flags that asked for a GPU, if any.
-* `execution.device_evidence` — what the runtime's own log said: the projector's
+- `execution.cpu_only` — `true` when the run was pinned to the CPU.
+- `execution.gpu_requested_by` — the exact flags that asked for a GPU, if any.
+- `execution.device_evidence` — what the runtime's own log said: the projector's
   backend (`CLIP using CPU backend`), the layer count (`offloaded 0/35 layers to
-  GPU`), and a verdict of `cpu-only-confirmed-by-log`, `gpu-work-observed` or
+GPU`), and a verdict of `cpu-only-confirmed-by-log`, `gpu-work-observed` or
   `not-stated-in-log`. A GPU observed while CPU-only was requested is a warning in
-  the report, not a silent success. (Vulkan lines in the log are *not* evidence of
+  the report, not a silent success. (Vulkan lines in the log are _not_ evidence of
   use: the backend DLL is loaded and its devices enumerated at startup either way.)
 
 `--cpu-only` is on by default; `--no-cpu-only` is the switch that turns the whole
@@ -341,7 +341,7 @@ That is the value confirmed on this machine. It is a **runtime workaround, not a
 repair** — the real fix belongs in the GGUF's metadata, which this lab must not
 touch — and the file on disk is only ever read: its SHA-256 is recorded before the
 run, and no code path here writes to it. The full reasoning is in
-`OUTPUT_DECODING.md`; the runner also *reads* the file's `tokenizer.ggml.model` /
+`OUTPUT_DECODING.md`; the runner also _reads_ the file's `tokenizer.ggml.model` /
 `tokenizer.ggml.pre` and prints them next to the override, so you can see whether
 the file agrees with the workaround (`execution.override_matches_metadata`).
 
@@ -392,7 +392,7 @@ python scripts\run_dentalgemma.py --image input\panoramic.png --llama-dir .\llam
   status : OPERATIONAL
 ```
 
-The last two lines are not decoration: success here means *text was produced*, not
+The last two lines are not decoration: success here means _text was produced_, not
 that the text is correct. `validation_scope.clinical_validation` is `false` in
 every report, and no run of this lab may be read as a diagnosis.
 
@@ -424,18 +424,18 @@ free space, GPU detection and the llama.cpp version; then the run report, whose
 These are the ten values that describe the run, and they are all in
 `output\run_report.json` (the same JSON is copied to `logs\`):
 
-| field in `run_report.json` | what it is |
-| --- | --- |
-| `exit_code` | the runtime's exit code (`0` is required for success) |
-| `inference_seconds` | wall-clock seconds for the inference |
-| `peak_ram_gb` / `peak_rss_bytes` | sampled peak memory (`memory_probe` names the probe) |
-| `cpu_seconds` | CPU time the child used |
-| `command` | the exact argv, verbatim |
-| `main_sha256`, `mmproj_sha256` | the two artifact digests as hashed on this machine |
-| `output_path` | the file the text was written to |
-| `execution.workarounds` | the CPU-only pins and the tokenizer override this run used |
-| `execution.device_evidence` | what the runtime's log said about the device |
-| `status` | `OPERATIONAL`, `FAILED`, `BLOCKED` or `UNKNOWN` |
+| field in `run_report.json`       | what it is                                                 |
+| -------------------------------- | ---------------------------------------------------------- |
+| `exit_code`                      | the runtime's exit code (`0` is required for success)      |
+| `inference_seconds`              | wall-clock seconds for the inference                       |
+| `peak_ram_gb` / `peak_rss_bytes` | sampled peak memory (`memory_probe` names the probe)       |
+| `cpu_seconds`                    | CPU time the child used                                    |
+| `command`                        | the exact argv, verbatim                                   |
+| `main_sha256`, `mmproj_sha256`   | the two artifact digests as hashed on this machine         |
+| `output_path`                    | the file the text was written to                           |
+| `execution.workarounds`          | the CPU-only pins and the tokenizer override this run used |
+| `execution.device_evidence`      | what the runtime's log said about the device               |
+| `status`                         | `OPERATIONAL`, `FAILED`, `BLOCKED` or `UNKNOWN`            |
 
 ```powershell
 $r = Get-Content .\output\run_report.json -Raw | ConvertFrom-Json
@@ -493,16 +493,16 @@ GPU and no network.
 
 ## STOP conditions — do not continue, send the output
 
-| Situation | What to send |
-| --- | --- |
-| `verify_artifacts.py` reports a size or SHA-256 mismatch | the full output **and** the two `Get-FileHash` results |
-| `verify_artifacts.py` reports `not a valid GGUF container` | the full output |
-| the pairing section prints `FAIL` | the full output |
-| any step exits with code `3` or `4` | the full command and its complete output |
-| the run reports `FAILED` with `no text was produced on stdout` | the last 30 lines of `output\panoramic_llama.log` |
-| the run is killed after the timeout | the timeout value used, plus the log tail |
-| Windows runs out of memory | the `peak RAM` line from the report and the failure text |
-| anything asks you to disable a safety check or to trust an unverified hash | stop and report; no step here requires that |
+| Situation                                                                  | What to send                                             |
+| -------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `verify_artifacts.py` reports a size or SHA-256 mismatch                   | the full output **and** the two `Get-FileHash` results   |
+| `verify_artifacts.py` reports `not a valid GGUF container`                 | the full output                                          |
+| the pairing section prints `FAIL`                                          | the full output                                          |
+| any step exits with code `3` or `4`                                        | the full command and its complete output                 |
+| the run reports `FAILED` with `no text was produced on stdout`             | the last 30 lines of `output\panoramic_llama.log`        |
+| the run is killed after the timeout                                        | the timeout value used, plus the log tail                |
+| Windows runs out of memory                                                 | the `peak RAM` line from the report and the failure text |
+| anything asks you to disable a safety check or to trust an unverified hash | stop and report; no step here requires that              |
 
 ## What a successful run does **not** prove
 

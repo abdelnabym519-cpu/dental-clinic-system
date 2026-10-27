@@ -53,7 +53,13 @@ async function listPublished(hospitalId: string) {
     reference: string | null
     status: string
     createdAt: string
-    documents: Array<{ id: string; version: string; status: string; wordCount: number; ingestedAt: string }>
+    documents: Array<{
+      id: string
+      version: string
+      status: string
+      wordCount: number
+      ingestedAt: string
+    }>
   }> = []
   for (const s of sources) {
     const docs = await store.listDocumentsBySource(s.id)
@@ -123,15 +129,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'source is required' }, { status: 400 })
   }
   const sourceKey = typeof sourceIn.sourceKey === 'string' ? sourceIn.sourceKey.trim() : ''
-  if (!sourceKey) return NextResponse.json({ error: 'source.sourceKey is required' }, { status: 400 })
+  if (!sourceKey)
+    return NextResponse.json({ error: 'source.sourceKey is required' }, { status: 400 })
   if (!content || !content.trim()) {
     return NextResponse.json({ error: 'content is required' }, { status: 400 })
   }
   if (content.length > MAX_CONTENT_CHARS) {
     return NextResponse.json({ error: 'content exceeds the maximum allowed size' }, { status: 400 })
   }
-  const title = typeof sourceIn.title === 'string' && sourceIn.title.trim() ? sourceIn.title.trim() : sourceKey
-  const publisher = typeof sourceIn.publisher === 'string' && sourceIn.publisher.trim() ? sourceIn.publisher.trim() : 'UNKNOWN'
+  const title =
+    typeof sourceIn.title === 'string' && sourceIn.title.trim() ? sourceIn.title.trim() : sourceKey
+  const publisher =
+    typeof sourceIn.publisher === 'string' && sourceIn.publisher.trim()
+      ? sourceIn.publisher.trim()
+      : 'UNKNOWN'
   const sourceType = sourceIn.sourceType
   const authorityTier = sourceIn.authorityTier
   const domain = sourceIn.domain
@@ -148,7 +159,10 @@ export async function POST(req: Request) {
   }
   if (!isKnowledgeDomain(domain)) {
     console.error('knowledge ingest: invalid domain', domain)
-    return NextResponse.json({ error: 'source.domain must be a known dental knowledge domain' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'source.domain must be a known dental knowledge domain' },
+      { status: 400 }
+    )
   }
   if (language !== 'en' && language !== 'ar') {
     return NextResponse.json({ error: 'source.language must be "en" or "ar"' }, { status: 400 })
@@ -212,7 +226,9 @@ export async function POST(req: Request) {
           }),
         },
       })
-      .catch((e: unknown) => console.error('AI knowledge audit failed:', e instanceof Error ? e.message : e))
+      .catch((e: unknown) =>
+        console.error('AI knowledge audit failed:', e instanceof Error ? e.message : e)
+      )
 
     return NextResponse.json({ hospitalId, report })
   } catch (err) {

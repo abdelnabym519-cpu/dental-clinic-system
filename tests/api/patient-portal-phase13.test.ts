@@ -25,7 +25,11 @@ const mockRenderPdf = vi.hoisted(() => vi.fn(async () => new Uint8Array([37, 80,
 vi.mock('@/lib/pdf', () => ({ renderSimplePdf: mockRenderPdf }))
 
 vi.mock('@/lib/storage', () => ({
-  getStorage: () => ({ get: vi.fn(async () => { throw new Error('not found') }) }),
+  getStorage: () => ({
+    get: vi.fn(async () => {
+      throw new Error('not found')
+    }),
+  }),
   StorageNotFoundError: class StorageNotFoundError extends Error {},
 }))
 
@@ -88,10 +92,15 @@ describe('POST /api/portal/accounts (Phase 13)', () => {
     const { POST } = await import('@/app/api/portal/accounts/route')
     vi.mocked(prisma.patient.findUnique).mockResolvedValue({ ...PATIENT } as any)
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.user.create).mockResolvedValue({ id: 'user-p1', email: 'patient-01012345678@portal.dentora.local' } as any)
+    vi.mocked(prisma.user.create).mockResolvedValue({
+      id: 'user-p1',
+      email: 'patient-01012345678@portal.dentora.local',
+    } as any)
     vi.mocked(prisma.patient.update).mockResolvedValue(PATIENT as any)
 
-    const res = await POST(makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' }))
+    const res = await POST(
+      makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' })
+    )
     const data = await res.json()
 
     expect(res.status).toBe(201)
@@ -117,15 +126,22 @@ describe('POST /api/portal/accounts (Phase 13)', () => {
 
   it('rejects short passwords (400)', async () => {
     const { POST } = await import('@/app/api/portal/accounts/route')
-    const res = await POST(makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'short' }))
+    const res = await POST(
+      makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'short' })
+    )
     expect(res.status).toBe(400)
     expect(prisma.user.create).not.toHaveBeenCalled()
   })
 
   it('rejects when a portal account already exists (409)', async () => {
     const { POST } = await import('@/app/api/portal/accounts/route')
-    vi.mocked(prisma.patient.findUnique).mockResolvedValue({ ...PATIENT, portalUserId: 'existing' } as any)
-    const res = await POST(makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' }))
+    vi.mocked(prisma.patient.findUnique).mockResolvedValue({
+      ...PATIENT,
+      portalUserId: 'existing',
+    } as any)
+    const res = await POST(
+      makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' })
+    )
     expect(res.status).toBe(409)
   })
 
@@ -138,7 +154,9 @@ describe('POST /api/portal/accounts (Phase 13)', () => {
       hospitalId: null,
       session: null,
     })
-    const res = await POST(makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' }))
+    const res = await POST(
+      makeReq('/api/portal/accounts', 'POST', { patientId: 'pat1', password: 'secret123' })
+    )
     expect(res.status).toBe(403)
     expect(prisma.user.create).not.toHaveBeenCalled()
   })
@@ -151,7 +169,12 @@ describe('POST /api/patient-portal/auth/login (Phase 13)', () => {
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ id: 'h1' } as any)
     vi.mocked(prisma.patient.findFirst).mockResolvedValue({
       ...PATIENT,
-      portalUser: { id: 'user-p1', password: await bcrypt.hash('secret123', 10), isActive: true, name: 'Ahmed Ali' },
+      portalUser: {
+        id: 'user-p1',
+        password: await bcrypt.hash('secret123', 10),
+        isActive: true,
+        name: 'Ahmed Ali',
+      },
     } as any)
     mockPatientAuth.setPatientCookie.mockImplementation((res) => res)
 
@@ -179,7 +202,12 @@ describe('POST /api/patient-portal/auth/login (Phase 13)', () => {
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ id: 'h1' } as any)
     vi.mocked(prisma.patient.findFirst).mockResolvedValue({
       ...PATIENT,
-      portalUser: { id: 'user-p1', password: await bcrypt.hash('otherpass9', 10), isActive: true, name: 'Ahmed Ali' },
+      portalUser: {
+        id: 'user-p1',
+        password: await bcrypt.hash('otherpass9', 10),
+        isActive: true,
+        name: 'Ahmed Ali',
+      },
     } as any)
 
     const res = await POST(
@@ -230,7 +258,12 @@ describe('POST /api/patient-portal/appointments (Phase 13 booking rules)', () =>
       name: 'DenToRa',
       address: 'Cairo',
       phone: '0200000000',
-      workingHours: JSON.stringify({ start: '09:00', end: '21:00', lunchStart: '13:00', lunchEnd: '14:00' }),
+      workingHours: JSON.stringify({
+        start: '09:00',
+        end: '21:00',
+        lunchStart: '13:00',
+        lunchEnd: '14:00',
+      }),
     } as any)
     vi.mocked(prisma.staffShift.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.appointment.findMany).mockResolvedValue([])
@@ -395,7 +428,13 @@ describe('GET /api/patient-portal/prescriptions/[id]/pdf (Phase 13)', () => {
       patient: { dateOfBirth: new Date('1990-05-01') }, // age line source (staff-PDF parity)
       doctor: { firstName: 'Laila', lastName: 'Khaled' },
       medications: [
-        { medicationName: 'Amoxicillin', dosage: '500mg', frequency: 'BD', duration: '7 days', instructions: 'After meals' },
+        {
+          medicationName: 'Amoxicillin',
+          dosage: '500mg',
+          frequency: 'BD',
+          duration: '7 days',
+          instructions: 'After meals',
+        },
       ],
     } as any)
     vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ name: 'DenToRa' } as any)
@@ -435,7 +474,11 @@ describe('POST /api/patient-portal/prescriptions/[id]/resend (Phase 13)', () => 
       createdAt: new Date('2026-09-01'),
       doctor: { firstName: 'Laila', lastName: 'Khaled' },
     } as any)
-    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({ name: 'DenToRa', address: 'Cairo', phone: null } as any)
+    vi.mocked(prisma.hospital.findUnique).mockResolvedValue({
+      name: 'DenToRa',
+      address: 'Cairo',
+      phone: null,
+    } as any)
     vi.mocked(prisma.prescription.update).mockResolvedValue({} as any)
 
     const res = await POST(makeReq('/api/patient-portal/prescriptions/rx1/resend', 'POST'), {

@@ -27,17 +27,17 @@ conventions contributors must follow.
 
 ## 1. What is localized today
 
-| Concern            | Implementation                                                        |
-| ------------------ | --------------------------------------------------------------------- |
-| Currency & numbers | `lib/i18n/format.ts` — single `Intl`-based module                      |
-| Dates & times      | `lib/i18n/format.ts` + `Africa/Cairo` from `lib/i18n/config.ts`        |
-| UI strings         | `locales/ar.json`, `locales/en.json` via `lib/i18n/dictionary.ts`      |
-| Locale resolution  | `lib/i18n/request.ts` cascade (see §2.1)                               |
-| `<html lang/dir>`  | `app/layout.tsx` — cookie choice → default; `directionFor()`          |
-| Tax                | `vatConfig` / `calculateVAT()` in `lib/billing-utils.ts` (VAT 14%)     |
-| Phones             | `validateEgyptianPhone()` in `lib/utils.ts`                            |
-| Seeds              | `prisma/seed.ts` — Egyptian clinic, staff, patients, suppliers         |
-| Payment gateways   | `lib/payment-gateways/` — Fawry, Paymob, InstaPay adapters             |
+| Concern            | Implementation                                                     |
+| ------------------ | ------------------------------------------------------------------ |
+| Currency & numbers | `lib/i18n/format.ts` — single `Intl`-based module                  |
+| Dates & times      | `lib/i18n/format.ts` + `Africa/Cairo` from `lib/i18n/config.ts`    |
+| UI strings         | `locales/ar.json`, `locales/en.json` via `lib/i18n/dictionary.ts`  |
+| Locale resolution  | `lib/i18n/request.ts` cascade (see §2.1)                           |
+| `<html lang/dir>`  | `app/layout.tsx` — cookie choice → default; `directionFor()`       |
+| Tax                | `vatConfig` / `calculateVAT()` in `lib/billing-utils.ts` (VAT 14%) |
+| Phones             | `validateEgyptianPhone()` in `lib/utils.ts`                        |
+| Seeds              | `prisma/seed.ts` — Egyptian clinic, staff, patients, suppliers     |
+| Payment gateways   | `lib/payment-gateways/` — Fawry, Paymob, InstaPay adapters         |
 
 ## 2. Locale resolution: per-clinic, not per-URL
 
@@ -157,12 +157,12 @@ prisma/seed.ts       # Egyptian clinic, staff, patients, catalogue
 The rendered UI reads `locales/ar.json` and `locales/en.json` through
 `lib/i18n/dictionary.ts`:
 
-| Surface                                 | Entry point                                        |
-| --------------------------------------- | -------------------------------------------------- |
-| Client components                       | `useLanguage()` → `t(key, vars?)`                   |
-| Server components / `generateMetadata()`| `getServerTranslator()` in `lib/i18n/server.ts`     |
-| Non-component code (lib helpers)        | `translateText(locale, key, vars?)`                 |
-| Dates rendered with `date-fns`          | `dateFnsLocale(locale)` in `lib/i18n/dates.ts`      |
+| Surface                                  | Entry point                                     |
+| ---------------------------------------- | ----------------------------------------------- |
+| Client components                        | `useLanguage()` → `t(key, vars?)`               |
+| Server components / `generateMetadata()` | `getServerTranslator()` in `lib/i18n/server.ts` |
+| Non-component code (lib helpers)         | `translateText(locale, key, vars?)`             |
+| Dates rendered with `date-fns`           | `dateFnsLocale(locale)` in `lib/i18n/dates.ts`  |
 
 Both files carry the same key set (parity is enforced by
 `tests/unit/i18n-completeness.test.tsx`), and the key is its own English text —
@@ -177,12 +177,12 @@ Patient-facing invoice and prescription PDFs
 (`app/api/communications/*/send`) follow the staff member's locale, exactly
 like the UI, and render Arabic properly:
 
-| Piece                | Where                                                       |
-| -------------------- | ----------------------------------------------------------- |
-| Contextual shaping   | `lib/pdf-arabic.ts` — isolated/final/initial/medial forms    |
-| Bidirectional order  | `lib/pdf-arabic.ts` — logical text → visual glyph order      |
-| Font subset + embed  | `lib/pdf-font.ts` + `lib/pdf.ts` — Type0/`Identity-H`, `/FontFile2` |
-| Font asset           | `assets/fonts/NotoNaskhArabic-Regular.ttf` (SIL OFL 1.1)     |
+| Piece               | Where                                                               |
+| ------------------- | ------------------------------------------------------------------- |
+| Contextual shaping  | `lib/pdf-arabic.ts` — isolated/final/initial/medial forms           |
+| Bidirectional order | `lib/pdf-arabic.ts` — logical text → visual glyph order             |
+| Font subset + embed | `lib/pdf-font.ts` + `lib/pdf.ts` — Type0/`Identity-H`, `/FontFile2` |
+| Font asset          | `assets/fonts/NotoNaskhArabic-Regular.ttf` (SIL OFL 1.1)            |
 
 Notes for future work:
 
@@ -202,5 +202,5 @@ Notes for future work:
 - `next.config.js` lists the font under `outputFileTracingIncludes`: it is read
   from disk at runtime, which a standalone build would otherwise not trace.
 
-The WhatsApp/SMS *message* text around the attachment is Arabic as well
+The WhatsApp/SMS _message_ text around the attachment is Arabic as well
 (`lib/messaging/templates.ts`).

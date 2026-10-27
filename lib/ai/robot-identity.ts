@@ -13,7 +13,7 @@ export const ROBOT_GREETING_AR =
   'أهلًا دكتور 👋 أنا الروبوت الذكي الخاص بالعيادة. تم تطويري بواسطة بشمهندس محمد. أنا جاهز. 🤖'
 
 export const ROBOT_GREETING_EN =
-  'Welcome, Doctor 👋 I am the clinic\'s smart robot, developed by Eng. Mohamed. I am ready. 🤖'
+  "Welcome, Doctor 👋 I am the clinic's smart robot, developed by Eng. Mohamed. I am ready. 🤖"
 
 export type RobotLocale = 'ar-EG' | 'en-US'
 

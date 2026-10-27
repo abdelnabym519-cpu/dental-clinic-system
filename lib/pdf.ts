@@ -76,12 +76,14 @@ export function jpegInfo(
 
 /** Escape PDF literal-string specials. */
 function escapePdfText(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)')
-    // WinAnsi-safe: drop anything outside Latin-1 to keep encoding valid.
-    .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '?')
+  return (
+    text
+      .replace(/\\/g, '\\\\')
+      .replace(/\(/g, '\\(')
+      .replace(/\)/g, '\\)')
+      // WinAnsi-safe: drop anything outside Latin-1 to keep encoding valid.
+      .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '?')
+  )
 }
 
 interface PreparedLine {

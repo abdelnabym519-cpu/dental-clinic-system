@@ -169,14 +169,16 @@ export default function NewPreAuthPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t('New Pre-Authorization')}</h1>
-          <p className="text-muted-foreground">{t('Request insurance pre-approval for treatment')}</p>
+          <p className="text-muted-foreground">
+            {t('Request insurance pre-approval for treatment')}
+          </p>
         </div>
       </div>
 
       {/* Step 1: Patient Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("1. Select Patient")}</CardTitle>
+          <CardTitle className="text-base">{t('1. Select Patient')}</CardTitle>
         </CardHeader>
         <CardContent>
           {selectedPatient ? (
@@ -194,7 +196,9 @@ export default function NewPreAuthPage() {
                   setSelectedPatient(null)
                   setPatientSearch('')
                 }}
-              >{t('ui.change')}</Button>
+              >
+                {t('ui.change')}
+              </Button>
             </div>
           ) : (
             <div className="relative">
@@ -233,7 +237,7 @@ export default function NewPreAuthPage() {
       {selectedPatient && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{t("2. Select Insurance Policy")}</CardTitle>
+            <CardTitle className="text-base">{t('2. Select Insurance Policy')}</CardTitle>
           </CardHeader>
           <CardContent>
             {policies.length === 0 ? (
@@ -293,9 +297,11 @@ export default function NewPreAuthPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">{t("3. Procedures")}</CardTitle>
+              <CardTitle className="text-base">{t('3. Procedures')}</CardTitle>
               <Button variant="outline" size="sm" onClick={addProcedure}>
-                <Plus className="h-4 w-4 mr-1" />{t('ui.add_procedure')}</Button>
+                <Plus className="h-4 w-4 mr-1" />
+                {t('ui.add_procedure')}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -303,9 +309,9 @@ export default function NewPreAuthPage() {
               {procedures.map((proc, i) => (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-5">
-                    {i === 0 && <Label className="text-xs">{t("Procedure Name *")}</Label>}
+                    {i === 0 && <Label className="text-xs">{t('Procedure Name *')}</Label>}
                     <Input
-                      placeholder={t("e.g., Root Canal Treatment")}
+                      placeholder={t('e.g., Root Canal Treatment')}
                       value={proc.name}
                       onChange={(e) => updateProcedure(i, 'name', e.target.value)}
                     />
@@ -319,7 +325,7 @@ export default function NewPreAuthPage() {
                     />
                   </div>
                   <div className="col-span-3">
-                    {i === 0 && <Label className="text-xs">{t("Cost (EGP ) *")}</Label>}
+                    {i === 0 && <Label className="text-xs">{t('Cost (EGP ) *')}</Label>}
                     <Input
                       type="number"
                       placeholder="0"
@@ -341,7 +347,8 @@ export default function NewPreAuthPage() {
               ))}
               <div className="flex justify-end pt-2 border-t">
                 <p className="text-sm font-medium">
-                  {t("Total Estimated Cost:")} <span className="text-lg">{formatCurrency(totalCost, locale)}</span>
+                  {t('Total Estimated Cost:')}{' '}
+                  <span className="text-lg">{formatCurrency(totalCost, locale)}</span>
                 </p>
               </div>
             </div>
@@ -353,7 +360,7 @@ export default function NewPreAuthPage() {
       {selectedPolicyId && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{t("4. Additional Notes")}</CardTitle>
+            <CardTitle className="text-base">{t('4. Additional Notes')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
@@ -363,10 +370,12 @@ export default function NewPreAuthPage() {
               rows={3}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => router.back()}>{t('ui.cancel')}</Button>
+              <Button variant="outline" onClick={() => router.back()}>
+                {t('ui.cancel')}
+              </Button>
               <Button onClick={handleSubmit} disabled={saving}>
                 <FileCheck className="h-4 w-4 mr-2" />
-                {saving ? 'Creating...' : t("Create Pre-Authorization")}
+                {saving ? 'Creating...' : t('Create Pre-Authorization')}
               </Button>
             </div>
           </CardContent>

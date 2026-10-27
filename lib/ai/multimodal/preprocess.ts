@@ -28,7 +28,7 @@ export interface ProcessedImage {
  * (storage is touched only by the caller via `persist`).
  */
 export async function preprocessImage(original: Buffer): Promise<ProcessedImage> {
-  let Jimp: typeof import('jimp')['Jimp']
+  let Jimp: (typeof import('jimp'))['Jimp']
   try {
     ;({ Jimp } = await import('jimp'))
   } catch {
@@ -43,7 +43,10 @@ export async function preprocessImage(original: Buffer): Promise<ProcessedImage>
   try {
     img = await Jimp.read(original)
   } catch {
-    throw new MultimodalError('INVALID_FORMAT', 'file passed signature check but is not a decodable image')
+    throw new MultimodalError(
+      'INVALID_FORMAT',
+      'file passed signature check but is not a decodable image'
+    )
   }
 
   const width = img.bitmap.width
@@ -55,10 +58,7 @@ export async function preprocessImage(original: Buffer): Promise<ProcessedImage>
 
   // Derivative: grayscale copy (contrast-preserving; no geometric distortion).
   // jimp v1: `getBuffer(mime, options)` (quality is an encoding option).
-  const derivative = await img
-    .clone()
-    .greyscale()
-    .getBuffer('image/jpeg', { quality: 85 })
+  const derivative = await img.clone().greyscale().getBuffer('image/jpeg', { quality: 85 })
 
   return { original, width, height, pixelCount, derivative }
 }
@@ -71,7 +71,7 @@ export async function preprocessImage(original: Buffer): Promise<ProcessedImage>
  */
 export async function persistPreprocessed(
   image: ProcessedImage,
-  keys: { originalKey: string; derivativeKey: string },
+  keys: { originalKey: string; derivativeKey: string }
 ): Promise<PreprocessResult> {
   const storage = getStorage()
   await storage.put(keys.originalKey, image.original, { contentType: 'image/jpeg' })

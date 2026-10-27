@@ -31,7 +31,9 @@ export function AccessDenied({ section }: { section?: string | null }) {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">{t('accessDenied.hint')}</p>
           {section ? (
-            <p className="text-xs text-muted-foreground">{t('accessDenied.blocked', { section })}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('accessDenied.blocked', { section })}
+            </p>
           ) : null}
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild variant="outline">

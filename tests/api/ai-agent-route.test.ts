@@ -21,17 +21,36 @@ vi.mock('@/lib/prisma', () => {
     findMany: async (args) => store.fake?.[name]?.findMany?.(args) ?? [],
     findUnique: async (args) => store.fake?.[name]?.findUnique?.(args) ?? null,
     count: async (args) => store.fake?.[name]?.count?.(args) ?? 0,
-    aggregate: async (args) => store.fake?.[name]?.aggregate?.(args) ?? { _sum: {}, _count: { _all: 0 } },
+    aggregate: async (args) =>
+      store.fake?.[name]?.aggregate?.(args) ?? { _sum: {}, _count: { _all: 0 } },
     create: async (args) => {
-      if (name === 'aIConversation') { store.convCreate.push(args); return { id: 'conv-' + store.convCreate.length } }
-      if (name === 'auditLog') { store.auditCreate.push(args); return { id: 'audit-1' } }
+      if (name === 'aIConversation') {
+        store.convCreate.push(args)
+        return { id: 'conv-' + store.convCreate.length }
+      }
+      if (name === 'auditLog') {
+        store.auditCreate.push(args)
+        return { id: 'audit-1' }
+      }
       return {}
     },
   })
   const names = [
-    'patient', 'appointment', 'treatment', 'staff', 'dentalChartEntry',
-    'clinicalNote', 'treatmentPlan', 'imagingStudy', 'aIAnalysisJob',
-    'invoice', 'patientRiskScore', 'medicalHistory', 'auditLog', 'aIConversation', 'hospital',
+    'patient',
+    'appointment',
+    'treatment',
+    'staff',
+    'dentalChartEntry',
+    'clinicalNote',
+    'treatmentPlan',
+    'imagingStudy',
+    'aIAnalysisJob',
+    'invoice',
+    'patientRiskScore',
+    'medicalHistory',
+    'auditLog',
+    'aIConversation',
+    'hospital',
   ]
   return { prisma: Object.fromEntries(names.map((n) => [n, delegate(n)])) }
 })
@@ -105,9 +124,13 @@ describe('POST /api/ai/agent', () => {
       user: { id: 'staff-acc-1', name: 'Acc A', role: 'ACCOUNTANT' },
       hospitalId: HOSP_A,
     }
-    store.runAiActionImpl = () => Promise.resolve({
-      status: 'APPROVAL_REQUIRED', success: false, message: 'Needs approval', approvalId: 'appr-r1',
-    })
+    store.runAiActionImpl = () =>
+      Promise.resolve({
+        status: 'APPROVAL_REQUIRED',
+        success: false,
+        message: 'Needs approval',
+        approvalId: 'appr-r1',
+      })
     const res = await POST(post({ message: 'Record payment 500 for Ahmed Ali' }))
     expect(res.status).toBe(200)
     const json = await res.json()

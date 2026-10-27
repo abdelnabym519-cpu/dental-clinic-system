@@ -23,7 +23,12 @@ import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vites
 // ---------------------------------------------------------------------------
 const state = vi.hoisted(() => ({
   tables: {} as Record<string, any[]>,
-  writes: { payment: [] as any[], approval: [] as any[], audit: [] as any[], appointment: [] as any[] },
+  writes: {
+    payment: [] as any[],
+    approval: [] as any[],
+    audit: [] as any[],
+    appointment: [] as any[],
+  },
   reset() {
     this.tables = {}
     this.writes = { payment: [], approval: [], audit: [], appointment: [] }
@@ -51,7 +56,13 @@ vi.mock('@/lib/prisma', () => {
       }
       if (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date)) {
         if ('in' in v && !(v.in as any[]).includes(row[k])) return false
-        if ('contains' in v && !(String(row[k] ?? '').toLowerCase().includes(String(v.contains).toLowerCase()))) return false
+        if (
+          'contains' in v &&
+          !String(row[k] ?? '')
+            .toLowerCase()
+            .includes(String(v.contains).toLowerCase())
+        )
+          return false
         if ('gte' in v && !(new Date(row[k]).getTime() >= new Date(v.gte).getTime())) return false
         if ('lt' in v && !(new Date(row[k]).getTime() < new Date(v.lt).getTime())) return false
         if ('lte' in v && !(new Date(row[k]).getTime() <= new Date(v.lte).getTime())) return false
@@ -63,7 +74,15 @@ vi.mock('@/lib/prisma', () => {
         }
         continue
       }
-      if (row[k] !== v && !(row[k] instanceof Date || v instanceof Date || (row[k] && v && new Date(row[k]).getTime() === new Date(v).getTime()))) return false
+      if (
+        row[k] !== v &&
+        !(
+          row[k] instanceof Date ||
+          v instanceof Date ||
+          (row[k] && v && new Date(row[k]).getTime() === new Date(v).getTime())
+        )
+      )
+        return false
     }
     return true
   }
@@ -75,14 +94,23 @@ vi.mock('@/lib/prisma', () => {
     const out: any = { ...row }
     for (const [rel, sel] of Object.entries(inc)) {
       const fk = `${rel}Id`
-      if (!(fk in out) || out[fk] == null) { out[rel] = null; continue }
+      if (!(fk in out) || out[fk] == null) {
+        out[rel] = null
+        continue
+      }
       const relTable = rel === 'patient' ? 'patient' : rel
       const relRow = (state.tables[relTable] ?? []).find((r: any) => r.id === out[fk]) ?? null
-      if (!relRow) { out[rel] = null; continue }
+      if (!relRow) {
+        out[rel] = null
+        continue
+      }
       // Handle both `include: { patient: true }` and `{ patient: { select: {...} } }`.
-      const selMap = sel && typeof sel === 'object'
-        ? (sel.select && typeof sel.select === 'object' ? sel.select : sel)
-        : null
+      const selMap =
+        sel && typeof sel === 'object'
+          ? sel.select && typeof sel.select === 'object'
+            ? sel.select
+            : sel
+          : null
       const selected = selMap ? Object.keys(selMap) : null
       out[rel] = selected ? Object.fromEntries(selected.map((k) => [k, relRow[k]])) : relRow
     }
@@ -91,14 +119,17 @@ vi.mock('@/lib/prisma', () => {
   const delegate = (model: string) => {
     const rows = () => (state.tables[model] ??= [])
     return {
-      findFirst: async (args?: any) => applyInclude(rows().find((r) => condMatches(r, args?.where)) ?? null, args),
+      findFirst: async (args?: any) =>
+        applyInclude(rows().find((r) => condMatches(r, args?.where)) ?? null, args),
       findMany: async (args?: any) => {
         let out = rows().filter((r) => condMatches(r, args?.where))
         if (args?.orderBy) {
           const first = Array.isArray(args.orderBy) ? args.orderBy[0] : args.orderBy
           const [field, dir] = Object.entries(first)[0] ?? []
           const factor = dir === 'asc' ? 1 : -1
-          out = [...out].sort((a, b) => (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0) * factor)
+          out = [...out].sort(
+            (a, b) => (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0) * factor
+          )
         }
         return out.map((r) => applyInclude(r, args))
       },
@@ -129,7 +160,11 @@ vi.mock('@/lib/prisma', () => {
       },
       updateMany: async ({ where, data }: any) => {
         let n = 0
-        for (const r of rows()) if (condMatches(r, where)) { Object.assign(r, data); n++ }
+        for (const r of rows())
+          if (condMatches(r, where)) {
+            Object.assign(r, data)
+            n++
+          }
         return { count: n }
       },
       deleteMany: async ({ where }: any) => {
@@ -141,10 +176,26 @@ vi.mock('@/lib/prisma', () => {
     }
   }
   const MODELS = [
-    'aIActionApproval', 'setting', 'invoice', 'payment', 'patient', 'treatment',
-    'user', 'auditLog', 'hospital', 'appointment', 'prescription', 'staff',
-    'aIAnalysisJob', 'imagingStudy', 'aiFinPayment', 'stockItem',
-    'inventoryItem', 'labOrder', 'medication', 'invoiceItem',
+    'aIActionApproval',
+    'setting',
+    'invoice',
+    'payment',
+    'patient',
+    'treatment',
+    'user',
+    'auditLog',
+    'hospital',
+    'appointment',
+    'prescription',
+    'staff',
+    'aIAnalysisJob',
+    'imagingStudy',
+    'aiFinPayment',
+    'stockItem',
+    'inventoryItem',
+    'labOrder',
+    'medication',
+    'invoiceItem',
   ]
   const client: any = {
     $transaction: async (fn: any) => (typeof fn === 'function' ? fn(client) : Promise.all(fn)),
@@ -169,16 +220,34 @@ const NOW_ISO = new Date().toISOString()
 function basePatient() {
   return [
     {
-      id: 'pat-A1', hospitalId: HOSP, patientId: 'PAT-A1', firstName: 'Ahmed', lastName: 'Ali',
-      phone: '01011112222', email: 'ahmed@example.com', portalUserId: 'user-pat-A',
+      id: 'pat-A1',
+      hospitalId: HOSP,
+      patientId: 'PAT-A1',
+      firstName: 'Ahmed',
+      lastName: 'Ali',
+      phone: '01011112222',
+      email: 'ahmed@example.com',
+      portalUserId: 'user-pat-A',
     },
     {
-      id: 'pat-A2', hospitalId: HOSP, patientId: 'PAT-A2', firstName: 'Sara', lastName: 'Hassan',
-      phone: '01022223333', email: 'sara@example.com', portalUserId: null,
+      id: 'pat-A2',
+      hospitalId: HOSP,
+      patientId: 'PAT-A2',
+      firstName: 'Sara',
+      lastName: 'Hassan',
+      phone: '01022223333',
+      email: 'sara@example.com',
+      portalUserId: null,
     },
     {
-      id: 'pat-B1', hospitalId: 'hosp-B', patientId: 'PAT-B1', firstName: 'Omar', lastName: 'Farouk',
-      phone: '01099998888', email: 'omar@example.com', portalUserId: 'user-pat-B',
+      id: 'pat-B1',
+      hospitalId: 'hosp-B',
+      patientId: 'PAT-B1',
+      firstName: 'Omar',
+      lastName: 'Farouk',
+      phone: '01099998888',
+      email: 'omar@example.com',
+      portalUserId: 'user-pat-B',
     },
   ]
 }
@@ -196,7 +265,14 @@ function seed(opts: {
     { id: 'proc-1', hospitalId: HOSP, name: 'Root canal', category: 'ENDODONTICS' },
   ]
   state.tables.staff = opts.staff ?? [
-    { id: 'staff-doctor-1', hospitalId: HOSP, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR', isActive: true },
+    {
+      id: 'staff-doctor-1',
+      hospitalId: HOSP,
+      firstName: 'Hana',
+      lastName: 'Shalaby',
+      role: 'DOCTOR',
+      isActive: true,
+    },
   ]
   // The pipeline re-authorizes the ORIGINAL requester from the user table.
   state.tables.user = [
@@ -209,21 +285,47 @@ function seed(opts: {
   if (opts.treatments) state.tables.treatment = opts.treatments
   if (opts.settings) {
     state.tables.setting = []
-    if (opts.settings.limit !== null) state.tables.setting.push({ id: 's1', hospitalId: HOSP, key: 'ai_financial_approval_limit', value: opts.settings.limit })
-    if (opts.settings.budget !== null) state.tables.setting.push({ id: 's2', hospitalId: HOSP, key: 'ai_monthly_budget', value: opts.settings.budget })
+    if (opts.settings.limit !== null)
+      state.tables.setting.push({
+        id: 's1',
+        hospitalId: HOSP,
+        key: 'ai_financial_approval_limit',
+        value: opts.settings.limit,
+      })
+    if (opts.settings.budget !== null)
+      state.tables.setting.push({
+        id: 's2',
+        hospitalId: HOSP,
+        key: 'ai_monthly_budget',
+        value: opts.settings.budget,
+      })
   }
   if (opts.approvals) state.tables.aIActionApproval = opts.approvals
 }
 
 const openInvoice = (over = {}) => ({
-  id: 'inv-a-101', hospitalId: HOSP, patientId: 'pat-A1', invoiceNo: 'INV-A-101',
-  status: 'PENDING', totalAmount: 1500, paidAmount: 0, balanceAmount: 1500,
-  createdAt: new Date('2026-09-20T10:00:00.000Z'), ...over,
+  id: 'inv-a-101',
+  hospitalId: HOSP,
+  patientId: 'pat-A1',
+  invoiceNo: 'INV-A-101',
+  status: 'PENDING',
+  totalAmount: 1500,
+  paidAmount: 0,
+  balanceAmount: 1500,
+  createdAt: new Date('2026-09-20T10:00:00.000Z'),
+  ...over,
 })
 
 const unbilledTreatment = (over = {}) => ({
-  id: 'trt-u-1', hospitalId: HOSP, patientId: 'pat-A1', treatmentNo: 'TRT-A-777',
-  status: 'COMPLETED', cost: 1000, invoiceItems: [], procedureId: 'proc-1', ...over,
+  id: 'trt-u-1',
+  hospitalId: HOSP,
+  patientId: 'pat-A1',
+  treatmentNo: 'TRT-A-777',
+  status: 'COMPLETED',
+  cost: 1000,
+  invoiceItems: [],
+  procedureId: 'proc-1',
+  ...over,
 })
 
 function seedForCase(caseId: string) {
@@ -236,7 +338,10 @@ function seedForCase(caseId: string) {
   }
   switch (caseId) {
     case 'APR-001':
-      seedAndRestore({ treatments: [unbilledTreatment()], settings: { limit: '10000', budget: '50000' } })
+      seedAndRestore({
+        treatments: [unbilledTreatment()],
+        settings: { limit: '10000', budget: '50000' },
+      })
       break
     case 'APR-002':
       seedAndRestore({ invoice: openInvoice(), settings: { limit: '10000', budget: '50000' } })
@@ -283,7 +388,14 @@ describe('APPROVAL_SAFETY golden replay', () => {
     //  - approval-floor / RBAC / clarification cases execute NOTHING
     //  - auto-executable cases execute EXACTLY ONCE (idempotent ledger)
     //  - exactly one payment row is written in the whole suite (APR-002)
-    const mustNotExecute = new Set(['APR-001', 'APR-003', 'APR-004', 'APR-005', 'APR-006', 'APR-009'])
+    const mustNotExecute = new Set([
+      'APR-001',
+      'APR-003',
+      'APR-004',
+      'APR-005',
+      'APR-006',
+      'APR-009',
+    ])
     const mustExecuteOnce = new Set(['APR-002', 'APR-007', 'APR-008'])
     for (const r of results) {
       const executed = r.checks.find((ch) => ch.id.endsWith('.actions'))
@@ -335,7 +447,9 @@ describe('approval mechanism (direct pipeline)', () => {
     const out = await runAiAction({
       action: 'record_payment',
       params: { amount: '500', patientName: 'Ahmed', patientId: 'pat-A1' },
-      actor: ACC, hospitalId: HOSP, requestReason: 'AI_AGENT',
+      actor: ACC,
+      hospitalId: HOSP,
+      requestReason: 'AI_AGENT',
     })
     expect(out.status).toBe('EXECUTED')
     expect(out.success).toBe(true)
@@ -348,7 +462,9 @@ describe('approval mechanism (direct pipeline)', () => {
     const out = await runAiAction({
       action: 'record_payment',
       params: { amount: '5000', patientName: 'Ahmed', patientId: 'pat-A1' },
-      actor: ACC, hospitalId: HOSP, requestReason: 'AI_AGENT',
+      actor: ACC,
+      hospitalId: HOSP,
+      requestReason: 'AI_AGENT',
     })
     expect(out.status).toBe('APPROVAL_REQUIRED')
     expect(out.approvalId).toBeTruthy()
@@ -360,7 +476,9 @@ describe('approval mechanism (direct pipeline)', () => {
     const out = await runAiAction({
       action: 'record_payment',
       params: { amount: '500', patientName: 'Ahmed', patientId: 'pat-A1' },
-      actor: ACC, hospitalId: HOSP, requestReason: 'AI_AGENT',
+      actor: ACC,
+      hospitalId: HOSP,
+      requestReason: 'AI_AGENT',
     })
     expect(out.status).toBe('APPROVAL_REQUIRED')
     expect(state.writes.payment.length).toBe(0)
@@ -371,12 +489,17 @@ describe('approval mechanism (direct pipeline)', () => {
     const out = await runAiAction({
       action: 'create_invoice',
       params: { patientName: 'Ahmed', patientId: 'pat-A1' },
-      actor: ACC, hospitalId: HOSP, requestReason: 'AI_AGENT',
+      actor: ACC,
+      hospitalId: HOSP,
+      requestReason: 'AI_AGENT',
     })
     expect(out.status).toBe('APPROVAL_REQUIRED')
     expect(state.writes.payment.length).toBe(0)
     const approve = await approveAndExecute({
-      approvalId: out.approvalId!, actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve',
+      approvalId: out.approvalId!,
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
     })
     expect(approve.ok).toBe(true)
     expect(state.tables.invoice.length).toBeGreaterThan(0) // invoice materialized only after approval
@@ -387,11 +510,16 @@ describe('approval mechanism (direct pipeline)', () => {
     const out = await runAiAction({
       action: 'record_payment',
       params: { amount: '500', patientName: 'Ahmed', patientId: 'pat-A1' },
-      actor: ACC, hospitalId: HOSP, requestReason: 'AI_AGENT',
+      actor: ACC,
+      hospitalId: HOSP,
+      requestReason: 'AI_AGENT',
     })
     expect(out.status).toBe('APPROVAL_REQUIRED')
     const self = await approveAndExecute({
-      approvalId: out.approvalId!, actor: ACC, approvalRoles: ['ACCOUNTANT', 'ADMIN'], mode: 'approve',
+      approvalId: out.approvalId!,
+      actor: ACC,
+      approvalRoles: ['ACCOUNTANT', 'ADMIN'],
+      mode: 'approve',
     })
     expect(self.ok).toBe(false)
     expect(self.code).toBe('SELF_APPROVAL')
@@ -434,7 +562,12 @@ describe('approval anti-forgery (direct pipeline)', () => {
 
   it('forged approval id → NOT_FOUND, nothing executed', async () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
-    const out = await approveAndExecute({ approvalId: 'appr-forged', actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-forged',
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('NOT_FOUND')
     expect(state.writes.payment.length).toBe(0)
@@ -443,7 +576,12 @@ describe('approval anti-forgery (direct pipeline)', () => {
   it('approver without approval role → NOT_APPROVER', async () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
     state.tables.aIActionApproval = [pendingApprovalRow()]
-    const out = await approveAndExecute({ approvalId: 'appr-1', actor: DOCTOR, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-1',
+      actor: DOCTOR,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('NOT_APPROVER')
     expect(state.writes.payment.length).toBe(0)
@@ -452,7 +590,12 @@ describe('approval anti-forgery (direct pipeline)', () => {
   it('self-approval (requester approves own action) → SELF_APPROVAL', async () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
     state.tables.aIActionApproval = [pendingApprovalRow({ id: 'appr-2' })]
-    const out = await approveAndExecute({ approvalId: 'appr-2', actor: ACCOUNTANT, approvalRoles: ['ACCOUNTANT', 'ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-2',
+      actor: ACCOUNTANT,
+      approvalRoles: ['ACCOUNTANT', 'ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('SELF_APPROVAL')
     expect(state.writes.payment.length).toBe(0)
@@ -461,9 +604,17 @@ describe('approval anti-forgery (direct pipeline)', () => {
   it('expired approval → EXPIRED, never executed', async () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
     state.tables.aIActionApproval = [
-      pendingApprovalRow({ id: 'appr-3', expiresAt: new Date(new Date(NOW_ISO).getTime() - 60000) }),
+      pendingApprovalRow({
+        id: 'appr-3',
+        expiresAt: new Date(new Date(NOW_ISO).getTime() - 60000),
+      }),
     ]
-    const out = await approveAndExecute({ approvalId: 'appr-3', actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-3',
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('EXPIRED')
     expect(state.writes.payment.length).toBe(0)
@@ -472,10 +623,20 @@ describe('approval anti-forgery (direct pipeline)', () => {
   it('legitimate approval by ADMIN executes exactly once; re-approval is refused', async () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
     state.tables.aIActionApproval = [pendingApprovalRow({ id: 'appr-4' })]
-    const out = await approveAndExecute({ approvalId: 'appr-4', actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-4',
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(true)
     expect(state.writes.payment.length).toBe(1)
-    const again = await approveAndExecute({ approvalId: 'appr-4', actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const again = await approveAndExecute({
+      approvalId: 'appr-4',
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(again.ok).toBe(false)
     expect(state.writes.payment.length).toBe(1)
   }, 30000)
@@ -486,7 +647,12 @@ describe('approval anti-forgery (direct pipeline)', () => {
     // Simulate tampering: the stored params no longer bind to the fingerprint.
     row.params = { amount: '500000', patientName: 'Ahmed Ali', patientId: 'pat-A1' }
     state.tables.aIActionApproval = [row]
-    const out = await approveAndExecute({ approvalId: 'appr-6', actor: ADMIN, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-6',
+      actor: ADMIN,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('FINGERPRINT_MISMATCH')
     expect(state.writes.payment.length).toBe(0)
@@ -496,7 +662,12 @@ describe('approval anti-forgery (direct pipeline)', () => {
     seed({ invoice: openInvoice(), settings: { limit: '10', budget: '10' } })
     state.tables.aIActionApproval = [pendingApprovalRow({ id: 'appr-5' })]
     const otherTenantAdmin = { ...ADMIN, hospitalId: 'hosp-B' }
-    const out = await approveAndExecute({ approvalId: 'appr-5', actor: otherTenantAdmin, approvalRoles: ['ADMIN'], mode: 'approve' })
+    const out = await approveAndExecute({
+      approvalId: 'appr-5',
+      actor: otherTenantAdmin,
+      approvalRoles: ['ADMIN'],
+      mode: 'approve',
+    })
     expect(out.ok).toBe(false)
     expect(out.code).toBe('NOT_FOUND')
   }, 30000)
@@ -511,7 +682,10 @@ describe('Gate C (approval & safety)', () => {
     // gate object machine-readable for the report.
     const checks = [
       pass('C.golden', 'approval-safety golden cases executed (see suite above)'),
-      pass('C.forgery', 'anti-forgery invariants verified (NOT_FOUND/NOT_APPROVER/SELF_APPROVAL/EXPIRED/once)'),
+      pass(
+        'C.forgery',
+        'anti-forgery invariants verified (NOT_FOUND/NOT_APPROVER/SELF_APPROVAL/EXPIRED/once)'
+      ),
     ]
     const report = gateReport('C_SAFETY', checks)
     expect(report.verdict).toBe('PASS')

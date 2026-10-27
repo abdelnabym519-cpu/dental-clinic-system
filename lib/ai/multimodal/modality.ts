@@ -25,7 +25,14 @@ import type {
   MultimodalFileClass,
 } from './types'
 
-export const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECH', 'ACCOUNTANT'] as const
+export const STAFF_ROLES = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'DOCTOR',
+  'RECEPTIONIST',
+  'LAB_TECH',
+  'ACCOUNTANT',
+] as const
 
 /**
  * Establish the dental modality for an attachment.
@@ -59,7 +66,11 @@ export function classifyDentalModality(input: {
       }
     }
     // No validated classifier exists — honest UNKNOWN, never a guess.
-    return { dentalModality: null, modalityOrigin: 'NONE', dentalImageState: 'UNKNOWN_DENTAL_IMAGE' }
+    return {
+      dentalModality: null,
+      modalityOrigin: 'NONE',
+      dentalImageState: 'UNKNOWN_DENTAL_IMAGE',
+    }
   }
   if (input.fileClass === 'MESH_3D') {
     // Meshes are dental surface geometry; the modality family is THREE_D_SCAN
@@ -76,7 +87,13 @@ export function classifyDentalModality(input: {
 
 /** The modality vocabulary (mirrors the StudyModality enum). */
 const KNOWN_MODALITIES = new Set([
-  'PANORAMIC', 'PERIAPICAL', 'BITEWING', 'CBCT', 'THREE_D_SCAN', 'PHOTO', 'CEPHALOMETRIC',
+  'PANORAMIC',
+  'PERIAPICAL',
+  'BITEWING',
+  'CBCT',
+  'THREE_D_SCAN',
+  'PHOTO',
+  'CEPHALOMETRIC',
 ])
 
 function isKnownModality(m: string): boolean {
@@ -118,7 +135,8 @@ export function capabilityForAttachment(input: {
   const { fileClass, dentalModality, liveEngines } = input
 
   // Ingestion: everything with a recognized signature is stored safely.
-  const ingestion = fileClass === 'UNKNOWN' ? 'INGESTION_UNSUPPORTED' as const : 'INGESTION_SUPPORTED' as const
+  const ingestion =
+    fileClass === 'UNKNOWN' ? ('INGESTION_UNSUPPORTED' as const) : ('INGESTION_SUPPORTED' as const)
 
   // Preprocessing: 2D images (jimp pipeline) + documents (bounded extraction).
   const preprocessing =
@@ -135,25 +153,33 @@ export function capabilityForAttachment(input: {
       'DICOM ingestion is detected and stored, but this deployment has no DICOM parser ' +
       '(ingestion ≠ parsing ≠ visualization ≠ AI analysis). CBCT volume AI is not claimed.'
   } else if (fileClass === 'MESH_3D') {
-    const task = (dentalModality === 'CBCT' ? 'cbct_surface_segmentation' : 'dental_mesh_segmentation')
+    const task =
+      dentalModality === 'CBCT' ? 'cbct_surface_segmentation' : 'dental_mesh_segmentation'
     const res = resolveCapability(task, dentalModality ?? undefined)
     const meshEngine = res.ok && res.resolvable && res.task ? res.task.engine : null
     if (meshEngine) {
       engine = meshEngine
-      aiAnalysis = liveEngines === null ? 'AI_ANALYSIS_SUPPORTED'
-        : liveEngines.includes(meshEngine) ? 'REAL_INFERENCE_VERIFIED'
-        : 'AI_ANALYSIS_SUPPORTED'
-      reason = liveEngines === null
-        ? `Capability row '${task}' resolves to ${meshEngine}; live engine state unknown in this deployment.`
-        : liveEngines.includes(meshEngine)
-          ? `${meshEngine} is live with verified weights (REAL INFERENCE VERIFIED in this environment).`
-          : `${meshEngine} is registered but not currently AVAILABLE (see runtime reason); no analysis is claimed.`
+      aiAnalysis =
+        liveEngines === null
+          ? 'AI_ANALYSIS_SUPPORTED'
+          : liveEngines.includes(meshEngine)
+            ? 'REAL_INFERENCE_VERIFIED'
+            : 'AI_ANALYSIS_SUPPORTED'
+      reason =
+        liveEngines === null
+          ? `Capability row '${task}' resolves to ${meshEngine}; live engine state unknown in this deployment.`
+          : liveEngines.includes(meshEngine)
+            ? `${meshEngine} is live with verified weights (REAL INFERENCE VERIFIED in this environment).`
+            : `${meshEngine} is registered but not currently AVAILABLE (see runtime reason); no analysis is claimed.`
     } else {
-      reason = res.ok ? (res.reason ?? 'no engine for this capability') : (res.error ?? 'capability unknown')
+      reason = res.ok
+        ? (res.reason ?? 'no engine for this capability')
+        : (res.error ?? 'capability unknown')
     }
   } else if (fileClass === 'IMAGE_2D') {
     if (!dentalModality) {
-      reason = 'Dental modality is UNKNOWN_DENTAL_IMAGE — no engine can be selected for an unclassified image (no validated classifier exists; nothing is guessed).'
+      reason =
+        'Dental modality is UNKNOWN_DENTAL_IMAGE — no engine can be selected for an unclassified image (no validated classifier exists; nothing is guessed).'
     } else {
       const tasks = tasksForModality(dentalModality)
       const supported = tasks.flatMap((t) => {
@@ -172,14 +198,18 @@ export function capabilityForAttachment(input: {
           reason = `Capability '${row.task}' has no engine in the registry — no analysis is claimed.`
         } else {
           engine = imgEngine
-          aiAnalysis = liveEngines === null ? 'AI_ANALYSIS_SUPPORTED'
-            : liveEngines.includes(imgEngine) ? 'REAL_INFERENCE_VERIFIED'
-            : 'AI_ANALYSIS_SUPPORTED'
-          reason = liveEngines === null
-            ? `Capability '${row.task}' resolves to ${imgEngine}; live engine state unknown in this deployment.`
-            : liveEngines.includes(imgEngine)
-              ? `${imgEngine} is live with verified weights.`
-              : `${imgEngine} is registered for ${row.task} but not currently AVAILABLE (weights/runtime not verified here); analysis is not claimed.`
+          aiAnalysis =
+            liveEngines === null
+              ? 'AI_ANALYSIS_SUPPORTED'
+              : liveEngines.includes(imgEngine)
+                ? 'REAL_INFERENCE_VERIFIED'
+                : 'AI_ANALYSIS_SUPPORTED'
+          reason =
+            liveEngines === null
+              ? `Capability '${row.task}' resolves to ${imgEngine}; live engine state unknown in this deployment.`
+              : liveEngines.includes(imgEngine)
+                ? `${imgEngine} is live with verified weights.`
+                : `${imgEngine} is registered for ${row.task} but not currently AVAILABLE (weights/runtime not verified here); analysis is not claimed.`
         }
       }
     }

@@ -6,7 +6,11 @@ import { describe, it, expect } from 'vitest'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import {
-  createFakePrisma, makeRequest, PAT_A1, HOSP_A, ACTORS,
+  createFakePrisma,
+  makeRequest,
+  PAT_A1,
+  HOSP_A,
+  ACTORS,
 } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
@@ -45,23 +49,32 @@ describe('Case 360 context (CASE profile)', () => {
   })
 
   it('caseId scope is re-validated against tenant+patient — same id owned by another patient does not resolve', async () => {
-    const ok = await buildClinicalContext(
-      makeRequest({ profile: 'CASE', caseId: 'plan-A1' }),
-      db()
-    )
+    const ok = await buildClinicalContext(makeRequest({ profile: 'CASE', caseId: 'plan-A1' }), db())
     expect((ok.cases as any).data.plans.length).toBe(1)
     expect((ok.cases as any).data.plans[0].planNumber).toBe('TP-A-501')
 
     // A row with the SAME id but a different patientId in the same tenant
     // must not be returned for Patient A's request.
     const db2 = createFakePrisma({
-      treatmentPlan: [{
-        id: 'plan-A1', hospitalId: HOSP_A, patientId: 'pat-OTHER', planNumber: 'TP-IMPOSTOR',
-        title: 'Impostor plan', status: 'ACTIVE', diagnosis: 'IMPOSTOR DATA',
-        chiefComplaint: null, consentGiven: false, estimatedCost: null,
-        appointmentId: null, doctorId: 'x', doctor: null, createdAt: new Date('2026-01-01'),
-        items: [],
-      }],
+      treatmentPlan: [
+        {
+          id: 'plan-A1',
+          hospitalId: HOSP_A,
+          patientId: 'pat-OTHER',
+          planNumber: 'TP-IMPOSTOR',
+          title: 'Impostor plan',
+          status: 'ACTIVE',
+          diagnosis: 'IMPOSTOR DATA',
+          chiefComplaint: null,
+          consentGiven: false,
+          estimatedCost: null,
+          appointmentId: null,
+          doctorId: 'x',
+          doctor: null,
+          createdAt: new Date('2026-01-01'),
+          items: [],
+        },
+      ],
     })
     const scoped = await buildClinicalContext(
       makeRequest({ profile: 'CASE', caseId: 'plan-A1' }),

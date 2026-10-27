@@ -231,8 +231,12 @@ export function ImageCompare({ open, onOpenChange, before, after }: ImageCompare
                 </div>
 
                 {/* Labels */}
-                <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">{t('ui.before')}</div>
-                <div className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">{t('ui.after')}</div>
+                <div className="absolute top-3 left-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">
+                  {t('ui.before')}
+                </div>
+                <div className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded text-xs text-white z-20">
+                  {t('ui.after')}
+                </div>
               </div>
             )}
           </div>

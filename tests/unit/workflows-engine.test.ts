@@ -18,25 +18,63 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createFakePrisma, HOSP_A, PAT_A1, NOW, ACTORS } from '@/tests/harness/context-fixtures'
-import { WORKFLOWS, getWorkflow, WORKFLOW_CASE_REVIEW, WORKFLOW_IMAGING_REVIEW, WORKFLOW_FOLLOW_UP, WORKFLOW_DAILY_CLINIC } from '@/lib/ai/workflows/definitions'
+import {
+  WORKFLOWS,
+  getWorkflow,
+  WORKFLOW_CASE_REVIEW,
+  WORKFLOW_IMAGING_REVIEW,
+  WORKFLOW_FOLLOW_UP,
+  WORKFLOW_DAILY_CLINIC,
+} from '@/lib/ai/workflows/definitions'
 import { runWorkflow, cancelWorkflow, type WorkflowDeps } from '@/lib/ai/workflows/engine'
 import { createMemoryWorkflowRunStore } from '@/lib/ai/workflows/run-store'
-import { isValidTransition, WORKFLOW_STATUSES, type WorkflowDefinition, type WorkflowContext } from '@/lib/ai/workflows/types'
+import {
+  isValidTransition,
+  WORKFLOW_STATUSES,
+  type WorkflowDefinition,
+  type WorkflowContext,
+} from '@/lib/ai/workflows/types'
 import { IntelligenceError, type CaseGraph } from '@/lib/ai/intelligence/types'
 import { buildCaseGraph, type GraphPrisma } from '@/lib/ai/intelligence/case-graph'
 
-const STAFF = [{ id: 'staff-doctor-1', hospitalId: HOSP_A, firstName: 'Hana', lastName: 'Shalaby', role: 'DOCTOR' }]
-const AI_JOBS = [{
-  id: 'job-A1', hospitalId: HOSP_A, studyId: 'study-A1', engine: 'clm', status: 'COMPLETED',
-  requestedById: 'staff-doctor-1', modelVersion: 'v1.2.0', modelChecksum: 'c0ffee',
-  orchestratorVersion: '2.1.0', startedAt: NOW, completedAt: NOW, confidence: 0.87,
-  findings: [{ condition: 'caries', tooth_number: 36 }],
-  reviewedById: 'staff-doctor-1', reviewedAt: NOW, reviewDecision: 'ACCEPTED',
-  acceptedFindings: [{ condition: 'caries', tooth_number: 36 }], createdAt: NOW,
-}]
+const STAFF = [
+  {
+    id: 'staff-doctor-1',
+    hospitalId: HOSP_A,
+    firstName: 'Hana',
+    lastName: 'Shalaby',
+    role: 'DOCTOR',
+  },
+]
+const AI_JOBS = [
+  {
+    id: 'job-A1',
+    hospitalId: HOSP_A,
+    studyId: 'study-A1',
+    engine: 'clm',
+    status: 'COMPLETED',
+    requestedById: 'staff-doctor-1',
+    modelVersion: 'v1.2.0',
+    modelChecksum: 'c0ffee',
+    orchestratorVersion: '2.1.0',
+    startedAt: NOW,
+    completedAt: NOW,
+    confidence: 0.87,
+    findings: [{ condition: 'caries', tooth_number: 36 }],
+    reviewedById: 'staff-doctor-1',
+    reviewedAt: NOW,
+    reviewDecision: 'ACCEPTED',
+    acceptedFindings: [{ condition: 'caries', tooth_number: 36 }],
+    createdAt: NOW,
+  },
+]
 
 function fakePrisma() {
-  return createFakePrisma({ staff: STAFF, aiAnalysisJob: AI_JOBS, aiMemoryItem: [] } as never) as unknown as GraphPrisma
+  return createFakePrisma({
+    staff: STAFF,
+    aiAnalysisJob: AI_JOBS,
+    aiMemoryItem: [],
+  } as never) as unknown as GraphPrisma
 }
 
 function ctx(over: Partial<WorkflowContext> = {}): WorkflowContext {
@@ -66,7 +104,12 @@ function makeDeps(over: Partial<WorkflowDeps> = {}): WorkflowDeps {
 // ---------------------------------------------------------------------------
 
 describe('Phase 9 — workflow definitions (§22)', () => {
-  const all = [WORKFLOW_CASE_REVIEW, WORKFLOW_IMAGING_REVIEW, WORKFLOW_FOLLOW_UP, WORKFLOW_DAILY_CLINIC]
+  const all = [
+    WORKFLOW_CASE_REVIEW,
+    WORKFLOW_IMAGING_REVIEW,
+    WORKFLOW_FOLLOW_UP,
+    WORKFLOW_DAILY_CLINIC,
+  ]
   it('four canonical workflows, unique ids, resolvable', () => {
     expect(Object.keys(WORKFLOWS)).toHaveLength(4)
     const ids = all.map((d) => d.workflowId)
@@ -74,26 +117,38 @@ describe('Phase 9 — workflow definitions (§22)', () => {
     for (const d of all) expect(getWorkflow(d.workflowId)).toBe(d)
   })
 
-  it.each(all.map((d) => [d.workflowId, d] as const))('definition %s is structurally valid', (_id, d) => {
-    // Unique step ids.
-    const stepIds = d.steps.map((s) => s.id)
-    expect(new Set(stepIds).size).toBe(stepIds.length)
-    // Bounded program.
-    expect(d.steps.length).toBeLessThanOrEqual(d.maxSteps)
-    expect(d.maxSteps).toBeGreaterThan(0)
-    expect(d.maxToolCalls).toBeGreaterThan(0)
-    expect(d.timeoutMs).toBeGreaterThan(0)
-    // No invented tools: every step tool is in the allowed set.
-    for (const s of d.steps) {
-      if (s.usesTool) expect(d.allowedTools, `step ${s.id} tool ${s.usesTool}`).toContain(s.usesTool)
+  it.each(all.map((d) => [d.workflowId, d] as const))(
+    'definition %s is structurally valid',
+    (_id, d) => {
+      // Unique step ids.
+      const stepIds = d.steps.map((s) => s.id)
+      expect(new Set(stepIds).size).toBe(stepIds.length)
+      // Bounded program.
+      expect(d.steps.length).toBeLessThanOrEqual(d.maxSteps)
+      expect(d.maxSteps).toBeGreaterThan(0)
+      expect(d.maxToolCalls).toBeGreaterThan(0)
+      expect(d.timeoutMs).toBeGreaterThan(0)
+      // No invented tools: every step tool is in the allowed set.
+      for (const s of d.steps) {
+        if (s.usesTool)
+          expect(d.allowedTools, `step ${s.id} tool ${s.usesTool}`).toContain(s.usesTool)
+      }
+      // Approval steps must exist in the program.
+      for (const a of d.approvalRequiredSteps) expect(stepIds, `approval step ${a}`).toContain(a)
+      // Retry policy is bounded.
+      expect(d.retry.maxRetries).toBeGreaterThanOrEqual(0)
+      // Roles are real roles.
+      for (const r of d.allowedRoles)
+        expect([
+          'SUPER_ADMIN',
+          'ADMIN',
+          'DOCTOR',
+          'RECEPTIONIST',
+          'LAB_TECH',
+          'ACCOUNTANT',
+        ]).toContain(r)
     }
-    // Approval steps must exist in the program.
-    for (const a of d.approvalRequiredSteps) expect(stepIds, `approval step ${a}`).toContain(a)
-    // Retry policy is bounded.
-    expect(d.retry.maxRetries).toBeGreaterThanOrEqual(0)
-    // Roles are real roles.
-    for (const r of d.allowedRoles) expect(['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST', 'LAB_TECH', 'ACCOUNTANT']).toContain(r)
-  })
+  )
 
   it('sensitive steps are declared approval-required', () => {
     expect(WORKFLOW_FOLLOW_UP.approvalRequiredSteps).toContain('propose_action')
@@ -127,18 +182,37 @@ describe('Phase 9 — state machine (§23)', () => {
 
   it('cancelling a completed run → INT_WORKFLOW_INVALID_TRANSITION', async () => {
     const deps = makeDeps()
-    const done = await runWorkflow(deps, { workflowId: 'daily_clinic_review', context: ctx({ patientId: null }) })
+    const done = await runWorkflow(deps, {
+      workflowId: 'daily_clinic_review',
+      context: ctx({ patientId: null }),
+    })
     expect(done.run.status).toBe('COMPLETED')
-    await expect(cancelWorkflow(deps, done.run.id, HOSP_A)).rejects.toMatchObject({ code: 'INT_WORKFLOW_INVALID_TRANSITION' })
+    await expect(cancelWorkflow(deps, done.run.id, HOSP_A)).rejects.toMatchObject({
+      code: 'INT_WORKFLOW_INVALID_TRANSITION',
+    })
   })
 
   it('cancelling an active (PENDING-equivalent) run → CANCELLED', async () => {
     const deps = makeDeps()
     const run = await deps.store.create({
-      id: 'wfrun-cancel-1', workflowId: 'case_review', version: 1, status: 'PENDING',
-      hospitalId: HOSP_A, patientId: PAT_A1, caseId: null, actorId: 's', actorRole: 'DOCTOR',
-      currentStep: null, stepLog: [], approvalId: null, context: {}, result: null,
-      attempts: 1, startedAt: null, completedAt: null, expiresAt: new Date(NOW.getTime() + 30_000).toISOString(),
+      id: 'wfrun-cancel-1',
+      workflowId: 'case_review',
+      version: 1,
+      status: 'PENDING',
+      hospitalId: HOSP_A,
+      patientId: PAT_A1,
+      caseId: null,
+      actorId: 's',
+      actorRole: 'DOCTOR',
+      currentStep: null,
+      stepLog: [],
+      approvalId: null,
+      context: {},
+      result: null,
+      attempts: 1,
+      startedAt: null,
+      completedAt: null,
+      expiresAt: new Date(NOW.getTime() + 30_000).toISOString(),
     })
     const cancelled = await cancelWorkflow(deps, run.id, HOSP_A)
     expect(cancelled.status).toBe('CANCELLED')
@@ -154,20 +228,30 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
   it('RBAC at trigger: a role outside the definition → INT_WORKFLOW_ROLE_DENIED', async () => {
     // daily_clinic_review allows only SUPER_ADMIN/ADMIN/DOCTOR.
     await expect(
-      runWorkflow(makeDeps(), { workflowId: 'daily_clinic_review', context: ctx({ patientId: null, actor: { id: 'r', role: 'RECEPTIONIST' } }) }),
+      runWorkflow(makeDeps(), {
+        workflowId: 'daily_clinic_review',
+        context: ctx({ patientId: null, actor: { id: 'r', role: 'RECEPTIONIST' } }),
+      })
     ).rejects.toMatchObject({ code: 'INT_WORKFLOW_ROLE_DENIED' })
     // imaging_review has no RECEPTIONIST either.
     await expect(
-      runWorkflow(makeDeps(), { workflowId: 'imaging_review', context: ctx({ actor: { id: 'r', role: 'RECEPTIONIST' } }) }),
+      runWorkflow(makeDeps(), {
+        workflowId: 'imaging_review',
+        context: ctx({ actor: { id: 'r', role: 'RECEPTIONIST' } }),
+      })
     ).rejects.toMatchObject({ code: 'INT_WORKFLOW_ROLE_DENIED' })
   })
 
   it('unknown workflowId → INT_WORKFLOW_NOT_FOUND (no invented workflows)', async () => {
-    await expect(runWorkflow(makeDeps(), { workflowId: 'hack_workflow', context: ctx() })).rejects.toMatchObject({ code: 'INT_WORKFLOW_NOT_FOUND' })
+    await expect(
+      runWorkflow(makeDeps(), { workflowId: 'hack_workflow', context: ctx() })
+    ).rejects.toMatchObject({ code: 'INT_WORKFLOW_NOT_FOUND' })
   })
 
   it('patient-scoped workflow without patientId → INT_INVALID_PARAMS', async () => {
-    await expect(runWorkflow(makeDeps(), { workflowId: 'case_review', context: ctx({ patientId: null }) })).rejects.toMatchObject({ code: 'INT_INVALID_PARAMS' })
+    await expect(
+      runWorkflow(makeDeps(), { workflowId: 'case_review', context: ctx({ patientId: null }) })
+    ).rejects.toMatchObject({ code: 'INT_INVALID_PARAMS' })
   })
 
   it('case_review → COMPLETED with bounded, verified step log', async () => {
@@ -186,7 +270,14 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
     expect(Number(res.run.result!.toolCalls)).toBeLessThanOrEqual(WORKFLOW_CASE_REVIEW.maxToolCalls)
     // Output items keep trust classes.
     const classes = new Set(res.outputItems.map((o) => o.insightClass))
-    for (const c of classes) expect(['FACT', 'AI_INTERPRETATION', 'DERIVED_INSIGHT', 'RECOMMENDATION', 'ACTION']).toContain(c)
+    for (const c of classes)
+      expect([
+        'FACT',
+        'AI_INTERPRETATION',
+        'DERIVED_INSIGHT',
+        'RECOMMENDATION',
+        'ACTION',
+      ]).toContain(c)
     // The persistent store has the terminal row.
     const stored = await deps.store.findUnique(res.run.id, HOSP_A)
     expect(stored?.status).toBe('COMPLETED')
@@ -198,7 +289,10 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
     const res = await runWorkflow(deps, { workflowId: 'imaging_review', context: ctx() })
     // The run reaches the sensitive step and stops there, failing closed.
     expect(res.run.status).toBe('FAILED')
-    expect(res.run.result).toMatchObject({ failedStep: 'create_finding', error: expect.stringContaining('NO_PIPELINE_ACTION') })
+    expect(res.run.result).toMatchObject({
+      failedStep: 'create_finding',
+      error: expect.stringContaining('NO_PIPELINE_ACTION'),
+    })
     // The review package (CDS stance) WAS produced before the boundary.
     const pkg = res.outputItems.find((o) => o.titleKey === 'wf.out.reviewPackage')
     expect(pkg).toBeTruthy()
@@ -212,10 +306,18 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
     const deps = makeDeps({
       runAction: async (action, params) => {
         calls.push({ action, params })
-        return { status: 'APPROVAL_REQUIRED', success: false, message: 'pending approval', approvalId: 'appr-123' }
+        return {
+          status: 'APPROVAL_REQUIRED',
+          success: false,
+          message: 'pending approval',
+          approvalId: 'appr-123',
+        }
       },
     })
-    const res = await runWorkflow(deps, { workflowId: 'follow_up', context: ctx({ patientName: 'Ahmed Ali' }) })
+    const res = await runWorkflow(deps, {
+      workflowId: 'follow_up',
+      context: ctx({ patientName: 'Ahmed Ali' }),
+    })
     expect(res.run.status).toBe('WAITING_APPROVAL')
     expect(res.run.approvalId).toBe('appr-123')
     expect(res.run.currentStep).toBe('propose_action')
@@ -290,7 +392,9 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
         return tick <= 1 ? NOW : new Date(NOW.getTime() + 60_000)
       },
     })
-    await expect(runWorkflow(deps, { workflowId: 'case_review', context: ctx() })).rejects.toMatchObject({ code: 'INT_WORKFLOW_EXPIRED' })
+    await expect(
+      runWorkflow(deps, { workflowId: 'case_review', context: ctx() })
+    ).rejects.toMatchObject({ code: 'INT_WORKFLOW_EXPIRED' })
   })
 
   it('tool budget: a definition whose steps exceed maxToolCalls is rejected', async () => {
@@ -303,7 +407,12 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
       maxToolCalls: 1,
       steps: [
         { id: 's1', kind: 'BUILD_CASE_GRAPH', titleKey: 'wf.step.buildCaseGraph', usesTool: 't' },
-        { id: 's2', kind: 'RETRIEVE_KNOWLEDGE', titleKey: 'wf.step.retrieveKnowledge', usesTool: 't' },
+        {
+          id: 's2',
+          kind: 'RETRIEVE_KNOWLEDGE',
+          titleKey: 'wf.step.retrieveKnowledge',
+          usesTool: 't',
+        },
       ],
     }
     ;(WORKFLOWS as Record<string, WorkflowDefinition>)['__test_budget__'] = evil
@@ -326,11 +435,20 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
       ...WORKFLOW_CASE_REVIEW,
       workflowId: '__test_tool__',
       allowedTools: ['t'],
-      steps: [{ id: 's1', kind: 'RESOLVE_PATIENT', titleKey: 'wf.step.resolvePatient', usesTool: 'invented_tool' }],
+      steps: [
+        {
+          id: 's1',
+          kind: 'RESOLVE_PATIENT',
+          titleKey: 'wf.step.resolvePatient',
+          usesTool: 'invented_tool',
+        },
+      ],
     }
     ;(WORKFLOWS as Record<string, WorkflowDefinition>)['__test_tool__'] = evil
     try {
-      await expect(runWorkflow(makeDeps(), { workflowId: '__test_tool__', context: ctx() })).rejects.toMatchObject({ code: 'INT_WORKFLOW_NOT_RUNNABLE' })
+      await expect(
+        runWorkflow(makeDeps(), { workflowId: '__test_tool__', context: ctx() })
+      ).rejects.toMatchObject({ code: 'INT_WORKFLOW_NOT_RUNNABLE' })
     } finally {
       delete (WORKFLOWS as Record<string, WorkflowDefinition>)['__test_tool__']
     }
@@ -346,7 +464,10 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
   })
 
   it('clinic workflow (no patient) runs to COMPLETED without a graph', async () => {
-    const res = await runWorkflow(makeDeps(), { workflowId: 'daily_clinic_review', context: ctx({ patientId: null }) })
+    const res = await runWorkflow(makeDeps(), {
+      workflowId: 'daily_clinic_review',
+      context: ctx({ patientId: null }),
+    })
     expect(res.run.status).toBe('COMPLETED')
     expect(res.run.patientId).toBeNull()
     const clinic = res.outputItems.find((o) => o.titleKey === 'wf.out.clinicState')
@@ -355,7 +476,10 @@ describe('Phase 9 — engine runner (§24–§26)', () => {
 
   it('cross-tenant patient in context → scope revalidation fails the run (never serves foreign data)', async () => {
     // PAT_B1 belongs to tenant B; the context claims hospitalId HOSP_A.
-    const res = await runWorkflow(makeDeps(), { workflowId: 'case_review', context: ctx({ patientId: 'pat-B1' }) })
+    const res = await runWorkflow(makeDeps(), {
+      workflowId: 'case_review',
+      context: ctx({ patientId: 'pat-B1' }),
+    })
     expect(res.run.status).toBe('FAILED')
     // Deliberately vague (no tenant enumeration): NOT_FOUND, never a foreign graph.
     expect(String(res.run.result!.error)).toContain('INT_PATIENT_NOT_FOUND')

@@ -7,14 +7,19 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createMemoryKnowledgeStore } from '@/lib/ai/knowledge/store'
 import { ingest, detectPatientData } from '@/lib/ai/knowledge/ingestion'
 import { NOW } from '@/tests/harness/context-fixtures'
-import { buildKnowledgeTestWorld, CORPUS, PATIENT_LEAK_SOURCE } from '@/tests/harness/knowledge-fixtures'
+import {
+  buildKnowledgeTestWorld,
+  CORPUS,
+  PATIENT_LEAK_SOURCE,
+} from '@/tests/harness/knowledge-fixtures'
 
 let mem, idFactory
 function factory() {
   let n = 0
   return () => `ks-${String(++n).padStart(3, '0')}`
 }
-const run = (input, store = mem.store) => ingest(input, store, { now: () => NOW, idFactory: factory() })
+const run = (input, store = mem.store) =>
+  ingest(input, store, { now: () => NOW, idFactory: factory() })
 
 const baseSource = (over = {}) => ({
   sourceKey: 'src-test',
@@ -40,7 +45,18 @@ describe('ingestion pipeline', () => {
     expect(report.failure).toBeNull()
     const stages = report.stages.map((s) => s.stage)
     // order: exact-hash dedup (checksum) runs before the heavier near-dup scan
-    expect(stages).toEqual(['validate', 'normalize', 'metadata', 'domain', 'chunking', 'checksum', 'dedup', 'index', 'validate_publish', 'publish'])
+    expect(stages).toEqual([
+      'validate',
+      'normalize',
+      'metadata',
+      'domain',
+      'chunking',
+      'checksum',
+      'dedup',
+      'index',
+      'validate_publish',
+      'publish',
+    ])
     for (const s of report.stages) expect(s.ok).toBe(true)
     expect(report.chunkCount).toBeGreaterThan(0)
     expect(report.contentHash).toMatch(/^[0-9a-f]{64}$/)
@@ -55,7 +71,10 @@ describe('ingestion pipeline', () => {
   })
 
   it('rejects invalid metadata with a typed code (no partial publish)', async () => {
-    const report = await run({ source: baseSource({ authorityTier: 'TIER_9' }), content: CORPUS.periodoV2.content })
+    const report = await run({
+      source: baseSource({ authorityTier: 'TIER_9' }),
+      content: CORPUS.periodoV2.content,
+    })
     expect(report.status).toBe('REJECTED')
     expect(report.failure.code).toBe('INVALID_QUERY')
     // nothing published — only a REJECTED observability record
@@ -64,7 +83,10 @@ describe('ingestion pipeline', () => {
   })
 
   it('rejects TENANT scope without hospitalId', async () => {
-    const report = await run({ source: baseSource({ scope: 'TENANT' }), content: CORPUS.periodoV2.content })
+    const report = await run({
+      source: baseSource({ scope: 'TENANT' }),
+      content: CORPUS.periodoV2.content,
+    })
     expect(report.failure?.code).toBe('INVALID_QUERY')
   })
 
@@ -88,7 +110,12 @@ describe('ingestion pipeline', () => {
 
   it('keeps unknown metadata UNKNOWN — never infers jurisdiction/dates', async () => {
     const report = await run({
-      source: baseSource({ jurisdiction: undefined, publicationDate: undefined, version: undefined, lastUpdated: undefined }),
+      source: baseSource({
+        jurisdiction: undefined,
+        publicationDate: undefined,
+        version: undefined,
+        lastUpdated: undefined,
+      }),
       content: CORPUS.unknownMeta.content,
     })
     expect(report.status).toBe('PUBLISHED')
@@ -100,14 +127,21 @@ describe('ingestion pipeline', () => {
 
   it('rejects duplicated content (same hash, different source)', async () => {
     await run({ source: baseSource(), content: CORPUS.periodoV2.content })
-    const dup = await run({ source: baseSource({ sourceKey: 'src-mirror' }), content: CORPUS.periodoV2.content })
+    const dup = await run({
+      source: baseSource({ sourceKey: 'src-mirror' }),
+      content: CORPUS.periodoV2.content,
+    })
     expect(dup.failure?.code).toBe('DUPLICATE_CONTENT')
     expect(await mem.store.listPublishedSources(null)).toHaveLength(1)
   })
 
   it('versions stay distinguishable: v2 supersedes v1, never deletes it', async () => {
     await run({ source: { ...CORPUS.periodoV1.source }, content: CORPUS.periodoV1.content })
-    const r2 = await run({ source: { ...CORPUS.periodoV2.source }, content: CORPUS.periodoV2.content, replaceVersion: true })
+    const r2 = await run({
+      source: { ...CORPUS.periodoV2.source },
+      content: CORPUS.periodoV2.content,
+      replaceVersion: true,
+    })
     expect(r2.status).toBe('PUBLISHED')
     expect(r2.supersededDocumentIds).toHaveLength(1)
     const src = await mem.store.findSourceByKey('synthetic-periodontitis-guideline')
@@ -127,8 +161,13 @@ describe('ingestion pipeline', () => {
     expect(detectPatientData('Patient PAT_A1 has caries on tooth 36')).toBe(true)
     expect(detectPatientData('Patient id: 12345. Chart #4521.')).toBe(true)
     expect(detectPatientData('caries treatment includes scaling and root planing')).toBe(false)
-    expect(detectPatientData('Root canal treatment is indicated for irreversible pulpitis')).toBe(false)
-    const report = await run({ source: { ...PATIENT_LEAK_SOURCE.source }, content: PATIENT_LEAK_SOURCE.content })
+    expect(detectPatientData('Root canal treatment is indicated for irreversible pulpitis')).toBe(
+      false
+    )
+    const report = await run({
+      source: { ...PATIENT_LEAK_SOURCE.source },
+      content: PATIENT_LEAK_SOURCE.content,
+    })
     expect(report.failure?.code).toBe('PATIENT_DATA_DETECTED')
     expect(await mem.store.listPublishedSources(null)).toHaveLength(0)
   })
@@ -148,7 +187,10 @@ describe('ingestion pipeline', () => {
   })
 
   it('records rejected sources as observability rows (never retrievable)', async () => {
-    await run({ source: baseSource({ sourceKey: 'bad', domain: undefined as any }), content: 'not dental content about quantum physics' })
+    await run({
+      source: baseSource({ sourceKey: 'bad', domain: undefined as any }),
+      content: 'not dental content about quantum physics',
+    })
     const src = await mem.store.findSourceByKey('bad')
     expect(src.status).toBe('REJECTED')
     expect(src.rejectReason).toBeTruthy()

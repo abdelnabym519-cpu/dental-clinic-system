@@ -154,8 +154,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       | 'PAID'
       | 'OVERDUE'
       | 'CANCELLED'
-      | 'REFUNDED' =
-      invoice.status
+      | 'REFUNDED' = invoice.status
     if (newBalanceAmount <= 0) {
       newStatus = 'PAID'
     } else if (newPaidAmount > 0) {

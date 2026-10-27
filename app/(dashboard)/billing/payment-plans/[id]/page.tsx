@@ -222,11 +222,19 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   const statusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
+        return (
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('ui.active')}</Badge>
+        )
       case 'COMPLETED':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.completed')}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+            {t('ui.completed')}
+          </Badge>
+        )
       case 'DEFAULTED':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
+        return (
+          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.defaulted')}</Badge>
+        )
       case 'CANCELLED':
         return <Badge variant="secondary">{t('ui.cancelled')}</Badge>
       default:
@@ -252,9 +260,15 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
   const installmentBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.paid')}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('ui.paid')}</Badge>
+        )
       case 'PENDING':
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">{t('ui.pending')}</Badge>
+        return (
+          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+            {t('ui.pending')}
+          </Badge>
+        )
       case 'OVERDUE':
         return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">{t('ui.overdue')}</Badge>
       case 'WAIVED':
@@ -325,7 +339,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {statusBadge(plan.status)}
             </div>
             <p className="text-muted-foreground">
-              {plan.patient.firstName} {plan.patient.lastName} {t("— Invoice")}{' '}
+              {plan.patient.firstName} {plan.patient.lastName} {t('— Invoice')}{' '}
               <Link
                 href={`/billing/invoices/${plan.invoice.id}`}
                 className="text-blue-600 hover:underline"
@@ -341,7 +355,9 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             className="text-destructive"
             onClick={() => setCancelDialog(true)}
           >
-            <Ban className="h-4 w-4 mr-2" />{t('ui.cancel_plan')}</Button>
+            <Ban className="h-4 w-4 mr-2" />
+            {t('ui.cancel_plan')}
+          </Button>
         )}
       </div>
 
@@ -356,7 +372,8 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             <div className="text-2xl font-bold">{formatCurrency(plan.totalAmount)}</div>
             {plan.interestRate > 0 && (
               <p className="text-xs text-muted-foreground">
-                {t("Includes")} {Number(plan.interestRate)}{t("% interest")}
+                {t('Includes')} {Number(plan.interestRate)}
+                {t('% interest')}
               </p>
             )}
           </CardContent>
@@ -371,7 +388,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {formatCurrency(plan.totalPaid)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {plan.paidInstallments} {t("of")} {plan.installments} {t("installments")}
+              {plan.paidInstallments} {t('of')} {plan.installments} {t('installments')}
             </p>
           </CardContent>
         </Card>
@@ -388,7 +405,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {plan.installments -
                 plan.paidInstallments -
                 plan.schedules.filter((s) => s.status === 'WAIVED').length}{' '}
-              {t("remaining")}
+              {t('remaining')}
             </p>
           </CardContent>
         </Card>
@@ -402,7 +419,9 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               {plan.nextDueDate ? format(new Date(plan.nextDueDate), 'dd MMM') : '—'}
             </div>
             {plan.overdueInstallments > 0 && (
-              <p className="text-xs text-red-600">{plan.overdueInstallments} {t('overdue')}</p>
+              <p className="text-xs text-red-600">
+                {plan.overdueInstallments} {t('overdue')}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -425,10 +444,11 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </div>
           <div className="flex justify-between mt-2 text-xs text-muted-foreground">
             <span>
-              {plan.downPayment > 0 && t("Down payment: {v1}", { v1: formatCurrency(plan.downPayment) })}
+              {plan.downPayment > 0 &&
+                t('Down payment: {v1}', { v1: formatCurrency(plan.downPayment) })}
             </span>
             <span>
-              {frequencyLabel(plan.frequency)} {t("— Started")}{' '}
+              {frequencyLabel(plan.frequency)} {t('— Started')}{' '}
               {format(new Date(plan.startDate), 'dd MMM yyyy')}
             </span>
           </div>
@@ -620,7 +640,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{t("Amount (EGP )")}</Label>
+              <Label>{t('Amount (EGP )')}</Label>
               <Input
                 type="number"
                 value={payAmount}
@@ -646,7 +666,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t("Transaction ID (Optional)")}</Label>
+              <Label>{t('Transaction ID (Optional)')}</Label>
               <Input
                 placeholder={t('Reference number...')}
                 value={payTransactionId}
@@ -655,7 +675,9 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayDialog(false)}>{t('ui.cancel')}</Button>
+            <Button variant="outline" onClick={() => setPayDialog(false)}>
+              {t('ui.cancel')}
+            </Button>
             <Button onClick={handlePay} disabled={paying || payAmount <= 0}>
               {paying ? (
                 <>
@@ -663,7 +685,7 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
                   {t('Processing...')}
                 </>
               ) : (
-                t("Record Payment — {v1}", { v1: formatCurrency(payAmount) })
+                t('Record Payment — {v1}', { v1: formatCurrency(payAmount) })
               )}
             </Button>
           </DialogFooter>
@@ -676,11 +698,15 @@ export default function PaymentPlanDetailPage({ params }: { params: Promise<{ id
           <DialogHeader>
             <DialogTitle>{t('Cancel Payment Plan')}</DialogTitle>
             <DialogDescription>
-              {t("This will cancel the payment plan and waive all remaining installments. Payments already made will not be refunded.")}
+              {t(
+                'This will cancel the payment plan and waive all remaining installments. Payments already made will not be refunded.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialog(false)}>{t('ui.keep_plan')}</Button>
+            <Button variant="outline" onClick={() => setCancelDialog(false)}>
+              {t('ui.keep_plan')}
+            </Button>
             <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
               {cancelling ? (
                 <>

@@ -164,7 +164,15 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
 
   it('creates a booking inside default working hours (201, SCHEDULED)', async () => {
     prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(201)
     expect(prisma.appointment.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: 'SCHEDULED' }) })
@@ -172,7 +180,15 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
   })
 
   it('rejects a booking outside working hours with a coded 409', async () => {
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '23:00', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '23:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('OUTSIDE_WORKING_HOURS')
@@ -180,7 +196,15 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
   })
 
   it('rejects a booking inside the default 13:00–14:00 lunch (DURING_BREAK)', async () => {
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '13:15', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '13:15',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('DURING_BREAK')
@@ -188,17 +212,40 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
 
   it('rejects a booking on an approved-leave day (DOCTOR_ON_LEAVE)', async () => {
     prisma.leave.findMany.mockResolvedValue([
-      { startDate: new Date('2027-06-15'), endDate: new Date('2027-06-16'), leaveType: 'CASUAL', status: 'APPROVED' },
+      {
+        startDate: new Date('2027-06-15'),
+        endDate: new Date('2027-06-16'),
+        leaveType: 'CASUAL',
+        status: 'APPROVED',
+      },
     ])
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('DOCTOR_ON_LEAVE')
   })
 
   it('rejects a booking on a clinic holiday (CLINIC_HOLIDAY)', async () => {
-    prisma.holiday.findMany.mockResolvedValue([{ date: new Date('2027-06-15'), isRecurring: false }])
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    prisma.holiday.findMany.mockResolvedValue([
+      { date: new Date('2027-06-15'), isRecurring: false },
+    ])
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('CLINIC_HOLIDAY')
@@ -212,11 +259,25 @@ describe('Agenda Phase-2 — booking-window enforcement (4A/4D)', () => {
       }),
     })
     prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
-    const open = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    const open = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(open.status).toBe(201)
 
     const closed = await POST(
-      post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: '2027-06-20', scheduledTime: '10:00', duration: 30 }) // Sunday
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: '2027-06-20',
+        scheduledTime: '10:00',
+        duration: 30,
+      }) // Sunday
     )
     expect(closed.status).toBe(409)
     expect((await closed.json()).code).toBe('OUTSIDE_WORKING_HOURS')
@@ -229,13 +290,18 @@ describe('Agenda Phase-2 — room assignment (4E)', () => {
   it('books into a free room and stores the assignment', async () => {
     prisma.room.findFirst.mockResolvedValue({ id: 'room-1', hospitalId: HOSPITAL, name: 'Chair 1' })
     prisma.appointment.findMany.mockImplementation(async ({ where }) =>
-      where?.roomId === 'room-1'
-        ? [{ id: 'other', scheduledTime: '09:00', duration: 30 }]
-        : []
+      where?.roomId === 'room-1' ? [{ id: 'other', scheduledTime: '09:00', duration: 30 }] : []
     )
     prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
     const res = await POST(
-      post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30, roomId: 'room-1' })
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+        roomId: 'room-1',
+      })
     )
     expect(res.status).toBe(201)
     expect(prisma.appointment.create).toHaveBeenCalledWith(
@@ -251,7 +317,14 @@ describe('Agenda Phase-2 — room assignment (4E)', () => {
         : []
     )
     const res = await POST(
-      post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:30', duration: 30, roomId: 'room-1' })
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:30',
+        duration: 30,
+        roomId: 'room-1',
+      })
     )
     expect(res.status).toBe(409)
     const body = await res.json()
@@ -261,7 +334,14 @@ describe('Agenda Phase-2 — room assignment (4E)', () => {
   it('never trusts a client roomId from another hospital (404)', async () => {
     prisma.room.findFirst.mockResolvedValue(null)
     const res = await POST(
-      post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30, roomId: 'other-hospital-room' })
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+        roomId: 'other-hospital-room',
+      })
     )
     expect(res.status).toBe(404)
   })
@@ -299,7 +379,15 @@ describe('Agenda Phase-2 — recurrence series (4J)', () => {
 
   it('does not set recurrenceGroupId for a single (non-recurring) booking', async () => {
     prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
-    await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(prisma.appointment.create.mock.calls[0][0].data.recurrenceGroupId).toBeNull()
   })
 
@@ -362,10 +450,38 @@ describe('Agenda Phase-2 — series editing scope (4J, PUT applyTo)', () => {
     )
     // The recurrence group as the DB stores it — including the edited base row.
     prisma.appointment.findMany.mockResolvedValue([
-      { id: 'apt-past', scheduledDate: new Date('2027-06-08T00:00:00'), scheduledTime: '10:00', duration: 30, status: 'COMPLETED', roomId: null },
-      { id: 'apt-base', scheduledDate: new Date('2027-06-15T00:00:00'), scheduledTime: '10:00', duration: 30, status: 'SCHEDULED', roomId: null },
-      { id: 'apt-future1', scheduledDate: new Date('2027-06-22T00:00:00'), scheduledTime: '10:00', duration: 30, status: 'SCHEDULED', roomId: null },
-      { id: 'apt-future2', scheduledDate: new Date('2027-06-29T00:00:00'), scheduledTime: '10:00', duration: 30, status: 'CONFIRMED', roomId: null },
+      {
+        id: 'apt-past',
+        scheduledDate: new Date('2027-06-08T00:00:00'),
+        scheduledTime: '10:00',
+        duration: 30,
+        status: 'COMPLETED',
+        roomId: null,
+      },
+      {
+        id: 'apt-base',
+        scheduledDate: new Date('2027-06-15T00:00:00'),
+        scheduledTime: '10:00',
+        duration: 30,
+        status: 'SCHEDULED',
+        roomId: null,
+      },
+      {
+        id: 'apt-future1',
+        scheduledDate: new Date('2027-06-22T00:00:00'),
+        scheduledTime: '10:00',
+        duration: 30,
+        status: 'SCHEDULED',
+        roomId: null,
+      },
+      {
+        id: 'apt-future2',
+        scheduledDate: new Date('2027-06-29T00:00:00'),
+        scheduledTime: '10:00',
+        duration: 30,
+        status: 'CONFIRMED',
+        roomId: null,
+      },
     ])
     prisma.appointment.update.mockResolvedValue({ id: 'updated' })
 
@@ -382,7 +498,9 @@ describe('Agenda Phase-2 — series editing scope (4J, PUT applyTo)', () => {
     expect(prisma.appointment.update).toHaveBeenCalledTimes(3)
     const updatedIds = prisma.appointment.update.mock.calls.map((c) => c[0]?.where?.id)
     expect(updatedIds).toEqual(['apt-base', 'apt-future1', 'apt-future2'])
-    expect(prisma.appointment.update.mock.calls.find((c) => c[0]?.where?.id === 'apt-past')).toBeUndefined()
+    expect(
+      prisma.appointment.update.mock.calls.find((c) => c[0]?.where?.id === 'apt-past')
+    ).toBeUndefined()
     const future1 = prisma.appointment.update.mock.calls.find(
       (c) => c[0]?.where?.id === 'apt-future1'
     )
@@ -399,7 +517,15 @@ describe('Agenda Phase-2b — per-doctor breaks & blocked slots (2B/2D)', () => 
     prisma.doctorBreak.findMany.mockResolvedValue([
       { startTime: '12:30', endTime: '13:30', label: 'Lunch' },
     ])
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '12:45', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '12:45',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('DOCTOR_ON_BREAK')
@@ -408,7 +534,15 @@ describe('Agenda Phase-2b — per-doctor breaks & blocked slots (2B/2D)', () => 
 
   it('rejects a booking overlapping an arbitrary blocked slot (SLOT_BLOCKED)', async () => {
     prisma.blockedSlot.findMany.mockResolvedValue([{ id: 'bs-1', reason: 'Equipment maintenance' }])
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '10:00', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '10:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.code).toBe('SLOT_BLOCKED')
@@ -419,7 +553,15 @@ describe('Agenda Phase-2b — per-doctor breaks & blocked slots (2B/2D)', () => 
     prisma.doctorBreak.findMany.mockResolvedValue([]) // queried per-doctor
     prisma.appointment.create.mockResolvedValue({ id: 'apt-1' })
     // 15:00 avoids the default 13:00–14:00 clinic lunch on purpose.
-    const res = await POST(post({ patientId: PATIENT, doctorId: DOCTOR, scheduledDate: DAY, scheduledTime: '15:00', duration: 30 }))
+    const res = await POST(
+      post({
+        patientId: PATIENT,
+        doctorId: DOCTOR,
+        scheduledDate: DAY,
+        scheduledTime: '15:00',
+        duration: 30,
+      })
+    )
     expect(res.status).toBe(201)
   })
 
@@ -428,7 +570,10 @@ describe('Agenda Phase-2b — per-doctor breaks & blocked slots (2B/2D)', () => 
       new NextRequest('http://localhost/api/blocked-slots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startAt: '2027-06-15T10:00:00.000Z', endAt: '2027-06-15T09:00:00.000Z' }),
+        body: JSON.stringify({
+          startAt: '2027-06-15T10:00:00.000Z',
+          endAt: '2027-06-15T09:00:00.000Z',
+        }),
       })
     )
     expect(res.status).toBe(400)
@@ -443,7 +588,9 @@ describe('Agenda Phase-2 — rooms API (4E)', () => {
     const body = await res.json()
     expect(body.rooms).toHaveLength(1)
     expect(prisma.room.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ hospitalId: HOSPITAL, isActive: true }) })
+      expect.objectContaining({
+        where: expect.objectContaining({ hospitalId: HOSPITAL, isActive: true }),
+      })
     )
   })
 
@@ -562,7 +709,11 @@ describe('Agenda Phase-2 — reminder infrastructure (4M)', () => {
       new NextRequest('http://localhost/api/appointments/reminders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointmentId: 'apt-1', channel: 'FAX', scheduledFor: new Date().toISOString() }),
+        body: JSON.stringify({
+          appointmentId: 'apt-1',
+          channel: 'FAX',
+          scheduledFor: new Date().toISOString(),
+        }),
       })
     )
     expect(res.status).toBe(400)
@@ -591,7 +742,9 @@ describe('Agenda Phase-2 — reminder infrastructure (4M)', () => {
       appointment: { hospitalId: HOSPITAL },
     })
     prisma.appointmentReminder.update.mockResolvedValue({ id: 'rem-1', status: 'CANCELLED' })
-    const ok = await remindersDELETE(new NextRequest('http://localhost/api/appointments/reminders?id=rem-1', { method: 'DELETE' }))
+    const ok = await remindersDELETE(
+      new NextRequest('http://localhost/api/appointments/reminders?id=rem-1', { method: 'DELETE' })
+    )
     expect(ok.status).toBe(200)
     expect(prisma.appointmentReminder.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: 'CANCELLED' } })
@@ -602,7 +755,9 @@ describe('Agenda Phase-2 — reminder infrastructure (4M)', () => {
       status: 'SENT',
       appointment: { hospitalId: HOSPITAL },
     })
-    const sent = await remindersDELETE(new NextRequest('http://localhost/api/appointments/reminders?id=rem-2', { method: 'DELETE' }))
+    const sent = await remindersDELETE(
+      new NextRequest('http://localhost/api/appointments/reminders?id=rem-2', { method: 'DELETE' })
+    )
     expect(sent.status).toBe(400)
   })
 })
@@ -614,7 +769,9 @@ describe('Agenda Phase-2 — availability context endpoint (4A/4B/4C overlay)', 
       { dayOfWeek: 2, startTime: '10:00', endTime: '18:00', isActive: true }, // Tuesday
     ])
     const res = await availabilityGET(
-      new NextRequest(`http://localhost/api/appointments/availability?doctorId=${DOCTOR}&date=${DAY}`)
+      new NextRequest(
+        `http://localhost/api/appointments/availability?doctorId=${DOCTOR}&date=${DAY}`
+      )
     )
     expect(res.status).toBe(200)
     const body = await res.json()

@@ -18,7 +18,10 @@ import { describe, it, expect } from 'vitest'
 import { existsSync } from 'node:fs'
 import { resolve as resolvePath } from 'node:path'
 import {
-  classifyLocalAiEvidence, verifyInferenceReport, sha256OfFile, findEngineEvidenceRoot,
+  classifyLocalAiEvidence,
+  verifyInferenceReport,
+  sha256OfFile,
+  findEngineEvidenceRoot,
 } from '@/lib/ai/evaluation/local-ai'
 import { resolveCapability } from '@/lib/ai/engines/capability-matrix'
 import { environmentFacts, type EnvLabel } from '@/lib/ai/evaluation'
@@ -27,8 +30,14 @@ import { environmentFacts, type EnvLabel } from '@/lib/ai/evaluation'
 const ROOT = process.cwd()
 const envLabel: EnvLabel = environmentFacts().label
 
-function artifactCheck(reportsDir: string, engine: string, zipName: string | null, meshName: string | null): { ok: boolean; reason: string; sha: string | null } {
-  if (!reportsDir) return { ok: false, reason: 'evidence directory not present in this workspace', sha: null }
+function artifactCheck(
+  reportsDir: string,
+  engine: string,
+  zipName: string | null,
+  meshName: string | null
+): { ok: boolean; reason: string; sha: string | null } {
+  if (!reportsDir)
+    return { ok: false, reason: 'evidence directory not present in this workspace', sha: null }
   if (zipName) {
     const zip = resolvePath(reportsDir, '..', 'model', zipName)
     const sha = sha256OfFile(zip)
@@ -43,10 +52,15 @@ function artifactCheck(reportsDir: string, engine: string, zipName: string | nul
 }
 
 function liveProbe(): { ok: boolean | null; reason: string } {
-  if (process.env.EVAL_REAL_ENGINE !== '1') return { ok: null, reason: 'live replay not opt-in (EVAL_REAL_ENGINE unset) — offline default' }
+  if (process.env.EVAL_REAL_ENGINE !== '1')
+    return { ok: null, reason: 'live replay not opt-in (EVAL_REAL_ENGINE unset) — offline default' }
   // Opt-in path: a real /health probe would run here. In this sandbox the
   // python venv + torch are not installed, so the honest result is blocked.
-  return { ok: false, reason: 'EVAL_REAL_ENGINE=1 set but local engine runtime (python venv + torch) not installed in this environment' }
+  return {
+    ok: false,
+    reason:
+      'EVAL_REAL_ENGINE=1 set but local engine runtime (python venv + torch) not installed in this environment',
+  }
 }
 
 describe('LOCAL AI gate (Gate F): 4-state classification', () => {
@@ -56,7 +70,12 @@ describe('LOCAL AI gate (Gate F): 4-state classification', () => {
     const dir = findEngineEvidenceRoot(ROOT, 'meshsegnet-max')
     expect(dir).toBeTruthy()
     for (const engine of ['meshsegnet-max', 'meshsegnet-man']) {
-      const report = verifyInferenceReport(resolvePath(dir!, `phase6_real_inference_${engine === 'meshsegnet-max' ? 'max' : 'man'}.json`))
+      const report = verifyInferenceReport(
+        resolvePath(
+          dir!,
+          `phase6_real_inference_${engine === 'meshsegnet-max' ? 'max' : 'man'}.json`
+        )
+      )
       expect(report.ok, `report for ${engine} should verify: ${report.reason}`).toBe(true)
       expect(report.status).toBe('REAL_INFERENCE_VERIFIED')
       expect(report.cpuOnly).toBe(true)
@@ -67,7 +86,12 @@ describe('LOCAL AI gate (Gate F): 4-state classification', () => {
 
   it('classifies each meshsegnet engine with its exact evidence state + reason', () => {
     const dir = findEngineEvidenceRoot(ROOT, 'meshsegnet-max')!
-    const art = artifactCheck(dir, 'meshsegnet-max', 'MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip', 'ZOUIF2W4_upper.obj')
+    const art = artifactCheck(
+      dir,
+      'meshsegnet-max',
+      'MeshSegNet_Max_15_classes_72samples_lr1e-2_best.zip',
+      'ZOUIF2W4_upper.obj'
+    )
     const max = classifyLocalAiEvidence({
       engine: 'dental_mesh_segmentation',
       codePresent: existsSync(resolvePath(ROOT, 'ai/engines/meshsegnet-max')),
@@ -79,7 +103,12 @@ describe('LOCAL AI gate (Gate F): 4-state classification', () => {
       environment: envLabel,
       liveOptIn: process.env.EVAL_REAL_ENGINE === '1',
     })
-    expect(['REAL_INFERENCE_VERIFIED', 'CAPABILITY_VERIFIED', 'UNAVAILABLE', 'ENVIRONMENT_BLOCKED']).toContain(max.state)
+    expect([
+      'REAL_INFERENCE_VERIFIED',
+      'CAPABILITY_VERIFIED',
+      'UNAVAILABLE',
+      'ENVIRONMENT_BLOCKED',
+    ]).toContain(max.state)
     expect(max.reason.length).toBeGreaterThan(10)
     // No-false-green: a pass requires report + artifacts (or opt-in live OK).
     if (max.state === 'REAL_INFERENCE_VERIFIED') {
@@ -132,7 +161,13 @@ describe('LOCAL AI gate (Gate F): 4-state classification', () => {
     //  - PASS when every engine resolves to a DEFINED state with a reason
     //    (defined ≠ "verified"); no engine may be silently skipped.
     const states: string[] = []
-    for (const task of ['dental_mesh_segmentation', 'dental_mesh_segmentation_mandible', 'panoramic_caries_detection', 'cbct_surface_segmentation', 'cbct_multi_structure_segmentation']) {
+    for (const task of [
+      'dental_mesh_segmentation',
+      'dental_mesh_segmentation_mandible',
+      'panoramic_caries_detection',
+      'cbct_surface_segmentation',
+      'cbct_multi_structure_segmentation',
+    ]) {
       const r = resolveCapability(task)
       expect(r.ok, `capability ${task} must resolve`).toBe(true)
       states.push(r.task?.overall ?? 'UNKNOWN')

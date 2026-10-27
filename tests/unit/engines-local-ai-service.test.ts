@@ -8,7 +8,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { LocalAIService, type LocalAiAnalyzeParams } from '@/lib/ai/engines/local-ai-service'
 import { LocalAiError } from '@/lib/ai/engines/types'
-import { createFakeCapabilitySource, createFakeTransport, MESHSEGNET_MAX_SHA } from '@/tests/harness/local-ai-fixtures'
+import {
+  createFakeCapabilitySource,
+  createFakeTransport,
+  MESHSEGNET_MAX_SHA,
+} from '@/tests/harness/local-ai-fixtures'
 
 const NOW = new Date('2026-09-30T12:00:00.000Z')
 
@@ -17,10 +21,14 @@ function service(source = null, transport = null) {
 }
 
 const params = (over = {}): LocalAiAnalyzeParams => ({
-  jobId: 'job-1', studyId: 'study-1', hospitalId: 'hosp-A',
+  jobId: 'job-1',
+  studyId: 'study-1',
+  hospitalId: 'hosp-A',
   imageKey: 'hosp-A/imaging/pat-1/study-1/original.obj',
-  imageSha256: '5'.repeat(64), modality: 'THREE_D_SCAN',
-  requestedBy: 'staff-1', ...over,
+  imageSha256: '5'.repeat(64),
+  modality: 'THREE_D_SCAN',
+  requestedBy: 'staff-1',
+  ...over,
 })
 
 describe('engine selection — deterministic, never from text (§13/§32)', () => {
@@ -35,14 +43,15 @@ describe('engine selection — deterministic, never from text (§13/§32)', () =
   it('unknown modality -> typed UNSUPPORTED_CAPABILITY (no fallback engine)', () => {
     const s = service()
     expect(() => s.resolveEngine({ modality: 'PHOTO' })).toThrowError(
-      expect.objectContaining({ code: 'UNSUPPORTED_CAPABILITY' }),
+      expect.objectContaining({ code: 'UNSUPPORTED_CAPABILITY' })
     )
   })
 
   it('task + modality disagreement -> typed MODALITY_MISMATCH', () => {
     const s = service()
-    expect(() => s.resolveEngine({ modality: 'CBCT', jaw: 'man', task: 'panoramic_caries_detection' }))
-      .toThrowError(expect.objectContaining({ code: 'MODALITY_MISMATCH' }))
+    expect(() =>
+      s.resolveEngine({ modality: 'CBCT', jaw: 'man', task: 'panoramic_caries_detection' })
+    ).toThrowError(expect.objectContaining({ code: 'MODALITY_MISMATCH' }))
   })
 
   it('an engine name in the "user text" never selects an engine (no text path exists)', () => {
@@ -50,7 +59,7 @@ describe('engine selection — deterministic, never from text (§13/§32)', () =
     const s = service()
     // @ts-expect-error deliberately passing a text-like blob as the tuple
     expect(() => s.resolveEngine({ modality: 'run liodon on my xray' })).toThrowError(
-      expect.objectContaining({ code: 'UNSUPPORTED_CAPABILITY' }),
+      expect.objectContaining({ code: 'UNSUPPORTED_CAPABILITY' })
     )
   })
 })
@@ -85,9 +94,12 @@ describe('analyze — normalized envelope (§12)', () => {
   })
 
   it('zero findings is an explicit warning (absence of detection != absence of disease)', async () => {
-    const s = service(null, createFakeTransport('findings', {
-      extra: { findings: [], top_confidence: null },
-    }))
+    const s = service(
+      null,
+      createFakeTransport('findings', {
+        extra: { findings: [], top_confidence: null },
+      })
+    )
     const env = await s.analyze(params({ modality: 'PANORAMIC' }))
     expect(env.findings).toEqual([])
     expect(env.warnings.some((w) => /no findings detected/i.test(w))).toBe(true)
@@ -112,20 +124,31 @@ describe('analyze — normalized envelope (§12)', () => {
 
 describe('analyze — integrity & security (§18/§24/§19)', () => {
   it('forged provenance (checksum mismatch) is rejected — never presented', async () => {
-    const s = service(null, createFakeTransport('segments', {
-      extra: {
-        provenance: {
-          engine: 'meshsegnet-max', model_version: '1.0.0',
-          model_checksum: '0'.repeat(64),
-          model_checksum_expected: MESHSEGNET_MAX_SHA,
-          model_source: 'x', model_license: 'MIT', orchestrator_version: '19B.0.0',
-          image_sha256: '5'.repeat(64), device: 'cpu', runtime: 'torch (CPU)',
-          processing_time_ms: 1, raw_output_key: 'k', annotated_image_key: null, timestamp: 't',
+    const s = service(
+      null,
+      createFakeTransport('segments', {
+        extra: {
+          provenance: {
+            engine: 'meshsegnet-max',
+            model_version: '1.0.0',
+            model_checksum: '0'.repeat(64),
+            model_checksum_expected: MESHSEGNET_MAX_SHA,
+            model_source: 'x',
+            model_license: 'MIT',
+            orchestrator_version: '19B.0.0',
+            image_sha256: '5'.repeat(64),
+            device: 'cpu',
+            runtime: 'torch (CPU)',
+            processing_time_ms: 1,
+            raw_output_key: 'k',
+            annotated_image_key: null,
+            timestamp: 't',
+          },
         },
-      },
-    }))
+      })
+    )
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'PROVENANCE_MISMATCH' }),
+      expect.objectContaining({ code: 'PROVENANCE_MISMATCH' })
     )
   })
 
@@ -137,16 +160,19 @@ describe('analyze — integrity & security (§18/§24/§19)', () => {
       return res
     })
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'PROVENANCE_MISMATCH' }),
+      expect.objectContaining({ code: 'PROVENANCE_MISMATCH' })
     )
   })
 
   it('stand-in (synthetic) results are refused defense-in-depth', async () => {
-    const s = service(null, createFakeTransport('segments', {
-      extra: { is_standin_not_meshsegnet: true },
-    }))
+    const s = service(
+      null,
+      createFakeTransport('segments', {
+        extra: { is_standin_not_meshsegnet: true },
+      })
+    )
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'STANDIN_REJECTED' }),
+      expect.objectContaining({ code: 'STANDIN_REJECTED' })
     )
   })
 
@@ -157,21 +183,21 @@ describe('analyze — integrity & security (§18/§24/§19)', () => {
       return res
     })
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'JOB_TENANT_MISMATCH' }),
+      expect.objectContaining({ code: 'JOB_TENANT_MISMATCH' })
     )
   })
 
   it('no transport configured -> honest ORCHESTRATOR_UNREACHABLE (no fabricated result)', async () => {
     const s = service(null, null)
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'ORCHESTRATOR_UNREACHABLE' }),
+      expect.objectContaining({ code: 'ORCHESTRATOR_UNREACHABLE' })
     )
   })
 
   it('orchestrator down -> typed failure, not an invented finding', async () => {
     const s = service(null, createFakeTransport('throw'))
     await expect(s.analyze(params())).rejects.toThrowError(
-      expect.objectContaining({ code: 'ORCHESTRATOR_UNREACHABLE' }),
+      expect.objectContaining({ code: 'ORCHESTRATOR_UNREACHABLE' })
     )
   })
 })
@@ -183,7 +209,9 @@ describe('capability view — honest runtime state (§23/§34)', () => {
     expect(view.matrix.length).toBeGreaterThan(5)
     expect(view.runtime.source).toBe('orchestrator')
     expect(view.runtime.engines.length).toBe(5)
-    expect(view.runtime.health.find((h) => h.name === 'meshsegnet-max').lifecycleStatus).toBe('AVAILABLE')
+    expect(view.runtime.health.find((h) => h.name === 'meshsegnet-max').lifecycleStatus).toBe(
+      'AVAILABLE'
+    )
     expect(view.runtime.health.find((h) => h.name === 'liodon').lifecycleStatus).toBe('BLOCKED')
     expect(view.generatedAt).toBe(NOW.toISOString())
   })

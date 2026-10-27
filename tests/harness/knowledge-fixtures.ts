@@ -285,7 +285,8 @@ export const PATIENT_LEAK_SOURCE = {
     language: 'en',
     scope: 'GLOBAL',
   },
-  content: 'Patient PAT_A1 has caries on tooth 36. Patient id: PAT_A1. Chart #4521. Diagnosis: deep caries, plan: root canal treatment.',
+  content:
+    'Patient PAT_A1 has caries on tooth 36. Patient id: PAT_A1. Chart #4521. Diagnosis: deep caries, plan: root canal treatment.',
 }
 
 export interface TestKnowledgeWorld {
@@ -312,9 +313,16 @@ export async function buildKnowledgeTestWorld(): Promise<TestKnowledgeWorld> {
   const reports: Record<string, any> = {}
 
   const order: Array<keyof typeof CORPUS> = [
-    'periodoV1', 'periodoV2', 'textbookMaterials', 'clinicEducation',
-    'endoGuideline', 'webBlog', 'arabicPediatric', 'tenantBPrivate',
-    'unknownMeta', 'partialDup',
+    'periodoV1',
+    'periodoV2',
+    'textbookMaterials',
+    'clinicEducation',
+    'endoGuideline',
+    'webBlog',
+    'arabicPediatric',
+    'tenantBPrivate',
+    'unknownMeta',
+    'partialDup',
   ]
   for (const key of order) {
     const item: any = CORPUS[key]
@@ -347,7 +355,9 @@ export async function buildKnowledgeTestWorld(): Promise<TestKnowledgeWorld> {
     return doc
   }
 
-  const tenantBSource = [...mem.sources.values()].find((s: any) => s.meta.sourceKey === 'clinic-b-private-protocol')
+  const tenantBSource = [...mem.sources.values()].find(
+    (s: any) => s.meta.sourceKey === 'clinic-b-private-protocol'
+  )
 
   return {
     mem,

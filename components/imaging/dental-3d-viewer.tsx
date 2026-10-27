@@ -543,7 +543,10 @@ export default function Dental3DViewer({
               {selectedTooth && (
                 <Card className="border-blue-200 bg-blue-50/50">
                   <CardContent className="p-3">
-                    <p className="font-semibold text-sm">{t("Tooth #")}{selectedTooth}</p>
+                    <p className="font-semibold text-sm">
+                      {t('Tooth #')}
+                      {selectedTooth}
+                    </p>
                     <p className="text-xs text-muted-foreground mb-2">
                       {TOOTH_NAMES[selectedTooth]}
                     </p>
@@ -559,7 +562,7 @@ export default function Dental3DViewer({
                       </div>
                       {selectedData?.severity && (
                         <p className="text-xs text-muted-foreground">
-                          {t("Severity:")} {selectedData.severity}
+                          {t('Severity:')} {selectedData.severity}
                         </p>
                       )}
                       {selectedData?.notes && (
@@ -613,7 +616,9 @@ export default function Dental3DViewer({
               <Card>
                 <CardContent className="p-3">
                   <p className="text-sm font-medium mb-2 flex items-center gap-1">
-                    <Eye className="h-3.5 w-3.5" />{t('ui.overview')}</p>
+                    <Eye className="h-3.5 w-3.5" />
+                    {t('ui.overview')}
+                  </p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t('Present Teeth')}</span>

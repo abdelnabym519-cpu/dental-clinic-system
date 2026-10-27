@@ -7,7 +7,14 @@ import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import { canSeeSection, canSeePrivateNotes, canSeeContact } from '@/lib/ai/context/permissions'
 import {
-  createFakePrisma, makeRequest, NOW, PAT_A1, PAT_A2, HOSP_A, HOSP_B, ACTORS,
+  createFakePrisma,
+  makeRequest,
+  NOW,
+  PAT_A1,
+  PAT_A2,
+  HOSP_A,
+  HOSP_B,
+  ACTORS,
 } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
@@ -16,7 +23,20 @@ const serialized = (ctx: any) => serializeForPrompt(ctx)
 describe('RBAC: unauthorized fields are OMITTED (never retrieved-and-hidden)', () => {
   it('role → section matrix is explicit and stable', () => {
     // DOCTOR: full clinical access
-    for (const s of ['identity', 'medical', 'dental', 'appointments', 'clinical', 'cases', 'treatments', 'prescriptions', 'imaging', 'financial', 'risk', 'timeline'] as const) {
+    for (const s of [
+      'identity',
+      'medical',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+      'imaging',
+      'financial',
+      'risk',
+      'timeline',
+    ] as const) {
       expect(canSeeSection('DOCTOR', s), s).toBe(true)
     }
     // ACCOUNTANT: financial + cases (billing) + identity/appointments; no clinical free text sections
@@ -84,8 +104,9 @@ describe('RBAC: unauthorized fields are OMITTED (never retrieved-and-hidden)', (
       makeRequest({ actor: { ...ACTORS.labTechA }, profile: 'FULL_360' }),
       db()
     )
-    const included = (Object.keys(ctx) as (keyof typeof ctx)[])
-      .filter((k) => k !== 'meta' && (ctx[k] as any).status === 'included')
+    const included = (Object.keys(ctx) as (keyof typeof ctx)[]).filter(
+      (k) => k !== 'meta' && (ctx[k] as any).status === 'included'
+    )
     expect(included.sort()).toEqual(['appointments', 'identity', 'imaging'])
     const s = serialized(ctx)
     expect(s).not.toContain('Metformin')

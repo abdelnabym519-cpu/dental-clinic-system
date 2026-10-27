@@ -26,13 +26,20 @@ export interface PlanContext {
   /** Phase 4 — the user's original message (for the knowledge query). */
   message: string
   /** Phase 6 — resolved attachment metadata (server facts, tenant-scoped). */
-  attachmentRefs?: { id: string; fileClass: string; dentalModality: string | null; patientId: string | null }[] | null
+  attachmentRefs?:
+    | { id: string; fileClass: string; dentalModality: string | null; patientId: string | null }[]
+    | null
   /** Phase 6 — deterministic tooth focus (FDI) when exactly one was named. */
   toothFdi?: number | null
   limit: AgentLimits
 }
 
-function step(index: number, tool: string, input: Record<string, unknown>, intent: string): AgentPlanStep {
+function step(
+  index: number,
+  tool: string,
+  input: Record<string, unknown>,
+  intent: string
+): AgentPlanStep {
   return { index, tool, input, intent, status: 'PENDING' }
 }
 
@@ -56,11 +63,15 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
   /** Phase 4 — the bounded knowledge tool (server-resolved scope). */
   const addKnowledge = () => {
     if (!knowledge) return
-    add('retrieve_dental_knowledge', {
-      question: ctx.message,
-      ...(knowledge.domain ? { domain: knowledge.domain } : {}),
-      maxResults: 5,
-    }, 'retrieve dental knowledge')
+    add(
+      'retrieve_dental_knowledge',
+      {
+        question: ctx.message,
+        ...(knowledge.domain ? { domain: knowledge.domain } : {}),
+        maxResults: 5,
+      },
+      'retrieve dental knowledge'
+    )
   }
 
   switch (task.taskType) {
@@ -78,19 +89,28 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       // from text here; it only reports what is registered and evidenced.
       if (task.localAiCapability) {
         add('local_ai_capabilities', {}, 'list local AI capabilities')
-        return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'local_ai_capability_plan_failed' }
+        return {
+          plan: steps.length ? finalize(steps, task) : null,
+          reason: steps.length ? null : 'local_ai_capability_plan_failed',
+        }
       }
       // Phase 4 — pure knowledge question (no patient involved): knowledge
       // only; no patient context is fetched and none is fabricated.
       if (knowledge && !ctx.hasPatient) {
         addKnowledge()
-        return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'knowledge_plan_failed' }
+        return {
+          plan: steps.length ? finalize(steps, task) : null,
+          reason: steps.length ? null : 'knowledge_plan_failed',
+        }
       }
       if (!ctx.hasPatient) return { plan: null, reason: 'patient_required' }
       if (profileTool && !ctx.hasContext) add(profileTool, {}, 'retrieve context')
       // Phase 4 — hybrid: patient facts AND dental knowledge (kept separate).
       addKnowledge()
-      return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'context_already_retrieved' }
+      return {
+        plan: steps.length ? finalize(steps, task) : null,
+        reason: steps.length ? null : 'context_already_retrieved',
+      }
     }
 
     case 'ATTACHMENT_ANALYSIS': {
@@ -103,10 +123,10 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       // scheduled for analysis: no engine can be selected without a modality,
       // and guessing is forbidden. MESH_3D always resolves to THREE_D_SCAN.
       const analyzable = atts.filter(
-        (a) => a.fileClass === 'MESH_3D' || (a.fileClass === 'IMAGE_2D' && a.dentalModality != null),
+        (a) => a.fileClass === 'MESH_3D' || (a.fileClass === 'IMAGE_2D' && a.dentalModality != null)
       )
       const documents = atts.filter(
-        (a) => a.fileClass === 'DOCUMENT_PDF' || a.fileClass === 'DOCUMENT_TEXT',
+        (a) => a.fileClass === 'DOCUMENT_PDF' || a.fileClass === 'DOCUMENT_TEXT'
       )
       const compare = task.attachmentTask?.compare === true && analyzable.length >= 2
       if (compare) {
@@ -114,7 +134,7 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
         add(
           'compare_attachments',
           { attachmentIdA: analyzable[0].id, attachmentIdB: analyzable[1].id },
-          'safe before/after comparison (observed + model differences)',
+          'safe before/after comparison (observed + model differences)'
         )
         for (const a of analyzable.slice(2)) {
           add('analyze_attachment', { attachmentId: a.id }, 'analyze extra attachment individually')
@@ -123,13 +143,19 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
         for (const a of analyzable) {
           add(
             'analyze_attachment',
-            typeof ctx.toothFdi === 'number' ? { attachmentId: a.id, toothFdi: ctx.toothFdi } : { attachmentId: a.id },
-            'run verified local AI analysis on the attachment',
+            typeof ctx.toothFdi === 'number'
+              ? { attachmentId: a.id, toothFdi: ctx.toothFdi }
+              : { attachmentId: a.id },
+            'run verified local AI analysis on the attachment'
           )
         }
       }
       for (const d of documents) {
-        add('read_document_attachment', { attachmentId: d.id }, 'read document attachment as untrusted data')
+        add(
+          'read_document_attachment',
+          { attachmentId: d.id },
+          'read document attachment as untrusted data'
+        )
       }
       if (!steps.length) {
         // DICOM volumes / unknown files only: no engine step — the answer
@@ -148,7 +174,10 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       }
       const t = ctx.operationalTopic ?? 'appointments'
       add(map[t][0], { ...(ctx.operationalInput ?? {}) }, map[t][1])
-      return { plan: steps.length ? finalize(steps, task) : null, reason: steps.length ? null : 'no_operational_tool' }
+      return {
+        plan: steps.length ? finalize(steps, task) : null,
+        reason: steps.length ? null : 'no_operational_tool',
+      }
     }
 
     case 'ACTION_REQUEST':
@@ -156,7 +185,10 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       // Context for grounding the proposal / multi-step analysis (skipped
       // when the RETRIEVE stage already built it — no duplicate calls).
       if (ctx.hasPatient && !ctx.hasContext) {
-        const tool = task.taskType === 'MULTI_STEP' && task.contextProfile === 'FULL_360' ? 'get_patient_360' : profileTool
+        const tool =
+          task.taskType === 'MULTI_STEP' && task.contextProfile === 'FULL_360'
+            ? 'get_patient_360'
+            : profileTool
         if (tool) add(tool, {}, 'retrieve context')
       }
       // Phase 4 — hybrid knowledge alongside an action (e.g. "book a
@@ -167,8 +199,16 @@ export function buildPlan(ctx: PlanContext): { plan: AgentPlan | null; reason: s
       if (ctx.actionTool && ctx.actionParamsComplete) {
         add(ctx.actionTool, ctx.actionParams, `execute ${ctx.actionTool}`)
       }
-      if (!steps.length) return { plan: null, reason: ctx.actionTool && !ctx.actionParamsComplete ? 'params_incomplete_draft' : 'no_steps' }
-      return { plan: finalize(steps, task), reason: ctx.actionTool && !ctx.actionParamsComplete ? 'params_incomplete_draft' : null }
+      if (!steps.length)
+        return {
+          plan: null,
+          reason:
+            ctx.actionTool && !ctx.actionParamsComplete ? 'params_incomplete_draft' : 'no_steps',
+        }
+      return {
+        plan: finalize(steps, task),
+        reason: ctx.actionTool && !ctx.actionParamsComplete ? 'params_incomplete_draft' : null,
+      }
     }
   }
 }
@@ -183,8 +223,14 @@ export function finalizePlan(steps: AgentPlanStep[], task: AgentTask): AgentPlan
     if (state.get(i) !== 'VISITING') return true
     const s = steps[i]
     for (const dep of s.dependsOn ?? []) {
-      if (dep >= s.index) { state.set(i, 'DONE'); return true } // self / forward = cycle
-      if (state.get(dep) === 'VISITING') { state.set(i, 'DONE'); return true }
+      if (dep >= s.index) {
+        state.set(i, 'DONE')
+        return true
+      } // self / forward = cycle
+      if (state.get(dep) === 'VISITING') {
+        state.set(i, 'DONE')
+        return true
+      }
     }
     state.set(i, 'DONE')
     return false
@@ -198,5 +244,3 @@ export function finalizePlan(steps: AgentPlanStep[], task: AgentTask): AgentPlan
 function finalize(steps: AgentPlanStep[], task: AgentTask): AgentPlan {
   return finalizePlan(steps, task)
 }
-
-

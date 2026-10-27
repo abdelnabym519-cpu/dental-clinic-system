@@ -366,7 +366,7 @@ export default function PaymentsPage() {
                       <div className="font-medium">{payment.paymentNo}</div>
                       {payment.transactionId && (
                         <div className="text-sm text-muted-foreground">
-                          {t("TXN:")} {payment.transactionId}
+                          {t('TXN:')} {payment.transactionId}
                         </div>
                       )}
                     </TableCell>
@@ -408,7 +408,7 @@ export default function PaymentsPage() {
                       <div className="font-medium">{formatCurrency(payment.amount, locale)}</div>
                       {payment.refundAmount && Number(payment.refundAmount) > 0 && (
                         <div className="text-sm text-red-600">
-                          {t("Refund:")} {formatCurrency(payment.refundAmount, locale)}
+                          {t('Refund:')} {formatCurrency(payment.refundAmount, locale)}
                         </div>
                       )}
                     </TableCell>
@@ -448,9 +448,9 @@ export default function PaymentsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("payments")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('payments')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -459,16 +459,20 @@ export default function PaymentsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

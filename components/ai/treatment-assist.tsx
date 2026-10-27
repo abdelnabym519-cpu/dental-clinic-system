@@ -190,7 +190,7 @@ function Spinner() {
   return (
     <div className="flex items-center gap-2 py-3 text-xs text-muted-foreground">
       <div className="h-3 w-3 animate-spin rounded-full border border-muted border-t-primary" />
-      <span>{t("Analyzing…")}</span>
+      <span>{t('Analyzing…')}</span>
     </div>
   )
 }
@@ -225,7 +225,7 @@ function DrugCheck({
           onKeyDown={(e) => {
             if (e.key === 'Enter') onCheck()
           }}
-          placeholder={t("e.g. Amoxicillin 500 mg")}
+          placeholder={t('e.g. Amoxicillin 500 mg')}
           className="flex-1 rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary"
         />
         <button
@@ -248,7 +248,7 @@ function DrugCheck({
               result.safe ? 'text-emerald-700' : 'text-red-700'
             )}
           >
-            {result.safe ? t("✓ No interactions detected") : t("⚠ Interactions detected")}
+            {result.safe ? t('✓ No interactions detected') : t('⚠ Interactions detected')}
           </p>
 
           {(result.interactions as any[])?.map((interaction, i) => (
@@ -270,18 +270,18 @@ function DrugCheck({
 
           {(result.allergies as any[])?.map((a, i) => (
             <p key={i} className="text-xs text-red-700 bg-red-50 rounded px-2 py-1">
-              {t("🚫 Allergy:")} {a.allergen} — {a.reaction}
+              {t('🚫 Allergy:')} {a.allergen} — {a.reaction}
             </p>
           ))}
 
           {(result.recommendations as string[])?.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {t("Recommendations:")} {(result.recommendations as string[]).join('; ')}
+              {t('Recommendations:')} {(result.recommendations as string[]).join('; ')}
             </p>
           )}
 
           <p className="text-xs text-muted-foreground italic mt-1">
-            {t("⚠ AI-generated — for doctor review only.")}
+            {t('⚠ AI-generated — for doctor review only.')}
           </p>
         </div>
       )}
@@ -322,26 +322,34 @@ function CostEstimate({
                   <span className="text-muted-foreground ml-1">×{item.quantity}</span>
                 )}
               </span>
-              <span className="font-medium">{t('EGP')} {Number(item.total).toLocaleString()}</span>
+              <span className="font-medium">
+                {t('EGP')} {Number(item.total).toLocaleString()}
+              </span>
             </div>
           ))}
           <div className="flex justify-between text-xs text-muted-foreground pt-1">
             <span>{t('ui.subtotal')}</span>
-            <span>{t('EGP')} {Number(result.subtotal || 0).toLocaleString()}</span>
+            <span>
+              {t('EGP')} {Number(result.subtotal || 0).toLocaleString()}
+            </span>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{t("VAT (14%)")}</span>
-            <span>{t('EGP')} {Number(result.vat || 0).toLocaleString()}</span>
+            <span>{t('VAT (14%)')}</span>
+            <span>
+              {t('EGP')} {Number(result.vat || 0).toLocaleString()}
+            </span>
           </div>
           <div className="flex justify-between text-sm font-semibold border-t pt-1.5 mt-1">
             <span>{t('ui.total')}</span>
-            <span>{t('EGP')} {Number(result.grandTotal || 0).toLocaleString()}</span>
+            <span>
+              {t('EGP')} {Number(result.grandTotal || 0).toLocaleString()}
+            </span>
           </div>
           {result.notes && (
             <p className="text-xs text-muted-foreground italic mt-1">{String(result.notes)}</p>
           )}
           <p className="text-xs text-muted-foreground italic">
-            {t("⚠ AI estimate — subject to change at billing.")}
+            {t('⚠ AI estimate — subject to change at billing.')}
           </p>
         </div>
       )}
@@ -399,7 +407,7 @@ function ConsentForm({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <label className="text-xs text-muted-foreground">{t("Language:")}</label>
+        <label className="text-xs text-muted-foreground">{t('Language:')}</label>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
@@ -414,7 +422,7 @@ function ConsentForm({
           disabled={loading}
           className="ml-auto text-xs text-primary hover:underline disabled:opacity-40"
         >
-          {result.title ? t("Regenerate") : t("Generate")}
+          {result.title ? t('Regenerate') : t('Generate')}
         </button>
       </div>
 
@@ -426,19 +434,19 @@ function ConsentForm({
           <div className="rounded border bg-muted/30 p-3 max-h-48 overflow-auto text-xs space-y-2">
             <p className="font-bold text-center text-sm">{t(result.title)}</p>
             <p>
-              <strong>{t("Patient:")}</strong> {String(result.patientName)}
+              <strong>{t('Patient:')}</strong> {String(result.patientName)}
             </p>
             <p>
-              <strong>{t("Hospital:")}</strong> {String(result.hospitalName)}
+              <strong>{t('Hospital:')}</strong> {String(result.hospitalName)}
             </p>
             <p>
-              <strong>{t("Procedure:")}</strong> {String(result.procedureName)}
+              <strong>{t('Procedure:')}</strong> {String(result.procedureName)}
             </p>
             <p>{String(result.description)}</p>
 
             {(result.risks as string[])?.length > 0 && (
               <>
-                <p className="font-semibold mt-2">{t("Risks:")}</p>
+                <p className="font-semibold mt-2">{t('Risks:')}</p>
                 {(result.risks as string[]).map((r, i) => (
                   <p key={i}>• {r}</p>
                 ))}
@@ -446,7 +454,7 @@ function ConsentForm({
             )}
             {(result.benefits as string[])?.length > 0 && (
               <>
-                <p className="font-semibold mt-2">{t("Benefits:")}</p>
+                <p className="font-semibold mt-2">{t('Benefits:')}</p>
                 {(result.benefits as string[]).map((b, i) => (
                   <p key={i}>• {b}</p>
                 ))}
@@ -454,7 +462,7 @@ function ConsentForm({
             )}
             {(result.alternatives as string[])?.length > 0 && (
               <>
-                <p className="font-semibold mt-2">{t("Alternatives:")}</p>
+                <p className="font-semibold mt-2">{t('Alternatives:')}</p>
                 {(result.alternatives as string[]).map((a, i) => (
                   <p key={i}>• {a}</p>
                 ))}
@@ -468,7 +476,7 @@ function ConsentForm({
             onClick={downloadText}
             className="text-xs text-muted-foreground hover:text-primary transition-colors"
           >
-            {t("⬇ Download")}
+            {t('⬇ Download')}
           </button>
         </>
       )}
@@ -500,7 +508,7 @@ function ClinicalNotes({
           disabled={loading}
           className="text-xs text-primary hover:underline disabled:opacity-40"
         >
-          {result.expandedNotes ? t("Re-expand") : t("Expand notes")}
+          {result.expandedNotes ? t('Re-expand') : t('Expand notes')}
         </button>
       </div>
 
@@ -534,7 +542,7 @@ function ClinicalNotes({
             </div>
           )}
           <p className="text-muted-foreground italic">
-            {t("⚠ AI-assisted — review and edit before saving.")}
+            {t('⚠ AI-assisted — review and edit before saving.')}
           </p>
         </div>
       )}

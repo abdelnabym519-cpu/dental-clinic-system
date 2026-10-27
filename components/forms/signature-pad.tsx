@@ -223,7 +223,9 @@ export function SignaturePad({
           onClick={clearCanvas}
           disabled={!hasSignature}
         >
-          <Eraser className="h-4 w-4 mr-1" />{t('ui.clear')}</Button>
+          <Eraser className="h-4 w-4 mr-1" />
+          {t('ui.clear')}
+        </Button>
       </div>
       <div className="flex items-start gap-2">
         <Checkbox
@@ -239,7 +241,7 @@ export function SignaturePad({
         </label>
       </div>
       <p className="text-xs text-muted-foreground">
-        {t("Signed on:")}{' '}
+        {t('Signed on:')}{' '}
         {new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
     </div>

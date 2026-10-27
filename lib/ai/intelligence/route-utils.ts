@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server'
 import type { IntelligenceErrorCode } from '@/lib/ai/intelligence/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export type RoutePrisma = any
 
 /** Staff roles allowed on the intelligence surface (PATIENT handled below). */
@@ -40,8 +40,10 @@ export const INT_ERROR_KEYS: Record<string, string> = {
 
 export function intErr(code: string, message: string, status = 400) {
   return NextResponse.json(
-    { error: { code, messageKey: INT_ERROR_KEYS[code] ?? 'aiIntelligence.error.invalid', message } },
-    { status },
+    {
+      error: { code, messageKey: INT_ERROR_KEYS[code] ?? 'aiIntelligence.error.invalid', message },
+    },
+    { status }
   )
 }
 
@@ -60,7 +62,7 @@ export function wfErr(code: string, message: string, status = 400) {
   }
   return NextResponse.json(
     { error: { code, messageKey: KEYS[code] ?? 'aiWorkflow.error.invalid', message } },
-    { status },
+    { status }
   )
 }
 
@@ -81,8 +83,13 @@ export async function resolvePatientScope(
   prisma: RoutePrisma,
   hospitalId: string,
   user: SessionUser,
-  patientId: unknown,
-): Promise<{ id: string; firstName: string | null; lastName: string | null; hospitalId: string } | null> {
+  patientId: unknown
+): Promise<{
+  id: string
+  firstName: string | null
+  lastName: string | null
+  hospitalId: string
+} | null> {
   const id = typeof patientId === 'string' && patientId ? patientId : null
   if (!id) return null
 
@@ -107,7 +114,7 @@ export async function resolveCaseScope(
   prisma: RoutePrisma,
   hospitalId: string,
   patientId: string,
-  caseId: unknown,
+  caseId: unknown
 ): Promise<string | null> {
   const id = typeof caseId === 'string' && caseId ? caseId : null
   if (!id) return null
@@ -121,7 +128,14 @@ export async function resolveCaseScope(
 /** Fire-and-forget audit (same convention as the knowledge route). */
 export function writeAudit(
   prisma: RoutePrisma,
-  p: { hospitalId: string; userId: string; action: string; entityType: string; entityId: string; newValues?: Record<string, unknown> },
+  p: {
+    hospitalId: string
+    userId: string
+    action: string
+    entityType: string
+    entityId: string
+    newValues?: Record<string, unknown>
+  }
 ): void {
   prisma.auditLog
     .create({
@@ -134,7 +148,9 @@ export function writeAudit(
         newValues: JSON.stringify(p.newValues ?? {}),
       },
     })
-    .catch((e: unknown) => console.error('AI intelligence audit failed:', e instanceof Error ? e.message : e))
+    .catch((e: unknown) =>
+      console.error('AI intelligence audit failed:', e instanceof Error ? e.message : e)
+    )
 }
 
 export function userName(u: SessionUser): string {

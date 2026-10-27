@@ -47,7 +47,7 @@ describe('WS-D: the 2D chart uses per-tooth anatomical geometry (not generic sym
     expect(lowerIdx).toBeGreaterThan(planeIdx)
     // canonical path space keeps one apex convention for every tooth
     expect(Math.sign(getToothGeometryByNumber(11).apexCenter.y)).toBe(
-      Math.sign(getToothGeometryByNumber(41).apexCenter.y),
+      Math.sign(getToothGeometryByNumber(41).apexCenter.y)
     )
   })
 

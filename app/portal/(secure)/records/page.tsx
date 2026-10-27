@@ -72,12 +72,14 @@ export default function PatientRecords() {
                       <div className="space-y-1">
                         <p className="font-medium">{treatment.procedure.name}</p>
                         {treatment.procedure.code && (
-                          <p className="text-xs text-muted-foreground">{t("Code:")} {treatment.procedure.code}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('Code:')} {treatment.procedure.code}
+                          </p>
                         )}
                         <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            {t("Dr.")} {treatment.doctor.firstName} {treatment.doctor.lastName}
+                            {t('Dr.')} {treatment.doctor.firstName} {treatment.doctor.lastName}
                           </span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -85,7 +87,9 @@ export default function PatientRecords() {
                           </span>
                         </div>
                       </div>
-                      <Badge className={statusColors[treatment.status] || 'bg-muted text-foreground'}>
+                      <Badge
+                        className={statusColors[treatment.status] || 'bg-muted text-foreground'}
+                      >
                         {treatment.status.replace('_', ' ')}
                       </Badge>
                     </div>
@@ -113,7 +117,10 @@ export default function PatientRecords() {
                   <CardContent className="py-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{t("Tooth #")}{entry.toothNumber}</p>
+                        <p className="font-medium">
+                          {t('Tooth #')}
+                          {entry.toothNumber}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {entry.condition} {entry.surface && `(${entry.surface})`}
                         </p>

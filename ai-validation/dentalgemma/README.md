@@ -10,7 +10,7 @@ fine-tune of Google's MedGemma, run locally through llama.cpp.
 > been executed, and no runtime figure exists. `STATUS` stays `UNKNOWN` until a
 > real local run produces real text on your machine and writes it to disk.
 >
-> What *has* been established, without running anything: the provenance chain, the
+> What _has_ been established, without running anything: the provenance chain, the
 > exact artifact identities, the runtime the publisher documents, and the license
 > situation. See `MODEL_PROVENANCE.md`.
 
@@ -49,10 +49,10 @@ separates them properly and records where the license story is inconsistent.
 
 ## Required artifacts
 
-| File | Size | Role |
-| --- | --- | --- |
-| `dentalgemma-4b-Q4_K_M.gguf` | 2,875,676,064 B (2.68 GiB) | the language model |
-| `dentalgemma-mmproj-f16.gguf` | 851,251,232 B (0.79 GiB) | the multimodal projector |
+| File                          | Size                       | Role                     |
+| ----------------------------- | -------------------------- | ------------------------ |
+| `dentalgemma-4b-Q4_K_M.gguf`  | 2,875,676,064 B (2.68 GiB) | the language model       |
+| `dentalgemma-mmproj-f16.gguf` | 851,251,232 B (0.79 GiB)   | the multimodal projector |
 
 **Both are required.** The model card is explicit, and llama.cpp's architecture
 makes it structural: the projector encodes the image, the language model writes
@@ -80,25 +80,25 @@ python scripts\run_dentalgemma.py --image input\panoramic.png
 
 ## Layout
 
-| Path | What it is |
-| --- | --- |
-| `MODEL_PROVENANCE.md` | The provenance chain, artifact identities, license facts, publisher inconsistencies |
-| `LOCAL_EXECUTION.md` | **Every command you must run yourself**, in order, with expected results |
-| `report.schema.json` | JSON Schema for the run report, including the four allowed statuses |
-| `reports/run_report.template.json` | The report template — committed with `"status": "UNKNOWN"` |
-| `scripts/artifacts.py` | Single source of truth for sizes, digests, repositories |
-| `scripts/sysinfo.py` | CPU / RAM / GPU / llama.cpp detection, standard library only |
-| `scripts/gguf.py` | Minimal GGUF header and metadata reader (no dependencies) |
-| `scripts/check_environment.py` | Read-only environment report |
-| `scripts/collect_system_info.py` | Machine-readable snapshot of this machine |
-| `scripts/download_artifacts.py` | Pinned-revision download, hash-verified, never destructive |
-| `scripts/verify_artifacts.py` | Presence, size, SHA-256, GGUF validity, and whether the two files form a pair. `--model-dir` reads them from anywhere |
-| `scripts/run_dentalgemma.py` | **The only script that runs a model.** CPU-only by default, with the decoding override applied and recorded |
-| `OUTPUT_DECODING.md` | The `[UNK_BYTE_0x...]` markers in the generated text: cause, evidence, and the local diagnostic |
-| `input/README.md` | Acceptable test images, and the rules about patient data |
-| `model/README.md` | What goes in `model/`, and why nothing there is committed |
-| `tests/` | Static and unit tests that need no model, no GPU and no network |
-| `tests/test_execution_policy.py` | The CPU-only policy, the decoding workaround, and what the runtime's log is allowed to prove |
+| Path                               | What it is                                                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `MODEL_PROVENANCE.md`              | The provenance chain, artifact identities, license facts, publisher inconsistencies                                   |
+| `LOCAL_EXECUTION.md`               | **Every command you must run yourself**, in order, with expected results                                              |
+| `report.schema.json`               | JSON Schema for the run report, including the four allowed statuses                                                   |
+| `reports/run_report.template.json` | The report template — committed with `"status": "UNKNOWN"`                                                            |
+| `scripts/artifacts.py`             | Single source of truth for sizes, digests, repositories                                                               |
+| `scripts/sysinfo.py`               | CPU / RAM / GPU / llama.cpp detection, standard library only                                                          |
+| `scripts/gguf.py`                  | Minimal GGUF header and metadata reader (no dependencies)                                                             |
+| `scripts/check_environment.py`     | Read-only environment report                                                                                          |
+| `scripts/collect_system_info.py`   | Machine-readable snapshot of this machine                                                                             |
+| `scripts/download_artifacts.py`    | Pinned-revision download, hash-verified, never destructive                                                            |
+| `scripts/verify_artifacts.py`      | Presence, size, SHA-256, GGUF validity, and whether the two files form a pair. `--model-dir` reads them from anywhere |
+| `scripts/run_dentalgemma.py`       | **The only script that runs a model.** CPU-only by default, with the decoding override applied and recorded           |
+| `OUTPUT_DECODING.md`               | The `[UNK_BYTE_0x...]` markers in the generated text: cause, evidence, and the local diagnostic                       |
+| `input/README.md`                  | Acceptable test images, and the rules about patient data                                                              |
+| `model/README.md`                  | What goes in `model/`, and why nothing there is committed                                                             |
+| `tests/`                           | Static and unit tests that need no model, no GPU and no network                                                       |
+| `tests/test_execution_policy.py`   | The CPU-only policy, the decoding workaround, and what the runtime's log is allowed to prove                          |
 
 ## Dependencies
 
@@ -153,7 +153,7 @@ as an error rather than "auto", so the flag is omitted entirely unless a count i
 given, and llama.cpp chooses.
 
 **CPU-only is pinned, because llama.cpp does not default to the CPU.** `-ngl`
-defaults to *auto* and the projector goes to the first GPU backend that answers —
+defaults to _auto_ and the projector goes to the first GPU backend that answers —
 on this machine the Intel Iris Xe through Vulkan, which lost the device during the
 vision encode and killed the process with `0xC0000409`. The runner therefore
 passes `-ngl 0`, `-dev none` and `--no-mmproj-offload` by default, and a GPU
@@ -168,7 +168,7 @@ policy (CPU-only, the flags that asked for a GPU, the workarounds applied) and
 backend, the layer count, `using device …` lines, and a verdict of
 `cpu-only-confirmed-by-log`, `gpu-work-observed` or `not-stated-in-log`. A GPU
 observed while CPU-only was requested becomes a warning; a log that says nothing
-yields no claim. Vulkan lines are *not* usage: the backend DLL is enumerated at
+yields no claim. Vulkan lines are _not_ usage: the backend DLL is enumerated at
 startup either way, which is why they are only counted.
 
 **The decoding workaround is a documented default with an off-switch.** The pinned
@@ -191,7 +191,7 @@ the run, never the answer.
 stderr are captured as bytes, decoded as UTF-8 explicitly, and written twice: the
 readable `<stem>_response.txt` / `<stem>_llama.log`, and the untouched
 `<stem>_stdout.raw` / `<stem>_stderr.raw`. If a byte is not valid UTF-8 it becomes
-U+FFFD in the readable file *and the substitution is counted in the report*, so a
+U+FFFD in the readable file _and the substitution is counted in the report_, so a
 change made by this lab can never be mistaken for something the model produced.
 
 **`[UNK_BYTE_0x...]` is counted, never deleted.** Those markers are written into
@@ -215,7 +215,7 @@ has to be fixed — rather than one problem per attempt, at 3.47 GiB each.
 
 Run here, in the repository, with no model present and no network access:
 
-* **151 tests, all passing** (`python -m unittest discover -s tests -v`, Python
+- **151 tests, all passing** (`python -m unittest discover -s tests -v`, Python
   3.11.2). They cover the GGUF reader against synthetic containers, the report
   template's honesty, artifact identities, the CLI contract (`--help`, BLOCKED on
   missing prerequisites, `--dry-run`, the `LOCAL HASH` output, refusal of wrong
@@ -224,13 +224,13 @@ Run here, in the repository, with no model present and no network access:
   workaround (which flags reach the argv, what the report records, and that no
   code path writes to the artifacts), and that every command printed in these
   documents uses flags the scripts accept.
-* Every script parses under `ast.parse(..., feature_version=(3, 9))`, so the
+- Every script parses under `ast.parse(..., feature_version=(3, 9))`, so the
   documented Python floor is enforced rather than asserted.
-* The failure paths were executed for real: missing artifacts, missing image,
+- The failure paths were executed for real: missing artifacts, missing image,
   wrong extension, an unrecognised image header, a non-GGUF file and a hollow
   container were all driven through the scripts and produced `BLOCKED` / failure
   exits with honest reports.
-* The capture path is tested end to end against a **synthetic runtime** (a script
+- The capture path is tested end to end against a **synthetic runtime** (a script
   named `llama-mtmd-cli` that emits bytes we choose): the incident text is
   reproduced byte for byte, the markers survive, the raw streams match the child's
   bytes exactly, invalid UTF-8 is counted rather than hidden, ANSI escapes are
@@ -244,15 +244,15 @@ until a real run on the target machine produces non-empty output.
 
 ## Reports and outputs
 
-| File | Contents |
-| --- | --- |
-| `output/<image>_response.txt` | the generated text — the artifact that proves the run |
-| `output/<image>_llama.log` | raw runtime stderr, kept verbatim |
-| `output/run_report.json` | machine-readable record of the latest run |
-| `logs/run_<UTC>.json` | immutable copy of each run |
-| `logs/environment.json` | output of `check_environment.py` |
-| `reports/system_info.json` | output of `collect_system_info.py` |
-| `reports/artifact_verification.json` | output of `verify_artifacts.py` |
+| File                                 | Contents                                              |
+| ------------------------------------ | ----------------------------------------------------- |
+| `output/<image>_response.txt`        | the generated text — the artifact that proves the run |
+| `output/<image>_llama.log`           | raw runtime stderr, kept verbatim                     |
+| `output/run_report.json`             | machine-readable record of the latest run             |
+| `logs/run_<UTC>.json`                | immutable copy of each run                            |
+| `logs/environment.json`              | output of `check_environment.py`                      |
+| `reports/system_info.json`           | output of `collect_system_info.py`                    |
+| `reports/artifact_verification.json` | output of `verify_artifacts.py`                       |
 
 `run_report.json` follows `report.schema.json` and carries the model identity,
 both artifact sizes and digests, the runtime and its version, CPU and RAM, CUDA

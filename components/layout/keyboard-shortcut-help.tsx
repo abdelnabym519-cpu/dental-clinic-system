@@ -80,12 +80,17 @@ export function KeyboardShortcutHelp() {
               </h4>
               <div className="space-y-2">
                 {section.items.map((item) => (
-                  <div key={t(item.description)} className="flex items-center justify-between text-sm">
+                  <div
+                    key={t(item.description)}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span>{t(item.description)}</span>
                     <div className="flex items-center gap-1">
                       {item.keys.map((key, i) => (
                         <span key={i}>
-                          {i > 0 && <span className="text-muted-foreground mx-0.5">{t("then")}</span>}
+                          {i > 0 && (
+                            <span className="text-muted-foreground mx-0.5">{t('then')}</span>
+                          )}
                           <kbd className="px-2 py-0.5 bg-muted rounded border text-xs font-mono">
                             {key}
                           </kbd>

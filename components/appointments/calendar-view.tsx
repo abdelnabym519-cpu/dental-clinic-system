@@ -364,10 +364,7 @@ export function CalendarView({
             (start.getTime() - dayStart.getTime()) / 60000,
             AGENDA_START_MINUTES
           )
-          const toMin = Math.min(
-            (end.getTime() - dayStart.getTime()) / 60000,
-            AGENDA_END_MINUTES
-          )
+          const toMin = Math.min((end.getTime() - dayStart.getTime()) / 60000, AGENDA_END_MINUTES)
           if (toMin <= AGENDA_START_MINUTES || fromMin >= AGENDA_END_MINUTES) return null
           return (
             <div
@@ -399,7 +396,9 @@ export function CalendarView({
             role="status"
             className="absolute left-1 right-1 top-1 z-10 rounded bg-destructive/15 px-2 py-1 text-[10px] font-semibold text-destructive pointer-events-none"
           >
-            {onLeave ? t("Provider on leave") : t("Clinic holiday: {v1}", { v1: holiday?.name ?? '' })}
+            {onLeave
+              ? t('Provider on leave')
+              : t('Clinic holiday: {v1}', { v1: holiday?.name ?? '' })}
           </div>
         )}
       </>
@@ -451,7 +450,10 @@ export function CalendarView({
 
     // Add days of current month
     for (let i = 1; i <= monthEnd.getDate(); i++) {
-      days.push({ date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i), isCurrentMonth: true })
+      days.push({
+        date: new Date(currentDate.getFullYear(), currentDate.getMonth(), i),
+        isCurrentMonth: true,
+      })
     }
 
     // Add days from next month to fill the last week
@@ -493,7 +495,12 @@ export function CalendarView({
         key={apt.id}
         role="button"
         tabIndex={0}
-        aria-label={t('Appointment {number}: {patient} at {time}, {status}', { number: apt.appointmentNo, patient: getPatientName(apt.patient), time: startLabel, status: appointmentStatusConfig[apt.status]?.label ?? apt.status })}
+        aria-label={t('Appointment {number}: {patient} at {time}, {status}', {
+          number: apt.appointmentNo,
+          patient: getPatientName(apt.patient),
+          time: startLabel,
+          status: appointmentStatusConfig[apt.status]?.label ?? apt.status,
+        })}
         className={`absolute left-1 right-1 rounded-md px-2 py-1 cursor-pointer overflow-hidden ${getStatusColor(
           apt.status
         )} ${cancelled ? 'opacity-60' : ''} hover:ring-1 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary`}
@@ -518,7 +525,7 @@ export function CalendarView({
             <div className="relative shrink-0">
               <button
                 type="button"
-                aria-label={t("Actions for appointment {v1}", { v1: apt.appointmentNo })}
+                aria-label={t('Actions for appointment {v1}', { v1: apt.appointmentNo })}
                 className="rounded p-0.5 hover:bg-black/10 focus:outline-none focus:ring-1 focus:ring-primary"
                 onClick={(e) => {
                   e.stopPropagation()
@@ -537,7 +544,7 @@ export function CalendarView({
                     className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
                     onClick={() => router.push(`/appointments/${apt.id}`)}
                   >
-                    <Eye className="h-3.5 w-3.5" /> {t("View details")}
+                    <Eye className="h-3.5 w-3.5" /> {t('View details')}
                   </button>
                   {apt.patient.id && (
                     <button
@@ -545,7 +552,7 @@ export function CalendarView({
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
                       onClick={() => router.push(`/patients/${apt.patient.id}`)}
                     >
-                      <User className="h-3.5 w-3.5" /> {t("View patient")}
+                      <User className="h-3.5 w-3.5" /> {t('View patient')}
                     </button>
                   )}
                   {canSchedule && (
@@ -555,7 +562,7 @@ export function CalendarView({
                       onClick={() => router.push(`/appointments/${apt.id}/edit`)}
                       disabled={cancelled}
                     >
-                      <Calendar className="h-3.5 w-3.5" /> {t("Edit / Reschedule")}
+                      <Calendar className="h-3.5 w-3.5" /> {t('Edit / Reschedule')}
                     </button>
                   )}
                   {canSchedule && (
@@ -566,56 +573,65 @@ export function CalendarView({
                       disabled={cancelled || cancellingId === apt.id}
                     >
                       <CalendarX className="h-3.5 w-3.5" />
-                      {cancellingId === apt.id ? t("Cancelling…") : 'Cancel'}
+                      {cancellingId === apt.id ? t('Cancelling…') : 'Cancel'}
                     </button>
                   )}
                   {canCheckIn && (apt.status === 'SCHEDULED' || apt.status === 'CONFIRMED') && (
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={t("Check in for appointment {v1}", { v1: apt.appointmentNo })}
+                      aria-label={t('Check in for appointment {v1}', { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'CHECKED_IN')}
                     >
-                      <LogIn className="h-3.5 w-3.5" />{t('ui.check_in_2')}</button>
+                      <LogIn className="h-3.5 w-3.5" />
+                      {t('ui.check_in_2')}
+                    </button>
                   )}
                   {canAdvance && apt.status === 'CHECKED_IN' && (
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={t("Start visit for appointment {v1}", { v1: apt.appointmentNo })}
+                      aria-label={t('Start visit for appointment {v1}', { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'IN_PROGRESS')}
                     >
-                      <Play className="h-3.5 w-3.5" />{t('ui.start_visit')}</button>
+                      <Play className="h-3.5 w-3.5" />
+                      {t('ui.start_visit')}
+                    </button>
                   )}
                   {canAdvance && apt.status === 'IN_PROGRESS' && (
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
-                      aria-label={t("Complete appointment {v1}", { v1: apt.appointmentNo })}
+                      aria-label={t('Complete appointment {v1}', { v1: apt.appointmentNo })}
                       disabled={cancellingId === apt.id}
                       onClick={() => quickStatus(apt, 'COMPLETED')}
                     >
-                      <CheckCheck className="h-3.5 w-3.5" />{t('ui.complete')}</button>
+                      <CheckCheck className="h-3.5 w-3.5" />
+                      {t('ui.complete')}
+                    </button>
                   )}
-                  {canNoShow &&
-                    ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(apt.status) && (
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted"
-                        aria-label={t("Mark no-show for appointment {v1}", { v1: apt.appointmentNo })}
-                        disabled={cancellingId === apt.id}
-                        onClick={() => quickStatus(apt, 'NO_SHOW')}
-                      >
-                        <UserX className="h-3.5 w-3.5" />{t('ui.no_show_2')}</button>
-                    )}
+                  {canNoShow && ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(apt.status) && (
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-muted"
+                      aria-label={t('Mark no-show for appointment {v1}', { v1: apt.appointmentNo })}
+                      disabled={cancellingId === apt.id}
+                      onClick={() => quickStatus(apt, 'NO_SHOW')}
+                    >
+                      <UserX className="h-3.5 w-3.5" />
+                      {t('ui.no_show_2')}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
-        <p className={`text-muted-foreground truncate ${options.compact ? 'text-[10px]' : 'text-xs'}`}>
+        <p
+          className={`text-muted-foreground truncate ${options.compact ? 'text-[10px]' : 'text-xs'}`}
+        >
           {options.compact
             ? startLabel
             : `${startLabel} · ${getDoctorName(apt.doctor)} · ${apt.duration}m${apt.room ? ` · ${apt.room.name}` : ''}`}
@@ -660,15 +676,12 @@ export function CalendarView({
                         apt.status
                       )} ${apt.status === 'CANCELLED' ? 'opacity-60' : ''}`}
                       onClick={() => router.push(`/appointments/${apt.id}`)}
-                      aria-label={t(
-                        'Appointment {number}: {patient} at {time}, {status}',
-                        {
-                          number: apt.appointmentNo,
-                          patient: getPatientName(apt.patient),
-                          time: formatTime(apt.scheduledTime),
-                          status: appointmentStatusConfig[apt.status]?.label ?? apt.status,
-                        }
-                      )}
+                      aria-label={t('Appointment {number}: {patient} at {time}, {status}', {
+                        number: apt.appointmentNo,
+                        patient: getPatientName(apt.patient),
+                        time: formatTime(apt.scheduledTime),
+                        status: appointmentStatusConfig[apt.status]?.label ?? apt.status,
+                      })}
                     >
                       <span className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium">
@@ -706,7 +719,11 @@ export function CalendarView({
           {/* Time column */}
           <div className="bg-muted/30" style={{ height: `max(100%, ${totalPx}px)` }}>
             {HOURS.map((h) => (
-              <div key={h} className="px-2 text-xs text-muted-foreground" style={{ height: HOUR_ROW_HEIGHT }}>
+              <div
+                key={h}
+                className="px-2 text-xs text-muted-foreground"
+                style={{ height: HOUR_ROW_HEIGHT }}
+              >
                 {formatTime(`${String(h).padStart(2, '0')}:00`)}
               </div>
             ))}
@@ -810,7 +827,7 @@ export function CalendarView({
       >
         {/* Header */}
         <div className="grid grid-cols-7 bg-muted/30">
-          {[t("Sun"), t("Mon"), t("Tue"), t("Wed"), t("Thu"), t("Fri"), t("Sat")].map((day) => (
+          {[t('Sun'), t('Mon'), t('Tue'), t('Wed'), t('Thu'), t('Fri'), t('Sat')].map((day) => (
             <div key={day} className="p-2 text-center text-sm font-medium">
               {day}
             </div>
@@ -848,7 +865,7 @@ export function CalendarView({
                       key={apt.id}
                       role="button"
                       tabIndex={0}
-                      aria-label={t("Appointment {v1} on {v2}", { v1: apt.appointmentNo, v2: key })}
+                      aria-label={t('Appointment {v1} on {v2}', { v1: apt.appointmentNo, v2: key })}
                       className={`text-xs p-1 rounded cursor-pointer truncate ${getStatusColor(
                         apt.status
                       )}`}
@@ -862,7 +879,7 @@ export function CalendarView({
                   ))}
                   {dayAppointments.length > 3 && (
                     <p className="text-xs text-muted-foreground pl-1">
-                      +{dayAppointments.length - 3} {t("more")}
+                      +{dayAppointments.length - 3} {t('more')}
                     </p>
                   )}
                 </div>
@@ -880,10 +897,20 @@ export function CalendarView({
       {!hideToolbar && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="icon" onClick={navigatePrevious} aria-label={t('Previous period')}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={navigatePrevious}
+              aria-label={t('Previous period')}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={navigateNext} aria-label={t('Next period')}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={navigateNext}
+              aria-label={t('Next period')}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={goToToday}>
@@ -902,7 +929,7 @@ export function CalendarView({
                   <SelectItem value="all">{t('ui.all_providers')}</SelectItem>
                   {providers.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {t("Dr.")} {p.firstName} {p.lastName}
+                      {t('Dr.')} {p.firstName} {p.lastName}
                       {p.specialization ? ` — ${p.specialization}` : ''}
                     </SelectItem>
                   ))}
@@ -937,7 +964,10 @@ export function CalendarView({
                 </SelectContent>
               </Select>
             )}
-            <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'day' | 'week' | 'month')}>
+            <Select
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as 'day' | 'week' | 'month')}
+            >
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
@@ -966,12 +996,14 @@ export function CalendarView({
               {t('The schedule could not be loaded. Check your connection and try again.')}
             </p>
             <Button variant="outline" size="sm" onClick={fetchAppointments}>
-              <RefreshCw className="h-4 w-4 mr-2" />{t('ui.retry')}</Button>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t('ui.retry')}
+            </Button>
           </CardContent>
         </Card>
       ) : (
         <>
-          {viewMode === t("day") && (
+          {viewMode === t('day') && (
             <>
               <div className="hidden min-h-0 flex-1 flex-col md:flex">{renderDayView()}</div>
               <div className="md:hidden">{renderMobileList([currentDate])}</div>
@@ -1006,7 +1038,7 @@ export function CalendarView({
 
       {/* Accessibility: live region announcing loaded count */}
       <p className="sr-only" role="status" aria-live="polite">
-        {t("{v1} appointments loaded", { v1: appointments.length })}
+        {t('{v1} appointments loaded', { v1: appointments.length })}
       </p>
     </div>
   )

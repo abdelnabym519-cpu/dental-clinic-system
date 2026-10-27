@@ -218,11 +218,21 @@ describe('POST /api/imaging/studies — upload', () => {
   })
 
   it('retry/duplicate upload (same patient + file, AI on) creates two independent studies + jobs — no corruption', async () => {
-    const studyRow = { id: 'study-r1', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
-    const studyRow2 = { id: 'study-r2', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
-    prisma.imagingStudy.create
-      .mockResolvedValueOnce(studyRow)
-      .mockResolvedValueOnce(studyRow2)
+    const studyRow = {
+      id: 'study-r1',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'PANORAMIC',
+    }
+    const studyRow2 = {
+      id: 'study-r2',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'PANORAMIC',
+    }
+    prisma.imagingStudy.create.mockResolvedValueOnce(studyRow).mockResolvedValueOnce(studyRow2)
     prisma.aIAnalysisJob.create
       .mockResolvedValueOnce({ ...studyRow, id: 'job-r1' })
       .mockResolvedValueOnce({ ...studyRow2, id: 'job-r2' })
@@ -265,7 +275,13 @@ describe('POST /api/imaging/studies — upload', () => {
 
 describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine map)', () => {
   it('routes BITEWING + analyze to implant-ai (19B D14: 2D non-panoramic radiographs)', async () => {
-    const studyRow = { id: 'study-2', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'BITEWING' }
+    const studyRow = {
+      id: 'study-2',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'BITEWING',
+    }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
     prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-2' })
     prisma.auditLog.create.mockResolvedValue({})
@@ -296,7 +312,13 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   })
 
   it('routes CEPHALOMETRIC + analyze to orthodontic-ai (19B D14: 38 cephalometric landmarks)', async () => {
-    const studyRow = { id: 'study-5', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'CEPHALOMETRIC' }
+    const studyRow = {
+      id: 'study-5',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'CEPHALOMETRIC',
+    }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
     prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-5' })
     prisma.auditLog.create.mockResolvedValue({})
@@ -313,7 +335,11 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
         coordinate_space: 'cropped_original_image',
       })),
       top_confidence: 0.9,
-      provenance: { engine: 'orthodontic-ai', model_version: '1.0.0', model_checksum: 'e'.repeat(64) },
+      provenance: {
+        engine: 'orthodontic-ai',
+        model_version: '1.0.0',
+        model_checksum: 'e'.repeat(64),
+      },
       processing_time_ms: 19857,
       raw_output_key: `${HOSPITAL}/imaging/pat-1/study-5/ai/orthodontic-ai/result.json`,
       annotated_image_key: `${HOSPITAL}/imaging/pat-1/study-5/ai/orthodontic-ai/annotated.png`,
@@ -354,7 +380,13 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   })
 
   it('creates PENDING job, audits, calls orchestrator, returns COMPLETED + findings', async () => {
-    const studyRow = { id: 'study-3', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
+    const studyRow = {
+      id: 'study-3',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'PANORAMIC',
+    }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
     prisma.aIAnalysisJob.create.mockResolvedValue({ ...studyRow, id: 'job-1' })
     prisma.auditLog.create.mockResolvedValue({})
@@ -409,7 +441,13 @@ describe('POST /api/imaging/studies — AI trigger (19A D10.1 / 19B D14 engine m
   })
 
   it('marks the job FAILED + audits when the orchestrator is unreachable', async () => {
-    const studyRow = { id: 'study-4', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' }
+    const studyRow = {
+      id: 'study-4',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'PANORAMIC',
+    }
     prisma.imagingStudy.create.mockResolvedValue(studyRow)
     prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-4' })
     prisma.auditLog.create.mockResolvedValue({})
@@ -463,7 +501,13 @@ function makeMeshForm(over: Record<string, any> = {}) {
 }
 
 function mockMeshStudy(id: string, modality: string) {
-  prisma.imagingStudy.create.mockResolvedValue({ id, hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality })
+  prisma.imagingStudy.create.mockResolvedValue({
+    id,
+    hospitalId: HOSPITAL,
+    patientId: PATIENT.id,
+    status: 'UPLOADED',
+    modality,
+  })
   prisma.auditLog.create.mockResolvedValue({})
 }
 
@@ -477,7 +521,11 @@ describe('POST /api/imaging/studies — 3D mesh upload (Phase 20B)', () => {
       status: 'COMPLETED',
       findings: [{ class_id: 0, class_name: 'Gingiva', point_count: 1234 }],
       top_confidence: null,
-      provenance: { engine: 'meshsegnet-max', model_version: '1.0.0', model_checksum: '727cd3c5'.padEnd(64, '0') },
+      provenance: {
+        engine: 'meshsegnet-max',
+        model_version: '1.0.0',
+        model_checksum: '727cd3c5'.padEnd(64, '0'),
+      },
       processing_time_ms: 8000,
       raw_output_key: `${HOSPITAL}/imaging/pat-1/study-m1/ai/meshsegnet-max/result.json`,
       annotated_image_key: null,
@@ -498,7 +546,9 @@ describe('POST /api/imaging/studies — 3D mesh upload (Phase 20B)', () => {
     const [key, , opts] = mockStorage.put.mock.calls[0]
     expect(key).toMatch(/^hosp-1\/imaging\/pat-1\/.+\/original\.obj$/)
     expect(opts.contentType).toBe('application/octet-stream')
-    expect(prisma.imagingStudy.create.mock.calls[0][0].data.mimeType).toBe('application/octet-stream')
+    expect(prisma.imagingStudy.create.mock.calls[0][0].data.mimeType).toBe(
+      'application/octet-stream'
+    )
 
     const params = mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0]
     expect(params.engine).toBe('meshsegnet-max')
@@ -518,18 +568,31 @@ describe('POST /api/imaging/studies — 3D mesh upload (Phase 20B)', () => {
       status: 'COMPLETED',
       findings: [{ class_id: 1, class_name: 'Tooth_1', point_count: 456 }],
       top_confidence: null,
-      provenance: { engine: 'meshsegnet-man', model_version: '1.0.0', model_checksum: 'd74c87e0'.padEnd(64, '0') },
+      provenance: {
+        engine: 'meshsegnet-man',
+        model_version: '1.0.0',
+        model_checksum: 'd74c87e0'.padEnd(64, '0'),
+      },
       processing_time_ms: 9000,
       raw_output_key: `${HOSPITAL}/imaging/pat-1/study-m2/ai/meshsegnet-man/result.json`,
       annotated_image_key: null,
     })
 
-    const res = await POST(makeMeshForm({ modality: 'THREE_D_SCAN', fileName: 'mandible.stl', jaw: 'man', analyze: 'true' }))
+    const res = await POST(
+      makeMeshForm({
+        modality: 'THREE_D_SCAN',
+        fileName: 'mandible.stl',
+        jaw: 'man',
+        analyze: 'true',
+      })
+    )
 
     expect(res.status).toBe(201)
     const jobData = prisma.aIAnalysisJob.create.mock.calls[0][0].data
     expect(jobData.engine).toBe('meshsegnet-man')
-    expect(mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0].engine).toBe('meshsegnet-man')
+    expect(mockOrchestrator.requestOrchestratorAnalyze.mock.calls[0][0].engine).toBe(
+      'meshsegnet-man'
+    )
 
     const [key] = mockStorage.put.mock.calls[0]
     expect(key).toMatch(/original\.stl$/)
@@ -540,7 +603,13 @@ describe('POST /api/imaging/studies — 3D mesh upload (Phase 20B)', () => {
   })
 
   it('ignores the jaw field for 2D modalities (PANORAMIC stays on liodon)', async () => {
-    prisma.imagingStudy.create.mockResolvedValue({ id: 'study-m3', hospitalId: HOSPITAL, patientId: PATIENT.id, status: 'UPLOADED', modality: 'PANORAMIC' })
+    prisma.imagingStudy.create.mockResolvedValue({
+      id: 'study-m3',
+      hospitalId: HOSPITAL,
+      patientId: PATIENT.id,
+      status: 'UPLOADED',
+      modality: 'PANORAMIC',
+    })
     prisma.aIAnalysisJob.create.mockResolvedValue({ id: 'job-m3' })
     prisma.auditLog.create.mockResolvedValue({})
     prisma.imagingStudy.findUnique.mockResolvedValue({ id: 'study-m3', status: 'ANALYZED' })

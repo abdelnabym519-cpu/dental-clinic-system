@@ -81,7 +81,7 @@ export default function CRMDashboardPage() {
             <div className="text-2xl font-bold">{data?.memberships.active || 0}</div>
             <p className="text-xs text-muted-foreground">
               <Banknote className="h-3 w-3 inline" />
-              {(data?.memberships.revenue || 0).toLocaleString(locale)} {t("revenue")}
+              {(data?.memberships.revenue || 0).toLocaleString(locale)} {t('revenue')}
             </p>
           </CardContent>
         </Card>
@@ -94,7 +94,8 @@ export default function CRMDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{data?.referrals.conversionRate || 0}%</div>
             <p className="text-xs text-muted-foreground">
-              {data?.referrals.converted || 0} {t("of")} {data?.referrals.total || 0} {t("referrals converted")}
+              {data?.referrals.converted || 0} {t('of')} {data?.referrals.total || 0}{' '}
+              {t('referrals converted')}
             </p>
           </CardContent>
         </Card>
@@ -120,7 +121,7 @@ export default function CRMDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{data?.retention.rate || 0}%</div>
             <p className="text-xs text-muted-foreground">
-              {data?.retention.recentVisitors || 0} {t("visited in last 6 months")}
+              {data?.retention.recentVisitors || 0} {t('visited in last 6 months')}
             </p>
           </CardContent>
         </Card>
@@ -137,11 +138,12 @@ export default function CRMDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {data?.memberships.active || 0} {t("active /")} {data?.memberships.total || 0} {t("total memberships")}
+              {data?.memberships.active || 0} {t('active /')} {data?.memberships.total || 0}{' '}
+              {t('total memberships')}
             </p>
             <Link href="/crm/memberships">
               <Button variant="outline" className="w-full">
-                {t("Manage Plans")} <ArrowRight className="ml-2 h-4 w-4" />
+                {t('Manage Plans')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </CardContent>
@@ -156,11 +158,12 @@ export default function CRMDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {(data?.loyalty.pointsInCirculation || 0).toLocaleString()} {t("points in circulation")}
+              {(data?.loyalty.pointsInCirculation || 0).toLocaleString()}{' '}
+              {t('points in circulation')}
             </p>
             <Link href="/crm/loyalty">
               <Button variant="outline" className="w-full">
-                {t("View Transactions")} <ArrowRight className="ml-2 h-4 w-4" />
+                {t('View Transactions')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </CardContent>
@@ -169,15 +172,18 @@ export default function CRMDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-blue-500" />{t('ui.referrals')}</CardTitle>
+              <Share2 className="h-5 w-5 text-blue-500" />
+              {t('ui.referrals')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              {data?.referrals.total || 0} {t("referrals,")} {data?.referrals.conversionRate || 0}{t("% conversion")}
+              {data?.referrals.total || 0} {t('referrals,')} {data?.referrals.conversionRate || 0}
+              {t('% conversion')}
             </p>
             <Link href="/crm/referrals">
               <Button variant="outline" className="w-full">
-                {t("Track Referrals")} <ArrowRight className="ml-2 h-4 w-4" />
+                {t('Track Referrals')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </CardContent>
@@ -202,7 +208,7 @@ export default function CRMDashboardPage() {
                 variant="outline"
                 className="mt-3 border-amber-300 text-amber-700 hover:bg-amber-100"
               >
-                {t("View Segments")} <ArrowRight className="ml-2 h-4 w-4" />
+                {t('View Segments')} <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </CardContent>

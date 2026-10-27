@@ -103,7 +103,8 @@ export default function PatientFormPage({ params }: { params: Promise<{ id: stri
         <CheckCircle2 className="h-16 w-16 mx-auto text-green-500" />
         <h2 className="text-2xl font-bold">{t('Form Submitted')}</h2>
         <p className="text-muted-foreground">
-          {t("Your")} {template.name} {t("has been submitted successfully. The clinic team will review it shortly.")}
+          {t('Your')} {template.name}{' '}
+          {t('has been submitted successfully. The clinic team will review it shortly.')}
         </p>
         <Button onClick={() => router.push('/portal/forms')}>{t('Back to Forms')}</Button>
       </div>
@@ -121,7 +122,7 @@ export default function PatientFormPage({ params }: { params: Promise<{ id: stri
           <div className="flex-1">
             <h1 className="text-2xl font-bold">{template.name}</h1>
             <p className="text-sm text-muted-foreground">
-              {t("Submitted on")}{' '}
+              {t('Submitted on')}{' '}
               {new Date(existingSubmission.createdAt).toLocaleDateString(locale, {
                 day: 'numeric',
                 month: 'long',

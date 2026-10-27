@@ -14,31 +14,25 @@ import bcrypt from 'bcryptjs'
  * a patient must not be able to read or write another patient's row.
  */
 
-const profileUpdateSchema = z
-  .object({
-    // `null` or an empty string clears the override and inherits the clinic's
-    // locale. See lib/i18n/config.ts for why that is not the same as picking
-    // the clinic's current value.
-    locale: z
-      .union([z.string(), z.null()])
-      .refine((value) => value === null || value === '' || isSupportedLocale(value), {
-        message: 'Unsupported locale',
-      })
-      .transform((value) => (value === null || value === '' ? null : (value as Locale)))
-      // Phase 13 (D11): the spec body is fully optional ({ email?, language?,
-      // currentPassword?, newPassword? }) — locale stays optional for
-      // backward compatibility with the existing locale-only clients.
-      .optional(),
-    // Phase 13 (D11) — the patient may update their own email. Name and
-    // phone stay read-only: the clinic manages those records.
-    email: z
-      .string()
-      .email()
-      .max(191)
-      .optional()
-      .or(z.literal('')),
-    currentPassword: z.string().max(128).optional(),
-    newPassword: z.string().min(8).max(128).optional(),
+const profileUpdateSchema = z.object({
+  // `null` or an empty string clears the override and inherits the clinic's
+  // locale. See lib/i18n/config.ts for why that is not the same as picking
+  // the clinic's current value.
+  locale: z
+    .union([z.string(), z.null()])
+    .refine((value) => value === null || value === '' || isSupportedLocale(value), {
+      message: 'Unsupported locale',
+    })
+    .transform((value) => (value === null || value === '' ? null : (value as Locale)))
+    // Phase 13 (D11): the spec body is fully optional ({ email?, language?,
+    // currentPassword?, newPassword? }) — locale stays optional for
+    // backward compatibility with the existing locale-only clients.
+    .optional(),
+  // Phase 13 (D11) — the patient may update their own email. Name and
+  // phone stay read-only: the clinic manages those records.
+  email: z.string().email().max(191).optional().or(z.literal('')),
+  currentPassword: z.string().max(128).optional(),
+  newPassword: z.string().min(8).max(128).optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -88,7 +82,10 @@ export async function PATCH(req: NextRequest) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(
         {
-          error: err.issues[0]?.message === 'Unsupported locale' ? 'Unsupported locale' : 'Invalid request body',
+          error:
+            err.issues[0]?.message === 'Unsupported locale'
+              ? 'Unsupported locale'
+              : 'Invalid request body',
           details: err.issues,
         },
         { status: 400 }
@@ -129,10 +126,7 @@ export async function PATCH(req: NextRequest) {
         ? await bcrypt.compare(currentPassword as string, portalUser.password)
         : false
       if (!currentOk) {
-        return NextResponse.json(
-          { error: 'Current password is incorrect' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
       }
       await prisma.user.update({
         where: { id: patientRow.portalUserId },

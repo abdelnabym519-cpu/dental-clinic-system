@@ -31,7 +31,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
   const { id } = await params
   const record = await service.get(id, hospitalId)
-  if (!record) return NextResponse.json({ error: 'Attachment not found', code: 'NOT_FOUND' }, { status: 404 })
+  if (!record)
+    return NextResponse.json({ error: 'Attachment not found', code: 'NOT_FOUND' }, { status: 404 })
 
   // Authorization: staff always; PATIENT only for their own attachment.
   if (user.role === 'PATIENT' && record.patientId) {
@@ -54,17 +55,23 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { error, user, hospitalId } = await requireAuthAndRole(['SUPER_ADMIN', 'ADMIN', 'DOCTOR', 'RECEPTIONIST'])
+  const { error, user, hospitalId } = await requireAuthAndRole([
+    'SUPER_ADMIN',
+    'ADMIN',
+    'DOCTOR',
+    'RECEPTIONIST',
+  ])
   if (error || !user || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const { id } = await params
   const record = await service.get(id, hospitalId)
-  if (!record) return NextResponse.json({ error: 'Attachment not found', code: 'NOT_FOUND' }, { status: 404 })
+  if (!record)
+    return NextResponse.json({ error: 'Attachment not found', code: 'NOT_FOUND' }, { status: 404 })
   if (record.studyId) {
     return NextResponse.json(
       { error: 'This attachment is referenced by an imaging study', code: 'STILL_REFERENCED' },
-      { status: 409 },
+      { status: 409 }
     )
   }
   await prisma.multimodalAttachment.delete({ where: { id: record.id } })

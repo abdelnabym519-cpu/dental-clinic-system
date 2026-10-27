@@ -20,16 +20,27 @@ const after = (resolution.databaseUrl ?? '') !== ''
 console.log('DATABASE_URL present =', after)
 console.log(
   'DATABASE_URL source  =',
-  before ? 'shell' : after ? resolution.loaded.map((l) => l.file).join(' > ') : '(none — no active DATABASE_URL in the loaded files)'
+  before
+    ? 'shell'
+    : after
+      ? resolution.loaded.map((l) => l.file).join(' > ')
+      : '(none — no active DATABASE_URL in the loaded files)'
 )
-console.log('loaded               =', resolution.loaded.map((l) => `${l.file}(+${l.keys} keys)`).join(', ') || '(none)')
+console.log(
+  'loaded               =',
+  resolution.loaded.map((l) => `${l.file}(+${l.keys} keys)`).join(', ') || '(none)'
+)
 console.log('NODE_ENV             =', process.env.NODE_ENV ?? '(unset)')
 console.log('cwd                  =', root)
 console.log('execPath             =', process.execPath)
 console.log('argv                 =', process.argv.join(' '))
 console.log('candidates on disk   =', sources.join(', ') || '(no env files found)')
 if (!after) {
-  console.log('VERDICT: NOT CONFIGURED — run: npm run setup:dev (creates .env and generates the required dev secrets).')
+  console.log(
+    'VERDICT: NOT CONFIGURED — run: npm run setup:dev (creates .env and generates the required dev secrets).'
+  )
 } else {
-  console.log('VERDICT: CONFIGURED — the dev-start readiness probe will receive this URL explicitly.')
+  console.log(
+    'VERDICT: CONFIGURED — the dev-start readiness probe will receive this URL explicitly.'
+  )
 }

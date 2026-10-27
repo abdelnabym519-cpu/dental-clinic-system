@@ -6,7 +6,13 @@ import { describe, it, expect } from 'vitest'
 import { buildClinicalContext } from '@/lib/ai/context/service'
 import { serializeForPrompt } from '@/lib/ai/context/serialize'
 import {
-  createFakePrisma, makeRequest, NOW, PAT_A1, PAT_A2, HOSP_A, ACTORS,
+  createFakePrisma,
+  makeRequest,
+  NOW,
+  PAT_A1,
+  PAT_A2,
+  HOSP_A,
+  ACTORS,
 } from '@/tests/harness/context-fixtures'
 
 const db = () => createFakePrisma()
@@ -19,7 +25,16 @@ describe('Patient 360 context (service)', () => {
     expect(ctx.meta.tenantId).toBe(HOSP_A)
     expect(ctx.meta.role).toBe('DOCTOR')
 
-    for (const s of ['identity', 'medical', 'dental', 'appointments', 'clinical', 'cases', 'treatments', 'prescriptions'] as const) {
+    for (const s of [
+      'identity',
+      'medical',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+    ] as const) {
       expect(ctx[s].status, s).toBe('included')
     }
     // CLINICAL has no imaging/financial/timeline
@@ -35,7 +50,16 @@ describe('Patient 360 context (service)', () => {
     expect(id.contact.phone).toBe('01011112222') // DOCTOR may see contact
 
     // every included section carries explicit freshness
-    for (const s of ['identity', 'medical', 'dental', 'appointments', 'clinical', 'cases', 'treatments', 'prescriptions'] as const) {
+    for (const s of [
+      'identity',
+      'medical',
+      'dental',
+      'appointments',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+    ] as const) {
       expect(['fresh', 'recent', 'historical', 'unknown'], s).toContain((ctx[s] as any).freshness)
     }
   })
@@ -43,13 +67,21 @@ describe('Patient 360 context (service)', () => {
   it('sections are bounded: budgets truncate, never the full history', async () => {
     // 500 notes beyond the clinical budget (15) must not appear.
     const notes = Array.from({ length: 50 }, (_, i) => ({
-      id: `note-extra-${i}`, hospitalId: HOSP_A, patientId: PAT_A1,
-      noteType: 'GENERAL', content: `Extra note ${i}`, isPrivate: false,
+      id: `note-extra-${i}`,
+      hospitalId: HOSP_A,
+      patientId: PAT_A1,
+      noteType: 'GENERAL',
+      content: `Extra note ${i}`,
+      isPrivate: false,
       createdAt: new Date(NOW.getTime() - (i + 400) * 86400000),
-      doctorId: 'staff-doctor-1', doctor: { firstName: 'Hana', lastName: 'Shalaby' },
+      doctorId: 'staff-doctor-1',
+      doctor: { firstName: 'Hana', lastName: 'Shalaby' },
       treatmentPlanId: null,
     }))
-    const ctx = await buildClinicalContext(makeRequest({ profile: 'CLINICAL' }), createFakePrisma({ clinicalNote: notes }))
+    const ctx = await buildClinicalContext(
+      makeRequest({ profile: 'CLINICAL' }),
+      createFakePrisma({ clinicalNote: notes })
+    )
     const d = (ctx.clinical as any).data
     expect(d.notes.length + d.examinations.length + d.followUpNotes.length).toBeLessThanOrEqual(15)
   })
@@ -104,30 +136,58 @@ describe('Patient 360 context (service)', () => {
 
   it('queryCount does NOT grow when the data grows (N+1 scaling: 1 → 100 rows)', async () => {
     const base = await buildClinicalContext(makeRequest({ profile: 'FULL_360' }), db())
-    const scaled = await buildClinicalContext(makeRequest({ profile: 'FULL_360' }), createFakePrisma({
-      clinicalNote: Array.from({ length: 100 }, (_, i) => ({
-        id: `n-scale-${i}`, hospitalId: HOSP_A, patientId: PAT_A1,
-        noteType: 'GENERAL', content: `x${i}`, isPrivate: false,
-        createdAt: new Date(NOW.getTime() - (i + 300) * 86400000),
-        doctorId: 'staff-doctor-1', doctor: { firstName: 'H', lastName: 'S' }, treatmentPlanId: null,
-      })),
-      dentalChartEntry: Array.from({ length: 100 }, (_, i) => ({
-        id: `c-scale-${i}`, hospitalId: HOSP_A, patientId: PAT_A1,
-        toothNumber: 11 + (i % 38), condition: 'CARIES', severity: 'MILD',
-        mesial: false, distal: false, occlusal: i % 2 === 0, buccal: false, lingual: false,
-        notes: null, diagnosedDate: new Date(NOW.getTime() - (i + 300) * 86400000), resolvedDate: null,
-      })),
-      appointment: Array.from({ length: 100 }, (_, i) => ({
-        id: `a-scale-${i}`, hospitalId: HOSP_A, patientId: PAT_A1,
-        appointmentNo: `APPT-SC-${i}`, appointmentType: 'CHECK_UP', status: 'COMPLETED',
-        scheduledDate: new Date(NOW.getTime() - (i + 300) * 86400000), chiefComplaint: null,
-        doctorId: 'staff-doctor-1', doctor: { firstName: 'H', lastName: 'S' }, createdAt: NOW,
-      })),
-    }))
+    const scaled = await buildClinicalContext(
+      makeRequest({ profile: 'FULL_360' }),
+      createFakePrisma({
+        clinicalNote: Array.from({ length: 100 }, (_, i) => ({
+          id: `n-scale-${i}`,
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          noteType: 'GENERAL',
+          content: `x${i}`,
+          isPrivate: false,
+          createdAt: new Date(NOW.getTime() - (i + 300) * 86400000),
+          doctorId: 'staff-doctor-1',
+          doctor: { firstName: 'H', lastName: 'S' },
+          treatmentPlanId: null,
+        })),
+        dentalChartEntry: Array.from({ length: 100 }, (_, i) => ({
+          id: `c-scale-${i}`,
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          toothNumber: 11 + (i % 38),
+          condition: 'CARIES',
+          severity: 'MILD',
+          mesial: false,
+          distal: false,
+          occlusal: i % 2 === 0,
+          buccal: false,
+          lingual: false,
+          notes: null,
+          diagnosedDate: new Date(NOW.getTime() - (i + 300) * 86400000),
+          resolvedDate: null,
+        })),
+        appointment: Array.from({ length: 100 }, (_, i) => ({
+          id: `a-scale-${i}`,
+          hospitalId: HOSP_A,
+          patientId: PAT_A1,
+          appointmentNo: `APPT-SC-${i}`,
+          appointmentType: 'CHECK_UP',
+          status: 'COMPLETED',
+          scheduledDate: new Date(NOW.getTime() - (i + 300) * 86400000),
+          chiefComplaint: null,
+          doctorId: 'staff-doctor-1',
+          doctor: { firstName: 'H', lastName: 'S' },
+          createdAt: NOW,
+        })),
+      })
+    )
     expect(scaled.meta.queryCount).toBe(base.meta.queryCount)
     // budgets still hold
     const sc = (scaled.clinical as any).data
-    expect(sc.notes.length + sc.examinations.length + sc.followUpNotes.length).toBeLessThanOrEqual(20)
+    expect(sc.notes.length + sc.examinations.length + sc.followUpNotes.length).toBeLessThanOrEqual(
+      20
+    )
     // toothCount is hard-bounded by the 38 valid FDI teeth (chart output cap)
     expect((scaled.dental as any).data.toothCount).toBeLessThanOrEqual(38)
   })
@@ -144,7 +204,9 @@ describe('Patient 360 context (service)', () => {
     const a2 = await buildClinicalContext(makeRequest({ patientId: PAT_A2 }), db())
     expect(a2.clinical.freshness).toBe('unknown')
     // appointments: newest scheduled is +30d → fresh (timestamp based)
-    expect(['fresh', 'recent', 'historical', 'unknown']).toContain((ctx.appointments as any).freshness)
+    expect(['fresh', 'recent', 'historical', 'unknown']).toContain(
+      (ctx.appointments as any).freshness
+    )
   })
 
   it('PATIENT_OVERVIEW is Minimum Necessary: no clinical free text, no AI internals', async () => {
@@ -176,7 +238,11 @@ describe('Patient 360 context (service)', () => {
 
   it('PATIENT role: own record only, only identity+appointments, no contact block', async () => {
     const own = await buildClinicalContext(
-      makeRequest({ actor: { ...ACTORS.patientA }, profile: 'PATIENT_OVERVIEW', patientId: PAT_A1 }),
+      makeRequest({
+        actor: { ...ACTORS.patientA },
+        profile: 'PATIENT_OVERVIEW',
+        patientId: PAT_A1,
+      }),
       db()
     )
     expect(own.meta.patient.found).toBe(true)
@@ -185,7 +251,18 @@ describe('Patient 360 context (service)', () => {
     // no contact for the patient
     expect((own.identity as any).data.contact).toBeUndefined()
     // everything else excluded (not permitted for PATIENT)
-    for (const s of ['medical', 'dental', 'clinical', 'cases', 'treatments', 'prescriptions', 'imaging', 'financial', 'risk', 'timeline'] as const) {
+    for (const s of [
+      'medical',
+      'dental',
+      'clinical',
+      'cases',
+      'treatments',
+      'prescriptions',
+      'imaging',
+      'financial',
+      'risk',
+      'timeline',
+    ] as const) {
       expect(own[s].status, s).toBe('excluded')
     }
     // other patient → unauthorized

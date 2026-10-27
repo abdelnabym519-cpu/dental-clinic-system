@@ -6,7 +6,14 @@
  * All times are `HH:MM` 24h strings; all dates are local `YYYY-MM-DD` keys
  * (see lib/agenda-utils.ts for the canonical conversion helpers).
  */
-import { isValidTime, timeToMinutes, timeRangesOverlap, addDays, toDateKey, parseDateKey } from '@/lib/agenda-utils'
+import {
+  isValidTime,
+  timeToMinutes,
+  timeRangesOverlap,
+  addDays,
+  toDateKey,
+  parseDateKey,
+} from '@/lib/agenda-utils'
 
 export interface WorkingWindow {
   startTime: string
@@ -31,8 +38,13 @@ export type RecurrencePattern = (typeof RECURRENCE_PATTERNS)[number]
 export const MAX_RECURRENCE_OCCURRENCES = 60
 
 /** True when `[start, start + duration)` lies fully inside the working window. */
-export function isWithinWorkingHours(time: string, duration: number, window: WorkingWindow): boolean {
-  if (!isValidTime(time) || !isValidTime(window.startTime) || !isValidTime(window.endTime)) return false
+export function isWithinWorkingHours(
+  time: string,
+  duration: number,
+  window: WorkingWindow
+): boolean {
+  if (!isValidTime(time) || !isValidTime(window.startTime) || !isValidTime(window.endTime))
+    return false
   const start = timeToMinutes(time)
   const end = start + duration
   return start >= timeToMinutes(window.startTime) && end <= timeToMinutes(window.endTime)
@@ -92,7 +104,9 @@ export function roomOverlapExists(
   existing: Array<{ scheduledTime: string; duration: number }>
 ): boolean {
   const start = timeToMinutes(time)
-  return existing.some((r) => timeRangesOverlap(start, duration, timeToMinutes(r.scheduledTime), r.duration))
+  return existing.some((r) =>
+    timeRangesOverlap(start, duration, timeToMinutes(r.scheduledTime), r.duration)
+  )
 }
 
 /**
@@ -111,7 +125,8 @@ export function generateRecurrenceDateKeys(
   const first = new Date(y, m - 1, d)
   const keys: string[] = [firstDateKey]
 
-  const stepDays = pattern === 'DAILY' ? 1 : pattern === 'WEEKLY' ? 7 : pattern === 'BIWEEKLY' ? 14 : 0
+  const stepDays =
+    pattern === 'DAILY' ? 1 : pattern === 'WEEKLY' ? 7 : pattern === 'BIWEEKLY' ? 14 : 0
   const effectiveCount = Math.max(1, Math.min(count || 1, MAX_RECURRENCE_OCCURRENCES))
 
   for (let i = 1; i < effectiveCount; i++) {
@@ -153,10 +168,13 @@ export interface SchedulingAnalytics {
   bookedMinutes: number
 }
 
-const rate = (part: number, total: number) => (total === 0 ? 0 : Math.round((part / total) * 1000) / 10)
+const rate = (part: number, total: number) =>
+  total === 0 ? 0 : Math.round((part / total) * 1000) / 10
 
 /** Outcome counts and rates over a set of appointments (already period-filtered). */
-export function computeSchedulingAnalytics(appointments: AnalyticsAppointment[]): SchedulingAnalytics {
+export function computeSchedulingAnalytics(
+  appointments: AnalyticsAppointment[]
+): SchedulingAnalytics {
   const total = appointments.length
   const completed = appointments.filter((a) => a.status === 'COMPLETED').length
   const cancelled = appointments.filter((a) => a.status === 'CANCELLED').length
@@ -190,7 +208,12 @@ export function computeDoctorUtilization(
   appointments: AnalyticsAppointment[],
   weeklyAvailableMinutes: Record<string, number>,
   periodDays: number
-): Array<{ doctorId: string; bookedMinutes: number; availableMinutes: number; utilization: number }> {
+): Array<{
+  doctorId: string
+  bookedMinutes: number
+  availableMinutes: number
+  utilization: number
+}> {
   const weeks = Math.max(periodDays / 7, 1 / 7)
   const byDoctor = new Map<string, number>()
   for (const a of appointments) {
@@ -204,7 +227,8 @@ export function computeDoctorUtilization(
       doctorId,
       bookedMinutes,
       availableMinutes,
-      utilization: availableMinutes === 0 ? 0 : Math.round((bookedMinutes / availableMinutes) * 1000) / 10,
+      utilization:
+        availableMinutes === 0 ? 0 : Math.round((bookedMinutes / availableMinutes) * 1000) / 10,
     }
   })
 }
@@ -258,7 +282,11 @@ export function resolveDayWindow(
   shift?: { startTime: string; endTime: string } | null
 ): ResolvedDayWindow {
   if (shift && isValidTime(shift.startTime) && isValidTime(shift.endTime)) {
-    return { window: { startTime: shift.startTime, endTime: shift.endTime }, lunch: null, fromShift: true }
+    return {
+      window: { startTime: shift.startTime, endTime: shift.endTime },
+      lunch: null,
+      fromShift: true,
+    }
   }
 
   let parsed: Record<string, unknown> | null = null
@@ -273,13 +301,18 @@ export function resolveDayWindow(
 
   if (parsed) {
     const dayName = DAY_NAMES[parseDateKey(dateKey).getDay()]
-    const dayConfig = parsed[dayName] as { open?: string | null; close?: string | null; closed?: boolean } | undefined
+    const dayConfig = parsed[dayName] as
+      { open?: string | null; close?: string | null; closed?: boolean } | undefined
     if (dayConfig && typeof dayConfig === 'object') {
       if (dayConfig.closed || !dayConfig.open || !dayConfig.close) {
         return { window: null, lunch: null, fromShift: false }
       }
       if (isValidTime(dayConfig.open) && isValidTime(dayConfig.close)) {
-        return { window: { startTime: dayConfig.open, endTime: dayConfig.close }, lunch: null, fromShift: false }
+        return {
+          window: { startTime: dayConfig.open, endTime: dayConfig.close },
+          lunch: null,
+          fromShift: false,
+        }
       }
       return { window: null, lunch: null, fromShift: false }
     }

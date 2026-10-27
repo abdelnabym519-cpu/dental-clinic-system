@@ -78,7 +78,10 @@ async function login(page: Page, email: string, password: string) {
         const session = (await res.json()) as { user?: unknown } | null
         return Boolean(session && session.user)
       },
-      { timeout: 15000, message: 'server-side session was never established after the credentials callback' }
+      {
+        timeout: 15000,
+        message: 'server-side session was never established after the credentials callback',
+      }
     )
     .toBe(true)
 

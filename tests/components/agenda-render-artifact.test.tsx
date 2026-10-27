@@ -43,7 +43,9 @@ vi.mock('@/components/ui/select', () => ({
   SelectTrigger: ({ children }: any) => <div>{children}</div>,
   SelectValue: () => <span />,
   SelectContent: ({ children }: any) => <div>{children}</div>,
-  SelectItem: ({ children, value }: any) => <div data-testid={`select-item-${value}`}>{children}</div>,
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid={`select-item-${value}`}>{children}</div>
+  ),
 }))
 vi.mock('@/lib/appointment-utils', () => ({
   appointmentStatusConfig: {
@@ -69,26 +71,46 @@ import { CalendarView } from '@/components/appointments/calendar-view'
 // Week of 2026-03-08 (Sun) … 2026-03-14 (Sat)
 const FIXTURES = [
   {
-    id: 'a1', appointmentNo: 'APT20260001', scheduledDate: '2026-03-09', scheduledTime: '09:00',
-    duration: 45, appointmentType: 'CHECK_UP', status: 'CONFIRMED',
+    id: 'a1',
+    appointmentNo: 'APT20260001',
+    scheduledDate: '2026-03-09',
+    scheduledTime: '09:00',
+    duration: 45,
+    appointmentType: 'CHECK_UP',
+    status: 'CONFIRMED',
     patient: { firstName: 'Amina', lastName: 'Hassan', phone: '010' },
     doctor: { firstName: 'Arun', lastName: 'Vijay' },
   },
   {
-    id: 'a2', appointmentNo: 'APT20260002', scheduledDate: '2026-03-09', scheduledTime: '11:00',
-    duration: 30, appointmentType: 'PROCEDURE', status: 'SCHEDULED',
+    id: 'a2',
+    appointmentNo: 'APT20260002',
+    scheduledDate: '2026-03-09',
+    scheduledTime: '11:00',
+    duration: 30,
+    appointmentType: 'PROCEDURE',
+    status: 'SCHEDULED',
     patient: { firstName: 'Omar', lastName: 'Farouk', phone: '011' },
     doctor: { firstName: 'Arun', lastName: 'Vijay' },
   },
   {
-    id: 'a3', appointmentNo: 'APT20260003', scheduledDate: '2026-03-11', scheduledTime: '10:30',
-    duration: 60, appointmentType: 'FOLLOW_UP', status: 'CHECKED_IN',
+    id: 'a3',
+    appointmentNo: 'APT20260003',
+    scheduledDate: '2026-03-11',
+    scheduledTime: '10:30',
+    duration: 60,
+    appointmentType: 'FOLLOW_UP',
+    status: 'CHECKED_IN',
     patient: { firstName: 'Salma', lastName: 'Ibrahim', phone: '012' },
     doctor: { firstName: 'Mariam', lastName: 'Ibrahim' },
   },
   {
-    id: 'a4', appointmentNo: 'APT20260004', scheduledDate: '2026-03-12', scheduledTime: '14:00',
-    duration: 30, appointmentType: 'CONSULTATION', status: 'COMPLETED',
+    id: 'a4',
+    appointmentNo: 'APT20260004',
+    scheduledDate: '2026-03-12',
+    scheduledTime: '14:00',
+    duration: 30,
+    appointmentType: 'CONSULTATION',
+    status: 'COMPLETED',
     patient: { firstName: 'Youssef', lastName: 'Adel', phone: '013' },
     doctor: { firstName: 'Arun', lastName: 'Vijay' },
   },

@@ -25,9 +25,32 @@ function walk(dir: string): string[] {
 // Accepted Latin, deliberately: request-field identifiers echoed back for developers,
 // brand/format tokens, and enum values that are data rather than copy.
 const ACCEPTED = new Set([
-  'JSON', 'SMS', 'OTP', 'IBAN', 'PDF', 'CSV', 'Excel', 'token', 'orderId', 'paymentId', 'claimId',
-  'doctorId', 'appointmentId', 'deviceId', 'consultationId', 'templateId', 'invoiceId', 'roomName',
-  'scheduleId', 'risk_score', 'cancel', 'retry', 'annotations', 'shifts', 'command', 'payment',
+  'JSON',
+  'SMS',
+  'OTP',
+  'IBAN',
+  'PDF',
+  'CSV',
+  'Excel',
+  'token',
+  'orderId',
+  'paymentId',
+  'claimId',
+  'doctorId',
+  'appointmentId',
+  'deviceId',
+  'consultationId',
+  'templateId',
+  'invoiceId',
+  'roomName',
+  'scheduleId',
+  'risk_score',
+  'cancel',
+  'retry',
+  'annotations',
+  'shifts',
+  'command',
+  'payment',
 ])
 
 describe('API error messages are Arabic-resolvable', () => {
@@ -85,11 +108,17 @@ describe('API error messages are Arabic-resolvable', () => {
   it('paints the shipped Arabic wording for the messages users actually hit', () => {
     // Public payment link (the page renders data.error straight into an error slot)
     expect(translateText('ar-EG', 'Invalid payment link')).toBe('رابط الدفع غير صالح')
-    expect(translateText('ar-EG', 'This payment link has expired')).toBe('انتهت صلاحية رابط الدفع هذا')
-    expect(translateText('ar-EG', 'Staff limit reached')).toBe('تم الوصول إلى الحد الأقصى لعدد الموظفين')
+    expect(translateText('ar-EG', 'This payment link has expired')).toBe(
+      'انتهت صلاحية رابط الدفع هذا'
+    )
+    expect(translateText('ar-EG', 'Staff limit reached')).toBe(
+      'تم الوصول إلى الحد الأقصى لعدد الموظفين'
+    )
     expect(translateText('ar-EG', 'Internal server error')).toBe('خطأ داخلي في الخادم')
     expect(translateText('ar-EG', 'Insufficient permissions')).toBe('الصلاحيات غير كافية')
-    expect(translateText('ar-EG', 'You do not have permission to use this skill')).toBe('ليست لديك صلاحية استخدام هذه المهارة')
+    expect(translateText('ar-EG', 'You do not have permission to use this skill')).toBe(
+      'ليست لديك صلاحية استخدام هذه المهارة'
+    )
     // identifiers stay as typed, sentence around them is Arabic
     expect(translateText('ar-EG', 'claimId is required')).toBe('حقل claimId مطلوب')
   })

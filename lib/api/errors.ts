@@ -31,13 +31,28 @@ export type ApiErrorBody = {
 /** Arabic/English message catalog for the generic codes (i18n keys). */
 export const API_ERROR_MESSAGES: Record<ApiErrorCode, { en: string; ar: string }> = {
   UNAUTHORIZED: { en: 'Authentication required.', ar: 'المصادقة مطلوبة.' },
-  FORBIDDEN: { en: 'You do not have permission for this action.', ar: 'لا تملك صلاحية لهذا الإجراء.' },
-  RATE_LIMITED: { en: 'Too many requests. Try again shortly.', ar: 'طلبات كثيرة جدًا. حاول بعد قليل.' },
+  FORBIDDEN: {
+    en: 'You do not have permission for this action.',
+    ar: 'لا تملك صلاحية لهذا الإجراء.',
+  },
+  RATE_LIMITED: {
+    en: 'Too many requests. Try again shortly.',
+    ar: 'طلبات كثيرة جدًا. حاول بعد قليل.',
+  },
   VALIDATION_ERROR: { en: 'The request payload is invalid.', ar: 'بيانات الطلب غير صالحة.' },
   NOT_FOUND: { en: 'The requested resource was not found.', ar: 'المورد المطلوب غير موجود.' },
-  CONFLICT: { en: 'The request conflicts with the current state.', ar: 'الطلب يتعارض مع الحالة الحالية.' },
-  DEPENDENCY_UNAVAILABLE: { en: 'A required service is temporarily unavailable.', ar: 'إحدى الخدمات المطلوبة غير متاحة حاليًا.' },
-  TIMEOUT: { en: 'The operation took too long and was stopped.', ar: 'استغرقت العملية وقتًا طويلاً وتم إيقافها.' },
+  CONFLICT: {
+    en: 'The request conflicts with the current state.',
+    ar: 'الطلب يتعارض مع الحالة الحالية.',
+  },
+  DEPENDENCY_UNAVAILABLE: {
+    en: 'A required service is temporarily unavailable.',
+    ar: 'إحدى الخدمات المطلوبة غير متاحة حاليًا.',
+  },
+  TIMEOUT: {
+    en: 'The operation took too long and was stopped.',
+    ar: 'استغرقت العملية وقتًا طويلاً وتم إيقافها.',
+  },
   INTERNAL: { en: 'An internal error occurred.', ar: 'حدث خطأ داخلي.' },
 }
 
@@ -68,7 +83,12 @@ function localizedMessage(code: ApiErrorCode, locale?: string): string {
 export function apiError(
   code: ApiErrorCode,
   requestId: string,
-  opts: { locale?: string; message?: string; details?: Record<string, unknown>; internalDetail?: string } = {},
+  opts: {
+    locale?: string
+    message?: string
+    details?: Record<string, unknown>
+    internalDetail?: string
+  } = {}
 ): { status: number; body: ApiErrorBody; internalDetail?: string } {
   const message = opts.message ?? localizedMessage(code, opts.locale)
   return {
@@ -89,7 +109,12 @@ export function apiError(
 export function apiErrorResponse(
   code: ApiErrorCode,
   requestId: string,
-  opts: { locale?: string; message?: string; details?: Record<string, unknown>; internalDetail?: string } = {},
+  opts: {
+    locale?: string
+    message?: string
+    details?: Record<string, unknown>
+    internalDetail?: string
+  } = {}
 ): NextResponse {
   // Imported lazily to keep this module importable from edge-safe contexts.
   const { NextResponse } = require('next/server') as typeof import('next/server')

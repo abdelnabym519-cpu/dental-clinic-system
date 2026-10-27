@@ -134,7 +134,7 @@ export default function SterilizationDashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.total || 0}</div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {t("Manage inventory")} <ArrowRight className="h-3 w-3" />
+                {t('Manage inventory')} <ArrowRight className="h-3 w-3" />
               </p>
             </CardContent>
           </Card>
@@ -148,7 +148,7 @@ export default function SterilizationDashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.recentLogs.length || 0}</div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {t("View cycle history")} <ArrowRight className="h-3 w-3" />
+                {t('View cycle history')} <ArrowRight className="h-3 w-3" />
               </p>
             </CardContent>
           </Card>
@@ -162,7 +162,7 @@ export default function SterilizationDashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{t('ui.reports')}</div>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {t("View compliance data")} <ArrowRight className="h-3 w-3" />
+                {t('View compliance data')} <ArrowRight className="h-3 w-3" />
               </p>
             </CardContent>
           </Card>
@@ -241,7 +241,8 @@ export default function SterilizationDashboardPage() {
                   <div>
                     <p className="font-medium text-sm">{log.instrument.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {log.instrument.category} {t("— Cycle #")}{log.cycleNumber} — {log.method}
+                      {log.instrument.category} {t('— Cycle #')}
+                      {log.cycleNumber} — {log.method}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

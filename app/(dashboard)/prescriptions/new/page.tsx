@@ -286,12 +286,14 @@ export default function NewPrescriptionPage() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <Button variant="ghost" className="mb-4" onClick={() => router.push('/prescriptions')}>
-        <ArrowLeft className="h-4 w-4 mr-2" /> {t("Back to Prescriptions")}
+        <ArrowLeft className="h-4 w-4 mr-2" /> {t('Back to Prescriptions')}
       </Button>
 
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <ClipboardList className="h-8 w-8" />{t('ui.new_prescription')}</h1>
+          <ClipboardList className="h-8 w-8" />
+          {t('ui.new_prescription')}
+        </h1>
         <p className="text-muted-foreground">{t('Create a new e-prescription for a patient')}</p>
       </div>
 
@@ -313,12 +315,14 @@ export default function NewPrescriptionPage() {
                     {selectedPatient.patientId} · {selectedPatient.phone}
                     {selectedPatient.allergies && (
                       <span className="text-destructive ml-2">
-                        {t("Allergies:")} {selectedPatient.allergies}
+                        {t('Allergies:')} {selectedPatient.allergies}
                       </span>
                     )}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setSelectedPatient(null)}>{t('ui.change')}</Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedPatient(null)}>
+                  {t('ui.change')}
+                </Button>
               </div>
             ) : (
               <div className="relative">
@@ -332,7 +336,9 @@ export default function NewPrescriptionPage() {
                 {(patients.length > 0 || searchingPatients) && (
                   <div className="absolute z-10 mt-1 w-full bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
                     {searchingPatients ? (
-                      <div className="p-3 text-center text-sm text-muted-foreground">{t('ui.searching')}</div>
+                      <div className="p-3 text-center text-sm text-muted-foreground">
+                        {t('ui.searching')}
+                      </div>
                     ) : (
                       patients.map((p) => (
                         <button
@@ -371,7 +377,7 @@ export default function NewPrescriptionPage() {
               <Input
                 value={diagnosis}
                 onChange={(e) => setDiagnosis(e.target.value)}
-                placeholder={t("e.g., Dental caries, Periodontal disease")}
+                placeholder={t('e.g., Dental caries, Periodontal disease')}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -400,7 +406,7 @@ export default function NewPrescriptionPage() {
               <div key={med.key} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">
-                    {t("Medication")} {index + 1}
+                    {t('Medication')} {index + 1}
                   </span>
                   {medications.length > 1 && (
                     <Button
@@ -416,7 +422,7 @@ export default function NewPrescriptionPage() {
 
                 {/* Medication name with search */}
                 <div className="relative">
-                  <Label>{t("Medication Name *")}</Label>
+                  <Label>{t('Medication Name *')}</Label>
                   <Input
                     value={activeMedRow === index ? medSearch : med.medicationName}
                     onChange={(e) => {
@@ -452,27 +458,27 @@ export default function NewPrescriptionPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div>
-                    <Label>{t("Dosage *")}</Label>
+                    <Label>{t('Dosage *')}</Label>
                     <Input
                       value={med.dosage}
                       onChange={(e) => updateMedRow(index, 'dosage', e.target.value)}
-                      placeholder={t("1 tablet")}
+                      placeholder={t('1 tablet')}
                     />
                   </div>
                   <div>
-                    <Label>{t("Frequency *")}</Label>
+                    <Label>{t('Frequency *')}</Label>
                     <Input
                       value={med.frequency}
                       onChange={(e) => updateMedRow(index, 'frequency', e.target.value)}
-                      placeholder={t("3 times a day")}
+                      placeholder={t('3 times a day')}
                     />
                   </div>
                   <div>
-                    <Label>{t("Duration *")}</Label>
+                    <Label>{t('Duration *')}</Label>
                     <Input
                       value={med.duration}
                       onChange={(e) => updateMedRow(index, 'duration', e.target.value)}
-                      placeholder={t("5 days")}
+                      placeholder={t('5 days')}
                     />
                   </div>
                   <div>
@@ -557,10 +563,12 @@ export default function NewPrescriptionPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => router.push('/prescriptions')}>{t('ui.cancel')}</Button>
+          <Button variant="outline" onClick={() => router.push('/prescriptions')}>
+            {t('ui.cancel')}
+          </Button>
           <Button onClick={handleSubmit} disabled={saving} size="lg">
             {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {t("Create Prescription")}
+            {t('Create Prescription')}
           </Button>
         </div>
       </div>

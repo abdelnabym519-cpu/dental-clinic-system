@@ -19,10 +19,7 @@ import { translateText } from '@/lib/i18n/dictionary'
  * where patientId comes from the authenticated portal token — a patient can
  * never reach another patient's prescription (404, no enumeration).
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, patient } = await requirePatientAuth(_request)
   if (error) return error
 
@@ -123,9 +120,6 @@ export async function GET(
     return new Response(new Uint8Array(pdf), { headers: pdfHeaders })
   } catch (err: unknown) {
     console.error('Error rendering patient prescription PDF:', err)
-    return NextResponse.json(
-      { error: 'Failed to render prescription PDF' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to render prescription PDF' }, { status: 500 })
   }
 }

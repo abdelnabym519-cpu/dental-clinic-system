@@ -2,15 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { deriveStatusMap, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 import type { Prisma } from '@prisma/client'
 
 // Explicit payload types: inference through Prisma's payload generics is
 // schema-sensitive; annotating keeps this route schema-portable.
 type StudyWithJobs = Prisma.ImagingStudyGetPayload<{
-  include: { aiJobs: { select: { id: true; status: true; acceptedFindings: true; completedAt: true } } }
+  include: {
+    aiJobs: { select: { id: true; status: true; acceptedFindings: true; completedAt: true } }
+  }
 }>
 type PlanItemWithRelations = Prisma.TreatmentPlanItemGetPayload<{
-  include: { procedure: { select: { name: true } }; treatmentPlan: { select: { id: true; status: true } } }
+  include: {
+    procedure: { select: { name: true } }
+    treatmentPlan: { select: { id: true; status: true } }
+  }
 }>
 type CatalogRow = Prisma.ProcedureGetPayload<{ select: { id: true; name: true; basePrice: true } }>
 
@@ -50,7 +56,11 @@ export function extractToothFindings(acceptedFindings: unknown): RawAiFinding[] 
         : typeof rawTooth === 'string'
           ? Number.parseInt(rawTooth, 10)
           : NaN
-    if (!Number.isInteger(toothNumber) || toothNumber < 11 || toothNumber > 48) continue
+    // FDI-52: accept the 32 permanent (11-48) AND the 20 primary (51-55,
+    // 61-65, 71-75, 81-85) identifiers. The previous `11..48` range check was
+    // wrong in both directions: it silently dropped valid primary teeth, and
+    // it admitted out-of-schema numbers such as 19, 29, 30, 39, 40 and 49.
+    if (!isValidFdi(toothNumber)) continue
     const label =
       (typeof rec.condition === 'string' && rec.condition) ||
       (typeof rec.finding === 'string' && rec.finding) ||
@@ -106,7 +116,11 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
         orderBy: { createdAt: 'asc' },
       }),
       prisma.treatmentPlan.findFirst({
-        where: { patientId, hospitalId, status: { in: ['DRAFT', 'PROPOSED', 'ACCEPTED', 'IN_PROGRESS'] } },
+        where: {
+          patientId,
+          hospitalId,
+          status: { in: ['DRAFT', 'PROPOSED', 'ACCEPTED', 'IN_PROGRESS'] },
+        },
         orderBy: { createdAt: 'desc' },
         select: { id: true, status: true },
       }),
@@ -150,7 +164,10 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
         procsByTooth.set(tooth, list)
       }
     }
-    const statusByTooth: Record<number, ToothTreatmentStatus> = deriveStatusMap(entriesByTooth, procsByTooth)
+    const statusByTooth: Record<number, ToothTreatmentStatus> = deriveStatusMap(
+      entriesByTooth,
+      procsByTooth
+    )
 
     // Procedure catalog for the panel's "add procedure" selector (read-only).
     const catalog = (await prisma.procedure.findMany({
@@ -188,5 +205,5 @@ function parseToothList(value: string | null): number[] {
   return value
     .split(',')
     .map((s) => Number.parseInt(s.trim(), 10))
-    .filter((n) => Number.isInteger(n) && n >= 11 && n <= 48)
+    .filter((n) => isValidFdi(n))
 }

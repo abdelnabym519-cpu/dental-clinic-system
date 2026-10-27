@@ -152,7 +152,9 @@ export function NotificationTray() {
         <DropdownMenuSeparator className="m-0" />
         <ScrollArea className="h-[340px]">
           {loading && notifications.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">{t('ui.loading')}</div>
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+              {t('ui.loading')}
+            </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-sm text-muted-foreground">
               <Bell className="mb-2 h-8 w-8 opacity-30" />

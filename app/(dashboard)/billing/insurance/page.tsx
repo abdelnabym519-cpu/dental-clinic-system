@@ -257,7 +257,9 @@ export default function InsuranceClaimsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('Insurance Claims')}</h1>
-          <p className="text-muted-foreground">{t('Manage insurance claims and track settlements')}</p>
+          <p className="text-muted-foreground">
+            {t('Manage insurance claims and track settlements')}
+          </p>
         </div>
         <div className="flex gap-2">
           <Link href="/billing/insurance/providers">
@@ -292,7 +294,9 @@ export default function InsuranceClaimsPage() {
             {loading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold">{formatCurrency(summary.totalClaimed, locale)}</div>
+              <div className="text-2xl font-bold">
+                {formatCurrency(summary.totalClaimed, locale)}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -443,7 +447,7 @@ export default function InsuranceClaimsPage() {
                     <TableCell>
                       <div className="font-medium">{claim.claimNumber}</div>
                       <div className="text-sm text-muted-foreground">
-                        {t("Policy:")} {claim.policyNumber}
+                        {t('Policy:')} {claim.policyNumber}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -495,13 +499,17 @@ export default function InsuranceClaimsPage() {
                           <DropdownMenuItem
                             onClick={() => router.push(`/billing/insurance/${claim.id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />{t('ui.view_details')}</DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            {t('ui.view_details')}
+                          </DropdownMenuItem>
                           {claim.status === 'DRAFT' && (
                             <>
                               <DropdownMenuItem
                                 onClick={() => router.push(`/billing/insurance/${claim.id}/edit`)}
                               >
-                                <Edit className="h-4 w-4 mr-2" />{t('ui.edit')}</DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />
+                                {t('ui.edit')}
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleSubmitClaim(claim.id)}>
                                 <Send className="h-4 w-4 mr-2" />
@@ -532,7 +540,7 @@ export default function InsuranceClaimsPage() {
                                   onClick={() => router.push(`/billing/invoices/${invoice.id}`)}
                                 >
                                   <FileText className="h-4 w-4 mr-2" />
-                                  {t("View Invoice")} {invoice.invoiceNo}
+                                  {t('View Invoice')} {invoice.invoiceNo}
                                 </DropdownMenuItem>
                               ))}
                             </>
@@ -550,9 +558,9 @@ export default function InsuranceClaimsPage() {
           {!loading && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                {t("Showing")} {(pagination.page - 1) * pagination.limit + 1} {t("to")}{' '}
-                {Math.min(pagination.page * pagination.limit, pagination.total)} {t("of")}{' '}
-                {pagination.total} {t("claims")}
+                {t('Showing')} {(pagination.page - 1) * pagination.limit + 1} {t('to')}{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} {t('of')}{' '}
+                {pagination.total} {t('claims')}
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -561,16 +569,20 @@ export default function InsuranceClaimsPage() {
                   onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
                   disabled={pagination.page <= 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />{t('ui.previous')}</Button>
+                  <ChevronLeft className="h-4 w-4" />
+                  {t('ui.previous')}
+                </Button>
                 <div className="text-sm">
-                  {t("Page")} {pagination.page} {t("of")} {pagination.totalPages}
+                  {t('Page')} {pagination.page} {t('of')} {pagination.totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
                   disabled={pagination.page >= pagination.totalPages}
-                >{t('ui.next')}<ChevronRight className="h-4 w-4" />
+                >
+                  {t('ui.next')}
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -596,7 +608,9 @@ export default function InsuranceClaimsPage() {
                   {denialClaim.insuranceProvider}
                 </p>
                 {denialClaim.rejectionReason && (
-                  <p className="text-destructive mt-1">{t("Rejection:")} {denialClaim.rejectionReason}</p>
+                  <p className="text-destructive mt-1">
+                    {t('Rejection:')} {denialClaim.rejectionReason}
+                  </p>
                 )}
               </div>
 
@@ -606,7 +620,7 @@ export default function InsuranceClaimsPage() {
                   <Input
                     value={denialForm.denialCode}
                     onChange={(e) => setDenialForm({ ...denialForm, denialCode: e.target.value })}
-                    placeholder={t("e.g., CO-4, PR-96")}
+                    placeholder={t('e.g., CO-4, PR-96')}
                   />
                 </div>
                 <div>
@@ -652,7 +666,9 @@ export default function InsuranceClaimsPage() {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setDenialClaim(null)}>{t('ui.cancel')}</Button>
+                <Button variant="outline" onClick={() => setDenialClaim(null)}>
+                  {t('ui.cancel')}
+                </Button>
                 <Button onClick={handleSaveDenialInfo}>{t('Save')}</Button>
               </div>
             </div>
@@ -684,11 +700,11 @@ export default function InsuranceClaimsPage() {
                   {aiAnalysisClaim.insuranceProvider}
                 </p>
                 <p className="text-muted-foreground">
-                  {t("Amount:")} {formatCurrency(aiAnalysisClaim.claimAmount, locale)}
+                  {t('Amount:')} {formatCurrency(aiAnalysisClaim.claimAmount, locale)}
                 </p>
                 {aiAnalysisClaim.rejectionReason && (
                   <p className="text-destructive mt-1">
-                    {t("Rejection:")} {aiAnalysisClaim.rejectionReason}
+                    {t('Rejection:')} {aiAnalysisClaim.rejectionReason}
                   </p>
                 )}
               </div>
@@ -707,15 +723,15 @@ export default function InsuranceClaimsPage() {
                     <h4 className="text-sm font-medium">{t('Analysis')}</h4>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
                       <p>
-                        <span className="font-medium">{t("Likely Cause:")}</span>{' '}
+                        <span className="font-medium">{t('Likely Cause:')}</span>{' '}
                         {aiAnalysis.analysis?.likelyCause}
                       </p>
                       <p>
-                        <span className="font-medium">{t("Category:")}</span>{' '}
+                        <span className="font-medium">{t('Category:')}</span>{' '}
                         {aiAnalysis.analysis?.denialCategory}
                       </p>
                       <p>
-                        <span className="font-medium">{t("Recovery Likelihood:")}</span>{' '}
+                        <span className="font-medium">{t('Recovery Likelihood:')}</span>{' '}
                         {aiAnalysis.analysis?.severityOfDenial}
                       </p>
                     </div>
@@ -789,7 +805,9 @@ export default function InsuranceClaimsPage() {
                     setAiAnalysisClaim(null)
                     setAiAnalysis(null)
                   }}
-                >{t('ui.close')}</Button>
+                >
+                  {t('ui.close')}
+                </Button>
               </div>
             </div>
           )}

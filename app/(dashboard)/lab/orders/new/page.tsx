@@ -171,7 +171,9 @@ export default function NewLabOrderPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(data.error || t('Failed to create lab order ({status})', { status: response.status }))
+        throw new Error(
+          data.error || t('Failed to create lab order ({status})', { status: response.status })
+        )
       }
 
       const result = await response.json()
@@ -213,7 +215,9 @@ export default function NewLabOrderPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />{t('ui.patient')}</CardTitle>
+              <User className="h-5 w-5" />
+              {t('ui.patient')}
+            </CardTitle>
             <CardDescription>{t('Select the patient for this lab order')}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,7 +243,9 @@ export default function NewLabOrderPage() {
                     setSelectedPatient(null)
                     setForm((prev) => ({ ...prev, patientId: '' }))
                   }}
-                >{t('ui.change')}</Button>
+                >
+                  {t('ui.change')}
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -254,7 +260,9 @@ export default function NewLabOrderPage() {
                 </div>
                 <div className="max-h-60 overflow-y-auto border rounded-lg">
                   {filteredPatients.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">{t('ui.no_patients_found')}</div>
+                    <div className="p-4 text-center text-muted-foreground">
+                      {t('ui.no_patients_found')}
+                    </div>
                   ) : (
                     filteredPatients.slice(0, 10).map((patient) => (
                       <button
@@ -295,7 +303,7 @@ export default function NewLabOrderPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t("Lab Vendor *")}</Label>
+                <Label>{t('Lab Vendor *')}</Label>
                 <Select
                   value={form.labVendorId}
                   onValueChange={(v) => setForm((prev) => ({ ...prev, labVendorId: v }))}
@@ -307,7 +315,9 @@ export default function NewLabOrderPage() {
                     {vendors.map((vendor) => (
                       <SelectItem key={vendor.id} value={vendor.id}>
                         {vendor.name}
-                        {vendor.avgTurnaround ? t(" ({v1}d avg)", { v1: vendor.avgTurnaround }) : ''}
+                        {vendor.avgTurnaround
+                          ? t(' ({v1}d avg)', { v1: vendor.avgTurnaround })
+                          : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -315,7 +325,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t("Work Type *")}</Label>
+                <Label>{t('Work Type *')}</Label>
                 <Select
                   value={form.workType}
                   onValueChange={(v) => setForm((prev) => ({ ...prev, workType: v }))}
@@ -375,7 +385,7 @@ export default function NewLabOrderPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>{t("Order Date *")}</Label>
+                <Label>{t('Order Date *')}</Label>
                 <Input
                   type="date"
                   value={form.orderDate}
@@ -394,7 +404,7 @@ export default function NewLabOrderPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t("Estimated Cost (EGP) *")}</Label>
+                <Label>{t('Estimated Cost (EGP) *')}</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -427,15 +437,21 @@ export default function NewLabOrderPage() {
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <Link href="/lab">
-            <Button type="button" variant="outline">{t('ui.cancel')}</Button>
+            <Button type="button" variant="outline">
+              {t('ui.cancel')}
+            </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('ui.creating')}</>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('ui.creating')}
+              </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />{t('ui.create_lab_order')}</>
+                <Save className="mr-2 h-4 w-4" />
+                {t('ui.create_lab_order')}
+              </>
             )}
           </Button>
         </div>

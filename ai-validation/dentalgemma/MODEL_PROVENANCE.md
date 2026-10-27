@@ -22,57 +22,57 @@ base foundation model           LoRA fine-tune, merged          GGUF conversion 
 gated, HAI-DEF terms            declared apache-2.0             declared apache-2.0
 ```
 
-| Link | Repository | Made by | Verification status |
-| --- | --- | --- | --- |
-| Base | `google/medgemma-1.5-4b-it` | Google | Organisation-verified on Hugging Face; 886 likes; 356,784 downloads |
-| Fine-tune | `naazimsnh02/dentalgemma-1.5-4b-it` | Individual contributor | **Community work — no peer review, no independent evaluation found** |
-| Conversion | `naazimsnh02/dentalgemma-1.5-4b-it-GGUF` | Same individual contributor | **Community work** |
+| Link       | Repository                               | Made by                     | Verification status                                                  |
+| ---------- | ---------------------------------------- | --------------------------- | -------------------------------------------------------------------- |
+| Base       | `google/medgemma-1.5-4b-it`              | Google                      | Organisation-verified on Hugging Face; 886 likes; 356,784 downloads  |
+| Fine-tune  | `naazimsnh02/dentalgemma-1.5-4b-it`      | Individual contributor      | **Community work — no peer review, no independent evaluation found** |
+| Conversion | `naazimsnh02/dentalgemma-1.5-4b-it-GGUF` | Same individual contributor | **Community work**                                                   |
 
-This matters for how much weight the model deserves: the *base* is Google's, the
-*dental adaptation* is one person's, and the *GGUF build* the model card itself
+This matters for how much weight the model deserves: the _base_ is Google's, the
+_dental adaptation_ is one person's, and the _GGUF build_ the model card itself
 describes as generated with llama.cpp converter scripts. The model card reports
 it was built for the MedGemma Impact Challenge.
 
 ### Base model — `google/medgemma-1.5-4b-it`
 
-| Field | Value |
-| --- | --- |
-| Revision | `91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b` |
-| Architecture | `Gemma3ForConditionalGeneration` |
-| Parameters | 4,300,079,472 (BF16) |
-| Pipeline tag | `image-text-to-text` |
-| Gated | **`auto`** — requires signing in and accepting the HAI-DEF terms |
-| License field | `other` / `health-ai-developer-foundations` |
-| License link | https://developers.google.com/health-ai-developer-foundations/terms |
-| Last modified | 2026-04-13 |
+| Field         | Value                                                               |
+| ------------- | ------------------------------------------------------------------- |
+| Revision      | `91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b`                          |
+| Architecture  | `Gemma3ForConditionalGeneration`                                    |
+| Parameters    | 4,300,079,472 (BF16)                                                |
+| Pipeline tag  | `image-text-to-text`                                                |
+| Gated         | **`auto`** — requires signing in and accepting the HAI-DEF terms    |
+| License field | `other` / `health-ai-developer-foundations`                         |
+| License link  | https://developers.google.com/health-ai-developer-foundations/terms |
+| Last modified | 2026-04-13                                                          |
 
 ### Fine-tune — `naazimsnh02/dentalgemma-1.5-4b-it`
 
-| Field | Value |
-| --- | --- |
-| Revision | `ffb71c2e3fb6ccf8c958696a5265ece1e2d06240` |
-| Base declared | `google/medgemma-1.5-4b-it` |
+| Field             | Value                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| Revision          | `ffb71c2e3fb6ccf8c958696a5265ece1e2d06240`                        |
+| Base declared     | `google/medgemma-1.5-4b-it`                                       |
 | Method (per card) | LoRA fine-tune, adapters merged into base weights, full precision |
-| Architecture | `Gemma3ForConditionalGeneration` |
-| Parameters | 4,971,331,952 (BF16) |
-| Gated | no |
-| License declared | `apache-2.0` |
+| Architecture      | `Gemma3ForConditionalGeneration`                                  |
+| Parameters        | 4,971,331,952 (BF16)                                              |
+| Gated             | no                                                                |
+| License declared  | `apache-2.0`                                                      |
 | Datasets declared | `naazimsnh02/dentalgemma-vqa`, `naazimsnh02/dentalgemma-instruct` |
-| Downloads / likes | 249 / 0 |
+| Downloads / likes | 249 / 0                                                           |
 
 ### GGUF conversion — `naazimsnh02/dentalgemma-1.5-4b-it-GGUF`
 
-| Field | Value |
-| --- | --- |
-| Revision | `81e65fb2a242aebadaeb78900d79aa5af1fd5ce7` |
-| Gated | **no** — no token needed to download |
-| License declared | `apache-2.0` |
-| GGUF architecture | `gemma3` |
-| GGUF context length | 131,072 |
-| GGUF total parameters | 4,551,515,648 |
-| Repository storage | 3,726,927,296 B (`usedStorage`) |
-| Downloads / likes | 216 / 0 |
-| Last modified | 2026-02-23 |
+| Field                 | Value                                      |
+| --------------------- | ------------------------------------------ |
+| Revision              | `81e65fb2a242aebadaeb78900d79aa5af1fd5ce7` |
+| Gated                 | **no** — no token needed to download       |
+| License declared      | `apache-2.0`                               |
+| GGUF architecture     | `gemma3`                                   |
+| GGUF context length   | 131,072                                    |
+| GGUF total parameters | 4,551,515,648                              |
+| Repository storage    | 3,726,927,296 B (`usedStorage`)            |
+| Downloads / likes     | 216 / 0                                    |
+| Last modified         | 2026-02-23                                 |
 
 ---
 
@@ -82,15 +82,15 @@ Both files are required for image input. The main file cannot see an image; the
 projector cannot produce text. Their sizes and digests come from Hugging Face's
 own file listing, where `lfs.oid` is the SHA-256 of the file content:
 
-| | Main language model | Multimodal projector |
-| --- | --- | --- |
-| Filename | `dentalgemma-4b-Q4_K_M.gguf` | `dentalgemma-mmproj-f16.gguf` |
-| Size | **2,875,676,064 B** (2.68 GiB) | **851,251,232 B** (0.79 GiB) |
-| SHA-256 | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` | `3d03262e058316c318c6dd4868c11fdccef68ec4af6d2ebea54bd1865b8c8113` |
-| Quantisation | Q4_K_M (4-bit) | f16 |
-| Declared architecture | `gemma3` | `clip` (projector) |
-| Role | generates the text | encodes the image into embeddings |
-| Total on disk | **3,726,927,296 B (3.47 GiB)** | |
+|                       | Main language model                                                | Multimodal projector                                               |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Filename              | `dentalgemma-4b-Q4_K_M.gguf`                                       | `dentalgemma-mmproj-f16.gguf`                                      |
+| Size                  | **2,875,676,064 B** (2.68 GiB)                                     | **851,251,232 B** (0.79 GiB)                                       |
+| SHA-256               | `311ea621a01960e2b4b908adbe8a0b5312201bd0025c92e387150acb3a321c03` | `3d03262e058316c318c6dd4868c11fdccef68ec4af6d2ebea54bd1865b8c8113` |
+| Quantisation          | Q4_K_M (4-bit)                                                     | f16                                                                |
+| Declared architecture | `gemma3`                                                           | `clip` (projector)                                                 |
+| Role                  | generates the text                                                 | encodes the image into embeddings                                  |
+| Total on disk         | **3,726,927,296 B (3.47 GiB)**                                     |                                                                    |
 
 Hugging Face also records an `xetHash` for each file
 (`0676e821a7b8ee37821d02da1de2befec99d681b32953b559ad9cfbaf16a2f8f` and
@@ -153,9 +153,9 @@ both declarations and moves on. What follows from it, plainly:
 
 The model cards list metrics, and mark them `"verified": false`:
 
-| Task | Metric | Value | Verified |
-| --- | --- | --- | --- |
-| Dental X-ray VQA | validation loss | 0.1585 | **false** |
+| Task                            | Metric          | Value  | Verified  |
+| ------------------------------- | --------------- | ------ | --------- |
+| Dental X-ray VQA                | validation loss | 0.1585 | **false** |
 | Dental clinical case assessment | validation loss | 0.0224 | **false** |
 
 Loss is not accuracy, the values are self-reported and unverified, the datasets
@@ -166,16 +166,16 @@ Nothing in this lab reproduces, endorses or repeats these numbers.
 
 ## 4. Runtime expectations, from the publishers' own documentation
 
-| Fact | Source |
-| --- | --- |
-| llama.cpp is the documented runtime for these GGUF files | GGUF model card |
-| A Q4_K_M 4-bit model "requires approximately ~2.5GB to 3GB RAM" | GGUF model card |
-| The card recommends Q4_K_M or higher; aggressive quantisation degrades quality | GGUF model card |
-| Multimodal needs both `-m` and `--mmproj` | llama.cpp `docs/multimodal.md` |
-| By default the projector is offloaded to a GPU; `--no-mmproj-offload` prevents that — and `-ngl` defaults to *auto*, so the language model is not pinned to the CPU either. `scripts/run_dentalgemma.py` therefore passes `-ngl 0`, `-dev none` **and** `--no-mmproj-offload` unless a GPU is asked for explicitly | llama.cpp `docs/multimodal.md`, `common/common.h` (`n_gpu_layers = -1`), `common/arg.cpp` |
-| Current multimodal tools are `llama-mtmd-cli`, `llama-cli`, `llama-server` | llama.cpp `docs/multimodal.md` |
-| **Gemma 3 vision is "very experimental, only used for demo purpose"** | llama.cpp `docs/multimodal/gemma3.md` |
-| The card's example uses `llama-llava-cli`, which llama.cpp has since replaced with `libmtmd` | GGUF model card vs llama.cpp PRs #12849 / #13012 |
+| Fact                                                                                                                                                                                                                                                                                                               | Source                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| llama.cpp is the documented runtime for these GGUF files                                                                                                                                                                                                                                                           | GGUF model card                                                                           |
+| A Q4_K_M 4-bit model "requires approximately ~2.5GB to 3GB RAM"                                                                                                                                                                                                                                                    | GGUF model card                                                                           |
+| The card recommends Q4_K_M or higher; aggressive quantisation degrades quality                                                                                                                                                                                                                                     | GGUF model card                                                                           |
+| Multimodal needs both `-m` and `--mmproj`                                                                                                                                                                                                                                                                          | llama.cpp `docs/multimodal.md`                                                            |
+| By default the projector is offloaded to a GPU; `--no-mmproj-offload` prevents that — and `-ngl` defaults to _auto_, so the language model is not pinned to the CPU either. `scripts/run_dentalgemma.py` therefore passes `-ngl 0`, `-dev none` **and** `--no-mmproj-offload` unless a GPU is asked for explicitly | llama.cpp `docs/multimodal.md`, `common/common.h` (`n_gpu_layers = -1`), `common/arg.cpp` |
+| Current multimodal tools are `llama-mtmd-cli`, `llama-cli`, `llama-server`                                                                                                                                                                                                                                         | llama.cpp `docs/multimodal.md`                                                            |
+| **Gemma 3 vision is "very experimental, only used for demo purpose"**                                                                                                                                                                                                                                              | llama.cpp `docs/multimodal/gemma3.md`                                                     |
+| The card's example uses `llama-llava-cli`, which llama.cpp has since replaced with `libmtmd`                                                                                                                                                                                                                       | GGUF model card vs llama.cpp PRs #12849 / #13012                                          |
 
 Three inconsistencies in the publisher's own material are recorded here rather
 than smoothed over:

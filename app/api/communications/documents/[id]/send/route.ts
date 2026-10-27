@@ -11,10 +11,7 @@ import * as templates from '@/lib/messaging/templates'
  * Tenant-scoped. The image bytes come from the same storage the patient file
  * uses; nothing is re-uploaded anywhere else.
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error, hospitalId, session } = await requireAuthAndRole(['DOCTOR', 'ADMIN'])
   if (error || !hospitalId) {
     return error || NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -60,12 +57,16 @@ export async function POST(
       throw err
     }
 
-    const clinicName = (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))?.name ?? 'Clinic'
+    const clinicName =
+      (await prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true } }))
+        ?.name ?? 'Clinic'
     const doctorRow = await prisma.staff.findFirst({
       where: { userId: session?.user?.id ?? '', hospitalId },
       select: { firstName: true, lastName: true },
     })
-    const doctorName = doctorRow ? `Dr. ${doctorRow.firstName} ${doctorRow.lastName}` : 'فريق العيادة'
+    const doctorName = doctorRow
+      ? `Dr. ${doctorRow.firstName} ${doctorRow.lastName}`
+      : 'فريق العيادة'
     const dateStr = new Date().toISOString().slice(0, 10)
 
     const queueId = await enqueueMessage({

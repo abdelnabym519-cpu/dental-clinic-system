@@ -3,6 +3,9 @@ import {
   formatDate as baseFormatDate,
   formatDateTime as baseFormatDateTime,
 } from '@/lib/i18n/format'
+import { isValidFdi, quadrantOf, type FdiQuadrant } from '@/lib/dental-chart/fdi'
+
+export type { FdiQuadrant }
 
 // Treatment status colors and labels
 export const treatmentStatusConfig: Record<
@@ -346,9 +349,18 @@ export function formatToothNumbers(teeth: number[]): string {
 }
 
 // Get tooth quadrant from tooth number
-export function getToothQuadrant(toothNumber: number): 1 | 2 | 3 | 4 {
-  const firstDigit = Math.floor(toothNumber / 10)
-  return firstDigit as 1 | 2 | 3 | 4
+/**
+ * Quadrant for any of the 52 FDI identifiers: 1-4 permanent, 5-8 primary.
+ *
+ * This previously returned `Math.floor(n / 10)` with no validation at all, so
+ * it invented a quadrant for numbers that are not teeth (19 -> 1, 30 -> 3,
+ * 99 -> 9) while its declared return type claimed only 1-4. Unrecognised input
+ * now falls back to 1, matching the documented convention in the dental-chart
+ * adapter — that default is a display convenience and is NOT a clinical claim
+ * about the tooth.
+ */
+export function getToothQuadrant(toothNumber: number): FdiQuadrant {
+  return isValidFdi(toothNumber) ? quadrantOf(toothNumber) : 1
 }
 
 // Check if tooth is a molar

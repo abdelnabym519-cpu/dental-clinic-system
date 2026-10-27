@@ -64,13 +64,45 @@ export interface ToothDimensions {
 export function toothDimensions(n: number): ToothDimensions {
   switch (groupOf(n)) {
     case 'incisor':
-      return { crownTop: 0.13, crownBottom: 0.17, crownHeight: 0.34, rootHeight: 0.4, segments: 4, flattenZ: 0.62, cusps: 0 }
+      return {
+        crownTop: 0.13,
+        crownBottom: 0.17,
+        crownHeight: 0.34,
+        rootHeight: 0.4,
+        segments: 4,
+        flattenZ: 0.62,
+        cusps: 0,
+      }
     case 'canine':
-      return { crownTop: 0.07, crownBottom: 0.17, crownHeight: 0.38, rootHeight: 0.46, segments: 4, flattenZ: 0.75, cusps: 0 }
+      return {
+        crownTop: 0.07,
+        crownBottom: 0.17,
+        crownHeight: 0.38,
+        rootHeight: 0.46,
+        segments: 4,
+        flattenZ: 0.75,
+        cusps: 0,
+      }
     case 'premolar':
-      return { crownTop: 0.17, crownBottom: 0.15, crownHeight: 0.3, rootHeight: 0.4, segments: 8, flattenZ: 0.85, cusps: 2 }
+      return {
+        crownTop: 0.17,
+        crownBottom: 0.15,
+        crownHeight: 0.3,
+        rootHeight: 0.4,
+        segments: 8,
+        flattenZ: 0.85,
+        cusps: 2,
+      }
     case 'molar':
     default:
-      return { crownTop: 0.22, crownBottom: 0.17, crownHeight: 0.3, rootHeight: 0.38, segments: 8, flattenZ: 0.95, cusps: 4 }
+      return {
+        crownTop: 0.22,
+        crownBottom: 0.17,
+        crownHeight: 0.3,
+        rootHeight: 0.38,
+        segments: 8,
+        flattenZ: 0.95,
+        cusps: 4,
+      }
   }
 }

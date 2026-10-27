@@ -63,7 +63,6 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn().mockResolvedValue([]),
     },
-
   },
 }))
 
@@ -580,7 +579,13 @@ describe('Appointments API - Comprehensive Tests', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             status: {
-              in: expect.arrayContaining(['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED']),
+              in: expect.arrayContaining([
+                'SCHEDULED',
+                'CONFIRMED',
+                'CHECKED_IN',
+                'IN_PROGRESS',
+                'COMPLETED',
+              ]),
             },
           }),
         })
