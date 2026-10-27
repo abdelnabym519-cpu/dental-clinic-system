@@ -171,3 +171,54 @@ AI/voice layer is an _older_ base.
 
 `/tmp/wt_base` @ `8f3429c`, `/tmp/wt_cur` @ `2ebafa3` — used for the CS-RESTO-007 probe and bisect.
 Remove with `git worktree remove /tmp/wt_base /tmp/wt_cur` when done.
+
+---
+
+## S0 PREFLIGHT — merge/fdi52-into-wip (`0819562a`) — measured 2026-10-28
+
+### Start-state verification (STOP-on-mismatch gate: PASSED)
+
+```
+expected HEAD: 0819562a288ec8c72681523d5373fb1bb9af1c6b
+actual   HEAD: 0819562a288ec8c72681523d5373fb1bb9af1c6b   -> MATCH
+parents:       d8c28ae58cb18c76026c04cf72e8b2153f427be7  (wip  @d8c28ae)
+               919c2ae98afffbea4b89cd17b9e4b44925459bfc  (arena @919c2ae)
+```
+
+Merge claim re-verified on origin: `components/dental-chart/interactive/tooth-anatomy.ts` is
+**904 lines**, contains `buildAnatomicalCrownGeometry`, and is **byte-identical to wip's** version
+(`git diff --stat origin/wip/... origin/merge/... -- <file>` empty) — i.e. theirs was taken.
+
+### Environment (recorded, differs from the user's machine)
+
+| Item                                    | This sandbox                           | Consequence                                                    |
+| --------------------------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| `docker --version`                      | **not installed**                      | WP2 remains impossible (B2)                                    |
+| `ai-validation/*/model/`                | **README.md only — no weights**        | model checksums impossible (B3)                                |
+| `git rev-parse --is-shallow-repository` | **true** (grafts `655dc10`, `8f3429c`) | cannot show `eba87b7` shared ancestry; `merge-base` unreliable |
+| MySQL `127.0.0.1:3306`                  | **closed**; no mysql client            | any live-DB check unverifiable                                 |
+| Prisma client                           | **absent**                             | 498 tsc errors; 1 test file uncollectable                      |
+| Node                                    | v22.22.3 (`.nvmrc` = 20)               | CI on Node 20 is authoritative                                 |
+
+### Baseline measured HERE (must not be assumed to match the user's)
+
+| Metric          | This sandbox                            | User's machine | Reconciliation                               |
+| --------------- | --------------------------------------- | -------------- | -------------------------------------------- |
+| tsc `--noEmit`  | **498 errors**                          | —              | all Prisma-client-derived                    |
+| `npm run lint`  | **0 errors, 266 warnings**              | —              | (274 warnings on the pre-merge arena branch) |
+| Full suite      | **6301 passed / 12 skipped / 1 failed** | 6315 / 12 / 1  | **reconciled below**                         |
+| Test files      | **348** (2 failed)                      | 348            | **match**                                    |
+| `npm run build` | not yet run                             | —              | pending                                      |
+
+**Delta explained — no discrepancy:** `tests/api/imaging-review.test.ts` declares **14** tests but
+collects **0** here because `@prisma/client` cannot load. 6301 + 14 = **6315**, the user's number.
+So the two baselines agree exactly once the Prisma-blocked file is accounted for.
+
+**The 1 failure** is `tests/unit/dev-start-env.test.ts > "constructing with { datasources: { db:
+{ url } } } never fails with env-not-found"`. Here it cannot even reach a server (no Prisma client,
+no MySQL), so **this environment cannot reproduce the user's real failure mode**, which is an
+_authentication_ rejection, not a connection one. See S1.
+
+### Docs refreshed on this branch
+
+`BLOCKERS.md` (+B12, and the option-(a) stamp on B6), `PROGRESS.md` (this section), `TODO.md`.
