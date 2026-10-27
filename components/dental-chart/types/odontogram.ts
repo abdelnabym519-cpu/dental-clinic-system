@@ -119,6 +119,12 @@ export interface OdontogramProps {
   showStats?: boolean
   showLegend?: boolean
   mode?: 'clinical' | 'selection'
+  /**
+   * FDI-52, opt-in. 'permanent' (the default) renders the existing 32-tooth
+   * odontogram exactly as before. 'mixed' additionally renders the 20 primary
+   * teeth (Q5-Q8). Nothing about the default path changes.
+   */
+  dentition?: 'permanent' | 'mixed'
 }
 
 export interface ToothConditionConfigItem {

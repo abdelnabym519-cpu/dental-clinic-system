@@ -39,6 +39,7 @@ export function Odontogram({
   showStats = true,
   showLegend = true,
   mode = 'clinical',
+  dentition = 'permanent',
   title = 'Interactive Dental Chart',
 }: OdontogramProps & { title?: string }) {
   const { t } = useLanguage()
@@ -266,6 +267,7 @@ export function Odontogram({
             onSurfaceClick={handleSurfaceClick}
             interactive={interactive}
             mode={mode}
+            dentition={dentition}
           />
 
           {/* SELECTED TEETH CHIPS (IN SELECTION MODE) */}

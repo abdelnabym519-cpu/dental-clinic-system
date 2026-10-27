@@ -5,7 +5,12 @@ import { ToothViewModel, ToothSurfaceKey } from '../types/odontogram'
 import { ToothCell } from './ToothCell'
 
 interface QuadrantProps {
-  id: 'Q1' | 'Q2' | 'Q3' | 'Q4'
+  /**
+   * Q1-Q4 are the permanent quadrants (pre-existing). Q5-Q8 are the primary
+   * (deciduous) quadrants added by FDI-52 — widening this union is backward
+   * compatible: every existing Q1-Q4 caller still type-checks unchanged.
+   */
+  id: 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'Q5' | 'Q6' | 'Q7' | 'Q8'
   title: string
   subtitle: string
   teethNumbers: readonly number[]
