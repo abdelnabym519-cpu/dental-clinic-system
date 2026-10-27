@@ -91,27 +91,31 @@ Expect a non-zero exit until B4 is resolved.
 
 ---
 
-## B6 — CS-RESTO-007: mechanism proven, **decision needed** (was: root cause unknown)
+## B6 — CS-RESTO-007: **RESOLVED 2026-10-27** (was: decision needed)
 
 Root cause is established and pasted in `PROGRESS.md`: the old validator was a range check
 (`11 <= n <= 48`) that wrongly accepted `30`; FDI-52 replaced it with set membership, so `30` is
 now correctly rejected and the agent asks for a tooth instead of completing.
 
-**The golden file has NOT been edited** (user rule 6: never weaken or edit a golden / clinical-safety
-test to get green). Until you decide, these 3 tests fail:
+**Resolved under an explicit, scoped user directive** (neither "change agent behaviour" nor "just
+relax it" — a third course): the golden's `expected.status` was corrected to
+`["CLARIFICATION_REQUIRED"]` and `mustContain` to `["Which tooth"]`, with the full justification
+written into the case's `description` (the only field that survives — the Zod schema is non-strict and
+strips unknown keys, and **there is no `comment` key** in this dataset). A new case `CS-FDI-021`
+("Assess the restoration on tooth 19") pins the same guarantee: an invalid tooth must produce
+`CLARIFICATION_REQUIRED` + the honesty marker, never a fabricated finding. Committed as `8fba370`.
 
-- `CS-RESTO-007: … no invented association`
-- `global invariants hold across ALL cases`
-- `writes the machine-readable clinical-safety results artifact`
+All 3 previously-failing tests now pass; `tests/evaluation/clinical-safety-eval.test.ts` is
+**25/25**. Case count 20 → 21; the results artifact was regenerated through the project's own
+`DENTORA_WRITE_BENCH=1` path.
 
-**Options:**
-1. Update the golden: `expected.status` → `["COMPLETED", "CLARIFICATION_REQUIRED"]` and relax/replace
-   `mustContain: ["Identity:"]`. *I will not do this without explicit sign-off — it edits a protected gate.*
-2. Keep the golden and instead make the agent still surface patient identity when it must ask for a
-   tooth (behaviour change in `lib/ai/agent/loop.ts:826-827`, no golden edit).
+**Correction to the record:** a later report described the CS-RESTO-007 case definition as "printed
+before any edit". That was **wrong** — the text printed was read from the post-edit working tree and
+already contained the `EXPECTATION UPDATED` paragraph. The pre-edit state is recoverable from
+`git show 8fba370^:tests/evaluation/golden/clinical-safety.golden.json`; see the golden audit.
 
-Note: the clarification string also hardcodes `(11–48)` and `:827` is English — both stale
-independently of this decision.
+The stale `(11–48)` wording noted below was fixed in `8413911` (Arabic + English clarification
+strings and the classifier `missingInfo` string now name the primary range).
 
 ---
 
@@ -121,3 +125,65 @@ independently of this decision.
 `engines` is not declared in `package.json`, so nothing enforces this. No version manager
 (nvm/n/fnm/volta) is installed and `nodejs.org` is not in the network allowlist.
 All local test results therefore come from Node 22; **CI on Node 20 is authoritative.**
+
+---
+
+## B8 — Primary teeth need root/canal counts that may NOT be invented
+
+`ToothViewModel.rootCount` and `ToothViewModel.canalCount`
+(`components/dental-chart/types/odontogram.ts:84-85`) are **required, non-nullable `number`s**.
+
+Consequence: building a view model for a primary tooth (51-85) forces us to supply root and canal
+counts for it. `getToothRootCanalCounts` (adapter `:148`) has **no primary branch** — it derives
+`isUpper` from `Math.floor(n / 10) <= 2`, which for every primary tooth returns `false`, so it would
+silently assign mandibular permanent values to deciduous teeth.
+
+Per the standing safeguards (no invented primary root/canal counts; gate them behind clinical
+review) this cannot be guessed in code. **Needs clinically reviewed primary root/canal counts.**
+
+---
+
+## B9 — `getToothSpecificType` mis-types every primary tooth
+
+`components/dental-chart/geometry/tooth-paths.ts:1464` —
+
+```
+const d = toothNumber % 10
+const upper = Math.floor(toothNumber / 10) <= 2
+```
+
+For all primary teeth (51-85) `upper` is `false`, so every primary tooth is typed
+**mandibular**. Additionally the index map sends `4 → first_premolar` and `5 → second_premolar`,
+but in the primary dentition indices **4 and 5 are the first and second MOLARS** (there are no
+primary premolars). `ToothSpecificType` has **no primary members at all**.
+
+Fixing this is a clinical/anatomy content decision (new type members + corrected mapping), not a
+pure refactor.
+
+---
+
+## B10 — `ToothViewModel.quadrant` cannot hold 5-8
+
+`components/dental-chart/types/odontogram.ts:83` declares `quadrant: 1 | 2 | 3 | 4`. Primary
+quadrants are 5-8 (Q5 upper-right … Q8 lower-right), so the model cannot represent a primary
+tooth's quadrant without widening this union — a data-model change.
+
+---
+
+## B11 — Opt-in mixed dentition is SPIKED and STOPPED, not implemented
+
+`dentition?: 'permanent' | 'mixed'` was added to `OdontogramProps` and threaded through
+`Odontogram.tsx` → `ArchGrid.tsx` (primary Q5-Q8 block renders only when `'mixed'`), with
+`Quadrant`'s `id` union widened to Q1-Q8. All additive; the default path is byte-identical.
+
+But `dentition='mixed'` **does not fully render primary teeth** — the tooth cells need view models,
+which is blocked by **B8–B10**. 2 of 3 new tests pass (proving the default path is unchanged); the
+`mixed` test fails on exactly this.
+
+**User directive 2026-10-27: STOP. Do not modify Phase-3 protected types/Odontogram for primary
+teeth.** The work is preserved on branch **`spike/odontogram-mixed-dentition`** (commit `7d1800f`,
+pushed, verification greps recorded) and is **NOT for merge**. The session branch's tree was
+restored to clean.
+
+Resolving B8–B10 requires a data-model + clinical-content decision (primary anatomy, molar vs
+premolar mapping, clinically reviewed root/canal counts), not a code change.
