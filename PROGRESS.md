@@ -748,3 +748,85 @@ tiering, but `lib/ai/models.ts:21-48` actually defines **10** tiers
 (`google/gemini-2.5-flash-lite`, `google/gemini-2.5-pro`,
 `anthropic/claude-opus-4.5`). So those names are not a partial wiring of this
 codebase — nothing here was ever built to read them.
+
+---
+
+# S5 — IMPLEMENTATION (phase A skipped, phases B and C done) + CORRECTION
+
+## CORRECTION to the S5 audit: findings 2, 3 and 4 were WRONG
+
+The audit reported `t('Refresh')`, `t('Clear all')` and `t('Active')` as
+unresolved keys that paint raw English. **That was wrong**, and I caught it
+before writing any code.
+
+My check tested whether each literal was a **KEY** in `ar.json`. But the legacy
+pattern passes an English **VALUE**, which `translateText` resolves through a
+reverse index:
+
+    lib/i18n/dictionary.ts:77-79
+    if (text in dictionaries[resolveLocale(locale)]) return translate(locale, text, vars)
+    const key = getReverseIndex().get(text)
+    return key ? translate(locale, key, vars) : text
+
+Re-tested with the real function at `ar-EG`:
+
+| literal               | resolves to           | verdict                  |
+| --------------------- | --------------------- | ------------------------ |
+| `Refresh`             | تحديث                 | already fine             |
+| `Clear all`           | مسح الكل              | already fine             |
+| `Active`              | نشط                   | already fine             |
+| `Q1 (UR)`             | `Q1 (UR)`             | **genuinely unresolved** |
+| `Upper Jaw (Maxilla)` | الفك العلوي (ماكسيلا) | fine                     |
+
+A full sweep of the 47 `t()` literals in `components/dental-chart` using
+`translateText('ar-EG', …)` found **0 unresolved**. So findings 2-4 are
+retracted; only the corner labels (1) and the date format (5) were real.
+
+**Phase A was therefore skipped, not completed.** Adding those three keys would
+have created redundant duplicate entries (each literal is already an English
+value mapped to a key) and could have confused the reverse index.
+
+## Phase B — DONE (`5e33739`)
+
+`components/dental-chart/odontogram/ToothHistoryTimeline.tsx` (+9/-2), one
+product file. `format(date, 'MMM d, yyyy')` had no locale, so date-fns used
+en-US and rendered `Jan 5, 2024`. Now passes
+`locale: dateFnsLocale(locale)` using the pre-existing, previously unused
+helper in `lib/i18n/dates.ts` (not modified). Format string unchanged, so only
+the month name localizes.
+
+## Phase C — DONE (`3da2b63`)
+
+`ArchGrid.tsx` (4 text nodes wrapped in `t()`, +4/-4) plus 4 keys in
+`locales/ar.json` + `locales/en.json`.
+
+The `en` values are an **identity mapping** (value == literal) on purpose. The
+no-provider context `t()` is hardcoded to `'en-EG'`
+(`language-provider.tsx:34`), documented inline as "components rendered outside
+a LanguageProvider … keep showing the exact English strings they always
+showed". The identity mapping preserves that exactly.
+
+**The gate the user set was satisfied and proven:** exactly one file references
+those literals — `tests/components/clinical-components.test.tsx:249-252`, four
+`getByText` assertions. **None was edited** (`git diff` on that file is empty),
+and all four still pass, because that test renders `<DentalChart>` with no
+`LanguageProvider` and so resolves through the `en` identity mapping.
+
+## Tests added
+
+`tests/components/dental-chart-i18n.test.tsx` (new, 2 tests). Renders inside the
+real `LanguageProvider` (`defaultLocale` = `ar-EG`) and asserts the date carries
+no English month name and the four corner cues are Arabic with the English
+originals gone. Both were shown failing first:
+
+    -> expected [ 'Jan' ] to deeply equal []
+    -> Unable to find an element with the text: الربع الأول (أعلى يمين)
+
+Verified: 188 passed / 0 failed across the 9 relevant suites; the 5 Phase-3
+protected odontogram suites stayed green throughout (89 tests).
+
+## Still open (unchanged, not started per instruction)
+
+- `Quadrant`'s unrendered `title`/`subtitle`/`id`/`mode` props — dead props,
+  recommended for a separate refactor, deliberately not conflated with i18n.
+- P2 / session 3 not started.
