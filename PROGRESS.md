@@ -356,3 +356,137 @@ i18n note: `tests/unit/i18n-api-messages.test.ts` sweeps every `error:` literal 
 `app/api` and requires an Arabic translation AND that the English entry equals the
 literal verbatim. `AI_NOT_CONFIGURED` therefore needed entries in both files
 (`en` = the literal itself). No allowlist was touched, no assertion weakened.
+
+---
+
+# S4 — Tooth-anatomy geometry review (all 52 FDI ids + arch overlap)
+
+Method: every number below was produced by importing the REAL modules
+(`tooth-3d.ts`, `tooth-anatomy.ts`, `lib/dental-chart/fdi.ts`) and measuring the
+actual `THREE.BufferGeometry`, not by re-deriving the formulas. Throwaway probe
+(created, run, deleted — not committed).
+
+## S4.1 Coverage — all 52 ids
+
+`isValidFdi` accepts exactly 52 numbers
+(11-18/21-28/31-38/41-48 + 51-55/61-65/71-75/81-85).
+All 52 pass `toothTransform(n)` without throwing (it throws on invalid input) and
+all 52 resolve to a crown geometry. **Coverage is complete.**
+
+## S4.2 FINDING (high): every adjacent tooth in the dentition interpenetrates
+
+Two independent tests, both against real geometry:
+
+- **Rotated-ellipse separating-axis test**, minimising penetration over 2880
+  directions. Positive penetration on every direction means no separating axis
+  exists, i.e. the crowns provably intersect:
+  **44 adjacent pairs tested → 44 guaranteed intersecting → 0 separable.**
+- **World-space AABB test** on the real `BufferGeometry` after the real
+  `toothTransform` rotation: **44/44 overlapping** (conservative; AABBs are
+  looser than the shapes, so this corroborates rather than proves).
+
+Worst cases, penetration as a share of the crown's mesiodistal width:
+
+| pair                       | groups                | penetration | % of crown width |
+| -------------------------- | --------------------- | ----------- | ---------------- |
+| 54-55, 64-65, 74-75, 84-85 | molar/molar (primary) | 0.1598      | **37%**          |
+| 16-17, 26-27, 36-37, 46-47 | molar/molar           | 0.1376      | **31%**          |
+| 15-16, 25-26, 35-36, 45-46 | premolar/molar        | ~0.12       | ~28%             |
+| 11-12, 21-22, 31-32, 41-42 | incisor/incisor       | 0.0290      | ~10%             |
+
+Every quadrant: permanent Q1-Q4 all 7/7 pairs intersect (min +0.0290, max
++0.1376); primary Q5-Q8 all 4/4 pairs intersect (min +0.0290, max +0.1598).
+
+**Root cause.** `tooth-3d.ts:26-32`: `archAngle(t) = 0.14 + (t-1)*0.092` with
+`ARCH_X = 2.35`, `ARCH_Z = 3.1` produces adjacent centre-to-centre spacing of
+only **0.218-0.250** world units, while the real measured crown widths are
+**0.28** (incisor) to **0.464** (molar). The angular step is far too small for
+this arch radius and these crown sizes. Measured crown bounding boxes:
+
+    incisor  x=0.2800  y=0.3500  z=0.2027
+    canine   x=0.3000  y=0.3850  z=0.3074
+    premolar x=0.3534  y=0.3280  z=0.3029
+    molar    x=0.4642  y=0.3180  z=0.4009
+
+**There is no spacing or overlap tolerance constant anywhere in the chart code.**
+Grepping `tolerance|spacing|overlap|collide|clearance` across
+`components/dental-chart` and `lib/dental-chart` returns only `ARCH_X`,
+`ARCH_Z` and `archAngle`. Overlap is not a tunable; it is a hard consequence of
+those three numbers.
+
+## S4.3 Inter-arch clearance is FINE (not a defect)
+
+Upper and lower crowns do not collide. Using the real measured crown heights and
+`ARCH_Y = 0.52`, the clear vertical gap between the upper and lower crown
+envelopes is positive for every group:
+
+| group    | upper y-range    | lower y-range    | clear gap |
+| -------- | ---------------- | ---------------- | --------- |
+| incisor  | [+0.175, +0.525] | [-0.525, -0.175] | +0.350    |
+| canine   | [+0.138, +0.522] | [-0.522, -0.138] | +0.275    |
+| premolar | [+0.206, +0.534] | [-0.534, -0.206] | +0.412    |
+| molar    | [+0.211, +0.529] | [-0.529, -0.211] | +0.422    |
+
+## S4.4 FINDING (high): the 904-line anatomical module is dead code
+
+`components/dental-chart/interactive/tooth-anatomy.ts` documents itself as
+implementing "authoritative procedural 3D anatomical crowns and multi-rooted
+systems for all 16 distinct human permanent tooth classes", citing Wheeler and
+Woelfel. **Nothing in the app calls it.**
+
+`DentalChart3D.tsx:26` imports only three things from it:
+
+    import { buildCrownGeometry, buildRootGeometry, rootSpecs, type ToothGroup }
+
+and `buildCrownGeometry(group)` is a thin wrapper over
+`buildAnatomicalCrownGeometry(group)`. Grepping the whole repo for
+`getAnatomicalSpec`, `buildAnatomicalCrownGeometry`, `buildAnatomicalRoot`,
+`rootSpecsForTooth`, `toothSpecificTypeOf` returns **zero callers outside
+`tooth-anatomy.ts` itself and `tests/components/tooth-anatomy.test.ts`.**
+
+Consequences that follow from the live render path:
+
+- The renderer builds **4 crown geometries, one per group**
+  (`DentalChart3D.tsx:49-51`). So 11 and 21 are the same mesh; 16, 17 and 18 are
+  the same mesh. None of the 16 per-tooth classes — Carabelli cusp, Y-5 groove
+  pattern, the 3-root maxillary molar tripod — reaches the screen.
+- `rootSpecs(group, arch)` is likewise group-level: 3 roots for upper molars,
+  2 for lower molars, 1 for everything else. Per-tooth `rootSpecsForTooth` is
+  never called. (These are the code's own values, quoted, not asserted as
+  anatomy.)
+
+## S4.5 FINDING (latent): 20 primary teeth silently fall back to an incisor
+
+`ANATOMICAL_SPECS` contains **16 keys, all permanent**. `specificTypeOf`
+(`fdi.ts:140-165`) returns `primary_<jaw>_<kind>` for the 20 primary teeth, none
+of which exist in the record. `getAnatomicalSpec` resolves this with a bare `??`:
+
+    return ANATOMICAL_SPECS[key] ?? ANATOMICAL_SPECS.maxillary_central_incisor
+
+So `getAnatomicalSpec(54)` silently returns a **maxillary central incisor** — an
+incisor crown and its **1-root** system — for a primary first molar. Latent
+today only because S4.4 makes the whole path dead; it becomes a visible wrong-
+geometry bug the moment anyone wires the anatomical path up. A `??` fallback
+that turns a missing key into a plausible-looking wrong tooth is the dangerous
+kind of failure for a clinical chart.
+
+Related: `toothTransform` positions primary teeth (index 1-5) at the same arch
+angles as permanent teeth 1-5, while `groupOf` (`fdi.ts:130`) correctly returns
+`molar` for primary index 4-5. Primary molars therefore inherit the crown width
+of a molar (0.464) at the spacing of a premolar — which is exactly why the
+primary second-molar pairs are the worst overlaps in S4.2.
+
+## S4.6 What only a browser can confirm
+
+- Whether the 44 interpenetrations are visually objectionable, or read as
+  acceptable "contact points" at the default camera. Depends on material
+  opacity, lighting and camera distance — not derivable from geometry alone.
+- Whether the dead anatomical path is intentional (work in progress) or an
+  abandoned experiment.
+- Frame rate / interaction smoothness, hover and selection scaling
+  (`scale={isSelected ? 1.08 : isHovered ? 1.05 : 1}` interacts with overlap:
+  a selected tooth grows _into_ its already-overlapping neighbours).
+- Whether the double-invocation under `reactStrictMode` has any visual effect.
+
+**No geometry was changed in S4.** No root or canal counts were invented; every
+root count quoted is read out of the code.
