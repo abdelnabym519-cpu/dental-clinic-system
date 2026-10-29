@@ -78,6 +78,7 @@ vi.mock('@/lib/ai/openrouter', () => ({
   complete: vi.fn(),
   streamResponse: vi.fn(),
   extractJSON: vi.fn((text: string) => text),
+  isOpenRouterConfigured: vi.fn().mockReturnValue(true),
 }))
 
 vi.mock('@/lib/ai/context-builder', () => ({
@@ -120,7 +121,7 @@ import { POST as webhooksPOST } from '@/app/api/webhooks/route'
 
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete, streamResponse } from '@/lib/ai/openrouter'
+import { complete, streamResponse, isOpenRouterConfigured } from '@/lib/ai/openrouter'
 import { dispatchEvent } from '@/lib/ai/event-dispatcher'
 
 // ---------------------------------------------------------------------------
@@ -1049,6 +1050,26 @@ describe('POST /api/ai/clinical', () => {
 
       expect(res.status).toBe(500)
       expect(data.error).toContain('audit write failed')
+    })
+
+    it('returns 503 AI_NOT_CONFIGURED when the provider is unconfigured (NOT 500)', async () => {
+      // Graceful degradation (approved 2026-10-28). A missing provider key is a
+      // deployment misconfiguration, not a server fault: 500 made an
+      // unconfigured install look broken and buried the cause in a generic
+      // string. 503 + a stable code lets the UI show a neutral "not enabled"
+      // state. This test intentionally does NOT assert which env var is
+      // missing and adds no key — it only pins the status/code contract.
+      mockPatientFound()
+      vi.mocked(isOpenRouterConfigured).mockReturnValue(false)
+
+      const res = await clinicalPOST(summaryReq())
+      const data = await res.json()
+
+      expect(res.status).toBe(503)
+      expect(res.status).not.toBe(500)
+      expect(data.error).toBe('AI_NOT_CONFIGURED')
+      // must short-circuit before touching the provider
+      expect(complete).not.toHaveBeenCalled()
     })
   })
 

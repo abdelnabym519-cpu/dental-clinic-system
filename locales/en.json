@@ -5753,5 +5753,8 @@
   "dental_chart.webgl_unsupported_body": "Your browser does not support WebGL — the 2D view remains fully functional.",
   "dental_chart.error": "An error occurred while loading the chart",
   "dental_chart.resolved": "Resolved",
-  "Failed to load dental chart summary": "Failed to load dental chart summary"
+  "Failed to load dental chart summary": "Failed to load dental chart summary",
+  "ai.not_configured": "Not enabled",
+  "ai.not_configured_body": "AI features are not enabled for this clinic. An administrator can enable them in Settings.",
+  "AI_NOT_CONFIGURED": "AI_NOT_CONFIGURED"
 }

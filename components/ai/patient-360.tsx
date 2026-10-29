@@ -22,11 +22,13 @@ export function Patient360({ patientId }: { patientId: string }) {
   const [cached, setCached] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [notConfigured, setNotConfigured] = useState(false)
 
   const load = useCallback(
     async (refresh = false) => {
       setLoading(true)
       setError(false)
+      setNotConfigured(false)
       try {
         const res = await fetch('/api/ai/clinical', {
           method: 'POST',
@@ -37,6 +39,10 @@ export function Patient360({ patientId }: { patientId: string }) {
         if (json.success && json.data) {
           setData(json.data)
           setCached(!!json.cached)
+        } else if (res.status === 503 || json.error === 'AI_NOT_CONFIGURED') {
+          // The provider is simply not enabled for this deployment - a neutral
+          // state, not a fault. Never surface the raw code to the user.
+          setNotConfigured(true)
         } else {
           setError(true)
         }
@@ -66,6 +72,25 @@ export function Patient360({ patientId }: { patientId: string }) {
           <div className="h-3 w-3/4 bg-muted rounded animate-pulse" />
           <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
         </div>
+      </div>
+    )
+  }
+
+  // Graceful degradation: provider not enabled -> neutral localized state,
+  // no red error and no raw error code. Distinct from a genuine failure.
+  if (notConfigured) {
+    return (
+      <div
+        dir="rtl"
+        data-testid="patient-360-not-configured"
+        className="rounded-lg border p-4 bg-muted/30"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-lg">🤖</span>
+          <span className="text-sm font-semibold">{t('ui.ai_patient_summary')}</span>
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">{t('ai.not_configured')}</p>
+        <p className="text-xs text-muted-foreground mt-1">{t('ai.not_configured_body')}</p>
       </div>
     )
   }

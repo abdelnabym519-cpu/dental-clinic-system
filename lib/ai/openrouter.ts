@@ -36,6 +36,18 @@ function getHeaders(): Record<string, string> {
 }
 
 /**
+ * Whether the OpenRouter provider is configured at all.
+ *
+ * Lets callers degrade gracefully (HTTP 503 + a stable code) instead of
+ * reporting an unconfigured deployment as a generic 500. It deliberately
+ * returns a boolean only: it never reads, logs or returns the key value, and
+ * adding it changes no provider, key or routing behaviour.
+ */
+export function isOpenRouterConfigured(): boolean {
+  return Boolean(process.env.OPENROUTER_API_KEY)
+}
+
+/**
  * Non-streaming chat completion.
  */
 export async function complete(

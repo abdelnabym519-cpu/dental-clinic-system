@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { prisma } from '@/lib/prisma'
-import { complete, extractJSON } from '@/lib/ai/openrouter'
+import { complete, extractJSON, isOpenRouterConfigured } from '@/lib/ai/openrouter'
 import { getModelByTier } from '@/lib/ai/models'
 
 // ---------------------------------------------------------------------------
@@ -119,6 +119,14 @@ async function patientSummary(hospitalId: string, body: Record<string, unknown>)
     outstandingBalance,
     riskScore: riskScores[0]?.overallScore ?? null,
     riskFactors: riskScores[0]?.factors ?? null,
+  }
+
+  // Graceful degradation: an unconfigured provider is a deployment state, not a
+  // server fault. Short-circuit with 503 + a stable code before any patient data
+  // is sent, so the UI can show a neutral "not enabled" state instead of a red
+  // error. No key is read or hardcoded here.
+  if (!isOpenRouterConfigured()) {
+    return NextResponse.json({ error: 'AI_NOT_CONFIGURED' }, { status: 503 })
   }
 
   try {

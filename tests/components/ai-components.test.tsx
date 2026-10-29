@@ -43,6 +43,7 @@ import { TreatmentAssist } from '@/components/ai/treatment-assist'
 import { ReportBuilder } from '@/components/ai/report-builder'
 import { AuditMonitor } from '@/components/ai/audit-monitor'
 import { AIUsageStats } from '@/components/ai/ai-usage-stats'
+import { LanguageProvider } from '@/components/providers/language-provider'
 import React from 'react'
 
 // ---------------------------------------------------------------------------
@@ -857,6 +858,37 @@ describe('Patient360', () => {
     await waitFor(() => {
       expect(container.innerHTML).toBe('')
     })
+  })
+
+  it('shows the localized "not enabled" state on 503 AI_NOT_CONFIGURED (no red error)', async () => {
+    // Graceful degradation (approved 2026-10-28). An unconfigured provider is
+    // a deployment state, not a fault: the card must say "not enabled" in
+    // Arabic with neutral styling - never a red error and never a raw code.
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 503,
+      json: async () => ({ error: 'AI_NOT_CONFIGURED' }),
+      text: async () => JSON.stringify({ error: 'AI_NOT_CONFIGURED' }),
+    } as Response)
+
+    // Wrapped in the real provider: outside it, useLanguage() falls back to a
+    // context default that resolves through the ENGLISH dictionary.
+    const { container } = render(
+      <LanguageProvider>
+        <Patient360 patientId="patient-1" />
+      </LanguageProvider>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('patient-360-not-configured')).toBeInTheDocument()
+    })
+
+    // localized Arabic label
+    expect(screen.getByText('غير مفعّل')).toBeInTheDocument()
+    // no destructive/red error styling anywhere in the card
+    expect(container.innerHTML).not.toMatch(/destructive/)
+    // and the raw code is never shown to the user
+    expect(container.textContent).not.toContain('AI_NOT_CONFIGURED')
   })
 
   it('has a Regenerate button after loading', async () => {

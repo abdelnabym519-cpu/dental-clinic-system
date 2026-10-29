@@ -276,3 +276,83 @@ not a finding that it is the user's cause** — the response body was UNKNOWN.
 
 Class (b) is recorded as a fact, not tested: those reads sit outside every try,
 so a failure there never reaches the JSON branch.
+
+---
+
+## S2 addendum 1 — AI provider -> env var map (names only, no values)
+
+Two providers are actually reachable from this codebase.
+
+**A. OpenRouter (cloud).** Key read at `lib/ai/openrouter.ts:28`
+(`process.env.OPENROUTER_API_KEY`), thrown on absence at :29.
+16 routes call it via `@/lib/ai/openrouter`:
+`ai/analyze`, `ai/briefing`, `ai/cashflow-forecast`, `ai/chat`, `ai/claim-analysis`,
+`ai/clinical`, `ai/command`, `ai/insights`, `ai/inventory-forecast`, `ai/no-show-risk`,
+`ai/patient-segments`, `ai/pricing-suggestions`, `ai/query`, `ai/suggestions`,
+`cron/briefing`, `data-import/ai-mapping`.
+**`OPENROUTER_API_KEY` is ABSENT from the user's .env** -> every one of these
+throws into its own 500 catch.
+
+**B. Local orchestrator (Ollama / DEN_TORA side).** Reads `AI_ORCHESTRATOR_URL`
+(default `http://localhost:8000`) and `ORCHESTRATOR_SECRET` at
+`lib/ai/engines/orchestrator-source.ts:18,22` and `lib/ai-orchestrator.ts:117,125`.
+Used by `ai/agent`, `ai/attachments`, `imaging/studies`, `ai/engines/local-ai-service.ts`.
+**`ORCHESTRATOR_SECRET` IS present in the user's .env.**
+
+**C. Names present in the user's .env that NO code reads anywhere** (checked across
+ts/tsx/yml/yaml/py/sh/mjs/json/md): `CLOUDFLARE_ACCOUNT_ID`,
+`CLOUDFLARE_AI_GATEWAY_ID`, `CLOUDFLARE_API_TOKEN`, `DEN_TORA_AI_MODEL`,
+`DEN_TORA_AI_FAST_MODEL`, `DEN_TORA_AI_REASONING_MODEL`.
+Zero references -> they are inert on this branch. They are presumably intended for
+the Python/orchestrator service or a Cloudflare AI Gateway hop that this
+codebase does not implement.
+
+## S2 addendum 2 — exactly what patient_summary sends to the provider
+
+`prisma.patient.findFirst({ where: { id, hospitalId } })` (route.ts:76) has **no
+`select`**, so the whole patient row is loaded into memory — but only these fields
+are put into the prompt payload (`snapshot`, route.ts:108-122):
+
+- `name` (firstName + lastName)
+- `age`
+- `phone`
+- `lastVisit` = first appointment's `scheduledDate`
+- `recentAppointments` = up to 3 x `{ date, appointmentType, status }`
+- `recentTreatments` = up to 3 x `{ status, createdAt }`
+- `outstandingBalance` (derived from invoices: totalAmount - paidAmount on
+  PENDING/OVERDUE)
+- `riskScore` = `PatientRiskScore.overallScore`
+- `riskFactors` = `PatientRiskScore.factors`
+
+That is directly identifying data (name, phone), a financial figure and clinical
+risk data leaving the server to a third-party provider. Relevant to the privacy
+decision below. Nothing else from the patient row is serialised.
+
+## S2 addendum 3 — graceful degradation for an unconfigured provider (APPROVED)
+
+Implemented test-first. Contract: unconfigured provider -> **503** with the stable
+code `AI_NOT_CONFIGURED`, **not 500**; Patient360 renders a neutral, localized
+Arabic "غير مفعّل" state with no red error and never shows the raw code.
+
+- `lib/ai/openrouter.ts`: new `isOpenRouterConfigured()` — returns a boolean only,
+  never reads or returns the key value.
+- `app/api/ai/clinical/route.ts`: guard in `patientSummary` short-circuits with
+  503 **before** any patient data is assembled or sent.
+- `components/ai/patient-360.tsx`: distinct `notConfigured` state rendering
+  `ai.not_configured` / `ai.not_configured_body` with muted (not destructive) styling.
+- `locales/ar.json` + `locales/en.json`: 3 new keys (`ai.not_configured`,
+  `ai.not_configured_body`, `AI_NOT_CONFIGURED`). Parity preserved.
+
+**This does NOT claim to explain the user's 500.** That stays unproven until the
+Response body confirms it. No key was added or hardcoded; no provider was switched.
+
+Tests: `tests/api/ai-routes.test.ts` (503/AI_NOT_CONFIGURED, asserts 503 and that
+`complete` is never called) and `tests/components/ai-components.test.tsx`
+(Arabic label, no `destructive` class, no raw code in the DOM). Both were shown
+failing first: `expected 500 to be 503`, then
+`Unable to find an element by: [data-testid="patient-360-not-configured"]`.
+
+i18n note: `tests/unit/i18n-api-messages.test.ts` sweeps every `error:` literal in
+`app/api` and requires an Arabic translation AND that the English entry equals the
+literal verbatim. `AI_NOT_CONFIGURED` therefore needed entries in both files
+(`en` = the literal itself). No allowlist was touched, no assertion weakened.
