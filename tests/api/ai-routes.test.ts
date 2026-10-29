@@ -979,6 +979,77 @@ describe('POST /api/ai/clinical', () => {
       expect(data.data.summary).toContain('Alice Smith')
       expect(data.data.nextAction).toBe('Schedule follow-up')
     })
+
+    // ── Reproductions of the 2026-10-28 "clinical" HTTP 500 ────────────────
+    // Screenshot showed two requests named `clinical` (initiator
+    // components/ai/patient-360.tsx) returning 500 with an UNKNOWN body, on the
+    // patient page. These tests pin BOTH reachable 500 classes of
+    // patient_summary so the body can be predicted from the error text.
+    //
+    // patient_summary has exactly two 500 sources:
+    //   (a) the catch at route.ts:146 wraps complete()/getModelByTier() and the
+    //       cache write prisma.patient.update() -> { error: String(err) }, 500
+    //   (b) the five Prisma reads at route.ts:76 and :85-102 sit OUTSIDE any
+    //       try, so a throw there is unhandled -> framework 500, no JSON body
+    // Class (a) is reproducible here; class (b) is recorded as a fact only.
+
+    function mockPatientFound() {
+      vi.mocked(prisma.patient.findFirst).mockResolvedValue({
+        id: 'p1',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        age: 32,
+        phone: '01012345678',
+        aiSummary: null,
+        aiSummaryAt: null,
+      } as any)
+      vi.mocked(prisma.appointment.findMany).mockResolvedValue([] as any)
+      vi.mocked(prisma.treatment.findMany).mockResolvedValue([] as any)
+      vi.mocked(prisma.invoice.findMany).mockResolvedValue([] as any)
+      vi.mocked(prisma.patientRiskScore.findMany).mockResolvedValue([] as any)
+    }
+
+    function summaryReq() {
+      return new NextRequest('http://localhost/api/ai/clinical', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'patient_summary', patientId: 'p1' }),
+      })
+    }
+
+    it('500 class (a): AI call failure surfaces verbatim in the 500 body', async () => {
+      // The exact throw from lib/ai/openrouter.ts:29 when OPENROUTER_API_KEY is
+      // unset or empty (.env.example:99 ships it as OPENROUTER_API_KEY="").
+      mockPatientFound()
+      vi.mocked(complete).mockRejectedValue(
+        new Error('OPENROUTER_API_KEY is not set. Add it to your .env file.')
+      )
+
+      const res = await clinicalPOST(summaryReq())
+      const data = await res.json()
+
+      expect(res.status).toBe(500)
+      // The body carries the real cause - this is what to read in DevTools.
+      expect(data.error).toContain('OPENROUTER_API_KEY is not set')
+    })
+
+    it('500 class (a): a failing cache write also yields 500 (generated work is lost)', async () => {
+      // The summary was already produced and paid for; only the prisma update
+      // failed, yet the whole request still returns 500.
+      mockPatientFound()
+      vi.mocked(complete).mockResolvedValue({
+        content: JSON.stringify({ summary: 'ok' }),
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+        model: 'anthropic/claude-opus-4.5',
+      })
+      vi.mocked(prisma.patient.update).mockRejectedValue(new Error('audit write failed'))
+
+      const res = await clinicalPOST(summaryReq())
+      const data = await res.json()
+
+      expect(res.status).toBe(500)
+      expect(data.error).toContain('audit write failed')
+    })
   })
 
   // -- duplicate_check --

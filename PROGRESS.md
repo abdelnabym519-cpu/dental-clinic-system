@@ -222,3 +222,57 @@ _authentication_ rejection, not a connection one. See S1.
 ### Docs refreshed on this branch
 
 `BLOCKERS.md` (+B12, and the option-(a) stamp on B6), `PROGRESS.md` (this section), `TODO.md`.
+
+---
+
+## S2 — the `clinical` HTTP 500 (READ-ONLY investigation)
+
+**The call.** `components/ai/patient-360.tsx:31` POSTs `/api/ai/clinical` with
+`{ type: 'patient_summary', patientId, refresh }`. Handler:
+`app/api/ai/clinical/route.ts` -> `patientSummary()` (line 71).
+
+**Why TWO requests.** `Patient360` is mounted exactly once
+(`app/(dashboard)/patients/[id]/page.tsx:583`) and `next.config.js:29` sets
+`reactStrictMode: true`. In dev, React double-invokes the mount effect, so one
+mount produces two identical POSTs. That is expected dev behaviour, not a bug
+and not evidence of a loop.
+
+**Every 500 path in `patient_summary`:**
+
+| #   | Path                                                                           | Mechanism                                                                    |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| a1  | `complete()` (external OpenRouter call) throws                                 | caught at route.ts:146 -> `{ error: String(err) }`, **500 with a JSON body** |
+| a2  | `getModelByTier('clinical')` throws (evaluated as an argument, inside the try) | same catch -> 500                                                            |
+| a3  | `prisma.patient.update()` cache write throws                                   | same catch -> 500                                                            |
+| b   | any of the 5 Prisma reads at route.ts:76 and :85-102 throws                    | **OUTSIDE all try blocks** -> unhandled -> framework 500, **no JSON body**   |
+
+**Facts checked, none of which support "the merge broke it":**
+
+- `git log eba87b7..HEAD -- app/api/ai/clinical/route.ts` -> **0 commits**. The
+  route is untouched by the merge and by FDI-52.
+- Same check: `lib/ai/openrouter.ts` 0, `lib/ai/models.ts` 0, `lib/api-helpers.ts` 0,
+  `lib/prisma.ts` 0. Only `components/ai/patient-360.tsx` changed, and that file
+  is **new**, added by PR #3 (`8f3429c`).
+- `PatientRiskScore` **exists** in `prisma/schema.prisma:2758` with the exact
+  fields used (`overallScore Int` :2762, `factors Json` :2763) -> no missing relation.
+- The `clinical` model tier **exists** (`lib/ai/models.ts:44`).
+- No `toothNumber` handling anywhere in this route -> **FDI-52 is not involved**.
+- No audit call in this path.
+
+**The one concrete throw on this path:** `lib/ai/openrouter.ts:29`
+`if (!key) throw new Error('OPENROUTER_API_KEY is not set. Add it to your .env file.')`
+and `.env.example:99` ships `OPENROUTER_API_KEY=""` — an empty string is falsy, so
+an unset key throws and lands in class (a1). **This is a fact about the code,
+not a finding that it is the user's cause** — the response body was UNKNOWN.
+
+**Tests added (reproduce BEFORE any fix):** `tests/api/ai-routes.test.ts`
+
+- `500 class (a): AI call failure surfaces verbatim in the 500 body` — mocks
+  `complete` to reject with the real openrouter message, asserts 500 and that
+  `data.error` contains `OPENROUTER_API_KEY is not set`.
+- `500 class (a): a failing cache write also yields 500 (generated work is lost)` —
+  the summary is produced and paid for, only the cache write fails, still 500.
+  Result: **52 passed / 0 failed** in that file.
+
+Class (b) is recorded as a fact, not tested: those reads sit outside every try,
+so a failure there never reaches the JSON branch.
