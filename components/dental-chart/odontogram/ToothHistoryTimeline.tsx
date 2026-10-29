@@ -7,13 +7,14 @@ import { DentalChartEntryRecord, DentalCondition } from '../types/odontogram'
 import { DENTAL_CONDITION_CONFIG } from '../adapters/dental-chart-adapter'
 import { CheckCircle2, Clock } from 'lucide-react'
 import { useLanguage } from '@/components/providers/language-provider'
+import { dateFnsLocale } from '@/lib/i18n/dates'
 
 interface ToothHistoryTimelineProps {
   entries: DentalChartEntryRecord[]
 }
 
 export function ToothHistoryTimeline({ entries }: ToothHistoryTimelineProps) {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
   if (!entries || entries.length === 0) {
     return (
       <div className="text-center py-4 text-xs text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
@@ -85,7 +86,11 @@ export function ToothHistoryTimeline({ entries }: ToothHistoryTimelineProps) {
                   </span>
                 )}
                 <span>•</span>
-                <span>{format(new Date(entry.diagnosedDate), 'MMM d, yyyy')}</span>
+                <span>
+                  {format(new Date(entry.diagnosedDate), 'MMM d, yyyy', {
+                    locale: dateFnsLocale(locale),
+                  })}
+                </span>
               </div>
             </div>
 
