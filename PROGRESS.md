@@ -490,3 +490,124 @@ primary second-molar pairs are the worst overlaps in S4.2.
 
 **No geometry was changed in S4.** No root or canal counts were invented; every
 root count quoted is read out of the code.
+
+---
+
+# S5 — Arabic-only audit of the dental chart (PROPOSE ONLY — no code changed)
+
+Scope: every user-visible string in `components/dental-chart/**`. Method: swept
+all 25 component files for `t('…')` keys and raw JSX English, then resolved each
+key against `locales/ar.json` and `locales/en.json` (5757 keys each, parity holds).
+
+## S5.1 English that ACTUALLY renders in Arabic mode (5 real defects)
+
+### (1) Four hardcoded quadrant corner labels in `ArchGrid.tsx`
+
+`components/dental-chart/odontogram/ArchGrid.tsx` — these are raw JSX text,
+**never passed through `t()`**:
+
+| line | literal   | position on the board |
+| ---- | --------- | --------------------- |
+| 34   | `Q1 (UR)` | top-left              |
+| 37   | `Q2 (UL)` | top-right             |
+| 42   | `Q4 (LR)` | bottom-left           |
+| 45   | `Q3 (LL)` | bottom-right          |
+
+Absolutely positioned in the corners of the chart board next to the coloured
+dots. These are the chart's primary orientation cues, so they are the most
+visible untranslated text in the whole component.
+
+### (2)(3)(4) Three `t()` keys that do not exist in either dictionary
+
+`translateText` (`lib/i18n/dictionary.ts:77-79`) falls back to returning the
+**key itself** when it is not in the dictionary and not in the reverse index. So
+an unresolved key paints raw English in Arabic mode.
+
+| file:line                     | call             | renders in Arabic mode               |
+| ----------------------------- | ---------------- | ------------------------------------ |
+| `Odontogram.tsx:250`          | `t('Refresh')`   | `Refresh` (toolbar button)           |
+| `Odontogram.tsx:294`          | `t('Clear all')` | `Clear all` (selection-clear button) |
+| `ToothHistoryTimeline.tsx:84` | `t('Active')`    | `Active` (status badge)              |
+
+These slipped past `tests/unit/i18n-completeness.test.tsx`, which enforces
+ar/en key parity and non-empty values but does **not** scan components for
+`t()` keys that have no entry.
+
+### (5) A hardcoded English date format
+
+`ToothHistoryTimeline.tsx:88`
+
+    format(new Date(entry.diagnosedDate), 'MMM d, yyyy')
+
+No `locale` option is passed, so date-fns uses its en-US default. Verified by
+running it:
+
+    format(new Date('2024-01-05'), 'MMM d, yyyy')  =>  Jan 5, 2024
+
+This never touches `t()`, so no dictionary entry can fix it.
+
+## S5.2 English in the code that is NOT user-visible (dead — do not "fix" blindly)
+
+`Quadrant` (`components/dental-chart/odontogram/Quadrant.tsx`) destructures
+`id`, `title`, `subtitle` and `mode` — and **renders none of them**. Its entire
+return is the tooth row. Therefore every prop ArchGrid passes for those four is
+discarded:
+
+- `subtitle="Q1 (UR)"`, `"Q2 (UL)"`, `"Q4 (LR)"`, `"Q3 (LL)"` (ArchGrid :73,
+  :103, :118, :138) — **dead**, never displayed.
+- `title={t('Upper Right')}`, `t('Upper Left')`, `t('Lower Right')`,
+  `t('Lower Left')` — **dead**, the `t()` still executes but the result is
+  thrown away.
+- `id="Q1"…"Q4"` and `mode` — **dead**.
+
+Consequence for planning: translating the `subtitle` values would change
+nothing on screen. The four corner labels in S5.1(1) are a _separate_ set of
+literals and are the ones actually on screen. Fixing one does not fix the other.
+
+## S5.3 What is already correct (verified, leave alone)
+
+- All 8 ArchGrid `t()` keys resolve to Arabic: `Upper Jaw (Maxilla)` →
+  الفك العلوي (ماكسيلا), `Lower Jaw (Mandible)` → الفك السفلي (مانديبولا),
+  `Occlusal Plane` → مستوى الإطباق, `Midline` → خط المنتصف.
+- All 40 namespaced keys (`dental_chart.*`, `common.retry`) resolve. 0 missing.
+- All ~40 legacy English-sentence keys in `SurfaceSelectorDialog`,
+  `OdontogramLegend`, `ToothCell`, `ToothSurfaces`, `ToothTooltip`,
+  `BridgeConnector` resolve (e.g. `Save Changes` → حفظ التغييرات,
+  `Clinical Notes & Observations` → ملاحظات ومشاهدات سريرية).
+- `ArchGrid`'s root is `dir="ltr"`, which is deliberate and correct: the
+  quadrant layout is anatomical and must not mirror in RTL.
+
+## S5.4 Proposed non-invasive path (NOT IMPLEMENTED — awaiting approval)
+
+Phase A — dictionary-only, touches no component, zero risk to the protected
+Phase-3 odontogram geometry:
+
+1. Add `Refresh`, `Clear all`, `Active` to `locales/ar.json` + `locales/en.json`
+   (en value = the literal, to satisfy the API-message convention where
+   relevant). Fixes 2,3,4. Parity test keeps them honest.
+
+Phase B — one-line, still geometry-free: 2. `ToothHistoryTimeline.tsx:88`: pass the existing helper
+`dateFnsLocale(locale)` from `lib/i18n/dates.ts` (already in the repo, maps
+`ar*` → date-fns `ar`), **or** swap to the locale-aware
+`formatDate(value, { locale })` from `lib/i18n/format.ts` (uses `Intl`).
+Either is a one-line change; no new dependency.
+
+Phase C — touches ArchGrid, the only step that edits a Phase-3 file: 3. Wrap the four corner literals in `t()` and add keys
+(`Q1 (UR)` → الربع الأول (أعلى يمين), etc.). This is a JSX-text change only.
+It does not alter geometry, layout, `FDI_QUADRANTS`, or any tooth path.
+**Needs your go-ahead because ArchGrid/Odontogram is protected.**
+
+Optional, separate decision: 4. `Quadrant`'s unused `title`/`subtitle`/`id`/`mode` props — either render
+`title` (giving each quadrant a visible Arabic heading, which would be a
+genuine UI addition) or delete the dead props. Deleting is safer; rendering
+is a product decision, not a bug fix. I recommend deleting the dead props in
+a separate commit and not conflating it with the i18n work.
+
+Suggested commit split so each is independently revertible:
+`i18n(chart): add missing ar/en keys for Refresh, Clear all, Active` →
+`i18n(chart): localize the ToothHistoryTimeline date format` →
+`i18n(chart): translate the ArchGrid quadrant corner labels` →
+`refactor(chart): drop Quadrant's unrendered title/subtitle/id/mode props`.
+
+**Nothing in S5 was changed. No file under `components/dental-chart/` was
+modified in this task — S5 is proposal only, per instruction.**
