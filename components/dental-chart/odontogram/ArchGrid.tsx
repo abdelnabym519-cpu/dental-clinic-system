@@ -31,18 +31,18 @@ export function ArchGrid({
         {/* QUADRANT CORNER CLINICAL LABELS */}
         <div className="absolute top-3 left-4 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-500" />
-          Q1 (UR)
+          {t('Q1 (UR)')}
         </div>
         <div className="absolute top-3 right-4 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-          Q2 (UL)
+          {t('Q2 (UL)')}
           <span className="w-2 h-2 rounded-full bg-blue-500" />
         </div>
         <div className="absolute bottom-3 left-4 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
-          Q4 (LR)
+          {t('Q4 (LR)')}
         </div>
         <div className="absolute bottom-3 right-4 text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-          Q3 (LL)
+          {t('Q3 (LL)')}
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
         </div>
 

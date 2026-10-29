@@ -5756,5 +5756,9 @@
   "Failed to load dental chart summary": "Failed to load dental chart summary",
   "ai.not_configured": "Not enabled",
   "ai.not_configured_body": "AI features are not enabled for this clinic. An administrator can enable them in Settings.",
-  "AI_NOT_CONFIGURED": "AI_NOT_CONFIGURED"
+  "AI_NOT_CONFIGURED": "AI_NOT_CONFIGURED",
+  "Q1 (UR)": "Q1 (UR)",
+  "Q2 (UL)": "Q2 (UL)",
+  "Q3 (LL)": "Q3 (LL)",
+  "Q4 (LR)": "Q4 (LR)"
 }
