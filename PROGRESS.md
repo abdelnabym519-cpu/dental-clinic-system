@@ -611,3 +611,140 @@ Suggested commit split so each is independently revertible:
 
 **Nothing in S5 was changed. No file under `components/dental-chart/` was
 modified in this task — S5 is proposal only, per instruction.**
+
+---
+
+# S2-4 — Local orchestrator capability: can it serve TEXT? (decision D accepted)
+
+User decision: **option D — no key, no provider change.** The 503
+`AI_NOT_CONFIGURED` state with the Arabic "غير مفعّل" card stays. This section
+answers the three verification questions with file/line evidence. **Facts only;
+no recommendation.** Nothing was changed.
+
+## Q1. Does the local orchestrator expose a text/LLM generation endpoint? — NO
+
+The orchestrator client has exactly **three** endpoints, all imaging metadata or
+imaging inference:
+
+| endpoint        | file:line                                  | payload                                                                                                                       | returns                                                                                                                             |
+| --------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /analyze` | `lib/ai-orchestrator.ts:132`               | `AnalyzeParams`: `jobId`, `studyId`, `hospitalId`, **`imageKey`**, **`imageSha256`**, `engine`, **`modality`**, `requestedBy` | `AnalyzeResult`: `findings` (boxes/landmarks/segments), `top_confidence`, `provenance`, `raw_output_key`, **`annotated_image_key`** |
+| `GET /engines`  | `lib/ai/engines/orchestrator-source.ts:50` | —                                                                                                                             | engine registry: `model_checksum`, `model_license`, `supported_modalities`, `result_kind`                                           |
+| `GET /health`   | `lib/ai/engines/orchestrator-source.ts:72` | —                                                                                                                             | per-engine `reachable`, `model_loaded`, `is_standin_not_*`                                                                          |
+
+Both clients default to `AI_ORCHESTRATOR_URL || 'http://localhost:8000'`
+(`lib/ai-orchestrator.ts:117`, `lib/ai/engines/orchestrator-source.ts:18`).
+
+**Structural proof it cannot return text** — the result contract has no text
+kind:
+
+    lib/ai/engines/types.ts:51
+    export const ENGINE_RESULT_KINDS = ['findings', 'segments', 'landmarks'] as const
+
+The registered engines are all imaging: `meshsegnet-max` / `meshsegnet-man`
+(3D scan + CBCT mesh segmentation), `liodon` (panoramic), `implant-ai`
+(periapical/bitewing), `orthodontic`.
+
+**The repo's own architecture doc agrees** —
+`docs/DENTORA_AI_PHASE5_LOCAL_AI_MODEL_STRATEGY.md:155`:
+
+    | Cloud LLM | (existing) | conversation synthesis, RAG synthesis | text |
+      | — | **UNCHANGED — CLOUD_ALLOWED for text only** | Phase 3/4, untouched |
+
+and :293 — "The cloud LLM remains fully intact for its original role; Phase 5
+**adds a local path** [for imaging]". §2 puts GPU support and training
+explicitly out of scope.
+
+## Q2. Which of the routes could run on a local text model? — all 17, architecturally
+
+`complete()` (`lib/ai/openrouter.ts:51-72`) POSTs to
+`{base}/chat/completions` with **only** `model`, `messages`, `max_tokens`,
+`temperature`. There is **no `response_format`, no `tools`, no `tool_choice`,
+and no image content** — `ChatMessage.content` is typed `string`
+(`lib/ai/openrouter.ts:14-18`), so no route sends a multimodal part.
+
+Therefore any local server exposing an OpenAI-compatible
+`/v1/chat/completions` could serve them. Per-route constraints:
+
+| route                    | fn                             | tier         | maxTokens | note                             |
+| ------------------------ | ------------------------------ | ------------ | --------- | -------------------------------- |
+| `ai/analyze`             | complete                       | clinical     | 4096      |                                  |
+| `ai/briefing`            | complete                       | chat         | 4096      |                                  |
+| `ai/cashflow-forecast`   | complete                       | billing      | **8192**  |                                  |
+| `ai/chat`                | complete + **streamResponse**  | fast         | 4096      | **the only SSE-streaming route** |
+| `ai/claim-analysis`      | complete                       | billing      | 4096      |                                  |
+| `ai/clinical`            | complete                       | clinical     | 4096      |                                  |
+| `ai/command`             | complete                       | default      | 4096      |                                  |
+| `ai/insights`            | complete                       | fast         | 4096      |                                  |
+| `ai/inventory-forecast`  | complete                       | insights     | **8192**  |                                  |
+| `ai/no-show-risk`        | complete                       | insights     | 4096      |                                  |
+| `ai/patient-segments`    | complete                       | insights     | **8192**  |                                  |
+| `ai/pricing-suggestions` | complete                       | default      | 4096      |                                  |
+| `ai/query`               | complete                       | query        | 4096      |                                  |
+| `ai/suggestions`         | complete                       | fast         | 4096      |                                  |
+| `cron/briefing`          | complete                       | reports      | 4096      |                                  |
+| `data-import/ai-mapping` | complete                       | default      | 4096      |                                  |
+| `ai/agent`               | complete (dynamic import, :86) | fast/default | —         | see below                        |
+
+(Count correction: **17** route files consume OpenRouter, not 16 — the earlier
+count missed `app/api/ai/agent/route.ts`, which imports it dynamically. Plus
+`lib/ai/agent/server-deps.ts` = 18 files total.)
+
+Two routes are notably robust to a missing/weak model:
+
+- **`ai/agent`** classifies **deterministically first**
+  (`lib/ai/agent/loop.ts:647` `classifyAgentTask`); the LLM is a fallback **only**
+  for `UNKNOWN` (`:658-666`), and failure pushes `MODEL_UNAVAILABLE` /
+  `PARSE_ERROR` instead of throwing.
+- **RAG needs no embeddings**: **no route wires an `EmbeddingProvider`**, so
+  retrieval is lexical-only today — `lib/ai/knowledge/retrieval.ts:160`
+  (`index.embeddingProvider ? await …embed(…) : null`), documented at :155-158
+  as "offline, zero network".
+
+## Q3. What would a local text service require?
+
+- **A new compose service.** `docker-compose.yml` defines only `mysql`,
+  `migrate`, `app`, `redis` (+ 3 volumes). There is **no** orchestrator, Ollama
+  or LLM service in any compose file. A local LLM means a new service + a
+  weights volume.
+- **A code change to the shared client, not just config.** `complete()`
+  hardcodes `OPENROUTER_BASE = 'https://openrouter.ai/api/v1'`
+  (`lib/ai/openrouter.ts:8`) and reads `OPENROUTER_API_KEY` (`:28`). Pointing it
+  at localhost needs a base-URL override or a provider abstraction — that
+  touches the file all 18 consumers share.
+- **A model.** The only local model named anywhere in this repo is
+  **DentalGemma 1.5 4B IT** (MedGemma dental fine-tune, llama.cpp). It is a
+  **VLM for 2D dental images, not a general text LLM**, and it is **not
+  registered**: `lib/ai/engines/capability-matrix.ts:223` records GGUF weights
+  absent → `RESOURCE_BLOCKED`, and states "a generic VLM is NOT classified as a
+  dental VLM without this evidence".
+- **Size:** **3.47 GiB** of GGUF artifacts (`capability-matrix.ts:223`,
+  `ai-validation/dentalgemma/LOCAL_EXECUTION.md:5`); the Phase-0 audit lists
+  `dentalgemma-4b-Q4_K_M.gguf` at **2.87 GB + mmproj**. Two artifacts,
+  deliberately git-ignored, not in the repo.
+- **Runtime is not installed.** `LOCAL_EXECUTION.md:43-45` expects the operator
+  to report `llama.cpp available : False`, then download a llama.cpp Windows
+  build from GitHub releases (vulkan-x64).
+- **RAM/GPU:** target is i9-13900H / **16 GB** / Iris Xe under a **CPU-only
+  contract** (PHASE5: "every engine … must run on plain CPU with zero CUDA
+  dependency"; GPU "is an optional speed factor"). Phase 5 measured **imaging**
+  at 1.84 GB + 1.74 GB RSS and infers ≥ 12 GB headroom, but labels that
+  **[INFERRED]** and says the operator must confirm on target hardware.
+  **No text-model RAM/latency figure exists anywhere in the repo** —
+  `LOCAL_EXECUTION.md:3-6`: "None of it has been run by the validation work …
+  the run, the timing and the memory figures can only come from your hardware."
+- **Open decision recorded in the repo:** `docs/DENTORA_AI_PHASE0_AUDIT.md:422`
+  — "Cloud dependency for the assistant (strategy): **REPLACE (decision
+  required)** … options: local LLM (llama.cpp/Ollama-class) on user hardware,
+  hybrid tiers, or explicit cloud acceptance. **Code stays until decided**."
+
+## Note on the inert env names
+
+`DEN_TORA_AI_MODEL`, `DEN_TORA_AI_FAST_MODEL`, `DEN_TORA_AI_REASONING_MODEL`
+have **zero references** in the repo (S2-1). They would fit a 3-bucket local
+tiering, but `lib/ai/models.ts:21-48` actually defines **10** tiers
+(`fast`, `chat`, `default`, `reports`, `query`, `scheduling`, `billing`,
+`insights`, `clinical`, `command`), every one pointing at a cloud model
+(`google/gemini-2.5-flash-lite`, `google/gemini-2.5-pro`,
+`anthropic/claude-opus-4.5`). So those names are not a partial wiring of this
+codebase — nothing here was ever built to read them.
