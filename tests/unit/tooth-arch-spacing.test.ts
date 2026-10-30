@@ -23,11 +23,15 @@ import {
   toothTransform,
   toothDimensions,
   CONTACT_TOLERANCE,
-  CROWN_MESIODISTAL,
-  CROWN_FACIOLINGUAL,
+  CROWN_EXTENTS,
+  CROWN_GROUP_EXTENTS,
 } from '@/components/dental-chart/interactive/tooth-3d'
-import { buildCrownGeometry } from '@/components/dental-chart/interactive/tooth-anatomy'
-import { groupOf, isValidFdi } from '@/lib/dental-chart/fdi'
+import {
+  crownGeometryFor,
+  buildCrownGeometry,
+  resolveAnatomicalSpec,
+} from '@/components/dental-chart/interactive/tooth-anatomy'
+import { groupOf, isValidFdi, isPrimaryFdi } from '@/lib/dental-chart/fdi'
 
 /** All 52 valid FDI ids: 32 permanent + 20 primary. */
 export const ALL_FDI: number[] = Array.from({ length: 90 }, (_, i) => i).filter(
@@ -53,7 +57,10 @@ function crownVerticesXZ(n: number): Float64Array {
   const cached = vertexCache.get(n)
   if (cached) return cached
 
-  const geo = buildCrownGeometry(groupOf(n))
+  // The geometry the renderer actually draws: per-class for permanent teeth,
+  // group master for primary. Testing anything else would pass while the
+  // render still overlapped.
+  const geo = crownGeometryFor(n)
   const pos = geo.attributes.position as THREE.BufferAttribute
   const { position, rotationY } = toothTransform(n)
   const cos = Math.cos(rotationY)
@@ -249,7 +256,7 @@ describe('inter-arch clearance', () => {
 
     for (const n of ALL_FDI) {
       const { position, crownDown } = toothTransform(n)
-      const geo = buildCrownGeometry(groupOf(n))
+      const geo = crownGeometryFor(n)
       geo.computeBoundingBox()
       const bb = geo.boundingBox!
       // DentalChart3D's ToothMesh offsets the crown mesh by
@@ -293,24 +300,49 @@ describe('inter-arch clearance', () => {
 })
 
 describe('the spacing table matches the real crown geometry', () => {
-  // tooth-3d.ts carries its own copy of the per-group crown extents so the arch
+  // tooth-3d.ts carries its own copy of the per-class crown extents so the arch
   // solver does not have to import the geometry module (which would create a
   // circular import: tooth-anatomy.ts imports tooth-3d.ts). That copy is only
   // safe while it matches the real geometry, so pin it here.
-  it('CROWN_MESIODISTAL / CROWN_FACIOLINGUAL equal the measured bounding box', () => {
+  it('CROWN_EXTENTS equals the measured per-class bounding box', () => {
+    let checked = 0
+    for (const n of ALL_FDI.filter((t) => !isPrimaryFdi(t))) {
+      const spec = resolveAnatomicalSpec(n)
+      expect(spec, `FDI ${n}`).not.toBeNull()
+      const [ex, ez] = CROWN_EXTENTS[spec!.specificType]
+      const geo = crownGeometryFor(n)
+      geo.computeBoundingBox()
+      const bb = geo.boundingBox!
+      expect(
+        Math.abs(ex - (bb.max.x - bb.min.x)),
+        `CROWN_EXTENTS.${spec!.specificType} X drifted from the real geometry`
+      ).toBeLessThan(0.002)
+      expect(
+        Math.abs(ez - (bb.max.z - bb.min.z)),
+        `CROWN_EXTENTS.${spec!.specificType} Z drifted from the real geometry`
+      ).toBeLessThan(0.002)
+      checked++
+    }
+    // 32 permanent teeth map onto 16 classes; every class must be checked.
+    expect(checked).toBe(32)
+  })
+
+  it('CROWN_GROUP_EXTENTS equals the measured group bounding box', () => {
     for (const group of ['incisor', 'canine', 'premolar', 'molar'] as const) {
+      const [ex, ez] = CROWN_GROUP_EXTENTS[group]
+      // Checked against buildCrownGeometry(group) directly: primary teeth have
+      // no premolars (a primary quadrant is incisor/incisor/canine/molar/molar),
+      // so there is no primary tooth whose group is 'premolar'.
       const geo = buildCrownGeometry(group)
       geo.computeBoundingBox()
       const bb = geo.boundingBox!
-      const measuredX = bb.max.x - bb.min.x
-      const measuredZ = bb.max.z - bb.min.z
       expect(
-        Math.abs(CROWN_MESIODISTAL[group] - measuredX),
-        `CROWN_MESIODISTAL.${group} drifted from buildCrownGeometry`
+        Math.abs(ex - (bb.max.x - bb.min.x)),
+        `CROWN_GROUP_EXTENTS.${group} X drifted`
       ).toBeLessThan(0.002)
       expect(
-        Math.abs(CROWN_FACIOLINGUAL[group] - measuredZ),
-        `CROWN_FACIOLINGUAL.${group} drifted from buildCrownGeometry`
+        Math.abs(ez - (bb.max.z - bb.min.z)),
+        `CROWN_GROUP_EXTENTS.${group} Z drifted`
       ).toBeLessThan(0.002)
     }
   })

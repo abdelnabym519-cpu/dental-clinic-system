@@ -23,7 +23,13 @@ import { FDI_TEETH, groupOf } from '@/lib/dental-chart/fdi'
 import { TOOTH_COLORS, type ToothTreatmentStatus } from '@/lib/dental-chart/clinical-status'
 import { useDentalChartStore } from '@/lib/dental-chart/chart-state'
 import { toothTransform, toothDimensions, ARCH_Y } from './tooth-3d'
-import { buildCrownGeometry, buildRootGeometry, rootSpecs, type ToothGroup } from './tooth-anatomy'
+import {
+  crownGeometryFor,
+  crownGeometryKey,
+  buildRootGeometry,
+  rootSpecs,
+  type ToothGroup,
+} from './tooth-anatomy'
 
 // ─── shared GPU resources (created once, disposed on unmount) ───────────────
 
@@ -43,11 +49,18 @@ let shared: SharedResources | null = null
 function getShared(): SharedResources {
   if (shared) return shared
 
-  // WS-C: anatomically differentiated crowns (extruded class outlines with
-  // cervical taper + bevelled occlusal rim) — replaces the block primitives.
+  // P2 step 4: one shared crown geometry per anatomical class (16 permanent
+  // classes) rather than one per group (4). Every permanent tooth now draws its
+  // own crown - a mandibular central incisor is 0.17 wide and a maxillary one
+  // 0.30, so a single "incisor" mesh was never going to be right.
+  //
+  // Built only from ANATOMICAL_SPECS, which is permanent-only. FDI_TEETH is the
+  // permanent set, so this loop yields exactly the 16 classes; primary teeth
+  // are not rendered here (see step 5).
   const crownGeoms: Record<string, THREE.BufferGeometry> = {}
-  for (const group of ['incisor', 'canine', 'premolar', 'molar'] as const) {
-    crownGeoms[group] = buildCrownGeometry(group)
+  for (const n of FDI_TEETH) {
+    const key = crownGeometryKey(n)
+    if (!crownGeoms[key]) crownGeoms[key] = crownGeometryFor(n)
   }
 
   const cuspGeom = new THREE.SphereGeometry(0.07, 12, 8)
@@ -168,7 +181,7 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
         <>
           {/* crown */}
           <mesh
-            geometry={res.crownGeoms[groupKey(n)]}
+            geometry={res.crownGeoms[crownGeometryKey(n)]}
             material={material}
             position={[0, crownY, 0]}
           />
@@ -200,6 +213,12 @@ function ToothMesh({ n, status }: { n: number; status: ToothTreatmentStatus }) {
   )
 }
 
+/**
+ * Root systems are still per-group: ANATOMICAL_SPECS carries root counts per
+ * class, but rootSpecs(group, arch) is the tuned, arch-aware source used here.
+ * Primary teeth have no root spec at all - rootSpecsForTooth() returns null for
+ * them - so they must not reach this path.
+ */
 function groupKey(n: number): string {
   return groupOf(n)
 }

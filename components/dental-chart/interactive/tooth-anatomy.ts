@@ -760,6 +760,34 @@ export function buildCrownGeometry(group: ToothGroup): THREE.BufferGeometry {
   return buildAnatomicalCrownGeometry(group)
 }
 
+/**
+ * The crown geometry the renderer should draw for a given FDI tooth.
+ *
+ * Permanent teeth get their own anatomical class (16 distinct crowns). Primary
+ * teeth have no class of their own - ANATOMICAL_SPECS is permanent-only - so
+ * they keep the group master until step 5 gives them a real schematic. They
+ * are NOT given a permanent class's crown: that is the silent-fallback bug
+ * step 3 removed.
+ *
+ * The renderer and tests/unit/tooth-arch-spacing.test.ts share this function so
+ * the spacing is always verified against the geometry that is actually drawn.
+ */
+export function crownGeometryFor(n: number): THREE.BufferGeometry {
+  const spec = resolveAnatomicalSpec(n)
+  return spec
+    ? buildAnatomicalCrownGeometry(spec.specificType)
+    : buildCrownGeometry(groupOf(n))
+}
+
+/**
+ * Cache key for crownGeometryFor: one shared geometry per anatomical class for
+ * permanent teeth, one per group for primary teeth.
+ */
+export function crownGeometryKey(n: number): string {
+  const spec = resolveAnatomicalSpec(n)
+  return spec ? spec.specificType : `group:${groupOf(n)}`
+}
+
 // -----------------------------------------------------------------------------
 // PROCEDURAL 3D ANATOMICAL ROOT GENERATOR
 // -----------------------------------------------------------------------------

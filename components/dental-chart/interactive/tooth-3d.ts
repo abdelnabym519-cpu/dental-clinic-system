@@ -18,6 +18,7 @@ import {
   isPrimaryFdi,
   type ToothGroup,
 } from '@/lib/dental-chart/fdi'
+import type { ToothSpecificType } from '../types/odontogram'
 
 export interface ToothTransform {
   position: [number, number, number]
@@ -43,31 +44,50 @@ const ARCH_X = 2.35 // horizontal semi-axis
 const ARCH_Z = 3.1 // depth semi-axis
 
 /**
- * Crown mesiodistal width per tooth group, measured from the real
- * buildCrownGeometry bounding boxes (not hand-tuned).
+ * Crown extents per anatomical class, measured from the real
+ * buildAnatomicalCrownGeometry bounding boxes (not hand-tuned): [x, z] where x
+ * is mesiodistal width and z is faciolingual depth.
  *
- * Duplication risk: tooth-anatomy.ts holds the spec widths these are derived
- * from. tests/unit/tooth-arch-spacing.test.ts pins this table against the real
- * geometry so it cannot silently drift.
+ * Spacing is per-class rather than per-group because the group masters are a
+ * width-tuned compromise and no longer match what the renderer draws - and
+ * because maxillary and mandibular crowns genuinely differ (a mandibular
+ * central incisor is 0.17 wide, a maxillary one 0.30; mandibular molars are
+ * the wider of the two). Spacing by group would hang the whole lower arch off
+ * upper-arch sizes.
+ *
+ * Duplication risk: tooth-anatomy.ts owns the specs these are derived from.
+ * tests/unit/anatomical-spec-resolution.test.ts pins this table against the
+ * real geometry so it cannot silently drift.
  */
-export const CROWN_MESIODISTAL: Record<ToothGroup, number> = {
-  incisor: 0.28,
-  canine: 0.3,
-  premolar: 0.3534,
-  molar: 0.4642,
+export const CROWN_EXTENTS: Record<ToothSpecificType, [number, number]> = {
+  maxillary_central_incisor: [0.3, 0.2492],
+  maxillary_lateral_incisor: [0.23, 0.2148],
+  maxillary_canine: [0.26, 0.3453],
+  maxillary_first_premolar: [0.2423, 0.313],
+  maxillary_second_premolar: [0.2423, 0.313],
+  maxillary_first_molar: [0.3798, 0.422],
+  maxillary_second_molar: [0.3482, 0.3904],
+  maxillary_third_molar: [0.3165, 0.3693],
+  mandibular_central_incisor: [0.17, 0.1998],
+  mandibular_lateral_incisor: [0.19, 0.214],
+  mandibular_canine: [0.24, 0.3014],
+  mandibular_first_premolar: [0.2423, 0.2625],
+  mandibular_second_premolar: [0.2423, 0.2827],
+  mandibular_first_molar: [0.4115, 0.3904],
+  mandibular_second_molar: [0.3904, 0.3693],
+  mandibular_third_molar: [0.3587, 0.3587],
 }
 
 /**
- * Crown faciolingual (Z) depth per group, measured from the same bounding
- * boxes. Needed because a crown's support along a diagonal is larger than half
- * its width: the canine is deeper than it is wide (0.3074 vs 0.3000), so
- * spacing by width alone under-spaces it.
+ * Crown extents per group, used only for primary teeth, which have no
+ * anatomical class of their own (see step 5). Measured from
+ * buildCrownGeometry(group) bounding boxes.
  */
-export const CROWN_FACIOLINGUAL: Record<ToothGroup, number> = {
-  incisor: 0.2027,
-  canine: 0.3074,
-  premolar: 0.3029,
-  molar: 0.4009,
+export const CROWN_GROUP_EXTENTS: Record<ToothGroup, [number, number]> = {
+  incisor: [0.28, 0.2027],
+  canine: [0.3, 0.3074],
+  premolar: [0.3534, 0.3029],
+  molar: [0.4642, 0.4009],
 }
 
 /** A point on the arch ellipse at parameter theta. */
@@ -153,14 +173,11 @@ function angleAtChordDistance(from: number, origin: [number, number], need: numb
  * orientation. That makes the spacing depend on the angles and vice versa, so
  * this runs a short fixed-point iteration (converged well inside 12 passes).
  */
-function solveAngles(quadrantPrefix: number, count: number): number[] {
-  const halfX: number[] = []
-  const halfZ: number[] = []
-  for (let i = 1; i <= count; i++) {
-    const g = groupOf(quadrantPrefix * 10 + i)
-    halfX.push(CROWN_MESIODISTAL[g] / 2)
-    halfZ.push(CROWN_FACIOLINGUAL[g] / 2)
-  }
+/** Extents for one arch sequence: 8 permanent classes, or 5 primary groups. */
+function solveAngles(extents: Array<[number, number]>): number[] {
+  const halfX = extents.map((e) => e[0] / 2)
+  const halfZ = extents.map((e) => e[1] / 2)
+  const count = extents.length
 
   // Seed: cumulative arc length using half-widths, so the iteration starts
   // close to the answer and only has to correct the diagonal overshoot.
@@ -192,25 +209,71 @@ function solveAngles(quadrantPrefix: number, count: number): number[] {
   return angles
 }
 
-// Permanent (8 per quadrant) and primary (5 per quadrant) are spaced
-// independently: a primary quadrant is incisor/incisor/canine/molar/molar, so
-// its spacing sequence differs from the permanent one and must not reuse it.
-const PERMANENT_ANGLES = solveAngles(1, 8)
-const PRIMARY_ANGLES = solveAngles(5, 5)
+/**
+ * Three independently solved sequences. Upper and lower differ because
+ * maxillary and mandibular crowns differ, so the lower arch is genuinely
+ * smaller and nests inside the upper one - which is what normal occlusion
+ * looks like. Permanent arches are per-class; primary uses group extents
+ * because primary teeth have no anatomical class of their own yet (step 5).
+ */
+const UPPER_ANGLES = solveAngles(
+  (
+    [
+      'maxillary_central_incisor',
+      'maxillary_lateral_incisor',
+      'maxillary_canine',
+      'maxillary_first_premolar',
+      'maxillary_second_premolar',
+      'maxillary_first_molar',
+      'maxillary_second_molar',
+      'maxillary_third_molar',
+    ] as ToothSpecificType[]
+  ).map((k) => CROWN_EXTENTS[k])
+)
 
-/** Parametric arch angle for permanent tooth index 1..8 (radians). */
+const LOWER_ANGLES = solveAngles(
+  (
+    [
+      'mandibular_central_incisor',
+      'mandibular_lateral_incisor',
+      'mandibular_canine',
+      'mandibular_first_premolar',
+      'mandibular_second_premolar',
+      'mandibular_first_molar',
+      'mandibular_second_molar',
+      'mandibular_third_molar',
+    ] as ToothSpecificType[]
+  ).map((k) => CROWN_EXTENTS[k])
+)
+
+// A primary quadrant is incisor/incisor/canine/molar/molar, so its spacing
+// sequence differs from the permanent one and must not reuse it.
+const PRIMARY_ANGLES = solveAngles(
+  (['incisor', 'incisor', 'canine', 'molar', 'molar'] as ToothGroup[]).map(
+    (g) => CROWN_GROUP_EXTENTS[g]
+  )
+)
+
+/** Parametric arch angle for a permanent upper tooth index 1..8 (radians). */
 export function archAngle(toothIndex: number): number {
-  return PERMANENT_ANGLES[Math.min(Math.max(toothIndex, 1), 8) - 1]
+  return UPPER_ANGLES[Math.min(Math.max(toothIndex, 1), 8) - 1]
 }
 
-/** Parametric arch angle for primary tooth index 1..5 (radians). */
+/** Parametric arch angle for a permanent lower tooth index 1..8 (radians). */
+export function lowerArchAngle(toothIndex: number): number {
+  return LOWER_ANGLES[Math.min(Math.max(toothIndex, 1), 8) - 1]
+}
+
+/** Parametric arch angle for a primary tooth index 1..5 (radians). */
 export function primaryArchAngle(toothIndex: number): number {
   return PRIMARY_ANGLES[Math.min(Math.max(toothIndex, 1), 5) - 1]
 }
 
-/** Arch angle for any valid FDI number, picking the right dentition sequence. */
+/** Arch angle for any valid FDI number, picking the right arch and dentition. */
 function archAngleOf(n: number): number {
-  return isPrimaryFdi(n) ? primaryArchAngle(toothIndexOf(n)) : archAngle(toothIndexOf(n))
+  const i = toothIndexOf(n)
+  if (isPrimaryFdi(n)) return primaryArchAngle(i)
+  return archOf(n) === 'upper' ? archAngle(i) : lowerArchAngle(i)
 }
 
 export function toothTransform(n: number): ToothTransform {
