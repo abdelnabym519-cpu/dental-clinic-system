@@ -1,4 +1,4 @@
-﻿/**
+/**
  * DenToRa — Interactive Dental Chart: High-Fidelity Human Tooth Anatomy
  *
  * Implements authoritative procedural 3D anatomical crowns and multi-rooted
@@ -36,6 +36,7 @@ import {
   archOf,
   toothIndexOf,
   isValidFdi,
+  isPrimaryFdi,
   sideOf,
   specificTypeOf,
   FDI_TEETH,
@@ -443,12 +444,40 @@ export function toothSpecificTypeOf(n: number): ToothSpecificType {
   return specificTypeOf(n) as ToothSpecificType
 }
 
+/**
+ * Honest spec lookup for a single FDI number: returns null when there is no
+ * spec, never a stand-in.
+ *
+ * ANATOMICAL_SPECS is permanent-only (16 classes). Primary teeth have no entry,
+ * so callers must decide what a primary tooth should look like rather than
+ * silently borrowing a permanent one - a primary molar rendering as a maxillary
+ * central incisor was the previous behaviour and is exactly what this prevents.
+ */
+export function resolveAnatomicalSpec(n: number): AnatomicalToothSpec | null {
+  const key = toothSpecificTypeOf(n)
+  return ANATOMICAL_SPECS[key] ?? null
+}
+
+/** True when an FDI number has a real anatomical spec (i.e. is permanent). */
+export function hasAnatomicalSpec(n: number): boolean {
+  return resolveAnatomicalSpec(n) !== null
+}
+
 export function getAnatomicalSpec(
   nOrType: number | ToothSpecificType | ToothGroup
 ): AnatomicalToothSpec {
   if (typeof nOrType === 'number') {
-    const key = toothSpecificTypeOf(nOrType)
-    return ANATOMICAL_SPECS[key] ?? ANATOMICAL_SPECS.maxillary_central_incisor
+    const spec = resolveAnatomicalSpec(nOrType)
+    if (!spec) {
+      throw new Error(
+        `No anatomical spec for FDI ${nOrType} (${
+          isPrimaryFdi(nOrType) ? 'primary' : 'unknown'
+        }): ANATOMICAL_SPECS covers the 16 permanent classes only. ` +
+          'Use resolveAnatomicalSpec() to check before assuming a spec, and ' +
+          'render primary teeth from their own schematic rather than borrowing one.'
+      )
+    }
+    return spec
   }
   if (nOrType in ANATOMICAL_SPECS) {
     return ANATOMICAL_SPECS[nOrType as ToothSpecificType]
@@ -878,11 +907,16 @@ export function rootSpecs(group: ToothGroup, arch: 'upper' | 'lower'): RootSpec[
 }
 
 /**
- * Returns tooth-specific root specifications matching the exact FDI number.
+ * Tooth-specific root specifications for an exact FDI number, or null when the
+ * tooth has no spec.
+ *
+ * Returns null rather than guessing: root and canal counts are anatomy facts,
+ * and primary teeth are deliberately excluded until a real primary spec exists.
+ * Never substitute permanent root counts for a primary tooth.
  */
-export function rootSpecsForTooth(n: number): RootSpec[] {
-  const spec = getAnatomicalSpec(n)
-  return spec.rootSystem
+export function rootSpecsForTooth(n: number): RootSpec[] | null {
+  const spec = resolveAnatomicalSpec(n)
+  return spec ? spec.rootSystem : null
 }
 
 /**
