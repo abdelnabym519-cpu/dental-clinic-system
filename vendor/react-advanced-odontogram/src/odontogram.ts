@@ -8198,6 +8198,61 @@ export function clearSelection(){
 export function getSelectedTeeth(): number[] {
   return Array.from(selectedTeeth) as number[];
 }
+
+/**
+ * PATCH 1 (R1a-i) — DenToRa controlled selection.
+ *
+ * Sets the selection programmatically. The engine shipped only the reader
+ * (`getSelectedTeeth`); there was no way for a host to drive the selection, so
+ * DenToRa's shared 2D/3D selection could be pushed INTO the odontogram but not
+ * out of its own store back into the chart.
+ *
+ * Notes on why it is written this way:
+ *  - Every write funnels through `updateSelectionUI()`, which already ends in a
+ *    single `notifyStateChange()`. Calling notify here as well would double-fire
+ *    on every programmatic selection change.
+ *  - `activeTooth` is kept as the first selected tooth, matching how the zoom
+ *    popover's "info" path behaves (`selectedTeeth = new Set([toothNo])` then
+ *    the same UI update), so the control cards stay consistent.
+ *  - Unknown numbers are dropped rather than stored: `ALL_TEETH` is the 32
+ *    permanent slots, and a stray number would be invisible in the DOM but
+ *    would still be reported back by `getSelectedTeeth()`, desynchronising the
+ *    host.
+ */
+export function setSelectedTeeth(teeth: number[]): void {
+  const valid = new Set<number>(ALL_TEETH as readonly number[]);
+  const next = (teeth ?? []).filter(t => valid.has(t));
+  selectedTeeth = new Set(next);
+  activeTooth = next.length > 0 ? next[0] : null;
+  updateSelectionUI();
+}
+
+/**
+ * PATCH 5 (R1a-v) — DenToRa per-patient reset.
+ *
+ * Resets everything that belongs to a PATIENT without tearing down the DOM the
+ * way `destroyOdontogram()` + `initOdontogram()` would.
+ *
+ * Why it is more than a bare `resetMouth()`:
+ *  - `resetMouth()` clears per-tooth findings (including perio, which rides
+ *    inside the per-tooth record), edentulous and case metadata — but it
+ *    deliberately PRESERVES the selection and the session settings. Leftover
+ *    selection from patient A would leak into patient B's chart, which is
+ *    exactly the cross-patient contamination the host store's own `reset()`
+ *    guards against.
+ *  - Conversely it must NOT reset `readOnly` / `notesEnabled` / numbering /
+ *    language, which are host configuration, not patient data — that is the
+ *    mistake `destroyOdontogram()` makes (it resets both to false), and the
+ *    provider already re-applies them afterwards.
+ *
+ * One notify at the end, so listeners see a single consistent transition.
+ */
+export function resetForPatient(): void {
+  resetMouth();
+  selectedTeeth = new Set();
+  activeTooth = null;
+  updateSelectionUI();
+}
 /**
  * Register one or more custom SVG plugins. Plugins can inject visual overlays
  * into the tooth SVG and maintain per-tooth custom state included in export/import.

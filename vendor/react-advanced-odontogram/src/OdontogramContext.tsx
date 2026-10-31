@@ -88,6 +88,10 @@ import {
   setSelectionBorderStyle,
   getToothInfoVisible,
   setToothInfoVisible,
+  // PATCH 1/5 (R1a) — added for DenToRa controlled selection and per-patient reset.
+  getSelectedTeeth,
+  setSelectedTeeth,
+  resetForPatient,
 } from "./odontogram";
 import type {
   OdontogramSummary,
@@ -162,6 +166,33 @@ export type OdontogramProviderProps = {
    * Useful for print/report/view modes.
    */
   readOnly?: boolean;
+  /**
+   * PATCH 1 (R1a-i) — DenToRa controlled selection.
+   *
+   * The tooth selection, as library slot numbers (11-48). When provided the
+   * selection is driven by the parent; omit it to let the odontogram own the
+   * selection internally (the upstream default).
+   *
+   * These are SLOTS, not DenToRa FDI numbers: primary teeth 51-85 live on slots
+   * 11-45 with the `milktooth` flag, so a host must map before passing them in
+   * and again on the way out — see `fdiToSlot`/`slotToFdi` in
+   * lib/dental-chart/v2/rao-adapter.ts.
+   */
+  selectedTeeth?: number[];
+  /**
+   * PATCH 1 (R1a-i) — fired whenever the selection changes, with the new
+   * selection as library slot numbers. Uses the engine's existing
+   * `onStateChange` funnel and diffs against the last seen selection, because
+   * `onStateChange` carries no payload and fires for every edit too, not just
+   * selection changes.
+   */
+  onSelectionChange?: (teeth: number[]) => void;
+  /**
+   * PATCH 3 (R1a-iii) — show the built-in language menu in the topbar.
+   * Defaults to true (upstream behaviour). DenToRa passes false: the app has
+   * its own Arabic/English switch, so a second switch would let the two drift.
+   */
+  showLanguageSwitcher?: boolean;
   /**
    * When true, enables per-tooth notes. Double-click a tooth to add/edit a note.
    * Notes are shown in hover tooltips and included in JSON export/import.
@@ -313,6 +344,10 @@ export type OdontogramUiContextValue = {
   t: TranslateFn;
   lang: Language;
   setLang: (lang: Language) => void;
+  /** PATCH 3 (R1a-iii) — whether the topbar language menu is shown. */
+  showLanguageSwitcher: boolean;
+  /** PATCH 5 (R1a-v) — clear all PATIENT data and the selection, keeping host config. */
+  resetForPatient: () => void;
   isDark: boolean;
   toggleDark: () => void;
   currentNumbering: NumberingSystem;
@@ -423,6 +458,9 @@ function OdontogramProviderInner({
   plugins,
   toothTemplates,
   readOnly: readOnlyProp,
+  selectedTeeth: selectedTeethProp,
+  onSelectionChange,
+  showLanguageSwitcher = true,
   enableNotes,
   enableIcdas,
   pulpDetailLevel,
@@ -613,6 +651,44 @@ function OdontogramProviderInner({
   useEffect(() => {
     setReadOnly(readOnlyProp ?? false);
   }, [readOnlyProp]);
+
+  // PATCH 1a (R1a-i) — push a controlled selection INTO the odontogram.
+  //
+  // Compared against the engine's CURRENT selection rather than against the
+  // previous prop, so this is idempotent and cannot fight the engine: when the
+  // user clicks a tooth, `onSelectionChange` below tells the host, the host
+  // re-renders with the same array, and the deep-equal guard short-circuits
+  // instead of re-applying and clobbering `activeTooth`.
+  useEffect(() => {
+    if(selectedTeethProp === undefined) return;
+    const current = getSelectedTeeth();
+    if(current.length === selectedTeethProp.length
+       && current.every((t, i) => t === selectedTeethProp[i])){
+      return;
+    }
+    setSelectedTeeth(selectedTeethProp);
+  }, [selectedTeethProp]);
+
+  // PATCH 1b (R1a-i) — pull selection changes OUT of the odontogram.
+  //
+  // `onStateChange` fires for every edit and carries no payload, so the only
+  // way to know the selection moved is to re-read `getSelectedTeeth()` and
+  // diff. Reading it inside the callback is safe: `updateSelectionUI()` mutates
+  // `selectedTeeth` BEFORE notifying, and `notifyStateChange()` is synchronous.
+  const lastSelectionRef = useRef<number[] | null>(null);
+  useEffect(() => {
+    if(!onSelectionChange) return;
+    return onStateChange(() => {
+      const next = getSelectedTeeth();
+      const prev = lastSelectionRef.current;
+      if(prev !== null && prev.length === next.length
+         && prev.every((t, i) => t === next[i])){
+        return; // not a selection change - some other edit
+      }
+      lastSelectionRef.current = next;
+      onSelectionChange(next);
+    });
+  }, [onSelectionChange]);
 
   // Sync notes enabled
   useEffect(() => {
@@ -923,6 +999,8 @@ function OdontogramProviderInner({
     t,
     lang,
     setLang,
+    showLanguageSwitcher,
+    resetForPatient,
     isDark,
     toggleDark,
     currentNumbering,
