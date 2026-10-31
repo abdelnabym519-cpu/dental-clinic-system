@@ -605,3 +605,279 @@ DenToRa source of truth: `components/dental-chart/types/odontogram.ts`
 - P2 step 5 (primary crowns) — **paused**, no code written.
 - Nothing deleted from the current charts.
 - **No adoption recommendation is made here.** Awaiting your decision.
+
+---
+
+# R0 follow-up — deep verification (read-only)
+
+Follows the acceptance of R0. Facts only, with source URLs and quoted text.
+**No legal conclusion is drawn in section (c).** No asset downloaded, nothing
+deleted. Tip at time of writing: `4b78e2c`.
+
+## (a) React-Advanced-Odontogram — selection events and reset semantics
+
+### Does a tooth selection trigger `onStateChange`? — **Yes.**
+
+`updateSelectionUI()` in `src/odontogram.ts` ends with `notifyStateChange()`,
+and it is the funnel for selection:
+
+```js
+function updateSelectionUI(){
+  $$(".tooth-tile").forEach(tile => {
+    const toothNo = Number(tile.dataset.tooth);
+    const isSelected = selectedTeeth.has(toothNo);
+    tile.classList.toggle("active", isSelected);
+    if(tile.hasAttribute("role")) tile.setAttribute("aria-selected", String(isSelected));
+  });
+  updateSelectionFilterButtons();
+  updateActiveLabel();
+  if(activeTooth && selectedTeeth.has(activeTooth)){
+    setControlsEnabled(true);
+    syncControlsFromState(toothState.get(activeTooth));
+  }else{
+    syncControlsFromState(defaultState());
+    setControlsEnabled(false);
+  }
+  // The declarative control cards re-read via onStateChange, so a selection
+  // change (new active tooth) must notify — otherwise a card would keep showing
+  // the previously-active tooth's state. Selection funnels through here and the
+  // edit path (applyToSelected) notifies on its own, so this adds no double-fire.
+  notifyStateChange();
+}
+```
+
+Every selection write path mutates `selectedTeeth` **first**, then calls
+`updateSelectionUI()` — so by the time listeners run, the new selection is
+already in place. Confirmed on the touch-zoom path too (`selectBtn` /
+`infoBtn` handlers both call `updateSelectionUI()`).
+
+### Can selection be read synchronously after the event? — **Yes.**
+
+`notifyStateChange()` (`src/state/notify.ts`) is a plain synchronous loop:
+
+```js
+export function notifyStateChange(){
+  for(const cb of stateChangeListeners){
+    try{ cb(); }
+    catch(e){ console.error("odontogram state-change listener failed", e); }
+  }
+  try{ postNotifyHook?.(); }
+  catch(e){ console.error("odontogram bridge overlay render failed", e); }
+}
+```
+
+So inside the listener, `getSelectedTeeth()` already returns the **new**
+selection. Two caveats:
+
+- The callback receives **no payload** (`cb: () => void`), so a host must
+  re-read `getSelectedTeeth()` and diff to know what changed.
+- `onStateChange` fires for **every** edit, edentulous toggle, import and
+  session-setting change — not only selection — so every fire costs a diff.
+- `postNotifyHook?.()` (the bridge-overlay redraw) runs **after** all listeners.
+
+`getSelectedTeeth()` returns `Array.from(selectedTeeth)` — a fresh array, so
+mutating it is safe.
+
+### What exactly resets — `resetMouth()` vs `destroyOdontogram()` + `initOdontogram()`
+
+**`resetMouth()`** (verbatim doc comment: "Reset the WHOLE mouth to a blank
+slate") does:
+
+1. `setEdentulous(false)`
+2. `resetCaseMeta()` — case-level patient metadata
+3. For every tooth in `ALL_TEETH`: `toothState.set(toothNo, defaultState())`,
+   `applyStateToSvg(toothNo)`, `updateToothTileNumber(toothNo)`
+4. Re-syncs the active tooth's controls if one is active
+5. `notifyStateChange()` once at the end
+
+Per-tooth periodontal data **is** cleared by this, because perio lives inside
+the per-tooth record — `src/state/payload.ts`:
+
+> Per-tooth, per-site periodontal probing data — deliberately a SEPARATE
+> sub-record from the 5-surface caries maps above (perio sites are a different
+> geometry: 6 fixed probing points, not tooth surfaces).
+
+**`resetMouth()` does NOT reset:** the selection (`selectedTeeth` /
+`activeTooth`), session settings (numbering system, ICDAS, caries/pulp/wear/
+discoloration detail levels, surface notation), `readOnly`, `notesEnabled`,
+theme, or the plan/edited-teeth bookkeeping.
+
+**`destroyOdontogram()`** does (in order): `initialized = false`; `initToken++`;
+`teardownBridgeOverlayResize()`; removes the `document` click and grid touch
+listeners; unsubscribes i18n; clears `#toothGrid.innerHTML`; removes the arch
+toggle bar; hides zoom popover / context menu / note editor; clears the
+long-press timer; `pinchScale = 1`, `isPinching = false`, `archMode = "both"`;
+**`readOnly = false`**; **`notesEnabled = false`**; `pluginOverlays.clear()`;
+`charts.status.clear()`; `charts.plan.clear()`; `setPlanInitialized(false)`;
+`planEditedTeeth.clear()`; `pendingDualStateConfirm = null`;
+`setActiveChartMode("status")`; `resetCaseMeta()`; clears the four DOM maps
+(`toothSvgRoot`, `toothTile`, `toothLabelUpper`, `toothLabelLower`); and
+**`selectedTeeth = new Set(); activeTooth = null`**.
+
+**⚠️ Two consequences for a per-patient reset:**
+
+1. `destroyOdontogram()` resets **`readOnly = false` and `notesEnabled = false`**
+   (it resets "the whole case"). A host must **re-apply** `setReadOnly()` /
+   `setNotesEnabled()` after every `initOdontogram()`.
+2. `destroyOdontogram()` does **not** call `notifyStateChange()`, so subscribers
+   are not told about the teardown.
+3. `initOdontogram()` is idempotent (`if(initialized) return;`) and calls
+   `notifyStateChange()` at the end.
+
+### ⚠️ Blocking finding for R1a: the library has no FDI 51–85 teeth
+
+```js
+// src/anatomy/profiles.ts
+export const ALL_TEETH = [
+  18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28,
+  48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38
+];
+```
+
+**32 permanent numbers only.** Primary teeth are **not** separate teeth — they
+are a *flag* on the permanent slot. `src/state/numbering.ts`:
+
+> A milk tooth is stored under its permanent FDI number but DISPLAYED with the
+> deciduous quadrant digit (1->5, 2->6, 3->7, 4->8), so e.g. permanent 11 shows
+> as 51. Non-milk teeth display their own number unchanged.
+
+```js
+export function getDisplayedToothNumber(toothNo){
+  const s = toothState.get(toothNo);
+  if(!s || s.toothSelection !== "milktooth") return toothNo;
+  const firstDigit = Math.floor(toothNo / 10);
+  const secondDigit = toothNo % 10;
+  const mappedFirst = firstDigit === 1 ? 5 : firstDigit === 2 ? 6 : firstDigit === 3 ? 7 : 8;
+  return mappedFirst * 10 + secondDigit;
+}
+```
+
+Constraints found in `src/odontogram.ts`:
+
+- `PRIMARY_MILK` = the **20** positions that may be a milk tooth:
+  `11–15, 21–25, 31–35, 41–45`
+- `MILKTOOTH_BLOCKED` = the **12** that may not:
+  `16,17,18,26,27,28,36,37,38,46,47,48`
+
+So the adapter mapping is **DenToRa 51–85 ↔ library 11–45 + `milktooth` flag**
+(subtract 40: 51→11, 55→15, 61→21, 65→25, 71→31, 75→35, 81→41, 85→45).
+Display is handled by the library itself via `getDisplayedToothNumber`.
+
+## (b) dental-scope — mesh keys and triangle counts
+
+### Are `tooth-NN` keys the FDI number? — **Yes, verified.**
+
+`public/models/manifest.json` has 32 `tooth-NN` mesh keys and 32 `teeth[NN]`
+entries. Each key was cross-checked against FDI semantics (quadrant → arch and
+side, position → tooth type): **0 mismatches across all 32.**
+
+| | |
+| --- | --- |
+| Keys | `11–18, 21–28, 31–38, 41–48` (32, permanent only) |
+| Example | `teeth["11"]` → `{arch: "maxillary", side: "right", type: "central-incisor"}` = FDI 11 ✓ |
+| `manifest.source` | `"BodyParts3D 3.0 (DBCLS), CC BY-SA 2.1 JP"` |
+
+So `tooth-NN` **is** the FDI number, and `meshOwner`/`toothFdiOfMesh()` only has
+to strip the `tooth-` prefix and parse the integer.
+
+### Triangles: initial 7.44 MB vs lazy 44.08 MB
+
+From the `docs/assets.md` asset table (165 rows, 1,610,184 triangles total),
+summed by file:
+
+| Stage | File | Meshes | Triangles |
+| --- | --- | --- | --- |
+| 1 | `core.glb` (6.09 MB) | 44 | **1,231,006** |
+| 2 | `context.glb` (0.98 MB) | 45 | **279,546** |
+| 3 | `neurovascular.glb` (0.37 MB) | 76 | **99,632** |
+| | **Initial total (7.44 MB)** | **165** | **1,610,184** |
+
+- The 32 `tooth-XX` **outer shells** are inside `core.glb` and are already
+  counted above: **978,584 triangles** (avg 30,581, range 18,384–52,568).
+- **The lazy 44.08 MB (`teeth/tooth-XX.glb`, 32 files) triangle count is NOT
+  published** — not in `manifest.json` (which stores only byte sizes per file)
+  and not in the asset table (whose `tooth-XX` rows describe the `core.glb`
+  shells, not the internal layer meshes). Measuring it would require
+  downloading a GLB, which is out of scope until the licence decision in R1b.
+
+**Correction to R0:** the earlier "978,584 triangles" figure is the tooth meshes
+only. The real initial-load cost is **1,610,184 triangles**.
+
+## (c) DBCLS BodyParts3D — does the CC BY 4.0 statement cover Release 3.0?
+
+**Recorded as facts. No legal conclusion.**
+
+**The licence page** (<https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html>),
+"Last updated : 2025/02/27", quoted verbatim:
+
+> You may use this database in compliance with the terms and conditions of the
+> license described below. [...]
+>
+> The license for this database is specified in the Creative Commons
+> Attribution 4.0 International.
+>
+> If you use data from this database, please be sure attribute this database as
+> follows: "BodyParts3D, © The Database Center for Life Science licensed under
+> CC Attribution 4.0 International".
+>
+> With regard to this database, you are licensed to:
+> 1. freely access part or whole of this database, and acquire data;
+> 2. freely redistribute part or whole of the data from this database; and
+> 3. freely create and distribute database and other derivative works based on
+>    part or whole of the data from this database,
+>
+> under the license, as long as you comply with the following conditions:
+> 1. You must attribute this database in the manner specified by the author or
+>    licensor when distributing part or whole of this database or any adapted
+>    material.
+> 2. You need to contact the Licensor shown below to request a license for use
+>    of this database or any part thereof not licensed under the license.
+
+**Does it name a release?** No. The page says **"this database"** throughout and
+carries **no version scoping in either direction** — it does not say "all
+releases including earlier ones", and it does not say "current release only".
+
+**Release timeline** — from the Update History page
+(<https://dbarchive.biosciencedbc.jp/en/bodyparts3d/update.html>), quoted:
+
+| Date | Update contents |
+| --- | --- |
+| 2025/02/27 | "License" is updated. |
+| 2013/06/19 | 3D data (Release 4.0) is updated. |
+| 2011/09/15 | 3D data (Release 3.0) is updated. |
+| 2011/08/25 | "License" is updated. |
+| 2010/08/16 | 3D data (Release 2.0) is updated. |
+| 2009/02/09 | 3D data (Release 1.0) is updated. |
+| 2008/08/12 | BodyPart3D (http://lifesciencedb.jp/bp3d/?lng=en) is released. |
+
+**What the download page currently serves** —
+<https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html> lists, under
+`LATEST/`:
+
+- `isa_BP3D_4.0_obj_99.zip` (136 MB)
+- `partof_BP3D_4.0_obj_99.zip` (62 MB)
+
+**Facts that follow, stated without legal interpretation:**
+
+1. **Release 3.0** — the release dental-scope states it uses — dates from
+   **2011/09/15**.
+2. **Release 4.0** dates from **2013/06/19** and is the release currently
+   served under `LATEST/`.
+3. The licence page has been updated at least twice: **2011/08/25** (a week
+   before Release 3.0 shipped) and **2025/02/27** (the CC BY 4.0 text).
+4. The **2025/02/27 CC BY 4.0 statement postdates Release 3.0 by about
+   13.5 years** and postdates Release 4.0 by about 11.7 years.
+5. At the moment Release 3.0 was published, the operative "License" page was
+   the **2011/08/25** state, not the 2025/02/27 one. What that 2011 text said
+   is **not recorded on the live site** and was not retrieved here.
+6. dental-scope did not take its STLs from DBCLS directly but from the
+   Kevin-Mattheus-Moerman mirror, which `CREDITS.md` describes as
+   "(Kevin M. Moerman; code MIT, **content CC BY-SA 2.1 JP**)".
+
+**Not concluded here:** whether the 2025/02/27 CC BY 4.0 grant reaches Release
+3.0 data retroactively; which licence governed Release 3.0 in 2011; and whether
+ShareAlike attaches at all. These are questions for counsel. The practical
+observation for engineering is that the DBCLS licence page and dental-scope's
+own `CREDITS.md` currently assert **different licences** (CC BY 4.0 with no
+ShareAlike vs CC BY-SA 2.1 JP with ShareAlike) for what is described as the
+same source.
