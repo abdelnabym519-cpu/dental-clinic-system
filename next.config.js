@@ -1,3 +1,5 @@
+const path = require('path')
+
 const createNextIntlPlugin = require('next-intl/plugin')
 
 // Locale comes from the clinic record, not the URL, so there is no routing
@@ -9,6 +11,24 @@ const nextConfig = {
   output: 'standalone',
   images: {
     unoptimized: true,
+  },
+  // R1a: the vendored React-Advanced-Odontogram is imported through the bare
+  // specifier `rao-odontogram`. The bundler resolves it to the real vendored
+  // source; TypeScript resolves the same specifier to the ambient declaration
+  // in types/rao-odontogram.d.ts, so the library's own (non-strict) source
+  // never enters the app's typecheck program. Without this split, importing the
+  // vendor directly drags 186 strict-mode errors into `tsc --noEmit`, which CI
+  // runs as a hard gate. See the header comment in types/rao-odontogram.d.ts.
+  //
+  // Next 16 builds with Turbopack, so this must be `turbopack.resolveAlias` -
+  // a `webpack:` block here is silently ignored and the import fails to
+  // resolve ("Module not found: Can't resolve 'rao-odontogram'").
+  // The value must be PROJECT-RELATIVE: Turbopack rejects an absolute path
+  // here with "server relative imports are not implemented yet".
+  turbopack: {
+    resolveAlias: {
+      'rao-odontogram': './vendor/react-advanced-odontogram/src/index.ts',
+    },
   },
   experimental: {
     serverActions: {
