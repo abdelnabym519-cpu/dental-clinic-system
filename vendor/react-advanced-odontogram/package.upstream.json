@@ -1,0 +1,103 @@
+{
+  "name": "react-advanced-odontogram",
+  "version": "2.8.0",
+  "license": "MIT",
+  "type": "module",
+  "description": "Interactive, SVG-based dental odontogram (dental chart) editor for React + TypeScript — multi-surface caries/filling charting, endodontic/prosthetic/periodontal states, FDI/Universal/Palmer numbering, HL7 FHIR R4 export/import, and ICDAS scoring.",
+  "author": "Zoltán Dul",
+  "homepage": "https://react-advanced-odontogram.vercel.app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZoliQua/React-Advanced-Odontogram.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZoliQua/React-Advanced-Odontogram/issues"
+  },
+  "keywords": [
+    "odontogram",
+    "dental-chart",
+    "dental-charting",
+    "dentistry",
+    "dental-records",
+    "react",
+    "typescript",
+    "svg",
+    "fhir",
+    "icdas",
+    "periodontal"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "main": "./dist/odontogram.js",
+  "module": "./dist/odontogram.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/odontogram.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:lib": "vite build --config vite.lib.config.ts",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "parity:capture": "PARITY_CAPTURE=1 vitest run src/__tests__/parity/capture.test.ts",
+    "docs": "typedoc",
+    "prepublishOnly": "npm run build:lib",
+    "fhir:codesystem": "FHIR_CODESYSTEM_WRITE=1 vitest run src/__tests__/fhir-codesystem.test.ts src/__tests__/fhir-valuesets.test.ts",
+    "test:e2e": "playwright test"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.16",
+    "jspdf": "^4.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@microsoft/api-extractor": "^7.58.12",
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/fhir": "^0.0.44",
+    "@types/jsdom": "^28.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "gh-pages": "^6.3.0",
+    "globals": "^15.15.0",
+    "jiti": "^2.6.1",
+    "jsdom": "^28.1.0",
+    "postcss": "^8.4.45",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.10",
+    "typedoc": "^0.28.17",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.53.1",
+    "vite": "^7.3.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vitest": "^4.0.18"
+  }
+}
