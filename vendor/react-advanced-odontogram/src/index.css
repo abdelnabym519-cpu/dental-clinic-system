@@ -1,5 +1,9 @@
 
-:root{
+/* PATCH 9: was `:root`. The library re-resolves every token on
+   `.odontogram-root` (see below), so scoping this to the container loses
+   nothing inside the chart while stopping --card/--muted/--accent from
+   overwriting the app's shadcn tokens in app/globals.css. */
+.rao-scope{
   --bg: var(--odon-bg, #f3f6fb);
   --panel: var(--odon-panel, #ffffff);
   --card: var(--odon-card, #ffffff);
@@ -30,13 +34,16 @@
   --text: var(--odon-text, #f1f5f9);
   --line: var(--odon-line, #334155);
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
+/* PATCH 9: was `*`. */
+.rao-scope,.rao-scope *{box-sizing:border-box}
+/* PATCH 9: the two rules below were `html,body{height:100%}` and a `body{}`
+   block setting margin, font-family, a radial-gradient background and color.
+   They are REMOVED from the document: the library must not restyle the host
+   page's body. The font is moved onto the container instead; background and
+   height are dropped (the host owns them). */
+.rao-scope{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-  background: radial-gradient(1200px 600px at 15% 0%, #ffffff 0%, var(--bg) 60%);
-  color:var(--text);
+  color: var(--text);
 }
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
@@ -120,7 +127,8 @@ body{
   border-color: rgba(59,123,255,.45);
 }
 
-select{
+/* PATCH 9: was `select` - it restyled EVERY dropdown on the host page. */
+.rao-scope select{
   appearance: none;
   border:1px solid var(--line);
   background:rgba(59,123,255,.12);
@@ -139,7 +147,8 @@ select{
   background-size: 6px 6px, 6px 6px;
   background-repeat:no-repeat;
 }
-select:focus{
+/* PATCH 9: was `select:focus`. */
+.rao-scope select:focus{
   outline:none;
   box-shadow: 0 0 0 3px rgba(59,123,255,.18);
 }
@@ -508,7 +517,8 @@ select:focus{
   gap:8px;
   flex-wrap:wrap;
 }
-.status-extra-row select{
+/* PATCH 9: was `.status-extra-row select`. */
+.rao-scope .status-extra-row select{
   min-width: 220px;
 }
 .btn-icon{
@@ -795,7 +805,7 @@ select:focus{
 }
 
 /* ── Dark mode ────────────────────────────────── */
-.dark{
+.dark .rao-scope{  /* PATCH 9: was bare `.dark` */
   --bg: var(--odon-bg, #0f172a);
   --panel: var(--odon-panel, #1e293b);
   --card: var(--odon-card, #1e293b);
@@ -803,9 +813,9 @@ select:focus{
   --text: var(--odon-text, #f1f5f9);
   --line: var(--odon-line, #334155);
 }
-.dark body{
-  background: var(--bg);
-}
+/* PATCH 9: was `.dark body{background:var(--bg)}`. The host app uses
+   Tailwind's `.dark` class, so this recoloured the host body in dark mode.
+   Removed - the container scopes its own background instead. */
 
 /* ── Dark mode: tooth artwork ──────────────────────────────────────────────
    The drawings paint through palette tokens (see tools/toothgen/palette.py),
@@ -849,7 +859,7 @@ select:focus{
    mobility, the plan markers, the endo and ortho colours. They are saturated
    hues chosen to be recognised at a glance, they read on either background,
    and shifting them risks changing what a clinician thinks they are seeing. */
-.dark{
+.dark .rao-scope{  /* PATCH 9: was bare `.dark` */
   /* tooth structure */
   --odon-tooth-body: #273140;
   /* --odon-tooth-dentin is deliberately NOT declared here. The rule this block
@@ -929,7 +939,8 @@ select:focus{
   background: rgba(96,165,250,.2);
   border-color: rgba(96,165,250,.45);
 }
-.dark select{
+/* PATCH 9: was `.dark select`. */
+.rao-scope.dark select, .dark .rao-scope select{
   background: rgba(96,165,250,.15);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--text) 50%),

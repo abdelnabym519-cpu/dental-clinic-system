@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Lock } from 'lucide-react'
 
 // Imported through the bare specifier, NOT the relative vendor path: the
 // bundler aliases it to the real vendored source (next.config.js) while
@@ -82,6 +82,12 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
   const { data: session } = useSession()
   const { locale } = useLanguage()
 
+  // Two sets on purpose:
+  //  - `allEntries`    every row the server returned, resolved included. Feeds
+  //                    the unmapped-findings panel, which must never hide
+  //                    anything that exists in the database.
+  //  - `entries`       active (unresolved) rows only. Feeds the chart.
+  const [allEntries, setAllEntries] = useState<DentalChartEntryRecord[]>([])
   const [entries, setEntries] = useState<DentalChartEntryRecord[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -100,7 +106,17 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
       const res = await fetch(`/api/dental-chart/${patientId}/summary`, { cache: 'no-store' })
       if (!res.ok) throw new Error(res.status === 403 ? 'forbidden' : 'failed')
       const data = (await res.json()) as SummaryPayload
-      setEntries(data.entries ?? [])
+      // The summary route returns EVERY row, resolved ones included
+      // (prisma.dentalChartEntry.findMany has no resolvedDate filter). A removal
+      // in v2 resolves the row rather than deleting it, so without this filter
+      // the refetch would bring the removed finding straight back into the chart.
+      // The old chart does the same thing in its adapter
+      // (adapters/dental-chart-adapter.ts:353 picks `!e.resolvedDate`) and the
+      // clinical-status derivation does too (lib/dental-chart/clinical-status.ts:47),
+      // so filtering here is what makes all views agree.
+      const all = data.entries ?? []
+      setAllEntries(all)
+      setEntries(all.filter((e) => !e.resolvedDate))
       setError(null)
     } catch {
       setError('تعذّر تحميل مخطط الأسنان')
@@ -115,6 +131,8 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
   // Double-submit guard: one write in flight at a time.
   const inFlightRef = useRef(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // True between an edit and its write landing. Drives the unload warning.
+  const pendingRef = useRef(false)
 
   const statesBySlot = useMemo(() => {
     const map = new Map<number, RaoToothState>()
@@ -305,6 +323,9 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
       setError('تعذّر الاتصال بالخادم. تم التراجع عن التغييرات.')
     } finally {
       inFlightRef.current = false
+      // Cleared on both success and failure: after a rollback the chart already
+      // matches the server, so there is nothing left to warn about.
+      pendingRef.current = false
       setSaving(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -315,10 +336,37 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
   useEffect(() => {
     if (readOnly) return
     return onStateChange(() => {
+      pendingRef.current = true
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => void persist(), SAVE_DEBOUNCE_MS)
     })
   }, [readOnly, persist])
+
+  // Leaving the page or closing the tab inside the 700ms window must not lose
+  // the write. Two guards: flush the pending write on unmount (navigation within
+  // the SPA), and warn on beforeunload (closing the tab / hard reload).
+  useEffect(
+    () => () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+        debounceRef.current = null
+      }
+      if (pendingRef.current) void persist()
+    },
+    [persist],
+  )
+
+  useEffect(() => {
+    if (readOnly) return
+    const handler = (event: BeforeUnloadEvent) => {
+      if (!pendingRef.current) return
+      event.preventDefault()
+      // Legacy convention: some browsers only honour the assignment.
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [readOnly])
 
   useEffect(
     () => () => {
@@ -354,6 +402,21 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
           <span>{error}</span>
         </div>
       )}
+      {/*
+        Read-only notice. SUPER_ADMIN is deliberately NOT a mutator: every write
+        route gates on ['ADMIN','DOCTOR'] (app/api/dental-chart/route.ts:103),
+        so offering editing here would produce a control that always 403s. Say so
+        in Arabic instead of leaving a silently inert chart.
+      */}
+      {readOnly && !error && (
+        <div
+          data-testid="chart-readonly-note"
+          className="flex items-center gap-2 rounded-lg border bg-muted/40 p-2 text-xs text-muted-foreground"
+        >
+          <Lock className="h-3.5 w-3.5 shrink-0" />
+          <span>وضع العرض فقط — لا يمكنك تعديل المخطط السني</span>
+        </div>
+      )}
       {saving && (
         <div
           data-testid="chart-saving"
@@ -364,7 +427,14 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border bg-card">
+      {/*
+        `.rao-scope` is the container the vendored stylesheet is scoped to
+        (PATCH 9 in vendor/react-advanced-odontogram/src/index.css). The
+        library's CSS is a GLOBAL sheet that Next keeps loaded after client
+        navigation, so without this container its `:root` tokens and `body` /
+        `select` rules would restyle the whole app.
+      */}
+      <div className="rao-scope overflow-hidden rounded-lg border bg-card">
         <Odontogram
           language={chartLanguage}
           showLanguageSwitcher={false}
@@ -374,7 +444,7 @@ export function RaoOdontogram({ patientId }: { patientId: string }) {
         />
       </div>
 
-      <UnmappedFindingsPanel entries={entries ?? []} locale={locale} />
+      <UnmappedFindingsPanel entries={allEntries} locale={locale} />
     </div>
   )
 }

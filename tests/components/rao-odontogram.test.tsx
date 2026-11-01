@@ -236,6 +236,121 @@ describe('edit persists through /api/dental-chart', () => {
   })
 })
 
+// ─── 2b. removal must stay removed ─────────────────────────────────────────
+
+describe('removal is durable', () => {
+  it('does not resurrect a resolved finding when the summary returns it', async () => {
+    // The summary route has NO resolvedDate filter, so a resolved row comes back
+    // on every refetch. v2 must ignore it, or a removal would visibly un-remove.
+    const resolvedRow = row(36, 'CARIES', { mesial: true, resolvedDate: '2026-02-01' })
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).includes('/summary')
+        ? jsonResponse({ patient: { id: 'p1', name: 'A' }, entries: [resolvedRow] })
+        : jsonResponse({ id: 'x' }),
+    )
+    render(<RaoOdontogram patientId="p1" />)
+    await waitFor(() => expect(engineCalls.importStatus).toHaveBeenCalled())
+
+    const payload = engineCalls.importStatus.mock.calls.at(-1)?.[0] as {
+      teeth: Record<string, { caries?: string[] }>
+    }
+    // Slot 36 must be empty - the resolved caries is NOT charted.
+    expect(payload.teeth['36']?.caries ?? []).toEqual([])
+  })
+
+  it('still discloses the resolved finding in the unmapped panel set', async () => {
+    // "Nothing may disappear silently": a resolved SENSITIVE row is not charted,
+    // but it still exists and must still be listed.
+    const resolvedSensitive = row(12, 'SENSITIVE', { resolvedDate: '2026-02-01' })
+    fetchMock.mockResolvedValue(
+      jsonResponse({ patient: { id: 'p1', name: 'A' }, entries: [resolvedSensitive] }),
+    )
+    render(<RaoOdontogram patientId="p1" />)
+
+    await waitFor(() => expect(screen.getByTestId('unmapped-findings-panel')).toBeTruthy())
+    expect(screen.getAllByTestId('unmapped-findings-row')).toHaveLength(1)
+    // and it is labelled closed, not active
+    expect(screen.getByTestId('unmapped-findings-panel').textContent).toMatch(/مغلق/)
+  })
+})
+
+// ─── 2c. the debounce window must not lose a write ─────────────────────────
+
+describe('debounce window is not a data-loss window', () => {
+  function setupFetch() {
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).includes('/summary')
+        ? jsonResponse({ patient: { id: 'p1', name: 'A' }, entries: [] })
+        : jsonResponse({ id: 'new' }),
+    )
+  }
+
+  it('flushes a pending write on unmount instead of dropping it', async () => {
+    setupFetch()
+    const { unmount } = render(<RaoOdontogram patientId="p1" />)
+    await waitFor(() => expect(screen.getByTestId('odontogram-shell')).toBeTruthy())
+
+    engineCalls.getToothStates.mockReturnValue({
+      36: { toothSelection: 'tooth-base', caries: ['mesial'], fillingSurfaces: [], mods: [] },
+    })
+    // Edit, then unmount WELL inside the 700ms debounce window.
+    await fireEngineChange()
+    unmount()
+
+    await waitFor(
+      () => {
+        const posts = fetchMock.mock.calls.filter((c) => (c[1] as RequestInit)?.method === 'POST')
+        expect(posts.length).toBeGreaterThan(0)
+      },
+      { timeout: 4000 },
+    )
+  })
+
+  it('warns on beforeunload while a write is pending', async () => {
+    setupFetch()
+    render(<RaoOdontogram patientId="p1" />)
+    await waitFor(() => expect(screen.getByTestId('odontogram-shell')).toBeTruthy())
+
+    // No pending write -> no warning.
+    const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent
+    window.dispatchEvent(clean)
+    expect(clean.defaultPrevented).toBe(false)
+
+    engineCalls.getToothStates.mockReturnValue({
+      36: { toothSelection: 'tooth-base', caries: ['mesial'], fillingSurfaces: [], mods: [] },
+    })
+    await fireEngineChange()
+
+    const evt = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent
+    window.dispatchEvent(evt)
+    expect(evt.defaultPrevented).toBe(true)
+  })
+
+  it('stops warning once the write has landed', async () => {
+    setupFetch()
+    render(<RaoOdontogram patientId="p1" />)
+    await waitFor(() => expect(screen.getByTestId('odontogram-shell')).toBeTruthy())
+
+    engineCalls.getToothStates.mockReturnValue({
+      36: { toothSelection: 'tooth-base', caries: ['mesial'], fillingSurfaces: [], mods: [] },
+    })
+    await fireEngineChange()
+    // Let the debounce elapse and the POST resolve.
+    await waitFor(
+      () => {
+        const posts = fetchMock.mock.calls.filter((c) => (c[1] as RequestInit)?.method === 'POST')
+        expect(posts.length).toBeGreaterThan(0)
+      },
+      { timeout: 4000 },
+    )
+    await new Promise((r) => setTimeout(r, 50))
+
+    const evt = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent
+    window.dispatchEvent(evt)
+    expect(evt.defaultPrevented).toBe(false)
+  })
+})
+
 // ─── 3. failure -> rollback + Arabic error, never a false "saved" ───────────
 
 describe('failure handling', () => {
@@ -324,6 +439,24 @@ describe('readOnly follows RBAC', () => {
 
     await waitFor(() => expect(screen.getByTestId('odontogram-shell')).toBeTruthy())
     expect(screen.getByTestId('odontogram-shell').getAttribute('data-readonly')).toBe(String(expected))
+  })
+
+  it('shows an Arabic read-only note for non-editing roles', async () => {
+    sessionState.role = 'SUPER_ADMIN'
+    fetchMock.mockResolvedValue(jsonResponse({ patient: { id: 'p1', name: 'A' }, entries: [] }))
+    render(<RaoOdontogram patientId="p1" />)
+
+    await waitFor(() => expect(screen.getByTestId('chart-readonly-note')).toBeTruthy())
+    expect(screen.getByTestId('chart-readonly-note').textContent).toMatch(/وضع العرض فقط/)
+  })
+
+  it('shows no read-only note for DOCTOR', async () => {
+    sessionState.role = 'DOCTOR'
+    fetchMock.mockResolvedValue(jsonResponse({ patient: { id: 'p1', name: 'A' }, entries: [] }))
+    render(<RaoOdontogram patientId="p1" />)
+
+    await waitFor(() => expect(screen.getByTestId('odontogram-shell')).toBeTruthy())
+    expect(screen.queryByTestId('chart-readonly-note')).toBeNull()
   })
 
   it('does not subscribe to edits when read-only', async () => {

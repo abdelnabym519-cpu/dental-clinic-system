@@ -25,6 +25,7 @@ Everything else under `src/` is upstream verbatim.
 | 6 | P1 | `package.json` (host) | `dompurify` + `jspdf` added — the library's only two external runtime imports. | ✅ done |
 | 7 | P1 | `tsconfig.json` (host) | `vendor` excluded from the repo typecheck. | ✅ done |
 | 8 | P1 | `src/odontogram.ts` | **`getToothStates()`** — structured per-tooth state reader. The engine had none, so a host could not diff the chart and persistence/rollback were impossible. | ✅ done |
+| 9 | **P0** | `src/index.css` | **Scope the global stylesheet.** It leaked onto every page of the host app — see the dedicated section below. | ✅ done |
 
 ---
 
@@ -69,6 +70,47 @@ possible at all.
 It is also the counterpart to `importStatus()`: that function is the only way to
 make DenToRa data visible, because the library renders from its own internal
 `charts.status` map, which otherwise only ever holds user edits.
+
+## Patch 9 — scope the global stylesheet (highest-impact patch here)
+
+`src/index.ts` imports `index.css` as a side effect, which makes it a **global**
+stylesheet. Next keeps CSS loaded by a dynamic import after client-side
+navigation, so once a user opens the v2 chart these rules keep applying on every
+other page, for the rest of the session.
+
+What leaked, measured before patching:
+
+| Selector | Declaration | Damage |
+| --- | --- | --- |
+| `:root` | `--card`, `--muted`, `--accent` | **Collides with the app's shadcn tokens** (`app/globals.css:9,17,19`). The sheet loads last, so it wins and recolours the whole app. |
+| `.dark` (bare, ×2) | `--card`, `--muted`, `--bg`, `--text`, … | Same collision, but only when the app's Tailwind dark mode is on — i.e. invisible until someone toggles the theme. |
+| `body` | `margin`, `font-family`, `radial-gradient` background, `color` | Overrides the host page's typography and background. |
+| `html, body` | `height: 100%` | Can break page scrolling. |
+| `select`, `select:focus` | appearance, background, `min-width: 220px`, focus ring | Restyles **every** dropdown on the host site. |
+| `.dark body` | `background` | The app uses Tailwind's `.dark`, so this recoloured the host body. |
+| `*` | `box-sizing` | Benign (Tailwind's preflight already sets it), scoped anyway for consistency. |
+
+Fix — scope every one of them to `.rao-scope`, the container the host wraps the
+chart in, and drop the two that cannot be scoped meaningfully (`html,body`
+height, `.dark body`).
+
+Notes on why this is safe:
+
+- **`:root` is redundant for the library.** `OdontogramContext.tsx:1045` always
+  renders a `.odontogram-root` wrapper, and the sheet already re-resolves every
+  token on `.odontogram-root` and `.dark .odontogram-root`. Moving the token
+  block to `.rao-scope` therefore loses nothing inside the chart.
+- **Dark mode still works.** The two bare `.dark` blocks became
+  `.dark .rao-scope`, and the app's `.dark` (Tailwind, on `<html>`) is an
+  ancestor of the container — so it still matches.
+- `--odon-*` tokens are untouched: the library owns that prefix and the host
+  drives it through `themeConfig` (see the dark-mode note below).
+
+Guarded by `tests/unit/rao-vendor-css-scope.test.ts` (13 tests), which parses
+the sheet and fails if any of these selectors reappear unscoped, and which
+asserts the app really does define `--card`/`--muted`/`--accent` (so the
+collision check cannot silently become vacuous) and that the host applies
+`.rao-scope`.
 
 ## Patch 2 — findings restricted to the 16 DenToRa conditions (R1a-ii)
 
