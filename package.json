@@ -77,7 +77,8 @@
     "test:all": "npm run test && npm run test:e2e",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && npm test -- --run && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm test -- --run && npm run build",
+    "typecheck:vendor": "tsc -p vendor/react-advanced-odontogram/tsconfig.json"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",
@@ -147,6 +148,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/fhir": "^0.0.44",
     "@types/node": "^25.0.3",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19.2.7",

@@ -1,0 +1,46 @@
+{
+  "_comment": [
+    "Separate typecheck program for the VENDORED library only.",
+    "",
+    "Why this exists: the app's root tsconfig excludes vendor/ (a bare import of",
+    "the library's non-strict source drags ~186 errors into `tsc --noEmit`, which",
+    "CI runs as a hard gate). Excluding it would mean the R1a patches were never",
+    "typechecked anywhere, so this program checks them on the library's own terms",
+    "- `strict: false`, matching upstream's tsconfig.json, which is what the code",
+    "was written against.",
+    "",
+    "Run with:  npm run typecheck:vendor",
+    "",
+    " `@types/fhir` is a devDependency purely to satisfy the `fhir/r4` type-only",
+    "imports in src/fhir/*. Without it those are the only 3 errors reported."
+  ],
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/main.tsx",
+    "src/lib-entry.ts",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
+  ]
+}
