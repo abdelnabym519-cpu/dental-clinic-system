@@ -452,3 +452,236 @@ export function roundTripEntries(
   const state = entriesToRaoState(entries, tooth)
   return raoStateToEntries(state, tooth, ctx)
 }
+
+// ─── library state -> adapter state (the read-back direction) ───────────────
+
+/**
+ * The subset of the library's SERIALIZED per-tooth state that this adapter
+ * reads. Produced by the engine's own `serializeState()`, so Sets have already
+ * become arrays and Maps plain objects (patch 8's `getToothStates()`).
+ *
+ * Every field is optional: the shape is whatever upstream emits, and we must
+ * not throw on a field that a future version renames or drops.
+ */
+export interface LibraryToothSnapshot {
+  toothSelection?: string
+  caries?: unknown
+  fillingSurfaces?: unknown
+  restorationType?: string
+  endo?: string
+  extractionWound?: boolean
+  extractionPlan?: boolean
+  toothSubstrate?: string
+  mobility?: string
+  periapicalType?: string
+  mods?: unknown
+  [key: string]: unknown
+}
+
+function asSurfaceList(value: unknown): DenToRaSurface[] {
+  if (!Array.isArray(value)) return []
+  const valid = new Set<string>(DENTORA_SURFACES)
+  return value.filter((s): s is DenToRaSurface => typeof s === 'string' && valid.has(s))
+}
+
+function asStringSet(value: unknown): Set<string> {
+  return new Set(Array.isArray(value) ? value.filter((v) => typeof v === 'string') : [])
+}
+
+/**
+ * Convert one serialized library tooth into the adapter's state shape.
+ *
+ * This is the direction that makes persistence and rollback possible: read the
+ * chart back as data, turn it into DenToRa rows, and diff against what is
+ * already stored.
+ *
+ * Anything the library can express but DenToRa cannot is DROPPED here — which
+ * is precisely why the unmapped-conditions panel has to exist (see
+ * `UNMAPPED_CONDITIONS`): dropping silently would lose clinical data.
+ *
+ * @param raw    serialized state from `getToothStates()`
+ * @param slot   the library slot (11-48)
+ * @param isPrimary whether this slot carries the `milktooth` flag
+ */
+export function raoStateFromLibrary(
+  raw: LibraryToothSnapshot | null | undefined,
+  slot: number,
+  isPrimary: boolean,
+): RaoToothState {
+  const state = emptyRaoState(slot, isPrimary)
+  if (!raw) return state
+
+  const caries = asSurfaceList(raw.caries)
+  const fillings = asSurfaceList(raw.fillingSurfaces)
+  const mods = asStringSet(raw.mods)
+
+  // toothSelection: implant and none are explicit; otherwise the flag decides.
+  if (raw.toothSelection === 'implant') state.toothSelection = 'implant'
+  else if (raw.toothSelection === 'none') state.toothSelection = 'none'
+  else state.toothSelection = isPrimary ? 'milktooth' : 'tooth-base'
+
+  state.caries = caries
+  state.cariesPresent = caries.length > 0
+  state.fillingSurfaces = fillings
+  state.fillingPresent = fillings.length > 0
+
+  // Only the three restoration types DenToRa knows. 'inlay' / 'onlay' and
+  // anything else the library adds later is dropped (and surfaces in the panel).
+  const rest = raw.restorationType
+  if (rest === 'crown' || rest === 'bridge' || rest === 'veneer') state.restorationType = rest
+
+  if (raw.endo === 'endo-filling') state.endo = 'endo-filling'
+
+  state.extractionWound = raw.extractionWound === true
+  state.extractionPlan = raw.extractionPlan === true
+
+  if (raw.toothSubstrate === 'broken') state.toothSubstrate = 'broken'
+
+  if (raw.mobility === 'm1' || raw.mobility === 'm2' || raw.mobility === 'm3') {
+    state.mobility = raw.mobility
+  }
+
+  if (raw.periapicalType === 'abscess') state.periapicalType = 'abscess'
+
+  state.periodontal = mods.has('parodontal')
+
+  return state
+}
+
+// ─── diffing: what the user added, modified or removed ──────────────────────
+
+/** One (condition) row reduced to a comparable signature. */
+export interface FindingKey {
+  toothNumber: number
+  condition: DentalCondition
+  surfaces: string
+  severity: string
+}
+
+export function findingKey(entry: DentalChartEntryRecord): FindingKey {
+  return {
+    toothNumber: entry.toothNumber,
+    condition: entry.condition as DentalCondition,
+    surfaces: DENTORA_SURFACES.filter((s) => entry[s] === true).sort().join('+'),
+    severity: String(entry.severity ?? ''),
+  }
+}
+
+export function keyOf(k: FindingKey): string {
+  return `${k.toothNumber}|${k.condition}|${k.surfaces}|${k.severity}`
+}
+
+export interface ToothDiff {
+  added: DentalChartEntryRecord[]
+  removed: DentalChartEntryRecord[]
+  changed: DentalChartEntryRecord[]
+}
+
+/**
+ * Diff two sets of rows for ONE tooth, matched on condition.
+ *
+ * Matching is by condition alone, not by row id: rows coming back from the
+ * library are freshly built (`id: ''`) and have no id to match on. Surfaces and
+ * severity are compared to detect a modification.
+ */
+export function diffToothRows(
+  before: DentalChartEntryRecord[],
+  after: DentalChartEntryRecord[],
+): ToothDiff {
+  const beforeByCond = new Map<string, DentalChartEntryRecord>()
+  for (const e of before) beforeByCond.set(e.condition, e)
+  const afterByCond = new Map<string, DentalChartEntryRecord>()
+  for (const e of after) afterByCond.set(e.condition, e)
+
+  const added: DentalChartEntryRecord[] = []
+  const removed: DentalChartEntryRecord[] = []
+  const changed: DentalChartEntryRecord[] = []
+
+  for (const [cond, row] of afterByCond) {
+    const prev = beforeByCond.get(cond)
+    if (!prev) {
+      added.push(row)
+    } else if (keyOf(findingKey(prev)) !== keyOf(findingKey(row))) {
+      changed.push(row)
+    }
+  }
+  for (const [cond, row] of beforeByCond) {
+    if (!afterByCond.has(cond)) removed.push(row)
+  }
+
+  return { added, removed, changed }
+}
+
+/**
+ * Rows whose condition has no library equivalent, i.e. the ones the 2D chart
+ * cannot draw. These must be surfaced, never dropped silently - see the
+ * "unmapped findings" panel.
+ */
+export function findUnmappedEntries(entries: DentalChartEntryRecord[]): DentalChartEntryRecord[] {
+  const unmapped = new Set<string>(UNMAPPED_CONDITIONS)
+  return entries.filter((e) => unmapped.has(e.condition as DentalCondition))
+}
+
+/**
+ * Convert adapter state BACK into the library's SERIALIZED tooth shape, so it
+ * can be handed to `importStatus()`.
+ *
+ * This is the missing half that makes the 2D chart actually show DenToRa data:
+ * the library renders from its own internal `charts.status` map, which is only
+ * populated by an import or by user interaction. Pushing rows into it is what
+ * turns "the adapter computed a state" into "the tooth is drawn".
+ *
+ * Only the axes DenToRa owns are emitted. Every other field falls back to the
+ * library default, because `hydrateState()` starts from `defaultState()` and
+ * documents that "unknown/absent values fall through to defaults; never
+ * throws" — so a partial snapshot is safe and is all we need.
+ */
+export function librarySnapshotFromRaoState(state: RaoToothState): LibraryToothSnapshot {
+  const mods: string[] = []
+  if (state.periodontal) mods.push('parodontal')
+
+  return {
+    toothSelection: state.toothSelection,
+    mods,
+    periapicalType: state.periapicalType,
+    endo: state.endo,
+    caries: [...state.caries],
+    fillingSurfaces: [...state.fillingSurfaces],
+    fillingMaterial: state.fillingPresent ? 'composite' : 'none',
+    extractionWound: state.extractionWound,
+    extractionPlan: state.extractionPlan,
+    toothSubstrate: state.toothSubstrate,
+    mobility: state.mobility,
+    restorationType: state.restorationType,
+    // Touching a tooth marks it charted; the library uses this for its
+    // "last modified" bookkeeping and for the plan/status diff.
+    crownNeeded: false,
+  }
+}
+
+/**
+ * Build the full `importStatus()` payload for a whole mouth.
+ *
+ * @param bySlot adapter state keyed by LIBRARY SLOT (11-48)
+ */
+export function buildImportPayload(
+  bySlot: Map<number, RaoToothState>,
+): { version: string; globals: Record<string, boolean>; teeth: Record<string, LibraryToothSnapshot> } {
+  const teeth: Record<string, LibraryToothSnapshot> = {}
+  for (const [slot, state] of bySlot) {
+    teeth[String(slot)] = librarySnapshotFromRaoState(state)
+  }
+  return {
+    // A >= 2.3 version tells the engine NOT to re-infer legacy secondary
+    // caries, so an unscored caried+filled surface stays primary caries.
+    version: '2.22',
+    globals: {
+      wisdomVisible: true,
+      showBase: true,
+      occlusalVisible: true,
+      showHealthyPulp: false,
+      edentulous: false,
+    },
+    teeth,
+  }
+}

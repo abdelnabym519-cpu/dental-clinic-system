@@ -72,6 +72,27 @@ declare module 'rao-odontogram' {
   export function initOdontogram(): Promise<void>
   export function destroyOdontogram(): void
 
+  /**
+   * PATCH 8: read the whole chart back as data, keyed by slot.
+   * The engine had no structured reader before this.
+   */
+  export function getToothStates(): Record<string, Record<string, unknown>>
+
+  /**
+   * Replace the whole chart from a payload produced by `buildImportPayload()`.
+   * This is what makes DenToRa data visible at all — the library renders from
+   * its own internal map, which otherwise only ever holds user edits.
+   */
+  export function importStatus(
+    payload: Record<string, unknown>,
+  ): void
+
+  /**
+   * Subscribe to every change (selection AND edits). Synchronous, no payload.
+   * Returns an unsubscribe function.
+   */
+  export function onStateChange(cb: () => void): () => void
+
   const _default: ComponentType<OdontogramShellProps>
   export default _default
 }

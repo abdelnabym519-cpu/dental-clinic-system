@@ -8253,6 +8253,24 @@ export function resetForPatient(): void {
   activeTooth = null;
   updateSelectionUI();
 }
+
+/**
+ * PATCH 8 (R1a) — structured per-tooth state reader.
+ *
+ * The engine had NO way to read the chart back as data: `getToothStateSummary`
+ * returns display strings, and `exportStatus()` writes a file to disk instead of
+ * returning anything. Without a reader a host cannot diff the chart against its
+ * own records, so it cannot know what the user added, modified or removed —
+ * which is what makes persistence and rollback possible at all.
+ *
+ * Returns the STATUS chart (not the treatment plan) for all 32 slots, already
+ * run through the engine's own `serializeState`, so Sets and Maps come back as
+ * plain arrays and objects. The result is a fresh snapshot: mutating it never
+ * touches live chart state.
+ */
+export function getToothStates(): Record<string, Any> {
+  return collectTeeth(charts.status);
+}
 /**
  * Register one or more custom SVG plugins. Plugins can inject visual overlays
  * into the tooth SVG and maintain per-tooth custom state included in export/import.

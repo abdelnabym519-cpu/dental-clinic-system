@@ -24,6 +24,7 @@ Everything else under `src/` is upstream verbatim.
 | 5 | **P0 (v)** | `odontogram.ts`, `OdontogramContext.tsx` | **Per-patient reset** — new `resetForPatient()`, exposed through the context. | ✅ done |
 | 6 | P1 | `package.json` (host) | `dompurify` + `jspdf` added — the library's only two external runtime imports. | ✅ done |
 | 7 | P1 | `tsconfig.json` (host) | `vendor` excluded from the repo typecheck. | ✅ done |
+| 8 | P1 | `src/odontogram.ts` | **`getToothStates()`** — structured per-tooth state reader. The engine had none, so a host could not diff the chart and persistence/rollback were impossible. | ✅ done |
 
 ---
 
@@ -51,6 +52,23 @@ could never push a selection in.
   edit, not just selection changes. Reading inside the callback is safe —
   `updateSelectionUI()` mutates `selectedTeeth` *before* notifying, and
   `notifyStateChange()` is synchronous.
+
+## Patch 8 — structured state reader
+
+**`src/odontogram.ts`** — added `getToothStates()`, returning the STATUS chart
+for all 32 slots, already run through the engine's own `serializeState()` so
+Sets become arrays and Maps become plain objects.
+
+The engine genuinely had no way to read the chart back as data:
+`getToothStateSummary()` returns **display strings**, and `exportStatus()`
+**writes a file to disk** instead of returning anything. Without a reader a host
+cannot diff the chart against its own records, so it cannot know what the user
+added, modified or removed — which is what makes persistence and rollback
+possible at all.
+
+It is also the counterpart to `importStatus()`: that function is the only way to
+make DenToRa data visible, because the library renders from its own internal
+`charts.status` map, which otherwise only ever holds user edits.
 
 ## Patch 2 — findings restricted to the 16 DenToRa conditions (R1a-ii)
 
