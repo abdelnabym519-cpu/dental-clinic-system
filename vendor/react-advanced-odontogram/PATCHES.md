@@ -15,24 +15,25 @@ src/surfaces/OdontogramTopbar.tsx (topbar)
 
 Everything else under `src/` is upstream verbatim.
 
-| # | Pri | File(s) | Patch | Status |
-| --- | --- | --- | --- | --- |
-| 1 | **P0 (i)** | `odontogram.ts`, `OdontogramContext.tsx` | **Controlled selection** — new `setSelectedTeeth()`, `selectedTeeth` prop and `onSelectionChange` callback. | ✅ done |
-| 2 | **P0 (ii)** | *(no library change)* | **Findings restricted to the 16 DenToRa conditions.** Enforced in the adapter, not by patching the library — see note below. | ✅ done (adapter) |
-| 3 | **P0 (iii)** | `OdontogramContext.tsx`, `OdontogramTopbar.tsx` | **Language switcher hidden; Arabic RTL default.** New `showLanguageSwitcher` prop (default `true`, upstream behaviour); host passes `language="ar"`. | ✅ done |
-| 4 | **P0 (iv)** | *(no library change)* | **`readOnly` driven from host RBAC.** The `readOnly` prop already existed and the provider already re-applies it — see note below. | ✅ done (no patch needed) |
-| 5 | **P0 (v)** | `odontogram.ts`, `OdontogramContext.tsx` | **Per-patient reset** — new `resetForPatient()`, exposed through the context. | ✅ done |
-| 6 | P1 | `package.json` (host) | `dompurify` + `jspdf` added — the library's only two external runtime imports. | ✅ done |
-| 7 | P1 | `tsconfig.json` (host) | `vendor` excluded from the repo typecheck. | ✅ done |
-| 8 | P1 | `src/odontogram.ts` | **`getToothStates()`** — structured per-tooth state reader. The engine had none, so a host could not diff the chart and persistence/rollback were impossible. | ✅ done |
-| 9 | **P0** | `src/index.css` | **Scope the global stylesheet.** It leaked onto every page of the host app — see the dedicated section below. | ✅ done |
+| #   | Pri          | File(s)                                         | Patch                                                                                                                                                         | Status                    |
+| --- | ------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| 1   | **P0 (i)**   | `odontogram.ts`, `OdontogramContext.tsx`        | **Controlled selection** — new `setSelectedTeeth()`, `selectedTeeth` prop and `onSelectionChange` callback.                                                   | ✅ done                   |
+| 2   | **P0 (ii)**  | _(no library change)_                           | **Findings restricted to the 16 DenToRa conditions.** Enforced in the adapter, not by patching the library — see note below.                                  | ✅ done (adapter)         |
+| 3   | **P0 (iii)** | `OdontogramContext.tsx`, `OdontogramTopbar.tsx` | **Language switcher hidden; Arabic RTL default.** New `showLanguageSwitcher` prop (default `true`, upstream behaviour); host passes `language="ar"`.          | ✅ done                   |
+| 4   | **P0 (iv)**  | _(no library change)_                           | **`readOnly` driven from host RBAC.** The `readOnly` prop already existed and the provider already re-applies it — see note below.                            | ✅ done (no patch needed) |
+| 5   | **P0 (v)**   | `odontogram.ts`, `OdontogramContext.tsx`        | **Per-patient reset** — new `resetForPatient()`, exposed through the context.                                                                                 | ✅ done                   |
+| 6   | P1           | `package.json` (host)                           | `dompurify` + `jspdf` added — the library's only two external runtime imports.                                                                                | ✅ done                   |
+| 7   | P1           | `tsconfig.json` (host)                          | `vendor` excluded from the repo typecheck.                                                                                                                    | ✅ done                   |
+| 8   | P1           | `src/odontogram.ts`                             | **`getToothStates()`** — structured per-tooth state reader. The engine had none, so a host could not diff the chart and persistence/rollback were impossible. | ✅ done                   |
+| 9   | **P0**       | `src/index.css`                                 | **Scope the global stylesheet.** It leaked onto every page of the host app — see the dedicated section below.                                                 | ✅ done                   |
+| 10  | **P1**       | `src/index.ts`                                  | **Re-export imperative functions** — `resetForPatient`, `getToothStates`, and `setSelectedTeeth` exported through the public package entry.                   | ✅ done                   |
 
 ---
 
 ## Patch 1 — controlled selection (R1a-i)
 
 **`src/odontogram.ts`** — added `setSelectedTeeth(teeth: number[])` next to the
-existing `getSelectedTeeth()`. The engine shipped only the *reader*, so a host
+existing `getSelectedTeeth()`. The engine shipped only the _reader_, so a host
 could never push a selection in.
 
 - Writes funnel through `updateSelectionUI()`, which already ends in a single
@@ -44,14 +45,14 @@ could never push a selection in.
 
 **`src/OdontogramContext.tsx`** — two effects:
 
-- *Push in*: compares the `selectedTeeth` prop against the engine's **current**
+- _Push in_: compares the `selectedTeeth` prop against the engine's **current**
   selection (not the previous prop), so it is idempotent and cannot fight the
   engine. When the user clicks a tooth the host echoes the same array back and
   the guard short-circuits instead of re-applying and clobbering `activeTooth`.
-- *Pull out*: subscribes to `onStateChange`, re-reads `getSelectedTeeth()` and
+- _Pull out_: subscribes to `onStateChange`, re-reads `getSelectedTeeth()` and
   **diffs**, because `onStateChange` carries no payload and fires for every
   edit, not just selection changes. Reading inside the callback is safe —
-  `updateSelectionUI()` mutates `selectedTeeth` *before* notifying, and
+  `updateSelectionUI()` mutates `selectedTeeth` _before_ notifying, and
   `notifyStateChange()` is synchronous.
 
 ## Patch 8 — structured state reader
@@ -80,15 +81,15 @@ other page, for the rest of the session.
 
 What leaked, measured before patching:
 
-| Selector | Declaration | Damage |
-| --- | --- | --- |
-| `:root` | `--card`, `--muted`, `--accent` | **Collides with the app's shadcn tokens** (`app/globals.css:9,17,19`). The sheet loads last, so it wins and recolours the whole app. |
-| `.dark` (bare, ×2) | `--card`, `--muted`, `--bg`, `--text`, … | Same collision, but only when the app's Tailwind dark mode is on — i.e. invisible until someone toggles the theme. |
-| `body` | `margin`, `font-family`, `radial-gradient` background, `color` | Overrides the host page's typography and background. |
-| `html, body` | `height: 100%` | Can break page scrolling. |
-| `select`, `select:focus` | appearance, background, `min-width: 220px`, focus ring | Restyles **every** dropdown on the host site. |
-| `.dark body` | `background` | The app uses Tailwind's `.dark`, so this recoloured the host body. |
-| `*` | `box-sizing` | Benign (Tailwind's preflight already sets it), scoped anyway for consistency. |
+| Selector                 | Declaration                                                    | Damage                                                                                                                               |
+| ------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `:root`                  | `--card`, `--muted`, `--accent`                                | **Collides with the app's shadcn tokens** (`app/globals.css:9,17,19`). The sheet loads last, so it wins and recolours the whole app. |
+| `.dark` (bare, ×2)       | `--card`, `--muted`, `--bg`, `--text`, …                       | Same collision, but only when the app's Tailwind dark mode is on — i.e. invisible until someone toggles the theme.                   |
+| `body`                   | `margin`, `font-family`, `radial-gradient` background, `color` | Overrides the host page's typography and background.                                                                                 |
+| `html, body`             | `height: 100%`                                                 | Can break page scrolling.                                                                                                            |
+| `select`, `select:focus` | appearance, background, `min-width: 220px`, focus ring         | Restyles **every** dropdown on the host site.                                                                                        |
+| `.dark body`             | `background`                                                   | The app uses Tailwind's `.dark`, so this recoloured the host body.                                                                   |
+| `*`                      | `box-sizing`                                                   | Benign (Tailwind's preflight already sets it), scoped anyway for consistency.                                                        |
 
 Fix — scope every one of them to `.rao-scope`, the container the host wraps the
 chart in, and drop the two that cannot be scoped meaningfully (`html,body`
@@ -137,7 +138,7 @@ The mapping table is checked in at `docs/dental-chart/CONDITION-MAPPING.md`:
 - `OdontogramTopbar.tsx` wraps the `#languageMenu` block in
   `{showLanguageSwitcher && (...)}`.
 - Arabic is a first-class upstream language: `i18n/languages.ts` documents
-  `ar` as *"Arabic (RTL — UI mirrors, dental/perio charts pinned LTR)"*. The
+  `ar` as _"Arabic (RTL — UI mirrors, dental/perio charts pinned LTR)"_. The
   host passes `language="ar"`, which the provider already supported in
   controlled mode.
 
@@ -149,8 +150,8 @@ provider already accepts `readOnly` and already re-applies it:
 ```js
 // Sync read-only mode
 useEffect(() => {
-  setReadOnly(readOnlyProp ?? false);
-}, [readOnlyProp]);
+  setReadOnly(readOnlyProp ?? false)
+}, [readOnlyProp])
 ```
 
 This matters because of an R0 finding: `destroyOdontogram()` resets
@@ -215,3 +216,27 @@ Recorded during R0 verification (`docs/dental-chart/ASSETS.md`, section "(a)"):
   flag on slots 11–45, displayed as 51–85 by `getDisplayedToothNumber()`
   (quadrant digit 1→5, 2→6, 3→7, 4→8). Slots 16,17,18, 26,27,28, 36,37,38,
   46,47,48 are `MILKTOOTH_BLOCKED` and can never be primary.
+
+---
+
+## Patch 10 � public re-exports of imperative state functions (P1)
+
+src/index.ts re-exports * from "./App", but App.tsx only re-exported
+the upstream imperative functions (clearSelection, getSelectedTeeth, etc.).
+The DenToRa extension functions added in patches 1, 5, and 8 (setSelectedTeeth,
+
+esetForPatient, and getToothStates) were exported from src/odontogram.ts
+but omitted from src/index.ts.
+
+Because ypes/rao-odontogram.d.ts declares them as ambient exports, sc --noEmit
+passed, and unit tests using mocks passed, but Turbopack production compilation
+(
+pm run build) failed with:
+Export resetForPatient doesn't exist in target module and
+Export getToothStates doesn't exist in target module.
+
+Fix:
+src/index.ts explicitly exports
+esetForPatient, getToothStates, and
+setSelectedTeeth from ./odontogram.
+Guarded by ests/unit/rao-vendor-exports.test.ts (contract and real-module smoke test).

@@ -29,7 +29,7 @@ function extractFn(src: string, name: string): string {
   const start = src.indexOf(`export function ${name}(`)
   expect(start, `${name} not found`).toBeGreaterThanOrEqual(0)
   const rest = src.slice(start)
-  const end = rest.search(/\n\}\n/)
+  const end = rest.search(/\r?\n\}\r?\n/)
   expect(end, `${name} has no closing brace at column 0`).toBeGreaterThan(0)
   return rest.slice(0, end + 3)
 }
@@ -38,7 +38,7 @@ describe('vendored licence files are untouched', () => {
   it('ships LICENSE and THIRD-PARTY-NOTICES.md', () => {
     expect(() => readFileSync('vendor/react-advanced-odontogram/LICENSE', 'utf8')).not.toThrow()
     expect(() =>
-      readFileSync('vendor/react-advanced-odontogram/THIRD-PARTY-NOTICES.md', 'utf8'),
+      readFileSync('vendor/react-advanced-odontogram/THIRD-PARTY-NOTICES.md', 'utf8')
     ).not.toThrow()
   })
 

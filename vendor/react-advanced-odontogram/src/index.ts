@@ -13,16 +13,19 @@
 // Re-exports the full public API that already lives on `src/App.tsx` (the
 // `OdontogramShell` component + the imperative state functions, `PerioChart`,
 // `startIntroTour`, and all public types).
-import "./index.css";
+import './index.css'
 
-import App from "./App";
+import App from './App'
 
 // The main component, exported both as a default and under an explicit,
 // self-documenting name.
-export default App;
-export { App as OdontogramShell };
+export default App
+export { App as OdontogramShell }
 
 // Everything else already surfaced by App.tsx (state functions, PerioChart,
 // startIntroTour, and the public types). `export *` does not re-export a
 // default, so it never clashes with the `App` default above.
-export * from "./App";
+export * from './App'
+
+// PATCH 10: DenToRa imperative state functions added for host integration
+export { resetForPatient, getToothStates, setSelectedTeeth } from './odontogram'
