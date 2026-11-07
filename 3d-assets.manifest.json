@@ -1,0 +1,190 @@
+{
+  "generatedBy": "scripts/3d-assets/fetch.mjs — regenerate after any upstream change",
+  "upstream": {
+    "repo": "https://github.com/Yoosseph/dental-scope",
+    "commit": "e34d4b986d5439501f23c91cde593f69a3b180b0",
+    "tarball": "https://codeload.github.com/Yoosseph/dental-scope.tar.gz/e34d4b986d5439501f23c91cde593f69a3b180b0",
+    "sourcePath": "public/models"
+  },
+  "codeLicence": "MIT (vendor/dental-scope-engine/LICENSE)",
+  "meshLicence": "BodyParts3D 3.0 (DBCLS) — CC BY-SA 2.1 JP per upstream CREDITS.md; the DBCLS site states CC BY 4.0 (updated 2025-02-27). UNRESOLVED — see docs/dental-chart/ASSETS.md and decision D1.",
+  "units": "cm",
+  "up": "+Y",
+  "anterior": "+Z",
+  "patientLeft": "+X",
+  "neverLoad": [
+    "neurovascular.glb"
+  ],
+  "files": [
+    {
+      "path": "core.glb",
+      "bytes": 6389592,
+      "sha256": "fac62870b9f9ab4725966e68f144bbb54794d7b7b82e61537de8d3e1e928b378"
+    },
+    {
+      "path": "context.glb",
+      "bytes": 1031904,
+      "sha256": "13d57044149bc6521ccb4a467c2a6e7baeef35a63bafe214c8d3dee4d54730b1"
+    },
+    {
+      "path": "teeth/tooth-11.glb",
+      "bytes": 548828,
+      "sha256": "1b33a83f5b992e1799c65404bbad35f49f41513158165becf40acc5ef76d2c43"
+    },
+    {
+      "path": "teeth/tooth-12.glb",
+      "bytes": 551964,
+      "sha256": "2f9db7c363ccaba50c8b5ac375f674cdd0248e1c2ce520bf1cd43ad7f6a9d308"
+    },
+    {
+      "path": "teeth/tooth-13.glb",
+      "bytes": 1979516,
+      "sha256": "194d330664d841d45ef9408f7ba41983f849e9466284bbee5d45e38160061384"
+    },
+    {
+      "path": "teeth/tooth-14.glb",
+      "bytes": 2340348,
+      "sha256": "d5b63866d72b63823757faec0763d55223b810a526cdc2820d7b8fec5128e469"
+    },
+    {
+      "path": "teeth/tooth-15.glb",
+      "bytes": 659712,
+      "sha256": "29102b9cf23e2c0b4b738ff7b8386e728fd569118a1e17edf6bcd3b7e650e152"
+    },
+    {
+      "path": "teeth/tooth-16.glb",
+      "bytes": 3374028,
+      "sha256": "6c77e87fcb43c0debaccd6532d5b76db27b938cd45b6fc0841fbdccdf9ca60c0"
+    },
+    {
+      "path": "teeth/tooth-17.glb",
+      "bytes": 1432420,
+      "sha256": "11ff7ec977134462643adfc1c498492abfdf93080ee6b1b844c5da4d2ee19c36"
+    },
+    {
+      "path": "teeth/tooth-18.glb",
+      "bytes": 2445052,
+      "sha256": "46fff29d173b3ce87d6fa9fcae6bb3f4db04f85af551d28166faaeacb1b92866"
+    },
+    {
+      "path": "teeth/tooth-21.glb",
+      "bytes": 1367860,
+      "sha256": "d1ce3633ff830320e318d69388af0a920a25004ede84be957cc4584863f1d76d"
+    },
+    {
+      "path": "teeth/tooth-22.glb",
+      "bytes": 614220,
+      "sha256": "1ddaefdecc31e6ddccab7515da8864ab38b54e90ac60d73f71e1fb3a5ee4ad42"
+    },
+    {
+      "path": "teeth/tooth-23.glb",
+      "bytes": 550740,
+      "sha256": "8d0ede9b095be14e977ed2e0f8be5b4cabb28c1c765fbcd43d47c8a6a1eda684"
+    },
+    {
+      "path": "teeth/tooth-24.glb",
+      "bytes": 2352004,
+      "sha256": "7ac9f6b7f40759cb5a6b9c2e4039244fcbd771e089cafb73d115634bc96a8cd2"
+    },
+    {
+      "path": "teeth/tooth-25.glb",
+      "bytes": 661984,
+      "sha256": "e76ae19fbff489aff81dbc654dd0ce9af14d9d7beeb7d9d83ecadc07b4c5dd51"
+    },
+    {
+      "path": "teeth/tooth-26.glb",
+      "bytes": 3397560,
+      "sha256": "61fed33e3794992ef9c4cb75dca7551473631c21edccee627525f3fb9e4f8324"
+    },
+    {
+      "path": "teeth/tooth-27.glb",
+      "bytes": 1437896,
+      "sha256": "407927565bf30c78e0369e77e5e6bc885047932a3ed99565e1d1cd503a3e06bd"
+    },
+    {
+      "path": "teeth/tooth-28.glb",
+      "bytes": 1245112,
+      "sha256": "9fb07318a9a65368756453c877cf50867a296898e6f1c245eca65a27ed236641"
+    },
+    {
+      "path": "teeth/tooth-31.glb",
+      "bytes": 841668,
+      "sha256": "685998a9b7ac04fad78f0e82da3ef8c52ab5e640c26d6e18a369d583354120e4"
+    },
+    {
+      "path": "teeth/tooth-32.glb",
+      "bytes": 815904,
+      "sha256": "a9be3670db9801eb723dceac123b93f5fff70750f0011fbaf1bf0371dfd80f8d"
+    },
+    {
+      "path": "teeth/tooth-33.glb",
+      "bytes": 1320440,
+      "sha256": "eee48cc606d0ec6a3c7942ccf39c475d7eba1e3bb1c236fd322774afc91659e6"
+    },
+    {
+      "path": "teeth/tooth-34.glb",
+      "bytes": 552652,
+      "sha256": "271d476980fe3b6aa1866fade0ea0547b171bdb8a7a804020e3a3afcea90b899"
+    },
+    {
+      "path": "teeth/tooth-35.glb",
+      "bytes": 553668,
+      "sha256": "3d82a25ceba185bf2636627214f66626f97395b5e46bf2ac3171337f10880cce"
+    },
+    {
+      "path": "teeth/tooth-36.glb",
+      "bytes": 2077788,
+      "sha256": "9a7c7a610910f0d092cfbb911e016682dde8aebbcc3ff8e7eaf69a488167a866"
+    },
+    {
+      "path": "teeth/tooth-37.glb",
+      "bytes": 3100344,
+      "sha256": "ef1abfeacd0b3bf04c9b2417b39e8694d262c468702d4985d104358c0755c28f"
+    },
+    {
+      "path": "teeth/tooth-38.glb",
+      "bytes": 1172108,
+      "sha256": "5cfbe36046701e807c4d3550eba03e314aea5d73a3f442b827886f4beacc6eb9"
+    },
+    {
+      "path": "teeth/tooth-41.glb",
+      "bytes": 846536,
+      "sha256": "a6a931e366c579fd3b9e0d5991b3726fde31584f0132de857ec9263723310c20"
+    },
+    {
+      "path": "teeth/tooth-42.glb",
+      "bytes": 862060,
+      "sha256": "f15ef92583569bb2d21673b436078b50cefbed0847d745a1b9b735dacbe7c2c1"
+    },
+    {
+      "path": "teeth/tooth-43.glb",
+      "bytes": 547292,
+      "sha256": "5222b153facc6b063d2e1be59f8f03207582f21581d20e1e842c41fbe055b200"
+    },
+    {
+      "path": "teeth/tooth-44.glb",
+      "bytes": 986600,
+      "sha256": "1fd01c79b00035f34ffefc21ff538b1c26e33473cec168dd27c077a54bb82ff4"
+    },
+    {
+      "path": "teeth/tooth-45.glb",
+      "bytes": 861232,
+      "sha256": "8aaad58629807ecadf93432e41abd3cf5f45e01b0b17278c122f5576bd39526b"
+    },
+    {
+      "path": "teeth/tooth-46.glb",
+      "bytes": 3476856,
+      "sha256": "1a527d99b8f3eb589e4639dd22607e2f0696ecfc9f5956ad396e78941e883f72"
+    },
+    {
+      "path": "teeth/tooth-47.glb",
+      "bytes": 1736360,
+      "sha256": "76aee6b44605c5168a73469095ebee1502d7c77339ff60185d1671eb01ef9f76"
+    },
+    {
+      "path": "teeth/tooth-48.glb",
+      "bytes": 1506340,
+      "sha256": "f89c96d61b1d0b137f9631c8552fe9e475f8e0268607f345e1c9a6f1b6eabde5"
+    }
+  ]
+}

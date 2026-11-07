@@ -81,3 +81,6 @@ __pycache__/
 
 # Local verification logs written by scripts/verify-local.sh / verify-ai.sh
 .local-logs/
+
+# 3D model assets (P4/S2) — never committed
+.local-assets/
