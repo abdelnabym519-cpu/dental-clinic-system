@@ -78,3 +78,6 @@ __pycache__/
 
 # Phase 10 local voice verification marker (never commit machine-local state)
 .voice-local-check
+
+# Local verification logs written by scripts/verify-local.sh / verify-ai.sh
+.local-logs/

@@ -881,3 +881,21 @@ observation for engineering is that the DBCLS licence page and dental-scope's
 own `CREDITS.md` currently assert **different licences** (CC BY 4.0 with no
 ShareAlike vs CC BY-SA 2.1 JP with ShareAlike) for what is described as the
 same source.
+
+---
+
+## P0 refresh (MASTER-DENTORA-ALL-IN-ONE.md) — status unchanged
+
+Re-verified on the P0 preflight pass:
+
+- **No third-party asset has been downloaded, imported or committed.**
+  `git ls-files | grep -Ei '\.glb$'` -> **0 results**. This is now a permanent
+  gate: `scripts/verify-local.sh` prints a `no-glb-in-git` row so it cannot
+  regress silently.
+- The licence conflict above (dental-scope `CREDITS.md`: CC BY-SA 2.1 JP vs the
+  DBCLS site's 2025/02/27 CC BY 4.0 statement) is **UNRESOLVED and is a
+  question for counsel**. The open questions are listed at the end of the
+  section above and belong in the D1 template `docs/legal/3D-ASSETS-DECISION.md`
+  written during P4/S8.
+- Default for any shipped build remains **`ASSET_MODE=none`** until the user
+  records decision **D1**.

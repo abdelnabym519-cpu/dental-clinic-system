@@ -1,0 +1,22 @@
+# ai-validation/models.sha256 — integrity manifest for local AI model weights.
+#
+# File NAMES and SHA-256 DIGESTS are not secrets. This manifest is committed on
+# purpose so that `scripts/verify-ai.sh` can run `sha256sum -c` on any machine
+# and prove the weights are the ones that were validated.
+#
+# STATUS: PLACEHOLDER — this worktree contains NO model weights (they are
+# downloaded separately and are gitignored). Until the manifest is generated
+# from real files, `scripts/verify-ai.sh` reports  model_checksums=FAIL.
+# That is the honest result, not a bug in the script.
+#
+# GENERATE (from the repository root, after placing the weights):
+#     ./scripts/generate-model-manifest.sh
+#
+# VERIFY:
+#     ( cd ai-validation && sha256sum -c models.sha256 )
+#
+# RULES (MASTER-DENTORA-ALL-IN-ONE.md §4.8): digests are NEVER edited to make a
+# check pass. The engines refuse to start on a checksum mismatch by design; a
+# mismatch means the file changed, and that must be investigated, not silenced.
+#
+# (no entries yet — run scripts/generate-model-manifest.sh)

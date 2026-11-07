@@ -1,35 +1,62 @@
 # TODO.md
 
-## Now (in progress) — SESSION 2, branch `merge/fdi52-into-wip` @ `0819562a`
+Governing document: **MASTER-DENTORA-ALL-IN-ONE.md** (committed at the repo
+root). It wins over every earlier prompt. Findings live in `PROGRESS.md`;
+things only the user can run live in `docs/USER-VERIFY.md`; environment limits
+live in `BLOCKERS.md`.
 
-Order is fixed by the session brief; it deliberately does NOT follow WP1..WP8 of
-`master-chart-ai-fdi.md`.
+Branch: `merge/fdi52-into-wip` is canonical. This session is pinned to
+`arena/91dddda0-dental-clinic-system` and keeps **both at the same commit**, so
+one tip hash identifies both.
 
-- [x] **S0 PREFLIGHT** — HEAD verified `0819562a`, environment recorded, baseline measured
-      (tsc 498, lint 0/266, tests 6301/12/1 across 348 files), docs refreshed.
-- [ ] **S1** `tests/unit/dev-start-env.test.ts` — keep the `not.toContain('Environment variable not
-    found: DATABASE_URL')` assertion; widen ONLY the second assertion to accept
-      authentication/credential rejection. Add a negative case. Unverifiable here (no Prisma client,
-      no MySQL) — the user must run it.
-- [ ] **S2** `clinical` HTTP 500 from `patient-360.tsx` — read-only: find the call, the route
-      handler, and every 500 path; check what changed between `eba87b7` and HEAD. Facts only.
-- [ ] **S3** CHART PAGE ERROR — **waiting for the user's Console + terminal text.** Until it
-      arrives: only verify `ChartErrorBoundary` + retry (from `3f80351`) are present and tested.
-      Do not claim they explain the error.
-- [ ] **S4** WP4 code-level — 904-line `tooth-anatomy.ts`: valid non-degenerate geometry for all 32
-      permanent AND all 20 primary ids; continuous arch, no overlaps within a stated tolerance.
-      No invented anatomy (no primary root/canal counts).
-- [ ] **S5** ARABIC-ONLY — **propose, do not edit protected files.** List every English string in
-      the chart UI (incl. ArchGrid's hardcoded corner labels "Q1 (UR)"…; note `Quadrant`'s
-      `subtitle` prop is never rendered). ArchGrid/Odontogram are Phase-3 protected. **WAIT.**
+## Execution order (dependency-ordered — do not reorder)
 
-## Deferred / blocked
+- [x] **P0 PREFLIGHT** — tip verified (`baf39b2`; section-1 ancestor check
+      PASSED), environment recorded (SANDBOX), baseline measured
+      (tsc 498 / vendor 0 / lint 0 errors + 304 warnings / tests 6449-1-12 /
+      build LOCAL / 0 `.glb` tracked). `scripts/verify-local.sh` +
+      `scripts/verify-ai.sh` written and exercised;
+      `ai-validation/models.sha256` placeholder + `scripts/generate-model-manifest.sh`
+      added; `.local-logs/` gitignored.
+- [ ] **P1 REPAIR THE BUILD** — the fix is **already on origin at `baf39b2`**
+      (Patch 10: `export { resetForPatient, getToothStates, setSelectedTeeth }`).
+      Remaining: re-verify from the remote state, run the non-mock guards,
+      perform the NEGATIVE CONTROL, attempt `npm run build` here.
+- [ ] **P2 PRIMARY TEETH IN THE API** — POST + PUT use the shared `isValidFdi`
+      (52 ids). The only test allowed to change is
+      `tests/api/dental-chart-cross-hospital.test.ts` (invalid example 51 → 56).
+      Error message must still contain "FDI". PUT currently has NO validation.
+- [ ] **P9.1 (code part only)** — single source of truth for storage variables,
+      `setup:dev` guarantees `STORAGE_*`/`S3_*`, analyze route pre-flight with an
+      Arabic message instead of a raw `NoSuchKey`. Test-first.
+- [ ] **P3 2D v2 COMPLETION** — then **STOP** at the user-acceptance step
+      (D2 precondition) and ask for screenshots before calling it done.
+- [ ] **P4** 3D dental-scope engine (S1–S9) — not started.
+- [ ] **P5** unified workspace — not started.
+- [ ] **P6** retire the old charts — **blocked on the user's word ACCEPT (D2)**.
+- [ ] **P7** premium design system — not started.
+- [ ] **P8** interactive dashboard with real numbers — not started.
+- [ ] **P9.2–P9.4** AI end-to-end [LOCAL], text AI provider (D4), licensing banner.
+- [ ] **P10** stabilization of the known issues.
+- [ ] **Part II** (14A–18 hardening) — gated behind every Part I gate.
 
-- Mixed-dentition UI — **DEFERRED** (BLOCKERS B8-B11; spike parked at `7d1800f`).
-  Data, API, voice and AI layers already support all 52 ids.
-- WP2 (AI runtime) — blocked in this sandbox (B2 docker, B3 model weights).
+## Decisions only the user makes (STOP and ask — never assume)
 
-## Not to be touched in this session
+| Id | Decision | Status |
+| --- | --- | --- |
+| D1 | Distribution of 3D models to clinics (CC BY-SA ShareAlike) | **OPEN** — default `ASSET_MODE=none` in any shipped build |
+| D2 | The word ACCEPT before retiring the old charts and protected tests | **OPEN** — blocks P6 |
+| D3 | Clinician sign-off of primary-tooth anatomical data | **OPEN** — primary 3D stays a labelled crown-only schematic until then |
+| D4 | AI text provider (none / cloud with data minimisation / local LLM) | **OPEN** — text AI stays `503 AI_NOT_CONFIGURED` until chosen |
+| D5 | Subscription extension for the demo hospital (SUPER_ADMIN flow) | **OPEN** — not a DB hack |
 
-`wip/realistic-teeth-anatomy`, `arena/91dddda0-dental-clinic-system`,
-`spike/odontogram-mixed-dentition`. No merges, no rebases, no cherry-picks, no PRs.
+## Never do
+
+- No schema change for charts; no new persistence path (all writes go through
+  `/api/dental-chart` with RBAC + audit + tenant isolation).
+- No edits to protected Phase-3 odontogram tests until D2.
+- No `--force` push, `--hard` reset, `clean -fd`, `migrate reset`, `--no-verify`
+  (except a PROVEN environmental failure recorded in BLOCKERS.md).
+- No `npm audit fix --force`; never print `.env` **values** in a report.
+- No `.glb` (or any 3D model file) committed to git.
+- Never weaken, skip or delete a test to get green.

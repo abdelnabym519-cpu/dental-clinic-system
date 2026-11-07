@@ -830,3 +830,60 @@ protected odontogram suites stayed green throughout (89 tests).
 - `Quadrant`'s unrendered `title`/`subtitle`/`id`/`mode` props — dead props,
   recommended for a separate refactor, deliberately not conflated with i18n.
 - P2 / session 3 not started.
+
+## =====================================================================
+## P0 PREFLIGHT — MASTER-DENTORA-ALL-IN-ONE.md (executor: Arena, 2026-11-07)
+## =====================================================================
+
+**Branch note.** `merge/fdi52-into-wip` is the canonical branch. This Arena
+session is pinned to `arena/91dddda0-dental-clinic-system`; both are kept at
+the SAME commit and both are pushed, so a single tip hash identifies both.
+
+### Section 1 — tip verification: **PASSED**
+
+    $ git fetch origin +refs/heads/merge/fdi52-into-wip:refs/remotes/origin/merge/fdi52-into-wip
+    $ git merge-base --is-ancestor 75d1ffd origin/merge/fdi52-into-wip && echo YES
+    ANCESTOR: YES
+    $ git log --oneline 75d1ffd..origin/merge/fdi52-into-wip
+    baf39b2 fix(vendor): export missing imperative state functions from rao-odontogram
+    8cedb99 R1a: scope the vendored CSS, keep removals removed, close the debounce window
+
+Both extra commits are accounted for: `8cedb99` is the R1a work described
+above; `baf39b2` is the P1 build fix (see P1 below), authored on another clone
+but present on origin, therefore REUSED rather than redone.
+
+### Environment: **SANDBOX**
+
+| Probe | Result |
+| --- | --- |
+| `node -v` | v22.22.3 |
+| `npm -v` | 10.9.8 |
+| `docker --version` | **command not found** |
+| `git rev-parse --is-shallow-repository` | **true** (depth 1) — repaired with `git fetch --deepen=300 origin` |
+| `require('@prisma/client')` | **Cannot find module** (`npm ci --ignore-scripts` ⇒ no `prisma generate`) |
+| `ls ai-validation/*/model/` | dirs exist, **no weight files** (`*.pt/*.onnx/*.pth` → none) |
+| `.env` | **absent** (only `.env.example`) |
+| browser | none |
+
+Consequences: `npm run build` and every DB/Docker/E2E item are **[LOCAL]** —
+they can only be run by the user. The two scripts in `scripts/verify-*.sh`
+exist for exactly that.
+
+### BASELINE measured at `baf39b2` (P0 gate)
+
+| Gate | Command | Result |
+| --- | --- | --- |
+| typecheck | `npx tsc --noEmit` | **498 errors** — all from the absent Prisma client |
+| vendor typecheck | `npm run typecheck:vendor` | **0 errors** |
+| lint | `npx eslint .` | **0 errors, 304 warnings**, exit 0 |
+| tests | `npx vitest run` | **6449 passed / 1 failed / 12 skipped** (357 files: 354 passed, 2 failed, 1 skipped), 430 s |
+| build | `npm run build` | **[LOCAL]** — not runnable here (Prisma client absent) |
+| models in git | `git ls-files \| grep -Ei '\.glb$'` | **0** — clean |
+
+The single test failure is `tests/unit/dev-start-env.test.ts` →
+`Cannot find module '.prisma/client/default'`. Environmental, pre-existing,
+not caused by any chart work.
+
+Compare with the last reported baseline at `8cedb99` (6447 passed / 1 failed /
+12 skipped): **+2 tests** (the two new `rao-vendor-exports` guards), same
+single environmental failure. The suite did NOT get worse.

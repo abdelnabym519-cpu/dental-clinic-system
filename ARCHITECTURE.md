@@ -119,3 +119,95 @@ graph LR
 | `components/dental-chart/adapters/dental-chart-adapter.ts:107-132` | permanent-only root/canal table                                                    |
 
 **Protected:** the Phase-3 odontogram clean room + its tests must keep passing unchanged.
+
+## =====================================================================
+## P0 CONSUMER GRAPH (MASTER-DENTORA-ALL-IN-ONE.md, task P0)
+## =====================================================================
+
+Recorded at `baf39b2`. Regenerate with the greps shown inline.
+
+### Consumers of `lib/dental-chart/**` (shared FDI + domain rules)
+```
+app/api/dental-chart/[id]/summary/route.ts
+app/api/treatment-plans/[id]/items/route.ts
+components/dental-chart/adapters/dental-chart-adapter.ts
+components/dental-chart/interactive/DentalChart2D.tsx
+components/dental-chart/interactive/DentalChart3D.tsx
+components/dental-chart/interactive/DentalChart3DLoader.tsx
+components/dental-chart/interactive/DentalChartWorkspace.tsx
+components/dental-chart/interactive/ToothContextPanel.tsx
+components/dental-chart/interactive/tooth-3d.ts
+components/dental-chart/interactive/tooth-anatomy.ts
+components/dental-chart/v2/RaoOdontogram.tsx
+components/dental-chart/v2/UnmappedFindingsPanel.tsx
+lib/ai/agent/tools.ts
+lib/ai/context/fdi.ts
+lib/ai/evaluation/dataset.ts
+lib/treatment-utils.ts
+tests/components/dental-chart-workspace.test.tsx
+tests/components/tooth-anatomy.test.ts
+tests/components/tooth-paths-2d-anatomy.test.ts
+tests/unit/anatomical-spec-resolution.test.ts
+tests/unit/dental-chart-3d-geometry.test.ts
+tests/unit/dental-chart-clinical-status.test.ts
+tests/unit/dental-chart-fdi.test.ts
+tests/unit/dental-chart-state.test.ts
+tests/unit/fdi-primary-dentition.test.ts
+tests/unit/rao-adapter-roundtrip.test.ts
+tests/unit/rao-vendor-patches.test.ts
+tests/unit/tooth-arch-spacing.test.ts
+```
+
+### Consumers of `components/dental-chart/**`
+```
+app/(dashboard)/patients/[id]/dental-chart-v2/page.tsx
+app/(dashboard)/patients/[id]/dental-chart/page.tsx
+app/(dashboard)/patients/[id]/odontogram/page.tsx
+app/(dashboard)/patients/[id]/page.tsx
+components/dental-chart/interactive/DentalChart2D.tsx
+components/dental-chart/interactive/DentalChartWorkspace.tsx
+components/dental-chart/interactive/ToothContextPanel.tsx
+components/dental-chart/v2/RaoOdontogram.tsx
+components/dental-chart/v2/UnmappedFindingsPanel.tsx
+components/treatments/dental-chart.tsx
+lib/dental-chart/chart-state.ts
+lib/dental-chart/fdi.ts
+lib/dental-chart/v2/rao-adapter.ts
+tests/components/clinical-components.test.tsx
+tests/components/dental-chart-error-handling.test.tsx
+tests/components/dental-chart-i18n.test.tsx
+tests/components/dental-chart-workspace.test.tsx
+tests/components/odontogram-clean-room.test.tsx
+tests/components/rao-odontogram.test.tsx
+tests/components/tooth-anatomy.test.ts
+tests/components/tooth-paths-2d-anatomy.test.ts
+tests/unit/adapter-primary-dentition.test.ts
+tests/unit/anatomical-spec-resolution.test.ts
+tests/unit/dental-chart-3d-geometry.test.ts
+tests/unit/i18n-completeness.test.tsx
+tests/unit/odontogram-clean-room.test.ts
+tests/unit/rao-adapter-roundtrip.test.ts
+tests/unit/rao-vendor-css-scope.test.ts
+tests/unit/tooth-arch-spacing.test.ts
+```
+
+### Client callers of `/api/dental-chart/**`
+```
+app/(dashboard)/patients/[id]/dental-chart-v2/page.tsx
+app/api/dental-chart/[id]/summary/route.ts
+app/api/treatment-plans/[id]/items/route.ts
+components/dental-chart/interactive/DentalChartWorkspace.tsx
+components/dental-chart/odontogram/Odontogram.tsx
+components/dental-chart/v2/RaoOdontogram.tsx
+lib/dental-chart/labels.ts
+```
+
+### Old odontogram / dental-chart routes (P6 retirement candidates — needs D2)
+```
+app/(dashboard)/patients/[id]/dental-chart
+app/(dashboard)/patients/[id]/dental-chart-v2
+app/(dashboard)/patients/[id]/odontogram
+app/api/dental-chart
+app/api/dental-chart/[id]
+app/api/dental-chart/[id]/summary
+```

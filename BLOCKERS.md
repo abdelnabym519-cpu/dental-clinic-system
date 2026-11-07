@@ -234,3 +234,77 @@ fallback line alongside the Arabic one.
 
 **Do not edit the goldens to get green.** This is a coordinated WP5 translation change, not a
 relaxation — the anti-fabrication `mustNotContain` lists stay exactly as they are.
+
+---
+
+## B13 — Sandbox clone is SHALLOW (depth 1)
+
+**Proof:** `git rev-parse --is-shallow-repository` -> `true`;
+`git log --oneline | wc -l` -> `1`.
+
+**Effect:** the section-1 ancestor check `git merge-base --is-ancestor 75d1ffd
+origin/merge/fdi52-into-wip` cannot run at all — `75d1ffd` is not a local
+object (`fatal: Not a valid object name 75d1ffd`).
+
+**Fix applied here:** `git fetch --deepen=300 origin` (depth -> 269). Re-run it
+after any fresh sandbox reset before trusting any ancestry question.
+
+**User action:** none — your worktree is a full clone.
+
+---
+
+## B14 — No Prisma client (blocks build, causes 498 tsc errors, 1 failing test)
+
+**Proof:** `node -e "require('@prisma/client')"` -> `Cannot find module
+'@prisma/client'`. Deps are installed with `npm ci --ignore-scripts`, which
+skips the `postinstall: prisma generate` hook.
+
+**Effect:** `npx tsc --noEmit` = **498 errors**; `tests/unit/dev-start-env.test.ts`
+fails with `Cannot find module '.prisma/client/default'`; `npm run build` cannot
+run. This is the ONLY failing test and it is pre-existing.
+
+**User action:** `npx prisma generate` then `./scripts/verify-local.sh`.
+
+---
+
+## B15 — No Docker (blocks P9.2 end-to-end and the whole AI stack)
+
+**Proof:** `docker --version` -> `command not found`.
+
+**User action:** `docker compose -f ai-compose.yml up -d`, then
+`./scripts/verify-ai.sh`, then paste the PASTE-THIS-LINE line back.
+
+---
+
+## B16 — No AI model weights (blocks the checksum manifest)
+
+**Proof:** `find ai-validation -type f -name '*.pt' -o -name '*.onnx' -o -name '*.pth'`
+-> empty. `ai-validation/models.sha256` is therefore a PLACEHOLDER with 0
+entries, and `./scripts/verify-ai.sh` honestly reports `model_checksums=FAIL`.
+
+**User action:** place the weights, then `./scripts/generate-model-manifest.sh`
+(which refuses to write an empty manifest, so a misconfigured run can never
+make an integrity check pass falsely).
+
+---
+
+## B17 — No `.env` in this sandbox (blocks any conclusion about YOUR driver)
+
+**Proof:** `ls .env` -> `No such file or directory` (only `.env.example`).
+
+**Effect:** I can prove the CODE path that produces the imaging `NoSuchKey`
+(`lib/storage/index.ts:38` defaults to the LOCAL driver; `.env.example` ships
+no `S3_*` names at all) but I cannot observe your actual configuration.
+
+**User action:** `./scripts/verify-ai.sh` sections 7 and 8 print the MISSING
+variable NAMES and the STORAGE_DRIVER value. Never paste secrets.
+
+---
+
+## B18 — `npm run build` is unverifiable here, so the P1 gate is [LOCAL]
+
+**Proof:** see B14. The P1 fix is on origin at `baf39b2` and the non-mock guard
+tests pass here, but "build reaches Compiled successfully" can only be proven
+on your machine.
+
+**User action:** `./scripts/verify-local.sh` — read the `build` row.
