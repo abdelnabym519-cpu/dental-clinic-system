@@ -14,6 +14,8 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { loadDevEnvIntoProcess } from './lib/dev-env'
 import { planDevEnv } from './lib/setup-dev'
+import { findDuplicateEnvKeys, formatDuplicateKeyWarning } from './lib/dev-env'
+import { readComposeStorageDefaultsFromRoot } from './lib/compose-storage'
 
 function main(): void {
   const root = process.cwd()
@@ -30,7 +32,27 @@ function main(): void {
   const existed = existsSync(envPath)
   const existingContent = existed ? readFileSync(envPath, 'utf8') : undefined
 
-  const plan = planDevEnv(templateContent, existingContent)
+  // Storage values are READ from docker-compose.dev.yml, never hardcoded.
+  const plan = planDevEnv(
+    templateContent,
+    existingContent,
+    undefined,
+    readComposeStorageDefaultsFromRoot(root)
+  )
+
+  // Duplicate keys (usually from copying lines): warn with NAMES ONLY and say
+  // which occurrence wins. Both files are checked because the template is the
+  // thing people copy from.
+  for (const [name, content] of [
+    ['.env.example', templateContent],
+    ['.env', existingContent],
+  ] as Array<[string, string | undefined]>) {
+    if (content === undefined) continue
+    const dupes = findDuplicateEnvKeys(content)
+    if (dupes.length > 0) {
+      for (const line of formatDuplicateKeyWarning(name, dupes)) console.warn(line)
+    }
+  }
   writeFileSync(envPath, plan.content, 'utf8')
 
   console.log(

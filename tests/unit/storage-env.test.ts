@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { describe, it, expect } from 'vitest'
 import {
   STORAGE_ENV_KEYS,
-  STORAGE_ENV_DEFAULTS,
+  STORAGE_PROTOCOL_DEFAULTS,
   STORAGE_DRIVER_NAMES,
   isValidStorageDriver,
   readStorageDriver,
@@ -29,12 +31,27 @@ describe('storage env — single source of truth', () => {
     ])
   })
 
-  it('ships a default for every declared key (so the bootstrap can guarantee them)', () => {
-    for (const key of STORAGE_ENV_KEYS) {
-      expect(typeof STORAGE_ENV_DEFAULTS[key], `default for ${key}`).toBe('string')
-      expect(STORAGE_ENV_DEFAULTS[key].length, `default for ${key}`).toBeGreaterThan(0)
+  it('ships NO credential in source — secrets come from compose or .env', () => {
+    const src = readFileSync(path.resolve(__dirname, '../../lib/storage/env.ts'), 'utf8')
+    expect(src, 'no dev MinIO credential may live here').not.toMatch(/dentalerp/)
+    expect(src).not.toMatch(/MINIO_ROOT_(USER|PASSWORD)\s*:/)
+    for (const key of ['S3_ENDPOINT', 'S3_ACCESS_KEY', 'S3_SECRET_KEY', 'S3_BUCKET']) {
+      expect(src, `${key} must not be assigned a value here`).not.toMatch(
+        new RegExp(`${key}:\\s*['"]`),
+      )
     }
-    expect(Object.keys(STORAGE_ENV_DEFAULTS).sort()).toEqual([...STORAGE_ENV_KEYS].sort())
+  })
+
+  it('ships only the non-secret protocol constants', () => {
+    expect(STORAGE_PROTOCOL_DEFAULTS).toEqual({
+      S3_REGION: 'us-east-1',
+      S3_FORCE_PATH_STYLE: 'true',
+    })
+    // Protocol facts, not credentials: short and structureless.
+    for (const v of Object.values(STORAGE_PROTOCOL_DEFAULTS)) {
+      expect(typeof v).toBe('string')
+      expect(v.length).toBeLessThan(20)
+    }
   })
 
   it('exposes exactly the drivers the factory implements', () => {

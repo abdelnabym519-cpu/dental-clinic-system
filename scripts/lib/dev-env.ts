@@ -116,3 +116,82 @@ export function assertDatabaseConfigured(resolution: DevEnvResolution): void {
     ].join('\n')
   )
 }
+
+export interface DuplicateEnvKey {
+  /** The variable NAME. A value is never captured or emitted. */
+  key: string
+  count: number
+  /** 1-based line numbers of every occurrence, in file order. */
+  lines: number[]
+  /** 1-based line of the occurrence that wins, or -1 when none does. */
+  winningLine: number
+}
+
+/**
+ * Find keys declared more than once.
+ *
+ * Copied lines are the usual cause and the result is genuinely ambiguous to
+ * read. This mirrors the parser exactly: {@link parseEnvFileContent} assigns in
+ * file order and skips empty values, so the winner is the LAST occurrence that
+ * carries a non-empty value. When every occurrence is empty the key is absent
+ * altogether, reported as winningLine === -1.
+ *
+ * Only NAMES are ever returned - no value is captured.
+ */
+export function findDuplicateEnvKeys(content: string): DuplicateEnvKey[] {
+  const seen = new Map<string, Array<{ line: number; value: string }>>()
+  content.split(/\r?\n/).forEach((raw, i) => {
+    let line = raw.trim()
+    if (!line || line.startsWith('#')) return
+    if (line.startsWith('export ')) line = line.slice(7).trim()
+    const eq = line.indexOf('=')
+    if (eq <= 0) return
+    const key = line.slice(0, eq).trim()
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) return
+    let value = line.slice(eq + 1).trim()
+    if (
+      value.length >= 2 &&
+      ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'")))
+    ) {
+      value = value.slice(1, -1)
+    }
+    const list = seen.get(key) ?? []
+    list.push({ line: i + 1, value })
+    seen.set(key, list)
+  })
+
+  const dupes: DuplicateEnvKey[] = []
+  for (const [key, occurrences] of seen) {
+    if (occurrences.length < 2) continue
+    const withValue = occurrences.filter((o) => o.value !== '')
+    const winner = withValue.length > 0 ? withValue[withValue.length - 1] : undefined
+    dupes.push({
+      key,
+      count: occurrences.length,
+      lines: occurrences.map((o) => o.line),
+      winningLine: winner ? winner.line : -1,
+    })
+  }
+  return dupes.sort((a, b) => a.lines[0] - b.lines[0])
+}
+
+/**
+ * Render a duplicate-key warning. NAMES ONLY - a value is never printed,
+ * because these files hold credentials.
+ */
+export function formatDuplicateKeyWarning(file: string, dupes: DuplicateEnvKey[]): string[] {
+  const out: string[] = []
+  out.push(
+    `[env] WARNING: ${file} declares ${dupes.length} key${dupes.length === 1 ? '' : 's'} more than once (names only - no values shown).`
+  )
+  for (const d of dupes) {
+    out.push(
+      d.winningLine === -1
+        ? `[env]   ${d.key}: ${d.count} occurrences at lines ${d.lines.join(', ')} - every occurrence is empty, so the key is treated as ABSENT.`
+        : `[env]   ${d.key}: ${d.count} occurrences at lines ${d.lines.join(', ')} - line ${d.winningLine} wins (the last non-empty one). Delete the others.`
+    )
+  }
+  out.push('[env]   Duplicates are legal but ambiguous: remove the losing lines to avoid surprises.')
+  return out
+}

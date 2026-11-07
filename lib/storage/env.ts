@@ -39,27 +39,19 @@ export const STORAGE_DRIVER_NAMES = ['local', 's3'] as const
 export type StorageDriverName = (typeof STORAGE_DRIVER_NAMES)[number]
 
 /**
- * Development defaults, deliberately identical to the values documented in the
- * commented S3 block of `.env.example` and to `docker-compose.dev.yml`.
+ * Protocol facts that are NOT credentials and do not appear in compose:
+ * MinIO's default region, and the fact that MinIO (like most non-AWS S3
+ * implementations) requires path-style addressing.
  *
- * `.env.example` keeps that block COMMENTED on purpose: switching to object
- * storage must stay an explicit one-line decision (`STORAGE_DRIVER=s3`). What
- * the bootstrap guarantees is only that the NAMES are present and consistent,
- * which is exactly what was missing when the two readers disagreed.
- *
- * These are the local MinIO development credentials already published in this
- * repository. Real deployments override them in `.env`, never here.
+ * Deliberately NOT here: the endpoint, the access key, the secret key and the
+ * bucket. Those are credentials and configuration. They are DERIVED from
+ * docker-compose.dev.yml by `scripts/lib/compose-storage.ts`, or supplied by
+ * the operator in `.env`. No credential is ever written in this source file.
  */
-export const STORAGE_ENV_DEFAULTS: Record<StorageEnvKey, string> = {
-  STORAGE_DRIVER: 'local',
-  UPLOAD_DIR: './uploads',
-  S3_ENDPOINT: 'http://localhost:9000',
-  S3_ACCESS_KEY: 'dentalerp',
-  S3_SECRET_KEY: 'dentalerp123',
-  S3_BUCKET: 'dental-erp-uploads',
+export const STORAGE_PROTOCOL_DEFAULTS = {
   S3_REGION: 'us-east-1',
   S3_FORCE_PATH_STYLE: 'true',
-}
+} as const
 
 type Env = Record<string, string | undefined>
 

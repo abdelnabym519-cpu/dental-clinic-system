@@ -20,8 +20,10 @@
  */
 import { randomBytes } from 'node:crypto'
 import { parseEnvFileContent } from './dev-env'
-import { STORAGE_ENV_DEFAULTS, STORAGE_ENV_KEYS } from '../../lib/storage/env'
+import { STORAGE_ENV_KEYS } from '../../lib/storage/env'
 import type { StorageEnvKey } from '../../lib/storage/env'
+import { readComposeStorageDefaultsFromRoot } from './compose-storage'
+import type { ComposeStorageValues } from './compose-storage'
 
 /** The required keys this bootstrap guarantees. */
 export const REQUIRED_KEYS = [
@@ -90,7 +92,10 @@ export function planDevEnv(
   existingContent: string | undefined,
   // Default: the REAL crypto generators (the CLI relies on this — it never
   // passes its own). Tests inject a deterministic generator instead.
-  generate: SecretGenerator = (key) => SECRET_GENERATORS[key]?.(key) ?? 'GENERATED'
+  generate: SecretGenerator = (key) => SECRET_GENERATORS[key]?.(key) ?? 'GENERATED',
+  // Storage values the template does not carry. Derived from
+  // docker-compose.dev.yml by default — NEVER hardcoded in source.
+  storageDefaults: ComposeStorageValues = readComposeStorageDefaultsFromRoot()
 ): SetupPlan {
   const template = parseEnvFileContent(templateContent)
   const existing = existingContent === undefined ? undefined : parseEnvFileContent(existingContent)
@@ -154,9 +159,15 @@ export function planDevEnv(
         }
         const fromTemplate = (template[key] ?? '').trim()
         const value =
-          fromTemplate !== ''
-            ? fromTemplate
-            : (STORAGE_ENV_DEFAULTS[key as StorageEnvKey] ?? '')
+          fromTemplate !== '' ? fromTemplate : (storageDefaults[key as StorageEnvKey] ?? '')
+        if (value === '') {
+          // Fail loud rather than write an empty credential: an empty S3_*
+          // would silently leave the app on local disk while the orchestrator
+          // reads MinIO — the exact drift this step exists to prevent.
+          throw new Error(
+            `No value for storage key ${key}: it is not in .env.example and could not be derived from docker-compose.dev.yml.`
+          )
+        }
         out += `${key}="${value}"\n`
         actions.push({ key, action: 'from-template' })
       }

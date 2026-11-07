@@ -41,10 +41,15 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { isDatabaseSeeded, type SeedCheckClient } from './seed-check'
-import { assertDatabaseConfigured, loadDevEnvIntoProcess } from './lib/dev-env'
+import {
+  assertDatabaseConfigured,
+  findDuplicateEnvKeys,
+  formatDuplicateKeyWarning,
+  loadDevEnvIntoProcess,
+} from './lib/dev-env'
 
 export const COMPOSE_FILE = 'docker-compose.dev.yml'
 
@@ -153,6 +158,18 @@ export async function runSafeStartup(
   //    MySQL was healthy. Precedence: shell > .env.local > .env. Secret
   //    values are never logged — only file names and applied-key counts.
   const devEnv = loadDevEnvIntoProcess(root)
+
+  // Duplicate keys are easy to create by copying lines around, and which one
+  // wins is not obvious. Warn with NAMES ONLY - never a value - and say which
+  // occurrence actually takes effect.
+  for (const name of ['.env', '.env.local']) {
+    const f = path.join(root, name)
+    if (!existsSync(f)) continue
+    const dupes = findDuplicateEnvKeys(readFileSync(f, 'utf8'))
+    if (dupes.length > 0) {
+      for (const line of formatDuplicateKeyWarning(name, dupes)) console.warn(line)
+    }
+  }
   for (const loadedFile of devEnv.loaded) {
     log(`environment: ${loadedFile.file} loaded (+${loadedFile.keys} keys)`)
   }

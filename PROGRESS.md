@@ -1180,3 +1180,67 @@ protected assertion requires:
                      tests/api/dental-chart-cross-hospital.test.ts
      Test Files  3 passed (3)
           Tests  65 passed (65)
+
+## =====================================================================
+## P9.1b — NO CREDENTIAL IN SOURCE (storage defaults derived from compose)
+## =====================================================================
+
+status **VERIFIED-HERE**. Rule: values must derive from docker-compose.dev.yml
+or be generated, and must never be printed.
+
+The first version of `lib/storage/env.ts` hardcoded the dev MinIO credentials
+(`S3_ACCESS_KEY: 'dentalerp'`, `S3_SECRET_KEY: 'dentalerp123'`, the endpoint and
+the bucket). That violated the rule even though the same values were already
+public in `.env.example` — code must not carry a copy.
+
+### Where each value comes from now
+
+| Value | Source |
+| --- | --- |
+| `S3_ACCESS_KEY` | `MINIO_ROOT_USER` — `docker-compose.dev.yml:76` |
+| `S3_SECRET_KEY` | `MINIO_ROOT_PASSWORD` — `docker-compose.dev.yml:77` |
+| `S3_ENDPOINT` | the published `9000:9000` port — `docker-compose.dev.yml:79` |
+| `S3_BUCKET` | `mc mb --ignore-existing local/<bucket>` — `docker-compose.dev.yml:107` |
+| `S3_REGION`, `S3_FORCE_PATH_STYLE` | MinIO protocol facts, NOT secrets — `STORAGE_PROTOCOL_DEFAULTS` in `lib/storage/env.ts` |
+| `STORAGE_DRIVER`, `UPLOAD_DIR` | active lines already in the template — `.env.example:28,31` |
+
+All four compose values are read by `scripts/lib/compose-storage.ts`.
+
+    $ grep -nE "dentalerp|S3_(ENDPOINT|ACCESS_KEY|SECRET_KEY|BUCKET):" lib/storage/env.ts
+    (no matches)
+
+**Fail loud, never invent.** If a value cannot be derived the bootstrap throws
+(`Cannot derive S3_ACCESS_KEY … refusing to invent a storage value`), because
+an empty or invented `S3_*` is exactly what lets the app write to local disk
+while the orchestrator reads MinIO. Nothing is printed: values go straight into
+`.env` (gitignored); logs and warnings carry NAMES only.
+
+Tests `tests/unit/compose-storage.test.ts` (13): derivation, service-block
+isolation (a later service mentioning `MINIO_ROOT_*` must not win), fail-loud
+for each missing value, and a sweep proving no credential literal exists in
+`lib/` or `scripts/`.
+
+## =====================================================================
+## P9.1c — DUPLICATE .env KEYS WARN (names only, which one wins)
+## =====================================================================
+
+status **VERIFIED-HERE**. Cause: copying lines in `.env`.
+
+`scripts/lib/dev-env.ts` gains `findDuplicateEnvKeys()` +
+`formatDuplicateKeyWarning()`. Semantics mirror the parser exactly:
+`parseEnvFileContent` assigns in file order and skips empty values, so the
+**last non-empty occurrence wins**; if all are empty the key is absent
+(`winningLine === -1`). Both rules are cross-checked against the real parser.
+
+Wired into `npm run setup:dev` (`.env.example` + `.env`) and `npm run dev:start`
+(`.env` + `.env.local`). NAMES ONLY:
+
+    [env] WARNING: .env declares 1 key more than once (names only - no values shown).
+    [env]   S3_SECRET_KEY: 2 occurrences at lines 4, 9 - line 9 wins (the last non-empty one). Delete the others.
+    [env]   Duplicates are legal but ambiguous: remove the losing lines to avoid surprises.
+
+Tests `tests/unit/dev-env-duplicates.test.ts` (13), including an assertion that
+no value (`hunter2`) can ever reach the warning text.
+
+    Test Files  5 passed (5)
+         Tests  56 passed (56)
