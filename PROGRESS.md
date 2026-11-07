@@ -971,3 +971,72 @@ The only chart-related type errors are Prisma-inference artifacts:
 
 **`npm run build` therefore stays [LOCAL] (B18) until the user runs it after
 `npx prisma generate`.**
+
+## =====================================================================
+## P2 — PRIMARY TEETH IN THE API (approved)
+## =====================================================================
+
+status **VERIFIED-HERE** — no schema change.
+
+### Root cause
+
+`app/api/dental-chart/route.ts` (POST) validated the tooth number against a
+literal 32-item array (11..48). `app/api/dental-chart/[id]/route.ts` (PUT) had
+**no tooth validation at all** — `updateData` never even read
+`body.toothNumber`, so a caller could write `toothNumber: 99` straight into the
+database. The canonical rule set (`isValidFdi`, 52 ids) already existed in
+`lib/dental-chart/fdi.ts` and was already used by the summary route; the two
+write routes had simply drifted away from it.
+
+### Fix
+
+- POST: the literal array is replaced by `isValidFdi(toothNumber)`.
+- PUT: validates `body.toothNumber` when present, and now persists it.
+- The error text keeps the protected token **"FDI"**:
+  `Invalid tooth number. Use FDI notation (permanent 11-48, primary 51-85)`
+- `isValidFdi` takes `unknown`, so the numeric string `'51'`, `1.5`, `true`,
+  `null` and `undefined` are all rejected with **no coercion**.
+
+All three dental-chart routes now import the shared module:
+
+    $ grep -ln "lib/dental-chart/fdi" $(find app/api/dental-chart -name route.ts)
+    app/api/dental-chart/[id]/route.ts
+    app/api/dental-chart/[id]/summary/route.ts
+    app/api/dental-chart/route.ts
+
+### Test-first: RED then GREEN
+
+The one test allowed to change was my own
+`tests/api/dental-chart-cross-hospital.test.ts`, which pinned "51 => 400" —
+it pinned the BUG, not the rule. Per MASTER §P2 the invalid example moved to
+**56** (a primary quadrant only has indices 1-5) and the block was rewritten
+to pin the corrected behaviour.
+
+RED (before the fix):
+
+     Test Files  1 failed (1)
+          Tests  13 failed | 27 passed (40)
+     AssertionError: expected 200 to be 400      <- PUT had no validation
+
+GREEN (after):
+
+     ✓ tests/api/dental-chart-cross-hospital.test.ts (40 tests)
+     Test Files  1 passed (1)
+          Tests  40 passed (40)
+
+New coverage: POST accepts all eight primary quadrant corners
+(51/55/61/65/71/75/81/85) plus permanent 11/48; POST rejects 56, 86, 19, 99,
+0, -11, 1.5, `'51'`, `true`, `null`, `undefined`; the message still matches
+`/FDI/i`; PUT accepts 51 and 85; PUT rejects 56, 86, 19, 99, `'51'`; PUT with
+no `toothNumber` behaves exactly as before.
+
+### Protected suites re-run — NOTHING edited
+
+     Test Files  21 passed (21)
+          Tests  272 passed (272)
+
+Includes the protected `tests/api/dental-chart-routes.test.ts`, both
+`odontogram-clean-room` suites, `dental-chart-summary`, `ai-context-tooth`,
+the two `fdi-*` suites and `rao-odontogram`. Every protected assertion is
+intact: 99 => 400 still holds, `isValidFdi(9)`/`(49)` are still false, and
+primary 51/75 are still preserved by the summary route.

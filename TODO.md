@@ -18,11 +18,11 @@ one tip hash identifies both.
       `scripts/verify-ai.sh` written and exercised;
       `ai-validation/models.sha256` placeholder + `scripts/generate-model-manifest.sh`
       added; `.local-logs/` gitignored.
-- [ ] **P1 REPAIR THE BUILD** — the fix is **already on origin at `baf39b2`**
+- [x] **P1 REPAIR THE BUILD** — the fix is **already on origin at `baf39b2`**
       (Patch 10: `export { resetForPatient, getToothStates, setSelectedTeeth }`).
       Remaining: re-verify from the remote state, run the non-mock guards,
       perform the NEGATIVE CONTROL, attempt `npm run build` here.
-- [ ] **P2 PRIMARY TEETH IN THE API** — POST + PUT use the shared `isValidFdi`
+- [x] **P2 PRIMARY TEETH IN THE API** — POST + PUT use the shared `isValidFdi`
       (52 ids). The only test allowed to change is
       `tests/api/dental-chart-cross-hospital.test.ts` (invalid example 51 → 56).
       Error message must still contain "FDI". PUT currently has NO validation.
