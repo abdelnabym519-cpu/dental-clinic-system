@@ -20,6 +20,8 @@
  */
 import { randomBytes } from 'node:crypto'
 import { parseEnvFileContent } from './dev-env'
+import { STORAGE_ENV_DEFAULTS, STORAGE_ENV_KEYS } from '../../lib/storage/env'
+import type { StorageEnvKey } from '../../lib/storage/env'
 
 /** The required keys this bootstrap guarantees. */
 export const REQUIRED_KEYS = [
@@ -29,6 +31,22 @@ export const REQUIRED_KEYS = [
   'CRON_SECRET',
   'ORCHESTRATOR_SECRET',
 ] as const
+
+/**
+ * Storage variables the bootstrap guarantees to exist BY NAME.
+ *
+ * P9.1: the imaging `NoSuchKey` was a disagreement between two readers of the
+ * same objects - the app (lib/storage, whose driver defaults to `local`) and
+ * the orchestrator (which reads MinIO/S3 directly). Neither side could see the
+ * other's configuration because the variable names were never declared
+ * anywhere both read. The list is imported from the SAME module the runtime
+ * factory uses, so the bootstrap and the factory cannot drift apart again.
+ *
+ * Deliberately NOT part of REQUIRED_KEYS: these are filled from the template
+ * (or from the documented dev defaults) and are never crypto-generated, so the
+ * existing "exactly four generated secrets" contract is untouched.
+ */
+export const STORAGE_KEYS: readonly string[] = STORAGE_ENV_KEYS
 
 export type SecretGenerator = (key: string) => string
 
@@ -107,6 +125,44 @@ export function planDevEnv(
     return undefined
   }
 
+    /**
+     * P9.1: guarantee the storage variable NAMES exist, so the app and the
+     * orchestrator are configured from one vocabulary. An existing non-empty
+     * value is NEVER overwritten.
+     */
+    function ensureStorageKeys(content: string): {
+      content: string
+      actions: Array<{ key: string; action: SetupPlanEntry['action'] }>
+    } {
+      const actions: Array<{ key: string; action: SetupPlanEntry['action'] }> = []
+      const missing = STORAGE_KEYS.filter((key) => {
+        const raw = rawActiveValue(content, key)
+        return raw === undefined || raw.trim() === ''
+      })
+      if (missing.length === 0) {
+        for (const key of STORAGE_KEYS) actions.push({ key, action: 'kept' })
+        return { content, actions }
+      }
+      let out = content
+      if (!out.endsWith('\n')) out += '\n'
+      out += '\n# -- storage: added by `npm run setup:dev` (single source of truth: lib/storage/env.ts) --\n'
+      for (const key of STORAGE_KEYS) {
+        const existing = rawActiveValue(out, key)
+        if (existing !== undefined && existing.trim() !== '') {
+          actions.push({ key, action: 'kept' })
+          continue
+        }
+        const fromTemplate = (template[key] ?? '').trim()
+        const value =
+          fromTemplate !== ''
+            ? fromTemplate
+            : (STORAGE_ENV_DEFAULTS[key as StorageEnvKey] ?? '')
+        out += `${key}="${value}"\n`
+        actions.push({ key, action: 'from-template' })
+      }
+      return { content: out, actions }
+    }
+
   // Fresh creation: the template is the single source of truth. Scan RAW
   // lines (the parser drops empty values by design, but the bootstrap must
   // see `NEXTAUTH_SECRET=""` to fill it).
@@ -130,7 +186,9 @@ export function planDevEnv(
       entries.push({ key, action: 'generated' })
     }
     // The template's DATABASE_URL is already the compose-matching value.
-    return { entries, content, createdFresh: true }
+    const withStorage = ensureStorageKeys(content)
+    for (const a of withStorage.actions) entries.push(a)
+    return { entries, content: withStorage.content, createdFresh: true }
   }
 
   // Existing .env: preserve verbatim; append ONLY missing required keys.
@@ -162,5 +220,7 @@ export function planDevEnv(
       content += `${e.key}="${value}"\n`
     }
   }
-  return { entries, content, createdFresh: false }
+  const stor = ensureStorageKeys(content)
+  for (const a of stor.actions) entries.push(a)
+  return { entries, content: stor.content, createdFresh: false }
 }

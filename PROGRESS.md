@@ -1040,3 +1040,77 @@ Includes the protected `tests/api/dental-chart-routes.test.ts`, both
 the two `fdi-*` suites and `rao-odontogram`. Every protected assertion is
 intact: 99 => 400 still holds, `isValidFdi(9)`/`(49)` are still false, and
 primary 51/75 are still preserved by the summary route.
+
+## =====================================================================
+## P9.1 (CODE PART) — STORAGE PRE-FLIGHT + setup:dev CONSISTENCY
+## =====================================================================
+
+status **VERIFIED-HERE** for the code. The runtime diagnosis stays **[LOCAL]**
+(B15 no Docker, B17 no `.env` in this sandbox).
+
+### The hypothesis from MASTER §3 is CONFIRMED at the code level
+
+1. `app/api/imaging/studies/route.ts:302` — `await getStorage().put(originalKey, bytes, …)`
+   writes the imaging original through the **app's** driver.
+2. `lib/storage/index.ts` — `createStorage()` defaults `STORAGE_DRIVER` to
+   **`local`** when unset/empty.
+3. `.env.example:28` ships `STORAGE_DRIVER="local"` as an ACTIVE line, but the
+   entire `S3_*` block (lines ~40-47) is **COMMENTED OUT** — so the template
+   defines no S3 variable name at all.
+4. `scripts/lib/setup-dev.ts` fills ONLY keys present in the template
+   (`REQUIRED_KEYS` = DATABASE_URL, NEXTAUTH_SECRET, ENCRYPTION_KEY,
+   CRON_SECRET, ORCHESTRATOR_SECRET). A bootstrap on that template can never
+   emit `S3_*`.
+5. `app/api/imaging/studies/route.ts` hands the same `originalKey` to
+   `requestOrchestratorAnalyze(...)`, and the orchestrator fetches it from
+   **MinIO** — where a local-disk write never landed. Hence `NoSuchKey`.
+
+Thumbnails still load because the app reads them back through its OWN driver
+(its own disk) and never through MinIO — which is exactly why the failure
+looked so arbitrary.
+
+### Code outcomes
+
+- **Single source of truth — `lib/storage/env.ts` (new).** Names all eight
+  storage variables, the two drivers, the dev defaults (identical to
+  docker-compose.dev.yml and to the commented block in `.env.example`), and
+  the rule `orchestratorCanReadDriver()` — true only for `s3`.
+- `lib/storage/index.ts` now falls back through `readStorageDriver()` instead
+  of re-declaring `'local'`. Behaviour is unchanged (unset/empty → local; a
+  non-empty unknown value still throws the same message) — the 9 existing
+  factory tests pass untouched.
+- **Analyze pre-flight** in `app/api/imaging/studies/route.ts`, gated on
+  `isOrchestratorConfigured()` so it cannot disturb any other path:
+  * driver not orchestrator-readable → 503 `STORAGE_DRIVER_INCOMPATIBLE`
+  * object absent from the store     → 503 `IMAGING_OBJECT_MISSING`
+  * the driver throws (raw NoSuchKey)→ 503 `STORAGE_PREFLIGHT_FAILED`
+
+  All three return ARABIC user text plus a machine-readable `code`; the raw
+  storage error goes to the server log only, never into the response.
+- **`npm run setup:dev` now guarantees the storage names.** `STORAGE_KEYS` is
+  imported from `lib/storage/env.ts` and appended (action `from-template`)
+  when absent. Existing non-empty values are never overwritten, and
+  `STORAGE_DRIVER` is deliberately left at the template's `local`, so enabling
+  object storage stays an explicit one-line decision.
+
+### Tests
+
+- `tests/unit/storage-env.test.ts` (14) — vocabulary, defaults, driver
+  parsing, and the rule `orchestratorCanReadDriver('local') === false`.
+- `tests/api/imaging-analyze-storage-preflight.test.ts` (6) — proves each of
+  the three 503 paths, asserts the body matches `/[؀-ۿ]/` (Arabic) and that
+  `NoSuchKey` never reaches the response, and proves the pre-flight stays out
+  of the way when the orchestrator is not configured.
+- `tests/unit/setup-dev-storage.test.ts` (7) — the bootstrap emits every
+  storage name (including the ones the template ships commented out), never
+  overwrites an existing `STORAGE_DRIVER`, is idempotent, and the existing
+  "exactly four generated secrets" contract still holds.
+
+     Test Files  4 passed (4)
+          Tests  35 passed (35)     (includes the pre-existing setup-dev.test.ts, 8 tests, unmodified)
+
+### Not done here
+
+- The runtime proof (list the MinIO bucket, compare both worktrees' `.env`) is
+  [LOCAL] — see `docs/USER-VERIFY.md` §3.
+- `scripts/migrate-storage.ts` was located and **NOT run**, as instructed.

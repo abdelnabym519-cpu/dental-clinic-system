@@ -5,6 +5,11 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
 import { getStorage, buildStorageKey, uploadUrl } from '@/lib/storage'
+import {
+  isOrchestratorConfigured,
+  orchestratorCanReadDriver,
+  readStorageDriver,
+} from '@/lib/storage/env'
 import { OrchestratorError, requestOrchestratorAnalyze } from '@/lib/ai-orchestrator'
 
 // Phase 19A (D10) — imaging study upload + AI trigger.
@@ -383,6 +388,57 @@ export async function POST(req: NextRequest) {
       newValues: JSON.stringify({ engine, studyId: study.id, modality: study.modality }),
     },
   })
+
+  // ---- P9.1 pre-flight: can the orchestrator actually READ this object? -----
+  // Only meaningful when the orchestrator side is configured at all; when it is
+  // not, the route's existing "not configured" failure path applies unchanged.
+  if (isOrchestratorConfigured()) {
+    // The orchestrator fetches `imageKey` from object storage itself. When this
+    // process wrote the original through the LOCAL disk driver the object is
+    // not there, and the engine failed much later with a raw `NoSuchKey`. Fail
+    // here, before the request leaves the building, with an Arabic message.
+    if (!orchestratorCanReadDriver(readStorageDriver())) {
+      console.error(
+        '[imaging] refusing analysis: the storage driver is not readable by the orchestrator',
+      )
+      return NextResponse.json(
+        {
+          error:
+            'تحليل الصورة غير متاح: إعدادات تخزين الملفات غير متوافقة مع خدمة التحليل. برجاء مراجعة إعدادات التخزين.',
+          code: 'STORAGE_DRIVER_INCOMPATIBLE',
+          jobId: job.id,
+        },
+        { status: 503 },
+      )
+    }
+
+    // Same failure mode, one level down: the object must exist in the store we
+    // just wrote to, whatever that store happens to be.
+    try {
+      if (!(await getStorage().exists(originalKey))) {
+        console.error('[imaging] refusing analysis: object is missing from the storage driver')
+        return NextResponse.json(
+          {
+            error:
+              'تحليل الصورة غير متاح: ملف الصورة غير موجود في مخزن الملفات. برجاء إعادة رفع الصورة.',
+            code: 'IMAGING_OBJECT_MISSING',
+            jobId: job.id,
+          },
+          { status: 503 },
+        )
+      }
+    } catch (err) {
+      console.error('[imaging] storage pre-flight failed:', err)
+      return NextResponse.json(
+        {
+          error: 'تعذّر التحقق من ملف الصورة قبل التحليل. برجاء المحاولة مرة أخرى.',
+          code: 'STORAGE_PREFLIGHT_FAILED',
+          jobId: job.id,
+        },
+        { status: 503 },
+      )
+    }
+  }
 
   try {
     const result = await requestOrchestratorAnalyze({

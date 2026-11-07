@@ -1,6 +1,8 @@
 import { LocalStorageDriver } from './local'
 import { S3StorageDriver } from './s3'
 import type { StorageDriver } from './types'
+import { readStorageDriver } from './env'
+import type { StorageDriverName } from './env'
 
 export {
   buildStorageKey,
@@ -35,7 +37,10 @@ function isTruthy(value: string | undefined): boolean {
  * fabricated environment without a module-level cache getting in the way.
  */
 export function createStorage(env: Env = process.env): StorageDriver {
-  const driver = (env.STORAGE_DRIVER || 'local').trim().toLowerCase()
+  // Fall back through the SINGLE canonical rule (lib/storage/env.ts) instead of
+  // re-declaring the default here. Behaviour is unchanged: unset/empty means
+  // 'local', and a non-empty unknown value still throws below.
+  const driver = (env.STORAGE_DRIVER || readStorageDriver(env)).trim().toLowerCase() as StorageDriverName
 
   switch (driver) {
     case 'local':

@@ -26,7 +26,7 @@ one tip hash identifies both.
       (52 ids). The only test allowed to change is
       `tests/api/dental-chart-cross-hospital.test.ts` (invalid example 51 → 56).
       Error message must still contain "FDI". PUT currently has NO validation.
-- [ ] **P9.1 (code part only)** — single source of truth for storage variables,
+- [x] **P9.1 (code part only)** — single source of truth for storage variables,
       `setup:dev` guarantees `STORAGE_*`/`S3_*`, analyze route pre-flight with an
       Arabic message instead of a raw `NoSuchKey`. Test-first.
 - [ ] **P3 2D v2 COMPLETION** — then **STOP** at the user-acceptance step
