@@ -1160,3 +1160,23 @@ purpose — the old chart is protected until the user says ACCEPT (D2).
 ### STOP — user acceptance required
 
 The following is [LOCAL] and is where this task stops.
+
+### P2 follow-up — the Arabic-only rule caught my own error message
+
+The full-suite regression run flagged `tests/unit/i18n-api-messages.test.ts`:
+my new English message `Invalid tooth number. Use FDI notation (...)` violated
+MASTER §4.6 (Arabic only). The guard is correct and was NOT touched.
+
+    - Array [ "app/api/dental-chart/route.ts: Invalid tooth number. Use FDI notation (...)",
+    -         "app/api/dental-chart/[id]/route.ts: Invalid tooth number. Use FDI notation (...)" ]
+
+Both messages are now Arabic while still carrying the `FDI` token the
+protected assertion requires:
+
+    'رقم السن غير صالح. استخدم ترقيم FDI (الدائم 11-48، واللبني 51-85)'
+
+    $ npx vitest run tests/unit/i18n-api-messages.test.ts \
+                     tests/api/dental-chart-routes.test.ts \
+                     tests/api/dental-chart-cross-hospital.test.ts
+     Test Files  3 passed (3)
+          Tests  65 passed (65)

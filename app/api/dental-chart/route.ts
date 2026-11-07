@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Invalid tooth number. Use FDI notation (permanent 11-48, primary 51-85)',
+            'رقم السن غير صالح. استخدم ترقيم FDI (الدائم 11-48، واللبني 51-85)',
         },
         { status: 400 },
       )
