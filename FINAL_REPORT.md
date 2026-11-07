@@ -1,287 +1,202 @@
-# FINAL_REPORT.md — Whole-Repository Stabilization Certification
+# FINAL REPORT — 2026-11-07
 
-## Executive Summary
+**Tip — full 40 characters:**
 
-The repository (Robot baseline 76e944f + Dental Chart integration) shipped with 445
-TypeScript errors that blocked the production build. Graph-traced root cause: ONE file
-(lib/prisma.ts) typed the Prisma client structurally (`[model: string]: any`), degrading
-every query result in the codebase to `any` — the symptomatic files were downstream
-noise. Fixing the root node (type-only real client import, runtime-identical) collapsed
-445 → 52; the remaining 52 resolved into 8 small classes, each repaired with the
-minimal certified fix (several were GENUINE runtime crash bugs the `any` masking had
-hidden). Final verified state: **tsc 0 · 6141 tests / 0 failed · build exit 0 ·
-lint 0 errors · runtime smoke PASS**.
+```
+git rev-parse HEAD
+a489bb90e1c11ec8e13985463c709f8a0e21736f
+```
 
-## Problems Found & Root Causes
+`local == origin: YES` — verified with `git ls-remote`, not with a local ref:
 
-| #   | Problem                                                                     | Root cause                                                                 | Severity                  |
-| --- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------- |
-| 1   | 445 tsc errors, build FAIL                                                  | structural prisma client type (`any` cascade)                              | P1                        |
-| 2   | 28 Decimal-assignment errors (4 invoice/bill PDF+send routes)               | money consumer type too narrow (`string \| number`)                        | P1 (build path)           |
-| 3   | AI command verification crash                                               | `findUnique` on non-unique compound fields                                 | P1 runtime (masked by #1) |
-| 4   | Intelligence alerts crash                                                   | accessor typo `prisma.aiInsight` (×2 files + tests)                        | P1 runtime (masked)       |
-| 5   | Portal prescription PDF crash                                               | `dateOfBirth` read from a projection lacking it                            | P1 runtime (masked)       |
-| 6   | Messaging service uncompilable                                              | code references `WELCOME`; schema lacked the enum value (migration absent) | P1 (inconsistency)        |
-| 7   | `PaymentMethod` map incomplete                                              | missing `UPI` entry                                                        | P2                        |
-| 8   | Misc typing/casts (availability, subscription, imaging review, dev scripts) | inference/cast debt                                                        | P2                        |
+```
+remote arena : a489bb90e1c11ec8e13985463c709f8a0e21736f
+remote merge : a489bb90e1c11ec8e13985463c709f8a0e21736f
+local  HEAD  : a489bb90e1c11ec8e13985463c709f8a0e21736f
+```
 
-## Fixes Applied
+Ancestry check (MASTER §1): `0533cac3f136813bfd2dccbfd1c6511b5a14518a` (the tip
+you had before this turn) is an ancestor of `a489bb9`. Nothing was rewritten.
 
-Root: lib/prisma.ts (+prisma-search.ts helper doc) · invoice-pdf MoneyLike ·
-action-pipeline findFirst+fail-closed · aIInsight class (proactive, alerts route,
-clinic-brain, 4 test files) · prescriptions-PDF age source · schema WELCOME append +
-additive migration (proven necessary: robot's own code referenced it) · billing-utils
-Arabic-first + UPI (certified I6/I7 behavior) · 4 typing/cast repairs · 7 test files
-updated as documented contract updates (assertions follow repaired behavior; nothing
-weakened/deleted/skipped). Harness: added `npm run typecheck` + `npm run verify`.
-
-## Verification (exact commands, this tree)
-
-- `npx tsc --noEmit` → **0 errors** (was 445)
-- `npm test -- --run` → **Test Files 334 passed | 1 skipped · Tests 6141 passed | 12 skipped | 0 failed**
-- `npm run lint` → **0 errors / 260 warnings** (261 pre-existing − 1 `no-explicit-any` suppression removed by the root fix)
-- `npm run build` (with prisma engine env) → **exit 0**, 256/256 static pages (was: type-check FAIL)
-- Runtime: `npm run dev` → Ready 444ms; `/login` 200 · `/api/health` 200 · `/api/ready` **503 with exact DB reason** (honest — sandbox has no DATABASE_URL; the readiness path itself proven) · protected pages 307 · APIs 401 · zero feature errors in log.
-- E2E (Playwright): ENVIRONMENT-BLOCKED (no browser binaries) — CODE-VALIDATED only.
-
-## Certification Matrix
-
-| Area                 | Verification                                       | Result                                                                                 | Evidence          |
-| -------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------- |
-| Install              | npm ci (lockfile, --ignore-scripts sandbox policy) | PASS                                                                                   | clean install     |
-| Build                | next build                                         | **PASS**                                                                               | exit 0, 256 pages |
-| Types                | tsc --noEmit                                       | **PASS**                                                                               | 0 errors          |
-| Lint                 | eslint                                             | PASS (0 errors; 260 pre-existing warnings documented)                                  | lint output       |
-| Unit+Integration+API | vitest suite                                       | **PASS**                                                                               | 6141/0            |
-| E2E                  | Playwright                                         | EXTERNAL BLOCKER (B2)                                                                  | BLOCKERS.md       |
-| Database             | real MySQL                                         | PARTIAL → B1 (schema+migration consistency proven; readiness path proven failing-safe) | BLOCKERS.md       |
-| Auth                 | boundaries via real server                         | PASS (401/307/200 observed)                                                            | boot smoke        |
-| RBAC                 | role gates                                         | PASS (suite: role pins; server-side requireAuthAndRole everywhere)                     | tests             |
-| Tenancy              | hospitalId scoping                                 | PASS (suite: cross-tenant 404 tests)                                                   | tests             |
-| APIs                 | handlers                                           | PASS (suite = real handlers)                                                           | tests             |
-| UI                   | jsdom component suites                             | PASS (browser walkthrough = B2)                                                        | tests             |
-| AI                   | gateway contract + typed failures                  | PASS (deterministic + typed-failure suites; live inference = B3)                       | tests             |
-| Local Engines        | voice/eval harnesses                               | PASS (suite; hardware = operator env)                                                  | tests             |
-| Security             | no secrets in repo; boundaries hold                | PASS                                                                                   | grep + suite      |
-| Runtime              | boot + smoke                                       | PASS                                                                                   | log captured      |
-| Documentation        | ARCHITECTURE.md matches source                     | PASS                                                                                   | this repo         |
-
-## Remaining Warnings
-
-260 pre-existing lint warnings (classified SAFE/TECHNICAL-DEBT; none introduced here; count reduced by 1).
-`middleware` deprecation notice (Next 16 → `proxy` convention): TECHNICAL DEBT, upstream advisories only.
-
-## Remaining Blockers
-
-B1 MySQL, B2 browsers, B3 secrets/credentials — all genuinely external (see BLOCKERS.md).
-
-## Git Changes
-
-One stabilization commit on `arena/01a0f3e0-dental-clinic-system` (see commit message for
-the full file list). No history rewrite; no force-push; protected phase12 evidence untouched.
-
-## Five-Principle Compliance
-
-Prompt ✅ (every fix had exact failure + verification) · Context ✅ (repo = source of truth; oracle diffs verified) ·
-Loop ✅ (root node first, then one class per pass, full regression after each) ·
-Harness ✅ (`npm run verify` canonical; nothing weakened — 7 contract updates documented) ·
-Graph ✅ (root-cause node fixed, ALL downstream nodes re-verified by full suite).
-
-## Final Verdict
-
-All in-repo completion criteria proven. The three environment-blocked rows (B1–B3) are
-genuinely external. `PROJECT_100_PERCENT_WORKING` is claimed for everything verifiable
-inside this environment; the blocked rows require the operator's machine (one command each, documented).
+> **On your other clone showing `baf39b2`:** that clone was stale, not a lost
+> push. `git ls-remote origin refs/heads/merge/fdi52-into-wip` returns
+> `a489bb9…`. Run `git fetch` there. Check `ls-remote` before believing a clone.
 
 ---
 
-# Addendum — Iteration 2: Environment/Startup Root Repair (user-reported P1)
+## 1. setup:dev — where every `S3_*` default comes from
 
-## Executive Summary
+**status VERIFIED-HERE.** You were right to challenge this: my earlier
+`lib/storage/env.ts` **hardcoded the dev MinIO credentials**. Even though the
+same values were already public in `.env.example`, keeping a second copy in
+source was wrong. It is removed.
 
-`npm run dev:start` failed on the canonical startup path ("Environment variable not
-found: DATABASE_URL", then a 180s readiness timeout) **while Docker showed mysql+redis
-Running**. Root cause was NOT MySQL: `scripts/dev-start.ts` validated `.env` existence
-but never loaded it — and a plain `tsx` process does not load env files (only the Prisma
-CLI and `next dev` do). The script's own PrismaClient probe therefore ran unconfigured
-and looped the exact reported error. Fixed with `scripts/lib/dev-env.ts` (canonical
-precedence **shell > .env.local > .env**, secret-safe) wired into the orchestrator.
+| Value | Source | file:line |
+| --- | --- | --- |
+| `S3_ACCESS_KEY` | `MINIO_ROOT_USER` | `docker-compose.dev.yml:76` |
+| `S3_SECRET_KEY` | `MINIO_ROOT_PASSWORD` | `docker-compose.dev.yml:77` |
+| `S3_ENDPOINT` | the published `9000:9000` port | `docker-compose.dev.yml:79` |
+| `S3_BUCKET` | `mc mb --ignore-existing local/<bucket>` | `docker-compose.dev.yml:107` |
+| `S3_REGION`, `S3_FORCE_PATH_STYLE` | MinIO **protocol facts**, not secrets | `STORAGE_PROTOCOL_DEFAULTS`, `lib/storage/env.ts` |
+| `STORAGE_DRIVER`, `UPLOAD_DIR` | active lines in the template | `.env.example:28,31` |
 
-## Evidence (A/B, executable)
+All four compose values are read by the new `scripts/lib/compose-storage.ts`.
+Proof that no credential remains in source:
 
-- Control (pre-fix behavior): PrismaClient query in a bare tsx process →
-  `env-missing-error=true` — the EXACT user failure reproduced.
-- Fixed: `loadDevEnvIntoProcess` + probe → `env-missing-error=false` (DATABASE_URL
-  reaches Prisma; the only residual sandbox error is the `--no-engine` client's
-  `prisma://` protocol requirement — a sandbox generation artifact, not repo behavior).
-- Orchestrator behavioral test: DATABASE_URL from `.env` is present in `process.env`
-  BEFORE the first command the startup runs; no-config → actionable error before any
-  Docker command (robot invariant preserved).
-- Secret safety: planted secret values never appear in logs, errors, or returns (tested).
+```
+$ grep -nE "dentalerp|S3_(ENDPOINT|ACCESS_KEY|SECRET_KEY|BUCKET):" lib/storage/env.ts
+(no matches)
+```
 
-## Verification
+**Fail loud, never invent.** If a value cannot be derived, `setup:dev` throws
+(`Cannot derive S3_ACCESS_KEY … refusing to invent a storage value`) instead of
+writing an empty one — an empty or invented `S3_*` is exactly what lets the app
+write to local disk while the orchestrator reads MinIO, which was the original
+`NoSuchKey` root cause.
 
-`npm run verify` → EXIT 0: tsc 0 · lint 0 errors / 260 warnings · suite **6149 / 12 skipped /
-0 failed** · build 256 pages. `npx playwright install chromium` attempted → egress-blocked
-(B2 evidence). Protected `docs/phase12` bytes re-verified.
+**Nothing is printed.** Values go straight into `.env` (gitignored). Logs,
+warnings and the duplicate-key message carry NAMES only.
 
-## Status Impact
+Tests: `tests/unit/compose-storage.test.ts` (13) — derivation, service-block
+isolation (a later service mentioning `MINIO_ROOT_*` must not win), fail-loud
+for each missing value, and a sweep proving no credential literal exists in
+`lib/` or `scripts/`.
 
-- B1 downgraded to database-runtime-only: the user's machines' containers were already
-  healthy; `npm run dev:start` will now load their `.env`/`.env.local` and probe MySQL
-  over real TCP. Everything else unchanged.
+## 2. Duplicate `.env` keys — warn, names only, say which one wins
 
----
+**status VERIFIED-HERE.** New `findDuplicateEnvKeys()` +
+`formatDuplicateKeyWarning()` in `scripts/lib/dev-env.ts`.
 
-# Addendum — Iteration 4: Local Environment Bootstrap Completed
+Semantics mirror the parser exactly (`parseEnvFileContent` assigns in file
+order and skips empty values), so the **last non-empty occurrence wins**; if
+every occurrence is empty the key is **ABSENT** (`winningLine === -1`). Both
+rules are cross-checked against the real parser in tests, so the warning can
+never disagree with what actually gets loaded.
 
-ROOT CAUSE: `.env.example`'s active `DATABASE_URL` (`root:password@...`) contradicted
-`docker-compose.dev.yml` (`root:dental`, port `3306:3306`, db `dental_erp`) — the
-canonical `cp .env.example .env` flow could never reach a live `SELECT 1`, and required
-secrets shipped empty. The user's own env-doctor output proved the loader correct
-(`.env loaded (+6 keys)`, `DATABASE_URL present = false` — an incomplete `.env`).
+Wired into `npm run setup:dev` (`.env.example` + `.env`) and `npm run dev:start`
+(`.env` + `.env.local`):
 
-CONTRACT NOW: `npm run setup:dev` (idempotent, never overwrites, never touches
-.env.local, generates only missing secrets, prints no values) -> complete `.env` whose
-DATABASE_URL is test-pinned to compose. `cp .env.example .env` also works (active,
-correct URL). All failure messages point to the same one-command recovery.
+```
+[env] WARNING: .env declares 1 key more than once (names only - no values shown).
+[env]   S3_SECRET_KEY: 2 occurrences at lines 4, 9 - line 9 wins (the last non-empty one). Delete the others.
+[env]   Duplicates are legal but ambiguous: remove the losing lines to avoid surprises.
+```
 
-LIVE PROOF (sandbox): fresh `npm run setup:dev` -> `.env created`, 3 secrets generated,
-VERDICT CONFIGURED; `npm run dev:start` -> banner, `.env loaded (+20 keys)`, only failure
-Docker-absent (external); second run idempotent (md5 identical). Full harness EXIT 0.
-Docker/TCP/browser legs remain BLOCKED_EXTERNAL in the sandbox.
+Tests `tests/unit/dev-env-duplicates.test.ts` (13), including an explicit
+assertion that a value (`hunter2`) can never reach the warning text.
 
----
+## 3. P4 — started, code parts only
 
-# Addendum — Iteration 5: External-Block Evidence Finalized (2026-10-08)
+### S1 — vendor the MIT engine **BUILT** (committed and pushed in the same turn)
 
-Exhaustive re-probe closed every remaining avenue for a real MySQL or browser in this
-sandbox (six CDN/mirror hosts unreachable; apt unusable; no local runtimes; npm-hosted
-MySQL options are runtime downloaders for the blocked CDN; a protocol-level MySQL stand-in
-was rejected as readiness-faking). B1/B2 stand as genuine BLOCKED_EXTERNAL with dated
-evidence; the §13 live-integration matrix (requirement/feature/command/resolution, no
-values) is now recorded in BLOCKERS.md. Everything provable in-sandbox remains proven at
-`4d781b4` (verify EXIT 0; real-command env/bootstrap flow live-tested). On any Docker
-machine the single path `npm run setup:dev && npm run dev:start` executes the DB leg that
-this sandbox cannot: compose up -> explicit-URL probe -> live SELECT 1 -> migrate deploy ->
-seed-if-uninitialized -> next dev.
+| Field | Value |
+| --- | --- |
+| Upstream | https://github.com/Yoosseph/dental-scope |
+| Pinned commit | `e34d4b986d5439501f23c91cde593f69a3b180b0` |
+| Licence | **MIT** — `LICENSE` vendored verbatim |
+| Vendored | **115 files, 1.5 MB, 0 model files** |
+| Provenance / patches | `vendor/dental-scope-engine/VENDOR.md`, `PATCHES.md` |
 
----
+The tarball is ~266 MB, of which **571 files are model assets**. None is
+committed — `git ls-files | grep -Eic '\.glb$'` returns **0**. I also excluded
+`docs/`, `e2e/`, `.github/` and every upstream `*.test.ts`.
 
-# Addendum — Iteration 6: E2E Harness Root Repair (adminPage beforeEach failure)
+Facts verified by **reading** the vendored source, not from memory:
 
-Three INDEPENDENT root causes stacked behind one symptom (1917 specs did not run):
+* `src/engine/Engine.ts:86` `export class Engine`; `:186` `mount(container)`;
+  `:265` `dispose()`.
+* Mesh keys are **`tooth-<NN>`** = the two-digit FDI number
+  (`Engine.ts:313`, `DevelopmentScene.ts:62,305`). That is the key↔FDI mapping
+  the adapter needs.
+* Deps we actually need: **three, three-mesh-bvh, zustand**. React, the fonts
+  and `@vercel/analytics` belong to its own UI chrome — not used.
+* Vite/ESM-only ⇒ must load via `next/dynamic`, `ssr: false`.
 
-1. LOCALE — the app is Arabic-first; the E2E harness asserted English label text.
-   Live proof: /login SSRs `البريد الإلكتروني` fresh, `Email` with the app's own
-   `dentora-locale=en-EG` cookie. Fix: default storageState pins that cookie
-   (the LanguageToggle mechanism — no mock, no bypass) + structural locators
-   (#email/#password/submit) in the login fixture.
-2. CREDENTIALS — fixture `*@demo-dental.com` vs seed `*@dentora-dental.com`.
-3. SECRET — next-auth v5 reads only AUTH_SECRET; the documented contract
-   provisions NEXTAUTH_SECRET; every signIn/session/proxy call failed with
-   MissingSecret. Fix: canonical mapping in shared lib/auth.config.ts.
+### S2 — asset modes, `none` as the DEFAULT **BUILT**
 
-Live verification (sandbox, no browser): /api/auth/session 200, providers 200,
-boot log clean; /login labels flip with the locale cookie; playwright --list
-collects 2946 tests / 53 files. Full harness EXIT 0 (6168/12/0). New 10-test
-contract suite pins all three seams without a browser. Browser E2E execution
-itself remains BLOCKED_EXTERNAL here (B2) and runs on the user's machine.
+`lib/dental-chart/3d/asset-mode.ts`: unknown or missing `ASSET_MODE` falls back
+to `none`, never to a mode that loads third-party meshes. `bundled` **throws**
+`BundledAssetsBlockedError` until `docs/legal/3D-ASSETS-DECISION.md` carries the
+marker `D1-DECISION-RECORDED`. `neurovascular.glb` is forbidden in **every**
+mode.
 
----
+`3d-assets.manifest.json` — committed, **34 entries, 53.6 MB, 0 forbidden
+files**, with **real** SHA-256 digests computed from the pinned tarball. It
+records the licence conflict honestly (CC BY-SA 2.1 JP per upstream CREDITS vs
+CC BY 4.0 per DBCLS, marked **UNRESOLVED**) instead of picking a side.
 
-# Addendum — Iteration 7: 3D Dental Chart — Audit, Gap Closure, Validation
+`scripts/3d-assets/fetch.mjs` — downloads the **pinned** commit, extracts only
+manifest-listed files, verifies every digest and size into the gitignored
+`.local-assets/3d/`. A checksum mismatch is a **hard failure**; a digest is
+never edited to make a check pass.
 
-The interactive 3D Dental Chart (R3F, original procedural dentition, FDI-canonical,
-patient-aware, RBAC/tenant-bounded) audited end-to-end against the mission DoD and
-found COMPLETE at the architecture level; two real gaps closed:
+Tests `tests/unit/asset-mode.test.ts` (14).
 
-1. PATIENT ISOLATION (Phase 8): store reset on patient switch — component-proven
-   (selection/hover/panel cleared; summary refetched for the new patient).
-2. E2E SPEC REPAIR: dental-chart-3d.spec.ts rebuilt on the repaired auth fixtures
-   with the full critical path, isolation test, and read-only receptionist —
-   collecting 18 across 6 projects (2952 total).
+### S3, S4–S5, S7, S9 — **NOT STARTED**
 
-New procedure-workflow component tests (post to existing treatment-plans API with
-toothNumbers + refetch; honest no-active-plan state). Live: 307/401/401 unauth
-boundaries with a clean boot log. verify EXIT 0 (6171/12/0, 256 pages). Browser
-execution + in-canvas pointer picking: real-machine validation (documented).
-
----
-
-# DenToRa Final Stabilization Report (Ultimate Master Prompt pass)
-
-## Status
-
-NOT CERTIFIED — one gate remains: the 18-test browser matrix on the real machine
-(browsers + MySQL). Two consecutive real-machine runs executed STALE trees; the
-third must verify parity first (git log --oneline -1 => b045b4b or newer).
-
-## Issues Found / Fixed
-
-Found 6 failure classes (A-F) + 8 product hypotheses. Fixed at HEAD: A (auth
-contract fixture), B (Radix portal nav), C (mobile hit-test via centering
-scrollIntoView), product defect #3 (medical-history 404 menu target -> deep
-link), plus all prior iterations (env bootstrap, secret mapping, seed-credential
-sync, locale pin, patient-isolation reset). Classified: D downstream-of-A,
-E secondary (evidenced), F dependency-internal. Hypotheses: slug conflict
-non-existent; prescriptions tab absent (deferred by design); others
-non-reproducible this pass.
-
-## Verification
-
-| Gate                 | Result        | Evidence                                      |
-| -------------------- | ------------- | --------------------------------------------- |
-| Build                | PASS          | npm run verify: 256 pages                     |
-| TypeScript           | PASS          | tsc --noEmit: 0 errors                        |
-| Lint                 | PASS          | 0 errors / 260 warnings                       |
-| Unit/Integration     | PASS          | 6176 passed / 12 skipped / 0 failed           |
-| Prisma               | PASS          | prisma validate: schema valid                 |
-| Dental E2E (collect) | PASS          | 18 tests / 6 projects / 3 scenarios           |
-| Dental E2E (execute) | MACHINE-BOUND | sandbox browsers CDN-blocked (dated evidence) |
-| Full E2E             | MACHINE-BOUND | 2952 tests require browser binaries           |
-
-## Git
-
-Branch: arena/01a0f3e0-dental-clinic-system. HEAD: (this commit). Origin: equal
-after push. Working tree: clean.
-
-## Remaining Limitations
-
-Browser execution only. Every statically and runtime-provable gate is green.
-
-## Final Decision
-
-Engineering complete to the sandbox boundary; certification requires the
-machine-run named in TODO.md item 1.
+My turn budget ran out after S2. `PATCHES.md` already lists the six engine
+patches S3 needs. **These are BUILT-less: no code exists for them yet.**
 
 ---
 
-# V7 Swarm Certification Kernel (current evidence, trust-leveled)
+## 4. Verification numbers
 
-| Gate                              | Status        | Evidence                                                                          | Trust           |
-| --------------------------------- | ------------- | --------------------------------------------------------------------------------- | --------------- |
-| Build                             | PASS          | verify: 256 pages                                                                 | L4              |
-| TypeScript                        | PASS          | tsc --noEmit: 0                                                                   | L2              |
-| Lint                              | PASS          | 0 errors / 260 warnings                                                           | L4              |
-| Unit/Integration                  | PASS          | 6177/12/0                                                                         | L2/L3           |
-| Prisma                            | PASS          | schema valid                                                                      | L2              |
-| Auth contract                     | PASS          | live endpoints (session/providers 200) + contract pins                            | L4              |
-| RBAC server-side                  | PASS          | 401 unauth read/write live; role pins in API tests                                | L4/L3           |
-| Tenant isolation                  | PASS          | cross-hospital 404 pinned (API tests); live-tenant attack needs 2nd tenant MySQL  | L3 (L6 blocked) |
-| Patient isolation                 | PASS          | store reset component-proven + E2E test                                           | L2/L5-pending   |
-| Dental chart (code+API+component) | PASS          | 75+ tests, live boundaries                                                        | L3/L4           |
-| Dental E2E 18x6                   | MACHINE-BOUND | browsers absent, CDN egress-blocked (dated)                                       | —               |
-| Full E2E 2952                     | MACHINE-BOUND | same                                                                              | —               |
-| AI truth                          | PASS          | unauth->401->CF-not-called pinned; fallback model pinned; no fabricated inference | L3              |
-| Chaos (DB down)                   | PASS          | /api/ready honest 503 (boot smoke)                                                | L4              |
-| Concurrency                       | PASS          | double-submit collapsed to one POST (new)                                         | L2              |
-| Clean-room                        | PASS          | full gate re-run from fresh node_modules + regenerated env every turn             | L4              |
-| Browser matrix                    | BLOCKED       | executable-level impossibility, evidenced                                         | —               |
+| Gate | Result | Baseline |
+| --- | --- | --- |
+| Full suite | **Tests 1 failed \| 6545 passed \| 12 skipped (6558)** | 6504 passed ⇒ **not worse (+41)** |
+| Test files | 2 failed \| 360 passed \| 1 skipped (363) | 2 failed \| 357 passed |
+| `tsc --noEmit` | **498** | 498 (unchanged) |
+| `.glb` tracked in git | **0** | 0 |
+| Tree | clean | clean |
 
-## Final Verdict: NOT CERTIFIED
+The 1 failure is the known environmental case
+(`tests/unit/dev-start-env.test.ts` — Prisma client absent in the sandbox), the
+same one present at `0533cac`. `tests/api/imaging-review.test.ts` fails at
+collection and contributes 0 tests — a count divergence I have **not** yet
+diagnosed and am reporting rather than hiding.
 
-Mandatory browser-matrix gates cannot execute in this environment. Every gate
-provable without browsers is at its highest practical trust level. The swarm's
-self-attack (§21/§51) caught and fixed one real defect this pass (HttpOnly
-session proof) — the process works.
+**Red-then-green:** all three new suites were written first and are green on
+the first run after the fix + `readFileSync` in `scripts/dev-start.ts:44`.
+
+## 5. What `scripts/verify-local.sh` should print on your machine
+
+I expect it to print, in this shape:
+
+```
+branch=<your-branch> HEAD=a489bb9…
+typecheck=PASS(498 known) typecheck:vendor=PASS(0) lint=PASS tests=6558(1 fail: prisma-absent)
+build=FAIL(@prisma/client exports — blocker B14) no-glb-in-git=PASS
+```
+
+and for the AI/storage block:
+
+```
+compose=UP orchestrator=UP model_loaded=X/Y model_checksums=OK
+minio=UP session=OK migrate_status_rc=0 env_missing_names=(none)
+STORAGE_DRIVER=s3
+```
+
+Point to check: `env_missing_names=(none)` now requires `setup:dev` to have
+derived the four `S3_*` values from `docker-compose.dev.yml`. If it lists
+names, the compose file moved and `scripts/lib/compose-storage.ts` needs the
+new line — it fails loudly rather than guessing.
+
+## 6. Not verified here
+
+* P3 remains **BUILT** — I am still waiting for your 3 screenshots.
+* S3–S5, S7, S9: **not started**.
+* P9.1 runtime part stays `[LOCAL]` (no Docker, no `.env` in the sandbox).
+* The `imaging-review.test.ts` collection failure: not diagnosed.
+* Licence conflict D1: **open**, deliberately, for counsel.
+
+## 7. Commits this turn
+
+```
+ca2ccf6b1df72b5cacfdbc1f12f084013d59ca9f  P9.1b/c: derive storage defaults from compose; warn on duplicate env keys
+0152c65f1f0664dd29daaa6d0b3f5bde0a94fb22  P4 S1: vendor dental-scope engine MIT source (code only, 0 model files)
+0a6722b5c029b1e98963863dead852b655d4e687  P4 S2: ASSET_MODE (none default), integrity manifest, fetch script, D1 template
+a489bb90e1c11ec8e13985463c709f8a0e21736f  docs(PROGRESS): P4 S1/S2 record
+```
+
+All pushed to both `arena/91dddda0-dental-clinic-system` and
+`merge/fdi52-into-wip`, fast-forward only, `local == origin: YES`.
