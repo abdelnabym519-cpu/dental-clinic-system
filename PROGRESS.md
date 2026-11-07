@@ -1114,3 +1114,49 @@ looked so arbitrary.
 - The runtime proof (list the MinIO bucket, compare both worktrees' `.env`) is
   [LOCAL] — see `docs/USER-VERIFY.md` §3.
 - `scripts/migrate-storage.ts` was located and **NOT run**, as instructed.
+
+## =====================================================================
+## P3 — 2D v2 COMPLETION
+## =====================================================================
+
+status **BUILT** — deliberately NOT "DONE". MASTER §P3 requires the user's
+screenshots (D2 precondition) before this may be called done.
+
+| P3 requirement | Evidence |
+| --- | --- |
+| load from API | `tests/components/rao-odontogram.test.tsx` load group (3) |
+| add/modify/remove -> POST/PUT with the mapped payload | edit group, incl. "POSTs the mapped payload when a finding is added" |
+| failure -> rollback to the last saved snapshot + Arabic error | failure group (3): 500 rollback + `تعذّر حفظ التعديلات. تم التراجع عن التغييرات.`; 403 verbatim; never false-saves |
+| double-submit guard | `inFlightRef` in `RaoOdontogram.tsx` |
+| flush on unmount | debounce group (3), incl. `beforeunload` warning while pending |
+| readOnly from role | `MUTATOR_ROLES = {DOCTOR, ADMIN}`; SUPER_ADMIN/RECEPTIONIST read-only with the Arabic note `وضع العرض فقط — لا يمكنك تعديل المخطط السني` |
+| per-patient reset | `resetForPatient()` + `store.reset()` on patient change |
+| primary teeth 51-85 editable after P2 | `RaoOdontogram.tsx:208,237-239` — `slotToFdi(slot, isPrimary)` maps a library slot back to 51-85; P2 made the API accept the result |
+| no English sentence reachable | see below |
+| CSS scoped to `.rao-scope`, 13-test guard | `tests/unit/rao-vendor-css-scope.test.ts` (13) |
+| dark mode follows the app class | `tailwind.config` `darkMode: ['class']`; `.dark` sits on `<html>`, an ancestor of `.rao-scope`, so `.dark .rao-scope` matches. PATCH 9 rewrote the two bare `.dark` rules to `.dark .rao-scope`, preserving them. |
+| restricted to mappable conditions | `docs/dental-chart/CONDITION-MAPPING.md` (8.3 KB); unmapped findings surface in the `حالات غير معروضة في المخطط` panel |
+
+    $ npx vitest run tests/components/rao-odontogram.test.tsx \
+                     tests/unit/rao-vendor-css-scope.test.ts \
+                     tests/unit/rao-adapter-roundtrip.test.ts
+     Test Files  3 passed (3)
+          Tests  100 passed (100)
+
+### The English sentence — located, NOT fixed, proven unreachable from v2
+
+`components/dental-chart/odontogram/Odontogram.tsx:234-236`, a hardcoded
+ternary with **no `t()` wrapper**, which is why it renders in Arabic mode:
+
+    : 'Click on a tooth or individual surface to view and update clinical findings. (FDI notation)'}
+
+    $ grep -rn "Click on a tooth or individual surface" components/ app/ vendor/
+    components/dental-chart/odontogram/Odontogram.tsx:236
+
+Exactly one hit, in the OLD chart. v2 imports neither that component nor any
+hardcoded English string, so the sentence cannot reach it. Left unfixed on
+purpose — the old chart is protected until the user says ACCEPT (D2).
+
+### STOP — user acceptance required
+
+The following is [LOCAL] and is where this task stops.

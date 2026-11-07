@@ -29,7 +29,7 @@ one tip hash identifies both.
 - [x] **P9.1 (code part only)** — single source of truth for storage variables,
       `setup:dev` guarantees `STORAGE_*`/`S3_*`, analyze route pre-flight with an
       Arabic message instead of a raw `NoSuchKey`. Test-first.
-- [ ] **P3 2D v2 COMPLETION** — then **STOP** at the user-acceptance step
+- [x] **P3 2D v2 COMPLETION (code) — STOPPED at user acceptance** — then **STOP** at the user-acceptance step
       (D2 precondition) and ask for screenshots before calling it done.
 - [ ] **P4** 3D dental-scope engine (S1–S9) — not started.
 - [ ] **P5** unified workspace — not started.
