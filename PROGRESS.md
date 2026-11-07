@@ -1244,3 +1244,71 @@ no value (`hunter2`) can ever reach the warning text.
 
     Test Files  5 passed (5)
          Tests  56 passed (56)
+
+## =====================================================================
+## P4 — DENTAL-SCOPE 3D CHART (STARTED; CODE PARTS ONLY)
+## =====================================================================
+
+### S1 — vendor the MIT engine with licence and notices — **BUILT**
+
+`vendor/dental-scope-engine/` (commit `0a6722b`'s parent `0152c65`):
+
+| Field | Value |
+| --- | --- |
+| Upstream | https://github.com/Yoosseph/dental-scope |
+| Pinned commit | `e34d4b986d5439501f23c91cde593f69a3b180b0` |
+| Code licence | **MIT** (`LICENSE` vendored verbatim) |
+| Files | **115 files, 1.5 MB — 0 model files** |
+| Provenance | `VENDOR.md` |
+| Patch log | `PATCHES.md` — empty at S1; the tree is upstream verbatim |
+
+The upstream tarball is ~266 MB, of which **571 files are 3D model assets**.
+None is committed:
+
+    $ git ls-files | grep -Eic '\.glb$'
+    0
+
+Also excluded: `docs/`, `e2e/`, `.github/`, and every upstream `*.test.ts`.
+
+Facts verified by READING the vendored source (not from memory):
+* `src/engine/Engine.ts:86` `export class Engine`; `:186` `mount(container)`;
+  `:265` `dispose()`.
+* Tooth meshes keyed **`tooth-<NN>`** = the two-digit FDI number
+  (`Engine.ts:313`, `DevelopmentScene.ts:62,305`) — this is the key↔FDI mapping
+  the adapter needs.
+* Runtime deps we need: **three, three-mesh-bvh, zustand** (React/fonts/analytics
+  belong to its own UI chrome, not used).
+* Vite/ESM-only ⇒ must load via `next/dynamic` with `ssr: false`.
+
+### S2 — asset modes, DEFAULT `none` — **BUILT**
+
+`lib/dental-chart/3d/asset-mode.ts`:
+
+* `none` **(DEFAULT)** · `local` · `bundled`.
+* An unknown or missing `ASSET_MODE` falls back to `none`, never to a mode that
+  loads third-party meshes.
+* **`bundled` throws `BundledAssetsBlockedError`** until `docs/legal/3D-ASSETS-DECISION.md`
+  contains the marker `D1-DECISION-RECORDED`.
+* `neurovascular.glb` is forbidden in **every** mode (CC BY-SA 4.0, Z-Anatomy).
+
+`3d-assets.manifest.json` — committed, **34 entries, 53.6 MB, 0 forbidden
+files**. Real SHA-256 digests computed from the pinned tarball, plus the
+upstream commit and the licence text. It records the licence conflict honestly
+(2.1 JP vs CC BY 4.0, marked UNRESOLVED) instead of picking a side.
+
+`scripts/3d-assets/fetch.mjs` — downloads the **pinned** commit, extracts only
+manifest-listed files, verifies every SHA-256 and size, writes to the
+gitignored `.local-assets/3d/`. A checksum mismatch is a **hard failure**; a
+digest is never edited to make a check pass.
+
+`docs/legal/3D-ASSETS-DECISION.md` — the D1 template with the four lawyer
+questions. It is a TEMPLATE: it does not contain the marker, so `bundled` is
+refused.
+
+Tests `tests/unit/asset-mode.test.ts` (14) — defaults, `bundled` blocked-without-D1,
+forbidden assets, and manifest integrity.
+
+### S3, S4–S5, S7, S9 (partial) — **NOT STARTED**
+
+The budget for this turn ran out after S2. `PATCHES.md` already lists the six
+engine patches S3 needs.
