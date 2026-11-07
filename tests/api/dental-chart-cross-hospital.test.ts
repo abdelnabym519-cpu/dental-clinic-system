@@ -191,18 +191,134 @@ describe('RBAC on writes', () => {
   })
 })
 
-describe('tooth number validation', () => {
-  it('rejects a primary tooth 51-85 with 400', async () => {
+describe('tooth number validation — shared isValidFdi (52 ids: 32 permanent + 20 primary)', () => {
+  /**
+   * The canonical rule set lives in lib/dental-chart/fdi.ts. BOTH write routes
+   * must use it, so a primary tooth (51-85) is accepted everywhere and no
+   * route can drift back to a permanent-only list.
+   *
+   * History: this block used to pin "51 => 400". That pinned the BUG, not the
+   * rule. Per MASTER-DENTORA-ALL-IN-ONE.md (task P2) the invalid example moves
+   * to 56 (a primary quadrant has only indices 1-5) and the positives below
+   * pin the corrected behaviour.
+   */
+
+  const txOk = () =>
+    prismaMock.$transaction.mockImplementation(async (fn: any) =>
+      fn({
+        dentalChartEntry: {
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          create: vi.fn().mockResolvedValue({ id: 'new' }),
+        },
+      }),
+    )
+
+  it.each([51, 55, 61, 65, 71, 75, 81, 85])('POST accepts primary tooth %s', async (tooth) => {
+    state.role = 'DOCTOR'
+    prismaMock.patient.findFirst.mockResolvedValue({ id: 'patient-A' })
+    txOk()
+    const res = await POST(
+      req('POST', 'http://localhost/api/dental-chart', {
+        patientId: 'patient-A',
+        toothNumber: tooth,
+        condition: 'CARIES',
+      }),
+    )
+    expect(res.status).not.toBe(400)
+    expect(prismaMock.$transaction).toHaveBeenCalled()
+  })
+
+  it.each([11, 48])('POST still accepts permanent tooth %s', async (tooth) => {
+    state.role = 'DOCTOR'
+    prismaMock.patient.findFirst.mockResolvedValue({ id: 'patient-A' })
+    txOk()
+    const res = await POST(
+      req('POST', 'http://localhost/api/dental-chart', {
+        patientId: 'patient-A',
+        toothNumber: tooth,
+        condition: 'CARIES',
+      }),
+    )
+    expect(res.status).not.toBe(400)
+  })
+
+  it.each([56, 86, 19, 99, 0, -11, 1.5, '51', true])('POST rejects %s with 400', async (tooth) => {
     state.role = 'DOCTOR'
     prismaMock.patient.findFirst.mockResolvedValue({ id: 'patient-A' })
     const res = await POST(
       req('POST', 'http://localhost/api/dental-chart', {
         patientId: 'patient-A',
-        toothNumber: 51,
+        toothNumber: tooth,
         condition: 'CARIES',
       }),
     )
     expect(res.status).toBe(400)
-    expect(prismaMock.dentalChartEntry.create).not.toHaveBeenCalled()
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('POST reports the failure as an FDI message (protected wording)', async () => {
+    state.role = 'DOCTOR'
+    prismaMock.patient.findFirst.mockResolvedValue({ id: 'patient-A' })
+    const res = await POST(
+      req('POST', 'http://localhost/api/dental-chart', {
+        patientId: 'patient-A',
+        toothNumber: 56,
+        condition: 'CARIES',
+      }),
+    )
+    const json = await res.json()
+    expect(json.error).toMatch(/FDI/i)
+  })
+
+  it('POST rejects a missing toothNumber (null / undefined)', async () => {
+    state.role = 'DOCTOR'
+    prismaMock.patient.findFirst.mockResolvedValue({ id: 'patient-A' })
+    for (const toothNumber of [null, undefined]) {
+      const res = await POST(
+        req('POST', 'http://localhost/api/dental-chart', {
+          patientId: 'patient-A',
+          toothNumber,
+          condition: 'CARIES',
+        }),
+      )
+      expect(res.status).toBe(400)
+    }
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+  })
+
+  // ---- PUT: it historically had NO tooth-number validation at all --------
+  it.each([51, 85])('PUT accepts primary tooth %s', async (tooth) => {
+    state.role = 'DOCTOR'
+    prismaMock.dentalChartEntry.findFirst.mockResolvedValue({ id: 'e1', toothNumber: 36 })
+    prismaMock.dentalChartEntry.update.mockResolvedValue({ id: 'e1', toothNumber: tooth })
+    const res = await PUT(
+      req('PUT', 'http://localhost/api/dental-chart/e1', { toothNumber: tooth }),
+      { params: Promise.resolve({ id: 'e1' }) },
+    )
+    expect(res.status).not.toBe(400)
+    expect(prismaMock.dentalChartEntry.update).toHaveBeenCalled()
+  })
+
+  it.each([56, 86, 19, 99, '51'])('PUT rejects %s with 400', async (tooth) => {
+    state.role = 'DOCTOR'
+    prismaMock.dentalChartEntry.findFirst.mockResolvedValue({ id: 'e1', toothNumber: 36 })
+    const res = await PUT(
+      req('PUT', 'http://localhost/api/dental-chart/e1', { toothNumber: tooth }),
+      { params: Promise.resolve({ id: 'e1' }) },
+    )
+    expect(res.status).toBe(400)
+    expect(prismaMock.dentalChartEntry.update).not.toHaveBeenCalled()
+  })
+
+  it('PUT still works when no toothNumber is sent', async () => {
+    state.role = 'DOCTOR'
+    prismaMock.dentalChartEntry.findFirst.mockResolvedValue({ id: 'e1', toothNumber: 36 })
+    prismaMock.dentalChartEntry.update.mockResolvedValue({ id: 'e1', toothNumber: 36 })
+    const res = await PUT(
+      req('PUT', 'http://localhost/api/dental-chart/e1', { condition: 'FILLED' }),
+      { params: Promise.resolve({ id: 'e1' }) },
+    )
+    expect(res.status).not.toBe(400)
+    expect(prismaMock.dentalChartEntry.update).toHaveBeenCalled()
   })
 })

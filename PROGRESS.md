@@ -887,3 +887,87 @@ not caused by any chart work.
 Compare with the last reported baseline at `8cedb99` (6447 passed / 1 failed /
 12 skipped): **+2 tests** (the two new `rao-vendor-exports` guards), same
 single environmental failure. The suite did NOT get worse.
+
+## =====================================================================
+## P1 — REPAIR THE BROKEN BUILD
+## =====================================================================
+
+status **VERIFIED-HERE** for the bundling error; **BLOCKED** (B18/B14) for the
+final `npm run build` exit code, which needs the user's machine.
+
+### Root cause
+
+`RaoOdontogram.tsx` imports imperative state functions from the vendored
+library's entry module. Three of them — `resetForPatient`, `getToothStates`
+and `setSelectedTeeth` — are defined in `vendor/.../src/odontogram.ts`
+(lines 8222 / 8250 / 8271) but were never re-exported from
+`vendor/.../src/index.ts`, which only did `export * from './App'`.
+
+**Why the mocks hid it (the actual lesson):**
+
+1. `tests/components/rao-odontogram.test.tsx` mocks `rao-odontogram` with
+   `vi.mock()`, so the component never touched the REAL entry module. The mock
+   supplied `getToothStates` because the test author wrote it that way.
+2. `types/rao-odontogram.d.ts` is an **ambient** declaration: it ASSERTSthe
+   names exist. `npx tsc --noEmit` therefore stayed clean — the declaration
+   asserted the exports instead of the code providing them.
+3. Only a real bundler resolves actual module exports, and that runs in
+   `npm run build`, which this sandbox could not execute (B14).
+   Mock + ambient declaration = two independent layers of false assurance.
+
+That is why MASTER §4.4 requires at least one test per vendored module that
+loads the REAL module. `tests/unit/rao-vendor-exports.test.ts` is that test.
+
+### The fix — already on origin, therefore REUSED not redone
+
+`baf39b2` (Patch 10) adds to `vendor/.../src/index.ts`:
+
+    export { resetForPatient, getToothStates, setSelectedTeeth } from './odontogram'
+
+MASTER §1 says: "Redo P1 from the remote state; if origin already contains any
+of it, reuse it." It does, so it was re-verified rather than rewritten.
+
+### Non-mock guards (2a + 2b)
+
+`tests/unit/rao-vendor-exports.test.ts` imports the REAL module
+(`import * as realRao from 'rao-odontogram'`, resolved through the vitest
+alias) and (a) parses every `export function X(` declared in
+`types/rao-odontogram.d.ts`, asserting each is a real function on the real
+module; (b) smoke-tests importStatus / getToothStates / onStateChange /
+resetForPatient / setSelectedTeeth / getSelectedTeeth / initOdontogram /
+destroyOdontogram / OdontogramShell / default.
+
+    $ npx vitest run tests/unit/rao-vendor-exports.test.ts tests/unit/rao-vendor-patches.test.ts
+     Test Files  2 passed (2)
+          Tests  17 passed (17)
+
+### NEGATIVE CONTROL (2c) — inject the fault, watch it fail, revert
+
+    - export { resetForPatient, getToothStates, setSelectedTeeth } from './odontogram'
+    + export { resetForPatient, setSelectedTeeth } from './odontogram'
+
+     Test Files  1 failed (1)
+          Tests  2 failed (2)
+     AssertionError: expected 'undefined' to be 'function'
+
+Reverted -> `Tests 17 passed (17)` and `git status --short` empty. Both guards
+fail on the exact fault that broke the user's build, so neither is vacuous.
+
+### Build
+
+    $ npm run build
+    ✓ Compiled successfully in 6.8s
+    Failed to type check.
+    BUILD_EXIT=1
+
+    $ grep -cE "Export (getToothStates|resetForPatient|setSelectedTeeth) doesn't exist" <log>
+    0
+
+The original symptom is GONE. Type checking now fails only on missing
+`@prisma/client` exports (B14), e.g. `prisma/seed.ts(12,3): error TS2305`.
+The only chart-related type errors are Prisma-inference artifacts:
+`app/api/dental-chart/route.ts(75,22)` and `(155,52)` — TS7006 implicit-any on
+`entry` / `tx` — which cannot occur once the client is generated.
+
+**`npm run build` therefore stays [LOCAL] (B18) until the user runs it after
+`npx prisma generate`.**

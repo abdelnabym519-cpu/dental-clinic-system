@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 
 // GET - Get single dental chart entry
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -55,6 +56,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const body = await request.json()
 
+    // Validate the tooth number against the shared FDI rule set (52 ids) when
+    // the client sends one. This route had NO tooth validation at all before,
+    // so a caller could write toothNumber: 99 straight into the database.
+    // isValidFdi takes `unknown`: '51', 1.5, true and null are all rejected.
+    if (body.toothNumber !== undefined && !isValidFdi(body.toothNumber)) {
+      return NextResponse.json(
+        {
+          error:
+            'Invalid tooth number. Use FDI notation (permanent 11-48, primary 51-85)',
+        },
+        { status: 400 },
+      )
+    }
+
     // Check if entry exists and belongs to this hospital
     const existingEntry = await prisma.dentalChartEntry.findFirst({
       where: { id, hospitalId },
@@ -67,6 +82,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updateData: any = {}
 
     if (body.condition !== undefined) updateData.condition = body.condition
+    // Validated above - only reached when isValidFdi(body.toothNumber) is true.
+    if (body.toothNumber !== undefined) updateData.toothNumber = body.toothNumber
     if (body.severity !== undefined) updateData.severity = body.severity
     if (body.notes !== undefined) updateData.notes = body.notes
     if (body.resolvedDate !== undefined) updateData.resolvedDate = body.resolvedDate

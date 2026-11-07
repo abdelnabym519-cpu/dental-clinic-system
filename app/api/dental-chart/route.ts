@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuthAndRole } from '@/lib/api-helpers'
+import { isValidFdi } from '@/lib/dental-chart/fdi'
 
 // GET - Get dental chart entries for a patient
 export async function GET(request: NextRequest) {
@@ -127,16 +128,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate tooth number (FDI notation: 11-18, 21-28, 31-38, 41-48)
-    const validToothNumbers = [
-      11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37,
-      38, 41, 42, 43, 44, 45, 46, 47, 48,
-    ]
-
-    if (!validToothNumbers.includes(toothNumber)) {
+    // Validate against the SINGLE canonical FDI rule set in
+    // lib/dental-chart/fdi.ts: all 52 identifiers - 32 permanent (11-48) plus
+    // the 20 primary/deciduous teeth (51-85). A literal array here is what
+    // silently locked primary teeth out of this API.
+    // isValidFdi takes `unknown`, so a numeric string ('51'), a float, a
+    // boolean, null and undefined are rejected without any coercion.
+    if (!isValidFdi(toothNumber)) {
       return NextResponse.json(
-        { error: 'Invalid tooth number. Use FDI notation (11-18, 21-28, 31-38, 41-48)' },
-        { status: 400 }
+        {
+          error:
+            'Invalid tooth number. Use FDI notation (permanent 11-48, primary 51-85)',
+        },
+        { status: 400 },
       )
     }
 
