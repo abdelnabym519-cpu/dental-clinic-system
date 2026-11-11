@@ -85,18 +85,62 @@ if [ ! -f "$MANIFEST" ]; then
   say "MANIFEST MISSING: $MANIFEST"
   MAN_RC=1
 else
-  ENTRIES=$(grep -cvE '^(#|$)' "$MANIFEST" | tr -d ' ')
-  say "manifest entries: $ENTRIES"
+  # A data line must be: <64 hex chars><whitespace><relative path>.
+  # GNU sha256sum tolerates one space or a tab, but NOT a leading "*" binary
+  # marker or a CRLF, and it aborts with the confusing
+  # "no properly formatted checksum lines found" when a file holds comments
+  # and no data lines at all. Normalise into the canonical two-space shape
+  # first so the check reports REAL mismatches instead of formatting noise.
+  # (Awk here avoids {n} intervals, which not every awk supports.)
+  MAN_NORM="$(mktemp)"
+  awk '
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
+    {
+      sub(/\r$/, "")
+      h = $1
+      if (length(h) == 64 && h ~ /^[0-9a-fA-F]+$/) {
+        p = $0
+        sub(/^[[:space:]]*[0-9a-fA-F]+[[:space:]]+/, "", p)
+        sub(/^\*/, "", p)
+        if (p != "") printf "%s  %s\n", h, p
+      }
+    }' "$MANIFEST" > "$MAN_NORM"
+  ENTRIES=$(grep -c '' "$MAN_NORM" | tr -d ' ')
+  say "manifest data lines: $ENTRIES"
   if [ "$ENTRIES" = "0" ]; then
-    say "MANIFEST IS EMPTY/PLACEHOLDER — model files are not present in this"
-    say "worktree. Generate it after placing the weights:"
-    say "    ./scripts/3d-assets/../.. (see docs/USER-VERIFY.md, section 'models')"
-    say "    ( cd ai-validation && sha256sum <each model file> > models.sha256 )"
+    say "MANIFEST HAS NO DATA LINES — comments only, so there is nothing to"
+    say "verify. Expected when the model weights are absent from this machine."
+    say "A data line MUST be:  64 hex chars, TWO spaces, then the path:"
+    say "    fac62870b9f9ab47...(64 hex total)...  models/your-model.bin"
+    say "Generate one after placing the weights:"
+    say "    ( cd ai-validation && sha256sum models/*.bin > models.sha256 )"
+    say "See docs/USER-VERIFY.md, section 'models'."
     MAN_RC=1
   else
-    ( cd ai-validation && sha256sum -c models.sha256 2>&1 ) | tee -a "$LOG"
+    MAN_OUT="$(mktemp)"
+    ( cd ai-validation && sha256sum -c "$MAN_NORM" 2>&1 ) | tee "$MAN_OUT" | tee -a "$LOG"
     MAN_RC=${PIPESTATUS[0]}
+    # Print the NAME of every failing model, not just a pass/fail bit.
+    FAILED_MODELS="$(grep -E ' FAILED( |$)' "$MAN_OUT" | sed 's/: FAILED.*//' | sort -u)"
+    MISSING_MODELS="$(grep -E 'No such file or directory' "$MAN_OUT" \
+      | sed -e 's/^sha256sum: //' -e 's/: No such file or directory.*//' | sort -u)"
+    if [ -n "$FAILED_MODELS" ] || [ -n "$MISSING_MODELS" ]; then
+      say "FAILING MODELS:"
+      if [ -n "$FAILED_MODELS" ]; then
+        say "  checksum mismatch:"
+        printf '    %s\n' "$FAILED_MODELS" | tee -a "$LOG"
+      fi
+      if [ -n "$MISSING_MODELS" ]; then
+        say "  file not found:"
+        printf '    %s\n' "$MISSING_MODELS" | tee -a "$LOG"
+      fi
+    else
+      say "all $ENTRIES model(s) matched their manifest digest"
+    fi
+    rm -f "$MAN_OUT"
   fi
+  rm -f "$MAN_NORM"
 fi
 SUMMARY="$SUMMARY model_checksums=$([ "$MAN_RC" = 0 ] && echo OK || echo FAIL)"
 say
@@ -116,8 +160,12 @@ say
 # ---------------------------------------------------------------------------
 say "----- 5. GET /api/auth/session -----"
 SESS_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 6 http://localhost:3000/api/auth/session 2>/dev/null || true)
-[ -z "$SESS_CODE" ] && SESS_CODE="000-no-response"
-say "GET http://localhost:3000/api/auth/session -> HTTP $SESS_CODE"
+# "000" is curl's way of saying "nothing is listening". Say so in words
+# rather than printing a bare HTTP code that reads like a server error.
+if [ -z "$SESS_CODE" ] || [ "${SESS_CODE#000}" != "$SESS_CODE" ]; then
+  SESS_CODE="dev server not running"
+fi
+say "GET http://localhost:3000/api/auth/session -> ${SESS_CODE}"
 SUMMARY="$SUMMARY session=$SESS_CODE"
 say
 
@@ -150,7 +198,12 @@ else
   else
     say "MISSING NAMES ($MISSING_COUNT): $MISSING"
   fi
-  SUMMARY="$SUMMARY env_missing_names=$MISSING_COUNT"
+  # Print the NAMES compactly (comma-separated, no spaces). A bare count
+  # does not tell the user which variable to add.
+  MISSING_CSV="$(printf '%s' "$MISSING" | tr ' ' ',' | sed 's/^,//;s/,,*/,/g;s/,$//')"
+  [ -z "$MISSING_CSV" ] && MISSING_CSV="none"
+  say "paste-back: env_missing_names=$MISSING_CSV"
+  SUMMARY="$SUMMARY env_missing_names=$MISSING_CSV"
 fi
 say
 

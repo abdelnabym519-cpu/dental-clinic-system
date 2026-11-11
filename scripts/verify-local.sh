@@ -71,6 +71,12 @@ GATE_NAMES=()
 GATE_RC=()
 GATE_NOTE=()
 
+# Remove ANSI colour/escape sequences so summary greps can anchor on ^.
+strip_ansi () {
+  sed -e "s/$(printf '\033')\\[[0-9;]*[A-Za-z]//g" \
+      -e "s/$(printf '\033')\][^$(printf '\007')]*$(printf '\007')//g"
+}
+
 note_for () {
   # Pull the one human-readable summary line out of a gate's output.
   local name="$1" f="$2" n=""
@@ -81,8 +87,17 @@ note_for () {
       n="$(grep -E '[0-9]+ problems? \(' "$f" | tail -1)"
       [ -z "$n" ] && n="$(grep -cE 'error' "$f" | tr -d ' ') error-ish lines" ;;
     tests)
-      n="$(grep -E '^[[:space:]]*Test Files' "$f" | tail -1 | sed 's/^[[:space:]]*//')"
-      n="$n ; $(grep -E '^[[:space:]]*Tests' "$f" | tail -1 | sed 's/^[[:space:]]*//')" ;;
+      # Vitest colourises its summary, so the lines begin with an ANSI escape
+      # (\x1b[32m) — which is why a '^[[:space:]]*Test Files' grep matched
+      # nothing and this row printed an empty detail. Strip ANSI first.
+      local tf tt
+      tf="$(strip_ansi <"$f" | grep -E 'Test Files' | tail -1 \
+            | sed -e 's/^[[:space:]]*Test Files[[:space:]]*//' -e 's/[[:space:]]*$//')"
+      tt="$(strip_ansi <"$f" | grep -E '^[[:space:]]*Tests[[:space:]]' | tail -1 \
+            | sed -e 's/^[[:space:]]*Tests[[:space:]]*//' -e 's/[[:space:]]*$//')"
+      [ -z "$tf" ] && tf="(no 'Test Files' line)"
+      [ -z "$tt" ] && tt="(no 'Tests' line)"
+      n="files: $tf ; tests: $tt" ;;
     build)
       n="$(grep -E 'Compiled successfully|Failed to compile|error during build|✓ Compiled' "$f" | tail -1)"
       [ -z "$n" ] && n="(no compile summary line)" ;;

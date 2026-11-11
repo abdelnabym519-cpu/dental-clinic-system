@@ -1312,3 +1312,92 @@ forbidden assets, and manifest integrity.
 
 The budget for this turn ran out after S2. `PATCHES.md` already lists the six
 engine patches S3 needs.
+
+## =====================================================================
+## P4/S0 — LICENCE HYGIENE: CC BY-SA 4.0 content DELETED from the vendored engine
+## =====================================================================
+
+status **VERIFIED-HERE** (source-level; the bundle proof is at the end).
+
+The engine CODE is MIT. Upstream `src/content/` is a **different work** under
+**CC BY-SA 4.0**: five languages of educational prose plus `canal-counts.json`
+— clinical data nobody approved. Deleted, not relicensed, not trimmed.
+
+### Removed (20 files under `src/content/`)
+
+`canal-counts.json`, `canalFrequency.ts`, `content.ts`,
+`descriptionCoverage.ts`, `developmentAnatomy.ts`, `feedbackAnatomy.ts`,
+`hyoidAttachments.ts`, `supportingAnatomy.ts`, `toothGuides.ts`,
+`vesselReferences.ts`, `{de,en,es,la,sv}/structures.json`,
+`{de,en,es,la,sv}/teeth.json`.
+
+Also removed `src/app/about.ts` and `src/app/guide.ts` — their only purpose was
+rendering that content (and they are chrome S3 hides anyway).
+
+### Replacement: `src/stubs/educational-text.ts` (PATCH 1)
+
+Same export names and types, **EMPTY data**. Types were reconstructed from the
+deleted files' signatures in git history and from their consumers' usage, not
+invented.
+
+| Export | Stub value | Consumer |
+| --- | --- | --- |
+| `resolveContent()` | `{key:null, summary:'', sources:[], facts:[], related:[], guides:[], status:'placeholder'}` | `Engine.ts:1047`, `ui/DetailPanel.tsx` |
+| `canalFrequency()` | `undefined` → panel does `if (!item) return null` | `ui/CanalFrequency.tsx` |
+| `formatPercent()` | `''` | `ui/CanalFrequency.tsx` |
+| `frequencyContext()` | `[]` | `ui/CanalFrequency.tsx` |
+| `hyoidAttachments()` | `[]` | `ui/HyoidConnections.tsx` |
+| `DEVELOPMENT_SOURCES` / `HYOID_SOURCES` | `[]` | `DevelopmentControls.tsx`, `GuidedTour.tsx`, `HyoidConnections.tsx` |
+
+Six modules repointed. **`summary` is `''`, not `undefined`**: `Engine.ts` does
+`resolveContent(...).summary!` → `textContent`, and `undefined` would render the
+literal English word "undefined" into an Arabic-only UI.
+
+### ⚠ GIT HISTORY STILL CONTAINS THE FILES — an input to D1
+
+Deletion removes them from the tip, not from history. Every commit up to
+`0152c65f1f0664dd29daaa6d0b3f5bde0a94fb22` still carries the full CC BY-SA 4.0
+tree. If this repo is ever published or handed over, that content is disclosed
+by the history. Recorded in `docs/dental-chart/ASSETS.md` — **not resolved here**.
+
+### Enforcement — `tests/unit/dental-scope-licence.test.ts` (13)
+
+Fails if any path in `vendor/dental-scope-engine` matches
+`content|docs|\.glb|neurovascular`; if any source still imports from
+`content/`; or if the stub ships non-empty data. **Negative control:** adding
+`src/content/probe.ts` ⇒ 1 failed; removing it ⇒ 13 passed.
+
+### Bundle proof
+
+Nothing outside `vendor/` imports the engine (0 matches in `app/`, `lib/`,
+`components/`, `next.config.*`, `tsconfig.json`), so it cannot reach the
+bundle. `git ls-files | grep -Eic '\.glb$'` = **0**; no `canal-counts.json`,
+`teeth.json` or `structures.json` anywhere in the worktree.
+
+### Known hazard for S3 (NOT fixed here)
+
+`Engine.ts:1108` and `:1251` call `loader.load('neurovascular.glb')` and `:77`
+lists it as a stage. That file is CC BY-SA 4.0 (Z-Anatomy) and must never be
+fetched — S3 must neutralise the loader.
+
+## =====================================================================
+## verify-local.sh / verify-ai.sh — three reported defects fixed
+## =====================================================================
+
+1. **`tests` row printed an empty detail.** Vitest colourises its summary, so
+   lines begin with an ESC sequence; `^[[:space:]]*Test Files` never matched.
+   Reproduced with `FORCE_COLOR=1` (old ⇒ `note=''`, new ⇒
+   `files: 1 passed (1) ; tests: 13 passed (13)`). Added `strip_ansi`.
+
+2. **`sha256sum -c` → "no properly formatted checksum lines".** The committed
+   `ai-validation/models.sha256` contains **comments and zero data lines**, so
+   there was nothing to parse. The script now distinguishes that case, prints
+   the required format (`<64 hex><TWO spaces><path>`) and a generation
+   command, and only runs `-c` when data lines exist. Data lines are
+   normalised first (portable awk — no `{n}` intervals, which not every awk
+   supports), and **the name of every failing model is printed**. Verified
+   against fixtures: canonical/1-space/tab ⇒ OK; empty ⇒ HOW-TO branch;
+   a corrupted entry ⇒ `failing: b.bin`.
+
+3. **`session=000-no-response`** ⇒ now `session=dev server not running`.
+   **`env_missing_names=<count>`** ⇒ now comma-separated NAMES (or `none`).
