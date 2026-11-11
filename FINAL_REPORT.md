@@ -1,263 +1,170 @@
-# FINAL REPORT — 2026-11-11 — P4/S1 LICENCE HYGIENE (blocking) + verify-script fixes
+# FINAL REPORT — 2026-11-11 — P4/S3: the six Dentora engine patches
 
 ## Tip — FULL 40 characters
 
 ```
 git rev-parse HEAD
-794b8a4af32d0643b8b5075894c86543590a4485
+eb8a2e15718f22548790122d19b1c217144258fd
 ```
 
 ```
-remote arena : 794b8a4af32d0643b8b5075894c86543590a4485
-remote merge : 794b8a4af32d0643b8b5075894c86543590a4485
-local  HEAD  : 794b8a4af32d0643b8b5075894c86543590a4485
+remote arena : eb8a2e15718f22548790122d19b1c217144258fd
+remote merge : eb8a2e15718f22548790122d19b1c217144258fd
+local  HEAD  : eb8a2e15718f22548790122d19b1c217144258fd
 ```
 
 `local == origin: YES` — verified with `git ls-remote` on both branches.
-Two commits this turn, both pushed in the same turn:
+One commit this turn, pushed in the same turn:
 
 ```
-087fc7ca93810a60d2665d75e77442d3ae411274  P4/S1 licence hygiene: delete CC BY-SA 4.0 content tree from vendored dental-scope, replace with empty typed stub
-794b8a4af32d0643b8b5075894c86543590a4485  P4/S1 licence hygiene + verify script fixes (test counts, sha256 manifest, session/env reporting)
+eb8a2e15718f22548790122d19b1c217144258fd  P4/S3: six Dentora engine patches (appearance, selection, reset, dispose, chrome) + typecheck:vendor-3d + 25 contract tests
 ```
 
----
-
-## 1. LICENCE HYGIENE — status **VERIFIED-HERE** (source-level)
-
-**Root cause.** The dental-scope engine *code* is MIT, but upstream
-`src/content/` is a **separate work under CC BY-SA 4.0** — five languages of
-educational prose plus `canal-counts.json`, clinical data nobody approved. My
-S1 vendoring had copied it wholesale. You were right: that was a licence
-violation waiting to ship.
-
-**Action: deleted, not relicensed, not trimmed.** 20 files under
-`src/content/`, plus `src/app/about.ts` and `src/app/guide.ts`, whose only job
-was rendering that content.
-
-### The grep you asked for
+Step 1 (licence hygiene) and step 6 (verify scripts) were completed last turn
+at `087fc7ca…` / `794b8a4a…` / `8b0b8d89…` and are verified still in place:
 
 ```
-$ git ls-files vendor/dental-scope-engine | grep -Ei "content|docs|\.glb|neurovascular"
-(no output)
-
 $ git ls-files vendor/dental-scope-engine | grep -Eic 'content|docs|\.glb|neurovascular'
 0
-```
-
-Working tree agrees (`find`, not git):
-
-```
-$ find vendor/dental-scope-engine \( -iname '*content*' -o -iname '*docs*' -o -iname '*.glb' -o -iname '*neurovascular*' \) | wc -l
-0
-```
-
-### Replacement stub — `src/stubs/educational-text.ts` (PATCH 1)
-
-Same export names and types, **EMPTY data**. Types were reconstructed from the
-deleted files' signatures **in git history** and from their **consumers'**
-usage — not invented.
-
-| Export | Stub value | Consumer |
-| --- | --- | --- |
-| `resolveContent()` | `{key:null, summary:'', sources:[], facts:[], related:[], guides:[], status:'placeholder'}` | `Engine.ts:1047`, `ui/DetailPanel.tsx` |
-| `canalFrequency()` | `undefined` → panel does `if (!item) return null` | `ui/CanalFrequency.tsx` |
-| `formatPercent()` | `''` | `ui/CanalFrequency.tsx` |
-| `frequencyContext()` | `[]` | `ui/CanalFrequency.tsx` |
-| `hyoidAttachments()` | `[]` | `ui/HyoidConnections.tsx` |
-| `DEVELOPMENT_SOURCES` / `HYOID_SOURCES` | `[]` | `DevelopmentControls.tsx`, `GuidedTour.tsx`, `HyoidConnections.tsx` |
-
-Six modules repointed. The stub **typechecks with 0 errors**
-(`tsc --noEmit --strict --allowImportingTsExtensions …`).
-
-**One deliberate detail worth your attention:** `summary` is `''`, **not**
-`undefined`. `Engine.ts` does `resolveContent(...).summary!` and assigns it to
-`textContent`; `undefined` would render the literal English word **"undefined"**
-into an Arabic-only UI. The stub returns an empty string so the node stays
-empty.
-
-### ⚠ GIT HISTORY STILL CONTAINS THE FILES — input to D1
-
-Deletion removes them from the tip, **not from history**. Every commit up to
-`0152c65f1f0664dd29daaa6d0b3f5bde0a94fb22` still carries the full CC BY-SA 4.0
-tree:
-
-```
-git log --all --oneline -- vendor/dental-scope-engine/src/content/
-git show 0152c65:vendor/dental-scope-engine/src/content/canal-counts.json
-```
-
-If this repository is ever published, pushed publicly, or handed to a third
-party, that content is **disclosed by the history**. Recorded in
-`docs/dental-chart/ASSETS.md`. I did **not** resolve it — that is D1's job.
-
-### Tests added — `tests/unit/dental-scope-licence.test.ts` (13)
-
-Fails if any path in the vendor tree matches `content|docs|\.glb|neurovascular`;
-if any source still imports from `content/`; if a model file appears; or if the
-stub ever ships non-empty data.
-
-**Red-then-green (negative control):**
-
-```
-mkdir -p vendor/dental-scope-engine/src/content && echo "export const probe = 1" > .../probe.ts
-  → Tests  1 failed | 12 passed (13)
-     offending paths: src/content/probe.ts
-rm -rf vendor/dental-scope-engine/src/content
-  → Tests  13 passed (13)
-```
-
-### Bundle proof
-
-Nothing outside `vendor/` imports the engine, so it cannot reach the bundle:
-
-```
-$ grep -rn "dental-scope-engine" --include=*.ts --include=*.tsx --include=*.mjs . \
-    | grep -v node_modules | grep -v '^./vendor/' | grep -v '^./docs/'
-(no output)                      # 0 matches
-$ grep -n "dental-scope" next.config.* tsconfig.json
-(no reference)
 $ git ls-files | grep -Eic '\.glb$'
 0
-$ find . -name 'canal-counts.json' -o -name 'teeth.json' -o -name 'structures.json'
-(no output)
 ```
-
-Honest limit: the 3D chart is not integrated until S3, so this is an
-**import-graph proof, not a built-artefact proof**. `npm run build` is still
-blocked by B14 (`@prisma/client`), so I could not grep `.next/`. I will redo
-this as a real bundle grep at S3 once the engine is wired in.
-
-### Documents updated
-
-* `vendor/dental-scope-engine/VENDOR.md` — removal record + the S3 hazard below.
-* `vendor/dental-scope-engine/PATCHES.md` — PATCH 1 table.
-* `docs/dental-chart/ASSETS.md` — removed-file list, stub table, history caveat.
-* `CREDITS.md` (new, repository root) — third-party register + the four rules.
-
-Upstream `CREDITS.md` and `LICENSE` are kept **verbatim** — they are the
-author's attribution file and must not be edited; our notes live elsewhere.
-
-### Hazard found, NOT fixed (belongs to S3)
-
-`Engine.ts:1108` and `:1251` call `loader.load('neurovascular.glb')`, and
-`:77` lists it as a stage. That file is **CC BY-SA 4.0 (Z-Anatomy)** and must
-never be fetched. It is absent from `3d-assets.manifest.json` and refused by
-`asset-mode.ts`, but the engine can still *ask* for it. S3 must neutralise the
-loader. (`tour.ts:42` and `ui/Overlays.tsx:12` are chrome, removed by hiding
-the engine's UI.)
 
 ---
 
-## 2. verify-local.sh / verify-ai.sh — status **VERIFIED-HERE**
+## P4/S3 — six engine patches — status **BUILT**
 
-### (a) `tests` row printed an empty detail — reproduced and fixed
+> BUILT, not DONE. The patches are typechecked and unit-tested against the real
+> module, but **nothing renders yet** — the adapter (step 3) is what puts them
+> on screen.
 
-Vitest colourises its summary, so the lines begin with an ESC sequence and
-`^[[:space:]]*Test Files` never matched. Reproduced with `FORCE_COLOR=1`:
+### Design: additive, not a fork
+
+All six live in **one new module**, `src/engine/dentoraPatches.ts`, rather than
+being spliced into the 1900-line upstream `Engine.ts`. `Engine` is imported
+**type-only**, so there is no runtime import cycle. The module reaches the
+engine through four narrow accessors instead of casting into private fields.
+
+`Engine.ts` edits total three, all small:
+
+1. `interface MeshEntry` → `export interface MeshEntry` (so the bridge can type).
+2. Import `disposeEngineResources`; call `dentoraDisposeResources()` at the end of `dispose()`.
+3. One clearly-marked block adding `dentoraEntries`, `dentoraScene`,
+   `dentoraRenderer`, `dentoraDisposeResources`.
+
+### The six patches
+
+| # | Patch | Export | Notes |
+| --- | --- | --- | --- |
+| **2** | Tooth appearance | `setToothAppearance(engine, fdi, {tint, opacity, rim})`, `clearToothAppearance(engine)` | Traverses `entries` for keys starting `tooth-<fdi>`. `cementum-`/`dentine-`/`pulp-<fdi>` get the **same status** — otherwise a "caries on 36" entry lights the crown while the roots look healthy. Tints by **multiply, not `set`**, preserving enamel shading. Originals saved on `userData.dentoraBase`, so every change is undoable. |
+| **3** | Selection OUT | `onToothSelection(cb)`, `fdiFromMeshKey(id)` | Subscribes to the **module-level** zustand store — no React hook, so it works from a plain adapter. `tooth-<NN>` → FDI is a **parse, not a lookup table**: NN *is* the FDI number (`Engine.ts:313`, `DevelopmentScene.ts:62,305`). De-duplicated; fires immediately with the current selection; returns unsubscribe. |
+| **4** | Selection IN | `selectTooth(engine, fdi, opts)`, `focusTooth(engine, fdi)` | Forwards `tooth-<fdi>` to the engine's `selectFromUI` / `focus`. |
+| **5** | Per-mount isolation | `resetEngine(engine)` | The store is a **module-level singleton**, so one patient's selection survives a remount and would leak into the next. Clears appearance + `selectedId`/`selectionRequest`/`hoveredId`/`isolateId`, then `resetToStart()`. |
+| **6** | Full dispose | `disposeEngineResources(engine)` | Upstream `dispose()` stops the loop and drops the renderer but **never releases geometries, materials or textures** — every mount leaked GPU memory. Now disposes textures → materials → geometries, including meshes outside `entries` via a scene traverse. Idempotent (`dentoraDispose` flag), wired into `Engine.dispose()`. |
+| **7** | Hide chrome, no English | `hideEngineChrome(container)` | `Engine.mount()` builds `div.ds-overlay` (label layer) and `div#ds-hover-info.ds-tip`; that tooltip is fed by `formatTooth`/`nameOf`/`SINUS_NOTE` — i.e. **English text**. Both hidden, and `labels` switched off in the store. The React chrome (search, language flags, `TopBar`) lives in `main.tsx`, which we never render, so it cannot appear. |
+
+### `typecheck:vendor-3d` — **0 errors**
+
+New `vendor/dental-scope-engine/tsconfig.json` + `npm run typecheck:vendor-3d`,
+mirroring the existing RAO `typecheck:vendor`. Without it the patches would
+never be typechecked, since the app's root `tsconfig` excludes `vendor/`.
 
 ```
-raw:  ^[[2m Test Files ^[[22m ^[[1m^[[32m1 passed^[[39m^[[22m^[[90m (1)^[[39m
-OLD:  note=''                                   <-- the bug you reported
-NEW:  files: 1 passed (1) ; tests: 13 passed (13)
-```
-
-Added `strip_ansi` to `scripts/verify-local.sh`.
-
-### (b) `sha256sum -c` → "no properly formatted checksum lines"
-
-**Root cause: the committed `ai-validation/models.sha256` contains comments
-and ZERO data lines** — there was literally nothing to parse:
-
-```
-$ grep -vE '^(#|$)' ai-validation/models.sha256 | wc -l
+$ npm run typecheck:vendor-3d
+> tsc -p vendor/dental-scope-engine/tsconfig.json
+$ echo $?
 0
-$ ( cd ai-validation && sha256sum -c models.sha256 )
-sha256sum: models.sha256: no properly formatted checksum lines found
 ```
 
-How a data line must be formatted — **64 hex chars, TWO spaces, then the
-path**, one per line, paths relative to `ai-validation/`:
+`strict: false` matches the style upstream was written against, so reported
+errors are real, not a strictness mismatch. Two deliberate exclusions:
+`src/main.tsx` (the upstream Vite entry — nothing imports it, we never render
+it, and it pulls `@vercel/analytics`) and a new `src/vendored-assets.d.ts`
+declaring the flag-PNG imports used by the chrome.
 
-```
-fac62870b9f9ab47c1e2d3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4  models/your-model.bin
-```
+### Tests added — `tests/unit/dental-scope-patches.test.ts` (25)
 
-Generate with:
+Real-module tests: they import the actual patch module and assert its exports
+and behaviour (including a jsdom container for PATCH 7), and they **parse the
+vendored source** so a change to `Engine.ts` cannot pass unnoticed.
 
-```
-( cd ai-validation && sha256sum models/*.bin > models.sha256 )
-```
+### Red-then-green — negative controls
 
-The script now: distinguishes "no data lines" (prints the format + generation
-command, sets FAIL) from a real check; normalises data lines first with
-**portable awk** (no `{n}` intervals — my first attempt used `{64}` and silently
-produced zero lines even for a *correct* manifest, which I caught by testing);
-and **prints the name of every failing model**. Verified against fixtures:
-
-```
-good        -> a.bin: OK
-onespace    -> a.bin: OK            (GNU tolerates 1 space; normalised anyway)
-tab         -> a.bin: OK
-empty       -> HOW-TO branch, model_checksums=FAIL
-mixed       -> a.bin: OK / b.bin: FAILED ;  failing: b.bin
-```
-
-### (c) Reporting
-
-| Was | Now |
+| Removal | Result |
 | --- | --- |
-| `session=000-no-response` | `session=dev server not running` |
-| `env_missing_names=<count>` | `env_missing_names=S3_ACCESS_KEY,S3_BUCKET` — the NAMES, comma-separated, or `none` |
+| `export` on `setToothAppearance` | **3 failed** ✓ |
+| Rename the `dentoraEntries` accessor | **1 failed** ✓ |
+| Drop `dentoraDisposeResources()` from `dispose()` | **1 failed** ✓ |
+| All reverted | **25 passed** ✓ |
 
-Both scripts pass `bash -n`.
-
----
-
-## 3. Full suite
-
-| | This run | Baseline (`0533cac` → `efae161`) |
-| --- | --- | --- |
-| Tests | **1 failed \| 6558 passed \| 12 skipped (6571)** | 1 failed \| 6545 passed (6558) |
-| Test files | 2 failed \| 361 passed \| 1 skipped (364) | 2 failed \| 360 passed |
-
-**+13 passed, no regression** — exactly the 13 new licence tests. The single
-failure is the known environmental case
-(`tests/unit/dev-start-env.test.ts`, Prisma client absent in the sandbox),
-unchanged since `0533cac`. `tests/api/imaging-review.test.ts` still fails at
-collection and contributes 0 tests — the count divergence I have **not** yet
-diagnosed.
+**One control caught a real flaw in my own test.** Renaming
+`dentoraEntries` → `_removed_dentoraEntries` initially **passed** 25/25: the
+assertion `dentoraEntries\s*\(` still matched the renamed method, because
+`_removed_dentoraEntries(` contains `dentoraEntries(`. The assertion is now
+anchored (`^\s{2}<name>\s*\(`, `m` flag) with a comment not to loosen it, and
+re-running the same control gives 1 failed. Worth flagging because it is
+exactly the kind of green test that proves nothing.
 
 ---
 
-## 4. Expected `scripts/verify-local.sh` output on your machine
+## Files changed
 
 ```
-branch=<your-branch> HEAD=794b8a4af32d0643b8b5075894c86543590a4485
-typecheck=0(498 known × 'error TS')  typecheck:vendor=0  lint=0 problems
-tests=1   files: 2 failed | 361 passed | 1 skipped (364) ; tests: 1 failed | 6558 passed | 12 skipped (6571)
+vendor/dental-scope-engine/src/engine/dentoraPatches.ts   (NEW — patches 2-7)
+vendor/dental-scope-engine/src/engine/Engine.ts           (MeshEntry export, 4 accessors, dispose fix)
+vendor/dental-scope-engine/src/vendored-assets.d.ts       (NEW — image-import declarations)
+vendor/dental-scope-engine/tsconfig.json                  (NEW — typecheck:vendor-3d)
+vendor/dental-scope-engine/PATCHES.md                     (patches 2-7 recorded)
+package.json                                              (typecheck:vendor-3d script)
+tests/unit/dental-scope-patches.test.ts                   (NEW — 25 contract tests)
+```
+
+## Verification numbers
+
+| Gate | This run | Previous |
+| --- | --- | --- |
+| Full suite | **1 failed \| 6583 passed \| 12 skipped (6596)** | 1 failed \| 6558 passed (6571) |
+| Test files | 2 failed \| 362 passed \| 1 skipped (365) | 2 failed \| 361 passed |
+| `tsc --noEmit` (app) | **498** | 498 — unchanged, no new errors |
+| `typecheck:vendor-3d` | **0** | (new script) |
+| `.glb` tracked in git | **0** | 0 |
+
+**+25 passed, no regression** — exactly the 25 new contract tests. The single
+failure is the known environmental case (`tests/unit/dev-start-env.test.ts`,
+Prisma client absent in the sandbox), unchanged since `0533cac`.
+`tests/api/imaging-review.test.ts` still fails at collection and contributes 0
+tests — the count divergence I have **not** diagnosed.
+
+## Expected `scripts/verify-local.sh` output on your machine
+
+```
+branch=<your-branch> HEAD=eb8a2e15718f22548790122d19b1c217144258fd
+typecheck=0(498 known × 'error TS')  typecheck:vendor=0  typecheck:vendor-3d=0  lint=0 problems
+tests=1   files: 2 failed | 362 passed | 1 skipped (365) ; tests: 1 failed | 6583 passed | 12 skipped (6596)
 build=1(@prisma/client exports — blocker B14)
 no-glb-in-git=0
 ```
 
-The `tests` row is the one that was empty before; it now carries both counts.
-
-## 5. What to check on your machine
+## What to check on your machine
 
 ```bash
-git fetch origin merge/fdi52-into-wip && git rev-parse HEAD   # -> 794b8a4af32d0643b8b5075894c86543590a4485
-git ls-files vendor/dental-scope-engine | grep -Ei 'content|docs|\.glb|neurovascular'   # -> nothing
-git ls-files | grep -Eic '\.glb$'                                                       # -> 0
+git fetch origin merge/fdi52-into-wip && git rev-parse HEAD   # -> eb8a2e15718f22548790122d19b1c217144258fd
+npm run typecheck:vendor-3d                                   # -> 0 errors
+npx vitest run tests/unit/dental-scope-patches.test.ts        # -> 25 passed
+git ls-files vendor/dental-scope-engine | grep -Eic 'content|docs|\.glb|neurovascular'   # -> 0
 bash scripts/verify-local.sh
-bash scripts/verify-ai.sh
 ```
 
-## 6. Not verified here
+## Not verified here
 
-* Step 1 is **source-level only**; the bundle proof becomes a real artefact
-  grep at S3 (build is blocked by B14).
-* Steps 2–5 (S3 patches, Chart3DAdapter, asset loading) **not started**.
+* **Nothing renders yet.** These are unit-level contracts; the engine has not
+  been mounted in a browser, so WebGL behaviour, real tinting appearance, and
+  the actual GPU-memory saving from PATCH 6 are all unproven.
+* **PATCH 7 was tested in jsdom, not a real browser.** The engine's DOM is
+  created by `Engine.mount()`, which needs WebGL — so `hideEngineChrome` was
+  exercised against a hand-built container matching what `mount()` produces.
+* Step 3 (Chart3DAdapter + dev route), step 4 (asset loading / USER-VERIFY
+  commands) and step 5 restrictions: **not started**.
 * The `imaging-review.test.ts` collection failure: still not diagnosed.
-* D1 (licence decision): **open**, deliberately, plus the new git-history
-  question above.
+* D1 (licence decision) and the git-history question: **open**.
 * P3 remains **BUILT** — still waiting on your 3 screenshots.
