@@ -29,6 +29,49 @@ MASTER §4.4 forbids committing 3D model files:
 Also excluded: `docs/`, `e2e/`, `.github/`, and every upstream `*.test.ts`
 (their suite is not our gate — our own contract tests are).
 
+## `src/content/` is DELETED — CC BY-SA 4.0, not MIT
+
+The upstream `src/content/` tree is a **separate work**: five languages of
+educational prose plus `canal-counts.json`, which is clinical data nobody
+approved. It is **CC BY-SA 4.0**, not MIT. All 20 files were removed, together
+with `src/app/about.ts` and `src/app/guide.ts`, whose only purpose was to
+render that content.
+
+Replacement: **`src/stubs/educational-text.ts`** (PATCH 1 in `PATCHES.md`) —
+same export names and types, **EMPTY data**: no prose, no counts, no sources.
+Six modules were repointed at it. Because `Engine.ts` does
+`resolveContent(...).summary!` → `textContent`, the stub returns `''` rather
+than `undefined`, which would otherwise render the English word "undefined".
+
+Full record, including the removed-file list and the git-history caveat:
+`docs/dental-chart/ASSETS.md`.
+
+> **Git history still contains these files.** Deletion removes them from the
+> tip, not from history — every commit up to
+> `0152c65f1f0664dd29daaa6d0b3f5bde0a94fb22` still carries the CC BY-SA 4.0
+> tree. That is an explicit input to decision **D1**, not resolved here.
+
+Upstream `CREDITS.md` is kept **verbatim and unmodified** — it is the upstream
+author's own attribution file and must not be edited. Our notes live in this
+file and in the repository-root `CREDITS.md`.
+
+## Known hazard for S3 — the engine can still request `neurovascular.glb`
+
+`neurovascular.glb` is CC BY-SA 4.0 (Z-Anatomy) and must **never** be loaded.
+It is absent from `3d-assets.manifest.json` and refused by
+`lib/dental-chart/3d/asset-mode.ts`, but the vendored engine still *asks* for
+it in three places:
+
+* `src/engine/Engine.ts:1108` — `this.loader.load('neurovascular.glb')`
+* `src/engine/Engine.ts:1251` — `this.loader.load('neurovascular.glb')`
+* `src/engine/Engine.ts:77` — it is listed as a loadable stage
+
+S3 must neutralise these (disable the neurovascular layer / short-circuit the
+loader) so that no selection, tour step or preset can trigger that fetch.
+`src/app/tour.ts:42` (`waitFor: { asset: 'neurovascular' }`) and
+`src/ui/Overlays.tsx:12` (stage list) are chrome, removed by hiding the
+engine's UI.
+
 ## Licences — the part that is NOT settled
 
 | Asset | Licence | Source |

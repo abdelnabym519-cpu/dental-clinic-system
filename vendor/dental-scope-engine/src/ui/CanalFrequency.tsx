@@ -1,4 +1,4 @@
-import { canalFrequency, formatPercent, frequencyContext } from '../content/canalFrequency';
+import { canalFrequency, formatPercent, frequencyContext } from '../stubs/educational-text';
 import { useLang } from '../i18n';
 import { FEEDBACK_TEXT } from '../i18n/feedback';
 

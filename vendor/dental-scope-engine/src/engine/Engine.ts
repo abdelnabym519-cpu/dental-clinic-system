@@ -31,7 +31,7 @@ import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
 import { renderPixelRatio } from './renderQuality';
-import { resolveContent } from '../content/content';
+import { resolveContent } from '../stubs/educational-text';
 import { SINUS_NOTE } from '../i18n/study';
 import { dentitionFrame, skullOverviewFrame } from './framing';
 import { navigate } from '../app/router';

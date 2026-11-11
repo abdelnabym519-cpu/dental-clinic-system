@@ -899,3 +899,74 @@ Re-verified on the P0 preflight pass:
   written during P4/S8.
 - Default for any shipped build remains **`ASSET_MODE=none`** until the user
   records decision **D1**.
+
+---
+
+## P4/S1 — CC BY-SA 4.0 educational content REMOVED from the vendored engine
+
+**Decision: deleted, not relicensed, not trimmed.** The dental-scope *code* is
+MIT; the upstream `src/content/` tree is a **separate work under CC BY-SA 4.0**.
+It carried five languages of educational prose and, in `canal-counts.json`,
+clinical data nobody approved.
+
+### What was removed (20 files)
+
+```
+src/content/canal-counts.json      <- clinical counts, never approved
+src/content/canalFrequency.ts
+src/content/content.ts
+src/content/descriptionCoverage.ts
+src/content/developmentAnatomy.ts
+src/content/feedbackAnatomy.ts
+src/content/hyoidAttachments.ts
+src/content/supportingAnatomy.ts
+src/content/toothGuides.ts
+src/content/vesselReferences.ts
+src/content/{de,en,es,la,sv}/structures.json
+src/content/{de,en,es,la,sv}/teeth.json
+```
+
+Also removed, because their **only** purpose was to render that content:
+`src/app/about.ts` and `src/app/guide.ts` (the engine's own About page and
+Guide panel — chrome we hide anyway under P4/S3).
+
+### Replacement
+
+`src/stubs/educational-text.ts` — a minimal typed stub exporting the same
+symbols with **EMPTY data**: `resolveContent()` returns no summary/facts/
+sources; `canalFrequency()` returns `undefined` so its panel renders nothing;
+`formatPercent()` returns `''`; `hyoidAttachments()`, `DEVELOPMENT_SOURCES` and
+`HYOID_SOURCES` are empty. Six files were repointed at it:
+`Engine.ts`, `ui/DetailPanel.tsx`, `ui/CanalFrequency.tsx`,
+`ui/DevelopmentControls.tsx`, `ui/GuidedTour.tsx`, `ui/HyoidConnections.tsx`.
+
+Deliberate detail: `resolveContent().summary` is `''`, **not** `undefined`.
+`Engine.ts` does `resolveContent(...).summary!` and assigns to `textContent`;
+`undefined` would render the literal English word "undefined" into an
+Arabic-only UI.
+
+### ⚠ GIT HISTORY STILL CONTAINS THESE FILES — read this before D1
+
+Deleting files removes them **from the tip, not from history**. Every commit up
+to and including `0152c65f1f0664dd29daaa6d0b3f5bde0a94fb22` still contains the
+full CC BY-SA 4.0 content tree:
+
+```
+git log --all --oneline -- vendor/dental-scope-engine/src/content/   # non-empty
+git show 0152c65:vendor/dental-scope-engine/src/content/canal-counts.json
+git show 0152c65:vendor/dental-scope-engine/src/content/en/teeth.json
+```
+
+**Consequence for D1:** if the repository is ever published, pushed to a public
+remote, or handed to a third party, that content is **disclosed by the history**
+even though the working tree is clean. A licence decision that concludes "we
+ship none of it" must ALSO address history — by rewriting/filtering it, or by
+re-vendoring from a clean root. Flagging this as an explicit input to **D1**,
+not resolving it here.
+
+### Enforcement
+
+`tests/unit/dental-scope-licence.test.ts` fails if any path in
+`vendor/dental-scope-engine` matches `content|docs|\.glb|neurovascular`, if any
+source file still imports from `content/`, or if the stub ever ships non-empty
+data.

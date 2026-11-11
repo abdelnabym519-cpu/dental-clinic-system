@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { DEVELOPMENT_STAGES, DEVELOPMENT_TEETH, developmentId, developmentNotation, developmentStatus } from '../anatomy/development';
-import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
+import { DEVELOPMENT_SOURCES } from '../stubs/educational-text';
 import { nameOf, useLang } from '../i18n';
 import { DEVELOPMENT_TEXT } from '../i18n/development';
 import { actions, useApp } from '../state/store';

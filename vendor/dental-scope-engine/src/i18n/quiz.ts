@@ -5,7 +5,7 @@
  * carries an FDI number.
  *
  * DRAFT content: the wording mirrors the sourced summaries in
- * `src/content/<lang>/teeth.json` (the `tooth:<type>:<arch>` entries), which are
+ * the upstream per-tooth JSON entries (the `tooth:<type>:<arch>` ones), which are
  * themselves marked draft and pending expert review — see docs/content.md.
  * Facts such as the long single cusp of the canines, the larger cheek-side
  * cusp of the first premolars or the three (maxillary) / two (mandibular)

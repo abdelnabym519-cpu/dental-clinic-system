@@ -5,7 +5,7 @@ import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import type { Structure } from '../anatomy/types';
 import { navigate } from '../app/router';
-import { resolveContent } from '../content/content';
+import { resolveContent } from '../stubs/educational-text';
 import { nameOf, useT, type Lang, type Messages } from '../i18n';
 import { typeLabel } from '../i18n/anatomy';
 import { actions, useApp } from '../state/store';

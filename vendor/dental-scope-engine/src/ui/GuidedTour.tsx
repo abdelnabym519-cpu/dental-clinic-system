@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { FIRST_VISIT_TOOTH, FIRST_VISIT_TOUR, needsFirstVisitGuide, playTour, rememberGuideVisit, tourDelay } from '../app/tour';
 import { navigate } from '../app/router';
 import { isCompactLayout } from '../app/viewport';
-import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
+import { DEVELOPMENT_SOURCES } from '../stubs/educational-text';
 import { useLang } from '../i18n';
 import { DEVELOPMENT_TEXT } from '../i18n/development';
 import { TOUR_TEXT } from '../i18n/tour';

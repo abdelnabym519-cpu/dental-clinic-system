@@ -1,7 +1,9 @@
 /**
  * Text of the static /about/ page in each interface language
  * (English at about/, Swedish at about/sv/, German at about/de/, Spanish at about/es/, Latin at about/la/).
- * Anatomical names come from src/i18n/anatomy.ts and descriptions from src/content/<lang>/.
+ * Anatomical names come from src/i18n/anatomy.ts. Descriptions come from the
+ * upstream CC BY-SA 4.0 content tree, which this vendor copy does NOT ship —
+ * see src/stubs/educational-text.ts and VENDOR.md.
  */
 import type { Lang } from '../i18n/lang.ts';
 

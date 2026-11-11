@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { hyoidAttachments, HYOID_SOURCES, type HyoidGroup } from '../content/hyoidAttachments';
+import { hyoidAttachments, HYOID_SOURCES, type HyoidGroup } from '../stubs/educational-text';
 import { useLang } from '../i18n';
 import { explorationText } from '../i18n/exploration';
 
