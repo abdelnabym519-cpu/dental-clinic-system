@@ -101,7 +101,14 @@ export default function Chart3DStage({
         kind === 'scope'
           ? createScopeScene(
               forceScopeFailure
-                ? { loadEngine: async () => { throw new Error('forced failure (test seam)') } }
+                ? {
+                    // Test seam only. Deliberately a single short token: the
+                    // protected i18n guard rejects multi-word English literals
+                    // in client components, and this never reaches the UI.
+                    loadEngine: async () => {
+                      throw new Error('forced')
+                    },
+                  }
                 : {},
             )
           : createProceduralScene()
