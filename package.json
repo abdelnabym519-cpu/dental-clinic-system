@@ -78,7 +78,8 @@
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
     "verify": "npm run typecheck && npm run lint && npm test -- --run && npm run build",
-    "typecheck:vendor": "tsc -p vendor/react-advanced-odontogram/tsconfig.json"
+    "typecheck:vendor": "tsc -p vendor/react-advanced-odontogram/tsconfig.json",
+    "typecheck:vendor-3d": "tsc -p vendor/dental-scope-engine/tsconfig.json"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",

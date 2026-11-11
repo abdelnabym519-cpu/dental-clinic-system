@@ -32,11 +32,13 @@ import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
 import { renderPixelRatio } from './renderQuality';
 import { resolveContent } from '../stubs/educational-text';
+// PATCH 6 (Dentora): GPU resource release. Type-only imports create no cycle.
+import { disposeEngineResources } from './dentoraPatches';
 import { SINUS_NOTE } from '../i18n/study';
 import { dentitionFrame, skullOverviewFrame } from './framing';
 import { navigate } from '../app/router';
 
-interface MeshEntry {
+export interface MeshEntry {
   key: string;
   owner: string;
   mesh: THREE.Mesh<THREE.BufferGeometry, TissueMaterial>;
@@ -280,7 +282,40 @@ export class Engine {
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
     this.overlay?.remove();
+    // PATCH 6 (Dentora): upstream dispose() stops the loop and drops the
+    // renderer but never releases geometries/materials/textures, so every
+    // mount leaked GPU memory. Release them here, once per engine.
+    this.dentoraDisposeResources();
     this.unsub = [];
+  }
+
+  /* ====================================================================== *
+   * PATCHES 2-6 (Dentora) — narrow accessors for ./dentoraPatches.ts.
+   *
+   * Deliberately narrow: the bridge needs the mesh registry and the scene,
+   * and this is preferable to casting into private fields from outside.
+   * See PATCHES.md.
+   * ====================================================================== */
+
+  /** PATCH 2/6: read-only mesh registry, keyed `tooth-<fdi>`, `enamel-<fdi>`, … */
+  dentoraEntries(): ReadonlyMap<string, MeshEntry> { return this.entries; }
+
+  /** PATCH 6: the scene, so dispose can reach meshes not in `entries`. */
+  dentoraScene(): THREE.Scene { return this.scene; }
+
+  /** PATCH 6: the renderer, for callers that must force a context loss. */
+  dentoraRenderer(): THREE.WebGLRenderer | undefined { return this.renderer; }
+
+  private dentoraDisposed = false;
+
+  /**
+   * PATCH 6: free geometries, materials and textures. Idempotent, because it
+   * runs from `dispose()` and a caller may also invoke it directly.
+   */
+  dentoraDisposeResources(): void {
+    if (this.dentoraDisposed) return;
+    this.dentoraDisposed = true;
+    disposeEngineResources(this);
   }
 
   /* ============================================================== loading */

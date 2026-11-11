@@ -48,18 +48,57 @@ signatures in git history** and from their **consumers'** usage — not invented
 
 ---
 
-Planned (S3, each will get a row here):
+## PATCHES 2–7 — `src/engine/dentoraPatches.ts` (NEW, additive)
 
-1. `setToothAppearance(fdi, { tint, opacity, rim })` — a tint over the enamel
-   material, applied by traversing meshes whose key starts with `tooth-<fdi>`,
-   rather than replacing the material.
-2. Selection **out**: subscribe to `src/state/store.ts` `selectedId` and map
-   `tooth-NN` → FDI number.
-3. Selection **in**: `selectFromUI` / `focus` with the FDI → key mapping.
-4. Per-mount isolation / explicit reset between patients.
-5. `dispose()` hardening — release geometries, materials and textures.
-6. Removal/hiding of the engine's own UI chrome (search, labels panel,
-   language flags) so no English text can appear in our build.
+All six live in one new module rather than being spliced into the 1900-line
+upstream `Engine.ts`. `Engine` is imported **type-only**, so there is no
+runtime import cycle. The module reaches the engine through four narrow
+accessors added to `Engine` (`dentoraEntries`, `dentoraScene`,
+`dentoraRenderer`, `dentoraDisposeResources`) instead of casting into private
+fields.
+
+| # | Patch | Export | Notes |
+| --- | --- | --- | --- |
+| **2** | Tooth appearance | `setToothAppearance(engine, fdi, {tint, opacity, rim})`, `clearToothAppearance(engine)` | Traverses `entries` for keys starting `tooth-<fdi>`; `cementum-`/`dentine-`/`pulp-<fdi>` get the SAME status so a "caries on 36" entry cannot light the crown while the roots look healthy. Tints by **multiply**, not `set`, preserving enamel shading. Originals saved on `userData.dentoraBase` so every change is undoable. |
+| **3** | Selection OUT | `onToothSelection(cb)`, `fdiFromMeshKey(id)` | Subscribes to the **module-level** zustand store (no React). `tooth-<NN>` → FDI is a **parse, not a lookup**: NN *is* the FDI number (`Engine.ts:313`, `DevelopmentScene.ts:62,305`). De-duplicated; fires immediately with the current selection; returns unsubscribe. |
+| **4** | Selection IN | `selectTooth(engine, fdi, opts)`, `focusTooth(engine, fdi)` | Forwards `tooth-<fdi>` to `selectFromUI` / `focus`. |
+| **5** | Per-mount isolation | `resetEngine(engine)` | The store is a **module-level singleton**, so one patient's selection survives a remount. Clears appearance + `selectedId`/`selectionRequest`/`hoveredId`/`isolateId`, then `resetToStart()`. |
+| **6** | Full dispose | `disposeEngineResources(engine)` | Upstream `dispose()` stops the loop and drops the renderer but **never releases geometries, materials or textures** — every mount leaked GPU memory. Now disposes textures → materials → geometries, including meshes outside `entries` via a scene traverse. Idempotent (`dentoraDisposed`), and wired into `Engine.dispose()`. |
+| **7** | Hide chrome, no English | `hideEngineChrome(container)` | `Engine.mount()` builds `div.ds-overlay` (label layer) and `div#ds-hover-info.ds-tip` — the tooltip is fed by `formatTooth`/`nameOf`/`SINUS_NOTE`, i.e. **English text**. Both hidden; `labels` switched off in the store. The React chrome (search, language flags, `TopBar`) lives in `main.tsx`, which we never render. |
+
+### Engine.ts edits (kept minimal)
+
+1. `interface MeshEntry` → `export interface MeshEntry` (so the bridge can type).
+2. Import `disposeEngineResources` and call `dentoraDisposeResources()` at the
+   end of `dispose()`.
+3. Add the four accessors in one clearly-marked block.
+
+### `typecheck:vendor-3d`
+
+`vendor/dental-scope-engine/tsconfig.json` + `npm run typecheck:vendor-3d` —
+**0 errors**. Mirrors the existing `typecheck:vendor` (RAO) approach: the app's
+root `tsconfig` excludes `vendor/`, so without this the patches would never be
+typechecked. `strict: false` matches the style upstream was written against.
+Two deliberate exclusions: `src/main.tsx` (the upstream Vite app entry —
+nothing imports it, we never render it, and it pulls `@vercel/analytics`) and
+`src/vendored-assets.d.ts` (declares the flag-PNG imports used by the chrome).
+
+### Negative controls (`tests/unit/dental-scope-patches.test.ts`, 25 tests)
+
+| Removal | Result |
+| --- | --- |
+| `export` on `setToothAppearance` | **3 failed** ✓ |
+| Rename `dentoraEntries` accessor | **1 failed** ✓ |
+| Drop `dentoraDisposeResources()` from `dispose()` | **1 failed** ✓ |
+| Reverted | **25 passed** ✓ |
+
+> The accessor control initially **passed when it should have failed**: an
+> unanchored `dentoraEntries\s*\(` regex still matched the renamed
+> `_removed_dentoraEntries(`. The assertion is now anchored with
+> `^\\s{2}<name>\\s*\\(` (`m` flag) and carries a comment not to loosen it.
+
+### Still outstanding (S3 follow-up / S4)
+
 7. **Neutralise `neurovascular.glb`** — `Engine.ts:1108` and `:1251` call
    `loader.load('neurovascular.glb')` and `:77` lists it as a stage. That file
    is CC BY-SA 4.0 (Z-Anatomy) and must never be fetched, so the loader must
