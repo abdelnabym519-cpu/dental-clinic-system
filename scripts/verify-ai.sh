@@ -86,11 +86,17 @@ if [ ! -f "$MANIFEST" ]; then
   MAN_RC=1
 else
   # A data line must be: <64 hex chars><whitespace><relative path>.
-  # GNU sha256sum tolerates one space or a tab, but NOT a leading "*" binary
-  # marker or a CRLF, and it aborts with the confusing
-  # "no properly formatted checksum lines found" when a file holds comments
-  # and no data lines at all. Normalise into the canonical two-space shape
-  # first so the check reports REAL mismatches instead of formatting noise.
+  #
+  # Measured on GNU coreutils (this repo's environment): sha256sum -c already
+  # tolerates ONE space, a tab, a CRLF line ending and the "*" binary marker,
+  # so NONE of those is what breaks the user's run. What breaks it is simply
+  # that this manifest holds COMMENTS AND ZERO DATA LINES - there is nothing
+  # to parse, hence "no properly formatted checksum lines found".
+  #
+  # The normaliser below is therefore belt-and-braces, not the fix: it makes
+  # the check portable to stricter sha256sum implementations (BSD/macOS) and
+  # gives us a reliable DATA-LINE COUNT to branch on, which is what lets the
+  # script print the required format instead of a bare parsing error.
   # (Awk here avoids {n} intervals, which not every awk supports.)
   MAN_NORM="$(mktemp)"
   awk '
